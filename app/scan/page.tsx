@@ -4,11 +4,16 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
+import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { useAnalysis } from '@/stores/analysis';
 import { useFamily } from '@/stores/family';
 import { useScans, nowLabel } from '@/stores/scans';
+import { usePreferences } from '@/stores/preferences';
 import { computeVerdict, LEVEL_META } from '@/lib/snapcare/verdict';
-import type { Member, ScanItem } from '@/lib/snapcare/types';
+import { itemToDsl } from '@/lib/snapcare/sigil';
+import { itemVoiceScript } from '@/lib/snapcare/say';
+import { speak } from '@/lib/voice';
+import type { Member, ScanItem, Verdict } from '@/lib/snapcare/types';
 
 export default function ScanResultPage() {
   const router = useRouter();
@@ -17,11 +22,18 @@ export default function ScanResultPage() {
   const { members, activeMemberId } = useFamily();
   const addScan = useScans((s) => s.addScan);
 
+  const autoTts = usePreferences((s) => s.autoTts);
   const member = members.find((m) => m.id === activeMemberId) ?? members[0];
 
   useEffect(() => {
     if (!item) router.replace('/camera');
   }, [item, router]);
+
+  useEffect(() => {
+    if (!item || !member || !autoTts) return;
+    speak(itemVoiceScript(item, computeVerdict(item, member), member), 'en-US');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.id, member?.id, autoTts]);
 
   if (!item || !member) return null;
 
@@ -54,7 +66,7 @@ export default function ScanResultPage() {
       <div className="flex items-center justify-between px-5 pt-14 pb-1">
         <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none" style={{ color: 'var(--color-sc-muted)' }}>×</button>
         <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>{header}</span>
-        <span className="w-6" />
+        <button onClick={() => speak(itemVoiceScript(item, verdict, member), 'en-US')} aria-label="Replay voice" className="text-xl leading-none">🔊</button>
       </div>
 
       {isRx ? (
@@ -69,7 +81,7 @@ export default function ScanResultPage() {
 function FoodResult({
   item, verdict, member, members, onDone,
 }: {
-  item: ScanItem; verdict: ReturnType<typeof computeVerdict>; member: Member; members: Member[]; onDone: () => void;
+  item: ScanItem; verdict: Verdict; member: Member; members: Member[]; onDone: () => void;
 }) {
   return (
     <div className="flex flex-1 flex-col">
@@ -133,7 +145,7 @@ function FoodResult({
 function RxResult({
   item, verdict, onDone,
 }: {
-  item: ScanItem; verdict: ReturnType<typeof computeVerdict>; onDone: () => void;
+  item: ScanItem; verdict: Verdict; onDone: () => void;
 }) {
   const meta = LEVEL_META[verdict.level];
   const conflict = verdict.level !== 'safe';
@@ -169,6 +181,11 @@ function RxResult({
           </div>
         </div>
       )}
+
+      {/* SIGIL 자체 엔진 픽토그램 (읽기 없이 이해) */}
+      <div className="mt-5">
+        <PictogramStrip source={itemToDsl(item, verdict.level !== 'safe')} />
+      </div>
 
       <div className="mt-auto pb-8 pt-6">
         <PrimaryButton onClick={onDone} level="safe">Create reminders</PrimaryButton>

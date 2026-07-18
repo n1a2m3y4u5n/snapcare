@@ -22,6 +22,14 @@ export default function HomePage() {
     router.push('/scan');
   }
 
+  function openDose(itemId: string, memberId: string) {
+    const item = getItem(itemId);
+    if (!item) return;
+    setCurrent(item);
+    setActiveMember(memberId);
+    router.push('/dose');
+  }
+
   return (
     <MobileScreen tab="home">
       <div className="px-5 pt-14">
@@ -31,7 +39,7 @@ export default function HomePage() {
 
         {/* 복약 리마인더 */}
         <button
-          onClick={() => openScan('metformin', 'grandpa')}
+          onClick={() => openDose('metformin', 'grandpa')}
           className="mt-4 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
           style={{ background: 'var(--color-med-bg)' }}
         >

@@ -16,6 +16,7 @@ const STATUS_COLOR = { safe: 'var(--color-safe)', caution: 'var(--color-caution)
 export default function SettingsPage() {
   const getMember = useFamily((s) => s.getMember);
   const [sos, setSos] = useState(false);
+  const [alerting, setAlerting] = useState(false);
 
   return (
     <MobileScreen tab="settings">
@@ -68,9 +69,19 @@ export default function SettingsPage() {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full text-3xl" style={{ background: 'var(--color-avoid-bg)' }}>❗</div>
             <h2 className="mt-4 text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}>Alert your emergency contact?</h2>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}>Your location and safety profile will be shared immediately.</p>
-            <button onClick={() => setSos(false)} className="mt-5 w-full rounded-2xl py-3 text-base font-bold text-white" style={{ background: 'var(--color-avoid)' }}>Yes, alert now</button>
+            <button onClick={() => { setSos(false); setAlerting(true); }} className="mt-5 w-full rounded-2xl py-3 text-base font-bold text-white" style={{ background: 'var(--color-avoid)' }}>Yes, alert now</button>
             <button onClick={() => setSos(false)} className="mt-2 w-full rounded-2xl py-3 text-base font-semibold" style={{ color: 'var(--color-sc-ink)' }}>Cancel</button>
           </div>
+        </div>
+      )}
+
+      {/* SOS 경보 진행 (풀스크린) */}
+      {alerting && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-10 text-center text-white" style={{ background: 'var(--color-avoid)' }}>
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white/20 text-5xl">❗</div>
+          <h2 className="mt-6 text-2xl font-bold">Alerting emergency contact</h2>
+          <p className="mt-2 text-sm opacity-90">Your location and safety profile are being shared.</p>
+          <button onClick={() => setAlerting(false)} className="mt-10 w-full max-w-xs rounded-2xl bg-white py-3 text-base font-bold" style={{ color: 'var(--color-avoid)' }}>Cancel</button>
         </div>
       )}
     </MobileScreen>
