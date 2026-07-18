@@ -18,15 +18,12 @@ ENV PORT=3000
 RUN apk add --no-cache python3 py3-pip && \
     pip3 install --no-cache-dir --break-system-packages Pillow
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/engine ./engine
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/engine ./engine
 
-USER nextjs
+# 데모: root로 실행 — 마운트된 /data 볼륨(서버 저장소)에 쓰기 위함
 EXPOSE 3000
 
 CMD ["node", "server.js"]
