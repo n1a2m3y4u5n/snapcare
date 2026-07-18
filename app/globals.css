@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* 파랑 — 카메라·OCR */
+  --color-blue-50: #EFF6FF;
+  --color-blue-100: #DBEAFE;
+  --color-blue-600: #185FA5;
+  --color-blue-800: #1E3A5F;
+
+  /* 초록 — 복약 */
+  --color-green-50: #F0FDF4;
+  --color-green-100: #DCFCE7;
+  --color-green-600: #3B6D11;
+  --color-green-800: #1A3006;
+
+  /* 보라 — 보관함 */
+  --color-purple-50: #F5F3FF;
+  --color-purple-100: #EDE9FE;
+  --color-purple-600: #534AB7;
+  --color-purple-800: #2E2A6B;
+
+  /* 분홍 — 일지 */
+  --color-pink-50: #FFF0F3;
+  --color-pink-100: #FFE4E8;
+  --color-pink-600: #993556;
+  --color-pink-800: #5C1F34;
+
+  /* 주황·노랑 — 예방 */
+  --color-amber-50: #FFFBEB;
+  --color-amber-100: #FEF3C7;
+  --color-amber-600: #BA7517;
+  --color-amber-800: #713F12;
+
+  /* 빨강 — 응급 */
+  --color-red-50: #FFF5F5;
+  --color-red-100: #FFE3E3;
+  --color-red-600: #A32D2D;
+  --color-red-800: #5C1111;
+
+  /* 중립 */
+  --color-neutral-50: #F9FAFB;
+  --color-neutral-100: #F3F4F6;
+  --color-neutral-200: #E5E7EB;
+  --color-neutral-300: #D1D5DB;
+  --color-neutral-400: #9CA3AF;
+  --color-neutral-600: #4B5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1F2937;
+  --color-neutral-900: #111827;
+
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+}
+
+body {
+  background: #ffffff;
+  color: #111827;
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid #185FA5;
+  outline-offset: 2px;
+}

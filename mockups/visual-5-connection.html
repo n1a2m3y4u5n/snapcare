@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>Visual 5 — 의료 연결 화면 모음</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", system-ui, sans-serif; }
+  .phone {
+    width: 360px;
+    height: 720px;
+    border-radius: 44px;
+    box-shadow: 0 30px 60px -15px rgba(0,0,0,.25), 0 0 0 1px rgba(0,0,0,.04);
+    overflow: hidden;
+    background: #fff;
+    position: relative;
+  }
+  .phone::before {
+    content: "";
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 22px;
+    background: #000;
+    border-radius: 999px;
+    z-index: 20;
+  }
+  .caption {
+    width: 360px;
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #666;
+    font-weight: 600;
+  }
+  /* QR 코드 가짜 (CSS로 그린 그리드) */
+  .qr {
+    width: 220px; height: 220px;
+    background:
+      linear-gradient(#000 0 0) 0 0 / 32px 32px no-repeat,
+      linear-gradient(#000 0 0) 0 0 / 32px 32px no-repeat,
+      linear-gradient(#000 0 0) 0 0 / 32px 32px no-repeat,
+      linear-gradient(45deg,#000 25%,#fff 25%,#fff 50%,#000 50%,#000 75%,#fff 75%) 0 0/16px 16px,
+      #fff;
+    border: 12px solid #fff;
+    box-shadow: 0 0 0 1px #e5e5e5;
+    border-radius: 16px;
+  }
+  /* SOS 진동 애니메이션 */
+  @keyframes pulse-sos {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: .9; }
+  }
+  .pulse-sos { animation: pulse-sos 1.6s ease-in-out infinite; }
+</style>
+</head>
+<body class="bg-neutral-100 min-h-screen px-12 py-16">
+  <div class="max-w-7xl mx-auto">
+    <header class="text-center mb-10">
+      <div class="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-2">시각 자료 5</div>
+      <h1 class="text-2xl font-bold text-neutral-900">기능 3 — 의료 연결</h1>
+      <p class="text-neutral-500 mt-1">의료진 QR 공유 · 응급 SOS · 가족 백신 카드</p>
+    </header>
+
+    <div class="flex justify-center gap-10 flex-wrap">
+
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <!-- PHONE 1 — 의료진 QR 공유                                    -->
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <div>
+        <div class="phone">
+          <div class="h-12 flex items-end justify-center pb-1 text-[11px] text-neutral-400 font-mono">10:32 AM</div>
+
+          <div class="h-[616px] bg-gradient-to-b from-violet-50 to-purple-100 flex flex-col">
+            <!-- 헤더 -->
+            <div class="px-5 pt-3 pb-2">
+              <div class="text-[11px] font-bold text-purple-700 uppercase tracking-widest">공유</div>
+              <h2 class="text-xl font-extrabold text-purple-900 mt-0.5">의료진에게 보여주세요</h2>
+              <p class="text-xs text-purple-700/70 mt-1">의사가 QR을 스캔하면 내 복약 기록을 볼 수 있어요</p>
+            </div>
+
+            <!-- 픽토그램 -->
+            <div class="px-5 flex items-center justify-center gap-1 mt-2">
+              <div class="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-3xl">📱</div>
+              <div class="text-2xl text-purple-400">→</div>
+              <div class="w-14 h-14 rounded-full bg-white shadow-md flex items-center justify-center text-3xl">👨‍⚕️</div>
+            </div>
+
+            <!-- QR -->
+            <div class="flex-1 flex flex-col items-center justify-center gap-4">
+              <div class="qr"></div>
+              <div class="text-center">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 border border-amber-300">
+                  <span class="text-base">⏱️</span>
+                  <span class="text-sm font-bold text-amber-800 font-mono tabular-nums">14:32</span>
+                  <span class="text-xs text-amber-700">후 만료</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 안내 -->
+            <div class="px-5 pb-5">
+              <div class="rounded-2xl bg-white/60 border border-purple-200 p-3">
+                <div class="flex items-start gap-2">
+                  <span class="text-xl">🔒</span>
+                  <div>
+                    <div class="text-[11px] font-bold text-purple-900">일회용 코드</div>
+                    <div class="text-[10px] text-purple-700/80 mt-0.5">사용 후 자동 만료되며, 의료진은 이 진료에서만 볼 수 있어요.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption">① 의료진 QR 공유</div>
+      </div>
+
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <!-- PHONE 2 — SOS 응급                                          -->
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <div>
+        <div class="phone">
+          <div class="h-12 flex items-end justify-center pb-1 text-[11px] text-white/70 font-mono bg-red-700">긴급</div>
+
+          <div class="h-[616px] bg-gradient-to-b from-red-600 via-red-700 to-red-800 flex flex-col items-center text-white">
+
+            <!-- 상단 라벨 -->
+            <div class="pt-4 text-center">
+              <div class="text-[11px] font-bold text-white/70 uppercase tracking-widest">긴급 요청 중</div>
+            </div>
+
+            <!-- SOS 픽토그램 -->
+            <div class="flex-1 flex flex-col items-center justify-center gap-6 px-6">
+              <div class="pulse-sos w-44 h-44 rounded-full bg-white shadow-2xl flex items-center justify-center">
+                <div class="text-6xl font-black text-red-600">SOS</div>
+              </div>
+
+              <div class="text-center">
+                <div class="text-xl font-extrabold">보호자에게 연락 중<span class="inline-block animate-pulse">…</span></div>
+                <div class="text-xs text-white/80 mt-1.5">위치 정보가 함께 전송되고 있어요</div>
+              </div>
+
+              <!-- 연락 대상 -->
+              <div class="w-full flex justify-center gap-3 mt-2">
+                <div class="flex flex-col items-center gap-1">
+                  <div class="w-12 h-12 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-2xl">👨</div>
+                  <div class="text-[10px] font-bold">아빠</div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                  <div class="w-12 h-12 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-2xl">👩</div>
+                  <div class="text-[10px] font-bold">엄마</div>
+                </div>
+                <div class="flex flex-col items-center gap-1">
+                  <div class="w-12 h-12 rounded-full bg-white border-2 border-white flex items-center justify-center text-2xl">🏥</div>
+                  <div class="text-[10px] font-bold">병원</div>
+                </div>
+              </div>
+
+              <!-- 위치 -->
+              <div class="w-full mt-2">
+                <div class="rounded-2xl bg-white/15 border border-white/25 p-3 backdrop-blur">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xl">📍</span>
+                    <div>
+                      <div class="text-[11px] font-bold">현재 위치 전송 중</div>
+                      <div class="text-[10px] text-white/80 mt-0.5">정확도 ±5m</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 취소 -->
+            <div class="w-full px-6 pb-5">
+              <button class="w-full h-12 rounded-2xl bg-white text-red-700 text-sm font-extrabold shadow-lg">취소</button>
+            </div>
+          </div>
+        </div>
+        <div class="caption">② 응급 SOS</div>
+      </div>
+
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <!-- PHONE 3 — 가족 백신 카드                                    -->
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <div>
+        <div class="phone">
+          <div class="h-12 flex items-end justify-center pb-1 text-[11px] text-neutral-400 font-mono">11:05 AM</div>
+
+          <div class="h-[616px] bg-gradient-to-b from-amber-50 to-orange-100 flex flex-col">
+            <!-- 헤더 -->
+            <div class="px-5 pt-3 pb-3">
+              <div class="text-[11px] font-bold text-amber-700 uppercase tracking-widest">예방</div>
+              <h2 class="text-xl font-extrabold text-amber-900 mt-0.5">가족 백신 카드</h2>
+              <p class="text-xs text-amber-800/70 mt-1">3명의 가족 · 5개 백신</p>
+            </div>
+
+            <!-- 가족 아바타 -->
+            <div class="px-5 pb-3">
+              <div class="flex gap-2 justify-around">
+                <div class="flex-1 rounded-2xl bg-white shadow-sm py-2 text-center border border-amber-200">
+                  <div class="text-3xl">👨</div>
+                  <div class="text-[10px] font-bold text-amber-900 mt-0.5">아빠</div>
+                </div>
+                <div class="flex-1 rounded-2xl bg-white shadow-sm py-2 text-center border border-amber-200">
+                  <div class="text-3xl">👩</div>
+                  <div class="text-[10px] font-bold text-amber-900 mt-0.5">엄마</div>
+                </div>
+                <div class="flex-1 rounded-2xl bg-white shadow-sm py-2 text-center border-2 border-amber-400">
+                  <div class="text-3xl">👶</div>
+                  <div class="text-[10px] font-bold text-amber-900 mt-0.5">아기</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 백신 매트릭스 -->
+            <div class="flex-1 px-5 overflow-hidden">
+              <div class="rounded-2xl bg-white border border-amber-200 overflow-hidden">
+                <!-- header row -->
+                <div class="grid grid-cols-4 bg-amber-100 text-[10px] font-bold text-amber-900 py-2">
+                  <div class="text-center">백신</div>
+                  <div class="text-center">👨</div>
+                  <div class="text-center">👩</div>
+                  <div class="text-center">👶</div>
+                </div>
+                <!-- BCG -->
+                <div class="grid grid-cols-4 py-2.5 border-t border-amber-100 items-center">
+                  <div class="text-center text-[11px] font-bold text-neutral-700">BCG</div>
+                  <div class="text-center text-xl text-green-600">✓</div>
+                  <div class="text-center text-xl text-green-600">✓</div>
+                  <div class="text-center text-xl text-green-600">✓</div>
+                </div>
+                <!-- DTaP -->
+                <div class="grid grid-cols-4 py-2.5 border-t border-amber-100 items-center">
+                  <div class="text-center text-[11px] font-bold text-neutral-700">DTaP</div>
+                  <div class="text-center text-xl text-green-600">✓</div>
+                  <div class="text-center text-xl text-green-600">✓</div>
+                  <div class="text-center text-base">⏰</div>
+                </div>
+                <!-- 홍역 -->
+                <div class="grid grid-cols-4 py-2.5 border-t border-amber-100 items-center">
+                  <div class="text-center text-[11px] font-bold text-neutral-700">홍역</div>
+                  <div class="text-center text-xl text-green-600">✓</div>
+                  <div class="text-center text-xl text-green-600">✓</div>
+                  <div class="text-center text-xl text-neutral-300">○</div>
+                </div>
+                <!-- 폴리오 -->
+                <div class="grid grid-cols-4 py-2.5 border-t border-amber-100 items-center">
+                  <div class="text-center text-[11px] font-bold text-neutral-700">폴리오</div>
+                  <div class="text-center text-xl text-green-600">✓</div>
+                  <div class="text-center text-xl text-green-600">✓</div>
+                  <div class="text-center text-xl text-green-600">✓</div>
+                </div>
+                <!-- 독감 -->
+                <div class="grid grid-cols-4 py-2.5 border-t border-amber-100 items-center">
+                  <div class="text-center text-[11px] font-bold text-neutral-700">독감</div>
+                  <div class="text-center text-xl text-green-600">✓</div>
+                  <div class="text-center text-base">⏰</div>
+                  <div class="text-center text-xl text-neutral-300">○</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 알람 -->
+            <div class="px-5 pb-5 mt-3">
+              <div class="rounded-2xl bg-amber-500 text-white p-3 shadow-md flex items-center gap-3">
+                <span class="text-3xl">⏰</span>
+                <div class="flex-1">
+                  <div class="text-xs font-extrabold">아기 DTaP 다음 접종</div>
+                  <div class="text-[11px] text-amber-50">2주 후 (4월 8일)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="caption">③ 가족 백신 카드</div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

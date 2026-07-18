@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>Visual 11 — 사용자 흐름 다이어그램</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", system-ui, sans-serif; }
+  .mono { font-family: "SF Mono", Menlo, Consolas, monospace; }
+
+  .step {
+    background: #fff;
+    border: 1.5px solid;
+    border-radius: 10px;
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .step .emoji { font-size: 16px; }
+
+  .branch-blue   { border-color: #93c5fd; background: #eff6ff; color: #1e3a8a; }
+  .branch-green  { border-color: #86efac; background: #f0fdf4; color: #14532d; }
+  .branch-purple { border-color: #c4b5fd; background: #f5f3ff; color: #4c1d95; }
+
+  .branch-header {
+    background: #fff;
+    border: 2px solid;
+    border-radius: 12px;
+    padding: 10px 8px;
+    text-align: center;
+    box-shadow: 0 4px 10px -3px rgba(0,0,0,.1);
+  }
+  .branch-header.blue   { border-color: #2563eb; }
+  .branch-header.green  { border-color: #16a34a; }
+  .branch-header.purple { border-color: #7c3aed; }
+
+  .connector {
+    width: 2px;
+    height: 16px;
+    background: #cbd5e1;
+    margin: 0 auto;
+    position: relative;
+  }
+  .connector::after {
+    content: "";
+    position: absolute;
+    bottom: -1px; left: 50%;
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid #cbd5e1;
+    transform: translateX(-50%);
+  }
+
+  /* 두 엔진 병렬 처리 */
+  .engines-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .engine-mini {
+    border-radius: 8px;
+    padding: 6px 8px;
+    font-size: 10px;
+    font-weight: 800;
+    text-align: center;
+    border: 1.5px solid;
+  }
+  .engine-sigil { background: #ecfdf5; border-color: #6ee7b7; color: #065f46; }
+  .engine-voca  { background: #f5f3ff; border-color: #c4b5fd; color: #4c1d95; }
+</style>
+</head>
+<body class="bg-neutral-100 min-h-screen px-6 py-8">
+
+  <div class="max-w-3xl mx-auto">
+
+    <!-- ── 헤더 ─────────────────────────────────────────────── -->
+    <header class="text-center mb-6">
+      <div class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">시각 자료 11</div>
+      <h1 class="text-base font-bold text-neutral-900">사용자 흐름 다이어그램</h1>
+      <p class="text-[11px] text-neutral-500 mt-1">홈 화면 → 세 분기 → 복약 루프</p>
+    </header>
+
+    <!-- ── 홈 화면 ─────────────────────────────────────────── -->
+    <div class="flex justify-center mb-2">
+      <div class="bg-neutral-900 text-white rounded-xl px-6 py-3 shadow-lg flex items-center gap-2">
+        <span class="text-xl">🏠</span>
+        <span class="text-sm font-extrabold">홈 화면</span>
+      </div>
+    </div>
+
+    <!-- 분기 화살표 -->
+    <div class="relative h-10">
+      <svg class="absolute inset-0 w-full h-full" viewBox="0 0 600 40" preserveAspectRatio="none">
+        <path d="M 300 0 L 300 8 L 100 22 L 100 40" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+        <path d="M 300 0 L 300 40" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+        <path d="M 300 0 L 300 8 L 500 22 L 500 40" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+        <polygon points="96,36 104,36 100,42" fill="#cbd5e1"/>
+        <polygon points="296,36 304,36 300,42" fill="#cbd5e1"/>
+        <polygon points="496,36 504,36 500,42" fill="#cbd5e1"/>
+      </svg>
+    </div>
+
+    <!-- ── 세 분기 ─────────────────────────────────────────── -->
+    <div class="grid grid-cols-3 gap-4">
+
+      <!-- ─── 분기 1: 카메라 (파랑) ─────────────────────── -->
+      <div>
+        <div class="branch-header blue">
+          <div class="text-2xl mb-0.5">📷</div>
+          <div class="text-xs font-extrabold text-blue-900">카메라 / 처방 이해</div>
+        </div>
+
+        <div class="connector"></div>
+        <div class="step branch-blue"><span class="emoji">📸</span><span>촬영 / 업로드</span></div>
+
+        <div class="connector"></div>
+        <div class="step branch-blue"><span class="emoji">🔍</span><span>OCR 추출</span></div>
+
+        <div class="connector"></div>
+        <!-- 두 엔진 병렬 -->
+        <div class="step branch-blue !p-2 !min-h-0 flex-col gap-1">
+          <div class="text-[9px] font-bold uppercase tracking-widest text-blue-700">병렬 합성</div>
+          <div class="engines-row w-full">
+            <div class="engine-mini engine-sigil">SIGIL</div>
+            <div class="engine-mini engine-voca">VOCA</div>
+          </div>
+        </div>
+
+        <div class="connector"></div>
+        <div class="step branch-blue"><span class="emoji">🖼️</span><span>결과 화면</span></div>
+
+        <div class="connector"></div>
+        <div class="step branch-blue"><span class="emoji">✓</span><span>복약 일정 확정</span></div>
+      </div>
+
+      <!-- ─── 분기 2: 알람 (초록) ──────────────────────── -->
+      <div>
+        <div class="branch-header green">
+          <div class="text-2xl mb-0.5">⏰</div>
+          <div class="text-xs font-extrabold text-green-900">알람 / 복약 이행</div>
+        </div>
+
+        <div class="connector"></div>
+        <div class="step branch-green"><span class="emoji">🔔</span><span>정해진 시간 도달</span></div>
+
+        <div class="connector"></div>
+        <div class="step branch-green"><span class="emoji">📱</span><span>풀스크린 알람</span></div>
+
+        <div class="connector"></div>
+        <div class="step branch-green"><span class="emoji">🔊</span><span>음성 안내 재생</span></div>
+
+        <div class="connector"></div>
+        <div class="step branch-green"><span class="emoji">✓</span><span>체크 버튼 누름</span></div>
+
+        <div class="connector"></div>
+        <div class="step branch-green"><span class="emoji">📔</span><span>일지 자동 저장</span></div>
+      </div>
+
+      <!-- ─── 분기 3: 공유 (보라) ─────────────────────── -->
+      <div>
+        <div class="branch-header purple">
+          <div class="text-2xl mb-0.5">🏥</div>
+          <div class="text-xs font-extrabold text-purple-900">공유 / 의료 연결</div>
+        </div>
+
+        <div class="connector"></div>
+        <div class="step branch-purple"><span class="emoji">👆</span><span>공유 카드 누름</span></div>
+
+        <div class="connector"></div>
+        <div class="step branch-purple"><span class="emoji">🔲</span><span>일회용 QR 생성</span></div>
+
+        <div class="connector"></div>
+        <div class="step branch-purple"><span class="emoji">📲</span><span>의료진이 스캔</span></div>
+
+        <div class="connector"></div>
+        <div class="step branch-purple"><span class="emoji">📋</span><span>복약 기록 표시</span></div>
+
+        <div class="connector"></div>
+        <div class="step branch-purple"><span class="emoji">⏱️</span><span>15분 후 자동 만료</span></div>
+      </div>
+
+    </div>
+
+    <!-- ── 음성 명령 동등 채널 ────────────────────────────── -->
+    <div class="mt-8 bg-amber-50 border border-amber-200 rounded-xl p-4 relative">
+      <div class="absolute -top-2 left-4 bg-white px-2 text-[10px] font-extrabold text-amber-700 uppercase tracking-widest border border-amber-200 rounded">
+        🎤 음성 명령 동등 채널
+      </div>
+      <p class="text-[11px] text-amber-900 leading-relaxed mt-1">
+        모든 화면 하단에 상시 노출되는 마이크 버튼은 동등한 진입로로 작동한다.
+        터치로 카드를 누르는 대신 다음과 같이 음성으로 동일한 흐름을 실행할 수 있다.
+      </p>
+      <div class="mt-3 grid grid-cols-3 gap-3 text-[10px]">
+        <div class="bg-white rounded-lg p-2 border border-blue-200">
+          <div class="font-bold text-blue-900 mono">"사진" / "찍기"</div>
+          <div class="text-blue-700 mt-0.5">→ 카메라 분기</div>
+        </div>
+        <div class="bg-white rounded-lg p-2 border border-green-200">
+          <div class="font-bold text-green-900 mono">"약 알람" / "오늘 약"</div>
+          <div class="text-green-700 mt-0.5">→ 알람 분기</div>
+        </div>
+        <div class="bg-white rounded-lg p-2 border border-purple-200">
+          <div class="font-bold text-purple-900 mono">"공유" / "의사"</div>
+          <div class="text-purple-700 mt-0.5">→ 공유 분기</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 푸터 ──────────────────────────────────────────── -->
+    <p class="mt-5 text-center text-[10px] text-neutral-500 italic leading-relaxed">
+      전체 흐름에서 사용자가 텍스트를 읽거나 입력해야 하는 단계는 존재하지 않는다.<br>
+      터치와 음성은 동등한 1차 입력 채널이며, 어느 한 채널만으로도 모든 흐름이 완결된다.
+    </p>
+
+  </div>
+
+</body>
+</html>

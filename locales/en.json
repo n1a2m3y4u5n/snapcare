@@ -1,0 +1,154 @@
+{
+  "common": {
+    "loading": "Loading",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "back": "Back"
+  },
+  "voice": {
+    "notReady": "Voice commands will be activated soon",
+    "listening": "Listening",
+    "notHeard": "Could you say that again?",
+    "phaseTwo": "This feature is coming soon"
+  },
+  "home": {
+    "greeting": "Hello",
+    "greetingNamed": "Hello",
+    "camera": "Camera",
+    "library": "Library",
+    "log": "Health Log",
+    "prevention": "Prevention"
+  },
+  "auth": {
+    "welcome": "Health in Pictures",
+    "welcomeSub": "IlliHealth",
+    "start": "Get Started",
+    "phoneTitle": "Enter your phone number",
+    "phonePlaceholder": "Phone number",
+    "phoneNext": "Next",
+    "otpTitle": "Enter the verification code",
+    "otpSent": "We sent a code via SMS",
+    "otpTts": "Your code is",
+    "pinSetupTitle": "Create your picture password",
+    "pinSetupSub": "Choose 4 pictures in order",
+    "pinLoginTitle": "Enter your picture password",
+    "pinLoginSub": "Choose 4 pictures in order"
+  },
+  "medication": {
+    "stripTitle": "Time for medication",
+    "noMedication": "No medication scheduled today",
+    "take": "Taken",
+    "skip": "Later"
+  },
+  "camera": {
+    "enterPrescription": "Align the prescription inside the frame",
+    "enterManual": "Align the manual inside the frame",
+    "reading": "Reading",
+    "converting": "Converting to pictures",
+    "shutter": "Take Photo",
+    "retake": "Retake",
+    "modeTitle": "What type of document?"
+  },
+  "processing": {
+    "ocrProgress": "Reading the prescription",
+    "pictogramProgress": "Converting to pictures",
+    "done": "All done"
+  },
+  "review": {
+    "title": "Here is what I understood",
+    "confirm": "Correct",
+    "reject": "Wrong",
+    "saved": "Saved",
+    "nextAlarm": "Next dose at",
+    "nextAlarmSuffix": "",
+    "readback": "at",
+    "readbackSuffix": "pill(s)"
+  },
+  "library": {
+    "title": "Library",
+    "empty": "No medications registered yet",
+    "enterTts": "What would you like to see?",
+    "active": "Active",
+    "inactive": "Completed"
+  },
+  "alarm": {
+    "title": "Time to take your medication",
+    "snooze": "15 min later",
+    "taken": "Taken",
+    "takenTts": "Great job. How are you feeling?",
+    "snoozeTts": "I will remind you in 15 minutes"
+  },
+  "log": {
+    "title": "Health Log",
+    "enterTts": "Showing your health records",
+    "conditionTitle": "How are you feeling?",
+    "conditionEnterTts": "How are you feeling?",
+    "moodPrompt": "Choose a face",
+    "bodyPrompt": "Tap where it hurts",
+    "done": "Done",
+    "doneTts": "Log saved, you are doing great",
+    "photoTitle": "Photo Progress",
+    "photoEmpty": "No photos yet",
+    "photoAdd": "Add Photo",
+    "photoEnterTts": "Record your progress with photos"
+  },
+  "prevention": {
+    "title": "Prevention",
+    "enterTts": "Checking your prevention records",
+    "chronic": "Chronic",
+    "vaccine": "Vaccines",
+    "epidemic": "Alerts",
+    "chronicTitle": "Chronic Disease",
+    "chronicEmpty": "No chronic conditions registered",
+    "chronicEnterTts": "Managing your chronic conditions",
+    "vaccineTitle": "Vaccines",
+    "vaccineEmpty": "No vaccine schedule found",
+    "vaccineEnterTts": "Checking your vaccine schedule",
+    "vaccineDone": "Done",
+    "vaccinePending": "Upcoming",
+    "epidemicTitle": "Disease Alerts",
+    "epidemicEmpty": "No active alerts",
+    "epidemicEnterTts": "Checking disease alerts",
+    "epidemicLevel1": "Watch",
+    "epidemicLevel2": "Caution",
+    "epidemicLevel3": "Alert",
+    "epidemicLevel4": "Serious"
+  },
+  "tutorial": {
+    "title": "How to use IlliHealth",
+    "skip": "Skip",
+    "next": "Next",
+    "done": "Get Started",
+    "step1Title": "Take a Photo",
+    "step1Body": "Take a photo of your prescription",
+    "step2Title": "Understand with Pictures",
+    "step2Body": "We explain your medicine with pictures and voice",
+    "step3Title": "Take Medicine on Time",
+    "step3Body": "We remind you when it is time to take your medicine",
+    "step4Title": "Track Your Health",
+    "step4Body": "Record how you feel every day",
+    "step5Title": "Emergency Contact",
+    "step5Body": "Call for help when you need it"
+  },
+  "share": {
+    "title": "Share with Doctor",
+    "enterTts": "Show this QR code to your doctor",
+    "generate": "Generate QR Code",
+    "expires": "Expires in 10 minutes"
+  },
+  "emergency": {
+    "title": "Emergency",
+    "call119": "Call 119",
+    "contacts": "Emergency Contacts",
+    "activeMeds": "Current Medications",
+    "enterTts": "Emergency screen. Press 119 to call."
+  },
+  "error": {
+    "networkOff": "No internet. You can still use the app",
+    "ocrFail": "Please take the photo again",
+    "cameraPermission": "Please allow camera access"
+  }
+}

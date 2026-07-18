@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>Visual 6 — 4-레이어 아키텍처 다이어그램</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", system-ui, sans-serif; }
+  .layer-tag {
+    position: absolute;
+    left: 10px; top: -8px;
+    background: #fff;
+    padding: 1px 8px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+  }
+  .arrow-down {
+    width: 2px;
+    background: #d1d5db;
+    margin: 0 auto;
+    position: relative;
+  }
+  .arrow-down::after {
+    content: "";
+    position: absolute;
+    bottom: -1px; left: 50%;
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid #d1d5db;
+    transform: translateX(-50%);
+  }
+  .arrow-label {
+    position: absolute;
+    left: 50%;
+    transform: translate(12px, -50%);
+    top: 50%;
+    font-size: 10px;
+    color: #6b7280;
+    font-weight: 600;
+    white-space: nowrap;
+    background: #f5f5f5;
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+  .node-box {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1f2937;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+</style>
+</head>
+<body class="bg-neutral-100 min-h-screen px-6 py-8">
+
+  <div class="max-w-md mx-auto">
+
+    <!-- ── 헤더 ────────────────────────────────────────────────── -->
+    <header class="text-center mb-6">
+      <div class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">시각 자료 6</div>
+      <h1 class="text-base font-bold text-neutral-900">4-레이어 시스템 아키텍처</h1>
+    </header>
+
+    <!-- ── 입력층 ─────────────────────────────────────────────── -->
+    <section class="relative bg-white border border-neutral-200 rounded-xl p-3 pt-5">
+      <div class="layer-tag">입력층 · INPUT</div>
+      <div class="flex justify-center gap-2 flex-wrap">
+        <div class="node-box"><span>📷</span><span>카메라</span></div>
+        <div class="node-box"><span>📁</span><span>파일</span></div>
+        <div class="node-box"><span>🎤</span><span>마이크</span></div>
+      </div>
+    </section>
+
+    <!-- 화살표 -->
+    <div class="relative h-7">
+      <div class="arrow-down h-full"></div>
+      <div class="arrow-label">처방전 이미지</div>
+    </div>
+
+    <!-- ── 분석층 ─────────────────────────────────────────────── -->
+    <section class="relative bg-white border border-neutral-200 rounded-xl p-3 pt-5">
+      <div class="layer-tag">분석층 · ANALYSIS</div>
+      <div class="flex items-center justify-center gap-2 flex-wrap">
+        <div class="node-box">
+          <span>🔍</span><span>Tesseract.js</span>
+          <span class="text-[9px] font-normal text-neutral-400 ml-0.5">OCR</span>
+        </div>
+        <span class="text-neutral-400 text-sm">→</span>
+        <div class="node-box">
+          <span>⚙️</span><span>ocr-to-macro</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 화살표 -->
+    <div class="relative h-7">
+      <div class="arrow-down h-full"></div>
+      <div class="arrow-label">의미 분해</div>
+    </div>
+
+    <!-- 분기 안내 -->
+    <div class="text-center text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-1.5">병렬 분기</div>
+
+    <!-- ── 합성층 (병렬) ───────────────────────────────────────── -->
+    <section class="relative">
+      <div class="bg-neutral-50 border border-dashed border-neutral-300 rounded-xl p-3 pt-5">
+        <div class="layer-tag">합성층 · SYNTHESIS</div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <!-- SIGIL -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
+            <div class="flex items-center gap-1.5 mb-1">
+              <div class="flex items-center justify-center w-5 h-5 rounded bg-emerald-600 text-white text-[8px] font-black">SG</div>
+              <div class="text-xs font-extrabold text-emerald-900">SIGIL</div>
+            </div>
+            <div class="text-[9px] text-emerald-700 font-medium mb-1.5 leading-tight">
+              Symbol Intuitive Glyph Image Lab
+            </div>
+            <div class="text-[10px] text-emerald-900 space-y-0.5">
+              <div>· DSL 변환</div>
+              <div>· AST 파싱</div>
+              <div>· Pillow PNG 합성</div>
+            </div>
+            <div class="mt-1.5 text-[9px] text-emerald-600 font-bold">→ 픽토그램</div>
+          </div>
+
+          <!-- VOCA -->
+          <div class="bg-violet-50 border border-violet-200 rounded-lg p-2.5">
+            <div class="flex items-center gap-1.5 mb-1">
+              <div class="flex items-center justify-center w-5 h-5 rounded bg-violet-600 text-white text-[8px] font-black">VC</div>
+              <div class="text-xs font-extrabold text-violet-900">VOCA</div>
+            </div>
+            <div class="text-[9px] text-violet-700 font-medium mb-1.5 leading-tight">
+              Voice-Output Composition Arch.
+            </div>
+            <div class="text-[10px] text-violet-900 space-y-0.5">
+              <div>· 14개 필드 추출</div>
+              <div>· 동사 분기</div>
+              <div>· 안내문 합성</div>
+            </div>
+            <div class="mt-1.5 text-[9px] text-violet-600 font-bold">→ TTS 스크립트</div>
+          </div>
+        </div>
+
+        <p class="text-center text-[9px] text-neutral-500 mt-2 italic">
+          같은 OCR 결과를 동시 처리 — 단일 원천 / 다중 채널
+        </p>
+      </div>
+    </section>
+
+    <!-- 병합 화살표 -->
+    <div class="relative h-8">
+      <svg class="absolute inset-0 w-full h-full" viewBox="0 0 400 32" preserveAspectRatio="none">
+        <path d="M 100 0 Q 100 16 200 16" fill="none" stroke="#d1d5db" stroke-width="1.5"/>
+        <path d="M 300 0 Q 300 16 200 16" fill="none" stroke="#d1d5db" stroke-width="1.5"/>
+        <path d="M 200 16 L 200 28" fill="none" stroke="#d1d5db" stroke-width="1.5"/>
+        <polygon points="196,25 204,25 200,32" fill="#d1d5db"/>
+      </svg>
+      <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[9px] text-neutral-500 font-bold bg-neutral-100 px-1.5">병합</div>
+    </div>
+
+    <!-- ── 출력층 ─────────────────────────────────────────────── -->
+    <section class="relative bg-white border border-neutral-200 rounded-xl p-3 pt-5">
+      <div class="layer-tag">출력층 · OUTPUT</div>
+      <div class="flex items-center justify-center gap-2 flex-wrap">
+        <div class="node-box bg-emerald-50 border-emerald-200">
+          <span>🖼️</span><span class="text-emerald-900">픽토그램 카드</span>
+        </div>
+        <span class="text-neutral-300 text-xs">+</span>
+        <div class="node-box bg-violet-50 border-violet-200">
+          <span>🔊</span><span class="text-violet-900">음성 안내</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 범례 ─────────────────────────────────────────────── -->
+    <div class="mt-5 flex justify-center gap-4 text-[10px]">
+      <div class="flex items-center gap-1.5">
+        <div class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></div>
+        <span class="text-neutral-600">SIGIL · 시각</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <div class="w-2.5 h-2.5 rounded-sm bg-violet-500"></div>
+        <span class="text-neutral-600">VOCA · 청각</span>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

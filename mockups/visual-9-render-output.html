@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>Visual 9 — 합성 결과 PNG 예시</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", system-ui, sans-serif; }
+  .mono { font-family: "SF Mono", Menlo, Consolas, monospace; }
+
+  /* 픽토그램 카드 (실제 SIGIL 출력 모사) */
+  .picto-card {
+    background: #fff;
+    border: 2px solid #1f2937;
+    border-radius: 14px;
+    padding: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px -2px rgba(0,0,0,.1);
+  }
+  .picto-cell {
+    width: 76px;
+    height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .picto-cell + .picto-cell {
+    border-left: 1px dashed #cbd5e1;
+  }
+  .sub-label {
+    position: absolute;
+    bottom: -6px;
+    right: -2px;
+    width: 22px;
+    height: 22px;
+    background: #fff;
+    border: 1.5px solid #1f2937;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* X 표시 (no operator) */
+  .overlay-cross::before,
+  .overlay-cross::after {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border-top: 5px solid #dc2626;
+    transform-origin: center;
+    pointer-events: none;
+  }
+  .overlay-cross::before { transform: rotate(45deg); }
+  .overlay-cross::after  { transform: rotate(-45deg); }
+</style>
+</head>
+<body class="bg-neutral-100 min-h-screen px-6 py-8">
+
+  <div class="max-w-2xl mx-auto">
+
+    <!-- ── 헤더 ─────────────────────────────────────────────── -->
+    <header class="text-center mb-6">
+      <div class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">시각 자료 9</div>
+      <h1 class="text-base font-bold text-neutral-900">SIGIL 합성 결과 예시</h1>
+      <p class="text-[11px] text-neutral-500 mt-1">DSL 입력 → 형태소 합성 → 픽토그램 PNG</p>
+    </header>
+
+    <!-- ─────────────────────────────────────────────────────── -->
+    <!-- 예시 1                                                  -->
+    <!-- ─────────────────────────────────────────────────────── -->
+    <section class="bg-white border border-neutral-200 rounded-xl p-5 mb-4">
+      <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3">예시 1 — 반복 + 시간대</div>
+
+      <div class="grid grid-cols-2 gap-5 items-center">
+        <!-- 좌: DSL -->
+        <div>
+          <div class="text-[10px] font-bold text-neutral-400 uppercase mb-1.5">입력 DSL</div>
+          <pre class="mono text-[11px] bg-neutral-900 text-emerald-300 rounded-lg p-3 leading-relaxed">\three_times_daily{
+  \pill_bottle{
+    \time_morning
+  }
+}</pre>
+          <div class="mt-2 text-[10px] text-neutral-500 leading-relaxed">
+            <div>· <span class="font-bold text-red-600">three_times_daily</span> = 반복 연산자</div>
+            <div>· <span class="font-bold text-blue-600">pill_bottle</span> = 알약 두부</div>
+            <div>· <span class="font-bold text-green-600">time_morning</span> = 아침 수식어</div>
+          </div>
+        </div>
+
+        <!-- 우: 합성 결과 -->
+        <div class="flex flex-col items-center">
+          <div class="text-[10px] font-bold text-neutral-400 uppercase mb-1.5">합성 결과</div>
+          <div class="picto-card gap-1">
+            <!-- 셀 1 -->
+            <div class="picto-cell">
+              <svg viewBox="0 0 100 100" width="60" height="60">
+                <rect x="22" y="38" width="56" height="26" rx="13" fill="none" stroke="black" stroke-width="3.5"/>
+                <line x1="50" y1="38" x2="50" y2="64" stroke="black" stroke-width="3.5"/>
+              </svg>
+              <div class="sub-label">
+                <svg viewBox="0 0 100 100" width="14" height="14">
+                  <circle cx="50" cy="50" r="14" fill="none" stroke="black" stroke-width="6"/>
+                  <line x1="50" y1="20" x2="50" y2="8" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="50" y1="80" x2="50" y2="92" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="20" y1="50" x2="8" y2="50" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="80" y1="50" x2="92" y2="50" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="29" y1="29" x2="20" y2="20" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="71" y1="29" x2="80" y2="20" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+            <!-- 셀 2 -->
+            <div class="picto-cell">
+              <svg viewBox="0 0 100 100" width="60" height="60">
+                <rect x="22" y="38" width="56" height="26" rx="13" fill="none" stroke="black" stroke-width="3.5"/>
+                <line x1="50" y1="38" x2="50" y2="64" stroke="black" stroke-width="3.5"/>
+              </svg>
+              <div class="sub-label">
+                <svg viewBox="0 0 100 100" width="14" height="14">
+                  <circle cx="50" cy="50" r="14" fill="none" stroke="black" stroke-width="6"/>
+                  <line x1="50" y1="20" x2="50" y2="8" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="50" y1="80" x2="50" y2="92" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="20" y1="50" x2="8" y2="50" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="80" y1="50" x2="92" y2="50" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="29" y1="29" x2="20" y2="20" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="71" y1="29" x2="80" y2="20" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+            <!-- 셀 3 -->
+            <div class="picto-cell">
+              <svg viewBox="0 0 100 100" width="60" height="60">
+                <rect x="22" y="38" width="56" height="26" rx="13" fill="none" stroke="black" stroke-width="3.5"/>
+                <line x1="50" y1="38" x2="50" y2="64" stroke="black" stroke-width="3.5"/>
+              </svg>
+              <div class="sub-label">
+                <svg viewBox="0 0 100 100" width="14" height="14">
+                  <circle cx="50" cy="50" r="14" fill="none" stroke="black" stroke-width="6"/>
+                  <line x1="50" y1="20" x2="50" y2="8" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="50" y1="80" x2="50" y2="92" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="20" y1="50" x2="8" y2="50" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="80" y1="50" x2="92" y2="50" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="29" y1="29" x2="20" y2="20" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                  <line x1="71" y1="29" x2="80" y2="20" stroke="black" stroke-width="6" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2 text-[10px] text-neutral-500 italic text-center">
+            "아침에 알약을 하루 세 번 복용"
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────────────────────── -->
+    <!-- 예시 2                                                  -->
+    <!-- ─────────────────────────────────────────────────────── -->
+    <section class="bg-white border border-neutral-200 rounded-xl p-5">
+      <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3">예시 2 — 금기 (부정 연산자)</div>
+
+      <div class="grid grid-cols-2 gap-5 items-center">
+        <!-- 좌: DSL -->
+        <div>
+          <div class="text-[10px] font-bold text-neutral-400 uppercase mb-1.5">입력 DSL</div>
+          <pre class="mono text-[11px] bg-neutral-900 text-emerald-300 rounded-lg p-3 leading-relaxed">\no{
+  \state_pregnant
+}</pre>
+          <div class="mt-2 text-[10px] text-neutral-500 leading-relaxed">
+            <div>· <span class="font-bold text-red-600">no</span> = 부정 연산자 (overlay)</div>
+            <div>· <span class="font-bold text-blue-600">state_pregnant</span> = 임신 상태 두부</div>
+            <div class="text-neutral-400 mt-1">→ 대각선 두 줄로 금기 표현 (Dowse 2004)</div>
+          </div>
+        </div>
+
+        <!-- 우: 합성 결과 -->
+        <div class="flex flex-col items-center">
+          <div class="text-[10px] font-bold text-neutral-400 uppercase mb-1.5">합성 결과</div>
+          <div class="picto-card">
+            <div class="picto-cell overlay-cross">
+              <svg viewBox="0 0 100 100" width="60" height="60">
+                <!-- head -->
+                <circle cx="50" cy="22" r="9" fill="none" stroke="black" stroke-width="3"/>
+                <!-- body with belly -->
+                <path d="M 50 31 L 50 45 Q 36 48 32 60 Q 32 70 50 72 Q 68 70 68 60 Q 64 48 50 45"
+                      fill="none" stroke="black" stroke-width="3"/>
+                <!-- legs -->
+                <line x1="42" y1="72" x2="40" y2="92" stroke="black" stroke-width="3" stroke-linecap="round"/>
+                <line x1="58" y1="72" x2="60" y2="92" stroke="black" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <div class="mt-2 text-[10px] text-neutral-500 italic text-center">
+            "임산부는 복용 금지"
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 푸터 ──────────────────────────────────────────── -->
+    <p class="mt-5 text-center text-[10px] text-neutral-500 italic leading-relaxed">
+      모든 자산은 흑색 단색 선화의 투명 배경 PNG로 일정 규격을 준수한다.<br>
+      합성기는 알파 채널 기반 합성으로 임의의 배경 위에 겹쳐 그릴 수 있다.
+    </p>
+
+  </div>
+
+</body>
+</html>

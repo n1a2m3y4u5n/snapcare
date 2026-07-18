@@ -1,0 +1,23 @@
+app = "illihealth-web"
+primary_region = "nrt"
+
+[build]
+  [build.args]
+    NEXT_PUBLIC_SUPABASE_URL = "https://wjaendulagbteuvnkjpz.supabase.co"
+    NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqYWVuZHVsYWdidGV1dm5ranB6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwODc3NzUsImV4cCI6MjA5NDY2Mzc3NX0.yhz8M6aSctxPqgvPcdv6qeNket6MOyhSiE8Q6F7e8eM"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

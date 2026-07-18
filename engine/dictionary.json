@@ -1,0 +1,246 @@
+{
+  "version": 4,
+  "canvas": 512,
+  "frame": {
+    "stroke_ratio": 0.025,
+    "corner_radius_ratio": 0.08,
+    "padding_ratio": 0.06,
+    "modifier_scale": 0.67
+  },
+  "composition_operators": {
+    "no": {
+      "kind": "overlay",
+      "description": "Bold cross over the entire pictogram. The validated negation cue (Dowse 2004)."
+    },
+    "twice_daily": {
+      "kind": "cadence",
+      "panels": 2
+    },
+    "three_times_daily": {
+      "kind": "cadence",
+      "panels": 3
+    },
+    "four_times_daily": {
+      "kind": "cadence",
+      "panels": 4
+    },
+    "half": {
+      "kind": "half",
+      "description": "Render only the left half of the child pictogram; the right half is transparent. Use this to express 'half a dose' without numbers."
+    }
+  },
+  "heads": [
+    {
+      "name": "hand_wash",
+      "category": "action",
+      "description": "Hygiene: wash hands.",
+      "slot": null
+    },
+    {
+      "name": "glucometer",
+      "category": "device",
+      "description": "Blood-glucose meter (device family).",
+      "slot": [
+        0.25,
+        0.35,
+        0.75,
+        0.75
+      ]
+    },
+    {
+      "name": "thermometer",
+      "category": "device",
+      "description": "Digital thermometer (device family).",
+      "slot": [
+        0.3,
+        0.3,
+        0.7,
+        0.7
+      ]
+    },
+    {
+      "name": "capsule_strip",
+      "category": "form",
+      "description": "Two-tone capsule.",
+      "slot": [
+        0.3,
+        0.3,
+        0.7,
+        0.7
+      ]
+    },
+    {
+      "name": "cream_tube",
+      "category": "form",
+      "description": "Topical cream/ointment tube.",
+      "slot": [
+        0.55,
+        0.3,
+        0.95,
+        0.7
+      ]
+    },
+    {
+      "name": "dropper_bottle",
+      "category": "form",
+      "description": "Eye/ear/nose drop bottle.",
+      "slot": [
+        0.25,
+        0.55,
+        0.75,
+        0.95
+      ]
+    },
+    {
+      "name": "inhaler",
+      "category": "form",
+      "description": "MDI inhaler.",
+      "slot": [
+        0.55,
+        0.3,
+        0.95,
+        0.7
+      ]
+    },
+    {
+      "name": "liquid_bottle",
+      "category": "form",
+      "description": "Oral liquid medicine with measuring cup.",
+      "slot": [
+        0.25,
+        0.45,
+        0.75,
+        0.85
+      ]
+    },
+    {
+      "name": "pill_bottle",
+      "category": "form",
+      "description": "Generic tablet/capsule container.",
+      "slot": [
+        0.25,
+        0.4,
+        0.75,
+        0.78
+      ]
+    },
+    {
+      "name": "sachet",
+      "category": "form",
+      "description": "Powder sachet (e.g. ORT).",
+      "slot": [
+        0.25,
+        0.35,
+        0.75,
+        0.8
+      ]
+    },
+    {
+      "name": "suppository",
+      "category": "form",
+      "description": "Suppository (rectal/vaginal).",
+      "slot": [
+        0.3,
+        0.35,
+        0.7,
+        0.75
+      ]
+    },
+    {
+      "name": "syringe",
+      "category": "form",
+      "description": "Injection syringe.",
+      "slot": [
+        0.1,
+        0.3,
+        0.45,
+        0.7
+      ]
+    },
+    {
+      "name": "tablet_blister",
+      "category": "form",
+      "description": "Blister-pack tablets.",
+      "slot": [
+        0.2,
+        0.2,
+        0.8,
+        0.8
+      ]
+    },
+    {
+      "name": "state_breastfeeding",
+      "category": "state",
+      "description": "State: breastfeeding.",
+      "slot": null
+    },
+    {
+      "name": "state_pregnant",
+      "category": "state",
+      "description": "State: pregnant.",
+      "slot": null
+    }
+  ],
+  "modifiers": [
+    {
+      "name": "body_ear",
+      "category": "body",
+      "description": "Body part: ear (with arrow)."
+    },
+    {
+      "name": "body_eye",
+      "category": "body",
+      "description": "Body part: eye (with arrow)."
+    },
+    {
+      "name": "body_mouth",
+      "category": "body",
+      "description": "Body part: mouth (with arrow)."
+    },
+    {
+      "name": "body_skin",
+      "category": "body",
+      "description": "Body part: skin / topical site (with arrow)."
+    },
+    {
+      "name": "food_bowl",
+      "category": "context",
+      "description": "Context: with food (bowl + spoon)."
+    },
+    {
+      "name": "food_empty_bowl",
+      "category": "context",
+      "description": "Context: empty stomach (empty bowl)."
+    },
+    {
+      "name": "water_glass",
+      "category": "context",
+      "description": "Context: with water (glass of water)."
+    },
+    {
+      "name": "storage_fridge",
+      "category": "storage",
+      "description": "Storage: refrigerator."
+    },
+    {
+      "name": "time_evening",
+      "category": "time",
+      "description": "Time-of-day: evening (sunset)."
+    },
+    {
+      "name": "time_morning",
+      "category": "time",
+      "description": "Time-of-day: morning (sunrise)."
+    },
+    {
+      "name": "time_night",
+      "category": "time",
+      "description": "Time-of-day: night (moon and stars)."
+    },
+    {
+      "name": "time_noon",
+      "category": "time",
+      "description": "Time-of-day: noon (full sun)."
+    }
+  ]
+}

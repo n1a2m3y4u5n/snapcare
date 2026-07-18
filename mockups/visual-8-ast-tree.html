@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>Visual 8 — AST 트리 다이어그램</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", system-ui, sans-serif; }
+  .mono { font-family: "SF Mono", Menlo, Consolas, monospace; }
+
+  /* 노드 종류별 색 */
+  .node-operator {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #991b1b;
+  }
+  .node-operator .kind-badge { background: #dc2626; }
+  .node-head {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1e3a8a;
+  }
+  .node-head .kind-badge { background: #2563eb; }
+  .node-modifier {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #14532d;
+  }
+  .node-modifier .kind-badge { background: #16a34a; }
+
+  .node {
+    border: 1.5px solid;
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-width: 180px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,.04);
+    position: relative;
+  }
+  .kind-badge {
+    display: inline-block;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+  }
+  .node-name {
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .node-name::before { content: "\\"; opacity: 0.5; margin-right: 1px; }
+
+  /* 연결선 */
+  .connector {
+    width: 2px;
+    height: 28px;
+    background: #cbd5e1;
+    margin: 0 auto;
+    position: relative;
+  }
+  .connector .child-label {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: #64748b;
+    font-style: italic;
+    white-space: nowrap;
+    background: #f5f5f5;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body class="bg-neutral-100 min-h-screen px-6 py-8">
+
+  <div class="max-w-md mx-auto">
+
+    <!-- ── 헤더 ─────────────────────────────────────────────── -->
+    <header class="text-center mb-5">
+      <div class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">시각 자료 8</div>
+      <h1 class="text-base font-bold text-neutral-900">AST 트리 변환</h1>
+      <p class="text-[11px] text-neutral-500 mt-1">DSL 문자열 → 재귀 하강 파서 → 추상 구문 트리</p>
+    </header>
+
+    <!-- ── 입력 DSL ─────────────────────────────────────────── -->
+    <div class="mb-3">
+      <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1.5 text-center">입력 DSL</div>
+      <div class="mono text-[13px] bg-neutral-900 text-emerald-300 rounded-lg px-4 py-3 text-center shadow-md">
+        \three_times_daily{\pill_bottle{\time_morning}}
+      </div>
+    </div>
+
+    <!-- 파싱 화살표 -->
+    <div class="flex flex-col items-center my-3">
+      <div class="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">재귀 하강 파싱</div>
+      <div class="text-2xl text-neutral-400">↓</div>
+    </div>
+
+    <!-- ── AST 트리 ─────────────────────────────────────────── -->
+    <div class="bg-white border border-neutral-200 rounded-xl p-5">
+      <div class="flex flex-col items-center">
+
+        <!-- 루트: operator -->
+        <div class="node node-operator">
+          <div class="kind-badge">OPERATOR</div>
+          <div class="node-name mono">three_times_daily</div>
+        </div>
+
+        <!-- connector with child label -->
+        <div class="connector">
+          <span class="child-label">children[0]</span>
+        </div>
+
+        <!-- HEAD -->
+        <div class="node node-head">
+          <div class="kind-badge">HEAD</div>
+          <div class="node-name mono">pill_bottle</div>
+        </div>
+
+        <!-- connector -->
+        <div class="connector">
+          <span class="child-label">slot[0]</span>
+        </div>
+
+        <!-- MODIFIER -->
+        <div class="node node-modifier">
+          <div class="kind-badge">MODIFIER</div>
+          <div class="node-name mono">time_morning</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── 노드 구조 코드 ──────────────────────────────────── -->
+    <div class="mt-5">
+      <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1.5 text-center">각 노드 구조</div>
+      <pre class="mono text-[11px] bg-neutral-900 text-neutral-100 rounded-lg p-3 leading-relaxed overflow-x-auto"><span class="text-violet-400">@dataclass</span>
+<span class="text-violet-400">class</span> <span class="text-yellow-300">Node</span>:
+    name: <span class="text-emerald-300">str</span>
+    kind: <span class="text-emerald-300">str</span>      <span class="text-neutral-500"># head | modifier | operator</span>
+    children: List[<span class="text-yellow-300">"Node"</span>] = field(default_factory=list)</pre>
+    </div>
+
+    <!-- ── 범례 ──────────────────────────────────────────── -->
+    <div class="mt-5 flex justify-center gap-3 text-[10px]">
+      <div class="flex items-center gap-1.5">
+        <div class="w-2.5 h-2.5 rounded-sm bg-red-500"></div>
+        <span class="text-neutral-600">OPERATOR · 외부 작용</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <div class="w-2.5 h-2.5 rounded-sm bg-blue-500"></div>
+        <span class="text-neutral-600">HEAD · 의약품</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <div class="w-2.5 h-2.5 rounded-sm bg-green-500"></div>
+        <span class="text-neutral-600">MODIFIER · 맥락</span>
+      </div>
+    </div>
+
+    <p class="mt-4 text-center text-[10px] text-neutral-500 italic leading-relaxed">
+      파서는 자신을 재귀 호출하며 트리를 구성한다.<br>
+      operator는 자식을 1개, head는 슬롯 0개 이상, modifier는 슬롯 내부에만 존재한다.
+    </p>
+
+  </div>
+
+</body>
+</html>

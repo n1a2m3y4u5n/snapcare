@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>Visual 4 — 복약 이행 화면 모음</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", system-ui, sans-serif; }
+  .phone {
+    width: 360px;
+    height: 720px;
+    border-radius: 44px;
+    box-shadow: 0 30px 60px -15px rgba(0,0,0,.25), 0 0 0 1px rgba(0,0,0,.04);
+    overflow: hidden;
+    background: #fff;
+    position: relative;
+  }
+  .phone::before {
+    content: "";
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 22px;
+    background: #000;
+    border-radius: 999px;
+    z-index: 20;
+  }
+  .caption {
+    width: 360px;
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #666;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body class="bg-neutral-100 min-h-screen px-12 py-16">
+  <div class="max-w-7xl mx-auto">
+    <header class="text-center mb-10">
+      <div class="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-2">시각 자료 4</div>
+      <h1 class="text-2xl font-bold text-neutral-900">기능 2 — 복약 이행 루프</h1>
+      <p class="text-neutral-500 mt-1">풀스크린 알람 · 보관함 · 일지</p>
+    </header>
+
+    <div class="flex justify-center gap-10 flex-wrap">
+
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <!-- PHONE 1 — 풀스크린 복약 알람                                -->
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <div>
+        <div class="phone">
+          <!-- status bar -->
+          <div class="h-12 flex items-end justify-center pb-1 text-[11px] text-neutral-400 font-mono">9:00 AM</div>
+
+          <!-- alarm background -->
+          <div class="h-[616px] bg-gradient-to-b from-amber-50 via-amber-50 to-orange-100 flex flex-col">
+
+            <!-- 시간대 -->
+            <div class="px-6 pt-4 flex flex-col items-center gap-2">
+              <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400/30 border border-amber-400/40">
+                <span class="text-xl">🌅</span>
+                <span class="text-sm font-extrabold text-amber-800 tracking-tight">아침</span>
+              </div>
+            </div>
+
+            <!-- 약 픽토그램 -->
+            <div class="flex-1 flex flex-col items-center justify-center gap-4 px-6">
+              <div class="w-44 h-44 rounded-3xl bg-white shadow-lg flex items-center justify-center">
+                <div class="text-8xl">💊</div>
+              </div>
+              <div class="text-center">
+                <div class="text-lg font-extrabold text-neutral-800">아목시실린 캡슐</div>
+                <div class="text-sm text-neutral-500 mt-1">1알 · 식후 30분</div>
+              </div>
+              <!-- 식후 표시 -->
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-bold mt-1">
+                <span>🍽️</span> 식후
+              </div>
+            </div>
+
+            <!-- 액션 버튼 -->
+            <div class="px-6 pb-6 pt-2">
+              <p class="text-center text-xs text-neutral-500 mb-3">약을 먹었나요?</p>
+              <div class="flex gap-3">
+                <button class="flex-1 h-20 rounded-2xl bg-red-500 text-white text-4xl font-black shadow-lg active:scale-95">✗</button>
+                <button class="flex-1 h-20 rounded-2xl bg-green-600 text-white text-4xl font-black shadow-lg active:scale-95">✓</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="caption">① 풀스크린 알람</div>
+      </div>
+
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <!-- PHONE 2 — 보관함                                            -->
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <div>
+        <div class="phone">
+          <div class="h-12 flex items-end justify-center pb-1 text-[11px] text-neutral-400 font-mono">9:14 AM</div>
+
+          <div class="h-[616px] flex flex-col">
+            <!-- 헤더 -->
+            <div class="px-5 pt-3 pb-4">
+              <div class="text-[11px] font-bold text-purple-600 uppercase tracking-widest">보관함</div>
+              <h2 class="text-2xl font-extrabold text-purple-900 mt-0.5">📚 내 약</h2>
+              <p class="text-xs text-neutral-500 mt-1">현재 복용 중인 약 4개</p>
+            </div>
+
+            <!-- 그리드 -->
+            <div class="flex-1 px-5 grid grid-cols-2 gap-3 pb-5 overflow-hidden">
+              <!-- 아목시실린 -->
+              <div class="rounded-2xl bg-blue-50 border border-blue-200 p-3 flex flex-col gap-2">
+                <div class="text-4xl">💊</div>
+                <div>
+                  <div class="text-sm font-extrabold text-blue-900">아목시실린</div>
+                  <div class="text-[10px] text-blue-700 mt-0.5">하루 3번 · 식후</div>
+                </div>
+                <div class="flex gap-1 mt-auto">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-200"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-200"></span>
+                </div>
+                <div class="text-[10px] font-bold text-blue-600">3일 남음</div>
+              </div>
+
+              <!-- 토브라마이신 -->
+              <div class="rounded-2xl bg-teal-50 border border-teal-200 p-3 flex flex-col gap-2">
+                <div class="text-4xl">👁️</div>
+                <div>
+                  <div class="text-sm font-extrabold text-teal-900">토브라마이신</div>
+                  <div class="text-[10px] text-teal-700 mt-0.5">하루 4번</div>
+                </div>
+                <div class="flex gap-1 mt-auto">
+                  <span class="w-2.5 h-2.5 rounded-full bg-teal-600"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-teal-600"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-teal-200"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-teal-200"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-teal-200"></span>
+                </div>
+                <div class="text-[10px] font-bold text-teal-600">2일 남음</div>
+              </div>
+
+              <!-- 타이레놀 -->
+              <div class="rounded-2xl bg-amber-50 border border-amber-200 p-3 flex flex-col gap-2">
+                <div class="text-4xl">🧴</div>
+                <div>
+                  <div class="text-sm font-extrabold text-amber-900">타이레놀 시럽</div>
+                  <div class="text-[10px] text-amber-700 mt-0.5">하루 3번</div>
+                </div>
+                <div class="flex gap-1 mt-auto">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                </div>
+                <div class="text-[10px] font-bold text-amber-700">완료 임박</div>
+              </div>
+
+              <!-- 고혈압약 -->
+              <div class="rounded-2xl bg-rose-50 border border-rose-200 p-3 flex flex-col gap-2">
+                <div class="text-4xl">💊</div>
+                <div>
+                  <div class="text-sm font-extrabold text-rose-900">암로디핀</div>
+                  <div class="text-[10px] text-rose-700 mt-0.5">하루 1번 · 아침</div>
+                </div>
+                <div class="flex gap-1 mt-auto flex-wrap">
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-200"></span>
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-200"></span>
+                </div>
+                <div class="text-[10px] font-bold text-rose-600">12일 남음</div>
+              </div>
+            </div>
+
+            <!-- 새 처방 추가 버튼 -->
+            <div class="px-5 pb-4">
+              <button class="w-full h-12 rounded-2xl bg-blue-600 text-white text-sm font-bold shadow-md flex items-center justify-center gap-2">
+                <span>📷</span> 새 처방전 등록
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="caption">② 보관함</div>
+      </div>
+
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <!-- PHONE 3 — 일지                                              -->
+      <!-- ─────────────────────────────────────────────────────────── -->
+      <div>
+        <div class="phone">
+          <div class="h-12 flex items-end justify-center pb-1 text-[11px] text-neutral-400 font-mono">9:20 AM</div>
+
+          <div class="h-[616px] flex flex-col">
+            <!-- 헤더 -->
+            <div class="px-5 pt-3 pb-4">
+              <div class="text-[11px] font-bold text-pink-600 uppercase tracking-widest">일지</div>
+              <h2 class="text-2xl font-extrabold text-pink-900 mt-0.5">📔 내 기록</h2>
+              <p class="text-xs text-neutral-500 mt-1">지난 7일</p>
+            </div>
+
+            <!-- 기록 리스트 -->
+            <div class="flex-1 px-5 flex flex-col gap-3 pb-5 overflow-hidden">
+              <!-- 오늘 -->
+              <div class="rounded-2xl border-2 border-pink-300 bg-pink-50 p-3">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="text-xs font-extrabold text-pink-700">오늘</div>
+                  <div class="text-[10px] text-pink-500">3월 24일</div>
+                </div>
+                <div class="flex gap-2 items-center mb-2.5">
+                  <span class="text-xl">💊</span>
+                  <span class="text-xl text-green-500">✓</span>
+                  <span class="text-xl text-green-500">✓</span>
+                  <span class="text-xl text-neutral-300">○</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-4xl">😊</span>
+                  <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-pink-200 to-rose-300 flex items-center justify-center text-xl">📷</div>
+                </div>
+              </div>
+
+              <!-- 어제 -->
+              <div class="rounded-2xl border border-pink-200 p-3">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="text-xs font-extrabold text-pink-700">어제</div>
+                  <div class="text-[10px] text-neutral-400">3월 23일</div>
+                </div>
+                <div class="flex gap-2 items-center mb-2.5">
+                  <span class="text-xl">💊</span>
+                  <span class="text-xl text-green-500">✓</span>
+                  <span class="text-xl text-green-500">✓</span>
+                  <span class="text-xl text-green-500">✓</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-4xl">😐</span>
+                </div>
+              </div>
+
+              <!-- 그제 -->
+              <div class="rounded-2xl border border-pink-200 p-3">
+                <div class="flex items-center justify-between mb-2">
+                  <div class="text-xs font-extrabold text-pink-700">그제</div>
+                  <div class="text-[10px] text-neutral-400">3월 22일</div>
+                </div>
+                <div class="flex gap-2 items-center mb-2.5">
+                  <span class="text-xl">💊</span>
+                  <span class="text-xl text-red-500">✗</span>
+                  <span class="text-xl text-green-500">✓</span>
+                  <span class="text-xl text-green-500">✓</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-4xl">😢</span>
+                  <div class="text-[10px] text-neutral-500">아침 약 잊음</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 기록 추가 -->
+            <div class="px-5 pb-4">
+              <button class="w-full h-12 rounded-2xl bg-pink-600 text-white text-sm font-bold shadow-md flex items-center justify-center gap-2">
+                <span>📝</span> 오늘 컨디션 기록
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="caption">③ 일지</div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
