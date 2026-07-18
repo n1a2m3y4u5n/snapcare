@@ -8,6 +8,8 @@ import { useSession } from '@/stores/session';
 /** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개 순서 (bcrypt로 실제 설정·검증). */
 const TILES = ['☀️', '🌙', '💧', '🔥', '🌸', '🐦', '🏠', '⛰️', '🛣️', '🚪', '🔔', '🔑'];
 const KEY_LEN = 4;
+/** 데모용 기본 픽처키 (stores/session 기본 pinHash와 일치) */
+const DEMO_KEY = [0, 1, 2, 3];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -63,7 +65,16 @@ export default function LoginPage() {
           ))}
         </div>
 
-        <div className="mt-8 grid grid-cols-4 gap-3">
+        {/* 데모 힌트 — 검증 모드에서 정답 픽처키 표시 */}
+        {!setup && (
+          <div className="mt-4 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--color-caution-bg)' }}>
+            <span className="rounded-md px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--color-caution)', color: '#fff' }}>DEMO</span>
+            <span className="text-sm" style={{ color: 'var(--color-sc-ink)' }}>Tap in order:</span>
+            <span className="text-lg tracking-wide">{DEMO_KEY.map((i) => TILES[i]).join(' ')}</span>
+          </div>
+        )}
+
+        <div className="mt-6 grid grid-cols-4 gap-3">
           {TILES.map((t, idx) => (
             <button
               key={idx}
