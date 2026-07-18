@@ -8,7 +8,9 @@ import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { useAnalysis } from '@/stores/analysis';
 import { useFamily } from '@/stores/family';
 import { useScans, nowLabel } from '@/stores/scans';
+import { useReminders } from '@/stores/reminders';
 import { usePreferences } from '@/stores/preferences';
+import { requestPermission, scheduleNotification } from '@/lib/notifications';
 import { computeVerdict, LEVEL_META } from '@/lib/snapcare/verdict';
 import { itemToDsl } from '@/lib/snapcare/sigil';
 import { itemVoiceScript } from '@/lib/snapcare/say';
@@ -21,6 +23,7 @@ export default function ScanResultPage() {
   const setCurrent = useAnalysis((s) => s.setCurrent);
   const { members, activeMemberId } = useFamily();
   const addScan = useScans((s) => s.addScan);
+  const addReminders = useReminders((s) => s.addReminders);
 
   const autoTts = usePreferences((s) => s.autoTts);
   const member = members.find((m) => m.id === activeMemberId) ?? members[0];
@@ -55,6 +58,27 @@ export default function ScanResultPage() {
     router.push('/home');
   }
 
+  async function createReminders() {
+    const sched = item!.rx?.schedule ?? [];
+    if (sched.length > 0) {
+      const granted = await requestPermission();
+      addReminders(
+        sched.map((s, i) => ({
+          id: `rem_${cryptoId()}_${i}`,
+          name: item!.name,
+          emoji: item!.emoji,
+          memberId: member.id,
+          time: s.time,
+        })),
+      );
+      // 데모: 첫 알림을 곧바로(8초 뒤) 실제로 띄운다
+      if (granted) {
+        scheduleNotification('SnapCare · Dose reminder', `${item!.name} — ${sched[0].label} (${sched[0].time})`, 8000);
+      }
+    }
+    finish();
+  }
+
   const header =
     item.kind === 'prescription' ? 'PRESCRIPTION RECOGNIZED'
     : item.kind === 'medicine' ? 'MEDICINE RECOGNIZED'
@@ -70,7 +94,7 @@ export default function ScanResultPage() {
       </div>
 
       {isRx ? (
-        <RxResult item={item} verdict={verdict} onDone={finish} />
+        <RxResult item={item} verdict={verdict} onDone={createReminders} />
       ) : (
         <FoodResult item={item} verdict={verdict} member={member} members={members} onDone={finish} />
       )}

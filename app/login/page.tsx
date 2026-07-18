@@ -2,48 +2,74 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import bcrypt from 'bcryptjs';
 import { useSession } from '@/stores/session';
 
-/** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개를 순서대로 (접근성 코어). */
+/** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개 순서 (bcrypt로 실제 설정·검증). */
 const TILES = ['☀️', '🌙', '💧', '🔥', '🌸', '🐦', '🏠', '⛰️', '🛣️', '🚪', '🔔', '🔑'];
 const KEY_LEN = 4;
 
 export default function LoginPage() {
   const router = useRouter();
-  const setAuthed = useSession((s) => s.setAuthed);
+  const { pinHash, setPinHash, setAuthed } = useSession();
+  const setup = !pinHash; // 최초면 설정 모드
   const [picked, setPicked] = useState<number[]>([]);
+  const [error, setError] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  function enter() {
-    setAuthed(true);
-    router.replace('/home');
+  async function complete(seq: number[]) {
+    setBusy(true);
+    const keyStr = seq.join(',');
+    if (setup) {
+      const hash = await bcrypt.hash(keyStr, 10);
+      setPinHash(hash);
+      setAuthed(true);
+      router.replace('/home');
+    } else {
+      const ok = await bcrypt.compare(keyStr, pinHash!);
+      if (ok) {
+        setAuthed(true);
+        router.replace('/home');
+      } else {
+        setError(true);
+        setPicked([]);
+        setBusy(false);
+      }
+    }
   }
 
   function tap(idx: number) {
+    if (busy) return;
+    setError(false);
     const next = [...picked, idx];
     setPicked(next);
-    if (next.length >= KEY_LEN) setTimeout(enter, 250);
+    if (next.length >= KEY_LEN) complete(next);
   }
 
   return (
     <div className="min-h-screen w-full flex justify-center" style={{ background: 'var(--color-sc-bg)' }}>
       <div className="relative w-full max-w-[440px] min-h-screen flex flex-col items-center px-6 pt-16">
         <div className="flex h-12 w-12 items-center justify-center rounded-full text-2xl" style={{ background: 'color-mix(in srgb, var(--color-sc-primary) 12%, white)' }}>🔒</div>
-        <h1 className="mt-4 text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}>Enter your picture key</h1>
+        <h1 className="mt-4 text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}>
+          {setup ? 'Create your picture key' : 'Enter your picture key'}
+        </h1>
+        <p className="mt-1 text-xs" style={{ color: error ? 'var(--color-avoid)' : 'var(--color-sc-muted)' }}>
+          {error ? 'Wrong key — try again' : setup ? 'Tap 4 pictures in an order you’ll remember' : 'Tap your 4 pictures in order'}
+        </p>
 
-        {/* 진행 점 */}
         <div className="mt-5 flex gap-3">
           {Array.from({ length: KEY_LEN }).map((_, k) => (
-            <span key={k} className="h-6 w-6 rounded-full border-2" style={{ borderColor: 'var(--color-sc-line)', background: k < picked.length ? 'var(--color-sc-primary)' : 'transparent' }} />
+            <span key={k} className="h-6 w-6 rounded-full border-2" style={{ borderColor: error ? 'var(--color-avoid)' : 'var(--color-sc-line)', background: k < picked.length ? 'var(--color-sc-primary)' : 'transparent' }} />
           ))}
         </div>
 
-        {/* 픽토그램 그리드 */}
         <div className="mt-8 grid grid-cols-4 gap-3">
           {TILES.map((t, idx) => (
             <button
               key={idx}
               onClick={() => tap(idx)}
-              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm active:scale-95 transition-transform"
+              disabled={busy}
+              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm active:scale-95 transition-transform disabled:opacity-50"
               aria-label={`picture ${idx + 1}`}
             >
               {t}
@@ -51,20 +77,7 @@ export default function LoginPage() {
           ))}
         </div>
 
-        <button onClick={() => setPicked(picked.slice(0, -1))} className="mt-4 text-sm" style={{ color: 'var(--color-sc-muted)' }}>⌫ delete</button>
-
-        <div className="mt-6 flex w-full items-center gap-3">
-          <span className="h-px flex-1" style={{ background: 'var(--color-sc-line)' }} />
-          <span className="text-xs" style={{ color: 'var(--color-sc-muted)' }}>or</span>
-          <span className="h-px flex-1" style={{ background: 'var(--color-sc-line)' }} />
-        </div>
-        <div className="mt-4 flex gap-3">
-          {['🍎', 'G', '✉️'].map((label, k) => (
-            <button key={k} onClick={enter} className="flex h-11 w-16 items-center justify-center rounded-2xl bg-white text-lg font-semibold shadow-sm" style={{ color: 'var(--color-sc-ink)' }}>
-              {label}
-            </button>
-          ))}
-        </div>
+        <button onClick={() => setPicked(picked.slice(0, -1))} disabled={busy} className="mt-4 text-sm disabled:opacity-40" style={{ color: 'var(--color-sc-muted)' }}>⌫ delete</button>
       </div>
     </div>
   );

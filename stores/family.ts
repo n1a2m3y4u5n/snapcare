@@ -10,11 +10,16 @@ const SEED_MEMBERS: Member[] = [
   { id: 'sam', name: 'Sam', role: 'Teen · age 15', emoji: '🧑‍🦱', color: '#DE8500', conditionIds: ['gluten_sensitivity'] },
 ];
 
+const AVATAR_COLORS = ['#7C5CE0', '#0EA5A5', '#E0669B', '#DE8500', '#2F6BF6', '#15A34A'];
+
 interface FamilyState {
   members: Member[];
   activeMemberId: string;
   setActiveMember: (id: string) => void;
   toggleCondition: (memberId: string, conditionId: string) => void;
+  setMemberName: (id: string, name: string) => void;
+  addMember: (name: string) => string;
+  removeMember: (id: string) => void;
   getMember: (id: string) => Member | undefined;
 }
 
@@ -37,6 +42,24 @@ export const useFamily = create<FamilyState>()(
             };
           }),
         })),
+      setMemberName: (id, name) =>
+        set((s) => ({ members: s.members.map((m) => (m.id === id ? { ...m, name } : m)) })),
+      addMember: (name) => {
+        const id = `m_${get().members.length}_${name.toLowerCase().replace(/\s+/g, '')}`;
+        const color = AVATAR_COLORS[get().members.length % AVATAR_COLORS.length];
+        set((s) => ({
+          members: [...s.members, { id, name: name || 'New member', role: 'Adult', emoji: '🧑', color, conditionIds: [] }],
+        }));
+        return id;
+      },
+      removeMember: (id) =>
+        set((s) => {
+          const members = s.members.filter((m) => m.id !== id);
+          return {
+            members,
+            activeMemberId: s.activeMemberId === id ? members[0]?.id ?? '' : s.activeMemberId,
+          };
+        }),
       getMember: (id) => get().members.find((m) => m.id === id),
     }),
     { name: 'snapcare-family' },

@@ -1,12 +1,20 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useFamily } from '@/stores/family';
 import { getCondition } from '@/lib/snapcare/conditions';
 
 export default function FamilyPage() {
+  const router = useRouter();
   const members = useFamily((s) => s.members);
+  const addMember = useFamily((s) => s.addMember);
+
+  function add() {
+    const id = addMember('New member');
+    router.push(`/family/${id}`);
+  }
 
   return (
     <MobileScreen tab="family">
@@ -51,6 +59,11 @@ export default function FamilyPage() {
               </Link>
             );
           })}
+
+          <button onClick={add} className="flex items-center gap-3 rounded-2xl border-2 border-dashed px-4 py-3 text-left" style={{ borderColor: 'var(--color-sc-line)' }}>
+            <span className="flex h-10 w-10 items-center justify-center rounded-full text-xl" style={{ background: 'var(--color-sc-line)', color: 'var(--color-sc-muted)' }}>＋</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--color-sc-muted)' }}>Add member</span>
+          </button>
         </div>
       </div>
     </MobileScreen>

@@ -8,8 +8,13 @@ import { CONDITIONS } from '@/lib/snapcare/conditions';
 export default function MemberEditPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
-  const { members, toggleCondition } = useFamily();
+  const { members, toggleCondition, setMemberName, removeMember } = useFamily();
   const member = members.find((m) => m.id === params.id);
+
+  function remove() {
+    if (member) removeMember(member.id);
+    router.push('/family');
+  }
 
   if (!member) {
     return (
@@ -25,9 +30,16 @@ export default function MemberEditPage() {
     <MobileScreen>
       <div className="px-5 pt-14">
         <button onClick={() => router.push('/family')} className="text-sm font-semibold" style={{ color: 'var(--color-sc-primary)' }}>
-          ‹ {member.name}
+          ‹ Family
         </button>
-        <p className="mt-3 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+        <input
+          value={member.name}
+          onChange={(e) => setMemberName(member.id, e.target.value)}
+          className="mt-3 w-full bg-transparent text-2xl font-extrabold outline-none"
+          style={{ color: 'var(--color-sc-ink)' }}
+          aria-label="Member name"
+        />
+        <p className="mt-2 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
           TAP TO TOGGLE · NO TYPING NEEDED
         </p>
 
@@ -52,7 +64,7 @@ export default function MemberEditPage() {
           })}
         </div>
 
-        <button className="mt-5 w-full rounded-2xl py-3 text-center text-sm font-semibold" style={{ background: 'var(--color-avoid-bg)', color: 'var(--color-avoid)' }}>
+        <button onClick={remove} className="mt-5 w-full rounded-2xl py-3 text-center text-sm font-semibold" style={{ background: 'var(--color-avoid-bg)', color: 'var(--color-avoid)' }}>
           Remove member
         </button>
       </div>
