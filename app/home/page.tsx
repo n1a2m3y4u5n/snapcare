@@ -1,167 +1,107 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Screen } from '@/components/Screen';
-import { MedicationStrip } from '@/components/MedicationStrip';
-import { speak } from '@/lib/voice';
-import { usePreferences } from '@/stores/preferences';
-import { requestPermission } from '@/lib/notifications';
-
-/** 샘플 처방전 정의 */
-const SAMPLES = [
-  {
-    id: 'antibiotic',
-    label: '항생제 캡슐',
-    sub: '아목시실린 250mg · 3회/일 · 5일',
-    emoji: '💊',
-    src: '/sample-prescription.png',
-    color: 'bg-blue-50 border-blue-200 text-blue-800',
-  },
-  {
-    id: 'eyedrop',
-    label: '안약',
-    sub: '토브라마이신 0.3% · 4회/일 · 5일',
-    emoji: '👁️',
-    src: '/prescription-eyedrop.png',
-    color: 'bg-teal-50 border-teal-200 text-teal-800',
-  },
-  {
-    id: 'syrup',
-    label: '소아 시럽',
-    sub: '타이레놀 현탁액 · 3회/일 · 3일',
-    emoji: '🧴',
-    src: '/prescription-syrup.png',
-    color: 'bg-amber-50 border-amber-200 text-amber-800',
-  },
-] as const;
+import { MobileScreen } from '@/components/sc/MobileScreen';
+import { useScans } from '@/stores/scans';
+import { useFamily } from '@/stores/family';
+import { useAnalysis } from '@/stores/analysis';
+import { getItem } from '@/lib/snapcare/catalog';
+import { LEVEL_META } from '@/lib/snapcare/verdict';
 
 export default function HomePage() {
   const router = useRouter();
-  const { autoTts } = usePreferences();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const scans = useScans((s) => s.scans);
+  const { setActiveMember, getMember } = useFamily();
+  const setCurrent = useAnalysis((s) => s.setCurrent);
 
-  useEffect(() => {
-    if (autoTts) speak('처방전을 찍거나 사진을 올려주세요.', 'ko-KR');
-    requestPermission();
-  }, [autoTts]);
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result as string;
-      sessionStorage.setItem('capturedImage', dataUrl);
-      sessionStorage.setItem('docMode', 'prescription');
-      router.push('/processing');
-    };
-    reader.readAsDataURL(file);
-  }
-
-  /** 샘플 이미지를 fetch → DataURL 변환 후 바로 처리 화면으로 이동 */
-  async function handleSample(src: string) {
-    const res = await fetch(src);
-    const blob = await res.blob();
-    const dataUrl = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => resolve(ev.target?.result as string);
-      reader.readAsDataURL(blob);
-    });
-    sessionStorage.setItem('capturedImage', dataUrl);
-    sessionStorage.setItem('docMode', 'prescription');
-    router.push('/processing');
+  function openScan(itemId: string, memberId: string) {
+    const item = getItem(itemId);
+    if (!item) return;
+    setCurrent(item);
+    setActiveMember(memberId);
+    router.push('/scan');
   }
 
   return (
-    <Screen>
-      <MedicationStrip />
+    <MobileScreen tab="home">
+      <div className="px-5 pt-14">
+        <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>
+          SnapCare
+        </h1>
 
-      <div className="flex-1 flex flex-col gap-5">
-        {/* 타이틀 */}
-        <div className="text-center pt-2">
-          <h1 className="text-2xl font-extrabold text-neutral-900">처방전을 그림으로</h1>
-          <p className="text-sm text-neutral-500 mt-1">
-            사진 찍기 또는 파일 올리기로 시작하세요
-          </p>
-        </div>
+        {/* 복약 리마인더 */}
+        <button
+          onClick={() => openScan('metformin', 'grandpa')}
+          className="mt-4 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
+          style={{ background: 'var(--color-med-bg)' }}
+        >
+          <span className="text-xl">⏰</span>
+          <span className="flex-1">
+            <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+              Metformin due for Grandpa Lee · 6:00 PM
+            </span>
+            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+              Tap to log dose
+            </span>
+          </span>
+          <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
+        </button>
 
-        {/* 두 버튼 나란히 */}
-        <div className="flex gap-4 w-full">
-          {/* 카메라 촬영 */}
+        {/* 스캔 버튼 */}
+        <div className="mt-8 flex flex-col items-center">
           <button
             onClick={() => router.push('/camera')}
-            style={{ minHeight: 160 }}
-            className="flex-1 rounded-3xl bg-blue-600 text-white flex flex-col items-center justify-center gap-3 shadow-lg active:scale-95 transition-transform"
-            aria-label="처방전 촬영"
+            className="flex h-24 w-24 items-center justify-center rounded-full text-white shadow-lg active:scale-95 transition-transform"
+            style={{ background: 'var(--color-sc-primary)' }}
+            aria-label="Scan something"
           >
-            <span className="text-5xl">📷</span>
-            <span className="text-base font-bold">촬영하기</span>
+            <CameraGlyph />
           </button>
-
-          {/* 파일 업로드 */}
-          <label
-            style={{ minHeight: 160 }}
-            className="flex-1 rounded-3xl bg-neutral-800 text-white flex flex-col items-center justify-center gap-3 shadow-lg active:scale-95 transition-transform cursor-pointer"
-            aria-label="파일 업로드"
-          >
-            <span className="text-5xl">📁</span>
-            <span className="text-base font-bold">파일 올리기</span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </label>
+          <span className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+            Scan something
+          </span>
         </div>
 
-        {/* 파이프라인 흐름 표시 */}
-        <div className="flex items-center justify-center gap-2 text-[11px] text-neutral-400 font-mono">
-          <span>이미지</span>
-          <span>→</span>
-          <span>OCR</span>
-          <span>→</span>
-          <span className="text-emerald-600">DSL</span>
-          <span>→</span>
-          <span className="text-blue-600">픽토그램</span>
-        </div>
-
-        {/* ── 샘플 처방전 ─────────────────────────────── */}
-        <div>
-          <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2">
-            샘플로 테스트하기
-          </p>
-          <div className="flex flex-col gap-2">
-            {SAMPLES.map((s) => (
+        {/* 최근 */}
+        <p className="mt-8 text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+          RECENT
+        </p>
+        <div className="mt-2 flex flex-col gap-2">
+          {scans.map((s) => {
+            const meta = LEVEL_META[s.level];
+            const member = getMember(s.memberId);
+            return (
               <button
                 key={s.id}
-                onClick={() => handleSample(s.src)}
-                className={`w-full flex items-center gap-3 rounded-2xl border px-4 py-3 active:scale-95 transition-transform text-left ${s.color}`}
+                onClick={() => openScan(s.itemId, s.memberId)}
+                className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
               >
-                <span className="text-3xl">{s.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm">{s.label}</div>
-                  <div className="text-xs opacity-70 truncate">{s.sub}</div>
-                </div>
-                <span className="text-lg opacity-50">›</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full text-lg" style={{ background: meta.bg }}>
+                  {s.emoji}
+                </span>
+                <span className="flex-1">
+                  <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+                    {s.name}
+                  </span>
+                  <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                    {member ? `${member.name} · ` : ''}{s.timeLabel}
+                  </span>
+                </span>
+                <span className="h-2.5 w-2.5 rounded-full" style={{ background: meta.color }} />
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
+    </MobileScreen>
+  );
+}
 
-      {/* 보관함 */}
-      <div className="pt-4 border-t border-neutral-100">
-        <button
-          onClick={() => router.push('/library')}
-          style={{ minHeight: 52 }}
-          className="w-full rounded-xl bg-purple-50 text-purple-800 text-sm font-bold flex items-center justify-center gap-2 active:scale-95"
-        >
-          <span>📚</span> 내 약 보관함
-        </button>
-      </div>
-    </Screen>
+function CameraGlyph() {
+  return (
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
   );
 }

@@ -25,9 +25,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   await writeFile(srcFile, source, 'utf-8');
 
   try {
-    await execFileAsync('python3', [ENGINE, srcFile, '--out', outDir, '--no-pdf'], {
+    // 로컬 dev에선 PICTOGRAM_PYTHON 으로 Pillow가 깔린 python을 지정한다.
+    // (배포 Docker 이미지엔 python3 + Pillow가 PATH에 있으므로 기본값으로 동작)
+    const python = process.env.PICTOGRAM_PYTHON || 'python3';
+    await execFileAsync(python, [ENGINE, srcFile, '--out', outDir, '--no-pdf'], {
       timeout: 30_000,
-      env: { ...process.env, PATH: '/usr/local/bin:/usr/bin:/bin' },
+      env: {
+        ...process.env,
+        PATH: `/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:${process.env.PATH ?? ''}`,
+      },
     });
 
     const files = (await readdir(outDir))

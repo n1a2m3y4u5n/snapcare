@@ -1,0 +1,201 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { MobileScreen } from '@/components/sc/MobileScreen';
+import { VerdictHero } from '@/components/sc/VerdictHero';
+import { useAnalysis } from '@/stores/analysis';
+import { useFamily } from '@/stores/family';
+import { useScans, nowLabel } from '@/stores/scans';
+import { computeVerdict, LEVEL_META } from '@/lib/snapcare/verdict';
+import type { Member, ScanItem } from '@/lib/snapcare/types';
+
+export default function ScanResultPage() {
+  const router = useRouter();
+  const item = useAnalysis((s) => s.current);
+  const setCurrent = useAnalysis((s) => s.setCurrent);
+  const { members, activeMemberId } = useFamily();
+  const addScan = useScans((s) => s.addScan);
+
+  const member = members.find((m) => m.id === activeMemberId) ?? members[0];
+
+  useEffect(() => {
+    if (!item) router.replace('/camera');
+  }, [item, router]);
+
+  if (!item || !member) return null;
+
+  const verdict = computeVerdict(item, member);
+  const isRx = item.kind === 'prescription' || item.kind === 'medicine';
+
+  function finish() {
+    addScan({
+      id: `r_${cryptoId()}`,
+      itemId: item!.id,
+      name: item!.name,
+      kind: item!.kind,
+      emoji: item!.emoji,
+      memberId: member.id,
+      level: verdict.level,
+      timeLabel: nowLabel(),
+    });
+    setCurrent(null);
+    router.push('/home');
+  }
+
+  const header =
+    item.kind === 'prescription' ? 'PRESCRIPTION RECOGNIZED'
+    : item.kind === 'medicine' ? 'MEDICINE RECOGNIZED'
+    : item.kind === 'drink' ? `DRINK · CHECKED FOR ${member.name.toUpperCase()}`
+    : `MEAL · CHECKED FOR ${member.name.toUpperCase()}`;
+
+  return (
+    <MobileScreen>
+      <div className="flex items-center justify-between px-5 pt-14 pb-1">
+        <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none" style={{ color: 'var(--color-sc-muted)' }}>×</button>
+        <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>{header}</span>
+        <span className="w-6" />
+      </div>
+
+      {isRx ? (
+        <RxResult item={item} verdict={verdict} onDone={finish} />
+      ) : (
+        <FoodResult item={item} verdict={verdict} member={member} members={members} onDone={finish} />
+      )}
+    </MobileScreen>
+  );
+}
+
+function FoodResult({
+  item, verdict, member, members, onDone,
+}: {
+  item: ScanItem; verdict: ReturnType<typeof computeVerdict>; member: Member; members: Member[]; onDone: () => void;
+}) {
+  return (
+    <div className="flex flex-1 flex-col">
+      <VerdictHero item={item} verdict={verdict} />
+
+      <div className="mt-2 flex flex-col gap-3 px-5">
+        {/* 영양 매크로 */}
+        {item.nutrition && (
+          <div className="flex gap-2">
+            {item.nutrition.kcal != null && <Macro label={`${item.nutrition.kcal} kcal`} emoji="🔥" />}
+            {item.nutrition.protein && <Macro label={item.nutrition.protein} emoji="💪" />}
+            {item.nutrition.sugar && <Macro label={item.nutrition.sugar} emoji="🧊" />}
+          </div>
+        )}
+        {item.nutrition?.note && (
+          <div className="flex items-start gap-2 rounded-2xl bg-white px-4 py-3 shadow-sm">
+            <span className="text-lg" style={{ color: 'var(--color-caution)' }}>●</span>
+            <span className="text-sm" style={{ color: 'var(--color-sc-ink)' }}>{item.nutrition.note}</span>
+          </div>
+        )}
+
+        {/* 대체품 */}
+        {item.alt && (
+          <div className="rounded-2xl px-4 py-3" style={{ background: 'var(--color-safe-bg)' }}>
+            <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-safe)' }}>TRY INSTEAD</p>
+            <p className="mt-0.5 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+              {item.alt.name} — {item.alt.note}
+            </p>
+          </div>
+        )}
+
+        {/* 가족별 판정 */}
+        <div>
+          <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>CHECKED FOR FAMILY</p>
+          <div className="mt-2 flex gap-3">
+            {members.map((m) => {
+              const v = computeVerdict(item, m);
+              const meta = LEVEL_META[v.level];
+              return (
+                <div key={m.id} className="flex flex-col items-center gap-1">
+                  <span className="relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: m.color }}>
+                    {m.name[0]}
+                    <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white" style={{ background: meta.color }} />
+                  </span>
+                  <span className="text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>{m.name.split(' ')[0]}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-auto px-5 pb-8 pt-4">
+        <PrimaryButton onClick={onDone} level={verdict.level}>Done</PrimaryButton>
+        <p className="mt-2 text-center text-xs" style={{ color: 'var(--color-sc-muted)' }}>Not right? Report this scan</p>
+      </div>
+    </div>
+  );
+}
+
+function RxResult({
+  item, verdict, onDone,
+}: {
+  item: ScanItem; verdict: ReturnType<typeof computeVerdict>; onDone: () => void;
+}) {
+  const meta = LEVEL_META[verdict.level];
+  const conflict = verdict.level !== 'safe';
+  return (
+    <div className="flex flex-1 flex-col px-5">
+      <div className="flex flex-col items-center pt-4 text-center">
+        <div className="flex h-24 w-24 items-center justify-center rounded-full text-5xl" style={{ background: conflict ? meta.bg : 'var(--color-med-bg)' }}>
+          {item.emoji}
+        </div>
+        <h1 className="mt-4 text-2xl font-bold" style={{ color: 'var(--color-sc-ink)' }}>{item.name}</h1>
+        {item.rx && <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}>{item.rx.dosageText}</p>}
+      </div>
+
+      {/* 안전 배지 / 충돌 경고 */}
+      <div className="mt-5 flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold"
+        style={{ background: meta.bg, color: meta.color }}>
+        <span className="text-lg">{meta.emoji}</span>
+        <span>{conflict ? verdict.summary : `Take as prescribed. ${item.rx?.dosageText ?? ''}`}</span>
+      </div>
+
+      {/* 복용 스케줄 */}
+      {item.rx && (
+        <div className="mt-5">
+          <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>INTAKE SCHEDULE</p>
+          <div className="mt-2 flex flex-col gap-2">
+            {item.rx.schedule.map((s, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
+                <span className="text-xl">{s.emoji}</span>
+                <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{s.label}</span>
+                <span className="text-sm" style={{ color: 'var(--color-sc-muted)' }}>{s.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-auto pb-8 pt-6">
+        <PrimaryButton onClick={onDone} level="safe">Create reminders</PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+function Macro({ label, emoji }: { label: string; emoji: string }) {
+  return (
+    <div className="flex flex-1 flex-col items-center gap-1 rounded-2xl bg-white py-3 shadow-sm">
+      <span className="text-lg">{emoji}</span>
+      <span className="text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{label}</span>
+    </div>
+  );
+}
+
+function PrimaryButton({ children, onClick, level }: { children: React.ReactNode; onClick: () => void; level: 'safe' | 'caution' | 'avoid' }) {
+  const bg = level === 'avoid' ? 'var(--color-avoid)' : level === 'caution' ? 'var(--color-caution)' : 'var(--color-sc-primary)';
+  return (
+    <button onClick={onClick} className="w-full rounded-2xl py-4 text-center text-base font-bold text-white active:scale-[0.98] transition-transform" style={{ background: bg }}>
+      {children}
+    </button>
+  );
+}
+
+function cryptoId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID().slice(0, 8);
+  return Math.abs(Date.now()).toString(36);
+}

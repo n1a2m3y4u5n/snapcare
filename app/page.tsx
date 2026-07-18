@@ -1,2 +1,5 @@
-import WelcomePage from './welcome-client';
-export default WelcomePage;
+import { redirect } from 'next/navigation';
+
+export default function Index() {
+  redirect('/home');
+}

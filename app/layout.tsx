@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "IlliHealth — 건강을 그림으로",
-  description: "개도국 문맹 사용자의 의료 정보 접근성을 보장하는 픽토그램·음성 앱",
-  manifest: "/manifest.json",
+  title: "SnapCare — one photo, instant verdict",
+  description: "저문해 사용자를 위한 사진 기반 가족 건강 안전 앱 — 픽토그램·음성·신호등 판정 (e-ICON H1)",
 };
 
 export default function RootLayout({

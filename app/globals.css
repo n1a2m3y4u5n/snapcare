@@ -63,3 +63,23 @@ body {
   outline: 3px solid #185FA5;
   outline-offset: 2px;
 }
+
+/* ===== SnapCare theme (blend: 와이어프레임 룩 + 접근성 코어) ===== */
+@theme inline {
+  --color-sc-bg: #F4F3EF;      /* 오프화이트 배경 */
+  --color-sc-surface: #FFFFFF; /* 카드 */
+  --color-sc-ink: #14141A;     /* 본문 */
+  --color-sc-muted: #6B7280;   /* 보조 텍스트 */
+  --color-sc-line: #ECEBE6;    /* 구분선 */
+  --color-sc-primary: #2F6BF6; /* 파랑 — 스캔/기록/처방 */
+
+  /* 신호등 판정 */
+  --color-safe: #15A34A;   --color-safe-bg: #E8F8ED;
+  --color-caution: #DE8500; --color-caution-bg: #FCF1DC;
+  --color-avoid: #DC2626;  --color-avoid-bg: #FBE9E9;
+  --color-med: #C9860C;    --color-med-bg: #FBF3DD; /* 크림 — 복약 */
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Apple SD Gothic Neo", Arial, sans-serif;
+}
