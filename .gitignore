@@ -73,3 +73,6 @@ Thumbs.db
 *.log
 .idea/
 .vscode/
+
+# 서버 저장소 (로컬)
+.data/

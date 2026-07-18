@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SyncProvider } from "./sync-provider";
 
 export const metadata: Metadata = {
   title: "SnapCare — one photo, instant verdict",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" className="h-full">
-      <body className="min-h-full bg-white">{children}</body>
+      <body className="min-h-full bg-white">
+        <SyncProvider />
+        {children}
+      </body>
     </html>
   );
 }
