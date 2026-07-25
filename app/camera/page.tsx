@@ -8,6 +8,7 @@ import { getItem } from '@/lib/snapcare/catalog';
 import { ocrToScanItem } from '@/lib/snapcare/fromOcr';
 import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } from '@/lib/nutrition/labelOcr';
 import { recognizeText } from '@/lib/ocr';
+import { Hint } from '@/components/sc/Hint';
 import type { ScanItem } from '@/lib/snapcare/types';
 import type { NutrientProfile } from '@/lib/nutrition/types';
 
@@ -197,7 +198,7 @@ export default function CameraPage() {
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-8">
             <span className="text-5xl">📷</span>
             <span className="text-xs opacity-70">{busy ? (status ?? 'Analyzing…') : 'camera preview'}</span>
-            {hint && <span className="text-xs" style={{ color: '#FBBF24' }}>{hint}</span>}
+            {hint && <Hint text={hint} />}
           </div>
         </div>
 

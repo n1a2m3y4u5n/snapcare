@@ -56,7 +56,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // 약·처방전으로 판별됐으면 영양 숫자는 의미가 없다 — 모델 값은 버린다.
   if (vision && (vision.kind === 'medicine' || vision.kind === 'prescription')) {
-    return NextResponse.json({ intent: vision.kind, item: vision, source: 'vision' });
+    return NextResponse.json({ intent: vision.kind, item: vision.item, source: 'vision' });
   }
 
   const measured = modelTotals ? densityFromTotals(modelTotals) : null;
@@ -66,36 +66,48 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // 모델이 검증을 통과했으면 숫자는 모델 것을 쓰고, Vision 은 세부 영양소만 얹는다.
   if (measured?.ok) {
-    const { per100, dropped } = mergeVisionDetail(measured.per100, vision?.profile?.per100);
+    const { per100, dropped } = mergeVisionDetail(measured.per100, vision?.item.profile?.per100);
     if (dropped.length) console.warn('[analyze] vision detail dropped:', dropped.join(', '));
     const item: ScanItem = {
-      id: vision?.id ?? `meal_${Math.round(measured.per100.energy ?? 0)}_${measured.servingGrams}`,
-      name: vision?.name ?? 'Meal',
+      id: vision?.item.id ?? `meal_${Math.round(measured.per100.energy ?? 0)}_${measured.servingGrams}`,
+      name: vision?.item.name ?? 'Meal',
       kind: 'food',
-      emoji: vision?.emoji ?? '🍽️',
+      emoji: vision?.item.emoji ?? '🍽️',
       detectedVia: vision ? 'photo analysis (measured portion)' : 'on-device meal model',
       flags: [],
       profile: {
         source: 'meal-model',
-        name: vision?.name ?? 'Meal',
+        name: vision?.item.name ?? 'Meal',
         servingGrams: measured.servingGrams,
         per100,
-        allergenTags: vision?.profile?.allergenTags ?? [],
+        allergenTags: vision?.item.profile?.allergenTags ?? [],
       },
     };
     return NextResponse.json({ intent: 'food', item, source: vision ? 'meal-model+vision' : 'meal-model' });
   }
 
   // 모델이 없거나 빗나갔다 → Vision 단독.
-  if (vision) return NextResponse.json({ intent: vision.kind, item: vision, source: 'vision' });
+  //
+  // 다만 음식인데 무엇인지 못 알아봤다면 결과를 내지 않는다. 판정 엔진은 걸리는 플래그가
+  // 없으면 'safe' 를 돌려주므로, 알아보지 못한 사진이 초록 "Safe to eat" 으로 뜬다 —
+  // 흰 종이 한 장이 그렇게 나왔다. 글을 못 읽는 사용자에게 초록은 먹어도 된다는 뜻이고,
+  // 그건 이 앱이 할 수 있는 가장 나쁜 거짓말이다. 못 알아봤으면 다시 찍으라고 해야 한다.
+  if (vision && vision.recognised) {
+    return NextResponse.json({ intent: vision.kind, item: vision.item, source: 'vision' });
+  }
 
+  // 판별을 못 한 것과 판별 수단이 없는 것은 사용자가 할 일이 다르다.
+  // 못 알아본 것이면 다시 찍으면 되고, 수단이 없으면 다시 찍어도 소용없다 —
+  // 화면은 이 상태 코드로 두 안내를 가른다. 하나로 묶으면 "연결이 필요합니다"가
+  // 인터넷이 멀쩡한 사람에게 뜬다.
+  if (vision) {
+    return NextResponse.json(
+      { error: 'not_recognised', message: 'Could not tell what this is.' },
+      { status: 422 },
+    );
+  }
   return NextResponse.json(
-    {
-      error: 'analysis_unavailable',
-      message: key
-        ? '판별에 실패했습니다 — 성분표를 찍거나 데모 아이템을 고르세요.'
-        : 'ANTHROPIC_API_KEY 미설정이고 자체 모델 가중치도 없습니다 — 데모 아이템으로 시연하세요.',
-    },
+    { error: 'analysis_unavailable', message: 'No photo recognition available on this server.' },
     { status: 501 },
   );
 }
@@ -158,7 +170,14 @@ Rules:
 - Use typical composition for the dish you recognise. If you cannot recognise it, set confidence below 0.4.
 - Omit per100 and portionGrams entirely for medicine/prescription.`;
 
-async function analyzeWithClaude(image: string, key: string): Promise<ScanItem> {
+interface VisionResult {
+  item: ScanItem;
+  kind: ScanItem['kind'];
+  /** 무엇인지 알아봤는가. 못 알아본 것을 'safe' 로 내보내지 않기 위한 신호다. */
+  recognised: boolean;
+}
+
+async function analyzeWithClaude(image: string, key: string): Promise<VisionResult> {
   const m = image.match(/^data:(image\/[a-zA-Z.+-]+);base64,(.*)$/);
   const mediaType = m ? m[1] : 'image/jpeg';
   const data = m ? m[2] : image;
@@ -214,14 +233,19 @@ async function analyzeWithClaude(image: string, key: string): Promise<ScanItem> 
   }
 
   return {
-    id: `scan_${Math.abs(hash(text))}`,
-    name: parsed.name ?? 'Unknown item',
     kind,
-    emoji: parsed.emoji ?? '📷',
-    detectedVia: profile ? 'photo analysis' : 'photo analysis (nutrition unverified)',
-    flags: [],
-    profile,
-    rx: parsed.rx,
+    // 약·처방전은 영양 수치가 없는 것이 정상이므로 판별 여부를 confidence 로만 본다.
+    recognised: isRx ? confident(parsed) : confident(parsed) && hasAnyNutrient(parsed),
+    item: {
+      id: `scan_${Math.abs(hash(text))}`,
+      name: parsed.name ?? 'Unknown item',
+      kind,
+      emoji: parsed.emoji ?? '📷',
+      detectedVia: profile ? 'photo analysis' : 'photo analysis (nutrition unverified)',
+      flags: [],
+      profile,
+      rx: parsed.rx,
+    },
   };
 }
 
@@ -244,10 +268,17 @@ interface VisionOut {
  * 질량 보존도 만족하고, 열량이 0 이라 Atwater 검사도 건너뛴다. 그대로 두면 판정 화면에
  * "아무것도 들어있지 않은 음식"이 뜨고, 그건 사용자에게 안전하다는 신호로 읽힌다.
  */
-function recognised(p: VisionOut): boolean {
-  if (typeof p.confidence === 'number' && p.confidence < 0.4) return false;
+function confident(p: VisionOut): boolean {
+  return !(typeof p.confidence === 'number' && p.confidence < 0.4);
+}
+
+function hasAnyNutrient(p: VisionOut): boolean {
   const values = Object.values(p.per100 ?? {});
   return values.length > 0 && values.some((v) => typeof v === 'number' && v > 0);
+}
+
+function recognised(p: VisionOut): boolean {
+  return confident(p) && hasAnyNutrient(p);
 }
 
 /** 한 끼로 가능한 범위를 벗어난 추정치는 버리고 100g 기본값으로 돌아간다. */

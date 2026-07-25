@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { MobileScreen } from '@/components/sc/MobileScreen';
+import { Hint } from '@/components/sc/Hint';
 import { useReminders } from '@/stores/reminders';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useFamily } from '@/stores/family';
@@ -245,9 +246,9 @@ export default function DevicePage() {
         )}
 
         {result && (
-          <p className="mt-3 rounded-2xl px-4 py-3 text-sm" style={{ background: 'var(--color-safe-bg)', color: 'var(--color-sc-ink)' }}>
-            {result}
-          </p>
+          <div className="mt-3 rounded-2xl px-4 py-3" style={{ background: 'var(--color-safe-bg)' }}>
+            <Hint text={result} tone="info" />
+          </div>
         )}
       </div>
     </MobileScreen>
