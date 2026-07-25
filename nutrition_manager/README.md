@@ -47,8 +47,21 @@ that 22.9% is the comparable-to-others number and something nearer the
 side-angle figure is what a user experiences, with the truth depending on how
 carefully they aim.
 
-That gap is worth about fifteen points, which makes checkpoint selection a real
-decision rather than a detail:
+And the two views are in tension, not merely different. The sampler ablation
+shows it clearly:
+
+| run | sampling | overhead | side |
+|---|---|---|---|
+| `v2-base` | 50% overhead | **17.82** | 32.54 |
+| `v2-asis` | as the data lies (97% side) | 19.66 | **29.66** |
+
+Feeding the model more side frames makes it better at side frames and worse at
+the benchmark, and vice versa. So the view-balanced sampler is not a free win —
+it buys 1.8 points on the scored view by giving up 2.9 on the unscored one. It
+is the right trade for a number that has to be comparable, and the wrong one
+for a phone held at an angle.
+
+That makes checkpoint selection a real decision rather than a detail:
 
 ```bash
 python train.py                                  # select_view=overhead, the benchmark
@@ -71,13 +84,9 @@ composition, so side frames outvoted overhead ones 29 to 1 in choosing the
 checkpoint. Selection is now overhead-only and sampling is view-balanced.
 
 The ablation confirms it. Sampling the dataset as it lies scores 19.66 on
-validation against 17.82 balanced — and that is with **2.9x more compute**, a
-full pass over 77k rows per epoch against 24k draws:
-
-| run | sampling | minutes | val MAE% |
-|---|---|---|---|
-| `v2-base` | 50% overhead | 19.6 | **17.82** |
-| `v2-asis` | as the data lies (97% side) | 56.5 | 19.66 |
+overhead validation against 17.82 balanced — and that is with **2.9x more
+compute**, a full pass over 77k rows per epoch against 24k draws (19.6 minutes
+against 56.5). What it buys and what it costs is in the table above.
 
 **A few labels were setting the scale for every dish.** Carbohydrate reaches
 845 g against a 99th percentile of 68 g. Standardization statistics are now
@@ -137,8 +146,14 @@ python eval.py --compare checkpoints/*.pt
 python runs/summarize.py
 ```
 
-Each run appends one row to `runs/history.jsonl`; `runs/ablation_v2.sh` is the
-set of runs behind the table above.
+Each run appends one row to `runs/history.jsonl`. `runs/ablation_v2.sh` is the
+set of runs behind the table above; `runs/queue.sh` runs everything still
+outstanding, in one shell, deployment model first.
+
+`runs/summarize.py` ranks by the **overhead** score whatever each run was
+selected on, and prints the side score beside it. Those columns are not
+interchangeable — sorting a mixed table by each run's own selection metric
+would compare a model against a different measurement and call it better.
 
 ## Deploying to the app
 
