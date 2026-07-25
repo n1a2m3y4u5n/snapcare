@@ -112,9 +112,23 @@ python train.py --set train.overhead_ratio=0.2 train.select_view=both
 python train.py --set train.perspective=0.35 train.select_view=both
 ```
 
-The shipped `deploy` model uses the config's 0.5 and `select_view=both`; the
-evidence above suggests a lower ratio would serve the app better, and that is
-the first thing to measure next.
+Selecting on both views is, at least here, not even a trade. The same backbone
+and sampler, differing only in which validation number chose the epoch:
+
+| run | selected on | epochs | overhead | side |
+|---|---|---|---|---|
+| `deploy` | both | 16 | **20.58** | **32.55** |
+| `web-b0` | overhead | 14 | 21.22 | 35.28 |
+
+`both` found a checkpoint better on *both* metrics. Optimising for the
+benchmark alone did not even win the benchmark — it just stopped at a worse
+epoch, which is what over-fitting a selection criterion to one view looks like.
+(The two differ by two epochs as well, so this is suggestive rather than
+controlled.)
+
+The shipped `deploy` model uses the config's 0.5 sampler; the sweep above
+suggests a lower ratio would serve the app better still, and that is what
+`runs/queue2.sh` measures next.
 
 ### What actually moved the number
 
