@@ -14,7 +14,18 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
 
-def build_transforms(img_size: int, train: bool):
+def build_transforms(img_size: int, train: bool, crop_scale_min: float = 0.7):
+    """Preprocessing for one image. `crop_scale_min` applies to training only.
+
+    A note on that crop, because it is not a free parameter here the way it is
+    for classification. This model has to judge *how much food* is on a plate,
+    and the plate is the only size reference in the frame. Cropping to 70% of
+    the image can take the rim out of shot, or cut off part of the dish, while
+    the label still states the mass of the whole thing — so an aggressive crop
+    is not just a harder view of the same example, it is a wrong label. Raising
+    the floor keeps the plate in frame at the cost of less augmentation, which
+    is the trade `runs/ablation_v3.sh` measures rather than assumes.
+    """
     if train:
         # Vertical flip + wider rotation make the model orientation-robust, which
         # matters because the side-angle training frames come from cafe1 videos
@@ -22,7 +33,9 @@ def build_transforms(img_size: int, train: bool):
         # totals are orientation-invariant, so this is safe.
         return transforms.Compose(
             [
-                transforms.RandomResizedCrop(img_size, scale=(0.7, 1.0), ratio=(0.85, 1.18)),
+                transforms.RandomResizedCrop(
+                    img_size, scale=(crop_scale_min, 1.0), ratio=(0.85, 1.18)
+                ),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 transforms.RandomApply([transforms.RandomRotation(25)], p=0.5),

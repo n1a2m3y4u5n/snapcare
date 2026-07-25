@@ -73,6 +73,7 @@ TRAIN_DEFAULTS = {
     "loss_beta": 1.0,         # SmoothL1 transition point, in standardized units
     "grad_clip": None,
     "label_noise": 0.0,       # stddev of noise added to standardized targets
+    "crop_scale_min": 0.7,    # smallest fraction of the image RandomResizedCrop keeps
 }
 
 
@@ -308,7 +309,9 @@ def main():
     print("  std :", dict(zip(targets, codec.std.round(3))))
 
     img_size = mcfg["img_size"]
-    train_ds = Nutrition5kDataset(df_train, targets, build_transforms(img_size, True))
+    train_ds = Nutrition5kDataset(
+        df_train, targets, build_transforms(img_size, True, tcfg["crop_scale_min"])
+    )
 
     loader_kwargs = dict(
         batch_size=tcfg["batch_size"],
