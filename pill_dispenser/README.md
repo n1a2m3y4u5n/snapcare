@@ -178,13 +178,17 @@ See [`firmware/README.md`](firmware/README.md) for wiring, flashing, and the two
 details that cost boards rather than time.
 
 ```bash
-make -C firmware/test          # ~24,000 assertions, no board, no cable
+make -C firmware/test          # ~24,000 assertions and both sketches, no board
 ```
 
 The protocol and the scheduler are free of `<Arduino.h>` and build with a
 desktop compiler. That matters most for the scheduler, because scheduling is the
 part that fails invisibly: a servo that does not move is obvious, a compartment
 that opens twice is not.
+
+The sketches are compiled too, against a stand-in Arduino API — a type check,
+not a simulation, but enough that nobody has to own the hardware to find out
+whether the code is valid.
 
 ## The whole chain, end to end
 

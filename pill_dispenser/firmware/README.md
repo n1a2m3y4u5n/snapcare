@@ -45,17 +45,30 @@ firmware/
 make -C pill_dispenser/firmware/test
 ```
 
-No board, no cable. This builds the protocol and the scheduler with a desktop
-compiler and runs ~24,000 assertions over them, including every vector that
+No board, no cable, about a second. Three things happen.
+
+**The protocol**, against ~23,000 assertions including every vector that
 `lib/hardware/protocol.test.ts` and `form_sheet_parser/tests/test_schedule.py`
 assert on. The three implementations share no code, so those common vectors are
 the only thing keeping them speaking the same language — and a mismatch has no
 symptom on hardware except a device that stops listening.
 
-The scheduler tests are the ones worth reading. They cover the failures that
-are invisible in a demo and expensive in a house: a dose given twice, a course
-that never ends, a device unplugged all day that dispenses breakfast, lunch and
-dinner into one hand when it comes back.
+**The scheduler**, which is the part worth reading. Its failures are invisible
+in a demo and expensive in a house: a dose given twice, a course that never
+ends, doses coming back out of order after a gap, a servo that jammed leaving
+the dose owed rather than silently delivered, and a device unplugged all day
+that must not dispense breakfast, lunch and dinner into one hand when it is
+plugged back in.
+
+**Both sketches compile**, against a stand-in Arduino API in
+`test/arduino_shim/`. This is a syntax and type check and nothing more — no
+timing, no interrupts, no servo, and `millis()` never advances. It is still
+most of what goes wrong in code that cannot be compiled without the board in
+front of you, and on this project the board is usually in a different country
+from whoever is editing. It caught a signed/unsigned comparison in each sketch
+the first time it ran.
+
+`make sc1`, `make scheduler` and `make sketches` run the three separately.
 
 ## Building
 
