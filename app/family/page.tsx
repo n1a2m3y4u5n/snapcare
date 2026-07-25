@@ -13,7 +13,7 @@ export default function FamilyPage() {
 
   function add() {
     const id = addMember();
-    router.push(`/family/${id}`);
+    router.push(`/family/edit?id=${id}`);
   }
 
   return (
@@ -48,7 +48,7 @@ export default function FamilyPage() {
             return (
               <Link
                 key={m.id}
-                href={`/family/${m.id}`}
+                href={`/family/edit?id=${m.id}`}
                 className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm"
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: m.color }}>

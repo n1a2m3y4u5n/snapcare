@@ -1,6 +1,7 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useFamily } from '@/stores/family';
 import { CONDITIONS } from '@/lib/snapcare/conditions';
@@ -15,6 +16,10 @@ import type { AgeBand } from '@/lib/snapcare/types';
  *
  * 나이대가 필요한 이유는 이것이 판정의 입력이기 때문이다 —
  * WHO 권고가 에너지 대비 %라, 나이대가 정해져야 당·소금·포화지방 상한이 정해진다.
+ *
+ * 구성원 id 를 경로가 아니라 쿼리로 받는 이유: 대회 후 정적 웹앱으로 변환해 전시한다는
+ * 요건이 있는데, 동적 경로는 사용자가 만든 id 를 미리 알 수 없어 정적 변환에서 깨진다.
+ * 쿼리 파라미터는 클라이언트에서 읽히므로 정적 빌드에서도 그대로 동작한다.
  */
 
 /** 사람을 나타내는 그림 — 이름 대신 이것이 신원이 된다. */
@@ -35,10 +40,19 @@ const GROUPS: { key: 'now' | 'experience' | 'diagnosis'; title: string }[] = [
 ];
 
 export default function MemberEditPage() {
+  // useSearchParams 는 정적 렌더 시 Suspense 경계를 요구한다.
+  return (
+    <Suspense fallback={<MobileScreen><div className="px-5 pt-20" /></MobileScreen>}>
+      <MemberEditor />
+    </Suspense>
+  );
+}
+
+function MemberEditor() {
   const router = useRouter();
-  const params = useParams<{ id: string }>();
+  const id = useSearchParams().get('id');
   const { members, toggleCondition, setMemberFace, setMemberAgeBand, removeMember } = useFamily();
-  const member = members.find((m) => m.id === params.id);
+  const member = members.find((m) => m.id === id);
 
   if (!member) {
     return (
