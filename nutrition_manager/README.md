@@ -34,12 +34,23 @@ errors. Its denominator is a constant, which makes it absolute error in
 rescaled units, and means a gram of error on a 900 kcal dish counts exactly as
 much as a gram on a 30 kcal one.
 
-That is why the targets are regressed in physical units rather than in log
-space, and the ablation agrees: `train.target_space=log1p` scores 17.96 on
-validation against 17.82 for the default. Regressing `log(1+y)` optimizes
-*relative* error, which is a different objective from the one being reported —
-and the difference is small precisely because it is a mismatch of emphasis
-rather than a mistake. Both are available; `targets.py` explains the trade.
+That is the argument for regressing physical units rather than `log(1+y)`,
+which optimizes *relative* error instead — a different objective from the one
+being reported.
+
+The measurement does not settle it, and it is worth saying so rather than
+quoting whichever half agrees:
+
+| | val (overhead) | test |
+|---|---|---|
+| `identity` (default) | **17.82** | 22.92 |
+| `log1p` | 17.96 | **22.08** |
+
+The orderings disagree. With one seed and 507 test dishes a gap of under a
+point is inside the noise, so the honest conclusion is that the target space
+barely matters here — not that either choice is vindicated. `identity` stays
+the default because the argument for it is principled, not because this
+measured it as better. Both are available; `targets.py` explains the trade.
 
 ### The benchmark number is not the product number
 

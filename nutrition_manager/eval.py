@@ -34,6 +34,7 @@ import metrics  # noqa: E402
 from common import load_config, resolve  # noqa: E402
 from data.dataset import Nutrition5kDataset  # noqa: E402
 from inference import eval_transform, load_checkpoint, predict_batch, resolve_tta  # noqa: E402
+from models.model import build_model  # noqa: E402
 
 
 def load_test_frame(cfg: dict) -> pd.DataFrame:
@@ -106,10 +107,22 @@ def main():
             print()
 
         rows.sort(key=lambda r: r[3].mean())
-        print(f"{'checkpoint':<24}{'backbone':<16}{'px':>5}{'mean MAE%':>11}")
-        print("-" * 56)
+        header = (f"{'checkpoint':<22}{'backbone':<22}{'px':>5}{'M':>7}"
+                  f"{'selected on':>13}{'test MAE%':>11}")
+        print(header)
+        print("-" * len(header))
         for name, ckpt, _, mae_pct in rows:
-            print(f"{name:<24}{ckpt['backbone']:<16}{ckpt['img_size']:>5}{mae_pct.mean():>10.2f}%")
+            # How a checkpoint was chosen changes what its *validation* number
+            # meant, but not this one: every row here is scored the same way, on
+            # the same overhead test split. Showing it explains why a model
+            # selected on `both` may rank lower here and still be the better
+            # one to ship.
+            selected = (ckpt.get("train_cfg") or {}).get("select_view", "overhead")
+            params = sum(p.numel() for p in
+                         build_model(ckpt["backbone"], num_outputs=len(ckpt["targets"]),
+                                     pretrained=False).parameters()) / 1e6
+            print(f"{name:<22}{ckpt['backbone']:<22}{ckpt['img_size']:>5}{params:>7.1f}"
+                  f"{selected:>13}{mae_pct.mean():>10.2f}%")
         return
 
     ckpt_path = Path(args.checkpoint) if args.checkpoint else resolve(
