@@ -127,11 +127,36 @@ has Pillow:
 # .env.local
 PICTOGRAM_PYTHON=/opt/homebrew/bin/python3
 ANTHROPIC_API_KEY=            # optional — meal-photo recognition only
+MEAL_MODEL_PYTHON=            # optional — path to a python with torch, enables the local meal model
 ```
 
 Everything except meal-photo recognition works with no key and no network: OCR runs in the
 browser, pictograms render locally, and looked-up products and rendered pictograms are cached
 to disk on first use.
+
+### The two meal-photo sources
+
+A meal photo has no text to read, so it goes to `api/analyze`, which uses two sources that
+fill in what the other cannot see:
+
+| | local model (`nutrition_manager`) | Claude Vision |
+|---|---|---|
+| energy, carbs, protein, fat | trained on weighed dishes | estimated |
+| **portion mass** | **predicted** | eyeballed |
+| name, food vs. medicine | — | yes |
+| allergens | — | yes |
+| sugars, saturated fat, fibre, salt | — | yes |
+| needs a network | no | yes |
+
+When both answer, the numbers come from the model and Vision supplies the rest; when only one
+is available, the app answers with that one. Either way the result passes the same physical
+checks (ranges, subset relations, mass conservation, the Atwater identity) before the verdict
+engine sees it — a regression model drifting outside its training distribution is caught by the
+same gauntlet as a hallucinating LLM.
+
+The model path is off unless `MEAL_MODEL_PYTHON` is set, because PyTorch is an order of
+magnitude larger than the rest of the image. Training weights are not in the repo; put them at
+`nutrition_manager/checkpoints/best.pt` or point `SNAPCARE_MEAL_CHECKPOINT` at them.
 
 ```bash
 npm run build && npm start    # production build

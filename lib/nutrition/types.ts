@@ -56,7 +56,7 @@ export const NUTRIENT_UNIT: Record<NutrientKey, 'kcal' | 'g'> = {
 /** 정규화된 식품 영양 프로필 — 100g(또는 100ml) 기준. */
 export interface NutrientProfile {
   /** 어디서 온 데이터인지 (화면에 출처를 밝히기 위해 보관) */
-  source: 'openfoodfacts' | 'label-ocr' | 'vision' | 'manual';
+  source: 'openfoodfacts' | 'label-ocr' | 'meal-model' | 'vision' | 'manual';
   /** 바코드 (있으면) */
   code?: string;
   name: string;

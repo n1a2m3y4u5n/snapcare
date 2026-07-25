@@ -2,13 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getItem } from '@/lib/snapcare/catalog';
 import type { ScanItem } from '@/lib/snapcare/types';
 import { validateDensity } from '@/lib/nutrition/validate';
+import { densityFromTotals, mergeVisionDetail, MIN_PORTION_G, MAX_PORTION_G } from '@/lib/nutrition/mealModel';
+import type { ModelTotals } from '@/lib/nutrition/mealModel';
 import type { NutrientAmounts, NutrientProfile } from '@/lib/nutrition/types';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import { writeFile, mkdir, rm } from 'fs/promises';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { randomUUID } from 'crypto';
+
+const execFileAsync = promisify(execFile);
+const MEAL_MODEL = join(process.cwd(), 'nutrition_manager', 'predict_cli.py');
 
 /**
  * 사진 의도 판별 + 추출 (하이브리드).
  * - demoItemId 가 오면 카탈로그에서 즉시 반환 (오프라인 데모 경로).
- * - image(base64) + ANTHROPIC_API_KEY 가 있으면 Claude Vision으로 판별·추출.
- * - 둘 다 없으면 400.
+ * - image(base64) 는 두 출처를 함께 쓴다:
+ *     · 자체 학습 모델(nutrition_manager) — 열량·질량·지방·탄수·단백. 오프라인, 무료.
+ *     · Claude Vision — 이름·종류·알레르기·세부 영양소. 인터넷 필요.
+ *   서로를 대체하는 게 아니라 상대가 모르는 칸을 채운다. 한쪽이 없어도 나머지로 답한다.
  *
  * 어느 경로든 결과는 동일한 ScanItem 스키마로 반환된다 (SIGIL/VOCA·판정 엔진이 재검증·소비).
  */
@@ -25,24 +38,98 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ intent: item.kind, item, source: 'demo' });
   }
 
-  // ── Vision 경로 ────────────────────────────────────────────
-  if (body.image) {
-    const key = process.env.ANTHROPIC_API_KEY;
-    if (!key) {
-      return NextResponse.json(
-        { error: 'vision_unconfigured', message: 'ANTHROPIC_API_KEY 미설정 — 데모 아이템으로 시연하세요.' },
-        { status: 501 },
-      );
-    }
-    try {
-      const item = await analyzeWithClaude(body.image, key);
-      return NextResponse.json({ intent: item.kind, item, source: 'vision' });
-    } catch (err) {
-      return NextResponse.json({ error: 'vision_failed', detail: String(err) }, { status: 502 });
-    }
+  if (!body.image) {
+    return NextResponse.json({ error: 'image or demoItemId required' }, { status: 400 });
   }
 
-  return NextResponse.json({ error: 'image or demoItemId required' }, { status: 400 });
+  // ── 사진 경로 ──────────────────────────────────────────────
+  const key = process.env.ANTHROPIC_API_KEY;
+
+  // 둘을 동시에 돌린다. 모델은 로컬 추론(수 초), Vision 은 왕복이라 직렬로 하면 합이 그대로 늘어난다.
+  const [modelTotals, vision] = await Promise.all([
+    runMealModel(body.image),
+    key ? analyzeWithClaude(body.image, key).catch((err) => {
+      console.error('[analyze] vision failed:', err);
+      return null;
+    }) : Promise.resolve(null),
+  ]);
+
+  // 약·처방전으로 판별됐으면 영양 숫자는 의미가 없다 — 모델 값은 버린다.
+  if (vision && (vision.kind === 'medicine' || vision.kind === 'prescription')) {
+    return NextResponse.json({ intent: vision.kind, item: vision, source: 'vision' });
+  }
+
+  const measured = modelTotals ? densityFromTotals(modelTotals) : null;
+  if (measured && !measured.ok) {
+    console.warn('[analyze] meal model rejected:', measured.problems.join('; '));
+  }
+
+  // 모델이 검증을 통과했으면 숫자는 모델 것을 쓰고, Vision 은 세부 영양소만 얹는다.
+  if (measured?.ok) {
+    const { per100, dropped } = mergeVisionDetail(measured.per100, vision?.profile?.per100);
+    if (dropped.length) console.warn('[analyze] vision detail dropped:', dropped.join(', '));
+    const item: ScanItem = {
+      id: vision?.id ?? `meal_${Math.round(measured.per100.energy ?? 0)}_${measured.servingGrams}`,
+      name: vision?.name ?? 'Meal',
+      kind: 'food',
+      emoji: vision?.emoji ?? '🍽️',
+      detectedVia: vision ? 'photo analysis (measured portion)' : 'on-device meal model',
+      flags: [],
+      profile: {
+        source: 'meal-model',
+        name: vision?.name ?? 'Meal',
+        servingGrams: measured.servingGrams,
+        per100,
+        allergenTags: vision?.profile?.allergenTags ?? [],
+      },
+    };
+    return NextResponse.json({ intent: 'food', item, source: vision ? 'meal-model+vision' : 'meal-model' });
+  }
+
+  // 모델이 없거나 빗나갔다 → Vision 단독.
+  if (vision) return NextResponse.json({ intent: vision.kind, item: vision, source: 'vision' });
+
+  return NextResponse.json(
+    {
+      error: 'analysis_unavailable',
+      message: key
+        ? '판별에 실패했습니다 — 성분표를 찍거나 데모 아이템을 고르세요.'
+        : 'ANTHROPIC_API_KEY 미설정이고 자체 모델 가중치도 없습니다 — 데모 아이템으로 시연하세요.',
+    },
+    { status: 501 },
+  );
+}
+
+/**
+ * 자체 학습 모델 추론. 가중치·파이썬 환경이 없으면 null 을 돌려주고 조용히 물러난다 —
+ * 이 경로가 없다고 앱이 멈추면 안 된다 (폼시트 파서와 같은 원칙).
+ *
+ * 가중치는 레포에 없다(용량). SNAPCARE_MEAL_CHECKPOINT 로 위치를 알려주거나
+ * nutrition_manager/checkpoints/best.pt 에 두면 이 경로가 살아난다.
+ */
+async function runMealModel(image: string): Promise<ModelTotals | null> {
+  const python = process.env.MEAL_MODEL_PYTHON;
+  if (!python) return null; // 명시적으로 켠 환경에서만 시도한다 (torch 는 기본 이미지에 없다)
+
+  const base64 = image.replace(/^data:image\/[a-zA-Z.+-]+;base64,/, '');
+  const dir = join(tmpdir(), `meal-${randomUUID()}`);
+  const file = join(dir, 'meal.jpg');
+  try {
+    await mkdir(dir, { recursive: true });
+    await writeFile(file, Buffer.from(base64, 'base64'));
+    const { stdout } = await execFileAsync(python, [MEAL_MODEL, file], { timeout: 30_000 });
+    const parsed = JSON.parse(stdout) as { ok: boolean; error?: string; totals?: ModelTotals };
+    if (!parsed.ok || !parsed.totals) {
+      console.warn('[analyze] meal model unavailable:', parsed.error);
+      return null;
+    }
+    return parsed.totals;
+  } catch (err) {
+    console.warn('[analyze] meal model failed:', String(err));
+    return null;
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 }
 
 const SYSTEM = `You identify what a person is about to consume, from one photo.
@@ -111,7 +198,7 @@ async function analyzeWithClaude(image: string, key: string): Promise<ScanItem> 
   // LLM이 준 영양 밀도는 물리 제약(범위·부분집합·질량보존·Atwater)을 통과해야만 채택한다.
   // 통과 못 하면 숫자를 버리고 정성 판정으로 떨어뜨린다 — 틀린 수치보다 없는 편이 낫다.
   let profile: NutrientProfile | undefined;
-  if (!isRx && parsed.per100) {
+  if (!isRx && parsed.per100 && recognised(parsed)) {
     const check = validateDensity(parsed.per100);
     if (check.ok) {
       profile = {
@@ -149,9 +236,23 @@ interface VisionOut {
   rx?: ScanItem['rx'];
 }
 
+/**
+ * 못 알아본 사진의 숫자는 쓰지 않는다.
+ *
+ * 프롬프트는 못 알아보면 confidence 를 0.4 아래로 두라고 시키는데, 그럴 때 모델은
+ * 영양소를 전부 0 으로 채워 보내는 경향이 있다. 0 은 검증을 전부 통과한다 — 범위 안이고,
+ * 질량 보존도 만족하고, 열량이 0 이라 Atwater 검사도 건너뛴다. 그대로 두면 판정 화면에
+ * "아무것도 들어있지 않은 음식"이 뜨고, 그건 사용자에게 안전하다는 신호로 읽힌다.
+ */
+function recognised(p: VisionOut): boolean {
+  if (typeof p.confidence === 'number' && p.confidence < 0.4) return false;
+  const values = Object.values(p.per100 ?? {});
+  return values.length > 0 && values.some((v) => typeof v === 'number' && v > 0);
+}
+
 /** 한 끼로 가능한 범위를 벗어난 추정치는 버리고 100g 기본값으로 돌아간다. */
 function plausiblePortion(g: number | undefined): number | undefined {
-  return typeof g === 'number' && g >= 10 && g <= 1500 ? Math.round(g) : undefined;
+  return typeof g === 'number' && g >= MIN_PORTION_G && g <= MAX_PORTION_G ? Math.round(g) : undefined;
 }
 
 function hash(s: string): number {
