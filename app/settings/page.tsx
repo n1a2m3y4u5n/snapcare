@@ -80,6 +80,21 @@ export default function SettingsPage() {
           </span>
         </button>
 
+        {/* 기기 — 네트워크 없이 카메라로만 오간다 */}
+        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+          PILL DEVICE
+        </p>
+        <button
+          onClick={() => router.push('/device')}
+          className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
+        >
+          <span className="text-lg">💊</span>
+          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+            Send the schedule to the device
+          </span>
+          <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
+        </button>
+
         {/* 의료진 공유 — 타이핑 없이 기록을 넘기는 경로 */}
         <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
           AT THE CLINIC
