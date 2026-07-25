@@ -127,10 +127,27 @@ does not throw — it returns plausible numbers that are quietly wrong on a
 screen telling someone whether a meal fits their day. All the caller owes the
 model is the resize and centre crop, which the JSON spells out.
 
-`--score` runs the exported graph over the real test split, preprocessing the
-images the way the browser will, so a quantized model that lost accuracy shows
-up as a number rather than as a worse app. Parity against PyTorch is checked on
-every export and the exporter refuses to write metadata if it fails.
+`--score` runs the exported graph over the real test split, decoding and
+cropping the images the way the browser will rather than through the torch
+DataLoader. Measured on `v2-base`:
+
+| | size | mean MAE% |
+|---|---|---|
+| PyTorch checkpoint | — | 22.92% |
+| ONNX float32 | 111 MB | 22.92% |
+| ONNX int8 | 28 MB | 23.03% |
+
+Two things follow. The float32 graph reproduces the checkpoint exactly, which
+is what says the preprocessing in `web/mealModel.ts` matches training — that
+path is written twice, in Python and in TypeScript, and this is the check that
+they agree. And quantization costs about a tenth of a point for a quarter of
+the size, so **ship the int8 graph**; the accuracy difference is far inside the
+model's own error bars, and the download is the thing a user on a bad
+connection actually experiences.
+
+Parity against PyTorch is also checked on random inputs at every export — real
+photographs occupy a narrow, well-behaved part of the input space where an
+export bug could hide — and the exporter refuses to write metadata if it fails.
 
 ## The processed multi-view dataset
 
