@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/stores/analysis';
 import { useFamily } from '@/stores/family';
-import { useScans, nowLabel } from '@/stores/scans';
+import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { usePreferences } from '@/stores/preferences';
 import { speak } from '@/lib/voice';
 
@@ -40,6 +40,7 @@ export default function DosePage() {
       emoji: item!.emoji,
       memberId: member.id,
       level: taken ? 'safe' : 'caution',
+      dayKey: todayKey(),
       timeLabel: nowLabel(),
     });
     setCurrent(null);
