@@ -99,7 +99,26 @@ export function looksLikePrescription(text: string): boolean {
   return signals.filter((re) => re.test(t)).length >= 2;
 }
 
-export function parseNutritionLabel(text: string, name = 'Scanned product'): LabelParseResult {
+/**
+ * 라벨 위쪽에서 제품명으로 보이는 줄을 찾는다.
+ * 성분표 자체엔 제품명이 없는 경우가 많아, 못 찾으면 정직하게 일반 이름을 쓴다.
+ */
+function guessProductName(lines: string[]): string {
+  const noise = /nutrition|facts|information|typical|values|per\s*100|serving|amount|ingredient|영양|성분|제공량|원재료/i;
+  const nutrientish = new RegExp(
+    [...PATTERNS.flatMap((p) => p.aliases), ...SODIUM_ALIASES, ...ENERGY_ALIASES].join('|'), 'i',
+  );
+  for (const line of lines.slice(0, 4)) {
+    const t = line.trim();
+    if (t.length < 3 || t.length > 40) continue;
+    if (noise.test(t) || nutrientish.test(t)) continue;
+    if (!/[A-Za-z가-힣]{3}/.test(t)) continue;   // 숫자·기호만인 줄 제외
+    return t;
+  }
+  return 'Packaged food';
+}
+
+export function parseNutritionLabel(text: string, name?: string): LabelParseResult {
   const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
   const servingGrams = parseServingSize(text);
   const per100 = /per\s*100\s*(g|ml)|100\s*g\s*당|100g당/i.test(text);
@@ -270,7 +289,7 @@ export function parseNutritionLabel(text: string, name = 'Scanned product'): Lab
   return {
     profile: {
       source: 'label-ocr',
-      name,
+      name: name ?? guessProductName(lines),
       servingGrams,
       per100: per100g,
       allergenTags: parseAllergens(text.toLowerCase()),
