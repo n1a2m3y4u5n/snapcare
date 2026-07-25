@@ -27,6 +27,7 @@ Run (from nutrition_manager/, snapcare env):
 """
 import argparse
 import csv
+import shutil
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -48,7 +49,29 @@ WORKERS = 16
 FIRST_FIELDS = ["calories", "mass", "fat", "carb", "protein"]
 NOTE_CAFE1 = "cafe1:mounted-upside-down;pre-rotation-pause"
 NOTE_CAFE2 = "cafe2:short-clip"
-FFMPEG = str(Path(sys.executable).parent / "ffmpeg")
+
+
+def _find_ffmpeg() -> str:
+    """Locate ffmpeg, preferring the one belonging to this environment.
+
+    Checking next to the interpreter first is not arbitrary: conda installs it
+    into the env's own bin, and picking that copy over whatever else is on PATH
+    keeps the extraction reproducible across machines with a system ffmpeg of a
+    different vintage. But a pip install has no such copy, and requirements.txt
+    tells those users to get it from their package manager — where it lands on
+    PATH and nowhere near python. Both have to work.
+    """
+    beside_python = Path(sys.executable).parent / "ffmpeg"
+    if beside_python.is_file():
+        return str(beside_python)
+    found = shutil.which("ffmpeg")
+    if found:
+        return found
+    raise SystemExit(
+        "ffmpeg not found. It is needed only to extract side-angle frames.\n"
+        "  conda install -n snapcare -c conda-forge ffmpeg\n"
+        "...or skip this script: train.py falls back to the overhead-only labels.csv."
+    )
 
 
 def load_id_set(path):
@@ -72,7 +95,7 @@ def extract_one(video: Path, out_dir: Path, cam: str):
         return existing
     pattern = str(out_dir / f"cam{cam}_s%02d.jpg")
     cmd = [
-        FFMPEG, "-hide_banner", "-loglevel", "error", "-i", str(video),
+        _find_ffmpeg(), "-hide_banner", "-loglevel", "error", "-i", str(video),
         "-vf", f"select='not(mod(n\\,{STEP}))',scale=-2:{SHORT_SIDE}",
         "-vsync", "0", "-frames:v", str(CAP), "-q:v", str(QSCALE), pattern,
     ]
