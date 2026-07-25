@@ -63,7 +63,36 @@ enum Day : uint8_t {
     EVERY_DAY = 0x7F
 };
 
-enum class Kind : uint8_t { Unknown, Schedule, Weekly, Event };
+enum class Kind : uint8_t { Unknown, Schedule, Weekly, Event, Clock };
+
+/**
+ * Wall-clock time, sent to the device so it can set its RTC.
+ *
+ * Why this exists: the dispenser has no keyboard, no screen a person reads,
+ * and no network. Its DS3231 keeps time across a power cut on a coin cell, but
+ * that cell eventually dies, and a clock that has lost power does not report
+ * *no* time — it reports a wrong one, confidently. A tray acting on a wrong
+ * clock opens compartments at the wrong hours, which is worse than one that
+ * does not open at all.
+ *
+ * So there has to be a way to set it, and the only channel this device has is
+ * the one it already uses: something held in front of the camera. The phone
+ * knows the time; a printed or displayed code carries it across the air gap.
+ *
+ * `SC1*C*202607251930*4`  — 2026-07-25 19:30, a Friday.
+ *
+ * The weekday is carried rather than computed. Working it out from the date
+ * needs calendar arithmetic that costs flash on an AVR and is a classic source
+ * of off-by-one bugs, and the sender already knows it.
+ */
+struct ClockSet {
+    uint16_t year;      // 2000..2099
+    uint8_t  month;     // 1..12
+    uint8_t  day;       // 1..31
+    uint8_t  hour;      // 0..23
+    uint8_t  minute;    // 0..59
+    uint8_t  weekday;   // 0 = Monday .. 6 = Sunday, matching the day mask
+};
 
 /**
  * One compartment's plan.
@@ -131,6 +160,12 @@ size_t encodeEvent(const DoseEvent& e, char* out, size_t cap);
 
 /** Parse `SC1*E*...`. Present so the host tests can prove the round trip. */
 bool decodeEvent(const char* payload, DoseEvent& out);
+
+/** Parse `SC1*C*YYYYMMDDHHMM*W`. Returns false on anything that is not a real date. */
+bool decodeClock(const char* payload, ClockSet& out);
+
+/** Write `SC1*C*...` into `out` (needs 20 bytes). Returns the length, or 0. */
+size_t encodeClock(const ClockSet& c, char* out, size_t cap);
 
 /* ── time helpers ─────────────────────────────────────────────────────── */
 

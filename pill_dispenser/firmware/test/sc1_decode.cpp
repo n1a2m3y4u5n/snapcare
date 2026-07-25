@@ -63,7 +63,21 @@ int main() {
 
         sc1::Schedule schedule;
         sc1::DoseEvent event;
+        sc1::ClockSet clock;
         switch (sc1::messageKind(payload.c_str())) {
+            case sc1::Kind::Clock:
+                if (sc1::decodeClock(payload.c_str(), clock)) {
+                    static const char* FULL_DAY[7] = {
+                        "Monday", "Tuesday", "Wednesday", "Thursday",
+                        "Friday", "Saturday", "Sunday"};
+                    std::printf("  -> clock: %04u-%02u-%02u %02u:%02u, %s\n",
+                                clock.year, clock.month, clock.day,
+                                clock.hour, clock.minute, FULL_DAY[clock.weekday]);
+                } else {
+                    std::printf("  -> REJECTED: not a real moment\n");
+                    ++bad;
+                }
+                break;
             case sc1::Kind::Schedule:
             case sc1::Kind::Weekly:
                 if (sc1::decodeAnySchedule(payload.c_str(), schedule)) {

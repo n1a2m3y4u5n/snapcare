@@ -21,7 +21,13 @@ from pathlib import Path
 import cv2
 
 from .form_sheet_parser import DEFAULT_CONFIG, load_config, parse_form_sheet_file
-from .schedule import encode_schedule, encode_weekly, payload_notes, sheets_to_schedule
+from .schedule import (
+    encode_clock,
+    encode_schedule,
+    encode_weekly,
+    payload_notes,
+    sheets_to_schedule,
+)
 
 
 def _annotate(image_path: Path, out_path: Path, config_file) -> None:
@@ -105,7 +111,7 @@ def write_qr(payload: str, out_path: Path, module_px: int = 8, quiet_modules: in
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
-    ap.add_argument("images", nargs="+", help="one photograph per tray compartment")
+    ap.add_argument("images", nargs="*", help="one photograph per tray compartment")
     ap.add_argument("--config", default=str(DEFAULT_CONFIG))
     ap.add_argument("--emit", choices=["weekly", "strict", "both"], default="both",
                     help="which payload to print (default: both)")
@@ -117,10 +123,24 @@ def main(argv=None) -> int:
                     help="write an annotated rectification of the FIRST image")
     ap.add_argument("--qr", metavar="PNG",
                     help="also render the payload as a QR code to show the device")
+    ap.add_argument("--clock-qr", metavar="PNG",
+                    help="write a QR carrying this computer's current time, for "
+                         "setting the dispenser's clock (it refuses to dispense "
+                         "until something vouches for the time)")
     args = ap.parse_args(argv)
+
+    if args.clock_qr:
+        payload = encode_clock()
+        print(f"clock: {payload}")
+        write_qr(payload, Path(args.clock_qr))
 
     if args.debug:
         _annotate(Path(args.images[0]), Path(args.debug), args.config)
+
+    if not args.images:
+        if not args.clock_qr:
+            ap.error("give at least one sheet photograph, or --clock-qr")
+        return 0
 
     sheets, read_errors = [], []
     for path in args.images:

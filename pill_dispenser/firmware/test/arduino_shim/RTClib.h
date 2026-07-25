@@ -5,6 +5,7 @@ class DateTime {
 public:
     DateTime() {}
     explicit DateTime(uint32_t t) : t_(t) {}
+    DateTime(uint16_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t) {}
     uint32_t unixtime() const { return t_; }
     uint8_t hour() const { return 0; }
     uint8_t minute() const { return 0; }

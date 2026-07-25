@@ -319,6 +319,58 @@ def _valid_time(t: str) -> bool:
     return bool(re.fullmatch(r"\d{4}", t)) and int(t[:2]) < 24 and int(t[2:]) < 60
 
 
+def encode_clock(when=None) -> str:
+    """`SC1*C*YYYYMMDDHHMM*W` — wall-clock time, for setting the device's RTC.
+
+    The dispenser has no keyboard, no screen a person reads, and no network. Its
+    DS3231 holds time across a power cut on a coin cell, but that cell dies
+    eventually — and a clock that has lost power does not report *no* time, it
+    reports a wrong one, confidently. A tray acting on a wrong clock opens
+    compartments at the wrong hours and looks fine doing it, so the firmware
+    refuses to dispense until something vouches for the time.
+
+    This is that something. The only channel the device has is the one it
+    already uses — a code held in front of the camera — so the computer that
+    knows the time prints one.
+
+    The weekday is carried rather than derived on the device: the arithmetic
+    costs flash on an AVR and is a classic source of off-by-one errors, and the
+    sender already knows the answer. Monday is 0, matching the day mask.
+
+    Exactly 20 characters, which is also the device screen's limit, so a clock
+    code fits on either side of the link.
+    """
+    from datetime import datetime
+
+    t = when or datetime.now()
+    return (f"{PROTOCOL}{SEP}C{SEP}"
+            f"{t.year:04d}{t.month:02d}{t.day:02d}{t.hour:02d}{t.minute:02d}"
+            f"{SEP}{t.weekday()}")
+
+
+def decode_clock(payload: str):
+    """Parse a clock payload back to a datetime, or None. Mirrors the firmware."""
+    from datetime import datetime
+
+    parts = payload.strip().upper().split(SEP)
+    if len(parts) != 4 or parts[0] != PROTOCOL or parts[1] != "C":
+        return None
+    stamp, weekday = parts[2], parts[3]
+    if not (len(stamp) == 12 and stamp.isdigit() and len(weekday) == 1 and weekday.isdigit()):
+        return None
+    try:
+        when = datetime(int(stamp[:4]), int(stamp[4:6]), int(stamp[6:8]),
+                        int(stamp[8:10]), int(stamp[10:12]))
+    except ValueError:
+        return None            # 30 February and friends
+    # The DS3231 stores a two-digit year against a century bit.
+    if not 2000 <= when.year <= 2099:
+        return None
+    if int(weekday) != when.weekday():
+        return None            # the stamp and the weekday disagree; trust neither
+    return when
+
+
 def payload_notes(plan: SchedulePlan) -> list[str]:
     """What the caller should tell the user before showing a strict `S` code."""
     notes = []

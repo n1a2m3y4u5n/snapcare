@@ -187,3 +187,51 @@ def test_broken_weekly_payloads_return_none_rather_than_raising(payload):
     # The camera reads whatever is in frame. A parser that throws would stop
     # the scan loop on the first unrelated QR code it sees.
     assert decode_weekly(payload) is None
+
+
+# ── setting the device's clock ──────────────────────────────────────────────
+
+def test_a_clock_payload_has_the_documented_shape():
+    from datetime import datetime
+
+    from form_sheet_parser.schedule import decode_clock, encode_clock
+
+    # 2026-07-25 is a Saturday; weekday() counts Monday as 0.
+    payload = encode_clock(datetime(2026, 7, 25, 19, 30))
+    assert payload == "SC1*C*202607251930*5"
+    # Exactly the device screen's limit, so a clock code fits both directions.
+    assert len(payload) == 20
+    assert decode_clock(payload) == datetime(2026, 7, 25, 19, 30)
+
+
+def test_the_weekday_must_agree_with_the_date():
+    # It is carried rather than derived, because computing it costs flash on an
+    # AVR and is a classic off-by-one. Carrying it means it can disagree, and a
+    # disagreement means one of the two is wrong — so neither is trusted.
+    from form_sheet_parser.schedule import decode_clock
+
+    assert decode_clock("SC1*C*202607251930*5") is not None   # Saturday, correct
+    assert decode_clock("SC1*C*202607251930*3") is None       # claims Thursday
+
+
+@pytest.mark.parametrize("payload", [
+    "SC1*C*202602301200*4",   # 30 February
+    "SC1*C*202513321200*4",   # month 13, day 32
+    "SC1*C*202607252500*4",   # 25 o'clock
+    "SC1*C*199912311200*5",   # before the DS3231's century
+    "SC1*C*210001011200*4",   # after it
+    "SC1*C*2026072519305",    # separator missing
+    "SC1*C**4",
+    "SC1*S*1:0800",           # a schedule is not a clock
+    "",
+])
+def test_no_impossible_moment_can_set_the_clock(payload):
+    # A wrong clock is worse than no clock: the tray opens at the wrong hours
+    # and nothing about it looks broken.
+    from form_sheet_parser.schedule import decode_clock
+    assert decode_clock(payload) is None
+
+
+def test_a_clock_message_is_not_mistaken_for_a_schedule():
+    from form_sheet_parser.schedule import decode_weekly
+    assert decode_weekly("SC1*C*202607251930*5") is None

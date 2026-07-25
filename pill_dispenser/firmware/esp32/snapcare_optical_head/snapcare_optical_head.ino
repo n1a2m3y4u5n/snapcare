@@ -166,22 +166,30 @@ static void showIdle() {
 
 /* ── the two directions ───────────────────────────────────────────────── */
 
-/** Phone -> tray. Anything that is not a schedule for us is ignored. */
+/** Phone -> tray. Anything that is not a schedule or a clock for us is ignored. */
 static void onCodeScanned(const char* payload) {
     const sc1::Kind kind = sc1::messageKind(payload);
-    if (kind != sc1::Kind::Schedule && kind != sc1::Kind::Weekly) {
+    if (kind != sc1::Kind::Schedule && kind != sc1::Kind::Weekly
+        && kind != sc1::Kind::Clock) {
         // The camera sees whatever is in front of it — a product barcode, a
         // poster, someone's wifi credentials. None of it is ours.
         return;
     }
 
-    // Validate here as well as on the tray board. Forwarding a malformed
-    // schedule would waste the only feedback channel the user has: they would
+    // Validate here as well as on the tray board. Forwarding something
+    // malformed would waste the only feedback channel the user has: they would
     // hold the phone up, see nothing happen, and have no way to tell whether
     // the code was wrong or the link was.
-    sc1::Schedule parsed;
-    if (!sc1::decodeAnySchedule(payload, parsed)) {
-        Serial.print("rejected malformed schedule: ");
+    bool valid;
+    if (kind == sc1::Kind::Clock) {
+        sc1::ClockSet clock;
+        valid = sc1::decodeClock(payload, clock);
+    } else {
+        sc1::Schedule parsed;
+        valid = sc1::decodeAnySchedule(payload, parsed);
+    }
+    if (!valid) {
+        Serial.print("rejected malformed payload: ");
         Serial.println(payload);
         return;
     }

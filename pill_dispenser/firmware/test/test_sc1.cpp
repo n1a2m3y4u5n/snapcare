@@ -313,8 +313,83 @@ static void test_the_structs_stay_small_enough_for_an_uno() {
     CHECK(sizeof(sc1::DoseEvent) <= 8);
 }
 
+
+/* ── setting the clock ────────────────────────────────────────────────── */
+
+static void test_a_clock_message_round_trips() {
+    section("wall-clock time survives the trip to the device");
+    char buf[32];
+    sc1::ClockSet set{2026, 7, 25, 19, 30, 4};   // a Friday
+    const size_t n = sc1::encodeClock(set, buf, sizeof buf);
+    // Exactly 20 characters — the same wall the dose event lives under, so a
+    // clock code can be shown on the device's own screen as well as read by it.
+    CHECK(n == sc1::MAX_DEVICE_PAYLOAD);
+    CHECK_STR(buf, "SC1*C*202607251930*4");
+
+    sc1::ClockSet back;
+    CHECK(sc1::decodeClock(buf, back));
+    CHECK(back.year == 2026 && back.month == 7 && back.day == 25);
+    CHECK(back.hour == 19 && back.minute == 30 && back.weekday == 4);
+
+    CHECK(sc1::messageKind(buf) == sc1::Kind::Clock);
+    // It is not a schedule, whatever else it is.
+    sc1::Schedule ignored;
+    CHECK(!sc1::decodeAnySchedule(buf, ignored));
+}
+
+static void test_a_clock_message_fits_the_device_screen() {
+    section("a clock code is small enough to display too");
+    char buf[32];
+    sc1::ClockSet latest{2099, 12, 31, 23, 59, 6};
+    const size_t n = sc1::encodeClock(latest, buf, sizeof buf);
+    CHECK(n > 0 && n <= sc1::MAX_DEVICE_PAYLOAD);
+}
+
+static void test_impossible_dates_are_refused() {
+    section("nothing that is not a real moment sets the clock");
+    // A wrong clock is worse than no clock: the tray opens at wrong hours and
+    // nothing about it looks broken.
+    const char* bad[] = {
+        "SC1*C*202602301200*4",   // 30 February
+        "SC1*C*202513321200*4",   // month 13, day 32
+        "SC1*C*202607252500*4",   // 25 o'clock
+        "SC1*C*202607251960*4",   // 60 minutes
+        "SC1*C*202607251930*7",   // eight days in the week
+        "SC1*C*199912311200*4",   // before the DS3231's century
+        "SC1*C*210001011200*4",   // after it
+        "SC1*C*2026072519304",    // separator missing
+        "SC1*C*20260725193*4",    // a digit short
+        "SC1*C*202607251930*44",  // a digit too many
+        "SC1*C**4",
+        "SC1*S*1:0800",
+    };
+    for (const char* p : bad) {
+        sc1::ClockSet out;
+        if (sc1::decodeClock(p, out)) {
+            ++failures;
+            std::printf("  FAIL accepted impossible clock \"%s\"\n", p);
+        }
+        ++checks;
+    }
+}
+
+static void test_leap_days_are_handled_the_way_the_rtc_does() {
+    section("29 February exists in 2028 and not in 2027");
+    sc1::ClockSet out;
+    CHECK(sc1::decodeClock("SC1*C*202802291200*1", out));
+    CHECK(!sc1::decodeClock("SC1*C*202702291200*0", out));
+    // 2000 is a leap year (divisible by 400); the DS3231 agrees.
+    CHECK(sc1::decodeClock("SC1*C*200002291200*1", out));
+    // 2100 would not be, but it is outside the supported century anyway.
+    CHECK(!sc1::decodeClock("SC1*C*210002281200*1", out));
+}
+
 int main() {
     test_message_kind();
+    test_a_clock_message_round_trips();
+    test_a_clock_message_fits_the_device_screen();
+    test_impossible_dates_are_refused();
+    test_leap_days_are_handled_the_way_the_rtc_does();
     test_schedule_vector_from_the_app();
     test_weekly_vector_from_the_sheet_reader();
     test_either_schedule_form_is_accepted();

@@ -207,11 +207,20 @@ A mismatch has no symptom on hardware except a device that stops listening.
 And onto real hardware without the app at all:
 
 ```bash
+python -m form_sheet_parser.cli --clock-qr clock.png        # set the device's clock
 python -m form_sheet_parser.cli sheets/*.jpg --qr schedule.png
 ```
 
-Print it or put it on a screen, hold it in front of the ESP32-CAM, and the tray
-fills. Without this, bringing up the device needs the phone app, the app needs
+Print them or put them on a screen, hold them in front of the ESP32-CAM, and the
+tray fills.
+
+The clock code is not optional the first time. The DS3231 keeps time across a
+power cut on a coin cell, but that cell dies eventually — and a clock that has
+lost power does not report *no* time, it reports a wrong one, confidently. A
+tray acting on a wrong clock opens compartments at the wrong hours and looks
+perfectly healthy doing it. So the firmware treats an unvouched-for clock as no
+clock and dispenses nothing until a `SC1*C*` code sets it. A tray that stays
+shut is a problem someone notices. Without this, bringing up the device needs the phone app, the app needs
 a schedule, and the schedule is the thing being brought up. The code is decoded
 again before the file is written, because an unreadable QR written without
 complaint is the failure that costs an afternoon at the bench. A full

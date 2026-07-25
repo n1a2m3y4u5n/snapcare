@@ -204,3 +204,29 @@ def test_a_full_tray_still_fits_one_readable_code(tmp_path):
     write_qr(payload, out)
     decoded, _, _ = cv2.QRCodeDetector().detectAndDecode(cv2.imread(str(out)))
     assert decoded == payload
+
+
+@pytest.mark.skipif(shutil.which("make") is None or shutil.which("g++") is None,
+                    reason="no C++ toolchain")
+def test_the_firmware_reads_the_clock_code_we_emit():
+    """The Python clock encoder against the C++ decoder that will run on the tray.
+
+    Worth checking across the boundary rather than within one language: the
+    firmware refuses to dispense until a clock code sets its time, so a
+    disagreement here is a device that never opens and gives no reason.
+    """
+    from datetime import datetime
+
+    from form_sheet_parser.schedule import encode_clock
+
+    build = subprocess.run(["make", "-C", str(FIRMWARE_TEST), "tools"],
+                           capture_output=True, text=True)
+    if build.returncode != 0:
+        pytest.skip("could not build the firmware tool")
+
+    payload = encode_clock(datetime(2026, 7, 25, 19, 30))
+    proc = subprocess.run([str(FIRMWARE_TEST / "build" / "sc1_decode")],
+                          input=payload + "\n", capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "2026-07-25 19:30" in proc.stdout
+    assert "Saturday" in proc.stdout

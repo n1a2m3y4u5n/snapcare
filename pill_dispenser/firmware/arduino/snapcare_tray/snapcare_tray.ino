@@ -100,6 +100,12 @@ RTC_DS3231 rtc;
 sc1::Scheduler scheduler;
 
 static bool rtcPresent = false;
+// A DS3231 whose backup cell has died does not report "no time" — it reports a
+// wrong one, confidently. A tray acting on a wrong clock opens compartments at
+// the wrong hours, and nothing about it looks broken. So the clock is treated
+// as untrusted until something sets it, and an untrusted clock dispenses
+// nothing. `SC1*C*` clears this; see handleLine.
+static bool clockTrusted = false;
 static uint8_t eventSeq = 0;
 static uint32_t lastTick = 0;
 
@@ -243,6 +249,34 @@ static void reportEvent(uint8_t slot, uint16_t minutes, bool taken) {
 
 static void handleLine(char* text) {
     if (text[0] == '\0') return;
+
+    // Setting the clock comes first: without a trusted one nothing else can
+    // happen, and this is the only way to set it on a device with no keyboard,
+    // no readable screen and no network.
+    sc1::ClockSet clk;
+    if (sc1::decodeClock(text, clk)) {
+        if (!rtcPresent) {
+            Serial.println(F("! no DS3231 to set"));
+            return;
+        }
+        rtc.adjust(DateTime(clk.year, clk.month, clk.day, clk.hour, clk.minute, 0));
+        clockTrusted = true;
+        Serial.print(F("clock set: "));
+        Serial.print(clk.year);
+        Serial.print('-');
+        Serial.print(clk.month);
+        Serial.print('-');
+        Serial.print(clk.day);
+        Serial.print(' ');
+        Serial.print(clk.hour);
+        Serial.print(':');
+        Serial.println(clk.minute);
+        setRing(COLOUR_LOADED);
+        chirp(2093, 100);
+        delay(300);
+        setRing(awaitingButton ? COLOUR_WAITING : COLOUR_IDLE);
+        return;
+    }
 
     sc1::Schedule incoming;
     if (sc1::decodeAnySchedule(text, incoming)) {
@@ -406,9 +440,15 @@ void setup() {
     if (!rtcPresent) {
         Serial.println(F("! no DS3231 — the tray will not dispense without a clock"));
     } else if (rtc.lostPower()) {
-        // A clock that has lost power reports a plausible but wrong time, which
-        // is the one thing worse than no clock at all.
-        Serial.println(F("! RTC lost power; set the time before trusting the schedule"));
+        // The dangerous case, and the reason clockTrusted exists: a clock that
+        // has lost power still answers, with a plausible wrong time. Dispensing
+        // on it would open compartments at the wrong hours while everything
+        // looked fine.
+        Serial.println(F("! RTC lost power — not dispensing until the clock is set."));
+        Serial.println(F("  Show the device an SC1*C* code, or paste one here:"));
+        Serial.println(F("  SC1*C*202607251930*4   (2026-07-25 19:30, Friday; 0=Mon)"));
+    } else {
+        clockTrusted = true;
     }
 
     if (restoreSchedule()) {
@@ -443,7 +483,10 @@ void loop() {
 
     if (millis() - lastTick < TICK_MS) return;
     lastTick = millis();
-    if (!rtcPresent) return;
+    // No clock, or one nobody has vouched for since it lost power: do nothing.
+    // A tray that stays shut is a problem someone notices; a tray that opens at
+    // the wrong hour is one they do not.
+    if (!rtcPresent || !clockTrusted) return;
 
     const DateTime t = now();
     const uint32_t day = dayNumber(t);

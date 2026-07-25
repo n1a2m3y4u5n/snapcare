@@ -160,8 +160,87 @@ Kind messageKind(const char* payload) {
         case 'S': return Kind::Schedule;
         case 'W': return Kind::Weekly;
         case 'E': return Kind::Event;
+        case 'C': return Kind::Clock;
         default:  return Kind::Unknown;
     }
+}
+
+namespace {
+
+/** Days in a month, with the leap rule the DS3231 also uses (2000-2099). */
+uint8_t daysInMonth(uint16_t year, uint8_t month) {
+    static const uint8_t LENGTH[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (month < 1 || month > 12) return 0;
+    if (month == 2 && (year % 4) == 0 && ((year % 100) != 0 || (year % 400) == 0)) return 29;
+    return LENGTH[month - 1];
+}
+
+/** Read exactly `n` digits into `value`, advancing `p`. */
+bool readFixed(const char*& p, uint16_t& value, uint8_t n) {
+    uint16_t acc = 0;
+    for (uint8_t i = 0; i < n; ++i) {
+        if (!isDigit(p[i])) return false;
+        acc = uint16_t(acc * 10 + uint16_t(p[i] - '0'));
+    }
+    p += n;
+    value = acc;
+    return true;
+}
+
+}  // namespace
+
+bool decodeClock(const char* payload, ClockSet& out) {
+    const char* p = body(payload, 'C');
+    if (!p) return false;
+
+    uint16_t year, month, day, hour, minute, weekday;
+    if (!readFixed(p, year, 4)) return false;
+    if (!readFixed(p, month, 2)) return false;
+    if (!readFixed(p, day, 2)) return false;
+    if (!readFixed(p, hour, 2)) return false;
+    if (!readFixed(p, minute, 2)) return false;
+    if (*p != SEP) return false;
+    ++p;
+    if (!readFixed(p, weekday, 1)) return false;
+    if (*p != '\0') return false;
+
+    // The DS3231 stores a two-digit year against a century bit; outside this
+    // range the value it reads back would not be the one that was written.
+    if (year < 2000 || year > 2099) return false;
+    if (day < 1 || day > daysInMonth(year, uint8_t(month))) return false;
+    if (hour > 23 || minute > 59 || weekday > 6) return false;
+
+    out.year = year;
+    out.month = uint8_t(month);
+    out.day = uint8_t(day);
+    out.hour = uint8_t(hour);
+    out.minute = uint8_t(minute);
+    out.weekday = uint8_t(weekday);
+    return true;
+}
+
+size_t encodeClock(const ClockSet& c, char* out, size_t cap) {
+    if (!out || cap < 20) return 0;
+    if (c.year < 2000 || c.year > 2099) return 0;
+    if (c.month < 1 || c.month > 12) return 0;
+    if (c.day < 1 || c.day > daysInMonth(c.year, c.month)) return 0;
+    if (c.hour > 23 || c.minute > 59 || c.weekday > 6) return 0;
+
+    size_t n = 0;
+    auto put = [&](char ch) { out[n++] = ch; };
+    put('S'); put('C'); put('1'); put(SEP); put('C'); put(SEP);
+    put(char('0' + c.year / 1000));
+    put(char('0' + (c.year / 100) % 10));
+    put(char('0' + (c.year / 10) % 10));
+    put(char('0' + c.year % 10));
+    put(char('0' + c.month / 10));  put(char('0' + c.month % 10));
+    put(char('0' + c.day / 10));    put(char('0' + c.day % 10));
+    put(char('0' + c.hour / 10));   put(char('0' + c.hour % 10));
+    put(char('0' + c.minute / 10)); put(char('0' + c.minute % 10));
+    put(SEP);
+    put(char('0' + c.weekday));
+    out[n] = '\0';
+    return n;
 }
 
 bool decodeSchedule(const char* payload, Schedule& out) {
