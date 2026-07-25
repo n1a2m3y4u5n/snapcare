@@ -35,6 +35,32 @@ rescaled units, and means a gram of error on a 900 kcal dish counts exactly as
 much as a gram on a 30 kcal one. That is why the targets are regressed in
 physical units by default rather than in log space — see `targets.py`.
 
+### The benchmark number is not the product number
+
+The table above, and every published Nutrition5k figure, is measured on
+**overhead** frames — one photograph taken from directly above the plate. The
+same v2 model scores about **32%** on the side-angle validation frames, which
+sweep the plate at roughly 45°.
+
+Nobody holds a phone perfectly above their dinner. So the honest reading is
+that 22.9% is the comparable-to-others number and something nearer the
+side-angle figure is what a user experiences, with the truth depending on how
+carefully they aim.
+
+That gap is worth about fifteen points, which makes checkpoint selection a real
+decision rather than a detail:
+
+```bash
+python train.py                                  # select_view=overhead, the benchmark
+python train.py --set train.select_view=both     # for a model that ships
+```
+
+Both numbers are printed every epoch either way, because a widening gap means
+the model is specialising to one camera geometry. Closing it — with more
+aggressive viewpoint augmentation, or by weighting the sampler differently — is
+the most valuable thing left to do here, and is worth more to the app than
+another point on the leaderboard metric.
+
 ### What actually moved the number
 
 **The model was being selected on the view it is not scored on.** `build_dataset.py`
@@ -43,6 +69,15 @@ manifest is 97% side — 79,770 against 2,755. The official test split is overhe
 only. Training sampled that mix as it lay, and the validation set had the same
 composition, so side frames outvoted overhead ones 29 to 1 in choosing the
 checkpoint. Selection is now overhead-only and sampling is view-balanced.
+
+The ablation confirms it. Sampling the dataset as it lies scores 19.66 on
+validation against 17.82 balanced — and that is with **2.9x more compute**, a
+full pass over 77k rows per epoch against 24k draws:
+
+| run | sampling | minutes | val MAE% |
+|---|---|---|---|
+| `v2-base` | 50% overhead | 19.6 | **17.82** |
+| `v2-asis` | as the data lies (97% side) | 56.5 | 19.66 |
 
 **A few labels were setting the scale for every dish.** Carbohydrate reaches
 845 g against a 99th percentile of 68 g. Standardization statistics are now

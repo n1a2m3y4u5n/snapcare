@@ -13,14 +13,20 @@ own checkpoint and a row in `runs/history.jsonl`.
 
 Two things about this loop are worth knowing before changing it.
 
-**Model selection is overhead-only.** The processed dataset is 97% side-angle
-frames (79,770 side against 2,755 overhead), because each dish contributes one
-overhead photo and up to 24 video frames. The official test split is overhead
-only. Selecting a checkpoint on the mixed validation set therefore selects for
-the view that is not scored — the side frames outvote the overhead ones 29 to
-1. The selection metric here is mean MAE% on the *overhead* validation frames;
-the side-frame number is still printed, because a big gap between the two says
-the model has specialised to one camera geometry.
+**Model selection is by view, and the view is a decision.** The processed
+dataset is 97% side-angle frames (79,770 against 2,755), because each dish
+contributes one overhead photo and up to 24 video frames. The official test
+split is overhead only. Selecting on the mixed validation set therefore selects
+for the view that is not scored — side frames outvote overhead ones 29 to 1 —
+so `train.select_view` defaults to `overhead` and the published numbers are
+comparable to other people's.
+
+But nobody holds a phone perfectly above their dinner, and the gap between the
+two views is around fifteen points, so the benchmark setting is not the right
+setting for a model that ships. `train.select_view=both` averages the two, and
+the side-angle frames — a 45-degree sweep around the plate — are much closer to
+how the app is actually used. Both numbers are printed either way, because a
+widening gap means the model is specialising to one camera geometry.
 
 **Sampling is view-balanced.** Left alone, an epoch is 97% side frames and the
 overhead distribution is seen barely at all. `train.overhead_ratio` sets the
@@ -74,6 +80,9 @@ TRAIN_DEFAULTS = {
     "grad_clip": None,
     "label_noise": 0.0,       # stddev of noise added to standardized targets
     "crop_scale_min": 0.7,    # smallest fraction of the image RandomResizedCrop keeps
+    # Which validation view chooses the checkpoint: "overhead" matches the
+    # published test protocol, "both" matches how the app is actually used.
+    "select_view": "overhead",
 }
 
 
@@ -218,6 +227,42 @@ def evaluate_by_view(model, loaders: dict, device, codec: TargetCodec):
         view: metrics.per_field(*collect_predictions(model, loader, device, codec))
         for view, loader in loaders.items()
     }
+
+
+def select_metric(by_view: dict, select_view: str):
+    """Turn the per-view scores into the one number that picks a checkpoint.
+
+    Returns (views used, score).
+
+    This is a choice between two different jobs, and it is worth being explicit
+    about which one is being done.
+
+    `overhead` reproduces the published Nutrition5k protocol, whose test split
+    is one overhead frame per dish. It is the setting to use when the number
+    has to be comparable to someone else's.
+
+    `both` averages the overhead and side-angle validation scores. It is the
+    setting for a model that ships, because nobody holds a phone perfectly
+    above their dinner. The side-angle frames sweep the plate at around 45
+    degrees, which is far closer to how the app is actually used — and the gap
+    between the two views is large, around fifteen points, so the choice is not
+    cosmetic. A model tuned for the benchmark is measurably worse at the job.
+    """
+    available = [v for v in ("overhead", "side") if v in by_view]
+    if not available:
+        raise SystemExit("validation produced no scored views")
+
+    if select_view == "both":
+        views = available
+    elif select_view in by_view:
+        views = [select_view]
+    else:
+        # Asked for a view this dataset does not have — fall back rather than
+        # crash after an epoch of training, but do not do it silently.
+        print(f"  (no '{select_view}' validation frames; selecting on {available[0]})")
+        views = [available[0]]
+
+    return views, float(np.mean([by_view[v][1].mean() for v in views]))
 
 
 # ── EMA ─────────────────────────────────────────────────────────────────────
@@ -399,13 +444,13 @@ def main():
         by_view = evaluate_by_view(scored, val_loaders, device, codec)
         train_loss = running / max(n_batches, 1)
 
-        # Selection metric: overhead only, because that is the test protocol.
-        sel_view = "overhead" if "overhead" in by_view else next(iter(by_view))
-        sel = float(by_view[sel_view][1].mean())
+        # Which view chooses the checkpoint. See the note in TRAIN_DEFAULTS:
+        # the benchmark is overhead-only, the app is not.
+        sel_view, sel = select_metric(by_view, tcfg["select_view"])
 
         print(f"  train loss {train_loss:.4f}   lr {sched.get_last_lr()[0]:.2e}")
         for view, (mae, mae_pct) in by_view.items():
-            marker = "*" if view == sel_view else " "
+            marker = "*" if view in sel_view else " "
             detail = "  ".join(f"{t}={p:.1f}%" for t, p in zip(targets, mae_pct))
             print(f" {marker}val[{view:8s}] mean MAE% {mae_pct.mean():5.2f}   {detail}")
 
@@ -414,9 +459,11 @@ def main():
             best_record = {
                 "tag": tag,
                 "epoch": epoch,
+                "select_view": tcfg["select_view"],
                 "val_mean_mae_pct": sel,
                 "val_by_view": {v: float(p.mean()) for v, (_, p) in by_view.items()},
-                "val_fields": metrics.as_dict(targets, *by_view[sel_view]),
+                "val_fields": metrics.as_dict(
+                    targets, *by_view["overhead" if "overhead" in by_view else sel_view[0]]),
             }
             torch.save(
                 {
@@ -433,10 +480,12 @@ def main():
                 },
                 ckpt_path,
             )
-            print(f"  ** saved {ckpt_path.name} (val overhead mean MAE% {sel:.2f})")
+            print(f"  ** saved {ckpt_path.name} "
+                  f"(val {'+'.join(sel_view)} mean MAE% {sel:.2f})")
 
     elapsed = time.time() - started
-    print(f"Done in {elapsed/60:.1f} min. Best val overhead mean MAE% = {best_metric:.2f}")
+    print(f"Done in {elapsed/60:.1f} min. "
+          f"Best val {tcfg['select_view']} mean MAE% = {best_metric:.2f}")
 
     # One line per run, so ablations accumulate into something comparable
     # instead of scrolling out of a terminal.
