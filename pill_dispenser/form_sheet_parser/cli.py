@@ -65,6 +65,44 @@ def _annotate(image_path: Path, out_path: Path, config_file) -> None:
     print(f"wrote {out_path}")
 
 
+def write_qr(payload: str, out_path: Path, module_px: int = 8, quiet_modules: int = 4) -> None:
+    """Render a payload as a QR code the dispenser's camera can read.
+
+    This is what lets the hardware be brought up without the app: read a paper
+    sheet, print or display the result, and hold it in front of the ESP32-CAM.
+    Otherwise testing the device requires the phone app, the app requires a
+    schedule, and the schedule is the thing being tested.
+
+    Sized for the reader rather than the page. The device camera is 640x480, so
+    the code needs chunky modules and a real quiet zone — a QR pressed against
+    the edge of an image is a QR that does not scan, and the four-module border
+    is part of the specification rather than a margin someone chose.
+    """
+    encoder = cv2.QRCodeEncoder.create()
+    matrix = encoder.encode(payload)
+    if matrix is None:
+        raise SystemExit(f"could not encode {len(payload)} characters as a QR code")
+
+    # OpenCV returns 0 for dark modules and 255 for light, already including
+    # its own border; add our own quiet zone so it is unambiguous.
+    padded = cv2.copyMakeBorder(matrix, quiet_modules, quiet_modules,
+                                quiet_modules, quiet_modules,
+                                cv2.BORDER_CONSTANT, value=255)
+    big = cv2.resize(padded, None, fx=module_px, fy=module_px,
+                     interpolation=cv2.INTER_NEAREST)
+    cv2.imwrite(str(out_path), big)
+
+    # Read it straight back. An unreadable code written without complaint is the
+    # one failure that would waste an afternoon at the bench.
+    decoded, _, _ = cv2.QRCodeDetector().detectAndDecode(big)
+    if decoded != payload:
+        raise SystemExit(
+            f"wrote {out_path} but it does not read back correctly "
+            f"(got {decoded!r}) — the payload may be too long for one code"
+        )
+    print(f"wrote {out_path}  ({big.shape[1]}x{big.shape[0]}px, {len(payload)} chars, verified)")
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
     ap.add_argument("images", nargs="+", help="one photograph per tray compartment")
@@ -77,6 +115,8 @@ def main(argv=None) -> int:
                          "(for review on screen — never for sending to hardware)")
     ap.add_argument("--debug", metavar="PNG",
                     help="write an annotated rectification of the FIRST image")
+    ap.add_argument("--qr", metavar="PNG",
+                    help="also render the payload as a QR code to show the device")
     args = ap.parse_args(argv)
 
     if args.debug:
@@ -144,6 +184,13 @@ def main(argv=None) -> int:
             lossy = " — LOSES days/duration" if (plan.loses_days or plan.loses_duration) else ""
             print(f"strict SC1*S* ({len(payload)} chars, app-compatible){lossy}:")
             print(f"  {payload}")
+
+        if args.qr:
+            # The weekly form unless explicitly asked for the strict one: there
+            # is no reason to hand the device the lossy payload when it
+            # understands both.
+            payload = encode_schedule(plan) if args.emit == "strict" else encode_weekly(plan)
+            write_qr(payload, Path(args.qr))
 
     return 0 if plan.ok and not read_errors else 1
 

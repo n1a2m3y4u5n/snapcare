@@ -49,6 +49,7 @@ pill_dispenser/
 python -m form_sheet_parser.cli sheet1.jpg sheet2.jpg
 python -m form_sheet_parser.cli sheets/*.jpg --json
 python -m form_sheet_parser.cli sheet.jpg --debug annotated.png
+python -m form_sheet_parser.cli sheets/*.jpg --qr schedule.png   # show this to the device
 ```
 
 One photograph is one compartment; give it the stack and it merges them. When a
@@ -202,3 +203,17 @@ runs on the dispenser. Three implementations of SC1 — TypeScript in the app,
 Python here, C++ on the device — share no code, so the common vectors in their
 three test suites are the only thing keeping them speaking the same language.
 A mismatch has no symptom on hardware except a device that stops listening.
+
+And onto real hardware without the app at all:
+
+```bash
+python -m form_sheet_parser.cli sheets/*.jpg --qr schedule.png
+```
+
+Print it or put it on a screen, hold it in front of the ESP32-CAM, and the tray
+fills. Without this, bringing up the device needs the phone app, the app needs
+a schedule, and the schedule is the thing being brought up. The code is decoded
+again before the file is written, because an unreadable QR written without
+complaint is the failure that costs an afternoon at the bench. A full
+eight-compartment thrice-daily plan comes to 205 characters — version 10 holds
+395 at the camera's 640×480.

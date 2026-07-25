@@ -11,6 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import cv2
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -155,3 +156,51 @@ def test_the_firmware_refuses_what_we_refuse():
         proc = subprocess.run([str(tool)], input=payload + "\n", capture_output=True, text=True)
         assert proc.returncode != 0, f"C++ accepted {payload}"
         assert "REJECTED" in proc.stdout
+
+
+# ── the code the device actually reads ──────────────────────────────────────
+
+def test_the_payload_renders_as_a_qr_that_reads_back(tmp_path):
+    # Closes the loop for hardware bring-up: without this, testing the device
+    # needs the phone app, the app needs a schedule, and the schedule is the
+    # thing being tested.
+    from form_sheet_parser.cli import write_qr
+
+    plan = sheets_to_schedule([
+        read({"layer": "1", "days": ALL_DAYS, "duration": "30d", "hour": "8"}, seed=21),
+        read({"layer": "3", "days": ["MON", "WED", "FRI"], "duration": "ongoing", "hour": "19"},
+             seed=22),
+    ])
+    payload = encode_weekly(plan)
+    out = tmp_path / "schedule.png"
+    write_qr(payload, out)          # raises if it does not decode back
+
+    assert out.is_file()
+    img = cv2.imread(str(out))
+    decoded, _, _ = cv2.QRCodeDetector().detectAndDecode(img)
+    assert decoded == payload
+
+
+def test_a_full_tray_still_fits_one_readable_code(tmp_path):
+    # The capacity claim, exercised rather than asserted: eight compartments
+    # dosed three times a day is the worst case the sheet can express, and it
+    # has to survive as a single code the device camera can resolve.
+    from form_sheet_parser.cli import write_qr
+
+    sheets = [
+        read({"layer": str(layer), "days": ALL_DAYS, "duration": "90d", "hour": str(hour)},
+             seed=layer * 3 + i)
+        for layer in range(1, 9)
+        for i, hour in enumerate((8, 13, 20))
+    ]
+    plan = sheets_to_schedule(sheets)
+    assert plan.ok, plan.problems
+    assert len(plan.layers) == 8
+
+    payload = encode_weekly(plan)
+    assert len(payload) < 395, f"{len(payload)} chars exceeds version 10 at 640x480"
+
+    out = tmp_path / "full_tray.png"
+    write_qr(payload, out)
+    decoded, _, _ = cv2.QRCodeDetector().detectAndDecode(cv2.imread(str(out)))
+    assert decoded == payload
