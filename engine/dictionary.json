@@ -31,34 +31,6 @@
   },
   "heads": [
     {
-      "name": "hand_wash",
-      "category": "action",
-      "description": "Hygiene: wash hands.",
-      "slot": null
-    },
-    {
-      "name": "glucometer",
-      "category": "device",
-      "description": "Blood-glucose meter (device family).",
-      "slot": [
-        0.25,
-        0.35,
-        0.75,
-        0.75
-      ]
-    },
-    {
-      "name": "thermometer",
-      "category": "device",
-      "description": "Digital thermometer (device family).",
-      "slot": [
-        0.3,
-        0.3,
-        0.7,
-        0.7
-      ]
-    },
-    {
       "name": "capsule_strip",
       "category": "form",
       "description": "Two-tone capsule.",
@@ -169,6 +141,52 @@
       ]
     },
     {
+      "name": "patch",
+      "category": "patch",
+      "description": "Patch.",
+      "slot": null
+    },
+    {
+      "name": "spray",
+      "category": "spray",
+      "description": "Spray.",
+      "slot": null
+    },
+    {
+      "name": "glucometer",
+      "category": "device",
+      "description": "Blood-glucose meter (device family).",
+      "slot": [
+        0.25,
+        0.35,
+        0.75,
+        0.75
+      ]
+    },
+    {
+      "name": "thermometer",
+      "category": "device",
+      "description": "Digital thermometer (device family).",
+      "slot": [
+        0.3,
+        0.3,
+        0.7,
+        0.7
+      ]
+    },
+    {
+      "name": "bp_monitor",
+      "category": "bp",
+      "description": "Bp monitor.",
+      "slot": null
+    },
+    {
+      "name": "hand_wash",
+      "category": "action",
+      "description": "Hygiene: wash hands.",
+      "slot": null
+    },
+    {
       "name": "state_pregnant",
       "category": "state",
       "description": "State: pregnant.",
@@ -178,6 +196,24 @@
       "name": "state_breastfeeding",
       "category": "state",
       "description": "State: breastfeeding.",
+      "slot": null
+    },
+    {
+      "name": "state_child",
+      "category": "state",
+      "description": "State child.",
+      "slot": null
+    },
+    {
+      "name": "state_elderly",
+      "category": "state",
+      "description": "State elderly.",
+      "slot": null
+    },
+    {
+      "name": "state_infant",
+      "category": "state",
+      "description": "State infant.",
       "slot": null
     },
     {
@@ -227,6 +263,72 @@
       "category": "allergen",
       "description": "Allergen sesame.",
       "slot": null
+    },
+    {
+      "name": "allergen_fish",
+      "category": "allergen",
+      "description": "Allergen fish.",
+      "slot": null
+    },
+    {
+      "name": "food_rice",
+      "category": "food",
+      "description": "Food rice.",
+      "slot": null
+    },
+    {
+      "name": "food_bread",
+      "category": "food",
+      "description": "Food bread.",
+      "slot": null
+    },
+    {
+      "name": "food_meat",
+      "category": "food",
+      "description": "Food meat.",
+      "slot": null
+    },
+    {
+      "name": "food_vegetable",
+      "category": "food",
+      "description": "Food vegetable.",
+      "slot": null
+    },
+    {
+      "name": "food_fruit",
+      "category": "food",
+      "description": "Food fruit.",
+      "slot": null
+    },
+    {
+      "name": "food_oil",
+      "category": "food",
+      "description": "Food oil.",
+      "slot": null
+    },
+    {
+      "name": "food_sugar",
+      "category": "food",
+      "description": "Food sugar.",
+      "slot": null
+    },
+    {
+      "name": "food_salt",
+      "category": "food",
+      "description": "Food salt.",
+      "slot": null
+    },
+    {
+      "name": "no_alcohol",
+      "category": "no",
+      "description": "No alcohol.",
+      "slot": null
+    },
+    {
+      "name": "call_help",
+      "category": "call",
+      "description": "Call help.",
+      "slot": null
     }
   ],
   "modifiers": [
@@ -246,9 +348,19 @@
       "description": "Body part: mouth (with arrow)."
     },
     {
+      "name": "body_nose",
+      "category": "body",
+      "description": "Body nose."
+    },
+    {
       "name": "body_skin",
       "category": "body",
       "description": "Body part: skin / topical site (with arrow)."
+    },
+    {
+      "name": "body_stomach",
+      "category": "body",
+      "description": "Body stomach."
     },
     {
       "name": "food_bowl",
@@ -269,6 +381,16 @@
       "name": "storage_fridge",
       "category": "storage",
       "description": "Storage: refrigerator."
+    },
+    {
+      "name": "storage_dark",
+      "category": "storage",
+      "description": "Storage dark."
+    },
+    {
+      "name": "storage_dry",
+      "category": "storage",
+      "description": "Storage dry."
     },
     {
       "name": "time_morning",
@@ -334,6 +456,16 @@
       "name": "symptom_mouth",
       "category": "symptom",
       "description": "Symptom mouth."
+    },
+    {
+      "name": "symptom_fever",
+      "category": "symptom",
+      "description": "Symptom fever."
+    },
+    {
+      "name": "symptom_dizzy",
+      "category": "symptom",
+      "description": "Symptom dizzy."
     }
   ]
 }
