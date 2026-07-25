@@ -187,15 +187,21 @@ export function parseNutritionLabel(text: string, name?: string): LabelParseResu
       // 위험한 건 값이 크게 갈릴 때다 (US 라벨: 지방 1.5 vs 15.9).
       // 그래서 근소한 후보들이 값에서 합의할 때만 채택한다.
       const contenders = scored.filter((s) => s.score - winner.score < AMBIGUITY_MARGIN);
-      for (const k of macroKeys) {
+      const disputed = macroKeys.filter((k) => {
         const vals = contenders.map((s) => s.combo[k]);
         const lo = Math.min(...vals);
         const hi = Math.max(...vals);
         // 0 근처는 비율이 무의미하므로 절대 오차도 함께 본다
         const agrees = hi - lo <= 1 || hi / Math.max(lo, 1e-6) <= 1 + VALUE_AGREEMENT;
-        if (agrees) chosen[k] = winner.combo[k];
-        else rejected.push(k);
-      }
+        return !agrees;
+      });
+
+      // 셋은 항등식으로 **함께** 검증된 값이다. 하나가 흔들리면 나머지를 떠받치던 근거도
+      // 같이 사라지므로 셋 다 버린다. 항목별로 따로 채택하면, 마침 후보가 하나뿐이라
+      // "합의"한 것처럼 보인 값만 살아남는다 — 1.5 g 를 15.9 로 읽은 라벨에서 지방이
+      // 39.75 g/100g 으로 나오고, 제대로 읽힌 탄수·단백이 대신 버려졌다.
+      if (disputed.length > 0) rejected.push(...macroKeys);
+      else for (const k of macroKeys) chosen[k] = winner.combo[k];
     }
     chosen.energy = kcal;
   } else {

@@ -1,5 +1,6 @@
 import type { ItemFlag, Member } from '@/lib/snapcare/types';
-import { referenceFor } from './reference';
+// 확장자를 붙이는 이유: 이 모듈들을 node --test 로 번들러 없이 직접 돌린다.
+import { referenceFor } from './reference.ts';
 import {
   NUTRIENT_KIND,
   type DailyReference,
@@ -7,7 +8,7 @@ import {
   type NutrientAssessment,
   type NutrientKey,
   type NutrientProfile,
-} from './types';
+} from './types.ts';
 
 /**
  * 영양 계산 코어 — 전부 순수 함수다 (네트워크·저장소 접근 없음).

@@ -1,5 +1,6 @@
 import type { Level, Member, ScanItem, Verdict, VerdictReason } from './types';
-import { getCondition } from './conditions';
+// 확장자를 붙이는 이유: 이 모듈을 node --test 로 번들러 없이 직접 돌린다.
+import { getCondition } from './conditions.ts';
 import type { NutrientAssessment, NutrientKey } from '@/lib/nutrition/types';
 
 /** 경고 문구에 쓸 영양소 이름 (사용자에게 보이는 말투) */
