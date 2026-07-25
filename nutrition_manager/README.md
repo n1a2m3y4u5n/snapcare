@@ -24,8 +24,9 @@ Official RGB test split, 507 dishes, one overhead frame each.
 | v2 | 19.0% | 16.5% | 27.2% | 24.2% | 27.8% | **22.9%** |
 | v2 + flip TTA | 18.7% | 16.5% | 26.7% | 24.1% | 27.6% | **22.7%** |
 
-Same backbone and resolution in both rows; the difference is the training
-recipe. The metric is the upstream one — `mean|err| / mean(gt)` per field — and
+Same backbone and resolution throughout; the difference between v1 and v2 is
+entirely the training recipe, and the third row adds only test-time flips.
+The metric is the upstream one — `mean|err| / mean(gt)` per field — and
 `eval.py` agrees with `nutrition5k_dataset/scripts/compute_eval_statistics.py`
 to within 1e-7, so these are comparable to published numbers.
 
