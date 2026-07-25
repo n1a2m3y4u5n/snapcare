@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getItem } from '@/lib/snapcare/catalog';
 import type { ScanItem } from '@/lib/snapcare/types';
+import { validateDensity } from '@/lib/nutrition/validate';
+import type { NutrientAmounts, NutrientProfile } from '@/lib/nutrition/types';
 
 /**
  * 사진 의도 판별 + 추출 (하이브리드).
@@ -43,16 +45,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json({ error: 'image or demoItemId required' }, { status: 400 });
 }
 
-const SYSTEM = `You are SnapCare's photo intake classifier for low-literacy users.
-Given ONE photo of something a person is about to consume, identify what it is and return STRICT JSON only.
-Classify intent as one of: "food", "drink", "medicine", "prescription".
-Detect any of these risk flags present: "peanut","gluten","lactose","shellfish","high_sugar","caffeine","nsaid_bleed","alcohol".
-Return JSON with this exact shape (omit rx unless medicine/prescription; omit nutrition unless food/drink):
-{"name":string,"kind":"food|drink|medicine|prescription","emoji":string,"detectedVia":string,
- "flags":string[],
- "nutrition":{"kcal":number,"protein":string,"sugar":string,"note":string},
- "chips":[{"emoji":string,"label":string}],
- "rx":{"dosageText":string,"durationText":string,"schedule":[{"time":string,"label":string,"emoji":string}]}}`;
+const SYSTEM = `You identify what a person is about to consume, from one photo.
+
+Return STRICT JSON only. No prose, no markdown fences.
+
+{
+  "kind": "food" | "drink" | "medicine" | "prescription",
+  "name": string,                 // short, e.g. "Bowl of jollof rice with chicken"
+  "emoji": string,
+  "confidence": number,           // 0-1, how sure you are of the identification
+  "per100": {                     // NUTRIENT DENSITY per 100 g of this food, numbers only, grams
+    "energy": number,             // kcal per 100 g
+    "carbohydrates": number, "protein": number, "fat": number,
+    "sugars": number, "saturatedFat": number, "fiber": number, "salt": number
+  },
+  "portionGrams": number,         // your estimate of how much is in the photo, in grams
+  "allergenTags": string[],       // OpenFoodFacts style: "en:peanuts","en:nuts","en:gluten","en:milk","en:eggs","en:soybeans","en:crustaceans"
+  "rx": { "dosageText": string, "durationText": string,
+          "schedule": [{"time": string, "label": string, "emoji": string}] }  // only for medicine/prescription
+}
+
+Rules:
+- per100 is DENSITY (per 100 g), never the amount on the plate. portionGrams carries the amount.
+- Energy must be consistent with the macros: energy ~= 4*carbohydrates + 4*protein + 9*fat. The app re-checks this and discards your answer if it does not hold.
+- Use typical composition for the dish you recognise. If you cannot recognise it, set confidence below 0.4.
+- Omit per100 and portionGrams entirely for medicine/prescription.`;
 
 async function analyzeWithClaude(image: string, key: string): Promise<ScanItem> {
   const m = image.match(/^data:(image\/[a-zA-Z.+-]+);base64,(.*)$/);
@@ -85,20 +102,56 @@ async function analyzeWithClaude(image: string, key: string): Promise<ScanItem> 
   if (!res.ok) throw new Error(`anthropic ${res.status}: ${await res.text()}`);
   const json = (await res.json()) as { content?: { type: string; text?: string }[] };
   const text = json.content?.find((c) => c.type === 'text')?.text ?? '';
-  const parsed = JSON.parse(text.replace(/^```json\s*|\s*```$/g, '')) as Partial<ScanItem>;
+  const parsed = JSON.parse(text.replace(/^```json\s*|\s*```$/g, '')) as VisionOut;
+
+  const kind = (parsed.kind ?? 'food') as ScanItem['kind'];
+  const isRx = kind === 'medicine' || kind === 'prescription';
+
+  // 사진 판별은 LLM이 하고, 판정은 우리 엔진이 한다.
+  // LLM이 준 영양 밀도는 물리 제약(범위·부분집합·질량보존·Atwater)을 통과해야만 채택한다.
+  // 통과 못 하면 숫자를 버리고 정성 판정으로 떨어뜨린다 — 틀린 수치보다 없는 편이 낫다.
+  let profile: NutrientProfile | undefined;
+  if (!isRx && parsed.per100) {
+    const check = validateDensity(parsed.per100);
+    if (check.ok) {
+      profile = {
+        source: 'vision',
+        name: parsed.name ?? 'Unknown item',
+        servingGrams: plausiblePortion(parsed.portionGrams),
+        per100: parsed.per100,
+        allergenTags: parsed.allergenTags ?? [],
+      };
+    } else {
+      console.warn('[analyze] vision nutrition rejected:', check.problems.join('; '));
+    }
+  }
 
   return {
     id: `scan_${Math.abs(hash(text))}`,
     name: parsed.name ?? 'Unknown item',
-    kind: (parsed.kind as ScanItem['kind']) ?? 'food',
+    kind,
     emoji: parsed.emoji ?? '📷',
-    detectedVia: parsed.detectedVia ?? 'photo analysis',
-    flags: (parsed.flags as ScanItem['flags']) ?? [],
-    nutrition: parsed.nutrition,
-    alt: parsed.alt,
-    chips: parsed.chips,
+    detectedVia: profile ? 'photo analysis' : 'photo analysis (nutrition unverified)',
+    flags: [],
+    profile,
     rx: parsed.rx,
   };
+}
+
+interface VisionOut {
+  kind?: string;
+  name?: string;
+  emoji?: string;
+  confidence?: number;
+  per100?: NutrientAmounts;
+  portionGrams?: number;
+  allergenTags?: string[];
+  rx?: ScanItem['rx'];
+}
+
+/** 한 끼로 가능한 범위를 벗어난 추정치는 버리고 100g 기본값으로 돌아간다. */
+function plausiblePortion(g: number | undefined): number | undefined {
+  return typeof g === 'number' && g >= 10 && g <= 1500 ? Math.round(g) : undefined;
 }
 
 function hash(s: string): number {
