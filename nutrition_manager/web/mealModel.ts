@@ -22,11 +22,18 @@
  *
  * What it is not
  * --------------
- * An estimate from a photograph, with the error bars to match. Measured on the
- * Nutrition5k test split it is roughly 19% mean absolute error on calories.
- * That is genuinely useful for "is this meal within today's budget" and is not
- * a substitute for a label. It must go through the same validation and be
- * surfaced with the same "estimate" framing as every other number in the app.
+ * An estimate from a photograph, with the error bars to match. On the
+ * Nutrition5k test split it is about 19% mean absolute error on calories — but
+ * that split is photographed from directly above the plate, and the same model
+ * is roughly fifteen points worse on the side-angle frames that resemble how a
+ * phone is actually held. Assume the worse figure for a user aiming by hand.
+ *
+ * That is still useful for "is this meal within today's budget", and it is not
+ * a substitute for a label. It must go through the same validation and carry
+ * the same "estimate" framing as every other number in the app. Its five
+ * outputs do satisfy the Atwater check the validator applies — measured at
+ * 98.8% of dishes within tolerance, slightly better than the dataset's own
+ * labels — so they will not simply be discarded.
  *
  * Usage
  * -----
