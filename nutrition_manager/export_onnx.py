@@ -183,11 +183,17 @@ def score_onnx(onnx_path: Path, ckpt: dict, cfg: dict) -> tuple:
     for _, row in df.iterrows():
         img = Image.open(resolve(row["image_path"])).convert("RGB")
         # Shorter side to resize_to, then centre crop — matching build_transforms.
+        # The rounding matters and is easy to get subtly wrong: torchvision's
+        # center_crop computes its offset with int(round(...)), not floor, and
+        # so does the TypeScript. Flooring here would shift the crop by up to
+        # half a pixel of the resized image — a few source pixels on a phone
+        # photograph — and this function exists precisely to detect that kind of
+        # drift between the three implementations, so it must not introduce any.
         w, h = img.size
         scale = resize_to / min(w, h)
         img = img.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.BILINEAR)
         w, h = img.size
-        left, top = (w - img_size) // 2, (h - img_size) // 2
+        left, top = int(round((w - img_size) / 2.0)), int(round((h - img_size) / 2.0))
         img = img.crop((left, top, left + img_size, top + img_size))
 
         arr = np.asarray(img, dtype=np.float32).transpose(2, 0, 1) / 255.0

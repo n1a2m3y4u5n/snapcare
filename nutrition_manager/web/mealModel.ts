@@ -132,8 +132,17 @@ export class MealModel {
   private preprocess(source: ImageBitmap | HTMLImageElement | HTMLCanvasElement): Float32Array {
     const { img_size: size, resize_shorter_side_to: resizeTo } = this.manifest.input;
 
-    const sw = 'width' in source ? source.width : (source as HTMLImageElement).naturalWidth;
-    const sh = 'height' in source ? source.height : (source as HTMLImageElement).naturalHeight;
+    // An HTMLImageElement has both `width` and `naturalWidth`, and they are not
+    // the same thing: `width` is the laid-out size, which is 0 for an image
+    // that was never inserted into the document and is the CSS size for one
+    // that was. Either would silently change the crop — and the crop is how
+    // much of the plate the model sees, which is how it judges portion size.
+    // ImageBitmap and HTMLCanvasElement have no `naturalWidth`, so fall through.
+    const asImage = source as HTMLImageElement;
+    const sw = asImage.naturalWidth || source.width;
+    const sh = asImage.naturalHeight || source.height;
+    if (!sw || !sh) throw new Error('image has no dimensions yet — await decode() first');
+
     const scale = resizeTo / Math.min(sw, sh);
     const rw = Math.max(1, Math.round(sw * scale));
     const rh = Math.max(1, Math.round(sh * scale));
