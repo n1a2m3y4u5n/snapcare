@@ -1,9 +1,9 @@
 {
-  "half_width": 8,
-  "half_height": 16,
+  "half_width": 6,
+  "half_height": 9,
   "normalize": true,
   "abs_min": 0.3,
-  "margin": 0.12,
+  "margin": 0.08,
   "groups": {
     "layer": {
       "mode": "one",

@@ -64,14 +64,22 @@ known coordinate. Then each bubble's ink is measured.
 
 Two things about that measurement are worth knowing, because both were bugs.
 
-**An empty bubble is not empty.** Its own printed outline is ink, and it lands
-inside the measurement box — 0.257 of it, against a threshold of 0.35. The
-cutoff was not really measuring "is this filled"; it was measuring "is this
+**An empty bubble was not empty.** The sampling window was 16×32 canonical
+pixels — wider than the printed box is tall — so it straddled the outline, and
+that outline is ink. An untouched bubble measured 0.257 against a threshold of
+0.35. The cutoff was not really asking "is this filled"; it was asking "is this
 darker than the printed outline was on the day we calibrated", with 0.09 of
-headroom for a change of printer, paper, or light. Each sheet now takes a low
-percentile of its own 44 bubbles as *its own* idea of unmarked and rescales
-against it. Empty boxes land near 0.05, marks near 0.5, and a sheet shot in
-shadow reads the same as one shot in daylight.
+headroom for a change of printer, paper or light.
+
+Two fixes, and the order matters. The window now sits *inside* the outline
+(12×18, about 5 px of margin all round, against a worst-case 3.5 px error in
+the hand-clicked coordinates), so it measures the mark rather than the print.
+And each sheet still takes a low percentile of its own 44 bubbles as its own
+idea of unmarked, which costs nothing and absorbs a heavier print or a greyer
+scan. An untouched bubble now reads 0.04 and a solid mark 0.81.
+
+That is not a cosmetic margin. It is the difference between needing 85% of the
+box filled and needing 40% — see the table below.
 
 **A covered corner must not be guessed at.** A hand steadying the page hides a
 marker constantly. Inferring the fourth corner by assuming a parallelogram is
@@ -99,12 +107,16 @@ thing at a time until reading breaks:
 | shadow across the page | 90% falloff |
 | underexposure | 0.25× |
 | JPEG quality | 8 |
-| mark coverage | 0.85 of the box |
+| mark coverage | 0.4 of the box |
 
-Lighting, noise and compression are essentially non-issues; the sheet is
-readable in conditions where it is hard to see. The two real limits are camera
-shake and how thoroughly the box was filled — which is why the sheet says *fill
-boxes solid*.
+Lighting, noise and compression are essentially non-issues — the sheet reads in
+conditions where a person would struggle to see it. The one real limit is
+camera shake.
+
+Mark coverage used to be the other one, at 0.85, and sizing the sampling window
+to fit inside the printed outline moved it to 0.4. That is the difference
+between a sheet that has to be filled in properly and one that tolerates the
+way people actually fill in forms.
 
 Past those limits the reader **refuses rather than guesses**. Blur first stops
 the markers being detectable, so the failure is "could not locate the sheet",

@@ -77,16 +77,32 @@ def test_every_group_is_read_independently(seed):
 
 # ── self-calibration ────────────────────────────────────────────────────────
 
-def test_an_empty_bubble_is_mostly_printed_outline():
-    # The reason the reader normalizes at all. On a blank sheet every bubble
-    # box is about a quarter ink before anyone touches it, so a fixed cutoff is
-    # really measuring print darkness, not whether someone marked the page.
+def test_an_unmarked_sheet_reads_as_almost_no_ink():
+    """The measurement the sampling window was sized around.
+
+    An earlier version sampled a 16x32 window, which is wider than the printed
+    box is tall and straddles its outline. That put a quarter of a bubble's ink
+    into every reading before anyone touched the page, so the threshold was
+    really encoding how dark the print was that day. The window now sits inside
+    the outline with ~5px of margin, and an untouched sheet reads as paper.
+    """
     binary = preprocess_form_sheet(canonical_blank())
     result = read_form_sheet(binary)
-    assert 0.15 < result.baseline < 0.45, result.baseline
-    # After normalization the empty bubbles sit near zero, far from the cutoff.
+    assert result.baseline < 0.10, f"unmarked baseline is {result.baseline:.3f}"
+
     every = [v for group in result.scores.values() for v in group.values()]
-    assert max(every) < 0.30, f"an unmarked bubble scored {max(every):.2f}"
+    assert max(every) < 0.15, f"an unmarked bubble scored {max(every):.2f}"
+
+
+def test_the_reader_still_normalizes_even_though_the_baseline_is_now_small():
+    # Sizing the window well made self-calibration nearly free rather than
+    # unnecessary — a heavier print, a grey scan or a darker paper still shifts
+    # every bubble together, and subtracting that shift costs nothing.
+    marked = render_marked(ANSWERS, seed=11)
+    greyed = np.clip(marked.astype(np.float32) * 0.75 + 40, 0, 255).astype(np.uint8)
+    result = parse_form_sheet(greyed)
+    assert result.ok, result.problems
+    assert result.values == ANSWERS
 
 
 def test_the_reading_survives_a_change_in_print_darkness():
