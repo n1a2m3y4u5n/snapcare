@@ -40,7 +40,7 @@
  *
  * Phone to device: the phone's screen is large, so the limit is this camera.
  * At 640x480 a version 10 code (57 modules, 395 alphanumeric characters) reads
- * comfortably, and a full eight-compartment weekly plan is around 190.
+ * comfortably, and a full eight-compartment thrice-daily plan is 205.
  *
  * WIRING — see firmware/README.md. Two things that will cost you a board:
  *   - the Arduino's TX is 5V and this chip's inputs are not 5V tolerant; the

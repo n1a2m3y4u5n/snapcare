@@ -222,7 +222,7 @@ worse, a scannable prefix.
 
 The other direction has room: the phone's screen is large and the limit is this
 camera, which reads version 10 (395 characters) at 640×480. A full eight-
-compartment weekly plan is about 190.
+compartment weekly plan is about 205.
 
 **A dose past its window is reported, never given.** The scheduler dispenses
 only within an hour of the scheduled time. Outside it the dose is reported to

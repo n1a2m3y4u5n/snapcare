@@ -57,7 +57,7 @@ static const uint8_t MAX_SLOTS = 8;
 static const uint8_t MAX_TIMES = 6;
 /** Longest device->phone payload the OLED can actually draw. See the header note. */
 static const size_t MAX_DEVICE_PAYLOAD = 20;
-/** Enough for a full eight-layer weekly plan (~190 chars) plus room. */
+/** Enough for a full eight-layer weekly plan (205 chars, measured) plus room. */
 static const size_t MAX_SCHEDULE_PAYLOAD = 256;
 
 /** Day-of-week bits, Monday first — the order the paper sheet prints them in. */
