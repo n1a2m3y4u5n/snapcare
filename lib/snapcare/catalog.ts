@@ -7,32 +7,26 @@ import type { ScanItem } from './types';
  */
 export const CATALOG: ScanItem[] = [
   {
+    // 실제 제품 — 바코드로 OpenFoodFacts 프로필을 받아 수치 판정까지 간다.
+    // flags 는 초기값일 뿐이고, 영양 엔진이 구성원 기준치로 다시 계산해 덮어쓴다.
     id: 'energy_drink',
-    name: 'Energy Drink',
+    name: 'Red Bull',
     kind: 'drink',
     emoji: '🥤',
     detectedVia: 'barcode lookup',
-    flags: ['high_sugar', 'caffeine'],
-    chips: [
-      { emoji: '✅', label: 'No allergens' },
-      { emoji: '⚡', label: '80mg caffeine' },
-    ],
+    barcode: '9002490100070',
+    flags: ['caffeine'],
+    chips: [{ emoji: '⚡', label: '80mg caffeine' }],
   },
   {
     id: 'granola_bar',
-    name: 'Granola Bar',
+    name: 'Snickers',
     kind: 'food',
     emoji: '🍫',
-    detectedVia: 'ingredient label OCR',
-    flags: ['peanut', 'gluten', 'high_sugar'],
-    nutrition: {
-      kcal: 210,
-      protein: '4g protein',
-      sugar: '12g sugar',
-      note: 'High in sugar for a snack — pair with protein to keep blood sugar steady.',
-    },
-    alt: { name: 'SunButter granola bar', note: 'peanut-free' },
-    chips: [{ emoji: '⚠️', label: 'Contains peanuts' }],
+    detectedVia: 'barcode lookup',
+    barcode: '5000159461122',
+    flags: [],
+    alt: { name: 'SunButter oat bar', note: 'peanut-free' },
   },
   {
     id: 'amoxicillin',

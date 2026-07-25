@@ -18,14 +18,16 @@ export function VerdictHero({ item, verdict }: { item: ScanItem; verdict: Verdic
         {item.emoji}
       </div>
 
+      {/*
+        핵심은 판정과 제품명 둘뿐이다.
+        인식 경로("Detected via …")는 사용자가 행동을 정하는 데 쓰이지 않는 메타정보라 뺐다 —
+        읽을 것이 적을수록 색과 아이콘이 먼저 눈에 들어온다.
+      */}
       <h1 className="mt-5 text-2xl font-bold" style={{ color: 'var(--color-sc-ink)' }}>
         {verdict.headline}
       </h1>
       <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}>
         {item.name}
-      </p>
-      <p className="mt-1 text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-        ⓘ Detected via {item.detectedVia}
       </p>
 
       {item.chips && item.chips.length > 0 && (

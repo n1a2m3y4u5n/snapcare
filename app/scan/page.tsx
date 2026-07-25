@@ -1,13 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip } from '@/components/sc/PictogramStrip';
+import { NutrientBars } from '@/components/sc/NutrientBars';
+import { useNutrition } from '@/lib/nutrition/useNutrition';
+import { assessForMember, flagsForMember } from '@/lib/nutrition/compute';
+import type { NutrientProfile } from '@/lib/nutrition/types';
 import { useAnalysis } from '@/stores/analysis';
 import { useFamily } from '@/stores/family';
-import { useScans, nowLabel } from '@/stores/scans';
+import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
 import { usePreferences } from '@/stores/preferences';
 import { requestPermission, scheduleNotification } from '@/lib/notifications';
@@ -15,7 +19,7 @@ import { computeVerdict, LEVEL_META } from '@/lib/snapcare/verdict';
 import { itemToDsl } from '@/lib/snapcare/sigil';
 import { itemVoiceScript } from '@/lib/snapcare/say';
 import { speak } from '@/lib/voice';
-import type { Member, ScanItem, Verdict } from '@/lib/snapcare/types';
+import type { ItemFlag, Member, ScanItem, Verdict } from '@/lib/snapcare/types';
 
 export default function ScanResultPage() {
   const router = useRouter();
@@ -28,19 +32,33 @@ export default function ScanResultPage() {
   const autoTts = usePreferences((s) => s.autoTts);
   const member = members.find((m) => m.id === activeMemberId) ?? members[0];
 
+  // 영양 엔진이 이 사람 기준으로 계산한 플래그를 아이템에 합쳐 판정한다.
+  // (카탈로그에 손으로 박아둔 플래그가 아니라 실제 수치·알레르기 태그에서 나온 것)
+  const nutrition = useNutrition({ barcode: item?.barcode, profile: item?.profile }, member);
+  const derivedKey = nutrition.flags?.join(',') ?? '';
+  const scanned = useMemo(() => {
+    if (!item) return null;
+    if (!derivedKey) return item;
+    return { ...item, flags: [...new Set([...item.flags, ...derivedKey.split(',') as ItemFlag[]])] };
+  }, [item, derivedKey]);
+
+  // 결과를 지우고 나갈 때 아래 가드 이펙트가 먼저 깨어 카메라로 되돌리는 경쟁이 있었다.
+  // 의도적으로 떠나는 중이면 가드를 끈다.
+  const leaving = useRef(false);
+
   useEffect(() => {
-    if (!item) router.replace('/camera');
+    if (!item && !leaving.current) router.replace('/camera');
   }, [item, router]);
 
   useEffect(() => {
-    if (!item || !member || !autoTts) return;
-    speak(itemVoiceScript(item, computeVerdict(item, member), member), 'en-US');
+    if (!scanned || !member || !autoTts) return;
+    speak(itemVoiceScript(scanned, computeVerdict(scanned, member, nutrition.assessments), member), 'en-US');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item?.id, member?.id, autoTts]);
+  }, [scanned?.id, derivedKey, member?.id, autoTts]);
 
-  if (!item || !member) return null;
+  if (!item || !scanned || !member) return null;
 
-  const verdict = computeVerdict(item, member);
+  const verdict = computeVerdict(scanned, member, nutrition.assessments);
   const isRx = item.kind === 'prescription' || item.kind === 'medicine';
 
   function finish() {
@@ -53,28 +71,39 @@ export default function ScanResultPage() {
       memberId: member.id,
       level: verdict.level,
       timeLabel: nowLabel(),
+      dayKey: todayKey(),
+      // 하루 누적 분석이 이 기록을 합산할 수 있게 바코드와 먹은 양을 남긴다.
+      barcode: item!.barcode,
+      grams: nutrition.grams,
     });
+    leaving.current = true;
     setCurrent(null);
     router.push('/home');
   }
 
-  async function createReminders() {
-    const sched = item!.rx?.schedule ?? [];
+  function createReminders() {
+    const sched = scanned!.rx?.schedule ?? [];
     if (sched.length > 0) {
-      const granted = await requestPermission();
+      // 알람은 먼저 만든다. OS 알림 권한은 부가 기능이라 이걸 기다리면 안 된다 —
+      // 사용자가 권한 창을 닫거나 무시하면 await 가 풀리지 않아 버튼이 죽은 것처럼 보였다.
       addReminders(
         sched.map((s, i) => ({
           id: `rem_${cryptoId()}_${i}`,
-          name: item!.name,
-          emoji: item!.emoji,
           memberId: member.id,
           time: s.time,
+          item: scanned!,
         })),
       );
-      // 데모: 첫 알림을 곧바로(8초 뒤) 실제로 띄운다
-      if (granted) {
-        scheduleNotification('SnapCare · Dose reminder', `${item!.name} — ${sched[0].label} (${sched[0].time})`, 8000);
-      }
+      // 권한이 있으면 데모용으로 첫 알림을 8초 뒤 실제로 띄운다 (없으면 앱 안에서만 동작)
+      void requestPermission().then((granted) => {
+        if (granted) {
+          scheduleNotification(
+            'SnapCare · Dose reminder',
+            `${scanned!.name} — ${sched[0].label} (${sched[0].time})`,
+            8000,
+          );
+        }
+      });
     }
     finish();
   }
@@ -82,45 +111,48 @@ export default function ScanResultPage() {
   const header =
     item.kind === 'prescription' ? 'PRESCRIPTION RECOGNIZED'
     : item.kind === 'medicine' ? 'MEDICINE RECOGNIZED'
-    : item.kind === 'drink' ? `DRINK · CHECKED FOR ${member.name.toUpperCase()}`
-    : `MEAL · CHECKED FOR ${member.name.toUpperCase()}`;
+    : `FOR ${member.name.toUpperCase()}`;
 
   return (
     <MobileScreen>
       <div className="flex items-center justify-between px-5 pt-14 pb-1">
         <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none" style={{ color: 'var(--color-sc-muted)' }}>×</button>
         <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>{header}</span>
-        <button onClick={() => speak(itemVoiceScript(item, verdict, member), 'en-US')} aria-label="Replay voice" className="text-xl leading-none">🔊</button>
+        <button onClick={() => speak(itemVoiceScript(scanned, verdict, member), 'en-US')} aria-label="Replay voice" className="text-xl leading-none">🔊</button>
       </div>
 
       {isRx ? (
-        <RxResult item={item} verdict={verdict} onDone={createReminders} />
+        <RxResult item={scanned} verdict={verdict} onDone={createReminders} />
       ) : (
-        <FoodResult item={item} verdict={verdict} member={member} members={members} onDone={finish} />
+        <FoodResult
+          item={scanned}
+          verdict={verdict}
+          member={member}
+          members={members}
+          profile={nutrition.profile}
+          onDone={finish}
+        />
       )}
     </MobileScreen>
   );
 }
 
 function FoodResult({
-  item, verdict, member, members, onDone,
+  item, verdict, member, members, profile, onDone,
 }: {
-  item: ScanItem; verdict: Verdict; member: Member; members: Member[]; onDone: () => void;
+  item: ScanItem; verdict: Verdict; member: Member; members: Member[];
+  profile?: NutrientProfile; onDone: () => void;
 }) {
   return (
     <div className="flex flex-1 flex-col">
       <VerdictHero item={item} verdict={verdict} />
 
       <div className="mt-2 flex flex-col gap-3 px-5">
-        {/* 영양 매크로 */}
-        {item.nutrition && (
-          <div className="flex gap-2">
-            {item.nutrition.kcal != null && <Macro label={`${item.nutrition.kcal} kcal`} emoji="🔥" />}
-            {item.nutrition.protein && <Macro label={item.nutrition.protein} emoji="💪" />}
-            {item.nutrition.sugar && <Macro label={item.nutrition.sugar} emoji="🧊" />}
-          </div>
-        )}
-        {item.nutrition?.note && (
+        {/* 영양 엔진 — 바코드가 있으면 실제 수치를 구성원 기준치와 대조해 보여준다 */}
+        <NutrientBars barcode={item.barcode} profile={item.profile} member={member} />
+
+        {/* 바코드가 없는 경우의 정성 폴백 */}
+        {!item.barcode && item.nutrition?.note && (
           <div className="flex items-start gap-2 rounded-2xl bg-white px-4 py-3 shadow-sm">
             <span className="text-lg" style={{ color: 'var(--color-caution)' }}>●</span>
             <span className="text-sm" style={{ color: 'var(--color-sc-ink)' }}>{item.nutrition.note}</span>
@@ -142,12 +174,21 @@ function FoodResult({
           <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>CHECKED FOR FAMILY</p>
           <div className="mt-2 flex gap-3">
             {members.map((m) => {
-              const v = computeVerdict(item, m);
+              // 기준치가 사람마다 다르므로 플래그도 구성원별로 다시 계산한다.
+              // (같은 제품이 성인에겐 safe, 7살에겐 caution 이 될 수 있다)
+              const flags = profile
+                ? [...new Set([...item.flags, ...flagsForMember(profile, m)])]
+                : item.flags;
+              const v = computeVerdict(
+                { ...item, flags },
+                m,
+                profile ? assessForMember(profile, m) : undefined,
+              );
               const meta = LEVEL_META[v.level];
               return (
                 <div key={m.id} className="flex flex-col items-center gap-1">
                   <span className="relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: m.color }}>
-                    {m.name[0]}
+                    {m.emoji}
                     <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white" style={{ background: meta.color }} />
                   </span>
                   <span className="text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>{m.name.split(' ')[0]}</span>
@@ -160,7 +201,6 @@ function FoodResult({
 
       <div className="mt-auto px-5 pb-8 pt-4">
         <PrimaryButton onClick={onDone} level={verdict.level}>Done</PrimaryButton>
-        <p className="mt-2 text-center text-xs" style={{ color: 'var(--color-sc-muted)' }}>Not right? Report this scan</p>
       </div>
     </div>
   );
@@ -218,14 +258,6 @@ function RxResult({
   );
 }
 
-function Macro({ label, emoji }: { label: string; emoji: string }) {
-  return (
-    <div className="flex flex-1 flex-col items-center gap-1 rounded-2xl bg-white py-3 shadow-sm">
-      <span className="text-lg">{emoji}</span>
-      <span className="text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{label}</span>
-    </div>
-  );
-}
 
 function PrimaryButton({ children, onClick, level }: { children: React.ReactNode; onClick: () => void; level: 'safe' | 'caution' | 'avoid' }) {
   const bg = level === 'avoid' ? 'var(--color-avoid)' : level === 'caution' ? 'var(--color-caution)' : 'var(--color-sc-primary)';
