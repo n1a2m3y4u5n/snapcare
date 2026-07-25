@@ -78,7 +78,13 @@ class DeployableModel(nn.Module):
         x = (pixels - self.pix_mean) / self.pix_std
         z = self.backbone(x) * self.t_std + self.t_mean
         if self.log_space:
-            z = torch.expm1(z)
+            # `torch.expm1` is what targets.py uses and is the numerically
+            # better spelling, but the ONNX exporter has no lowering for
+            # aten::expm1 at opset 17 — a log-space checkpoint simply could not
+            # be exported. exp(z) - 1 loses precision only as z approaches
+            # zero, where the two differ by a fraction of a gram, so the
+            # trade is worth making to have a graph at all.
+            z = torch.exp(z) - 1.0
         # Nothing on a plate weighs a negative number of grams, and a negative
         # value would corrupt the day's running total in the app rather than
         # showing up as an obviously wrong single reading.
