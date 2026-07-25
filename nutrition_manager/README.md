@@ -176,8 +176,10 @@ python export_onnx.py --checkpoint checkpoints/best.pt --quantize --score
 ```
 
 Writes `export/<name>.onnx`, an int8 variant, and `<name>.json` describing how
-to call it. Then copy `web/mealModel.ts` into the app's `lib/nutrition/` and
-serve the two files from `public/models/`:
+to call it. `export/` is gitignored along with `checkpoints/` — a 111 MB graph
+does not belong in a repository, and the whole thing is reproducible from a
+checkpoint in under a minute. Copy the int8 graph and its JSON into the app's
+`public/models/`, and `web/mealModel.ts` into `lib/nutrition/`:
 
 ```ts
 const model = await MealModel.load('/models/web.json');
