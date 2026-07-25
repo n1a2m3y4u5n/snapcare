@@ -7,6 +7,7 @@ import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { NutrientBars } from '@/components/sc/NutrientBars';
 import { Say } from '@/components/sc/Say';
+import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
 import { assessForMember, flagsForMember } from '@/lib/nutrition/compute';
 import type { NutrientProfile } from '@/lib/nutrition/types';
@@ -263,7 +264,7 @@ function RxResult({
               <div key={i} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
                 <span className="text-xl">{s.emoji}</span>
                 <Say className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{`${s.label} at ${s.time}`}</Say>
-                <span className="text-sm" style={{ color: 'var(--color-sc-muted)' }}>{s.time}</span>
+                <TimeGlyph label={s.time} className="text-sm" />
               </div>
             ))}
           </div>

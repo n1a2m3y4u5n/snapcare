@@ -1,6 +1,7 @@
 'use client';
 
 import { MobileScreen } from '@/components/sc/MobileScreen';
+import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { NutrientBar } from '@/components/sc/NutrientBar';
 import { useScans } from '@/stores/scans';
 import { useFamily } from '@/stores/family';
@@ -117,8 +118,8 @@ export default function NutritionPage() {
                   </span>
                   <span className="flex-1">
                     <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{record.name}</span>
-                    <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-                      {record.grams} g · {record.timeLabel.replace('Today · ', '')}
+                    <span className="mt-0.5 block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                      <TimeGlyph label={record.timeLabel} />
                     </span>
                   </span>
                   <span className="text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}>

@@ -12,6 +12,7 @@ import type { Reminder } from '@/stores/reminders';
 import type { ScanRecord } from '@/lib/snapcare/types';
 import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
 import { SpeakIcon } from '@/components/sc/Say';
+import { TimeGlyph } from '@/components/sc/TimeGlyph';
 
 export default function HomePage() {
   const router = useRouter();
@@ -114,13 +115,36 @@ export default function HomePage() {
                     <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                       {s.name}
                     </span>
-                    <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-                      {member ? `${member.name} · ` : ''}{s.timeLabel}
+                    {/* 이름은 아바타로, 시각은 시계로 — 둘 다 이미 그림으로 가진 정보다.
+                        행 자체가 버튼이라 여기서는 누를 수 없는 형태를 쓴다. */}
+                    <span className="mt-0.5 flex items-center gap-1.5">
+                      {member && (
+                        <span
+                          className="flex h-4 w-4 items-center justify-center rounded-full text-[9px]"
+                          style={{ background: member.color }}
+                          title={member.name}
+                        >
+                          {member.emoji}
+                        </span>
+                      )}
+                      <TimeGlyph label={s.timeLabel} mute />
                     </span>
                   </span>
                 </button>
                 <SpeakIcon text={`${s.name}. ${member ? `For ${member.name}. ` : ''}${meta.label}.`} />
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: meta.color }} />
+                {/*
+                  판정은 이 목록에서 가장 중요한 정보인데 2.5px 색 점이었다.
+                  색만으로 뜻을 싣는 것은 색 규약을 아는 사람에게만 통하고, 적록색약이면
+                  안전과 회피가 같은 점이 된다. 색은 그대로 두고 기호를 얹는다 —
+                  ✅ ⚠️ ⛔ 는 색과 무관하게 모양이 다르다.
+                */}
+                <span
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm"
+                  style={{ background: meta.bg }}
+                  title={meta.label}
+                >
+                  {meta.emoji}
+                </span>
               </div>
             );
           })}
