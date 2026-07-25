@@ -8,6 +8,7 @@ import { useReminders } from '@/stores/reminders';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useFamily } from '@/stores/family';
 import { encodeSchedule, decodeEvent, messageKind, type SlotSchedule } from '@/lib/hardware/protocol';
+import { toSchedule, type FormSheetValues } from '@/lib/hardware/formSheet';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
 import { speak } from '@/lib/voice';
 
@@ -19,6 +20,15 @@ import { speak } from '@/lib/voice';
  *
  * 두 방향 모두 인터넷도, 페어링도, 같은 네트워크도 필요 없다.
  */
+function toDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result as string);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
 export default function DevicePage() {
   const router = useRouter();
   const reminders = useReminders((s) => s.reminders);
@@ -28,6 +38,8 @@ export default function DevicePage() {
 
   const [reading, setReading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  // 폼시트에서 읽어낸 일정 — 있으면 알람 대신 이것을 기기로 내보낸다.
+  const [sheet, setSheet] = useState<{ schedule: SlotSchedule[]; summary: string } | null>(null);
 
   // 알람을 기기 칸으로 묶는다 — 약 하나가 칸 하나다.
   const slots: SlotSchedule[] = useMemo(() => {
@@ -41,7 +53,43 @@ export default function DevicePage() {
   }, [reminders]);
 
   const names = useMemo(() => [...new Set(reminders.map((r) => r.item.name))], [reminders]);
-  const payload = slots.length > 0 ? encodeSchedule(slots) : null;
+
+  // 폼시트를 읽었으면 그것이 우선한다 — 의사가 직접 채워준 일정이기 때문이다.
+  const effective = sheet?.schedule.length ? sheet.schedule : slots;
+  const payload = effective.length > 0 ? encodeSchedule(effective) : null;
+
+  /** 의사가 준 종이 폼시트를 찍어 일정을 받는다 (인터넷도 DB도 필요 없는 경로). */
+  async function readFormSheet(file: File) {
+    setReading(true);
+    setResult(null);
+    try {
+      const dataUrl = await toDataUrl(file);
+      const res = await fetch('/api/form-sheet', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl }),
+      });
+      if (res.status === 501) {
+        setResult('Form sheet reading is not available on this server.');
+        return;
+      }
+      if (!res.ok) {
+        setResult('Could not read the sheet — lay it flat so all four corner marks are in frame.');
+        return;
+      }
+      const { values } = (await res.json()) as { values: FormSheetValues };
+      const reading = toSchedule(values);
+      if (reading.schedule.length === 0) {
+        setResult(`Could not read: ${reading.missing.join(', ')} not marked.`);
+        return;
+      }
+      setSheet({ schedule: reading.schedule, summary: reading.summary });
+      setResult(`Read from the sheet — ${reading.summary}`);
+      speak(`Schedule read. ${reading.summary}`, 'en-US');
+    } finally {
+      setReading(false);
+    }
+  }
 
   /** 하드웨어 없이 읽기 경로를 보여주기 위한 샘플 (기기가 표시할 크기 그대로 만든 QR) */
   async function readSample() {
@@ -128,6 +176,33 @@ export default function DevicePage() {
             Scan a prescription first — the schedule it creates is what the device needs.
           </p>
         )}
+
+        {/* 종이 → 폰 : 의사가 채운 폼시트 */}
+        <p className="mt-8 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+          OR READ THE DOCTOR&apos;S SHEET
+        </p>
+        <label className="mt-2 flex w-full cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-4 shadow-sm" style={{ opacity: reading ? 0.5 : 1 }}>
+          <span className="text-2xl">📄</span>
+          <span className="flex-1">
+            <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+              Photograph the paper form sheet
+            </span>
+            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+              {sheet ? sheet.summary : 'The clinic fills it in — you only take the photo'}
+            </span>
+          </span>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            disabled={reading}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void readFormSheet(f);
+            }}
+          />
+        </label>
 
         {/* 기기 → 폰 */}
         <p className="mt-8 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
