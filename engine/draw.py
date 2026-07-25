@@ -161,6 +161,9 @@ class Canvas:
     def hole_blob(self, pts) -> None:
         self.blob(pts, color=HOLE)
 
+    def hole_wedge(self, cx: float, cy: float, r: float, start: float, end: float) -> None:
+        self.wedge(cx, cy, r, start, end, color=HOLE)
+
     # ── 자주 쓰는 조합 ───────────────────────────────────────
     def cross(self, cx: float, cy: float, r: float, w: float = STROKE, color=INK) -> None:
         k = r * 0.707

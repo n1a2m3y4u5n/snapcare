@@ -283,11 +283,15 @@ def _overlay_half(img: Image.Image) -> None:
     """
     w, h = img.size
     d = ImageDraw.Draw(img)
+    # 절개선은 테두리 안에서 끝나야 한다. 패널 높이 전체에 그으면 프레임을 뚫고 나가
+    # 그림이 아니라 종이가 잘린 것처럼 보인다.
+    y0 = int(h * HALF_INSET)
+    y1 = h - y0
     gap = max(2, int(w * 0.045))
-    d.rectangle((w // 2 - gap // 2, 0, w // 2 + gap // 2, h), fill=(0, 0, 0, 0))
-    dash = int(h * 0.055)
-    for y in range(0, h, dash * 2):
-        d.rectangle((w // 2 - gap // 6, y, w // 2 + gap // 6, y + dash), fill=INK)
+    d.rectangle((w // 2 - gap // 2, y0, w // 2 + gap // 2, y1), fill=(0, 0, 0, 0))
+    dash = max(2, int(h * 0.055))
+    for y in range(y0, y1, dash * 2):
+        d.rectangle((w // 2 - gap // 6, y, w // 2 + gap // 6, min(y + dash, y1)), fill=INK)
 
 
 def _placeholder(size: int, macro: str, label: str = "") -> Image.Image:
@@ -316,6 +320,9 @@ MIN_MOD_RATIO = 0.14
 
 #: 잉크를 잘라낸 뒤 사방에 남기는 여백 (잘린 변의 비율)
 TRIM_MARGIN = 0.05
+
+#: 절반 절개선이 위아래로 물러나는 비율 (프레임 안에서 끝나게)
+HALF_INSET = 0.13
 
 #: 프레임 안에서 head 를 들여 놓는 비율.
 #: 잉크에 맞춰 자르기 시작하면서 글리프가 테두리에 닿을 만큼 커졌다 — 예전에는
@@ -409,8 +416,9 @@ def _render_head(manifest: Manifest, node: Node, size: int, framed: bool = True)
         # 창은 슬롯 그대로다. 수식어에 맞춰 넓히면 head 를 파먹는다.
         pad = int(mod_side * 0.08)
         win = (sx0 - pad, sy0 - pad, sx1 + pad, sy1 + pad)
+        # 모서리를 넉넉히 둥글린다. 각진 창은 둥근 head(정제 등)를 베어낸 것처럼 보인다.
         ImageDraw.Draw(panel).rounded_rectangle(
-            win, radius=int(mod_side * 0.10), fill=(0, 0, 0, 0))
+            win, radius=int(min(win[2] - win[0], win[3] - win[1]) * 0.22), fill=(0, 0, 0, 0))
 
         mod = manifest.get(first_mod.name)
         m_img, _ = _trim(_load(manifest, mod, mod_side))
