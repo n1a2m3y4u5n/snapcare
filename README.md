@@ -1,36 +1,197 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SnapCare
 
-## Getting Started
+**One photo in — pictograms, voice, and a colour out.**
 
-First, run the development server:
+The 16th e-ICON World Contest · Global Team **H1** (Korea × Moldova)
+SDG 3 — Good Health and Well-being
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Live: **https://snapcare.fly.dev**
+
+---
+
+## The problem
+
+773 million adults cannot read (UNESCO, 2022). Every health tool built for them still
+assumes they can: a prescription is text, a nutrition label is a table, and every mobile
+health app is a wall of words. The information exists — it just never arrives.
+
+SnapCare removes reading from the loop. The user photographs whatever they are about to
+put in their body — a prescription, a medicine box, a packaged food, a plate of food — and
+the app answers in three channels at once: **a pictogram, a spoken sentence, and one colour**.
+
+## What it does
+
+| | |
+|---|---|
+| **Photograph a prescription** | Extracts drug, dose, timing and warnings; renders them as composed pictograms and a short spoken script; sets the dose reminders |
+| **Photograph a nutrition label** | Reads the table offline, converts it to the person's own daily reference, and answers green / amber / red |
+| **Photograph a meal** | Identifies the dish, estimates its composition, and judges it the same way |
+| **Per person, not per product** | The same biscuit is safe for an adult and a caution for a seven-year-old, because the limits are computed from *their* energy requirement |
+| **Daily view** | Today's intake accumulated against that person's reference — catching what single scans cannot |
+
+Nothing in the flow requires reading or typing, including sign-in (an ordered picture key).
+
+---
+
+## Architecture
+
+```
+                 photo
+                   │
+        ┌──────────┴───────────┐
+        │  Tesseract OCR       │  offline, in-browser
+        └──────────┬───────────┘
+                   │  what kind of text is this?
+     ┌─────────────┼──────────────┬──────────────────┐
+     │             │              │                  │
+ prescription  nutrition label  neither          no text
+     │             │              │                  │
+     │             │              └────────┬─────────┘
+     │             │                       │
+     │      label parser              Claude Vision      ← only these need a network
+     │      (+ validation)            (+ same validation)
+     │             │                       │
+     └─────────────┴───────────┬───────────┘
+                               │
+                    ┌──────────┴──────────┐
+                    │  NUTRITION ENGINE   │  reference · scaling · verdict
+                    │  SIGIL · VOCA       │  pictograms · voice
+                    └──────────┬──────────┘
+                               │
+                    pictogram + voice + colour
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The three input paths converge on one internal representation, so every downstream
+behaviour — verdicts, daily accumulation, pictograms, speech — is written once.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### The three engines
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**SIGIL** — pictogram synthesis (`engine/`)
+A LaTeX-influenced DSL (`\three_times_daily{\pill_bottle{\time_morning}}`) is parsed by a
+recursive-descent parser into an AST, then composed into a PNG with Python/Pillow. Existing
+medical pictogram standards (e.g. the USP set) *select* one of a fixed number of static
+images; SIGIL *composes* new ones, so an instruction that has no single symbol still gets a
+single picture. Adding a morpheme to the dictionary extends the whole system with no code
+change.
 
-## Learn More
+**VOCA** — voice script synthesis (`lib/snapcare/say.ts`, `lib/voice.ts`)
+Rather than reading OCR output aloud, VOCA keeps only what is needed to act, and rebuilds it
+as a short script for the Web Speech API. Pictogram and speech are two renderings of the same
+semantic object, so they cannot contradict each other.
 
-To learn more about Next.js, take a look at the following resources:
+**Nutrition engine** — reference, scaling, judgement (`lib/nutrition/`)
+WHO expresses its limits as *percentages of energy*, so we compute rather than tabulate: fix
+a person's energy requirement and their sugar, saturated-fat and salt ceilings follow. This is
+why the same food is judged differently for different people.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+sugars limit    = energy × 10% ÷ 4 kcal/g     WHO 2015, free sugars
+saturated fat   = energy × 10% ÷ 9 kcal/g     WHO 2023
+salt            = 5 g × (energy / 2000)       WHO 2012, scaled for children
+protein target  = weight × 0.83 g/kg          WHO/FAO/UNU 2007
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Reading numbers we are willing to act on
 
-## Deploy on Vercel
+Nutrition data arrives from unreliable readers. Measured on real Tesseract output, `22.4 g`
+comes back as `2249` — the decimal point is dropped and the unit `g` is read as a digit.
+Believed literally, that is a tenfold error driving a health judgement.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+So no reading is trusted on sight. Every value — whether it came from OCR or from a language
+model — must survive the same gauntlet:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Range** — a macronutrient cannot exceed 100 g per 100 g
+2. **Containment** — sugars ≤ carbohydrates, saturated fat ≤ fat
+3. **Mass** — the nutrients cannot outweigh the food that contains them
+4. **Energy** — `4·carb + 4·protein + 9·fat` must reconcile with the stated calories (Atwater)
+
+Where several readings survive, the one requiring fewest corrections wins; where survivors
+disagree materially, the field is **discarded and the user is asked to retake**. Saying
+"couldn't read it" is safer than showing a confident wrong number.
+
+The same validator gates the vision model. The model identifies; the engine judges.
+
+---
+
+## Running it
+
+```bash
+npm install
+npm run dev          # http://localhost:3000
+```
+
+Pictogram rendering shells out to Python. In development, point it at an interpreter that
+has Pillow:
+
+```
+# .env.local
+PICTOGRAM_PYTHON=/opt/homebrew/bin/python3
+ANTHROPIC_API_KEY=            # optional — meal-photo recognition only
+```
+
+Everything except meal-photo recognition works with no key and no network: OCR runs in the
+browser, pictograms render locally, and looked-up products and rendered pictograms are cached
+to disk on first use.
+
+```bash
+npm run build && npm start    # production build
+npm run lint                  # eslint (clean)
+npx tsc --noEmit              # types (clean)
+```
+
+## Layout
+
+```
+app/                    screens (App Router) and API routes
+  camera/               capture and routing between the three input paths
+  scan/                 verdict, pictograms, voice, per-member breakdown
+  nutrition/            today's accumulated intake
+  api/pictogram/        SIGIL — DSL → PNG, disk-cached
+  api/nutrition/        product lookup, disk-cached
+  api/analyze/          meal-photo recognition, validated before use
+lib/
+  nutrition/            reference · compute · validate · label OCR · adapters
+  snapcare/             domain types, verdict engine, DSL bridge, voice
+engine/                 SIGIL: parser, compositor, morpheme dictionary, assets
+stores/                 client state (zustand, persisted)
+pill_dispenser/         hardware companion — form-sheet parser (OpenCV/ArUco)
+scripts/                sample generators used to test the label parser
+```
+
+## Deployment
+
+Docker multi-stage build on **fly.io** (Tokyo). A mounted volume holds the household store
+and the pictogram/product caches, so the app keeps answering when the network does not.
+
+```bash
+fly deploy
+fly secrets set ANTHROPIC_API_KEY=… -a snapcare   # meal-photo recognition in production
+```
+
+## Data sources
+
+Nutrition references from WHO/FAO guidance, cited inline in `lib/nutrition/reference.ts`.
+Packaged-product data from **OpenFoodFacts**, which is community-edited and can be incomplete —
+the app says so on screen and tells the user to check the package for allergens.
+All nutrition output is an estimate and is labelled as such. It is not medical advice.
+
+## Use of AI
+
+Disclosed in full:
+
+- **Claude Vision** identifies a dish from a photo and proposes its composition. It never
+  decides anything: its output passes through the same validator as OCR, and is discarded if
+  it fails. Verdicts, references, scaling and accumulation are ours.
+- **Claude Code** was used as a development tool while building this repository.
+
+The engines — SIGIL, VOCA, and the nutrition reference/validation logic — are the team's own
+design and implementation.
+
+## Team H1
+
+| | |
+|---|---|
+| **Yunsu Nam** (KR) | Development & prototype lead — web app, engines, deployment |
+| **Dohun Kim** (KR) | Coordination & uploads — hardware form-sheet parser |
+| **Daniel Stanchevici** (MD) | Design & wireframe lead — user flow, UI, pictogram design |
+| **Cristian Rudico** (MD) | Research & content lead — problem research, poster and presentation |
