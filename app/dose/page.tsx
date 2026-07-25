@@ -41,6 +41,7 @@ export default function DosePage() {
       memberId: member.id,
       level: taken ? 'safe' : 'caution',
       dayKey: todayKey(),
+      item: item!,
       timeLabel: nowLabel(),
     });
     setCurrent(null);

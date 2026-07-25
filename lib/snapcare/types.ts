@@ -123,4 +123,10 @@ export interface ScanRecord {
   barcode?: string;
   /** 그때 먹은 양(g) */
   grams?: number;
+  /**
+   * 그때 판정한 대상 전체.
+   * itemId 만으로는 카탈로그에 있는 것만 되살릴 수 있어서, OCR·라벨·사진으로 만든
+   * 아이템은 기록을 눌러도 열리지 않았고 하루 누적에도 잡히지 않았다.
+   */
+  item?: ScanItem;
 }

@@ -75,6 +75,7 @@ export default function ScanResultPage() {
       // 하루 누적 분석이 이 기록을 합산할 수 있게 바코드와 먹은 양을 남긴다.
       barcode: item!.barcode,
       grams: nutrition.grams,
+      item: scanned!,
     });
     leaving.current = true;
     setCurrent(null);

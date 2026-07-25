@@ -42,7 +42,7 @@ export function useDailyIntake(scans: ScanRecord[], member: Member | undefined):
   const [state, setState] = useState<{ today: string; profiles: Map<string, NutrientProfile> } | null>(null);
 
   // scans 배열은 매 렌더 새 참조일 수 있어, 실제로 조회가 달라지는 경우만 dep으로 쓴다.
-  const barcodeKey = scans.map(barcodeOf).join(',');
+  const barcodeKey = scans.map((r) => (r.item?.profile ? 'inline' : barcodeOf(r) ?? '')).join(',');
 
   useEffect(() => {
     let alive = true;
@@ -66,8 +66,12 @@ export function useDailyIntake(scans: ScanRecord[], member: Member | undefined):
     if (rec.kind !== 'food' && rec.kind !== 'drink') continue;
     if (!isToday(rec, state.today)) continue;
 
+    // 기록에 프로필이 들어 있으면(성분표 OCR·사진 판별) 조회 없이 그대로 쓴다.
+    // 이게 없으면 바코드가 있는 포장식품만 누적되고, 정작 대상 지역에서 더 흔한
+    // 라벨 촬영·조리 음식은 하루 합계에서 통째로 빠진다.
+    const inline = rec.item?.profile;
     const code = barcodeOf(rec);
-    const profile = code ? state.profiles.get(code) : undefined;
+    const profile = inline ?? (code ? state.profiles.get(code) : undefined);
     if (!profile) continue;
 
     // 먹은 양이 기록에 없으면(구버전 기록) 제품의 1회 제공량으로 본다.

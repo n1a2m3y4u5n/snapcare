@@ -9,6 +9,7 @@ import { useReminders } from '@/stores/reminders';
 import { getItem } from '@/lib/snapcare/catalog';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
 import type { Reminder } from '@/stores/reminders';
+import type { ScanRecord } from '@/lib/snapcare/types';
 
 export default function HomePage() {
   const router = useRouter();
@@ -28,12 +29,13 @@ export default function HomePage() {
     router.push('/dose');
   }
 
-  function openScan(itemId: string, memberId: string) {
-    const item = getItem(itemId);
+  function openScan(rec: ScanRecord) {
+    // 기록에 담아둔 대상을 우선 쓰고, 없으면(구버전 기록) 카탈로그에서 찾는다.
+    const item = rec.item ?? getItem(rec.itemId);
     if (!item) return;
     setCurrent(item);
-    setActiveMember(memberId);
-    router.push('/scan');
+    setActiveMember(rec.memberId);
+    router.push(rec.kind === 'prescription' || rec.kind === 'medicine' ? '/dose' : '/scan');
   }
 
   return (
@@ -89,7 +91,7 @@ export default function HomePage() {
             return (
               <button
                 key={s.id}
-                onClick={() => openScan(s.itemId, s.memberId)}
+                onClick={() => openScan(s)}
                 className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-full text-lg" style={{ background: meta.bg }}>
