@@ -20,7 +20,11 @@ BUILD_DIR = build
 LIB_SRC   = $(SRC_DIR)/SC1.cpp $(SRC_DIR)/Scheduler.cpp
 LIB_HDR   = $(SRC_DIR)/SC1.h $(SRC_DIR)/Scheduler.h
 
-.PHONY: all test sc1 scheduler tools clean
+SHIM_DIR  = arduino_shim
+SKETCHES  = ../arduino/snapcare_tray/snapcare_tray.ino \
+            ../esp32/snapcare_optical_head/snapcare_optical_head.ino
+
+.PHONY: all test sc1 scheduler sketches tools clean
 all: test
 
 $(BUILD_DIR)/test_%: test_%.cpp $(LIB_SRC) $(LIB_HDR)
@@ -33,7 +37,19 @@ sc1: $(BUILD_DIR)/test_sc1
 scheduler: $(BUILD_DIR)/test_scheduler
 	@./$<
 
-test: sc1 scheduler
+# Compile the sketches against a stand-in Arduino API. This is a syntax and
+# type check, not a simulation — it proves the sketch is valid C++ that uses
+# these libraries correctly, and nothing about timing, interrupts or servos.
+# That is still most of what goes wrong in code nobody can compile without the
+# board in front of them, and the board is usually in another country.
+sketches:
+	@for s in $(SKETCHES); do \
+	    echo "  checking $$s"; \
+	    $(CXX) $(CXXFLAGS) -fsyntax-only -I$(SHIM_DIR) -I$(SRC_DIR) -x c++ $$s || exit 1; \
+	done
+	@echo "sketches compile"
+
+test: sc1 scheduler sketches
 	@echo "all firmware host tests passed"
 
 # Decode payloads on stdin with the firmware's own parser — the end-to-end

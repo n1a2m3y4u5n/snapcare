@@ -233,7 +233,7 @@ static void pumpLink() {
             lineLen = 0;
             continue;
         }
-        if (lineLen + 1 < sizeof lineBuf) lineBuf[lineLen++] = c;
+        if (size_t(lineLen) + 1 < sizeof lineBuf) lineBuf[lineLen++] = c;
         else lineLen = 0;   // overlong: drop the whole line rather than half of it
     }
 }

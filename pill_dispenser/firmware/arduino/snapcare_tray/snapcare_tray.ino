@@ -178,6 +178,9 @@ static bool restoreSchedule() {
 
 /* ── the tray ─────────────────────────────────────────────────────────── */
 
+/** Forward declaration: the servo waits have to keep draining the serial port. */
+static void collectWithoutDispatching(uint32_t ms);
+
 /**
  * Open one compartment and shut it again.
  *
@@ -186,17 +189,25 @@ static bool restoreSchedule() {
  * is audible hum, avoidable heat, and — with everything else this board is
  * doing — the difference between a supply that copes and one that browns out
  * mid-dose. It also means a knocked tray does not fight back.
+ *
+ * The waits are not `delay`. A dose takes about 1.6 seconds, and SoftwareSerial
+ * buffers 64 bytes; a weekly schedule for a full tray is around 190. Blocking
+ * here would silently drop most of a schedule that happened to arrive while a
+ * compartment was open, and what reaches the parser afterwards is a fragment —
+ * which either fails to parse or, far worse, parses as a shorter valid
+ * schedule. So the bytes keep being collected throughout; only their
+ * *interpretation* waits.
  */
 static void dispense(uint8_t slot) {
     if (slot < 1 || slot > sc1::MAX_SLOTS) return;
     Servo servo;
     servo.attach(SERVO_PIN[slot - 1]);
     servo.write(SERVO_REST);
-    delay(60);
+    collectWithoutDispatching(60);
     servo.write(SERVO_OPEN);
-    delay(SERVO_TRAVEL_MS + SERVO_DWELL_MS);
+    collectWithoutDispatching(SERVO_TRAVEL_MS + SERVO_DWELL_MS);
     servo.write(SERVO_REST);
-    delay(SERVO_TRAVEL_MS);
+    collectWithoutDispatching(SERVO_TRAVEL_MS);
     servo.detach();
 }
 
@@ -261,6 +272,10 @@ static void handleLine(char* text) {
         }
         setRing(COLOUR_LOADED);
         chirp(1760, 120);
+        // A plain delay, unlike the others: `text` points into lineBuf, and
+        // collecting here would append incoming bytes to the string this
+        // function is still reading. 400ms is safe because the only sender is
+        // the optical head, which suppresses a repeat scan for four seconds.
         delay(400);
         setRing(awaitingButton ? COLOUR_WAITING : COLOUR_IDLE);
         return;
@@ -273,18 +288,36 @@ static void handleLine(char* text) {
     Serial.println(text);
 }
 
-/** Collect bytes from a stream into `lineBuf`, dispatching on newline. */
-static void pump(Stream& in) {
+// Set when a complete line arrived while the tray was busy. It stays in
+// lineBuf and is acted on as soon as the servo is back at rest.
+static bool linePending = false;
+
+/**
+ * Collect bytes from a stream into `lineBuf`.
+ *
+ * With `dispatch` false the line is held rather than acted on. That matters
+ * during a dose: loading a new schedule between `beginDose` and the matching
+ * `confirm` would leave the scheduler unable to find the compartment it just
+ * opened, so the dose would never be marked done and would be delivered again
+ * on the next tick.
+ */
+static void pump(Stream& in, bool dispatch = true) {
     while (in.available()) {
         const char c = char(in.read());
         if (c == '\r') continue;
         if (c == '\n') {
             lineBuf[lineLen] = '\0';
-            handleLine(lineBuf);
-            lineLen = 0;
+            if (lineLen == 0) continue;
+            if (dispatch) {
+                handleLine(lineBuf);
+                lineLen = 0;
+            } else {
+                linePending = true;
+                return;   // stop reading: the next line would overwrite this one
+            }
             continue;
         }
-        if (lineLen + 1 < sizeof lineBuf) {
+        if (size_t(lineLen) + 1 < sizeof lineBuf) {
             lineBuf[lineLen++] = c;
         } else {
             // Overlong input is discarded whole. Parsing a truncated schedule
@@ -293,6 +326,26 @@ static void pump(Stream& in) {
             Serial.println(F("! line too long, discarded"));
         }
     }
+}
+
+/** Keep the serial buffers drained for `ms`, without acting on what arrives. */
+static void collectWithoutDispatching(uint32_t ms) {
+    const uint32_t until = millis() + ms;
+    while (int32_t(until - millis()) > 0) {
+        if (!linePending) {
+            pump(Serial, false);
+            pump(link, false);
+        }
+        delay(1);
+    }
+}
+
+/** Act on a line that arrived while the tray was busy. */
+static void flushPendingLine() {
+    if (!linePending) return;
+    linePending = false;
+    handleLine(lineBuf);
+    lineLen = 0;
 }
 
 /* ── the dose cycle ───────────────────────────────────────────────────── */
@@ -314,7 +367,7 @@ static void finishDose(bool taken) {
     reportEvent(pending.slot, pending.minutes, taken);
     setRing(taken ? COLOUR_TAKEN : COLOUR_MISSED);
     chirp(taken ? 1320 : 440, 200);
-    delay(1200);
+    collectWithoutDispatching(1200);   // the colour is held, the port stays drained
     setRing(COLOUR_IDLE);
     awaitingButton = false;
 }
@@ -323,7 +376,13 @@ static bool buttonPressed() {
     if (digitalRead(PIN_BUTTON) != LOW) return false;
     delay(30);                                   // debounce
     if (digitalRead(PIN_BUTTON) != LOW) return false;
-    while (digitalRead(PIN_BUTTON) == LOW) delay(10);   // wait for release
+
+    // Wait for release, so one press is one acknowledgement. Someone resting a
+    // thumb on the button holds this for as long as they like, which is exactly
+    // when the port must not be left to overflow.
+    while (digitalRead(PIN_BUTTON) == LOW) {
+        collectWithoutDispatching(10);
+    }
     return true;
 }
 
@@ -362,6 +421,9 @@ void setup() {
 }
 
 void loop() {
+    // Anything received while a servo was moving is acted on first, before new
+    // input can overwrite it.
+    flushPendingLine();
     pump(Serial);
     pump(link);
 
@@ -400,7 +462,7 @@ void loop() {
         scheduler.confirm(d, day);
         reportEvent(d.slot, d.minutes, false);
         setRing(COLOUR_MISSED);
-        delay(800);
+        collectWithoutDispatching(800);
         setRing(COLOUR_IDLE);
         return;
     }
