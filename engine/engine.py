@@ -275,9 +275,19 @@ def _overlay_cross(img: Image.Image, stroke_ratio: float = 0.06) -> None:
 
 
 def _overlay_half(img: Image.Image) -> None:
-    """Make the right half of the panel transparent — visual 'half a dose'."""
+    """'절반' — 가운데를 가르는 절개선.
+
+    예전에는 오른쪽 절반을 통째로 지웠다. 그러면 남는 것이 온전한 형태가 아니라
+    잘린 조각이라 무엇의 절반인지 알 수 없고, 잉크에 맞춰 자르는 단계가 그 조각에
+    다시 맞춰지면서 확대돼 화면 밖으로 밀려났다. 형태는 남기고 갈라진 자리를 보인다.
+    """
     w, h = img.size
-    img.paste(Image.new("RGBA", (w - w // 2, h), (0, 0, 0, 0)), (w // 2, 0))
+    d = ImageDraw.Draw(img)
+    gap = max(2, int(w * 0.045))
+    d.rectangle((w // 2 - gap // 2, 0, w // 2 + gap // 2, h), fill=(0, 0, 0, 0))
+    dash = int(h * 0.055)
+    for y in range(0, h, dash * 2):
+        d.rectangle((w // 2 - gap // 6, y, w // 2 + gap // 6, y + dash), fill=INK)
 
 
 def _placeholder(size: int, macro: str, label: str = "") -> Image.Image:
@@ -298,13 +308,59 @@ def _placeholder(size: int, macro: str, label: str = "") -> Image.Image:
     return img
 
 
+#: 수식어의 하한 (패널 대비).
+#: 예전에는 0.30 이었는데, 그 하한이 슬롯보다 커지면 수식어를 앉히려고 뚫는 창이
+#: head 자체를 먹어버렸다 — 흡입기의 캐니스터와 좌약이 통째로 사라졌다.
+#: 수식어는 슬롯 안에 들어가야 하고, 작아서 안 보인다면 고칠 것은 슬롯 쪽이다.
+MIN_MOD_RATIO = 0.14
+
+#: 잉크를 잘라낸 뒤 사방에 남기는 여백 (잘린 변의 비율)
+TRIM_MARGIN = 0.05
+
+#: 프레임 안에서 head 를 들여 놓는 비율.
+#: 잉크에 맞춰 자르기 시작하면서 글리프가 테두리에 닿을 만큼 커졌다 — 예전에는
+#: 512 캔버스에 그려둔 여백이 그 역할을 했다. 그 여백을 여기서 명시적으로 준다.
+HEAD_INSET = 0.10
+
+
+def _trim(img: Image.Image, slot=None):
+    """글리프 PNG 의 빈 여백을 잘라내고, 슬롯 좌표를 잘린 좌표계로 옮긴다.
+
+    글리프는 512 정사각 캔버스에 그려지지만 잉크는 그 일부만 차지한다. 캔버스를 그대로
+    칸에 맞추면 여백까지 함께 맞춰지므로, 납작한 글리프(캡슐 등)는 칸 안에서 얇은 띠가
+    되고 반복 칸처럼 작은 자리에서는 무엇인지 알아볼 수 없게 된다. 잉크에 맞춰 자르면
+    글리프의 원래 비례와 무관하게 칸을 채운다.
+
+    슬롯은 캔버스 기준 비율이라 함께 옮겨주지 않으면 수식어가 엉뚱한 곳에 붙는다.
+    """
+    box = img.getbbox()
+    if box is None:
+        return img, slot
+    bx0, by0, bx1, by1 = box
+    w, h = img.size
+    m = int(max(bx1 - bx0, by1 - by0) * TRIM_MARGIN)
+    cropped = img.crop(box)
+    out = Image.new("RGBA", (cropped.size[0] + 2 * m, cropped.size[1] + 2 * m), (0, 0, 0, 0))
+    out.alpha_composite(cropped, (m, m))
+
+    if slot is None:
+        return out, None
+    rx0, ry0, rx1, ry1 = slot
+    ow, oh = out.size
+    remap = (
+        (rx0 * w - bx0 + m) / ow, (ry0 * h - by0 + m) / oh,
+        (rx1 * w - bx0 + m) / ow, (ry1 * h - by0 + m) / oh,
+    )
+    return out, remap
+
+
 def _load(manifest: Manifest, c: Component, size: int) -> Image.Image:
     if manifest.asset_exists(c):
         return Image.open(manifest.asset_path(c)).convert("RGBA")
     return _placeholder(size, c.name, c.description)
 
 
-def _render_head(manifest: Manifest, node: Node, size: int) -> Image.Image:
+def _render_head(manifest: Manifest, node: Node, size: int, framed: bool = True) -> Image.Image:
     """
     Layout:
         - 1st modifier  -> inside head's `slot`, centered on the slot,
@@ -314,28 +370,50 @@ def _render_head(manifest: Manifest, node: Node, size: int) -> Image.Image:
     """
     panel = _blank(size)
     fk = manifest.frame_kwargs()
-    _draw_frame(panel, **fk)
-    cx0, cy0, cx1, cy1 = _content_box(size, fk["pad_ratio"])
+    if framed:
+        _draw_frame(panel, **fk)
+    cx0, cy0, cx1, cy1 = _content_box(size, fk["pad_ratio"] if framed else 0.0)
 
     first_mod = node.children[0] if node.children else None
     extras = node.children[1:]
 
     above_h = int((cy1 - cy0) * ABOVE_STRIP) if extras else 0
-    head_box = (cx0, cy0 + above_h, cx1, cy1)
+    inset = int(min(cx1 - cx0, cy1 - cy0) * HEAD_INSET) if framed else 0
+    head_box = (cx0 + inset, cy0 + above_h + inset, cx1 - inset, cy1 - inset)
 
     head = manifest.get(node.name)
-    resized, origin = _fit(_load(manifest, head, size), head_box)
+    head_img, head_slot = _trim(_load(manifest, head, size), head.slot)
+    resized, origin = _fit(head_img, head_box)
     panel.alpha_composite(resized, origin)
 
     if first_mod:
-        rx0, ry0, rx1, ry1 = head.slot or (0.25, 0.30, 0.75, 0.70)
+        # 수식어 크기는 **슬롯**에서 나온다. 예전에는 패널 크기의 modifier_scale 만큼
+        # 그렸는데, 사전이 head 마다 정의해둔 slot 사각형의 중심만 쓰고 크기는 버린 셈이라
+        # 납작한 head(캡슐 등)는 수식어에 통째로 덮여 십자 모양으로 뭉쳤다.
+        rx0, ry0, rx1, ry1 = head_slot or (0.25, 0.30, 0.75, 0.70)
         slot_cx = origin[0] + int(((rx0 + rx1) / 2) * resized.size[0])
         slot_cy = origin[1] + int(((ry0 + ry1) / 2) * resized.size[1])
-        mod_side = int(size * manifest.modifier_scale)
+        slot_side = min((rx1 - rx0) * resized.size[0], (ry1 - ry0) * resized.size[1])
+        # 너무 작아지면 안에 무엇이 들었는지 알 수 없으므로 패널 대비 하한을 둔다.
+        mod_side = max(int(slot_side * manifest.modifier_scale), int(size * MIN_MOD_RATIO))
         mod_box = (slot_cx - mod_side // 2, slot_cy - mod_side // 2,
                    slot_cx + mod_side // 2, slot_cy + mod_side // 2)
+        # 슬롯 자리를 먼저 뚫는다.
+        # 글리프가 채운 실루엣이라 검은 바탕에 검은 수식어를 얹으면 그대로 사라진다 —
+        # 좌약 안의 달이 보이지 않던 이유다. pill_bottle 만 라벨 구멍이 있어 우연히 동작했다.
+        # 뚫는 것은 합성할 때만 한다. 낱개 글리프는 제 모습을 유지해야 하기 때문이다.
+        sx0 = origin[0] + int(rx0 * resized.size[0])
+        sy0 = origin[1] + int(ry0 * resized.size[1])
+        sx1 = origin[0] + int(rx1 * resized.size[0])
+        sy1 = origin[1] + int(ry1 * resized.size[1])
+        # 창은 슬롯 그대로다. 수식어에 맞춰 넓히면 head 를 파먹는다.
+        pad = int(mod_side * 0.08)
+        win = (sx0 - pad, sy0 - pad, sx1 + pad, sy1 + pad)
+        ImageDraw.Draw(panel).rounded_rectangle(
+            win, radius=int(mod_side * 0.10), fill=(0, 0, 0, 0))
+
         mod = manifest.get(first_mod.name)
-        m_img = _load(manifest, mod, mod_side)
+        m_img, _ = _trim(_load(manifest, mod, mod_side))
         m_resized, m_origin = _fit(m_img, mod_box)
         panel.alpha_composite(m_resized, m_origin)
 
@@ -350,7 +428,7 @@ def _render_head(manifest: Manifest, node: Node, size: int) -> Image.Image:
         y = cy0 + (above_h - ext_side) // 2
         for child in extras:
             mod = manifest.get(child.name)
-            m_img = _load(manifest, mod, ext_side)
+            m_img, _ = _trim(_load(manifest, mod, ext_side))
             m_resized, m_origin = _fit(m_img, (x, y, x + ext_side, y + ext_side))
             panel.alpha_composite(m_resized, m_origin)
             x += ext_side + gap
@@ -365,27 +443,51 @@ def _render_cadence(manifest: Manifest, op: Operator, child: Node,
     fk = manifest.frame_kwargs()
     _draw_frame(outer, **fk)
     cx0, cy0, cx1, cy1 = _content_box(size, fk["pad_ratio"])
-    inner_w = (cx1 - cx0 - gap * (n - 1)) // n
-    inner_h = cy1 - cy0
-    side = min(inner_w, inner_h)
-    base_y = cy0 + (inner_h - side) // 2
+
+    # 반복을 가로로 늘어놓을지 세로로 쌓을지는 글리프의 비례가 정한다.
+    # 예전에는 늘 가로로 늘어놓고 칸을 정사각형으로 잡았는데, 그러면 세로 공간이
+    # 통째로 남고 납작한 글리프(캡슐 등)는 칸 폭에 갇혀 얇은 띠가 됐다.
+    # 넓은 것은 위아래로 쌓아야 폭을 다 쓴다.
+    stacked = _is_wide(manifest, child)
+    if stacked:
+        cell_w = cx1 - cx0
+        cell_h = (cy1 - cy0 - gap * (n - 1)) // n
+    else:
+        cell_w = (cx1 - cx0 - gap * (n - 1)) // n
+        cell_h = cy1 - cy0
+
     for i in range(n):
-        outer.alpha_composite(
-            render_pictogram(child, manifest, size=side),
-            (cx0 + i * (side + gap), base_y),
-        )
+        # 안쪽 칸은 프레임을 그리지 않는다. 바깥 프레임 안에 또 테두리가 생기면
+        # 상자 속 상자로 보이고, 작은 칸에서는 그 테두리가 내용을 먹는다.
+        cell = render_pictogram(child, manifest, size=max(cell_w, cell_h), framed=False)
+        # 렌더 결과도 정사각 캔버스라, 그대로 칸에 맞추면 남은 여백까지 함께 맞춰져
+        # 다시 칸 비율만큼 줄어든다. 잉크에 맞춰 자른 뒤에 넣는다.
+        trimmed, _ = _trim(cell)
+        fitted, off = _fit(trimmed, (0, 0, cell_w, cell_h))
+        x = cx0 + (0 if stacked else i * (cell_w + gap)) + off[0]
+        y = cy0 + (i * (cell_h + gap) if stacked else 0) + off[1]
+        outer.alpha_composite(fitted, (x, y))
     return outer
+
+
+def _is_wide(manifest: Manifest, node: Node) -> bool:
+    """이 글리프가 세로보다 가로로 긴가. 잉크 기준으로 본다."""
+    if node.kind != NodeKind.HEAD:
+        return False
+    img, _ = _trim(_load(manifest, manifest.get(node.name), DEFAULT_CANVAS))
+    return img.size[0] > img.size[1] * 1.25
 
 
 def render_pictogram(node: Node, manifest: Manifest,
                      size: int = DEFAULT_CANVAS,
-                     gap: int = DEFAULT_GAP) -> Image.Image:
+                     gap: int = DEFAULT_GAP,
+                     framed: bool = True) -> Image.Image:
     if node.kind == NodeKind.HEAD:
-        return _render_head(manifest, node, size)
+        return _render_head(manifest, node, size, framed=framed)
     op = manifest.operators[node.name]
     if op.kind == "cadence":
         return _render_cadence(manifest, op, node.children[0], size, gap)
-    panel = render_pictogram(node.children[0], manifest, size=size, gap=gap)
+    panel = render_pictogram(node.children[0], manifest, size=size, gap=gap, framed=framed)
     if op.kind == "overlay":
         _overlay_cross(panel)
     elif op.kind == "half":

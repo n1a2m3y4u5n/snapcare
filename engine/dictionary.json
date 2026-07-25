@@ -5,7 +5,7 @@
     "stroke_ratio": 0.025,
     "corner_radius_ratio": 0.08,
     "padding_ratio": 0.06,
-    "modifier_scale": 0.67
+    "modifier_scale": 0.86
   },
   "composition_operators": {
     "no": {
@@ -35,10 +35,10 @@
       "category": "form",
       "description": "Two-tone capsule.",
       "slot": [
-        0.3,
-        0.3,
-        0.7,
-        0.7
+        0.14,
+        0.38,
+        0.46,
+        0.62
       ]
     },
     {
@@ -46,10 +46,10 @@
       "category": "form",
       "description": "Blister-pack tablets.",
       "slot": [
-        0.2,
-        0.2,
-        0.8,
-        0.8
+        0.22,
+        0.28,
+        0.48,
+        0.72
       ]
     },
     {
@@ -57,10 +57,10 @@
       "category": "form",
       "description": "Generic tablet/capsule container.",
       "slot": [
-        0.25,
+        0.32,
         0.4,
-        0.75,
-        0.78
+        0.68,
+        0.74
       ]
     },
     {
@@ -68,10 +68,10 @@
       "category": "form",
       "description": "Oral liquid medicine with measuring cup.",
       "slot": [
-        0.25,
-        0.45,
-        0.75,
-        0.85
+        0.32,
+        0.52,
+        0.68,
+        0.84
       ]
     },
     {
@@ -79,10 +79,10 @@
       "category": "form",
       "description": "Eye/ear/nose drop bottle.",
       "slot": [
-        0.25,
-        0.55,
-        0.75,
-        0.95
+        0.34,
+        0.48,
+        0.66,
+        0.78
       ]
     },
     {
@@ -90,10 +90,10 @@
       "category": "form",
       "description": "Topical cream/ointment tube.",
       "slot": [
-        0.55,
+        0.34,
         0.3,
-        0.95,
-        0.7
+        0.66,
+        0.62
       ]
     },
     {
@@ -101,10 +101,10 @@
       "category": "form",
       "description": "MDI inhaler.",
       "slot": [
-        0.55,
-        0.3,
-        0.95,
-        0.7
+        0.24,
+        0.14,
+        0.52,
+        0.42
       ]
     },
     {
@@ -112,9 +112,9 @@
       "category": "form",
       "description": "Powder sachet (e.g. ORT).",
       "slot": [
-        0.25,
-        0.35,
-        0.75,
+        0.3,
+        0.38,
+        0.7,
         0.8
       ]
     },
@@ -123,10 +123,10 @@
       "category": "form",
       "description": "Suppository (rectal/vaginal).",
       "slot": [
-        0.3,
-        0.35,
-        0.7,
-        0.75
+        0.36,
+        0.34,
+        0.64,
+        0.68
       ]
     },
     {
@@ -134,33 +134,43 @@
       "category": "form",
       "description": "Injection syringe.",
       "slot": [
-        0.1,
-        0.3,
-        0.45,
-        0.7
+        0.32,
+        0.38,
+        0.58,
+        0.54
       ]
     },
     {
       "name": "patch",
       "category": "patch",
       "description": "Patch.",
-      "slot": null
+      "slot": [
+        0.34,
+        0.36,
+        0.66,
+        0.64
+      ]
     },
     {
       "name": "spray",
       "category": "spray",
       "description": "Spray.",
-      "slot": null
+      "slot": [
+        0.36,
+        0.44,
+        0.64,
+        0.82
+      ]
     },
     {
       "name": "glucometer",
       "category": "device",
       "description": "Blood-glucose meter (device family).",
       "slot": [
-        0.25,
-        0.35,
-        0.75,
-        0.75
+        0.34,
+        0.2,
+        0.66,
+        0.46
       ]
     },
     {
@@ -168,17 +178,22 @@
       "category": "device",
       "description": "Digital thermometer (device family).",
       "slot": [
-        0.3,
-        0.3,
-        0.7,
-        0.7
+        0.4,
+        0.12,
+        0.6,
+        0.46
       ]
     },
     {
       "name": "bp_monitor",
       "category": "bp",
       "description": "Bp monitor.",
-      "slot": null
+      "slot": [
+        0.28,
+        0.64,
+        0.72,
+        0.88
+      ]
     },
     {
       "name": "hand_wash",

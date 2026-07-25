@@ -579,6 +579,31 @@ def symptom_dizzy(c: Canvas) -> None:
         c.arc(0.50, 0.22, r, 200, 340, w=THIN)
 
 
+#: head 안에서 수식어가 앉는 자리 (그 head 의 캔버스 기준 x0,y0,x1,y1).
+#:
+#: 그림 옆에 두는 이유: 슬롯은 "이 그림의 어디가 비어 있는가" 이므로 그림이 바뀌면
+#: 함께 바뀌어야 한다. 사전에만 적어두었더니 글리프를 다시 그린 뒤에도 옛 좌표가 남아,
+#: 흡입기의 수식어가 마우스피스 위에 얹혔다.
+SLOTS = {
+    # 수식어는 이 사각형 **안에** 들어간다. 좁게 잡으면 안에 무엇이 들었는지 알 수 없고,
+    # 넓게 잡으면 그 자리를 뚫을 때 head 의 형태가 사라진다. 글리프마다 '비어도 되는 면' 을 준다.
+    "pill_bottle": (0.32, 0.40, 0.68, 0.74),        # 라벨
+    "liquid_bottle": (0.32, 0.52, 0.68, 0.84),      # 병 아래쪽 배
+    "dropper_bottle": (0.34, 0.48, 0.66, 0.78),
+    "cream_tube": (0.34, 0.30, 0.66, 0.62),
+    "inhaler": (0.24, 0.14, 0.52, 0.42),            # 캐니스터 면. 마우스피스는 남는다
+    "sachet": (0.30, 0.38, 0.70, 0.80),
+    "capsule_strip": (0.14, 0.38, 0.46, 0.62),      # 캡슐의 한쪽 반
+    "tablet_blister": (0.22, 0.28, 0.48, 0.72),     # 알약의 왼쪽 반
+    "glucometer": (0.34, 0.20, 0.66, 0.46),         # 표시창
+    "thermometer": (0.40, 0.12, 0.60, 0.46),
+    "bp_monitor": (0.28, 0.64, 0.72, 0.88),         # 커프
+    "syringe": (0.32, 0.38, 0.58, 0.54),            # 눈금창
+    "patch": (0.34, 0.36, 0.66, 0.64),              # 가운데 패드
+    "spray": (0.36, 0.44, 0.64, 0.82),
+    "suppository": (0.36, 0.34, 0.64, 0.68),
+}
+
 HEADS = {
     "capsule_strip": capsule_strip, "tablet_blister": tablet_blister, "pill_bottle": pill_bottle,
     "liquid_bottle": liquid_bottle, "dropper_bottle": dropper_bottle, "cream_tube": cream_tube,

@@ -15,7 +15,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 from draw import Canvas, SIZE  # noqa: E402
-from glyphs import HEADS, MODIFIERS  # noqa: E402
+from glyphs import HEADS, MODIFIERS, SLOTS  # noqa: E402
 
 ROLES = {"head": HEADS, "modifier": MODIFIERS}
 
@@ -70,13 +70,17 @@ def sync_dictionary() -> None:
         entries = []
         for name in table:
             if name in old:
-                entries.append(old[name])
+                e = dict(old[name])
+                # 슬롯은 그림 옆(glyphs.SLOTS)이 출처다. 사전에 남은 옛 좌표를 덮어쓴다.
+                if key == "heads":
+                    e["slot"] = list(SLOTS[name]) if name in SLOTS else None
+                entries.append(e)
             else:
                 entries.append({
                     "name": name,
                     "category": name.split("_")[0],
                     "description": name.replace("_", " ").capitalize() + ".",
-                    **({"slot": None} if key == "heads" else {}),
+                    **({"slot": list(SLOTS[name]) if name in SLOTS else None} if key == "heads" else {}),
                 })
         d[key] = entries
     p.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n")
