@@ -5,14 +5,28 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useScans } from '@/stores/scans';
 import { useFamily } from '@/stores/family';
 import { useAnalysis } from '@/stores/analysis';
+import { useReminders } from '@/stores/reminders';
 import { getItem } from '@/lib/snapcare/catalog';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
+import type { Reminder } from '@/stores/reminders';
 
 export default function HomePage() {
   const router = useRouter();
   const scans = useScans((s) => s.scans);
   const { setActiveMember, getMember } = useFamily();
   const setCurrent = useAnalysis((s) => s.setCurrent);
+  const reminders = useReminders((s) => s.reminders);
+
+  // 처방을 스캔해 알람을 만들었을 때만 뜬다.
+  // 예전에는 존재하지도 않는 Metformin 알람이 항상 박혀 있었다 —
+  // 눌러도 실제 알람과 무관했고, 데모에서 눌러보면 어긋나는 자리였다.
+  const nextDose: Reminder | undefined = reminders[0];
+
+  function openDose(r: Reminder) {
+    setCurrent(r.item);
+    setActiveMember(r.memberId);
+    router.push('/dose');
+  }
 
   function openScan(itemId: string, memberId: string) {
     const item = getItem(itemId);
@@ -22,14 +36,6 @@ export default function HomePage() {
     router.push('/scan');
   }
 
-  function openDose(itemId: string, memberId: string) {
-    const item = getItem(itemId);
-    if (!item) return;
-    setCurrent(item);
-    setActiveMember(memberId);
-    router.push('/dose');
-  }
-
   return (
     <MobileScreen tab="home">
       <div className="px-5 pt-14">
@@ -37,23 +43,25 @@ export default function HomePage() {
           SnapCare
         </h1>
 
-        {/* 복약 리마인더 */}
-        <button
-          onClick={() => openDose('metformin', 'grandpa')}
-          className="mt-4 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
-          style={{ background: 'var(--color-med-bg)' }}
-        >
-          <span className="text-xl">⏰</span>
-          <span className="flex-1">
-            <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-              Metformin due for Grandpa Lee · 6:00 PM
+        {/* 복약 리마인더 — 실제로 만든 알람이 있을 때만 */}
+        {nextDose && (
+          <button
+            onClick={() => openDose(nextDose)}
+            className="mt-4 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
+            style={{ background: 'var(--color-med-bg)' }}
+          >
+            <span className="text-xl">{nextDose.item.emoji}</span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+                {nextDose.item.name} · {nextDose.time}
+              </span>
+              <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                {getMember(nextDose.memberId)?.name ?? ''}
+              </span>
             </span>
-            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-              Tap to log dose
-            </span>
-          </span>
-          <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
-        </button>
+            <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
+          </button>
+        )}
 
         {/* 스캔 버튼 */}
         <div className="mt-8 flex flex-col items-center">

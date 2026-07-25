@@ -4,13 +4,14 @@ import { useEffect, useRef } from 'react';
 import { useFamily } from '@/stores/family';
 import { useScans } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
-import { pullBlob, pushBlob, type SyncBlob } from '@/lib/snapcare/sync';
+import { pullBlob, pushBlob, isUsable, SYNC_VERSION, type SyncBlob } from '@/lib/snapcare/sync';
 
 /** household 키 — 지금은 데모 공용. 이후 픽처키/auth에 묶으면 가구별 분리 가능. */
 const HOUSEHOLD = 'household-demo';
 
 function snapshot(): SyncBlob {
   return {
+    version: SYNC_VERSION,
     members: useFamily.getState().members,
     activeMemberId: useFamily.getState().activeMemberId,
     scans: useScans.getState().scans,
@@ -32,7 +33,8 @@ export function SyncProvider() {
     (async () => {
       const blob = await pullBlob(HOUSEHOLD);
       if (!alive) return;
-      const hasServer = !!blob && ((blob.members?.length ?? 0) > 0 || (blob.scans?.length ?? 0) > 0);
+      // 버전이 안 맞거나 모양이 깨진 서버 데이터는 무시하고 로컬을 다시 시드한다.
+      const hasServer = isUsable(blob) && ((blob.members?.length ?? 0) > 0 || (blob.scans?.length ?? 0) > 0);
       if (hasServer && blob) {
         if (blob.members) useFamily.setState({ members: blob.members });
         if (blob.activeMemberId) useFamily.setState({ activeMemberId: blob.activeMemberId });
