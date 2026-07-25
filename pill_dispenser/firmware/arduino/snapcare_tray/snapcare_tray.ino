@@ -106,6 +106,12 @@ static bool rtcPresent = false;
 // as untrusted until something sets it, and an untrusted clock dispenses
 // nothing. `SC1*C*` clears this; see handleLine.
 static bool clockTrusted = false;
+// Whether the loaded schedule's start date was set from a clock we believed.
+// A "for 30 days" course counts from the day it was loaded, so a schedule
+// accepted while the clock was wrong has a wrong start — and once the clock is
+// corrected the day number leaps, which would make the course look finished
+// before it began. See reanchorSchedule().
+static bool scheduleAnchored = false;
 static uint8_t eventSeq = 0;
 static uint32_t lastTick = 0;
 
@@ -247,6 +253,27 @@ static void reportEvent(uint8_t slot, uint16_t minutes, bool taken) {
 
 /* ── inbound lines ────────────────────────────────────────────────────── */
 
+/**
+ * Restart the loaded courses from today, once the clock can be believed.
+ *
+ * A schedule shown to the device before its clock was set has its "for 30 days"
+ * counted from whatever day the wrong clock claimed — usually 2000-01-01. When
+ * the clock is then corrected the day number jumps forward by decades and every
+ * fixed-length course reads as long finished, so the tray would go quiet and
+ * give no reason. Re-anchoring costs the days already elapsed, which is the
+ * right trade: those days were dispensed against a clock nobody trusted.
+ */
+static void reanchorSchedule() {
+    if (scheduleAnchored || scheduler.schedule().count == 0) return;
+    const sc1::Schedule current = scheduler.schedule();   // copy before reloading
+    const uint32_t today = dayNumber(now());
+    scheduler.load(current, today);
+    saveSchedule(current, today);
+    scheduleAnchored = true;
+    Serial.println(F("courses restarted from today (they were loaded on an unset clock)"));
+}
+
+
 static void handleLine(char* text) {
     if (text[0] == '\0') return;
 
@@ -261,6 +288,7 @@ static void handleLine(char* text) {
         }
         rtc.adjust(DateTime(clk.year, clk.month, clk.day, clk.hour, clk.minute, 0));
         clockTrusted = true;
+        reanchorSchedule();
         Serial.print(F("clock set: "));
         Serial.print(clk.year);
         Serial.print('-');
@@ -283,6 +311,8 @@ static void handleLine(char* text) {
         const uint32_t today = dayNumber(now());
         scheduler.load(incoming, today);
         saveSchedule(incoming, today);
+        // Only meaningful if the clock was believable when we read it.
+        scheduleAnchored = clockTrusted;
 
         Serial.print(F("loaded "));
         Serial.print(incoming.count);
@@ -451,6 +481,7 @@ void setup() {
         clockTrusted = true;
     }
 
+    scheduleAnchored = clockTrusted;
     if (restoreSchedule()) {
         Serial.print(F("restored schedule for "));
         Serial.print(scheduler.schedule().count);
