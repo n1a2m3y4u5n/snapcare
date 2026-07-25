@@ -1,37 +1,37 @@
-# Serialize training runs on the one GPU.  Source this, then call `gpu_wait`.
+# Wait for the GPU to be free.  Source this, then call `gpu_wait`.
 #
-# The naive version of this — poll until no `train.py` is running, then start —
-# has a race that is easy to miss and guaranteed to bite: two queued scripts
-# both see the gap between one run ending and the next beginning, and both
-# launch. Two trainings then share a 12GB card, each slower than one would have
-# been, and if they collide on memory one dies halfway through.
+# The obvious spelling of this is a bug, and it deadlocks rather than racing.
 #
-# So there are two mechanisms, because they cover different cases:
+#     while pgrep -f "train.py --tag" >/dev/null; do sleep 30; done
 #
-#   gpu_wait_for_pattern  waits for scripts that were started *before* this
-#                         mechanism existed and do not take the lock
-#   flock                 makes every script that does take it mutually
-#                         exclusive, with no polling gap to lose
+# `pgrep -f` matches the *whole command line* of every process, and the shell
+# that launched this script has the text of this script — including that very
+# pattern — somewhere in its own arguments. So the loop matches its own
+# launcher, the launcher never exits, and the wait never ends. Nothing appears
+# to be wrong: the GPU sits idle and the script waits politely forever.
 #
-# Use it as:
+# Two rules avoid it. Anchor the pattern to what a real training process
+# actually looks like (`^python train.py`, which a bash wrapper can never
+# match), and never wait on a string that appears in the waiting script.
+#
 #     source "$(dirname "$0")/gpu_lock.sh"
-#     gpu_wait                       # blocks until the GPU is ours
-#     python train.py --tag ...      # ...and stays ours until the script exits
+#     gpu_wait
+#     python train.py --tag ...
 
-GPU_LOCK_FILE="${GPU_LOCK_FILE:-/tmp/snapcare-gpu.lock}"
-
-gpu_wait_for_pattern() {
-    local pattern="$1"
-    while pgrep -f "$pattern" >/dev/null; do sleep 30; done
-}
+# Anchored so it matches the interpreter and its dataloader workers, and
+# nothing that merely mentions them.
+GPU_BUSY_PATTERN='^python train\.py'
 
 gpu_wait() {
-    # Anything already running, lock-aware or not.
-    for pattern in "train.py --tag" "ablation_v2.sh" "train_web.sh" "ablation_v3.sh"; do
-        gpu_wait_for_pattern "$pattern"
-    done
-    # Then hold the lock for the rest of this script's life. Descriptor 9 stays
-    # open until the shell exits, which is exactly the lifetime we want.
-    exec 9>"$GPU_LOCK_FILE"
-    flock 9
+    while pgrep -f "$GPU_BUSY_PATTERN" >/dev/null; do sleep 20; done
+    # A moment for the previous process to release its CUDA context before the
+    # next one asks for memory.
+    sleep 5
 }
+
+# Sanity check: this must not match the shell running it. If it ever does, the
+# wait would be an infinite loop rather than a slow one, so fail loudly instead.
+if pgrep -f "$GPU_BUSY_PATTERN" | grep -qx "$$"; then
+    echo "gpu_lock.sh: the busy pattern matches this shell; it would deadlock" >&2
+    exit 1
+fi
