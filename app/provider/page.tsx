@@ -1,38 +1,48 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useScans } from '@/stores/scans';
 import { useFamily } from '@/stores/family';
+import { useIsClient } from '@/lib/hooks';
 
 /** 의료진 공유 — 스캔 기록을 담은 일회용 QR (15분 만료). */
 export default function ProviderPage() {
   const router = useRouter();
   const scans = useScans((s) => s.scans);
   const getMember = useFamily((s) => s.getMember);
-  const [payload, setPayload] = useState<string | null>(null);
+  const isClient = useIsClient();
   const [left, setLeft] = useState(15 * 60);
 
+  // 일회용 토큰은 화면 진입 시 딱 한 번 발급한다.
+  // 렌더 중에 만들면 (a) SSR 결과와 달라 하이드레이션이 깨지고 (b) 리렌더마다 QR이 바뀐다.
+  // 그래서 발급은 이펙트에서 하고, 그동안 payload 는 null(스켈레톤)로 둔다.
+  const [token, setToken] = useState<{ token: string; issuedAt: string } | null>(null);
   useEffect(() => {
-    // 클라이언트에서만 토큰·페이로드 생성 (SSR 불일치 회피)
-    const token = Math.random().toString(36).slice(2, 10);
-    const data = {
-      token,
+    // 난수·시계는 순수 렌더에서 읽을 수 없는 외부 소스라, 발급은 이펙트에서 1회만 한다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setToken({
+      token: Math.random().toString(36).slice(2, 10),
       issuedAt: new Date().toISOString(),
+    });
+    const t = setInterval(() => setLeft((v) => Math.max(0, v - 1)), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const payload = useMemo(() => {
+    if (!isClient || !token) return null;
+    return JSON.stringify({
+      ...token,
       records: scans.slice(0, 12).map((s) => ({
         item: s.name,
         for: getMember(s.memberId)?.name ?? s.memberId,
         level: s.level,
         at: s.timeLabel,
       })),
-    };
-    setPayload(JSON.stringify(data));
-    const t = setInterval(() => setLeft((v) => Math.max(0, v - 1)), 1000);
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    });
+  }, [isClient, token, scans, getMember]);
 
   const mm = Math.floor(left / 60);
   const ss = (left % 60).toString().padStart(2, '0');

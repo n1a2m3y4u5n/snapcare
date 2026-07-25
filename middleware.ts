@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 /**
- * 예선 단계 — 인증 없이 전체 경로 개방.
- * API 경로·정적 자산만 그대로 통과시키고 나머지는 모두 허용한다.
+ * 인증 게이트는 클라이언트(진입 게이트 + 픽처키 로그인)가 담당한다.
+ * 미들웨어는 통과만 시킨다 — 심사 시연 중 서버단에서 막히는 경로를 만들지 않기 위해서다.
  */
-export function middleware(_req: NextRequest) {
+export function middleware() {
   return NextResponse.next();
 }
 
