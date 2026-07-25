@@ -59,13 +59,34 @@ train:
   # Nutrition5k's own weights are measured, not exact.
   label_noise: 0.0
 
-  # --- sampling ------------------------------------------------------------
+  # --- sampling and selection ----------------------------------------------
   # The manifest is 97% side-angle frames but the test split is overhead only.
   # Draw overhead frames this often so the scored view is actually trained on.
   overhead_ratio: 0.5
   # One "epoch" is this many draws with replacement, so epoch cost is constant
   # regardless of how many frames build_dataset.py happened to extract.
   epoch_size: 24000
+  # Which validation view picks the checkpoint. `overhead` reproduces the
+  # published Nutrition5k protocol and keeps the headline number comparable to
+  # other people's. `both` averages overhead and side-angle, which is the
+  # setting for a model that ships — nobody holds a phone above their dinner,
+  # and the two views differ by around fifteen points.
+  select_view: overhead
+
+  # --- augmentation --------------------------------------------------------
+  # Not free parameters here the way they are for classification: this model
+  # judges *how much* food is on a plate, and the plate is the only size
+  # reference in the frame.
+  #
+  # Smallest fraction of the image RandomResizedCrop may keep. Below about 0.7
+  # it starts cutting the plate rim out of shot while the label still states
+  # the mass of the whole dish — a wrong label rather than a harder view.
+  crop_scale_min: 0.7
+  # Random off-axis warp, aimed squarely at the overhead/side gap: it turns an
+  # overhead photo into a plausible angled one without changing what is on the
+  # plate. 0 disables it; try 0.35 with select_view=both.
+  perspective: 0.0
+  perspective_p: 0.5
 
   # --- optimisation --------------------------------------------------------
   warmup_epochs: 1
