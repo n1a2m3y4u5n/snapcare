@@ -10,11 +10,12 @@ import { getItem } from '@/lib/snapcare/catalog';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
 import type { Reminder } from '@/stores/reminders';
 import type { ScanRecord } from '@/lib/snapcare/types';
+import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
 
 export default function HomePage() {
   const router = useRouter();
   const scans = useScans((s) => s.scans);
-  const { setActiveMember, getMember } = useFamily();
+  const { setActiveMember, getMember, activeMemberId } = useFamily();
   const setCurrent = useAnalysis((s) => s.setCurrent);
   const reminders = useReminders((s) => s.reminders);
 
@@ -22,6 +23,9 @@ export default function HomePage() {
   // 예전에는 존재하지도 않는 Metformin 알람이 항상 박혀 있었다 —
   // 눌러도 실제 알람과 무관했고, 데모에서 눌러보면 어긋나는 자리였다.
   const nextDose: Reminder | undefined = reminders[0];
+
+  // 반응은 먹은 직후에 나오지 않으므로, 아직 답하지 않은 끼니 중 가장 오래된 것을 묻는다.
+  const pending = pendingFeedback(scans, activeMemberId);
 
   function openDose(r: Reminder) {
     setCurrent(r.item);
@@ -79,6 +83,9 @@ export default function HomePage() {
             Scan something
           </span>
         </div>
+
+        {/* 식이 일지 — 아직 답하지 않은 끼니가 있을 때만 뜬다 */}
+        {pending && <HowDidItSit key={pending.id} record={pending} />}
 
         {/* 최근 */}
         <p className="mt-8 text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>

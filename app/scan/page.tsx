@@ -95,6 +95,8 @@ export default function ScanResultPage() {
       barcode: item!.barcode,
       grams: nutrition.grams,
       item: scanned!,
+      // 그때 이 음식에 들어 있다고 본 것. 나중에 식이 일지가 이걸 가로질러 본다.
+      tags: nutrition.profile?.allergenTags ?? item!.profile?.allergenTags ?? [],
     });
     leaving.current = true;
     setCurrent(null);

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ScanRecord } from '@/lib/snapcare/types';
+import type { Reaction, ScanRecord, Symptom } from '@/lib/snapcare/types';
 
 /**
  * 시드 최근 스캔 (와이어프레임 홈 RECENT 피드 기준).
@@ -18,6 +18,8 @@ const SEED_SCANS: ScanRecord[] = [
 interface ScansState {
   scans: ScanRecord[];
   addScan: (rec: ScanRecord) => void;
+  /** 먹고 난 뒤의 몸 상태를 나중에 기록한다 (식이 일지). */
+  setReaction: (id: string, reaction: Reaction, symptoms?: Symptom[]) => void;
   clear: () => void;
 }
 
@@ -25,7 +27,12 @@ export const useScans = create<ScansState>()(
   persist(
     (set) => ({
       scans: SEED_SCANS,
-      addScan: (rec) => set((s) => ({ scans: [rec, ...s.scans].slice(0, 30) })),
+      // 30개는 열흘 남짓이라 식이 일지로는 짧다 — 한 성분이 네 번 이상 나오고
+      // 그것이 없는 끼니도 있어야 비교가 성립한다. 늘려도 localStorage 여유 안이다.
+      addScan: (rec) => set((s) => ({ scans: [rec, ...s.scans].slice(0, 200) })),
+      setReaction: (id, reaction, symptoms) => set((s) => ({
+        scans: s.scans.map((r) => (r.id === id ? { ...r, reaction, symptoms } : r)),
+      })),
       clear: () => set({ scans: [] }),
     }),
     {

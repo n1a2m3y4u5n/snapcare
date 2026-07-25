@@ -1,4 +1,4 @@
-import type { ConditionDef, ItemFlag } from '@/lib/snapcare/types';
+import type { ConditionDef, ItemFlag, Reaction, ScanRecord, Symptom } from '@/lib/snapcare/types';
 // 상대경로 + 확장자: 이 모듈을 node --test 로 번들러 없이 직접 돌린다 (@/ 별칭은 해석되지 않는다).
 import { CONDITIONS } from '../snapcare/conditions.ts';
 
@@ -26,10 +26,7 @@ import { CONDITIONS } from '../snapcare/conditions.ts';
  * "우연히 하나쯤"이 거의 항상 걸린다.
  */
 
-export type Symptom = 'skin' | 'gut' | 'breath' | 'mouth';
-export type Reaction = 'fine' | 'unwell';
-
-/** 한 끼에 대한 사후 기록. 아이콘 세 개로 입력받는다 — 글자가 필요 없어야 한다. */
+/** 한 끼에 대한 사후 기록. 아이콘으로 입력받는다 — 글자가 필요 없어야 한다. */
 export interface MealFeedback {
   /** 그 끼니에 들어 있던 알레르겐 태그 (OpenFoodFacts 형식: 'en:peanuts') */
   tags: string[];
@@ -90,6 +87,21 @@ function flagsOf(tags: string[]): ItemFlag[] {
  */
 function conditionForFlag(flag: ItemFlag): ConditionDef | undefined {
   return CONDITIONS.find((c) => c.trigger === flag);
+}
+
+/**
+ * 저장된 스캔 기록 → 그 사람의 식이 일지.
+ *
+ * 답을 받은 음식·음료만 남긴다. 답하지 않은 끼니를 '괜찮았다'로 세면 분모가 부풀어
+ * 신호가 묽어지고, '불편했다'로 세면 없는 알레르기가 만들어진다 — 무응답은 자료가 아니다.
+ * 약은 제외한다. 약의 이상반응은 다른 문제이고 여기 규칙으로 다룰 것이 아니다.
+ */
+export function feedbackFrom(records: ScanRecord[], memberId: string): MealFeedback[] {
+  return records
+    .filter((r) => r.memberId === memberId)
+    .filter((r) => r.kind === 'food' || r.kind === 'drink')
+    .filter((r) => r.reaction !== undefined)
+    .map((r) => ({ tags: r.tags ?? [], reaction: r.reaction!, symptoms: r.symptoms }));
 }
 
 export function findTriggers(log: MealFeedback[]): SuspectedTrigger[] {

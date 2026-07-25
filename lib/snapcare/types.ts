@@ -107,6 +107,15 @@ export interface Verdict {
   member: Member;
 }
 
+/**
+ * 먹고 난 뒤 몸이 어땠는지. 글자 없이 아이콘으로 입력받는다.
+ * 이 기록이 쌓이면 lib/pattern/infer.ts 가 어떤 성분에서 반복되는지 찾는다.
+ */
+export type Reaction = 'fine' | 'unwell';
+
+/** 어디가 불편했는지. 알레르기(즉시형)와 소화 불내성을 가르는 단서다. */
+export type Symptom = 'skin' | 'gut' | 'breath' | 'mouth';
+
 /** 최근 스캔 기록 항목 */
 export interface ScanRecord {
   id: string;
@@ -134,4 +143,16 @@ export interface ScanRecord {
    * 아이템은 기록을 눌러도 열리지 않았고 하루 누적에도 잡히지 않았다.
    */
   item?: ScanItem;
+  /**
+   * 그때 이 음식에 들어 있다고 본 알레르겐 태그 ('en:peanuts').
+   *
+   * item 에서 유도하지 않고 따로 남긴다 — 식이 일지는 "그때 무엇이라고 알고 있었는가"의
+   * 기록이어야 하고, 나중에 카탈로그나 판별 결과가 바뀌면 지난 끼니의 해석까지 조용히
+   * 달라진다. 추론이 딛고 서는 근거가 흔들리면 안 된다.
+   */
+  tags?: string[];
+  /** 먹고 난 뒤의 몸 상태. 사용자가 나중에 아이콘으로 답한다. */
+  reaction?: Reaction;
+  /** reaction='unwell' 일 때 어디가 불편했는지 */
+  symptoms?: Symptom[];
 }

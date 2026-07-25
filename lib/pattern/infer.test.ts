@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { findTriggers, fisherRightTail } from './infer.ts';
-import type { MealFeedback, Symptom } from './infer.ts';
+import { findTriggers, fisherRightTail, feedbackFrom } from './infer.ts';
+import type { MealFeedback } from './infer.ts';
+import type { ScanRecord, Symptom } from '../snapcare/types.ts';
 
 /** n 끼: 그 성분이 든 끼니 `eaten` 회 중 `unwell` 회 불편, 없는 끼니 `other` 회 중 `otherUnwell` 회 불편. */
 function log(
@@ -101,6 +102,29 @@ test('성분을 여러 개 볼수록 기준을 높인다', () => {
     tags: [...m.tags, ...['en:milk', 'en:eggs', 'en:gluten', 'en:soybeans'].slice(0, (i % 4) + 1)],
   }));
   assert.equal(findTriggers(noisy).length, 0, 'Bonferroni 보정 후에는 같은 신호로 부족하다');
+});
+
+test('답하지 않은 끼니는 자료로 세지 않는다', () => {
+  const rec = (over: Partial<ScanRecord>): ScanRecord => ({
+    id: 'r', itemId: 'i', name: 'n', kind: 'food', emoji: '🍚',
+    memberId: 'you', level: 'safe', timeLabel: '', dayKey: 'today', ...over,
+  });
+
+  const records = [
+    rec({ id: '1', tags: ['en:peanuts'], reaction: 'unwell', symptoms: ['skin'] }),
+    rec({ id: '2', tags: ['en:peanuts'] }),                                    // 답 안 함
+    rec({ id: '3', tags: ['en:rice'], reaction: 'fine' }),
+    rec({ id: '4', tags: ['en:peanuts'], reaction: 'fine', memberId: 'mia' }), // 다른 사람
+    rec({ id: '5', tags: [], reaction: 'unwell', kind: 'medicine' }),          // 약
+  ];
+
+  const out = feedbackFrom(records, 'you');
+  // 답한 것 + 본인 것 + 음식/음료만 남는다.
+  // 무응답을 '괜찮았다'로 세면 분모가 부풀어 신호가 묽어지고,
+  // '불편했다'로 세면 없는 알레르기가 만들어진다.
+  assert.equal(out.length, 2);
+  assert.deepEqual(out.map((m) => m.reaction), ['unwell', 'fine']);
+  assert.deepEqual(out[0].symptoms, ['skin']);
 });
 
 test('기록이 비어도 죽지 않는다', () => {
