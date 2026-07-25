@@ -42,7 +42,13 @@ export function ocrToScanItem(ocrText: string): { item: ScanItem; rxInfo: Struct
     kind: 'prescription',
     emoji: rx.drugEmoji || '💊',
     detectedVia: 'prescription OCR (Tesseract)',
-    flags: flagsFromText(ocrText),
+    // VOCA가 뽑아둔 금기를 판정 엔진이 볼 수 있는 플래그로 넘긴다.
+    // 이 연결이 없으면 처방전에서 임신 금기를 읽어놓고도 판정은 '안전'이 나온다.
+    flags: [
+      ...flagsFromText(ocrText),
+      ...(rx.contraindications.includes('pregnant') ? ['unsafe_pregnancy' as ItemFlag] : []),
+      ...(rx.contraindications.includes('breastfeeding') ? ['unsafe_breastfeeding' as ItemFlag] : []),
+    ],
     rx: {
       dosageText,
       durationText: rx.durationDays ? `${rx.durationDays} days` : 'ongoing',
