@@ -1,0 +1,23 @@
+{
+  "source": "openfoodfacts",
+  "code": "8001505005707",
+  "name": "Nocciolata",
+  "brands": "Rigoni di Asiago",
+  "servingGrams": 15,
+  "per100": {
+    "energy": 544,
+    "sugars": 51,
+    "salt": 0.12,
+    "saturatedFat": 5.7,
+    "fat": 32,
+    "protein": 8.1,
+    "fiber": 3.6,
+    "carbohydrates": 54
+  },
+  "allergenTags": [
+    "en:milk",
+    "en:nuts",
+    "en:soybeans"
+  ],
+  "nutriscore": "e"
+}

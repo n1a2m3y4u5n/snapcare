@@ -1,0 +1,19 @@
+{
+  "source": "openfoodfacts",
+  "code": "9002490100070",
+  "name": "Red Bull",
+  "brands": "Red Bull",
+  "servingGrams": 250,
+  "per100": {
+    "energy": 46,
+    "sugars": 11,
+    "salt": 0.1,
+    "saturatedFat": 0,
+    "fat": 0,
+    "protein": 0,
+    "fiber": 0,
+    "carbohydrates": 11
+  },
+  "allergenTags": [],
+  "nutriscore": "e"
+}

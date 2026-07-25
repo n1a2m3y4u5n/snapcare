@@ -1,0 +1,21 @@
+{
+  "source": "openfoodfacts",
+  "code": "3017620422003",
+  "name": "Nutella",
+  "brands": "Nutella, Ferrero, Yum yum",
+  "per100": {
+    "energy": 539,
+    "sugars": 56.3,
+    "salt": 0.107,
+    "saturatedFat": 10.6,
+    "fat": 30.9,
+    "protein": 6.3,
+    "carbohydrates": 57.5
+  },
+  "allergenTags": [
+    "en:milk",
+    "en:nuts",
+    "en:soybeans"
+  ],
+  "nutriscore": "e"
+}

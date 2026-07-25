@@ -1,0 +1,24 @@
+{
+  "source": "openfoodfacts",
+  "code": "5000159461122",
+  "name": "Snickers",
+  "brands": "Snickers",
+  "servingGrams": 50,
+  "per100": {
+    "energy": 481,
+    "sugars": 51.8,
+    "salt": 0.62875,
+    "saturatedFat": 7.9,
+    "fat": 22.5,
+    "protein": 8.6,
+    "fiber": 4.3,
+    "carbohydrates": 60.5
+  },
+  "allergenTags": [
+    "en:eggs",
+    "en:milk",
+    "en:peanuts",
+    "en:soybeans"
+  ],
+  "nutriscore": "e"
+}

@@ -1,0 +1,24 @@
+{
+  "source": "openfoodfacts",
+  "code": "5000159407236",
+  "name": "Mars",
+  "brands": "Mars, Mars Wrigley",
+  "servingGrams": 100,
+  "per100": {
+    "energy": 450,
+    "sugars": 61.6,
+    "salt": 0.42,
+    "saturatedFat": 8.38,
+    "fat": 16.8,
+    "protein": 4.04,
+    "fiber": 1.24,
+    "carbohydrates": 70
+  },
+  "allergenTags": [
+    "en:eggs",
+    "en:gluten",
+    "en:milk",
+    "en:soybeans"
+  ],
+  "nutriscore": "e"
+}

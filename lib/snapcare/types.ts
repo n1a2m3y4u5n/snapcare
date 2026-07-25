@@ -1,3 +1,5 @@
+import type { NutrientProfile } from '@/lib/nutrition/types';
+
 // SnapCare 코어 도메인 타입
 // 사진 1장 → 의도 판별 → 가족 구성원별 신호등 판정 (blend: 접근성 코어 + 와이어프레임 UX)
 
@@ -7,8 +9,10 @@ export type ItemKind = 'food' | 'drink' | 'medicine' | 'prescription';
 
 /** 스캔 대상이 가진 속성 플래그 (컨디션과 대조하는 열쇠) */
 export type ItemFlag =
-  | 'peanut' | 'gluten' | 'lactose' | 'shellfish'
-  | 'high_sugar' | 'caffeine' | 'nsaid_bleed' | 'alcohol';
+  | 'peanut' | 'tree_nuts' | 'gluten' | 'lactose' | 'shellfish' | 'egg' | 'soy' | 'sesame'
+  | 'high_sugar' | 'high_salt' | 'high_sat_fat'
+  | 'unsafe_pregnancy' | 'unsafe_breastfeeding'
+  | 'caffeine' | 'nsaid_bleed' | 'alcohol';
 
 /** 가족 구성원이 가진 건강 컨디션 정의 */
 export interface ConditionDef {
@@ -16,6 +20,15 @@ export interface ConditionDef {
   label: string;
   emoji: string;
   kind: 'allergen' | 'diet' | 'med';
+  /**
+   * 사용자가 이 사실을 어떻게 알 수 있는가.
+   *  now        — 지금 본인 상태 (인프라 불필요)
+   *  experience — 먹고 아팠던 경험으로 안다 (진단 불필요)
+   *  diagnosis  — 진료를 받아야 안다
+   * 대상 지역엔 알레르기 검사 인프라가 거의 없어서, 진단을 전제하면 프로필이 비어버린다.
+   * 화면은 이 축으로 묶어 "당신이 알 수 있는 것"만 묻는다.
+   */
+  knownBy: 'now' | 'experience' | 'diagnosis';
   /** 이 플래그를 가진 아이템이면 발동 */
   trigger: ItemFlag;
   /** 발동 시 심각도 */
@@ -32,6 +45,16 @@ export interface ScanItem {
   emoji: string;
   /** "Detected via …" — 어떻게 인식했는지 */
   detectedVia: string;
+  /**
+   * 제품 바코드. 있으면 영양 엔진이 OpenFoodFacts 프로필을 받아
+   * 구성원별 기준치와 대조한 실제 수치 판정을 낸다 (없으면 정성 판정만).
+   */
+  barcode?: string;
+  /**
+   * 조회 없이 이미 확보한 영양 프로필 (성분표 OCR·사진 판별 결과).
+   * 바코드가 없어도 — 즉 제품 DB에 없는 로컬 식품이어도 — 계산 엔진이 그대로 돈다.
+   */
+  profile?: NutrientProfile;
   flags: ItemFlag[];
   /** 음식/음료 영양 요약 (정성 가이드용) */
   nutrition?: { kcal?: number; protein?: string; sugar?: string; note?: string };
@@ -47,11 +70,16 @@ export interface ScanItem {
   };
 }
 
+/** 기준치 산출용 나이대. 타이핑 없이 그림으로 고르게 하려고 연속값 대신 구간을 쓴다. */
+export type AgeBand = 'child' | 'teen' | 'adult' | 'senior';
+
 export interface Member {
   id: string;
   name: string;
   /** 예: 'Adult', 'Child · age 7' */
   role: string;
+  /** 없으면 role 문자열에서 추정한다 (구버전 저장분 호환) */
+  ageBand?: AgeBand;
   emoji: string;
   /** 아바타 배경색 (hex) */
   color: string;
@@ -85,4 +113,14 @@ export interface ScanRecord {
   level: Level;
   /** 표시용 시각 라벨 (예: '2:14 PM', 'Yesterday') — 렌더 중 포맷팅 회피 */
   timeLabel: string;
+  /**
+   * 하루 경계 키 (YYYY-MM-DD). 하루 누적 분석이 "오늘"을 고르는 기준.
+   * 데모 시드 기록은 'today' 라는 센티널을 쓴다 — 모듈 로드 시점에 Date를 읽으면
+   * 서버·클라이언트 렌더가 어긋나기 때문이다.
+   */
+  dayKey: string;
+  /** 영양 누적용 — 있으면 캐시된 프로필로 섭취량을 재계산할 수 있다. */
+  barcode?: string;
+  /** 그때 먹은 양(g) */
+  grams?: number;
 }

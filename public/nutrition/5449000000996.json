@@ -1,0 +1,18 @@
+{
+  "source": "openfoodfacts",
+  "code": "5449000000996",
+  "name": "coca-cola",
+  "brands": "Coca-Cola",
+  "servingGrams": 330,
+  "per100": {
+    "energy": 42,
+    "sugars": 10.6,
+    "salt": 0,
+    "saturatedFat": 0,
+    "fat": 0,
+    "protein": 0,
+    "carbohydrates": 10.6
+  },
+  "allergenTags": [],
+  "nutriscore": "e"
+}
