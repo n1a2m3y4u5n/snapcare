@@ -14,36 +14,54 @@ IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 
 
-def build_transforms(img_size: int, train: bool, crop_scale_min: float = 0.7):
-    """Preprocessing for one image. `crop_scale_min` applies to training only.
+def build_transforms(img_size: int, train: bool, crop_scale_min: float = 0.7,
+                     perspective: float = 0.0, perspective_p: float = 0.5):
+    """Preprocessing for one image. The augmentation arguments apply to training only.
 
-    A note on that crop, because it is not a free parameter here the way it is
-    for classification. This model has to judge *how much food* is on a plate,
-    and the plate is the only size reference in the frame. Cropping to 70% of
-    the image can take the rim out of shot, or cut off part of the dish, while
-    the label still states the mass of the whole thing — so an aggressive crop
-    is not just a harder view of the same example, it is a wrong label. Raising
-    the floor keeps the plate in frame at the cost of less augmentation, which
-    is the trade `runs/ablation_v3.sh` measures rather than assumes.
+    Two of these are not free parameters here the way they are for
+    classification, because this model has to judge *how much food* is on a
+    plate and the plate is the only size reference in the frame.
+
+    `crop_scale_min` — cropping to 70% of the image can take the rim out of
+    shot, or cut off part of the dish, while the label still states the mass of
+    the whole thing. So an aggressive crop is not just a harder view of the same
+    example, it is a wrong label. Raising the floor keeps the plate in frame at
+    the cost of less augmentation.
+
+    `perspective` — the one augmentation aimed squarely at how the app is used.
+    Overhead training frames are taken from directly above; users hold a phone
+    at an angle, and the model is around fifteen points worse on the side-angle
+    frames that resemble that. A random perspective warp turns an overhead photo
+    into a plausible off-axis one *without* changing what is on the plate, which
+    is exactly the invariance that is missing. 0 disables it.
+
+    `runs/queue.sh` measures both rather than assuming either.
     """
     if train:
-        # Vertical flip + wider rotation make the model orientation-robust, which
-        # matters because the side-angle training frames come from cafe1 videos
-        # that are mounted upside-down and sweep through many azimuths. Nutrition
-        # totals are orientation-invariant, so this is safe.
-        return transforms.Compose(
-            [
-                transforms.RandomResizedCrop(
-                    img_size, scale=(crop_scale_min, 1.0), ratio=(0.85, 1.18)
-                ),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomVerticalFlip(),
-                transforms.RandomApply([transforms.RandomRotation(25)], p=0.5),
-                transforms.ColorJitter(0.15, 0.15, 0.15, 0.03),
-                transforms.ToTensor(),
-                transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
-            ]
-        )
+        stages = [
+            transforms.RandomResizedCrop(
+                img_size, scale=(crop_scale_min, 1.0), ratio=(0.85, 1.18)
+            ),
+            # Vertical flip + wide rotation make the model orientation-robust,
+            # which matters because the side-angle frames come from cafe1 videos
+            # that are mounted upside-down and sweep through many azimuths.
+            # Nutrition totals do not depend on orientation, so this is safe.
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.RandomApply([transforms.RandomRotation(25)], p=0.5),
+        ]
+        if perspective > 0:
+            # After the crop, so the warp fills the frame rather than being
+            # partly cropped away again.
+            stages.append(
+                transforms.RandomPerspective(distortion_scale=perspective, p=perspective_p)
+            )
+        stages += [
+            transforms.ColorJitter(0.15, 0.15, 0.15, 0.03),
+            transforms.ToTensor(),
+            transforms.Normalize(IMAGENET_MEAN, IMAGENET_STD),
+        ]
+        return transforms.Compose(stages)
     resize = int(round(img_size * 1.15))
     return transforms.Compose(
         [

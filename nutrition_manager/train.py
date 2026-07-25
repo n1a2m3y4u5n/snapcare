@@ -80,6 +80,10 @@ TRAIN_DEFAULTS = {
     "grad_clip": None,
     "label_noise": 0.0,       # stddev of noise added to standardized targets
     "crop_scale_min": 0.7,    # smallest fraction of the image RandomResizedCrop keeps
+    # Random off-axis warp, aimed at the gap between overhead frames and how
+    # a phone is actually held. 0 disables it.
+    "perspective": 0.0,
+    "perspective_p": 0.5,
     # Which validation view chooses the checkpoint: "overhead" matches the
     # published test protocol, "both" matches how the app is actually used.
     "select_view": "overhead",
@@ -355,7 +359,9 @@ def main():
 
     img_size = mcfg["img_size"]
     train_ds = Nutrition5kDataset(
-        df_train, targets, build_transforms(img_size, True, tcfg["crop_scale_min"])
+        df_train, targets,
+        build_transforms(img_size, True, tcfg["crop_scale_min"],
+                         tcfg["perspective"], tcfg["perspective_p"]),
     )
 
     loader_kwargs = dict(

@@ -69,10 +69,18 @@ python train.py --set train.select_view=both     # for a model that ships
 ```
 
 Both numbers are printed every epoch either way, because a widening gap means
-the model is specialising to one camera geometry. Closing it — with more
-aggressive viewpoint augmentation, or by weighting the sampler differently — is
-the most valuable thing left to do here, and is worth more to the app than
-another point on the leaderboard metric.
+the model is specialising to one camera geometry.
+
+Closing that gap is the most valuable thing left to do here, and worth more to
+the app than another point on the leaderboard metric. `train.perspective` is
+the first attempt: a random off-axis warp turns an overhead photo into a
+plausible angled one *without* changing what is on the plate, which is exactly
+the invariance that is missing. It is off by default — turning it on is an
+experiment, not the baseline.
+
+```bash
+python train.py --set train.perspective=0.35 train.select_view=both
+```
 
 ### What actually moved the number
 
