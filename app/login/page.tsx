@@ -59,10 +59,32 @@ export default function LoginPage() {
           {error ? 'Wrong key — try again' : setup ? 'Tap 4 pictures in an order you’ll remember' : 'Tap your 4 pictures in order'}
         </p>
 
+        {/*
+          채워진 슬롯에 고른 그림을 그대로 보여준다.
+          익명의 점이면 "무엇을 눌렀는지", "지우면 무엇이 사라지는지"를 알 수 없다 —
+          삭제 버튼이 직관적이지 않다는 지적의 실제 원인이 여기였다.
+          마지막 칸은 다음에 지워질 대상이라 테두리로 강조한다.
+        */}
         <div className="mt-5 flex gap-3">
-          {Array.from({ length: KEY_LEN }).map((_, k) => (
-            <span key={k} className="h-6 w-6 rounded-full border-2" style={{ borderColor: error ? 'var(--color-avoid)' : 'var(--color-sc-line)', background: k < picked.length ? 'var(--color-sc-primary)' : 'transparent' }} />
-          ))}
+          {Array.from({ length: KEY_LEN }).map((_, k) => {
+            const filled = k < picked.length;
+            const isLast = filled && k === picked.length - 1;
+            return (
+              <span
+                key={k}
+                className="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl transition-transform"
+                style={{
+                  background: filled ? 'white' : 'transparent',
+                  border: `2px ${filled ? 'solid' : 'dashed'} ${
+                    error ? 'var(--color-avoid)' : isLast ? 'var(--color-sc-primary)' : 'var(--color-sc-line)'
+                  }`,
+                  transform: isLast ? 'scale(1.06)' : 'none',
+                }}
+              >
+                {filled ? TILES[picked[k]] : ''}
+              </span>
+            );
+          })}
         </div>
 
         {/* 데모 힌트 — 검증 모드에서 정답 픽처키 표시 */}
@@ -88,7 +110,22 @@ export default function LoginPage() {
           ))}
         </div>
 
-        <button onClick={() => setPicked(picked.slice(0, -1))} disabled={busy} className="mt-4 text-sm disabled:opacity-40" style={{ color: 'var(--color-sc-muted)' }}>⌫ delete</button>
+        {/*
+          지울 게 없으면 아예 숨긴다 — 비활성 상태의 흐린 글씨보다
+          "지금 누를 수 있는 것만 보인다"가 문해력에 덜 기댄다.
+          아이콘 + 라벨 + 테두리로 탭 대상임을 분명히 한다.
+        */}
+        {picked.length > 0 && !busy && (
+          <button
+            onClick={() => { setError(false); setPicked(picked.slice(0, -1)); }}
+            className="mt-5 flex items-center gap-2 rounded-full bg-white px-5 py-2.5 shadow-sm active:scale-95 transition-transform"
+            style={{ border: '1.5px solid var(--color-sc-line)' }}
+            aria-label="Undo last picture"
+          >
+            <span className="text-lg leading-none">⌫</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>Undo</span>
+          </button>
+        )}
       </div>
     </div>
   );
