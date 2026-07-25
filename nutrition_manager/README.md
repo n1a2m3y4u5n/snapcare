@@ -1,66 +1,77 @@
 # SnapCare — nutrition estimation model
 
-RGB-only nutrition regression on the [Nutrition5k](https://github.com/google-research-datasets/Nutrition5k)
-dataset. Given an overhead photo of a plated dish, the model predicts five
-dish-level totals: **calories, mass, fat, carbohydrate, protein** — the exact
-targets scored by the official `compute_eval_statistics.py`.
+Photograph a plate, get five numbers: **calories, mass, fat, carbohydrate,
+protein**. Trained on [Nutrition5k](https://github.com/google-research-datasets/Nutrition5k)
+and scored by its official protocol.
 
-This is **v1**: a single ImageNet-pretrained CNN backbone (`efficientnet_b0` by
-default) with a 5-way regression head, trained on the overhead RealSense RGB
-frames. Depth (RGB-D) and side-angle frames are planned follow-ups.
+This is the on-device half of SnapCare's meal path. The existing path sends the
+photograph to a vision model, which means the one part of the app that most
+needs to work without infrastructure is the part that requires a network and a
+key. This runs in the browser instead: no request, no key, and nothing about
+the photograph leaves the phone.
+
+It answers a narrower question than the vision model — it does not identify the
+dish or name an ingredient, it regresses five totals — so the two compose:
+this first, the network model as a refinement when there is a network.
+
+## Where it stands
+
+Official RGB test split, 507 dishes, one overhead frame each.
+
+| | calories | mass | fat | carb | protein | mean |
+|---|---|---|---|---|---|---|
+| v1 | 22.8% | 20.5% | 31.8% | 31.0% | 30.6% | **27.3%** |
+| v2 | 19.0% | 16.5% | 27.2% | 24.2% | 27.8% | **22.9%** |
+| v2 + flip TTA | 18.7% | 16.5% | 26.7% | 24.1% | 27.6% | **22.7%** |
+
+Same backbone and resolution in both rows; the difference is the training
+recipe. The metric is the upstream one — `mean|err| / mean(gt)` per field — and
+`eval.py` agrees with `nutrition5k_dataset/scripts/compute_eval_statistics.py`
+to within 1e-7, so these are comparable to published numbers.
+
+Note what that metric is *not*: it is not the mean of per-dish percentage
+errors. Its denominator is a constant, which makes it absolute error in
+rescaled units, and means a gram of error on a 900 kcal dish counts exactly as
+much as a gram on a 30 kcal one. That is why the targets are regressed in
+physical units by default rather than in log space — see `targets.py`.
+
+### What actually moved the number
+
+**The model was being selected on the view it is not scored on.** `build_dataset.py`
+extracts up to 24 side-angle frames per dish but only one overhead frame, so the
+manifest is 97% side — 79,770 against 2,755. The official test split is overhead
+only. Training sampled that mix as it lay, and the validation set had the same
+composition, so side frames outvoted overhead ones 29 to 1 in choosing the
+checkpoint. Selection is now overhead-only and sampling is view-balanced.
+
+**A few labels were setting the scale for every dish.** Carbohydrate reaches
+845 g against a 99th percentile of 68 g. Standardization statistics are now
+fitted below the 99.5th percentile — the statistics only. Clipping the targets
+a sample trains against would teach the model to under-predict large dishes.
+
+Plus warmup, cosine decay, gradient clipping, and an EMA of the weights.
 
 ## Layout
 
 ```
 nutrition_manager/
-  nutrition5k_dataset/     # third-party dataset (read-only, gitignored)
-  configs/config.yaml      # all paths + hyperparameters
-  common.py                # config loading + project-relative paths
-  data/build_labels.py     # metadata + overhead imagery -> data/labels.csv
-  build_dataset.py         # + side-angle frames -> dataset_processed/manifest.csv
-  data/dataset.py          # torch Dataset + transforms
-  models/model.py          # backbone + regression head (timm)
-  train.py                 # training loop -> checkpoints/best.pt
-  eval.py                  # test-split scoring + predictions.csv
-  predict.py               # single-image inference (app entry point)
-  environment.yml          # conda env `snapcare`
+  nutrition5k_dataset/     third-party dataset (read-only, gitignored)
+  configs/config.yaml      paths + hyperparameters
+  common.py                config loading, project-relative paths
+  targets.py               the transform between grams and what the net regresses
+  metrics.py               the scoring metric, defined once
+  inference.py             checkpoint loading + TTA, shared by every caller
+  data/build_labels.py     metadata + overhead imagery -> data/labels.csv
+  build_dataset.py         + side-angle frames -> dataset_processed/manifest.csv
+  data/dataset.py          torch Dataset + transforms
+  models/model.py          backbone + regression head (timm)
+  train.py                 training -> checkpoints/<tag>.pt
+  eval.py                  test-split scoring -> predictions.csv
+  predict.py               single-image inference
+  export_onnx.py           -> export/*.onnx for the browser
+  web/mealModel.ts         the browser side of that export
+  runs/                    ablation script, summary, history.jsonl
 ```
-
-## Processed multi-view dataset (`dataset_processed/`)
-
-`build_dataset.py` creates a **separate** processed dataset — the original
-`nutrition5k_dataset/` is never modified:
-
-```
-dataset_processed/
-  frames/<dish_id>/cam<A-D>_s<NN>.jpg   # sampled side-angle frames (480p JPEG)
-  manifest.csv                          # one row per image (train/eval unit)
-```
-
-`manifest.csv` columns: `dish_id, split, view, camera, seq, cafe,
-calories, mass, fat, carb, protein, image_path, notes` — `image_path` is
-project-relative and may point either into the read-only original (overhead
-frames) or into `dataset_processed/` (side frames).
-
-**How side frames are used.** The overhead `realsense_overhead/rgb.png` frames
-keep the official split. Side-angle frames (four cameras sweeping the plate at
-~45°) are sampled (~4/camera) and added **only to the train split**; the test
-set stays overhead-only so metrics remain comparable to the overhead-only
-baseline. The validation slice is held out **by dish**, so a dish's side frames
-never leak into training against its own overhead val frame.
-
-**Side-angle quirks (recorded in `notes`, not filtered).** Per DH's inspection:
-
-- **cafe1** videos tend to be **mounted upside-down** and **pause briefly**
-  before the camera starts rotating. The entire `rgb_train` split is cafe1, so
-  every side training frame carries this note. We do not de-rotate them — instead
-  training augmentation adds vertical flips + wider rotation so the model is
-  orientation-invariant (nutrition totals don't depend on orientation).
-- A few dishes are **off-centered**, and (rarely) one is shot in **near-total
-  darkness**. These are kept as-is; they are realistic noise.
-
-Note the dataset's ground-truth id lists only distinguish **cafe1 (4768)** and
-**cafe2 (238)** — there is no cafe3 label to key on.
 
 ## Setup
 
@@ -71,36 +82,95 @@ conda activate snapcare
 
 ## Usage
 
-Run everything **from this `nutrition_manager/` directory**:
+Run everything from this directory.
 
 ```bash
-python data/build_labels.py   # build data/labels.csv (splits intersected with available RGB)
-python build_dataset.py       # extract side frames -> dataset_processed/manifest.csv (needs ffmpeg)
-python train.py               # train; saves checkpoints/best.pt
-python eval.py                # score the test split; writes predictions.csv
-python predict.py meal.jpg    # single-image inference
+python data/build_labels.py    # -> data/labels.csv
+python build_dataset.py        # -> dataset_processed/manifest.csv (needs ffmpeg)
+python train.py                # -> checkpoints/best.pt
+python eval.py                 # -> predictions.csv, eval_stats.json
+python predict.py meal.jpg
 ```
 
-`build_dataset.py` needs `ffmpeg` (installed into the `snapcare` env:
-`conda install -n snapcare -c conda-forge ffmpeg`). If you skip it, `train.py`
-falls back to the overhead-only `labels.csv`.
+Any config key can be overridden without editing the file, so an ablation never
+needs a second copy of `config.yaml`:
 
-## Notes / design decisions
+```bash
+python train.py --tag b0 --set model.backbone=efficientnet_b0 train.epochs=10
+python train.py --tag log --set train.target_space=log1p
+python eval.py --compare checkpoints/*.pt
+python runs/summarize.py
+```
 
-- **Split fidelity.** Uses the official `rgb_train_ids` / `rgb_test_ids` lists.
-  Roughly a third of those ids are side-angle-only (no overhead frame) and are
-  dropped by `build_labels.py`, leaving ~2.6k train / ~450 test overhead images.
-- **Targets** are standardized (per-field mean/std from the train slice) for a
-  balanced loss; the checkpoint stores the stats so eval/inference de-normalize
-  identically. Optional outlier clipping via `train.clip_percentile`.
-- **Metric** mirrors the upstream scorer (per-field MAE and MAE%). `eval.py`
-  also emits `predictions.csv` + `groundtruth_test.csv` so you can run
-  `nutrition5k_dataset/scripts/compute_eval_statistics.py` for a cross-check.
-- The dataset directory is treated as **read-only**.
+Each run appends one row to `runs/history.jsonl`; `runs/ablation_v2.sh` is the
+set of runs behind the table above.
+
+## Deploying to the app
+
+```bash
+python export_onnx.py --checkpoint checkpoints/best.pt --quantize --score
+```
+
+Writes `export/<name>.onnx`, an int8 variant, and `<name>.json` describing how
+to call it. Then copy `web/mealModel.ts` into the app's `lib/nutrition/` and
+serve the two files from `public/models/`:
+
+```ts
+const model = await MealModel.load('/models/web.json');
+const nutrition = await model.estimate(imageBitmap);   // { calories, mass, fat, carb, protein }
+```
+
+**ImageNet normalization and target de-standardization are inside the graph.**
+The contract is pixels in, grams out. Those constants would otherwise have to
+be duplicated in TypeScript and kept in step by hand, and getting one wrong
+does not throw — it returns plausible numbers that are quietly wrong on a
+screen telling someone whether a meal fits their day. All the caller owes the
+model is the resize and centre crop, which the JSON spells out.
+
+`--score` runs the exported graph over the real test split, preprocessing the
+images the way the browser will, so a quantized model that lost accuracy shows
+up as a number rather than as a worse app. Parity against PyTorch is checked on
+every export and the exporter refuses to write metadata if it fails.
+
+## The processed multi-view dataset
+
+`build_dataset.py` creates `dataset_processed/` and never modifies the original:
+
+```
+dataset_processed/
+  frames/<dish_id>/cam<A-D>_s<NN>.jpg   sampled side-angle frames (480p)
+  manifest.csv                          one row per image
+```
+
+Overhead frames keep the official split. Side-angle frames — four cameras
+sweeping the plate at ~45° — are sampled at about four per camera and added to
+the **train** split only, so the test set stays overhead-only and comparable.
+Validation is held out **by dish**, so a dish's side frames never train against
+its own overhead frame; a plate photographed 25 times is one dish, and
+splitting by row would measure memorisation.
+
+Side-angle quirks are recorded in `notes` rather than filtered out. Per DH's
+inspection: cafe1 videos tend to be mounted **upside-down** and pause before the
+camera starts rotating, and the whole `rgb_train` split is cafe1, so every side
+frame carries that note. A few dishes are off-centre and one or two are shot
+nearly dark. None of it is corrected — training augmentation includes vertical
+flips and wide rotation, because nutrition totals do not depend on which way up
+the camera was, and the rest is realistic noise.
+
+## Notes
+
+- **Split fidelity.** Uses the official `rgb_train_ids` / `rgb_test_ids`. About a
+  third of those ids are side-angle-only and are dropped by `build_labels.py`,
+  leaving ~2.6k train / ~507 test overhead images.
+- **Test-time augmentation** averages over flips in *physical* units, not in the
+  network's output space. Under a log target those differ, and averaging in log
+  space is a geometric mean, which would bias every prediction downward.
+- The dataset directory is treated as read-only.
 
 ## Roadmap
 
-- v2: add the `depth_raw` channel (RGB-D 4-channel input).
-- Side-angle frames via `nutrition5k_dataset/scripts/extract_frames_sampled.sh`.
-- Optional per-ingredient auxiliary head (the metadata carries ingredient breakdowns).
-```
+- v3: add the `depth_raw` channel (RGB-D 4-channel input) — the published
+  Nutrition5k results put most of their gain there.
+- A per-ingredient auxiliary head; the metadata carries the breakdown.
+- Calibrated uncertainty, so the app can say "about 400" versus "somewhere
+  between 250 and 600" instead of always sounding equally sure.

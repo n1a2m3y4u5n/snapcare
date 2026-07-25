@@ -10,3 +10,5 @@ nutrition5k_dataset/
 
 # Run logs; history.jsonl and the scripts are kept.
 runs/*.log
+export/
+web/node_modules/

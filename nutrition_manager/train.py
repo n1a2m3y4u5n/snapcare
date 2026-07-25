@@ -152,27 +152,43 @@ def split_train_val(df_train_all: pd.DataFrame, val_frac: float, seed: int):
 
 
 def build_sampler(df: pd.DataFrame, overhead_ratio: float | None, epoch_size: int | None, seed: int):
-    """Weighted sampler that draws overhead frames `overhead_ratio` of the time.
+    """Choose how an epoch is drawn. Returns (sampler, shuffle, drop_last).
 
-    Returns (sampler, shuffle, drop_last) for the DataLoader. With
-    `overhead_ratio` unset the dataset is sampled as it lies, which is the v1
-    behaviour and means 97% of every epoch is side-angle frames.
+    The two knobs are independent, and both have to be honoured separately or
+    an ablation silently stops being an ablation:
+
+    * `overhead_ratio` sets the mix of views. Unset means sample the dataset as
+      it lies, which is the v1 behaviour and means 97% side-angle frames.
+    * `epoch_size` fixes how many images an epoch is. Unset means one pass.
+
+    Setting only `epoch_size` still has to work. Otherwise the run that exists
+    to isolate the sampler's effect would also quietly get 3.2x the compute of
+    the run it is being compared against, and the comparison would measure
+    both changes at once while appearing to measure one.
     """
     n = len(df)
-    if overhead_ratio is None:
-        return None, True, True
-
-    is_overhead = (df["view"] == "overhead").to_numpy()
-    n_over = int(is_overhead.sum())
-    n_side = n - n_over
-    if n_over == 0 or n_side == 0:
-        return None, True, True
-
-    # Uniform within each view, so the two views together hit the requested mix.
-    weights = np.where(is_overhead, overhead_ratio / n_over, (1.0 - overhead_ratio) / n_side)
     generator = torch.Generator().manual_seed(seed)
+
+    if overhead_ratio is None:
+        if not epoch_size:
+            return None, True, True
+        # Uniform over the dataset as it lies, but a fixed number of draws, so
+        # epoch cost matches a balanced run exactly.
+        weights = torch.ones(n, dtype=torch.double)
+    else:
+        is_overhead = (df["view"] == "overhead").to_numpy()
+        n_over = int(is_overhead.sum())
+        n_side = n - n_over
+        if n_over == 0 or n_side == 0:
+            return None, True, True
+        # Uniform within each view, so the two together hit the requested mix.
+        weights = torch.as_tensor(
+            np.where(is_overhead, overhead_ratio / n_over, (1.0 - overhead_ratio) / n_side),
+            dtype=torch.double,
+        )
+
     sampler = WeightedRandomSampler(
-        weights=torch.as_tensor(weights, dtype=torch.double),
+        weights=weights,
         num_samples=int(epoch_size or n),
         replacement=True,
         generator=generator,
@@ -304,8 +320,9 @@ def main():
         df_train, tcfg["overhead_ratio"], tcfg["epoch_size"], tcfg["seed"]
     )
     if sampler is not None:
-        print(f"sampler: {tcfg['overhead_ratio']:.0%} overhead, "
-              f"{len(sampler)} draws/epoch (with replacement)")
+        mix = ("as the dataset lies" if tcfg["overhead_ratio"] is None
+               else f"{tcfg['overhead_ratio']:.0%} overhead")
+        print(f"sampler: {mix}, {len(sampler)} draws/epoch (with replacement)")
     train_loader = DataLoader(
         train_ds, sampler=sampler, shuffle=shuffle, drop_last=drop_last, **loader_kwargs
     )
