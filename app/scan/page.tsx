@@ -16,6 +16,7 @@ import { useReminders } from '@/stores/reminders';
 import { usePreferences } from '@/stores/preferences';
 import { requestPermission, scheduleNotification } from '@/lib/notifications';
 import { computeVerdict, LEVEL_META } from '@/lib/snapcare/verdict';
+import { checkInteractions } from '@/lib/medication/interactions';
 import { itemToDsl } from '@/lib/snapcare/sigil';
 import { itemVoiceScript } from '@/lib/snapcare/say';
 import { speak } from '@/lib/voice';
@@ -27,6 +28,7 @@ export default function ScanResultPage() {
   const setCurrent = useAnalysis((s) => s.setCurrent);
   const { members, activeMemberId } = useFamily();
   const addScan = useScans((s) => s.addScan);
+  const scans = useScans((s) => s.scans);
   const addReminders = useReminders((s) => s.addReminders);
 
   const autoTts = usePreferences((s) => s.autoTts);
@@ -58,8 +60,25 @@ export default function ScanResultPage() {
 
   if (!item || !scanned || !member) return null;
 
-  const verdict = computeVerdict(scanned, member, nutrition.assessments);
   const isRx = item.kind === 'prescription' || item.kind === 'medicine';
+  const baseVerdict = computeVerdict(scanned, member, nutrition.assessments);
+
+  // 지금 복용 중인 약과 대조한다. 상품명이 달라도 성분이 겹치면 용량이 합쳐지는데,
+  // 포장지를 읽을 수 없는 사용자는 그걸 스스로 알아낼 방법이 없다.
+  const activeMeds = scans
+    .filter((r) => r.memberId === member.id && (r.kind === 'medicine' || r.kind === 'prescription'))
+    .map((r) => r.item)
+    .filter((i): i is ScanItem => Boolean(i))
+    .filter((i) => i.id !== scanned.id);
+  const interactions = isRx ? checkInteractions(scanned, activeMeds) : [];
+
+  const verdict: Verdict = interactions.length === 0 ? baseVerdict : {
+    ...baseVerdict,
+    level: 'avoid',
+    headline: `Do not take with your other medicine`,
+    summary: interactions.map((w) => w.text).join(' · '),
+    reasons: [...baseVerdict.reasons, ...interactions.map((w) => ({ level: w.level, text: w.text }))],
+  };
 
   function finish() {
     addScan({
