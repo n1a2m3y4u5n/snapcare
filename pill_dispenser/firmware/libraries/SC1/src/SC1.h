@@ -30,6 +30,10 @@
  *                     the same, plus a day-of-week mask and a course length,
  *                     which the paper sheet can express and `S` cannot
  *
+ *   phone -> device   SC1*C*202607251930*4
+ *                     wall-clock time. The device refuses to dispense until it
+ *                     has one it can trust; see ClockSet.
+ *
  *   device -> phone   SC1*E*1*0800*T*07
  *                     one dose, taken or missed
  *

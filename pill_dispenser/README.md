@@ -161,6 +161,7 @@ caller is told which is which.
 ```
 SC1*S*1:0800/3:1900                    app-compatible, exact only if all seven days
 SC1*W*1:0800-127-030/3:1900-021-000    lossless: day mask and course length kept
+SC1*C*202607251930*4                   wall-clock time, to set the device's RTC
 ```
 
 `SC1*W*` is safe to show to an app build that predates it: `messageKind` returns
