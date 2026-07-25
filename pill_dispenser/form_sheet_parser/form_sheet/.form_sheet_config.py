@@ -1,13 +1,24 @@
 import json
 import sys
+from pathlib import Path
+
 import cv2
 import numpy as np
 
-from form_sheet_parser import (
+# form_sheet_parser/form_sheet/ -> pill_dispenser/, so the package imports
+# whatever directory this is invoked from.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from form_sheet_parser import (  # noqa: E402
     detect_aruco_corners,
+    load_config,
     warp_form_sheet,
     SIDE,
 )
+
+# The thresholds the reader currently ships with, so re-calibrating the bubble
+# positions cannot silently reset them to whatever was hardcoded here.
+DEFAULTS = load_config()
 
 GROUPS = [
     ("layer",    "one",  [str(i) for i in range(1, 9)]),
@@ -59,11 +70,18 @@ def main(image_path: str, out_path: str = "form_sheet_config.json") -> None:
         if key == ord("q"):
             break
         if key == ord("s") and len(clicks) == len(TASKS):
+            # Thresholds are copied from the reader's own defaults rather than
+            # written out here. They are not free parameters: they were set by
+            # measuring where marked and unmarked bubbles actually separate
+            # (`python -m form_sheet_parser.synth --sweep`), and a second copy
+            # in this script would quietly revert that the next time anyone
+            # re-clicked the bubble map.
             cfg = {
-                "half_width": 8,
-                "half_height": 16,
-                "abs_min": 0.35,
-                "margin": 0.15,
+                "half_width": DEFAULTS["half_width"],
+                "half_height": DEFAULTS["half_height"],
+                "normalize": DEFAULTS.get("normalize", True),
+                "abs_min": DEFAULTS["abs_min"],
+                "margin": DEFAULTS["margin"],
                 "groups": {
                     g: {"mode": m, "bubbles": {}} for g, m, _ in GROUPS
                 },
