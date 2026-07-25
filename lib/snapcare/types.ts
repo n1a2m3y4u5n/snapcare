@@ -28,7 +28,12 @@ export interface ConditionDef {
    * 대상 지역엔 알레르기 검사 인프라가 거의 없어서, 진단을 전제하면 프로필이 비어버린다.
    * 화면은 이 축으로 묶어 "당신이 알 수 있는 것"만 묻는다.
    */
-  knownBy: 'now' | 'experience' | 'diagnosis';
+  /**
+   * 이 조건을 사용자가 어떻게 알 수 있는가 — 자가보고 화면의 묶음 축이다.
+   * 'pattern' 은 스스로는 알 수 없고 식사 기록의 누적으로만 드러나는 것이라
+   * 목록에 띄우지 않는다 (lib/pattern/infer.ts 가 제안한다).
+   */
+  knownBy: 'now' | 'experience' | 'diagnosis' | 'pattern';
   /** 이 플래그를 가진 아이템이면 발동 */
   trigger: ItemFlag;
   /** 발동 시 심각도 */

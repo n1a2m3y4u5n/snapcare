@@ -135,6 +135,31 @@ export const CONDITIONS: ConditionDef[] = [
     severity: 'avoid',
     reason: 'May interact with blood thinners',
   },
+
+  // ── 스스로는 알 수 없고, 쌓인 기록에서만 드러나는 것 ─────
+  // 자가보고 목록에는 띄우지 않는다. 콩과 참깨는 주식·조미료에 널리 섞여 있어서
+  // "무엇을 먹고 탈이 났는지" 되짚는 방식으로는 거의 지목되지 않는다 —
+  // 검사 없이 이런 것을 찾아내려면 여러 끼니를 가로질러 보는 수밖에 없다.
+  {
+    id: 'soy_allergy',
+    label: 'Soy',
+    emoji: '🫘',
+    kind: 'allergen',
+    knownBy: 'pattern',
+    trigger: 'soy',
+    severity: 'caution',
+    reason: 'Contains soy',
+  },
+  {
+    id: 'sesame_allergy',
+    label: 'Sesame',
+    emoji: '🌱',
+    kind: 'allergen',
+    knownBy: 'pattern',
+    trigger: 'sesame',
+    severity: 'caution',
+    reason: 'Contains sesame',
+  },
 ];
 
 export const CONDITIONS_BY_ID: Record<string, ConditionDef> = Object.fromEntries(
