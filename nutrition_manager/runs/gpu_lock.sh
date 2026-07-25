@@ -27,7 +27,7 @@ gpu_wait_for_pattern() {
 
 gpu_wait() {
     # Anything already running, lock-aware or not.
-    for pattern in "train.py --tag" "ablation_v2.sh" "train_web.sh"; do
+    for pattern in "train.py --tag" "ablation_v2.sh" "train_web.sh" "ablation_v3.sh"; do
         gpu_wait_for_pattern "$pattern"
     done
     # Then hold the lock for the rest of this script's life. Descriptor 9 stays
