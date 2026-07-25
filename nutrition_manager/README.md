@@ -65,19 +65,26 @@ that 22.9% is the comparable-to-others number and something nearer the
 side-angle figure is what a user experiences, with the truth depending on how
 carefully they aim.
 
-And the two views are in tension, not merely different. The sampler ablation
-shows it clearly:
+And the two views are in tension, not merely different. Sweeping the sampler
+across its whole range gives a monotonic trade-off:
 
-| run | sampling | overhead | side |
-|---|---|---|---|
-| `v2-base` | 50% overhead | **17.82** | 32.54 |
-| `v2-asis` | as the data lies (97% side) | 19.66 | **29.66** |
+| run | overhead sampling | overhead | side | mean of the two |
+|---|---|---|---|---|
+| `v2-onlyover` | 100% | **17.24** | 57.66 | 37.5 |
+| `v2-base` | 50% | 17.82 | 32.54 | 25.2 |
+| `v2-asis` | as the data lies, ~3% | 19.66 | **29.66** | **24.7** |
 
-Feeding the model more side frames makes it better at side frames and worse at
-the benchmark, and vice versa. So the view-balanced sampler is not a free win —
-it buys 1.8 points on the scored view by giving up 2.9 on the unscored one. It
-is the right trade for a number that has to be comparable, and the wrong one
-for a phone held at an angle.
+Every side frame the model sees costs it a little on the benchmark and buys a
+lot off-axis, and the exchange rate is wildly asymmetric. Going from half the
+epoch overhead to all of it gains 0.6 points on the scored view and gives up
+**25** on the unscored one — a model trained only on the view the benchmark
+measures is close to useless at any other angle, which is exactly the model the
+leaderboard rewards.
+
+Read down the last column instead and the ordering inverts: for a device held
+by hand, sampling the data as it lies beats the balanced sampler. That is the
+single most useful thing this ablation says, and none of it is visible in the
+published metric.
 
 That makes checkpoint selection a real decision rather than a detail:
 
@@ -90,15 +97,24 @@ Both numbers are printed every epoch either way, because a widening gap means
 the model is specialising to one camera geometry.
 
 Closing that gap is the most valuable thing left to do here, and worth more to
-the app than another point on the leaderboard metric. `train.perspective` is
-the first attempt: a random off-axis warp turns an overhead photo into a
-plausible angled one *without* changing what is on the plate, which is exactly
-the invariance that is missing. It is off by default — turning it on is an
-experiment, not the baseline.
+the app than another point on the leaderboard metric. Two levers, in the order
+worth trying:
 
 ```bash
+# 1. Sample fewer overhead frames. The table above says this is the strongest
+#    single knob for the mean of the two views, and it costs nothing to try.
+python train.py --set train.overhead_ratio=0.2 train.select_view=both
+
+# 2. Synthesise the missing viewpoints. A random off-axis warp turns an
+#    overhead photo into a plausible angled one *without* changing what is on
+#    the plate, which is precisely the invariance that is absent. Off by
+#    default — turning it on is an experiment, not the baseline.
 python train.py --set train.perspective=0.35 train.select_view=both
 ```
+
+The shipped `deploy` model uses the config's 0.5 and `select_view=both`; the
+evidence above suggests a lower ratio would serve the app better, and that is
+the first thing to measure next.
 
 ### What actually moved the number
 
