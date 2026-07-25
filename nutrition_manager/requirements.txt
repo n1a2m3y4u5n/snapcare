@@ -1,10 +1,26 @@
 # pip fallback if you are not using environment.yml.
-# For GPU (RTX 3060): pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu124
+# For GPU: pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu130
+#
+# ffmpeg is not here because it is not a Python package. build_dataset.py needs
+# it on PATH; conda users get it from environment.yml, everyone else from their
+# package manager.
 torch
 torchvision
 timm
+
+numpy
 pandas
 pillow
 pyyaml
 tqdm
-numpy
+
+# ArUco is in the main module since OpenCV 4.7, so no contrib package is
+# needed. Use plain `opencv-python` instead if you want the calibration
+# scripts in form_sheet/, which are the only things here that open a window.
+opencv-python-headless
+
+# export_onnx.py
+onnx
+onnxruntime
+
+pytest

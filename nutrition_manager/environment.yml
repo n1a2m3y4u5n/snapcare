@@ -1,19 +1,55 @@
-# Conda environment for the SnapCare nutrition model.
-# Create with:  conda env create -f environment.yml
-# The CUDA torch wheels (cu124) work with the RTX 3060 + driver 595.
+# Conda environment for both SnapCare hardware/ML features.
+#
+#   conda env create -f environment.yml
+#   conda activate snapcare
+#
+# One environment covers the nutrition model and the pill dispenser's form
+# sheet reader. They are separate features, but they are worked on together and
+# share a stack, and two environments that both have to be active is a step
+# nobody remembers.
+#
+# The dispenser's firmware needs no Python at all — its tests build with a host
+# C++ compiler (`make -C pill_dispenser/firmware/test`).
 name: snapcare
 channels:
   - conda-forge
 dependencies:
   - python=3.11
   - pip
+  # build_dataset.py shells out to ffmpeg to pull side-angle frames from the
+  # Nutrition5k videos, and looks for the binary next to the interpreter — so
+  # it comes from conda rather than pip.
+  - ffmpeg
   - pip:
-      - --extra-index-url https://download.pytorch.org/whl/cu124
+      # CUDA wheels matched to the machine this was developed on (RTX 3060).
+      # Drop this line for a CPU-only install: everything except training runs
+      # perfectly well on CPU.
+      - --extra-index-url https://download.pytorch.org/whl/cu130
       - torch
       - torchvision
       - timm
+
+      # shared
+      - numpy
       - pandas
       - pillow
       - pyyaml
       - tqdm
-      - numpy
+
+      # pill_dispenser: ArUco detection and the optical mark reader.
+      # `headless` because nothing that runs unattended needs a GUI, and the
+      # full build drags in X11 libraries that are simply absent on a server.
+      # ArUco itself needs no contrib package — it moved into the main module
+      # in OpenCV 4.7.
+      #
+      # Swap to plain `opencv-python` if you want the two calibration scripts
+      # in form_sheet/, which open a window: they are the only things here that
+      # call cv2.imshow.
+      - opencv-python-headless
+
+      # nutrition_manager: browser deployment (export_onnx.py).
+      - onnx
+      - onnxruntime
+
+      # tests for both features
+      - pytest
