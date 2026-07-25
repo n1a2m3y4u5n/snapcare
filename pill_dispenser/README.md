@@ -172,7 +172,42 @@ not recognise the code. The firmware here understands both.
 Capacity is not the constraint in this direction. The 20-character ceiling in
 the protocol is the *device's* screen; going the other way the phone's display
 is large and the limit is the device camera, which reads 395 characters at
-640×480. A full eight-compartment weekly plan is about 190.
+640×480. A full eight-compartment weekly plan is about 205.
+
+### If the app wants to speak it
+
+`lib/hardware/protocol.ts` is not ours to edit, so this is the shape the change
+would take. Two additions, no modifications — nothing existing has to move, and
+`SC1*S*` keeps behaving exactly as it does today.
+
+```ts
+// messageKind gains one case:
+return p[1] === 'S' ? 'schedule'
+     : p[1] === 'W' ? 'weekly'
+     : p[1] === 'E' ? 'event'
+     : p[1] === 'C' ? 'clock' : null;
+
+export interface WeeklySlot extends SlotSchedule {
+  days: number;          // bitmask, bit 0 = Monday
+  durationDays: number;  // 0 = ongoing
+}
+
+// SC1*W*1:0800.2000-127-030/3:1900-021-000
+//   per slot: times, then a 3-digit day mask, then 3-digit duration in days
+export function encodeWeekly(slots: WeeklySlot[]): string
+export function decodeWeekly(payload: string): WeeklySlot[] | null
+```
+
+Fixed field widths so 8-bit firmware can read them with pointer arithmetic
+instead of a tokenizer, and every character stays inside the QR alphanumeric
+set — straying out of it doubles the code's size and is what stops it fitting.
+
+The reference implementations to match are `schedule.py` here and `SC1.cpp` in
+the firmware, and the vectors all three suites assert on are the contract.
+`decodeWeekly` should return `null` rather than throwing on anything malformed,
+for the same reason `decodeSchedule` does: the camera reads whatever QR happens
+to be in frame, and a parser that throws stops the scan loop on a stranger's
+code.
 
 ## The firmware
 
