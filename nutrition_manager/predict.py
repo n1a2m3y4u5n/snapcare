@@ -1,13 +1,22 @@
-"""Single-image nutrition inference — the entry point for the SnapCare app.
+"""Single-image nutrition inference.
 
-Usage (from nutrition_manager/):
-    python predict.py path/to/meal.jpg
-    python predict.py path/to/meal.jpg --checkpoint checkpoints/best.pt
+    python predict.py meal.jpg
+    python predict.py meal.jpg --checkpoint checkpoints/v2-base.pt
+    python predict.py a.jpg b.jpg c.jpg --json
+    python predict.py meal.jpg --no-tta
 
-Note: v1 is trained on overhead RealSense frames, so it works best on a
-roughly top-down photo of a single plated dish.
+The model was trained on overhead frames of a single plated dish, so it expects
+a roughly top-down photograph of one plate. It regresses five totals; it does
+not identify the food.
+
+The numbers are estimates from a photograph. On the official test split the
+calorie error is around 19%, which is useful for "does this fit in today's
+budget" and is not a substitute for a label.
 """
+from __future__ import annotations
+
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -15,45 +24,74 @@ import torch
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import resolve  # noqa: E402
-from data.dataset import build_transforms  # noqa: E402
-from models.model import build_model  # noqa: E402
+from common import load_config, resolve  # noqa: E402
+from inference import eval_transform, load_checkpoint, predict_batch, resolve_tta  # noqa: E402
 
 UNITS = {"calories": "kcal", "mass": "g", "fat": "g", "carb": "g", "protein": "g"}
 
 
-def load_model(ckpt_path, device):
-    ckpt = torch.load(ckpt_path, map_location=device)
-    model = build_model(ckpt["backbone"], num_outputs=len(ckpt["targets"]), pretrained=False)
-    model.load_state_dict(ckpt["model_state"])
-    model.to(device).eval()
-    return model, ckpt
-
-
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("image")
-    ap.add_argument("--checkpoint", default=str(resolve("checkpoints", "best.pt")))
+    ap.add_argument("images", nargs="+")
+    ap.add_argument("--checkpoint", default=None)
+    ap.add_argument("--tta", nargs="*", default=None,
+                    help="test-time flips to average (default: config `tta`)")
+    ap.add_argument("--no-tta", action="store_true", help="single forward pass")
+    ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
+    cfg = load_config()
+    ckpt_path = Path(args.checkpoint) if args.checkpoint else resolve(
+        cfg["train"]["checkpoint_dir"], "best.pt"
+    )
+    if not ckpt_path.is_file():
+        raise SystemExit(f"Checkpoint not found: {ckpt_path}")
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    if not Path(args.checkpoint).is_file():
-        raise SystemExit(f"Checkpoint not found: {args.checkpoint}")
-    model, ckpt = load_model(args.checkpoint, device)
+    tta = resolve_tta(["none"] if args.no_tta else (args.tta or cfg.get("tta", ["none"])))
 
-    mean = torch.tensor(ckpt["target_mean"])
-    std = torch.tensor(ckpt["target_std"])
-    tf = build_transforms(ckpt["img_size"], train=False)
+    # De-normalization goes through the checkpoint's own codec rather than
+    # being written out here. A v1 checkpoint standardized raw grams and a
+    # log-space one standardized log(1+grams); undoing the wrong one produces
+    # numbers that look entirely reasonable and are wrong by a factor.
+    model, codec, ckpt = load_checkpoint(ckpt_path, device)
+    transform = eval_transform(ckpt)
 
-    img = Image.open(args.image).convert("RGB")
-    x = tf(img).unsqueeze(0).to(device)
-    with torch.no_grad():
-        pred = (model(x).float().cpu().squeeze(0) * std + mean).clamp_min(0)
+    batch, kept, failed = [], [], []
+    for path in args.images:
+        try:
+            img = Image.open(path).convert("RGB")
+        except (OSError, ValueError) as exc:
+            failed.append((path, str(exc)))
+            continue
+        batch.append(transform(img))
+        kept.append(path)
 
-    print(f"Prediction for {args.image}:")
-    for name, value in zip(ckpt["targets"], pred.tolist()):
-        print(f"  {name:<9}{value:8.1f} {UNITS.get(name, '')}")
+    results = {}
+    if batch:
+        x = torch.stack(batch).to(device)
+        preds = predict_batch(model, x, codec, tta)
+        for path, row in zip(kept, preds.tolist()):
+            results[path] = dict(zip(ckpt["targets"], row))
+
+    if args.json:
+        print(json.dumps({
+            "checkpoint": ckpt_path.name,
+            "tta": tta,
+            "units": UNITS,
+            "predictions": results,
+            "failed": dict(failed),
+        }, indent=2))
+    else:
+        for path, values in results.items():
+            print(f"{path}:")
+            for name, value in values.items():
+                print(f"  {name:<9}{value:8.1f} {UNITS.get(name, '')}")
+        for path, reason in failed:
+            print(f"{path}: could not read ({reason})")
+
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
