@@ -35,7 +35,7 @@ model:
   dropout: 0.2
 
 train:
-  epochs: 12                # fewer needed now that side-angle frames ~25x the data
+  epochs: 12
   batch_size: 32
   lr: 3.0e-4
   weight_decay: 0.05
@@ -43,5 +43,37 @@ train:
   seed: 42
   num_workers: 12
   amp: true                # mixed precision (recommended on the RTX 3060)
-  clip_percentile: null    # e.g. 99 to clip target outliers before standardizing
   checkpoint_dir: checkpoints
+
+  # --- target handling -----------------------------------------------------
+  # `identity` standardizes raw physical units; `log1p` standardizes log(1+y).
+  # identity is the space the official metric lives in (MAE% is a ratio of
+  # sums, so it rewards absolute accuracy), which is why it is the default.
+  target_space: identity
+  # Fit the mean/std below this percentile. The targets carry a few extreme
+  # labels — carb reaches 845 g against a 99th percentile of 68 g — and without
+  # this they set the scale for the standardization of every other dish.
+  # The samples themselves are NOT clipped, only the statistics.
+  clip_percentile: 99.5
+  # A little noise on the standardized target, matched to the fact that
+  # Nutrition5k's own weights are measured, not exact.
+  label_noise: 0.0
+
+  # --- sampling ------------------------------------------------------------
+  # The manifest is 97% side-angle frames but the test split is overhead only.
+  # Draw overhead frames this often so the scored view is actually trained on.
+  overhead_ratio: 0.5
+  # One "epoch" is this many draws with replacement, so epoch cost is constant
+  # regardless of how many frames build_dataset.py happened to extract.
+  epoch_size: 24000
+
+  # --- optimisation --------------------------------------------------------
+  warmup_epochs: 1
+  min_lr_factor: 0.01      # cosine floor as a fraction of lr
+  loss_beta: 1.0           # SmoothL1 transition, in standardized units
+  grad_clip: 1.0
+  ema_decay: 0.999         # null to disable the weight average
+
+# Test-time augmentation used by eval.py / predict.py. Each listed transform
+# is run and the predictions are averaged. `none` alone reproduces v1.
+tta: [none, hflip]

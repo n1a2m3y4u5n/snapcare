@@ -7,3 +7,6 @@ predictions.csv
 groundtruth_test.csv
 eval_stats.json
 nutrition5k_dataset/
+
+# Run logs; history.jsonl and the scripts are kept.
+runs/*.log

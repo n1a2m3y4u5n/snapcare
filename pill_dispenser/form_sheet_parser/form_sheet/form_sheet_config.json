@@ -1,8 +1,9 @@
 {
   "half_width": 8,
   "half_height": 16,
-  "abs_min": 0.35,
-  "margin": 0.15,
+  "normalize": true,
+  "abs_min": 0.3,
+  "margin": 0.12,
   "groups": {
     "layer": {
       "mode": "one",
