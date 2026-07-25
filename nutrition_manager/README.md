@@ -32,8 +32,14 @@ to within 1e-7, so these are comparable to published numbers.
 Note what that metric is *not*: it is not the mean of per-dish percentage
 errors. Its denominator is a constant, which makes it absolute error in
 rescaled units, and means a gram of error on a 900 kcal dish counts exactly as
-much as a gram on a 30 kcal one. That is why the targets are regressed in
-physical units by default rather than in log space — see `targets.py`.
+much as a gram on a 30 kcal one.
+
+That is why the targets are regressed in physical units rather than in log
+space, and the ablation agrees: `train.target_space=log1p` scores 17.96 on
+validation against 17.82 for the default. Regressing `log(1+y)` optimizes
+*relative* error, which is a different objective from the one being reported —
+and the difference is small precisely because it is a mismatch of emphasis
+rather than a mistake. Both are available; `targets.py` explains the trade.
 
 ### The benchmark number is not the product number
 
