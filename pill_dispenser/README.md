@@ -134,7 +134,9 @@ noise and JPEG. The correct answer is known exactly, so the 75 tests assert on
 the reading itself.
 
 ```bash
-python -m pytest form_sheet_parser/tests -q
+make            # both suites: the firmware's and the reader's
+make python     # just this half
+make sweep      # re-measure the table above
 ```
 
 It renders from the **PDF** rather than the preview PNG for a reason: at 420 px
