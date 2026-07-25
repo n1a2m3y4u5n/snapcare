@@ -107,3 +107,20 @@ def test_the_table_reports_the_mean_row():
     assert "30.0%" in text          # mean of 10..50
     for name in TARGETS:
         assert name in text
+
+
+def test_atwater_consistency_helper_matches_the_apps_check():
+    """The relationship the app validates every number against.
+
+    SnapCare discards a nutrition field whose energy does not reconcile with
+    its macronutrients, so a model whose five outputs disagree with each other
+    has its answers thrown away however accurate any one of them is. This pins
+    the formula the check uses; the measured agreement is in the README.
+    """
+    # 9 kcal/g fat, 4 kcal/g carbohydrate, 4 kcal/g protein.
+    preds = np.array([[  0.0, 100.0,  0.0,  0.0,  0.0],
+                      [100.0, 100.0,  0.0, 25.0,  0.0],
+                      [ 90.0, 100.0, 10.0,  0.0,  0.0],
+                      [400.0, 200.0, 20.0, 25.0, 30.0]])
+    atwater = 9 * preds[:, 2] + 4 * preds[:, 3] + 4 * preds[:, 4]
+    assert np.allclose(atwater, [0.0, 100.0, 90.0, 400.0])

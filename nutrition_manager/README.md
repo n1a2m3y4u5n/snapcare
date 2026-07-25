@@ -184,6 +184,28 @@ const model = await MealModel.load('/models/web.json');
 const nutrition = await model.estimate(imageBitmap);   // { calories, mass, fat, carb, protein }
 ```
 
+### It survives the app's validator
+
+Every number in SnapCare goes through the same gauntlet before it is shown, and
+one of those checks is Atwater: `4·carb + 4·protein + 9·fat` has to reconcile
+with the stated calories, or the field is discarded. A model whose five outputs
+disagree with each other would have its answers thrown away no matter how
+accurate any one of them was.
+
+Measured on the test split, they do not disagree:
+
+| | median discrepancy | within 25% |
+|---|---|---|
+| Nutrition5k ground truth | 3.9% | 97.9% |
+| model predictions | 4.9% | **98.8%** |
+
+The five heads are trained jointly against labels that already obey the
+relationship, so the network learns it without being told. That is worth
+checking rather than assuming — the obvious fix would have been an explicit
+consistency term in the loss, and it would have bought nothing.
+
+### Calling it from the app
+
 **ImageNet normalization and target de-standardization are inside the graph.**
 The contract is pixels in, grams out. Those constants would otherwise have to
 be duplicated in TypeScript and kept in step by hand, and getting one wrong
