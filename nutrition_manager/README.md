@@ -245,21 +245,29 @@ model is the resize and centre crop, which the JSON spells out.
 
 `--score` runs the exported graph over the real test split, decoding and
 cropping the images the way the browser will rather than through the torch
-DataLoader. Measured on `v2-base`:
+DataLoader:
 
-| | size | mean MAE% |
-|---|---|---|
-| PyTorch checkpoint | — | 22.92% |
-| ONNX float32 | 111 MB | 22.92% |
-| ONNX int8 | 28 MB | 23.03% |
+| checkpoint | backbone | float32 | int8 |
+|---|---|---|---|
+| `v2-base` | convnext_tiny | 111 MB · **22.92%** | 28 MB · 23.03% |
+| `deploy` | efficientnet_b0 | 16 MB · **25.72%** | 4.9 MB · 52.71% |
 
-Two things follow. The float32 graph reproduces the checkpoint exactly, which
-is what says the preprocessing in `web/mealModel.ts` matches training — that
-path is written twice, in Python and in TypeScript, and this is the check that
-they agree. And quantization costs about a tenth of a point for a quarter of
-the size, so **ship the int8 graph**; the accuracy difference is far inside the
-model's own error bars, and the download is the thing a user on a bad
-connection actually experiences.
+The float32 rows reproduce their checkpoints exactly, which is what says the
+preprocessing in `web/mealModel.ts` matches training — that path is written
+twice, in Python and TypeScript, and this is the check that they agree.
+
+The int8 rows are why the scoring step exists. **Quantization cost one backbone
+a tenth of a point and multiplied the other's error by two and a half.**
+ConvNeXt is mostly 1×1 convolutions and survives it; EfficientNet's depthwise
+convolutions do not, and no amount of care in the quantizer rescued it — static
+calibration on real images and per-channel weights brought 70.5% down to 52.7%,
+still twice the float32 error.
+
+Nothing about the file says which happened, so the exporter decides: it scores
+both, writes `"recommended"` into the manifest, and prints *do not ship it*
+when the quantized graph is worse than `MAX_QUANTIZATION_COST`.
+`mealModel.ts` follows the manifest rather than a caller's preference. "It
+worked last time" is not evidence about a different backbone.
 
 Parity against PyTorch is also checked on random inputs at every export — real
 photographs occupy a narrow, well-behaved part of the input space where an

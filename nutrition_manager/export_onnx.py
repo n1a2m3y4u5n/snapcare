@@ -138,16 +138,102 @@ def check_parity(torch_model: nn.Module, onnx_path: Path, img_size: int,
     return float(np.abs(expected - got).max())
 
 
-def quantize(src: Path, dst: Path) -> None:
-    """Dynamic int8 quantization — weights int8, activations measured at runtime.
+class _Calibration:
+    """Feeds real photographs to the quantizer so it can measure activations.
 
-    Chosen over static quantization because it needs no calibration dataset and
-    cannot be silently miscalibrated. The whole point here is a smaller
-    download for a phone on a slow connection, and `--score` says what it cost.
+    Deliberately the *training* images rather than the test ones: calibration
+    reads the data, and reading the test split to build the model that is then
+    scored on it would make the score meaningless.
     """
-    from onnxruntime.quantization import QuantType, quantize_dynamic
 
-    quantize_dynamic(str(src), str(dst), weight_type=QuantType.QInt8)
+    def __init__(self, cfg, ckpt, limit=128):
+        import pandas as pd
+
+        manifest = resolve(cfg.get("manifest_csv", "dataset_processed/manifest.csv"))
+        if manifest.is_file():
+            df = pd.read_csv(manifest)
+            df = df[(df["split"] == "train") & (df["view"] == "overhead")]
+        else:
+            df = pd.read_csv(resolve(cfg["labels_csv"]))
+            df = df[df["split"] == "train"]
+            df["image_path"] = cfg["dataset_root"] + "/" + df["rgb_path"]
+        self.paths = df["image_path"].tolist()[:limit]
+        self.ckpt = ckpt
+        self.iter = None
+
+    def get_next(self):
+        if self.iter is None:
+            self.iter = iter(self.paths)
+        path = next(self.iter, None)
+        if path is None:
+            return None
+        return {"pixels": _load_pixels(resolve(path), self.ckpt["img_size"])[None]}
+
+    def rewind(self):
+        self.iter = None
+
+
+def quantize(src: Path, dst: Path, cfg=None, ckpt=None) -> str:
+    """Write an int8 graph, calibrated when there is data to calibrate with.
+
+    Returns which method was used, because it matters and is not visible from
+    the file.
+
+    Dynamic quantization is the tempting default — no calibration set, nothing
+    to get wrong — and on this project it silently destroyed a model. It leaves
+    activation ranges to be guessed at runtime, which is fine for the MatMul-
+    heavy graphs it was designed for and is not fine for a convolutional net:
+    efficientnet_b0's depthwise convolutions went from 25.7% error to 70.5%,
+    while convnext_tiny through the same code path lost 0.1. A backbone made of
+    1x1 convolutions survives it and one made of depthwise convolutions does
+    not, so "it worked last time" is not evidence.
+
+    Static quantization measures those ranges on real images instead. It needs
+    the dataset, so it falls back to dynamic when there is none — and `--score`
+    is what tells you whether the result is usable either way.
+    """
+    from onnxruntime.quantization import CalibrationMethod, QuantType, quantize_dynamic, quantize_static
+    from onnxruntime.quantization.preprocess import quant_pre_process
+
+    if cfg is None or ckpt is None:
+        quantize_dynamic(str(src), str(dst), weight_type=QuantType.QInt8)
+        return "dynamic"
+
+    reader = _Calibration(cfg, ckpt)
+    if not reader.paths:
+        quantize_dynamic(str(src), str(dst), weight_type=QuantType.QInt8)
+        return "dynamic (no calibration images found)"
+
+    prepared = dst.with_suffix(".prep.onnx")
+    try:
+        quant_pre_process(str(src), str(prepared), skip_symbolic_shape=True)
+        quantize_static(
+            str(prepared), str(dst), reader,
+            quant_format=__import__("onnxruntime.quantization", fromlist=["QuantFormat"]).QuantFormat.QDQ,
+            activation_type=QuantType.QUInt8,
+            weight_type=QuantType.QInt8,
+            per_channel=True,               # depthwise convs need it
+            calibrate_method=CalibrationMethod.MinMax,
+        )
+        return f"static, calibrated on {len(reader.paths)} training images"
+    finally:
+        prepared.unlink(missing_ok=True)
+
+
+def _load_pixels(path, img_size: int):
+    """Decode and preprocess one image exactly as the browser will."""
+    import numpy as np
+    from PIL import Image
+
+    resize_to = int(round(img_size * 1.15))
+    img = Image.open(path).convert("RGB")
+    w, h = img.size
+    scale = resize_to / min(w, h)
+    img = img.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.BILINEAR)
+    w, h = img.size
+    left, top = int(round((w - img_size) / 2.0)), int(round((h - img_size) / 2.0))
+    img = img.crop((left, top, left + img_size, top + img_size))
+    return np.asarray(img, dtype=np.float32).transpose(2, 0, 1) / 255.0
 
 
 def score_onnx(onnx_path: Path, ckpt: dict, cfg: dict) -> tuple:
@@ -206,6 +292,21 @@ def score_onnx(onnx_path: Path, ckpt: dict, cfg: dict) -> tuple:
     return metrics.per_field(np.concatenate(preds), np.concatenate(gts))
 
 
+# How much accuracy a 4x smaller download is worth. Below this the quantized
+# graph is the better deal on a slow connection; above it, it is a worse app.
+# One point of mean MAE% is roughly 2.5 kcal on a typical dish.
+MAX_QUANTIZATION_COST = 1.0
+
+
+def _recommend(artifacts: dict) -> str:
+    """Which artifact to serve, given what each one actually scored."""
+    fp32 = artifacts.get("float32", {}).get("test_mean_mae_pct")
+    int8 = artifacts.get("int8", {}).get("test_mean_mae_pct")
+    if int8 is None or fp32 is None:
+        return "float32"
+    return "int8" if int8 - fp32 <= MAX_QUANTIZATION_COST else "float32"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", default=None)
@@ -250,11 +351,12 @@ def main():
 
     if args.quantize:
         int8_path = out_dir / f"{name}.int8.onnx"
-        quantize(fp32_path, int8_path)
+        method = quantize(fp32_path, int8_path, cfg, ckpt)
         int8_mb = int8_path.stat().st_size / 1e6
         print(f"  wrote {int8_path.name}  ({int8_mb:.1f} MB, "
-              f"{size_mb / max(int8_mb, 1e-9):.1f}x smaller)")
-        artifacts["int8"] = {"file": int8_path.name, "size_mb": round(int8_mb, 2)}
+              f"{size_mb / max(int8_mb, 1e-9):.1f}x smaller)  [{method}]")
+        artifacts["int8"] = {"file": int8_path.name, "size_mb": round(int8_mb, 2),
+                             "method": method}
 
     meta = {
         "name": name,
@@ -294,6 +396,22 @@ def main():
             print(metrics.format_table(ckpt["targets"], mae, mae_pct, title=f"{name} [{label}]"))
             meta["artifacts"][label]["test_mean_mae_pct"] = round(float(mae_pct.mean()), 3)
             meta["artifacts"][label]["test_fields"] = metrics.as_dict(ckpt["targets"], mae, mae_pct)
+
+        # Decide which graph should actually be served, and say why.
+        #
+        # This is the point of scoring at all. Quantization is normally a free
+        # 4x on download size, and on one backbone here it was — while on
+        # another it multiplied the error by two and a half. Nothing about the
+        # file says which happened, so leaving the choice to whoever reads the
+        # directory listing means eventually shipping the broken one.
+        meta["recommended"] = _recommend(meta["artifacts"])
+        chosen = meta["artifacts"][meta["recommended"]]
+        print(f"\nServe **{meta['recommended']}** ({chosen['file']}, {chosen['size_mb']} MB, "
+              f"{chosen['test_mean_mae_pct']}% mean MAE).")
+        if meta["recommended"] == "float32" and "int8" in meta["artifacts"]:
+            cost = (meta["artifacts"]["int8"]["test_mean_mae_pct"]
+                    - meta["artifacts"]["float32"]["test_mean_mae_pct"])
+            print(f"  The int8 graph is smaller but {cost:.1f} points worse — do not ship it.")
 
     meta_path = out_dir / f"{name}.json"
     with open(meta_path, "w") as f:

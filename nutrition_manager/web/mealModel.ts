@@ -58,6 +58,8 @@ export interface ModelManifest {
   };
   output: { name: string };
   artifacts: Record<string, { file: string; size_mb: number; test_mean_mae_pct?: number }>;
+  /** Which artifact the exporter measured as the one to serve. */
+  recommended?: 'float32' | 'int8';
 }
 
 export type Nutrition = Record<string, number>;
@@ -65,8 +67,17 @@ export type Nutrition = Record<string, number>;
 type OrtModule = typeof import('onnxruntime-web');
 
 export interface LoadOptions {
-  /** Prefer the quantized graph. Four times smaller; check the manifest for its cost. */
-  quantized?: boolean;
+  /**
+   * Override which graph to fetch. Leave unset.
+   *
+   * By default the manifest's own `recommended` field decides, because
+   * quantization is not reliably a free win: the exporter scores both graphs
+   * on the real test split, and on one backbone here int8 cost 0.1 points
+   * while on another it multiplied the error by two and a half. Nothing about
+   * the file says which happened. Setting this by hand means overriding a
+   * measurement with a preference.
+   */
+  variant?: 'float32' | 'int8';
   /** Supply onnxruntime-web yourself if the app already bundles it. */
   ort?: OrtModule;
 }
@@ -92,8 +103,8 @@ export class MealModel {
     if (!response.ok) throw new Error(`model manifest ${manifestUrl}: ${response.status}`);
     const manifest = (await response.json()) as ModelManifest;
 
-    const artifact =
-      (options.quantized ? manifest.artifacts.int8 : undefined) ?? manifest.artifacts.float32;
+    const variant = options.variant ?? manifest.recommended ?? 'float32';
+    const artifact = manifest.artifacts[variant] ?? manifest.artifacts.float32;
     if (!artifact) throw new Error('manifest lists no usable artifact');
 
     const base = manifestUrl.slice(0, manifestUrl.lastIndexOf('/') + 1);
