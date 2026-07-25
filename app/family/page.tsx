@@ -12,14 +12,21 @@ export default function FamilyPage() {
   const addMember = useFamily((s) => s.addMember);
 
   function add() {
-    const id = addMember('New member');
+    const id = addMember();
     router.push(`/family/${id}`);
   }
 
   return (
-    <MobileScreen tab="family">
+    <MobileScreen>
       <div className="px-5 pt-14">
-        <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Family Safety</h1>
+        <button
+          onClick={() => router.push('/settings')}
+          className="text-sm font-semibold"
+          style={{ color: 'var(--color-sc-primary)' }}
+        >
+          ‹ Settings
+        </button>
+        <h1 className="mt-2 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Who we check for</h1>
 
         {/* 범례 */}
         <div className="mt-3 flex gap-4 text-xs" style={{ color: 'var(--color-sc-muted)' }}>
@@ -45,7 +52,7 @@ export default function FamilyPage() {
                 className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm"
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: m.color }}>
-                  {m.name[0]}
+                  {m.emoji}
                 </span>
                 <span className="flex-1">
                   <span className="block text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}>{m.name}</span>

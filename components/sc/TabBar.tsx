@@ -2,11 +2,10 @@
 
 import Link from 'next/link';
 
-export type TabKey = 'home' | 'family' | 'nutrition' | 'settings';
+export type TabKey = 'home' | 'nutrition' | 'settings';
 
 const TABS: { key: TabKey; href: string; label: string; emoji: string }[] = [
   { key: 'home', href: '/home', label: 'Home', emoji: '🏠' },
-  { key: 'family', href: '/family', label: 'Family', emoji: '👨‍👩‍👧' },
   { key: 'nutrition', href: '/nutrition', label: 'Nutrition', emoji: '🥗' },
   { key: 'settings', href: '/settings', label: 'Settings', emoji: '⚙️' },
 ];

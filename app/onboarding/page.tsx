@@ -8,7 +8,7 @@ const SLIDES = [
   { emoji: '📷', title: 'Point & scan', body: 'Aim your camera at food, medicine or anything you’re about to use.', tint: 'var(--color-sc-primary)' },
   { emoji: '🚦', title: 'Instant verdict', body: 'Green, amber or red — no reading required.', tint: 'var(--color-safe)' },
   { emoji: '👨‍👩‍👧', title: 'Built for family', body: 'Every verdict shows exactly who it applies to in your household.', tint: 'var(--color-caution)' },
-  { emoji: '🔔', title: 'A few permissions', body: 'Camera to scan, notifications for dose reminders, and contacts for Emergency SOS.', tint: 'var(--color-avoid)' },
+  { emoji: '🔔', title: 'A few permissions', body: 'Camera to scan, and notifications for dose reminders.', tint: 'var(--color-avoid)' },
 ];
 
 export default function OnboardingPage() {
