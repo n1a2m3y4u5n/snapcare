@@ -285,8 +285,61 @@ static void test_reloading_a_schedule_forgets_the_old_one() {
     CHECK(s.schedule().find(5) != nullptr);
 }
 
+
+/* ── midnight ─────────────────────────────────────────────────────────── */
+
+static void test_a_midnight_dose_fires_at_the_top_of_the_day() {
+    section("00:00 is a time of day like any other");
+    // Off-by-one territory: minute zero is both "not yet past the dose" and
+    // "exactly the dose", and the first tick of a new day is when the
+    // already-fired bookkeeping has to have reset.
+    sc1::Scheduler s;
+    s.load(parse("SC1*S*1:0000"), 0);
+
+    sc1::Decision d = s.next(0, 0, 0);
+    CHECK(d.what == sc1::Due::Dispense);
+    CHECK(d.minutes == 0);
+    s.confirm(d, 0);
+    CHECK(s.next(0, 0, 0).what == sc1::Due::Nothing);
+
+    // The next day it is owed again, and the day after that.
+    CHECK(s.next(1, 1, 0).what == sc1::Due::Dispense);
+}
+
+static void test_a_dose_at_the_last_minute_of_the_day_is_not_missed() {
+    section("23:59 still fires, and does not leak into tomorrow");
+    sc1::Scheduler s(60);
+    s.load(parse("SC1*S*2:2359"), 0);
+
+    CHECK(s.next(0, 0, 23 * 60 + 58).what == sc1::Due::Nothing);
+    sc1::Decision d = s.next(0, 0, 23 * 60 + 59);
+    CHECK(d.what == sc1::Due::Dispense);
+    s.confirm(d, 0);
+
+    // Midnight is a new day; the dose must not immediately re-fire, and it
+    // must not be reported as missed either, because it was taken.
+    CHECK(s.next(1, 1, 0).what == sc1::Due::Nothing);
+    CHECK(s.next(1, 1, 23 * 60 + 59).what == sc1::Due::Dispense);
+}
+
+static void test_crossing_midnight_does_not_replay_yesterday() {
+    section("yesterday's doses stay yesterday's");
+    // The grace window is measured within a day, so a dose from 20:00 must not
+    // come back as owed at 00:30 the next morning.
+    sc1::Scheduler s(60);
+    s.load(parse("SC1*S*1:2000"), 0);
+    DayLog day0 = runDay(s, 0, 0);
+    CHECK(day0.dispensed == 1);
+
+    CHECK(s.next(1, 1, 30).what == sc1::Due::Nothing);
+    CHECK(runDay(s, 1, 1).dispensed == 1);
+}
+
 int main() {
     test_a_daily_dose_fires_once_a_day();
+    test_a_midnight_dose_fires_at_the_top_of_the_day();
+    test_a_dose_at_the_last_minute_of_the_day_is_not_missed();
+    test_crossing_midnight_does_not_replay_yesterday();
     test_polling_repeatedly_does_not_multiply_doses();
     test_a_full_day_of_a_full_tray();
     test_a_weekday_course_skips_the_days_it_should();
