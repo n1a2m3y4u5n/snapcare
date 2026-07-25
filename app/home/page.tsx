@@ -11,6 +11,7 @@ import { LEVEL_META } from '@/lib/snapcare/verdict';
 import type { Reminder } from '@/stores/reminders';
 import type { ScanRecord } from '@/lib/snapcare/types';
 import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
+import { SpeakIcon } from '@/components/sc/Say';
 
 export default function HomePage() {
   const router = useRouter();
@@ -96,24 +97,31 @@ export default function HomePage() {
             const meta = LEVEL_META[s.level];
             const member = getMember(s.memberId);
             return (
-              <button
+              // 듣기 버튼을 행 버튼 안에 넣으면 버튼이 중첩돼 키보드 탐색이 깨진다.
+              // 행을 div 로 두고 두 버튼을 나란히 놓는다.
+              <div
                 key={s.id}
-                onClick={() => openScan(s)}
-                className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
+                className="flex items-center gap-2 rounded-2xl bg-white pr-2 shadow-sm"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full text-lg" style={{ background: meta.bg }}>
-                  {s.emoji}
-                </span>
-                <span className="flex-1">
-                  <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-                    {s.name}
+                <button
+                  onClick={() => openScan(s)}
+                  className="flex flex-1 items-center gap-3 px-4 py-3 text-left"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full text-lg" style={{ background: meta.bg }}>
+                    {s.emoji}
                   </span>
-                  <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-                    {member ? `${member.name} · ` : ''}{s.timeLabel}
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+                      {s.name}
+                    </span>
+                    <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                      {member ? `${member.name} · ` : ''}{s.timeLabel}
+                    </span>
                   </span>
-                </span>
-                <span className="h-2.5 w-2.5 rounded-full" style={{ background: meta.color }} />
-              </button>
+                </button>
+                <SpeakIcon text={`${s.name}. ${member ? `For ${member.name}. ` : ''}${meta.label}.`} />
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: meta.color }} />
+              </div>
             );
           })}
         </div>

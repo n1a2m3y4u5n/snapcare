@@ -6,6 +6,7 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { NutrientBars } from '@/components/sc/NutrientBars';
+import { Say } from '@/components/sc/Say';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
 import { assessForMember, flagsForMember } from '@/lib/nutrition/compute';
 import type { NutrientProfile } from '@/lib/nutrition/types';
@@ -177,7 +178,7 @@ function FoodResult({
         {!item.barcode && item.nutrition?.note && (
           <div className="flex items-start gap-2 rounded-2xl bg-white px-4 py-3 shadow-sm">
             <span className="text-lg" style={{ color: 'var(--color-caution)' }}>●</span>
-            <span className="text-sm" style={{ color: 'var(--color-sc-ink)' }}>{item.nutrition.note}</span>
+            <Say className="text-sm" style={{ color: 'var(--color-sc-ink)' }}>{item.nutrition.note}</Say>
           </div>
         )}
 
@@ -186,7 +187,7 @@ function FoodResult({
           <div className="rounded-2xl px-4 py-3" style={{ background: 'var(--color-safe-bg)' }}>
             <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-safe)' }}>TRY INSTEAD</p>
             <p className="mt-0.5 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-              {item.alt.name} — {item.alt.note}
+              <Say>{`${item.alt.name} — ${item.alt.note}`}</Say>
             </p>
           </div>
         )}
@@ -241,15 +242,16 @@ function RxResult({
         <div className="flex h-24 w-24 items-center justify-center rounded-full text-5xl" style={{ background: conflict ? meta.bg : 'var(--color-med-bg)' }}>
           {item.emoji}
         </div>
-        <h1 className="mt-4 text-2xl font-bold" style={{ color: 'var(--color-sc-ink)' }}>{item.name}</h1>
-        {item.rx && <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}>{item.rx.dosageText}</p>}
+        <h1 className="mt-4 text-2xl font-bold" style={{ color: 'var(--color-sc-ink)' }}><Say>{item.name}</Say></h1>
+        {item.rx && <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}><Say>{item.rx.dosageText}</Say></p>}
       </div>
 
       {/* 안전 배지 / 충돌 경고 */}
       <div className="mt-5 flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold"
         style={{ background: meta.bg, color: meta.color }}>
         <span className="text-lg">{meta.emoji}</span>
-        <span>{conflict ? verdict.summary : `Take as prescribed. ${item.rx?.dosageText ?? ''}`}</span>
+        {/* 복약 지시는 잘못 들으면 바로 위험해지는 문장이라 반드시 누를 수 있어야 한다 */}
+        <Say>{conflict ? verdict.summary : `Take as prescribed. ${item.rx?.dosageText ?? ''}`}</Say>
       </div>
 
       {/* 복용 스케줄 */}
@@ -260,7 +262,7 @@ function RxResult({
             {item.rx.schedule.map((s, i) => (
               <div key={i} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
                 <span className="text-xl">{s.emoji}</span>
-                <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{s.label}</span>
+                <Say className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{`${s.label} at ${s.time}`}</Say>
                 <span className="text-sm" style={{ color: 'var(--color-sc-muted)' }}>{s.time}</span>
               </div>
             ))}
