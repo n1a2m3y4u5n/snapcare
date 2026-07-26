@@ -385,6 +385,94 @@ def call_help(c: Canvas) -> None:
         c.arc(0.70, 0.24, r, 250, 20, w=THIN)
 
 
+# ── 증상 ────────────────────────────────────────────────────
+# 식이 일지가 되묻는 것들. 부위 글리프(body_*)와 달리 '아프다' 가 실려야 한다.
+# head 로 두는 이유: "피부가 가려웠다" 는 문장의 주어이지 무언가를 한정하는 말이 아니고,
+# 수식어는 DSL 에서 단독으로 쓸 수 없어 화면의 증상 선택 버튼에 쓸 수가 없었다.
+
+
+def symptom_skin(c: Canvas) -> None:
+    c.rect(0.20, 0.24, 0.80, 0.76, r=0.08, fill=True)
+    for x, y in ((0.36, 0.40), (0.58, 0.36), (0.42, 0.62), (0.64, 0.60)):
+        c.hole_circle(x, y, 0.07)
+        c.circle(x, y, 0.03, fill=True)                  # 부어오른 자리
+
+
+def symptom_gut(c: Canvas) -> None:
+    # 물결을 파낸 타원은 장식된 달걀로 보였다. 배(둥근 몸)와 통증(번개)을 나눠 싣는다.
+    c.circle(0.46, 0.60, 0.30, fill=True)
+    c.hole_blob([(0.46, 0.32), (0.56, 0.46), (0.48, 0.50), (0.58, 0.60),
+                 (0.42, 0.86), (0.46, 0.62), (0.36, 0.58), (0.42, 0.46)])
+    for a in (215, 260, 305):
+        import math as _m
+        r = _m.radians(a)
+        c.path([(0.46 + 0.36 * _m.cos(r), 0.60 + 0.36 * _m.sin(r)),
+                (0.46 + 0.46 * _m.cos(r), 0.60 + 0.46 * _m.sin(r))], w=THIN)
+
+
+def symptom_breath(c: Canvas) -> None:
+    # 물결에 X 를 얹은 것은 낙서로 보였다. 폐는 그 자체로 '숨' 을 뜻하는 몇 안 되는 형태다.
+    c.rect(0.46, 0.10, 0.54, 0.34, r=0.02, fill=True)      # 기관
+    c.path([(0.50, 0.30), (0.34, 0.40)], w=THIN)
+    c.path([(0.50, 0.30), (0.66, 0.40)], w=THIN)
+    c.blob([(0.30, 0.38), (0.44, 0.50), (0.44, 0.78), (0.30, 0.88), (0.18, 0.72), (0.18, 0.48)])
+    c.blob([(0.70, 0.38), (0.82, 0.48), (0.82, 0.72), (0.70, 0.88), (0.56, 0.78), (0.56, 0.50)])
+    c.cross(0.50, 0.62, 0.16, w=STROKE)                    # 막힘
+
+
+def symptom_mouth(c: Canvas) -> None:
+    c.blob([(0.50, 0.34), (0.78, 0.52), (0.50, 0.78), (0.22, 0.52)])
+    c.hole_path([(0.25, 0.53), (0.75, 0.53)], w=THIN)
+    for x in (0.34, 0.50, 0.66):
+        c.circle(x, 0.20, 0.058, fill=True)              # 부어오름
+
+
+def symptom_fever(c: Canvas) -> None:
+    c.rect(0.38, 0.14, 0.54, 0.62, r=0.08, fill=True)
+    c.circle(0.46, 0.76, 0.16, fill=True)
+    c.hole_path([(0.46, 0.26), (0.46, 0.52)], w=HAIR)
+    for x in (0.70, 0.84):
+        c.smooth([(x, 0.52), (x + 0.06, 0.40), (x - 0.02, 0.28), (x + 0.05, 0.14)], w=THIN)
+
+
+def symptom_dizzy(c: Canvas) -> None:
+    c.circle(0.50, 0.60, 0.27, fill=True)
+    c.hole_circle(0.41, 0.55, 0.055)
+    c.hole_circle(0.59, 0.55, 0.055)
+    c.hole_path([(0.39, 0.75), (0.50, 0.70), (0.61, 0.75)], w=HAIR, smooth=True)
+    for r in (0.14, 0.22):                               # 도는 표시
+        c.arc(0.50, 0.22, r, 200, 340, w=THIN)
+
+
+#: head 안에서 수식어가 앉는 자리 (그 head 의 캔버스 기준 x0,y0,x1,y1).
+#:
+#: 그림 옆에 두는 이유: 슬롯은 "이 그림의 어디가 비어 있는가" 이므로 그림이 바뀌면
+#: 함께 바뀌어야 한다. 사전에만 적어두었더니 글리프를 다시 그린 뒤에도 옛 좌표가 남아,
+#: 흡입기의 수식어가 마우스피스 위에 얹혔다.
+SLOTS = {
+    # 수식어는 이 사각형 **안에** 들어간다. 좁게 잡으면 안에 무엇이 들었는지 알 수 없고,
+    # 넓게 잡으면 그 자리를 뚫을 때 head 의 형태가 사라진다. 글리프마다 '비어도 되는 면' 을 준다.
+    "pill_bottle": (0.32, 0.40, 0.68, 0.74),        # 라벨
+    "liquid_bottle": (0.32, 0.52, 0.68, 0.84),      # 병 아래쪽 배
+    "dropper_bottle": (0.34, 0.48, 0.66, 0.78),
+    "cream_tube": (0.34, 0.30, 0.66, 0.62),
+    "inhaler": (0.24, 0.14, 0.52, 0.42),            # 캐니스터 면. 마우스피스는 남는다
+    "sachet": (0.30, 0.38, 0.70, 0.80),
+    # 슬롯이 head 의 가장자리까지 닿으면 그 자리를 뚫을 때 실루엣이 잘려나간다.
+    # 정제는 왼쪽 반을 슬롯으로 잡았다가 초승달이 됐고, 캡슐은 한쪽 반이 통째로 사라졌다.
+    # 어느 쪽이든 테두리가 남아야 무엇의 안인지 알 수 있다.
+    "capsule_strip": (0.18, 0.42, 0.44, 0.58),      # 캡슐 한쪽 반의 안쪽
+    "tablet_blister": (0.30, 0.32, 0.70, 0.68),     # 정제 가운데. 바깥에 테두리를 남긴다
+    "glucometer": (0.34, 0.20, 0.66, 0.46),         # 표시창
+    "thermometer": (0.40, 0.12, 0.60, 0.46),
+    "bp_monitor": (0.28, 0.64, 0.72, 0.88),         # 커프
+    "syringe": (0.32, 0.38, 0.58, 0.54),            # 눈금창
+    "patch": (0.34, 0.36, 0.66, 0.64),              # 가운데 패드
+    "spray": (0.36, 0.44, 0.64, 0.82),
+    "suppository": (0.36, 0.34, 0.64, 0.68),
+}
+
+
 # ─────────────────────────────────────────────────────────────
 # MODIFIER — 주어를 한정한다. 어디에, 언제, 몇 개.
 # ─────────────────────────────────────────────────────────────
@@ -545,91 +633,6 @@ def qty_four(c: Canvas) -> None: _dots(c, 4)
 def qty_five(c: Canvas) -> None: _dots(c, 5)
 
 
-# ── 증상 ────────────────────────────────────────────────────
-# 식이 일지가 되묻는 것들. 부위 글리프와 달리 '아프다' 가 실려야 한다.
-
-
-def symptom_skin(c: Canvas) -> None:
-    c.rect(0.20, 0.24, 0.80, 0.76, r=0.08, fill=True)
-    for x, y in ((0.36, 0.40), (0.58, 0.36), (0.42, 0.62), (0.64, 0.60)):
-        c.hole_circle(x, y, 0.07)
-        c.circle(x, y, 0.03, fill=True)                  # 부어오른 자리
-
-
-def symptom_gut(c: Canvas) -> None:
-    # 물결을 파낸 타원은 장식된 달걀로 보였다. 배(둥근 몸)와 통증(번개)을 나눠 싣는다.
-    c.circle(0.46, 0.60, 0.30, fill=True)
-    c.hole_blob([(0.46, 0.32), (0.56, 0.46), (0.48, 0.50), (0.58, 0.60),
-                 (0.42, 0.86), (0.46, 0.62), (0.36, 0.58), (0.42, 0.46)])
-    for a in (215, 260, 305):
-        import math as _m
-        r = _m.radians(a)
-        c.path([(0.46 + 0.36 * _m.cos(r), 0.60 + 0.36 * _m.sin(r)),
-                (0.46 + 0.46 * _m.cos(r), 0.60 + 0.46 * _m.sin(r))], w=THIN)
-
-
-def symptom_breath(c: Canvas) -> None:
-    # 물결에 X 를 얹은 것은 낙서로 보였다. 폐는 그 자체로 '숨' 을 뜻하는 몇 안 되는 형태다.
-    c.rect(0.46, 0.10, 0.54, 0.34, r=0.02, fill=True)      # 기관
-    c.path([(0.50, 0.30), (0.34, 0.40)], w=THIN)
-    c.path([(0.50, 0.30), (0.66, 0.40)], w=THIN)
-    c.blob([(0.30, 0.38), (0.44, 0.50), (0.44, 0.78), (0.30, 0.88), (0.18, 0.72), (0.18, 0.48)])
-    c.blob([(0.70, 0.38), (0.82, 0.48), (0.82, 0.72), (0.70, 0.88), (0.56, 0.78), (0.56, 0.50)])
-    c.cross(0.50, 0.62, 0.16, w=STROKE)                    # 막힘
-
-
-def symptom_mouth(c: Canvas) -> None:
-    c.blob([(0.50, 0.34), (0.78, 0.52), (0.50, 0.78), (0.22, 0.52)])
-    c.hole_path([(0.25, 0.53), (0.75, 0.53)], w=THIN)
-    for x in (0.34, 0.50, 0.66):
-        c.circle(x, 0.20, 0.058, fill=True)              # 부어오름
-
-
-def symptom_fever(c: Canvas) -> None:
-    c.rect(0.38, 0.14, 0.54, 0.62, r=0.08, fill=True)
-    c.circle(0.46, 0.76, 0.16, fill=True)
-    c.hole_path([(0.46, 0.26), (0.46, 0.52)], w=HAIR)
-    for x in (0.70, 0.84):
-        c.smooth([(x, 0.52), (x + 0.06, 0.40), (x - 0.02, 0.28), (x + 0.05, 0.14)], w=THIN)
-
-
-def symptom_dizzy(c: Canvas) -> None:
-    c.circle(0.50, 0.60, 0.27, fill=True)
-    c.hole_circle(0.41, 0.55, 0.055)
-    c.hole_circle(0.59, 0.55, 0.055)
-    c.hole_path([(0.39, 0.75), (0.50, 0.70), (0.61, 0.75)], w=HAIR, smooth=True)
-    for r in (0.14, 0.22):                               # 도는 표시
-        c.arc(0.50, 0.22, r, 200, 340, w=THIN)
-
-
-#: head 안에서 수식어가 앉는 자리 (그 head 의 캔버스 기준 x0,y0,x1,y1).
-#:
-#: 그림 옆에 두는 이유: 슬롯은 "이 그림의 어디가 비어 있는가" 이므로 그림이 바뀌면
-#: 함께 바뀌어야 한다. 사전에만 적어두었더니 글리프를 다시 그린 뒤에도 옛 좌표가 남아,
-#: 흡입기의 수식어가 마우스피스 위에 얹혔다.
-SLOTS = {
-    # 수식어는 이 사각형 **안에** 들어간다. 좁게 잡으면 안에 무엇이 들었는지 알 수 없고,
-    # 넓게 잡으면 그 자리를 뚫을 때 head 의 형태가 사라진다. 글리프마다 '비어도 되는 면' 을 준다.
-    "pill_bottle": (0.32, 0.40, 0.68, 0.74),        # 라벨
-    "liquid_bottle": (0.32, 0.52, 0.68, 0.84),      # 병 아래쪽 배
-    "dropper_bottle": (0.34, 0.48, 0.66, 0.78),
-    "cream_tube": (0.34, 0.30, 0.66, 0.62),
-    "inhaler": (0.24, 0.14, 0.52, 0.42),            # 캐니스터 면. 마우스피스는 남는다
-    "sachet": (0.30, 0.38, 0.70, 0.80),
-    # 슬롯이 head 의 가장자리까지 닿으면 그 자리를 뚫을 때 실루엣이 잘려나간다.
-    # 정제는 왼쪽 반을 슬롯으로 잡았다가 초승달이 됐고, 캡슐은 한쪽 반이 통째로 사라졌다.
-    # 어느 쪽이든 테두리가 남아야 무엇의 안인지 알 수 있다.
-    "capsule_strip": (0.18, 0.42, 0.44, 0.58),      # 캡슐 한쪽 반의 안쪽
-    "tablet_blister": (0.30, 0.32, 0.70, 0.68),     # 정제 가운데. 바깥에 테두리를 남긴다
-    "glucometer": (0.34, 0.20, 0.66, 0.46),         # 표시창
-    "thermometer": (0.40, 0.12, 0.60, 0.46),
-    "bp_monitor": (0.28, 0.64, 0.72, 0.88),         # 커프
-    "syringe": (0.32, 0.38, 0.58, 0.54),            # 눈금창
-    "patch": (0.34, 0.36, 0.66, 0.64),              # 가운데 패드
-    "spray": (0.36, 0.44, 0.64, 0.82),
-    "suppository": (0.36, 0.34, 0.64, 0.68),
-}
-
 HEADS = {
     "capsule_strip": capsule_strip, "tablet_blister": tablet_blister, "pill_bottle": pill_bottle,
     "liquid_bottle": liquid_bottle, "dropper_bottle": dropper_bottle, "cream_tube": cream_tube,
@@ -647,6 +650,8 @@ HEADS = {
     "food_rice": food_rice, "food_bread": food_bread, "food_meat": food_meat,
     "food_vegetable": food_vegetable, "food_fruit": food_fruit, "food_oil": food_oil,
     "food_sugar": food_sugar, "food_salt": food_salt,
+    "symptom_skin": symptom_skin, "symptom_gut": symptom_gut, "symptom_breath": symptom_breath,
+    "symptom_mouth": symptom_mouth, "symptom_fever": symptom_fever, "symptom_dizzy": symptom_dizzy,
     "no_alcohol": no_alcohol, "caffeine": caffeine,
     "warn_bleeding": warn_bleeding, "call_help": call_help,
 }
@@ -660,6 +665,4 @@ MODIFIERS = {
     "time_evening": time_evening, "time_night": time_night,
     "qty_one": qty_one, "qty_two": qty_two, "qty_three": qty_three,
     "qty_four": qty_four, "qty_five": qty_five,
-    "symptom_skin": symptom_skin, "symptom_gut": symptom_gut, "symptom_breath": symptom_breath,
-    "symptom_mouth": symptom_mouth, "symptom_fever": symptom_fever, "symptom_dizzy": symptom_dizzy,
 }

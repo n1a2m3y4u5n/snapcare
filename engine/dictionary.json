@@ -334,6 +334,42 @@
       "slot": null
     },
     {
+      "name": "symptom_skin",
+      "category": "symptom",
+      "description": "Symptom skin.",
+      "slot": null
+    },
+    {
+      "name": "symptom_gut",
+      "category": "symptom",
+      "description": "Symptom gut.",
+      "slot": null
+    },
+    {
+      "name": "symptom_breath",
+      "category": "symptom",
+      "description": "Symptom breath.",
+      "slot": null
+    },
+    {
+      "name": "symptom_mouth",
+      "category": "symptom",
+      "description": "Symptom mouth.",
+      "slot": null
+    },
+    {
+      "name": "symptom_fever",
+      "category": "symptom",
+      "description": "Symptom fever.",
+      "slot": null
+    },
+    {
+      "name": "symptom_dizzy",
+      "category": "symptom",
+      "description": "Symptom dizzy.",
+      "slot": null
+    },
+    {
       "name": "no_alcohol",
       "category": "no",
       "description": "No alcohol.",
@@ -463,36 +499,6 @@
       "name": "qty_five",
       "category": "qty",
       "description": "Qty five."
-    },
-    {
-      "name": "symptom_skin",
-      "category": "symptom",
-      "description": "Symptom skin."
-    },
-    {
-      "name": "symptom_gut",
-      "category": "symptom",
-      "description": "Symptom gut."
-    },
-    {
-      "name": "symptom_breath",
-      "category": "symptom",
-      "description": "Symptom breath."
-    },
-    {
-      "name": "symptom_mouth",
-      "category": "symptom",
-      "description": "Symptom mouth."
-    },
-    {
-      "name": "symptom_fever",
-      "category": "symptom",
-      "description": "Symptom fever."
-    },
-    {
-      "name": "symptom_dizzy",
-      "category": "symptom",
-      "description": "Symptom dizzy."
     }
   ]
 }

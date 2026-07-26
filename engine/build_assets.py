@@ -25,10 +25,36 @@ def build() -> int:
     for role, table in ROLES.items():
         out = HERE / "assets" / role
         out.mkdir(parents=True, exist_ok=True)
+        # 표에서 사라진 글리프의 파일은 지운다. 이름을 바꾸거나 다른 역할로 옮기면
+        # 옛 파일이 남아, 사전과 파일 수가 어긋나고 화면에는 유령 글리프가 남는다.
+        for stale in out.glob("*.png"):
+            if stale.stem not in table:
+                stale.unlink()
         for name, fn in table.items():
             c = Canvas()
             fn(c)
             c.save(out / f"{name}.png")
+            n += 1
+    return n
+
+
+def publish() -> int:
+    """글리프를 웹앱이 직접 참조할 수 있는 자리에 복사한다.
+
+    합성 픽토그램은 SIGIL 엔진이 만들지만, 화면의 단일 버튼(증상 선택 등)은 글리프
+    한 장을 그대로 쓴다. 그때마다 엔진을 호출하는 건 과하고, 파이썬이 없는 환경에서는
+    아예 안 나온다 — 정적 파일로 두면 오프라인에서도 그대로 뜬다.
+    """
+    out = HERE.parent / "public" / "glyphs"
+    out.mkdir(parents=True, exist_ok=True)
+    known = {name for t in ROLES.values() for name in t}
+    for stale in out.glob("*.png"):
+        if stale.stem not in known:
+            stale.unlink()
+    n = 0
+    for role in ROLES:
+        for f in (HERE / "assets" / role).glob("*.png"):
+            (out / f.name).write_bytes(f.read_bytes())
             n += 1
     return n
 
@@ -89,6 +115,7 @@ def sync_dictionary() -> None:
 if __name__ == "__main__":
     count = build()
     sync_dictionary()
+    print(f"{publish()} glyphs -> public/glyphs/")
     print(f"{count} glyphs -> {SIZE}px")
     if "--sheet" in sys.argv:
         print("sheet:", sheet())

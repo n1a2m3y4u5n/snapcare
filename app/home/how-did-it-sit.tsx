@@ -18,11 +18,19 @@ import { useScans } from '@/stores/scans';
  * 보호자·심사자도 읽으므로 영어 라벨을 함께 둔다 (앱 전체와 같은 방침).
  */
 
-const SYMPTOMS: { key: Symptom; emoji: string; label: string }[] = [
-  { key: 'skin', emoji: '🌶️', label: 'Itchy skin' },
-  { key: 'gut', emoji: '🤢', label: 'Upset stomach' },
-  { key: 'mouth', emoji: '👄', label: 'Lips or mouth' },
-  { key: 'breath', emoji: '😮‍💨', label: 'Hard to breathe' },
+/**
+ * 증상 선택지.
+ *
+ * 이모지에서 우리 글리프로 바꿨다. 🌶️ 로 '가려움' 을 뜻하게 하는 건 무리였고 —
+ * 고추는 매운 것이지 두드러기가 아니다 — 이모지는 기기마다 다르게 그려져서
+ * 같은 그림을 보고 답한다는 보장이 없다. 여기 답이 알레르기 추론의 입력이므로,
+ * 무엇을 가리켰는지가 흔들리면 추론도 흔들린다.
+ */
+const SYMPTOMS: { key: Symptom; glyph: string; label: string }[] = [
+  { key: 'skin', glyph: 'symptom_skin', label: 'Itchy skin' },
+  { key: 'gut', glyph: 'symptom_gut', label: 'Upset stomach' },
+  { key: 'mouth', glyph: 'symptom_mouth', label: 'Lips or mouth' },
+  { key: 'breath', glyph: 'symptom_breath', label: 'Hard to breathe' },
 ];
 
 /** 아직 답하지 않은 음식·음료 중 가장 오래된 것. 없으면 카드를 띄우지 않는다. */
@@ -88,7 +96,8 @@ export function HowDidItSit({ record }: { record: ScanRecord }) {
                 onClick={() => pick(s.key)}
                 className="flex items-center gap-2 rounded-2xl bg-[var(--color-sc-bg)] px-3 py-3 text-left"
               >
-                <span className="text-xl">{s.emoji}</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/glyphs/${s.glyph}.png`} alt="" aria-hidden className="h-7 w-7 shrink-0" />
                 <span className="text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                   {s.label}
                 </span>
