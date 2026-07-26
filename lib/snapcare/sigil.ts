@@ -18,6 +18,11 @@ const CADENCE: Record<number, string> = {
   4: 'four_times_daily',
 };
 
+/** 1회 복용 개수 → 점 그림. 숫자가 아니라 셀 수 있는 점으로 보여준다. */
+const QTY: Record<number, string> = {
+  1: 'qty_one', 2: 'qty_two', 3: 'qty_three', 4: 'qty_four', 5: 'qty_five',
+};
+
 const TIME_MOD: Record<string, string> = {
   Morning: 'time_morning',
   Noon: 'time_noon',
@@ -89,32 +94,62 @@ const FORM_SITE: Record<string, string> = {
   syrup: 'body_mouth',
 };
 
-/** 약/처방 → 어떻게 먹는가. 제형·횟수·식사·시간대를 그림으로 옮긴다. */
+/** 약/처방 → 어떻게 먹는가. 순서가 곧 읽는 순서라, 먼저 할 일부터 놓는다. */
 function medicineLabels(item: ScanItem, avoid: boolean): string[] {
   const labels: string[] = [];
   const rx = item.rx;
   const head = (rx?.form && FORM_HEAD[rx.form]) || 'pill_bottle';
   const site = rx?.form ? FORM_SITE[rx.form] : undefined;
-  const withFood = /food|meal/i.test(rx?.dosageText ?? '');
+  const dosage = rx?.dosageText ?? '';
   const freq = rx?.schedule.length ?? 1;
 
   // 회피면 그것부터. 나머지 지시를 읽기 전에 멈춰야 한다.
   if (avoid) labels.push(`\\no{\\${head}}`);
 
-  // 손을 씻고 시작하는 약이 있다 (안약·연고). 순서가 곧 읽는 순서이므로 앞에 놓는다.
+  // 손을 씻고 시작하는 약이 있다 (안약·연고).
   if (rx?.handwash) labels.push('\\hand_wash');
 
   // 슬롯은 하나뿐이다. 부위가 있으면 부위가 먼저다 — 안약에 '식사와 함께' 는 뜻이 없고,
-  // '눈에' 는 이 지시의 절반이다.
-  const slot = site ?? (withFood ? 'food_bowl' : undefined);
+  // '눈에' 는 이 지시의 절반이다. 부위가 없으면 식사 맥락이 그 자리를 쓴다.
+  //
+  // 공복(before meals)은 빈 그릇으로 그린다. 예전에는 '식사와 함께' 만 그렸고 공복은
+  // 아무것도 안 그렸는데, 그러면 식전 약과 아무 조건 없는 약이 같은 그림이 된다 —
+  // 공복에 먹어야 하는 약을 밥과 함께 먹으면 흡수가 달라진다.
+  const meal = /before\s*meal/i.test(dosage) ? 'food_empty_bowl'
+    : /food|with\s*meal/i.test(dosage) ? 'food_bowl'
+    : undefined;
+  const slot = site ?? meal;
   let core = slot ? `\\${head}{\\${slot}}` : `\\${head}`;
   if (CADENCE[freq]) core = `\\${CADENCE[freq]}{${core}}`;
   labels.push(core);
+
+  // 부위가 슬롯을 차지했으면 식사 맥락은 따로 한 칸을 받는다 (둘 다 지시의 일부다).
+  if (site && meal) labels.push(`\\${head}{\\${meal}}`);
 
   for (const s of rx?.schedule ?? []) {
     const tm = TIME_MOD[s.label];
     if (tm) labels.push(`\\${head}{\\${tm}}`);
   }
+
+  // 한 번에 몇 개인가. 숫자를 못 읽는 사용자에게 '1정' 은 점 하나로만 도착한다.
+  if (rx?.doseCount && QTY[rx.doseCount]) labels.push(`\\${head}{\\${QTY[rx.doseCount]}}`);
+
+  // 보관. 냉장이라고 적힌 처방전이 그림에는 나오지 않고 있었다 —
+  // 상온에 둔 항생제 시럽은 며칠이면 못 쓰게 된다.
+  // 보관 표시는 수식어라 단독으로 설 수 없다 — 무엇을 그렇게 보관하라는 것인지가
+  // 함께 있어야 뜻이 성립하기도 한다. 약을 머리로 두고 슬롯에 넣는다.
+  const storage = rx?.storage === 'refrigerator' ? 'storage_fridge'
+    : rx?.storage === 'room' ? 'storage_dry'
+    : undefined;
+  if (storage) labels.push(`\\${head}{\\${storage}}`);
+
+  // 기간이 정해진 약은 끝까지 먹어야 한다. 증상이 가시면 끊는 것이 내성의 주요 경로인데,
+  // 처방전의 '7일간' 이 화면에 도착하지 않으면 그 지시는 없는 것과 같다.
+  if (rx?.durationText && rx.durationText !== 'ongoing') labels.push('\\finish_course');
+
+  // 안약을 넣는 동안 렌즈를 끼면 약이 렌즈에 갇힌다. OCR 이 이미 읽고 있던 값이다.
+  if (rx?.noLens) labels.push('\\no{\\contact_lens}');
+
   return labels;
 }
 

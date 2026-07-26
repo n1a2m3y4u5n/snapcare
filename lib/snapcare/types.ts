@@ -88,6 +88,12 @@ export interface ScanItem {
       | 'injection' | 'suppository' | 'sachet';
     /** 쓰기 전에 손을 씻어야 하는가 (안약·연고 등). OCR 이 이미 판단하는 값이다. */
     handwash?: boolean;
+    /** 보관 방법. 냉장이라고 적힌 처방전이 그림에는 나오지 않고 있었다. */
+    storage?: 'refrigerator' | 'room';
+    /** 1회 복용 개수 (정·캡슐·방울). 세는 그림이 있는데 부르는 곳이 없었다. */
+    doseCount?: number;
+    /** 렌즈 착용 금지 (안약). OCR 이 lensRestriction 으로 이미 뽑는다. */
+    noLens?: boolean;
   };
 }
 

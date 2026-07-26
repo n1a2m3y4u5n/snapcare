@@ -10,6 +10,19 @@ const TIME_SLOT: Record<string, { time: string; label: string; emoji: string }> 
   night: { time: '9:00 PM', label: 'Night', emoji: '🌙' },
 };
 
+/**
+ * 1회 복용량 문자열 → 셀 수 있는 개수.
+ *
+ * '1 capsule' 은 점 하나로 그릴 수 있지만 '5 mL' 는 그릴 수 없다 — 부피는 개수가 아니고,
+ * 점 다섯 개를 그리면 다섯 알로 읽힌다. 세어지는 단위일 때만 숫자를 돌려준다.
+ */
+function countFromAmount(text: string): number | undefined {
+  const m = text.match(/^([\d.]+)\s*(capsules?|tablets?|drops?|puffs?|정|알|캡슐|방울)/i);
+  if (!m) return undefined;
+  const n = Number(m[1]);
+  return Number.isInteger(n) && n >= 1 && n <= 5 ? n : undefined;
+}
+
 /** OCR 텍스트에서 위험 플래그 추정 (알레르기/상호작용 키워드) */
 function flagsFromText(t: string): ItemFlag[] {
   const flags: ItemFlag[] = [];
@@ -60,6 +73,10 @@ export function ocrToScanItem(ocrText: string): { item: ScanItem; rxInfo: Struct
       // 'unknown' 은 제형을 못 알아냈다는 뜻이므로 넘기지 않는다 — 그림 엔진이 기본형을 쓴다
       form: rx.drugForm === 'unknown' ? undefined : rx.drugForm,
       handwash: rx.needsHandwash,
+      storage: rx.storageType ?? undefined,
+      // "Take 1 capsule" · "5 mL" 의 앞 숫자. 셀 수 있는 개수일 때만 그림으로 옮긴다.
+      doseCount: countFromAmount(rx.amountText),
+      noLens: rx.lensRestriction,
       schedule,
     },
   };

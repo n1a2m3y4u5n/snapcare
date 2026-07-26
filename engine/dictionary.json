@@ -382,6 +382,48 @@
       "slot": null
     },
     {
+      "name": "contact_lens",
+      "category": "contact",
+      "description": "Contact lens.",
+      "slot": null
+    },
+    {
+      "name": "finish_course",
+      "category": "finish",
+      "description": "Finish course.",
+      "slot": null
+    },
+    {
+      "name": "vehicle",
+      "category": "vehicle",
+      "description": "Vehicle.",
+      "slot": null
+    },
+    {
+      "name": "tablet_split",
+      "category": "tablet",
+      "description": "Tablet split.",
+      "slot": null
+    },
+    {
+      "name": "shake_bottle",
+      "category": "shake",
+      "description": "Shake bottle.",
+      "slot": null
+    },
+    {
+      "name": "symptom_vomit",
+      "category": "symptom",
+      "description": "Symptom vomit.",
+      "slot": null
+    },
+    {
+      "name": "symptom_cough",
+      "category": "symptom",
+      "description": "Symptom cough.",
+      "slot": null
+    },
+    {
       "name": "no_alcohol",
       "category": "no",
       "description": "No alcohol.",

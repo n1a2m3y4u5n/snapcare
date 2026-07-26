@@ -1,7 +1,10 @@
 {
-  "19215edc": "\\twice_daily{\\capsule_strip{\\food_bowl}}",
-  "26fffdef": "\\capsule_strip{\\time_noon}",
-  "6e9accd1": "\\capsule_strip{\\time_evening}",
-  "05907205": "\\no_alcohol",
+  "95de7798": "\\hand_wash",
+  "7b707391": "\\pill_bottle",
+  "c8e54b03": "\\pill_bottle{\\time_evening}",
+  "f9e47872": "\\pill_bottle{\\qty_two}",
+  "1eb85668": "\\pill_bottle{\\storage_fridge}",
+  "3da922bc": "\\finish_course",
+  "cb8461a1": "\\no{\\contact_lens}",
   "7ae9598c": "\\state_pregnant"
 }

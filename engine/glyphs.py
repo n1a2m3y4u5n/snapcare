@@ -373,6 +373,79 @@ def food_salt(c: Canvas) -> None:
 # ── 경고 ────────────────────────────────────────────────────
 
 
+def contact_lens(c: Canvas) -> None:
+    # 렌즈만 그리면 언덕이 된다. 렌즈는 그 자체로 알아볼 수 있는 형태가 아니라서,
+    # 들어가는 자리(눈)와 함께 있어야 무엇인지가 정해진다.
+    c.blob([(0.50, 0.52), (0.80, 0.70), (0.50, 0.90), (0.20, 0.70)])   # 눈
+    c.hole_circle(0.50, 0.70, 0.11)
+    c.circle(0.50, 0.70, 0.055, fill=True)
+    c.arc(0.50, 0.42, 0.24, 200, 340, w=STROKE)            # 위에 떠 있는 렌즈
+    c.path([(0.28, 0.34), (0.72, 0.34)], w=HAIR)
+
+
+def finish_course(c: Canvas) -> None:
+    # "며칠간" 을 그리는 그림. 항생제를 증상이 가시면 끊는 것은 내성의 주요 경로이고,
+    # 처방전에 적힌 기간이 화면에 도착하지 않으면 그 지시는 없는 것과 같다.
+    # 먹은 것(채운 원)과 남은 것(빈 원), 그리고 끝까지 가라는 화살표.
+    for i, x in enumerate((0.16, 0.34, 0.52, 0.70)):
+        if i < 2:
+            c.circle(x, 0.40, 0.095, fill=True)
+        else:
+            c.circle(x, 0.40, 0.095, w=THIN)
+    c.arrow(0.14, 0.72, 0.80, 0.72)
+    c.path([(0.86, 0.60), (0.86, 0.84)], w=STROKE)         # 끝 표시
+
+
+def vehicle(c: Canvas) -> None:
+    # 졸음 유발 약의 '운전 금지'. 금지는 \no{} 가 얹는다.
+    c.blob([(0.10, 0.62), (0.20, 0.46), (0.34, 0.34), (0.66, 0.34),
+            (0.80, 0.46), (0.90, 0.62), (0.88, 0.72), (0.12, 0.72)])
+    c.hole_blob([(0.28, 0.50), (0.48, 0.44), (0.48, 0.58), (0.26, 0.58)])
+    c.hole_blob([(0.54, 0.44), (0.72, 0.50), (0.74, 0.58), (0.54, 0.58)])
+    c.circle(0.28, 0.76, 0.10, fill=True)
+    c.circle(0.72, 0.76, 0.10, fill=True)
+    c.hole_circle(0.28, 0.76, 0.035)
+    c.hole_circle(0.72, 0.76, 0.035)
+
+
+def tablet_split(c: Canvas) -> None:
+    # '쪼개지 마시오' 의 재료. 반으로 갈라진 정제 — \no{} 를 씌우면 금지가 된다.
+    c.wedge(0.36, 0.50, 0.30, 90, 270)
+    c.wedge(0.64, 0.50, 0.30, 270, 90)
+    c.path([(0.36, 0.20), (0.36, 0.80)], w=THIN, color=HOLE)
+
+
+def shake_bottle(c: Canvas) -> None:
+    # 현탁액은 흔들지 않으면 농도가 바닥에 몰린다 — 한 번 먹을 때마다 용량이 달라진다.
+    c.blob([(0.42, 0.20), (0.58, 0.20), (0.58, 0.32), (0.68, 0.44),
+            (0.68, 0.84), (0.32, 0.84), (0.32, 0.44), (0.42, 0.32)])
+    c.hole_path([(0.36, 0.62), (0.64, 0.62)], w=HAIR)
+    for sx in (-1, 1):                                      # 흔드는 궤적
+        for i, r in enumerate((0.10, 0.18)):
+            c.arc(0.50 + sx * 0.34, 0.50, r, 250 if sx > 0 else 70, 470 if sx > 0 else 290, w=THIN)
+
+
+def symptom_vomit(c: Canvas) -> None:
+    # 식이 일지의 'gut' 만으로는 체한 것과 토한 것이 같아진다. 알레르기 판정에서
+    # 즉시형 반응의 무게가 다르므로 나눠 받는다.
+    c.circle(0.42, 0.36, 0.22, fill=True)
+    c.hole_circle(0.36, 0.32, 0.04)
+    c.hole_blob([(0.40, 0.46), (0.54, 0.44), (0.54, 0.52), (0.40, 0.54)])   # 벌린 입
+    for x, y, r in ((0.62, 0.58, 0.05), (0.72, 0.70, 0.042), (0.66, 0.82, 0.034)):
+        c.blob([(x, y - r * 1.7), (x + r, y + r * 0.4), (x, y + r), (x - r, y + r * 0.4)])
+
+
+def symptom_cough(c: Canvas) -> None:
+    # 구토와 실루엣이 겹쳤다 (머리 + 튀는 것). 기침은 입을 가린 손이 있어야 갈린다.
+    c.circle(0.34, 0.40, 0.21, fill=True)
+    c.hole_circle(0.28, 0.36, 0.04)
+    c.rect(0.46, 0.44, 0.60, 0.74, r=0.06, fill=True)      # 입을 가린 손
+    for i, x in enumerate((0.52, 0.61, 0.70)):
+        c.rect(x, 0.36 + i * 0.02, x + 0.055, 0.50, r=0.028, fill=True)
+    for i in range(3):                                      # 터져 나오는 공기
+        c.path([(0.74 + i * 0.06, 0.30 - i * 0.06), (0.84 + i * 0.06, 0.22 - i * 0.06)], w=THIN)
+
+
 def no_alcohol(c: Canvas) -> None:
     c.poly([(0.20, 0.16), (0.80, 0.16), (0.55, 0.52), (0.45, 0.52)])   # 잔
     c.path([(0.50, 0.52), (0.50, 0.84)], w=THIN)
@@ -678,6 +751,9 @@ HEADS = {
     "food_sugar": food_sugar, "food_salt": food_salt,
     "symptom_skin": symptom_skin, "symptom_gut": symptom_gut, "symptom_breath": symptom_breath,
     "symptom_mouth": symptom_mouth, "symptom_fever": symptom_fever, "symptom_dizzy": symptom_dizzy,
+    "contact_lens": contact_lens, "finish_course": finish_course, "vehicle": vehicle,
+    "tablet_split": tablet_split, "shake_bottle": shake_bottle,
+    "symptom_vomit": symptom_vomit, "symptom_cough": symptom_cough,
     "no_alcohol": no_alcohol, "caffeine": caffeine,
     "warn_bleeding": warn_bleeding, "call_help": call_help,
 }
