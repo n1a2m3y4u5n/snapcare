@@ -54,6 +54,7 @@ export function ocrToScanItem(ocrText: string): { item: ScanItem; rxInfo: Struct
       durationText: rx.durationDays ? `${rx.durationDays} days` : 'ongoing',
       // 'unknown' 은 제형을 못 알아냈다는 뜻이므로 넘기지 않는다 — 그림 엔진이 기본형을 쓴다
       form: rx.drugForm === 'unknown' ? undefined : rx.drugForm,
+      handwash: rx.needsHandwash,
       schedule,
     },
   };

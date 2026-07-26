@@ -76,18 +76,38 @@ function contentLabels(item: ScanItem, avoid: boolean): string[] {
   return out;
 }
 
+/**
+ * 제형 → 몸의 어디에 쓰는가.
+ *
+ * 안약을 '눈에' 넣는다는 것은 지시의 절반인데, 그림에는 병만 있고 눈이 없었다.
+ * OCR 이 제형을 알아내는 순간 부위도 정해지므로 따로 물을 필요가 없다.
+ */
+const FORM_SITE: Record<string, string> = {
+  eyedrop: 'body_eye',
+  cream: 'body_skin',
+  inhaler: 'body_mouth',
+  syrup: 'body_mouth',
+};
+
 /** 약/처방 → 어떻게 먹는가. 제형·횟수·식사·시간대를 그림으로 옮긴다. */
 function medicineLabels(item: ScanItem, avoid: boolean): string[] {
   const labels: string[] = [];
   const rx = item.rx;
   const head = (rx?.form && FORM_HEAD[rx.form]) || 'pill_bottle';
+  const site = rx?.form ? FORM_SITE[rx.form] : undefined;
   const withFood = /food|meal/i.test(rx?.dosageText ?? '');
   const freq = rx?.schedule.length ?? 1;
 
   // 회피면 그것부터. 나머지 지시를 읽기 전에 멈춰야 한다.
   if (avoid) labels.push(`\\no{\\${head}}`);
 
-  let core = withFood ? `\\${head}{\\food_bowl}` : `\\${head}`;
+  // 손을 씻고 시작하는 약이 있다 (안약·연고). 순서가 곧 읽는 순서이므로 앞에 놓는다.
+  if (rx?.handwash) labels.push('\\hand_wash');
+
+  // 슬롯은 하나뿐이다. 부위가 있으면 부위가 먼저다 — 안약에 '식사와 함께' 는 뜻이 없고,
+  // '눈에' 는 이 지시의 절반이다.
+  const slot = site ?? (withFood ? 'food_bowl' : undefined);
+  let core = slot ? `\\${head}{\\${slot}}` : `\\${head}`;
   if (CADENCE[freq]) core = `\\${CADENCE[freq]}{${core}}`;
   labels.push(core);
 

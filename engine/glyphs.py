@@ -188,6 +188,19 @@ def state_child(c: Canvas) -> None:
     ])
 
 
+def state_teen(c: Canvas) -> None:
+    # 아이와 어른 사이. 머리는 어른 비율에 가깝고 몸은 아직 가늘다.
+    _figure(c, 0.50, 0.20, 0.13, [
+        (0.50, 0.34), (0.64, 0.44), (0.58, 0.64), (0.56, 0.92), (0.44, 0.92), (0.42, 0.64), (0.36, 0.44),
+    ])
+
+
+def state_adult(c: Canvas) -> None:
+    _figure(c, 0.50, 0.16, 0.12, [
+        (0.50, 0.28), (0.68, 0.40), (0.60, 0.62), (0.58, 0.92), (0.42, 0.92), (0.40, 0.62), (0.32, 0.40),
+    ])
+
+
 def state_elderly(c: Canvas) -> None:
     _figure(c, 0.42, 0.16, 0.11, [
         (0.42, 0.28), (0.54, 0.38), (0.52, 0.62), (0.50, 0.92), (0.34, 0.92), (0.32, 0.60), (0.30, 0.38),
@@ -641,7 +654,8 @@ HEADS = {
     "glucometer": glucometer, "thermometer": thermometer, "bp_monitor": bp_monitor,
     "hand_wash": hand_wash,
     "state_pregnant": state_pregnant, "state_breastfeeding": state_breastfeeding,
-    "state_child": state_child, "state_elderly": state_elderly, "state_infant": state_infant,
+    "state_child": state_child, "state_teen": state_teen, "state_adult": state_adult,
+    "state_elderly": state_elderly, "state_infant": state_infant,
     "allergen_peanut": allergen_peanut, "allergen_tree_nut": allergen_tree_nut,
     "allergen_milk": allergen_milk, "allergen_egg": allergen_egg,
     "allergen_gluten": allergen_gluten, "allergen_shellfish": allergen_shellfish,

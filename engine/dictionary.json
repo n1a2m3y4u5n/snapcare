@@ -220,6 +220,18 @@
       "slot": null
     },
     {
+      "name": "state_teen",
+      "category": "state",
+      "description": "State teen.",
+      "slot": null
+    },
+    {
+      "name": "state_adult",
+      "category": "state",
+      "description": "State adult.",
+      "slot": null
+    },
+    {
       "name": "state_elderly",
       "category": "state",
       "description": "State elderly.",

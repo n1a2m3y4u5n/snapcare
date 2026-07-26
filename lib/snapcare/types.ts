@@ -78,6 +78,8 @@ export interface ScanItem {
      */
     form?: 'tablet' | 'capsule' | 'syrup' | 'eyedrop' | 'cream' | 'inhaler'
       | 'injection' | 'suppository' | 'sachet';
+    /** 쓰기 전에 손을 씻어야 하는가 (안약·연고 등). OCR 이 이미 판단하는 값이다. */
+    handwash?: boolean;
   };
 }
 

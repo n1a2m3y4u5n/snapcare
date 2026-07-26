@@ -25,11 +25,19 @@ import type { AgeBand } from '@/lib/snapcare/types';
 /** 사람을 나타내는 그림 — 이름 대신 이것이 신원이 된다. */
 const FACES = ['🧑', '🧒', '👶', '🧓', '👩', '👨', '👦', '👧'];
 
-const AGE_BANDS: { band: AgeBand; emoji: string; label: string; role: string }[] = [
-  { band: 'child', emoji: '🧒', label: 'Child', role: 'Child · age 7' },
-  { band: 'teen', emoji: '🧑‍🎓', label: 'Teen', role: 'Teen · age 15' },
-  { band: 'adult', emoji: '🧑', label: 'Adult', role: 'Adult' },
-  { band: 'senior', emoji: '🧓', label: 'Older', role: 'Older adult' },
+/**
+ * 나이대는 이모지 대신 우리 글리프로 보인다.
+ *
+ * 아바타는 사용자가 고른 얼굴이라 그대로 두지만(그건 신원이다), 나이대는 기준치를
+ * 정하는 입력이라 무엇을 고르는지가 정확해야 한다. 이모지는 기기마다 다르게 그려지고
+ * 🧑‍🎓(학사모)는 '십대' 가 아니라 '졸업생' 이다 — 학교를 다니지 않는 아이에게는
+ * 아무 뜻도 아니다. 다섯 글리프는 한 계열로 그려져서 나란히 놓으면 나이 차가 보인다.
+ */
+const AGE_BANDS: { band: AgeBand; glyph: string; label: string; role: string }[] = [
+  { band: 'child', glyph: 'state_child', label: 'Child', role: 'Child · age 7' },
+  { band: 'teen', glyph: 'state_teen', label: 'Teen', role: 'Teen · age 15' },
+  { band: 'adult', glyph: 'state_adult', label: 'Adult', role: 'Adult' },
+  { band: 'senior', glyph: 'state_elderly', label: 'Older', role: 'Older adult' },
 ];
 
 /** 화면 묶음 — 진단서가 없어도 답할 수 있는 것부터 묻는다. */
@@ -119,7 +127,8 @@ function MemberEditor() {
                 style={{ outline: on ? '2px solid var(--color-sc-primary)' : '2px solid transparent' }}
                 aria-pressed={on}
               >
-                <span className="text-2xl">{b.emoji}</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/glyphs/${b.glyph}.png`} alt="" aria-hidden className="h-8 w-8" />
                 <span className="text-[11px] font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{b.label}</span>
               </button>
             );
