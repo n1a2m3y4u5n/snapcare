@@ -45,17 +45,33 @@ there is a network and a key.
 
 | | |
 |---|---|
-| Backbone | efficientnet_b0, 4.0M parameters |
+| Backbone | efficientnet_b0, 4.0M parameters (`deploy-warp`) |
 | Download | 16 MB (float32) |
-| Accuracy | 25.7% mean MAE on the Nutrition5k test split |
-| Calories | 20.9% MAE |
+| Nutrition5k test split | 26.7% mean MAE |
 | Runs on | onnxruntime-web, WASM backend, no GPU needed |
 
-**Assume worse than that number in the field.** The test split is photographed
-from directly above the plate; the same model is around twelve points worse on
-side-angle frames, which is what a hand-held phone produces. Aiming matters,
-and telling the user to shoot from above is the cheapest accuracy improvement
-available.
+**This is deliberately not the best benchmark score available**, and the reason
+matters if someone later "fixes" it.
+
+The published test split is photographed from directly above the plate, and
+optimising for it produces a model that is worse at what this app does. Among
+the models small enough to ship:
+
+| | benchmark | side-angle |
+|---|---|---|
+| `deploy-mnv3` | **19.81** | 33.92 |
+| `deploy` | 20.58 | 32.55 |
+| `deploy-warp` (installed) | 21.26 | **31.56** |
+
+The one with the best benchmark number is the worst of the three at the angle a
+hand-held phone actually produces. `deploy-warp` was trained with a random
+off-axis warp for exactly that reason. The three are within half a point of
+each other overall, so this is a considered tie-break rather than a large win —
+but it is the right direction, and `promote.py` encodes it so the next person
+does not have to re-derive it.
+
+**Assume the side-angle figure in the field.** Telling the user to shoot from
+above is still the cheapest accuracy improvement available.
 
 Its outputs do satisfy the Atwater check the app's validator applies (98.8% of
 dishes within tolerance, slightly better than the dataset's own labels), so
@@ -63,8 +79,8 @@ they will not simply be discarded.
 
 ## Two things not to change
 
-**Do not swap in the int8 graph.** It is a quarter of the size and more than
-twice as wrong — 52.7% against 25.7% — because this backbone's depthwise
+**Do not swap in the int8 graph.** It is a quarter of the size and roughly
+twice as wrong — 52.5% against 26.7% — because this backbone's depthwise
 convolutions do not survive quantization. The manifest's `recommended` field
 records that, `mealModel.ts` follows it, and the same measurement said the
 opposite for a different backbone. If a new model is exported, believe

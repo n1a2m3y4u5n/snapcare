@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "source_checkpoint": "deploy.pt",
+  "source_checkpoint": "deploy-warp.pt",
   "backbone": "efficientnet_b0",
   "targets": [
     "calories",
@@ -41,40 +41,40 @@
     "float32": {
       "file": "web.onnx",
       "size_mb": 16.04,
-      "test_mean_mae_pct": 25.716,
+      "test_mean_mae_pct": 26.748,
       "test_fields": {
-        "calories_MAE": 53.36950981088197,
-        "calories_MAE_%": 20.890956265432646,
-        "mass_MAE": 33.78526077420989,
-        "mass_MAE_%": 17.019521494102396,
-        "fat_MAE": 4.323810101938221,
-        "fat_MAE_%": 33.69904256562507,
-        "carb_MAE": 5.4356622822209095,
-        "carb_MAE_%": 27.61519016579518,
-        "protein_MAE": 5.130653247708896,
-        "protein_MAE_%": 29.353821963353344
+        "calories_MAE": 58.118280628106845,
+        "calories_MAE_%": 22.749814699934877,
+        "mass_MAE": 32.97346622986201,
+        "mass_MAE_%": 16.610575273776917,
+        "fat_MAE": 4.2112482474314685,
+        "fat_MAE_%": 32.821754563409534,
+        "carb_MAE": 6.022529682019718,
+        "carb_MAE_%": 30.596695271540675,
+        "protein_MAE": 5.411356642538759,
+        "protein_MAE_%": 30.959800204043095
       }
     },
     "int8": {
       "file": "web.int8.onnx",
       "size_mb": 4.86,
       "method": "static, calibrated on 128 training images",
-      "test_mean_mae_pct": 52.725,
+      "test_mean_mae_pct": 52.507,
       "test_fields": {
-        "calories_MAE": 117.24080295409972,
-        "calories_MAE_%": 45.89272968249936,
-        "mass_MAE": 62.59139478935528,
-        "mass_MAE_%": 31.53077894181782,
-        "fat_MAE": 8.259521477108864,
-        "fat_MAE_%": 64.37330948091738,
-        "carb_MAE": 9.738642360411516,
-        "carb_MAE_%": 49.47593260513435,
-        "protein_MAE": 12.646582904677645,
-        "protein_MAE_%": 72.35444008898227
+        "calories_MAE": 106.20808917843598,
+        "calories_MAE_%": 41.57408516443724,
+        "mass_MAE": 76.35534686026489,
+        "mass_MAE_%": 38.46444980143307,
+        "fat_MAE": 7.128032985335553,
+        "fat_MAE_%": 55.55468008974888,
+        "carb_MAE": 10.407534204273107,
+        "carb_MAE_%": 52.87415245573185,
+        "protein_MAE": 12.945814676213725,
+        "protein_MAE_%": 74.06642406516916
       }
     }
   },
-  "val_mean_mae_pct": 26.563532501147883,
-  "parity_max_abs_diff": 0.000335693359375,
+  "val_mean_mae_pct": 26.40811111392724,
+  "parity_max_abs_diff": 0.00030517578125,
   "recommended": "float32"
 }
