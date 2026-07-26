@@ -13,15 +13,13 @@ import type { ScanItem } from '@/lib/snapcare/types';
 import type { NutrientProfile } from '@/lib/nutrition/types';
 
 const DEMO_IDS = ['energy_drink', 'granola_bar', 'amoxicillin', 'ibuprofen'];
-// 기본 데모는 영어로 돈다 (대회 공식 언어). 한국어 처방전은 마지막에 하나만 남겨
-// OCR 이 라틴 문자 밖에서도 동작한다는 것을 보인다 — 현장의 종이는 그 지역 언어다.
 const SAMPLE_RX = [
   { src: '/prescription-antibiotic.png', label: 'Antibiotic Rx' },
   { src: '/prescription-eyedrop.png', label: 'Eye drops Rx' },
+  // 상호작용 엔진을 건드리는 유일한 샘플 — 혈액희석제를 쓰는 구성원에게 회피가 뜬다
+  { src: '/prescription-painkiller.png', label: 'Painkiller Rx' },
   { src: '/prescription-syrup.png', label: 'Syrup Rx' },
-  { src: '/sample-prescription-ko.png', label: 'Korean Rx' },
-];
-const SAMPLE_LABELS = [
+];const SAMPLE_LABELS = [
   { src: '/label-eu-biscuit.png', label: 'Biscuit label' },
   { src: '/label-kr-snack.png', label: 'Korean snack label' },
   { src: '/label-us-cereal.png', label: 'Cereal label' },

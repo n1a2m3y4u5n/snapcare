@@ -9,9 +9,8 @@
 데모 내내 한국어 약품명이 화면에 뜨는 건 맞지 않고, 무엇보다 이미지를 고치려면
 누군가 다시 그려야 한다. 코드로 만들면 문구를 바꾸고 다시 돌리면 된다.
 
-한국어 샘플(public/sample-prescription-ko.png)은 남겨둔다. OCR 이 라틴 문자
-밖에서도 동작한다는 것은 실제 강점이고, 현장에서 카메라에 잡히는 종이는 그 지역
-언어이기 때문이다 — 다만 기본 데모는 영어로 돈다.
+OCR 자체는 라틴 문자 밖에서도 동작한다(파서도 양쪽 패턴을 다 갖고 있다). 다만 그건
+현장 배포에서 증명할 일이지, 데모 화면에 한국어를 띄워 보일 일은 아니다.
 
 문구는 lib/ocr-to-macro.ts 가 뽑아내는 것들을 담는다: 복용 횟수, 시간대,
 식전·식후, 1회 용량, 기간, 보관, 금기.
@@ -116,6 +115,21 @@ SAMPLES = [
         days="For 5 days",
         storage="Keep refrigerated (2-8 C)",
         warnings="Do not wear contact lenses during treatment. Not for use in pregnancy.",
+    ),
+    dict(
+        # 상호작용 엔진을 실제로 건드리는 샘플. 'ibuprofen' 이 nsaid_bleed 플래그를
+        # 만들고, 혈액희석제를 쓰는 구성원에게 회피 판정이 나온다 — 이 경로에는
+        # 그동안 샘플이 없어서 데모에서 한 번도 보이지 않았다.
+        name="prescription-painkiller.png",
+        drug="Ibuprofen Tablets 200 mg",
+        generic="ibuprofen",
+        sig=[
+            "Take 1 tablet twice a day, after meals.",
+            "Morning and evening.",
+        ],
+        days="For 5 days",
+        storage="Store at room temperature",
+        warnings="Not for use in pregnancy. Do not take with blood thinners.",
     ),
     dict(
         name="prescription-syrup.png",
