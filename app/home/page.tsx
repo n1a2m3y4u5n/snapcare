@@ -12,6 +12,8 @@ import type { Reminder } from '@/stores/reminders';
 import type { ScanRecord } from '@/lib/snapcare/types';
 import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
 import { SuspectedTriggerCard } from './suspected';
+import { Today } from './today';
+import { TryIt } from './try-it';
 import { SpeakIcon, sayable } from '@/components/sc/Say';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { spokenName } from '@/lib/tts/speakable';
@@ -92,19 +94,34 @@ export default function HomePage() {
         </div>
 
         {/*
+          아직 아무것도 찍지 않았다면 눌러볼 것을 내놓는다. 이 자리는 원래 빈 공간이었고,
+          빈 화면은 "쓸 것이 없다"로 읽힌다 — 실제로는 카메라 화면 안쪽에 다 있었다.
+        */}
+        {scans.length === 0 && <TryIt />}
+
+        {/*
           기록에서 드러난 것이 있으면 먼저 묻는다. 아직 답하지 않은 끼니를 묻는 것보다
           이쪽이 무겁고, 통계 문턱을 넘었을 때만 뜨므로 자주 보일 일이 없다.
         */}
         <SuspectedTriggerCard memberId={activeMemberId} />
 
+        {/* 오늘 하루 누적 — 오늘 먹은 것이 있을 때만 스스로 뜬다 */}
+        <Today scans={scans} />
+
         {/* 식이 일지 — 아직 답하지 않은 끼니가 있을 때만 뜬다 */}
         {pending && <HowDidItSit key={pending.id} record={pending} />}
 
-        {/* 최근 */}
-        <p className="mt-8 text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-           {...sayable('Recent. What has been checked lately.')}>
-          RECENT
-        </p>
+        {/*
+          최근 — 아무것도 없으면 제목도 내지 않는다. 빈 목록 위의 제목은 자리를
+          차지하면서 아무것도 말하지 않고, 소리로 들으면 "RECENT" 다음에 침묵이라
+          뭔가 놓친 것처럼 들린다.
+        */}
+        {scans.length > 0 && (
+          <p className="mt-8 text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
+             {...sayable('Recent. What has been checked lately.')}>
+            RECENT
+          </p>
+        )}
         <div className="mt-2 flex flex-col gap-2">
           {scans.map((s) => {
             const meta = LEVEL_META[s.level];

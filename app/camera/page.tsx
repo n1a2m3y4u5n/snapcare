@@ -10,24 +10,11 @@ import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } f
 import { recognizeText } from '@/lib/ocr';
 import { estimateOnDevice, warmUp } from '@/lib/nutrition/estimateOnDevice';
 import { Hint } from '@/components/sc/Hint';
+import { SAMPLE_LABELS, SAMPLE_RX, sampleBySlug } from '@/lib/snapcare/samples';
 import type { ScanItem } from '@/lib/snapcare/types';
 import type { NutrientProfile } from '@/lib/nutrition/types';
 
 const DEMO_IDS = ['energy_drink', 'granola_bar', 'amoxicillin', 'ibuprofen'];
-const SAMPLE_RX = [
-  { src: '/prescription-antibiotic.png', label: 'Antibiotic Rx' },
-  { src: '/prescription-eyedrop.png', label: 'Eye drops Rx' },
-  // 상호작용 엔진을 건드리는 유일한 샘플 — 혈액희석제를 쓰는 구성원에게 회피가 뜬다
-  { src: '/prescription-painkiller.png', label: 'Painkiller Rx' },
-  { src: '/prescription-syrup.png', label: 'Syrup Rx' },
-];
-
-const SAMPLE_LABELS = [
-  { src: '/label-eu-biscuit.png', label: 'Biscuit label' },
-  // 라벨만 읽고 알레르기 회피 판정까지 가는 유일한 샘플
-  { src: '/label-peanut-bar.png', label: 'Peanut bar label' },
-  { src: '/label-us-cereal.png', label: 'Cereal label' },
-];
 
 export default function CameraPage() {
   const router = useRouter();
@@ -46,6 +33,26 @@ export default function CameraPage() {
 
   // 16MB 를 사진 찍은 뒤에 받기 시작하면 그만큼 기다린다. 화면에 들어올 때 미리 받는다.
   useEffect(() => { warmUp(); }, []);
+
+  /**
+   * 홈의 "TRY IT" 에서 표본을 눌러 들어온 경우, 도착하자마자 그 표본을 읽는다.
+   *
+   * 홈에서 직접 읽지 않고 여기로 보내는 이유: 인식 경로(OCR·모델·판정)가 전부
+   * 이 화면에 있다. 홈에 복사하면 두 벌이 되고, 한쪽만 고쳐지는 날이 온다.
+   *
+   * 슬러그로만 받는다 — 경로를 그대로 받으면 쿼리 문자열이 무엇이든 가져오는
+   * 통로가 된다. useSearchParams 대신 location 을 쓰는 것은 이 화면을
+   * Suspense 로 감싸지 않기 위해서다 (어차피 effect 안이라 서버에서 돌지 않는다).
+   */
+  const tried = useRef(false);
+  useEffect(() => {
+    if (tried.current) return;
+    const sample = sampleBySlug(new URLSearchParams(window.location.search).get('try'));
+    if (!sample) return;
+    tried.current = true;
+    void scanSample(sample.src);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function fail(message: string) {
     setHint(message);
