@@ -151,6 +151,28 @@ a sample trains against would teach the model to under-predict large dishes.
 
 Plus warmup, cosine decay, gradient clipping, and an EMA of the weights.
 
+### What did not work
+
+Two things I expected to help, measured anyway, and one of them was backwards:
+
+| run | change | overhead | side |
+|---|---|---|---|
+| `v2-base` | — | 17.82 | 32.54 |
+| `v3-288` | 288px instead of 224 | **17.38** | **31.85** |
+| `v3-mildcrop` | crop floor 0.85 instead of 0.7 | 20.79 | 33.59 |
+| `v3-288-mild` | both | 20.89 | 35.67 |
+
+**The gentler crop is much worse.** The argument for it was that
+`RandomResizedCrop` at 0.7 can cut the plate rim out of shot while the label
+still states the mass of the whole dish — augmentation that quietly corrupts
+the target. That is a real effect and it is evidently swamped by the value of
+the augmentation: raising the floor cost three points. The knob stays, at 0.7.
+
+**Resolution helps a little, for a lot.** 288px gains 0.44 points on the
+benchmark and 0.69 on side frames for 1.5x the training time and 1.65x the
+inference cost. Worth it for a server model, not obviously worth it for a
+16 MB graph on a phone.
+
 ## Layout
 
 ```
