@@ -1,5 +1,6 @@
 import type { ScanItem, ItemFlag } from './types';
-import { extractRxInfo, type StructuredRxInfo } from '@/lib/ocr-to-macro';
+// 상대경로 + 확장자: 이 모듈을 node --test 로 번들러 없이 직접 돌린다 (@/ 는 해석되지 않는다).
+import { extractRxInfo, type StructuredRxInfo } from '../ocr-to-macro.ts';
 
 const FREQ_WORD: Record<number, string> = { 1: 'Once', 2: 'Twice', 3: 'Three times', 4: 'Four times' };
 const TIME_SLOT: Record<string, { time: string; label: string; emoji: string }> = {
@@ -14,6 +15,10 @@ function flagsFromText(t: string): ItemFlag[] {
   const flags: ItemFlag[] = [];
   if (/이부프로펜|ibuprofen|아스피린|aspirin|naproxen|nsaid/i.test(t)) flags.push('nsaid_bleed');
   if (/땅콩|peanut/i.test(t)) flags.push('peanut');
+  // 처방전에 'No alcohol' 이라고 적혀 있는데 이 플래그를 만드는 코드가 없었다.
+  // 타입에도 있고 픽토그램도 있는데 어떤 경로도 붙이지 않아, 있으나 마나 한 상태였다.
+  if (/알코올|음주|술.*(금지|피)|no\s*alcohol|avoid\s*alcohol/i.test(t)) flags.push('alcohol');
+  if (/카페인|caffeine/i.test(t)) flags.push('caffeine');
   return flags;
 }
 

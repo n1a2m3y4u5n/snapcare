@@ -8,7 +8,7 @@ import { Hint } from '@/components/sc/Hint';
 import { useReminders } from '@/stores/reminders';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useFamily } from '@/stores/family';
-import { encodeSchedule, decodeEvent, messageKind, type SlotSchedule } from '@/lib/hardware/protocol';
+import { encodeSchedule, encodeWeekly, decodeEvent, messageKind, type SlotSchedule, type WeeklySlot } from '@/lib/hardware/protocol';
 import { toSchedule, type FormSheetValues } from '@/lib/hardware/formSheet';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
 import { speak } from '@/lib/voice';
@@ -40,7 +40,8 @@ export default function DevicePage() {
   const [reading, setReading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   // 폼시트에서 읽어낸 일정 — 있으면 알람 대신 이것을 기기로 내보낸다.
-  const [sheet, setSheet] = useState<{ schedule: SlotSchedule[]; summary: string } | null>(null);
+  // 시트에서 온 일정은 요일·기간을 갖는다 (WeeklySlot). 앱 안에서 만든 알람은 안 갖는다.
+  const [sheet, setSheet] = useState<{ schedule: WeeklySlot[]; summary: string } | null>(null);
 
   // 알람을 기기 칸으로 묶는다 — 약 하나가 칸 하나다.
   const slots: SlotSchedule[] = useMemo(() => {
@@ -56,8 +57,13 @@ export default function DevicePage() {
   const names = useMemo(() => [...new Set(reminders.map((r) => r.item.name))], [reminders]);
 
   // 폼시트를 읽었으면 그것이 우선한다 — 의사가 직접 채워준 일정이기 때문이다.
-  const effective = sheet?.schedule.length ? sheet.schedule : slots;
-  const payload = effective.length > 0 ? encodeSchedule(effective) : null;
+  //
+  // 시트에는 요일과 기간이 표시돼 있고 SC1*W* 가 그것을 실을 수 있다. SC1*S* 로 보내면
+  // 월/수/금 30일이 '매일 무기한' 으로 도착한다 — 화면은 맞아 보이는데 기기가 나흘을
+  // 더 연다. 앱 안에서 만든 알람에는 요일 개념이 없으므로 그쪽은 지금처럼 S 로 간다.
+  const payload = sheet?.schedule.length
+    ? encodeWeekly(sheet.schedule)
+    : slots.length > 0 ? encodeSchedule(slots) : null;
 
   /** 의사가 준 종이 폼시트를 찍어 일정을 받는다 (인터넷도 DB도 필요 없는 경로). */
   async function readFormSheet(file: File) {
