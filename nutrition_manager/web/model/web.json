@@ -1,0 +1,80 @@
+{
+  "name": "web",
+  "source_checkpoint": "deploy.pt",
+  "backbone": "efficientnet_b0",
+  "targets": [
+    "calories",
+    "mass",
+    "fat",
+    "carb",
+    "protein"
+  ],
+  "units": {
+    "calories": "kcal",
+    "mass": "g",
+    "fat": "g",
+    "carb": "g",
+    "protein": "g"
+  },
+  "input": {
+    "name": "pixels",
+    "layout": "NCHW",
+    "colour": "RGB",
+    "range": [
+      0,
+      1
+    ],
+    "img_size": 224,
+    "resize_shorter_side_to": 258,
+    "then": "centre crop to img_size, divide by 255"
+  },
+  "output": {
+    "name": "nutrition",
+    "shape": [
+      "batch",
+      5
+    ],
+    "note": "physical units, clamped at zero; normalization is inside the graph"
+  },
+  "opset": 17,
+  "artifacts": {
+    "float32": {
+      "file": "web.onnx",
+      "size_mb": 16.04,
+      "test_mean_mae_pct": 25.716,
+      "test_fields": {
+        "calories_MAE": 53.36950981088197,
+        "calories_MAE_%": 20.890956265432646,
+        "mass_MAE": 33.78526077420989,
+        "mass_MAE_%": 17.019521494102396,
+        "fat_MAE": 4.323810101938221,
+        "fat_MAE_%": 33.69904256562507,
+        "carb_MAE": 5.4356622822209095,
+        "carb_MAE_%": 27.61519016579518,
+        "protein_MAE": 5.130653247708896,
+        "protein_MAE_%": 29.353821963353344
+      }
+    },
+    "int8": {
+      "file": "web.int8.onnx",
+      "size_mb": 4.86,
+      "method": "static, calibrated on 128 training images",
+      "test_mean_mae_pct": 52.725,
+      "test_fields": {
+        "calories_MAE": 117.24080295409972,
+        "calories_MAE_%": 45.89272968249936,
+        "mass_MAE": 62.59139478935528,
+        "mass_MAE_%": 31.53077894181782,
+        "fat_MAE": 8.259521477108864,
+        "fat_MAE_%": 64.37330948091738,
+        "carb_MAE": 9.738642360411516,
+        "carb_MAE_%": 49.47593260513435,
+        "protein_MAE": 12.646582904677645,
+        "protein_MAE_%": 72.35444008898227
+      }
+    }
+  },
+  "val_mean_mae_pct": 26.563532501147883,
+  "parity_max_abs_diff": 0.000335693359375,
+  "recommended": "float32"
+}

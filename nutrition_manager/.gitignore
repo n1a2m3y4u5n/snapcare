@@ -10,5 +10,7 @@ nutrition5k_dataset/
 
 # Run logs; history.jsonl and the scripts are kept.
 runs/*.log
+# Scratch area for exports. The graph that actually ships is committed under
+# web/model/, so the app can be integrated without a GPU or a training run.
 export/
 web/node_modules/
