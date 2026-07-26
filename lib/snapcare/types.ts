@@ -72,6 +72,12 @@ export interface ScanItem {
     dosageText: string;
     durationText: string;
     schedule: { time: string; label: string; emoji: string }[];
+    /**
+     * 제형. OCR 이 이미 알아내는 값인데(extractRxInfo.drugForm) 여기까지 오지 않아서,
+     * 안약을 찍어도 픽토그램은 알약통이 나왔다. 그림 엔진이 이 값으로 머리를 고른다.
+     */
+    form?: 'tablet' | 'capsule' | 'syrup' | 'eyedrop' | 'cream' | 'inhaler'
+      | 'injection' | 'suppository' | 'sachet';
   };
 }
 

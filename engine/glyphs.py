@@ -359,6 +359,24 @@ def no_alcohol(c: Canvas) -> None:
     c.rect(0.28, 0.84, 0.72, 0.92, r=0.03, fill=True)
 
 
+def caffeine(c: Canvas) -> None:
+    # 앱의 caffeine 플래그에 대응하는 그림이 없어서, 카페인이 든 음료를 판정해도
+    # 픽토그램 자리에는 아무것도 나오지 않았다.
+    c.blob([(0.18, 0.34), (0.66, 0.34), (0.62, 0.72), (0.42, 0.84), (0.22, 0.72)])
+    c.arc(0.68, 0.48, 0.14, 270, 90, w=STROKE)                # 손잡이
+    c.rect(0.12, 0.86, 0.74, 0.94, r=0.03, fill=True)         # 받침
+    for x in (0.30, 0.44, 0.56):                              # 김
+        c.smooth([(x, 0.28), (x + 0.05, 0.20), (x - 0.02, 0.12)], w=THIN)
+
+
+def warn_bleeding(c: Canvas) -> None:
+    # nsaid_bleed — 출혈 위험. 판정 엔진이 이 플래그로 회피를 내는데 그림이 없었다.
+    c.blob([(0.42, 0.10), (0.62, 0.40), (0.68, 0.62), (0.42, 0.80), (0.18, 0.62), (0.24, 0.40)])
+    c.hole_blob([(0.36, 0.44), (0.46, 0.36), (0.52, 0.48), (0.40, 0.58)])
+    for i, r in enumerate((0.10, 0.17)):                      # 번지는 자국
+        c.arc(0.66, 0.80, r, 200, 340, w=THIN)
+
+
 def call_help(c: Canvas) -> None:
     c.blob([(0.18, 0.20), (0.34, 0.14), (0.46, 0.32), (0.34, 0.44), (0.46, 0.62),
             (0.62, 0.70), (0.70, 0.58), (0.88, 0.66), (0.84, 0.84), (0.62, 0.88),
@@ -629,7 +647,8 @@ HEADS = {
     "food_rice": food_rice, "food_bread": food_bread, "food_meat": food_meat,
     "food_vegetable": food_vegetable, "food_fruit": food_fruit, "food_oil": food_oil,
     "food_sugar": food_sugar, "food_salt": food_salt,
-    "no_alcohol": no_alcohol, "call_help": call_help,
+    "no_alcohol": no_alcohol, "caffeine": caffeine,
+    "warn_bleeding": warn_bleeding, "call_help": call_help,
 }
 
 MODIFIERS = {

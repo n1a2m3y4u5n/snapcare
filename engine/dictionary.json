@@ -340,6 +340,18 @@
       "slot": null
     },
     {
+      "name": "caffeine",
+      "category": "caffeine",
+      "description": "Caffeine.",
+      "slot": null
+    },
+    {
+      "name": "warn_bleeding",
+      "category": "warn",
+      "description": "Warn bleeding.",
+      "slot": null
+    },
+    {
       "name": "call_help",
       "category": "call",
       "description": "Call help.",

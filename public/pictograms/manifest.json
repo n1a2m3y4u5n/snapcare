@@ -1,10 +1,8 @@
 {
-  "7b707391": "\\pill_bottle",
-  "7d3fb808": "\\no{\\pill_bottle}",
-  "7286c566": "\\twice_daily{\\pill_bottle{\\food_bowl}}",
-  "b692448f": "\\pill_bottle{\\time_morning}",
-  "c8e54b03": "\\pill_bottle{\\time_evening}",
-  "c936a1de": "\\pill_bottle{\\food_bowl}",
   "571bf666": "\\no{\\allergen_peanut}",
-  "44a9bd05": "\\pill_bottle{\\time_noon}"
+  "ebf2cad0": "\\no{\\allergen_milk}",
+  "7708ed19": "\\no{\\food_sugar}",
+  "7b707391": "\\pill_bottle",
+  "c8e54b03": "\\pill_bottle{\\time_evening}",
+  "7ae9598c": "\\state_pregnant"
 }

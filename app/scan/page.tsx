@@ -173,6 +173,13 @@ function FoodResult({
       <VerdictHero item={item} verdict={verdict} />
 
       <div className="mt-2 flex flex-col gap-3 px-5">
+        {/*
+          무엇이 들어 있는지 그림으로. 이 줄이 없어서 땅콩이 든 과자를 찍어 회피 판정이
+          떠도 땅콩 그림은 화면 어디에도 없었다 — 처방 화면에만 스트립이 있었다.
+          플래그가 하나도 없으면 컴포넌트가 스스로 아무것도 그리지 않는다.
+        */}
+        <PictogramStrip source={itemToDsl(item, verdict.level !== 'safe')} />
+
         {/* 영양 엔진 — 바코드가 있으면 실제 수치를 구성원 기준치와 대조해 보여준다 */}
         <NutrientBars barcode={item.barcode} profile={item.profile} member={member} />
 

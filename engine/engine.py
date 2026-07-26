@@ -265,13 +265,35 @@ def _fit(asset: Image.Image, box: Tuple[int, int, int, int]
     return resized, (x0 + (bw - nw) // 2, y0 + (bh - nh) // 2)
 
 
-def _overlay_cross(img: Image.Image, stroke_ratio: float = 0.06) -> None:
+def _overlay_cross(img: Image.Image, stroke_ratio: float = 0.075) -> None:
+    """금지 — 테두리 원과 사선 하나.
+
+    예전에는 굵은 X 두 획을 판 전체에 그었다. 주어가 하나일 때는 읽혔지만 알레르겐처럼
+    안쪽 형태가 촘촘한 그림 위에서는 밑그림을 통째로 덮어, 세 장을 나란히 놓으면 전부
+    같은 X 로 보였다 — 무엇을 피하라는 것인지가 사라지면 이 기호는 뜻이 없다.
+
+    금지 표지가 세계 어디서나 원 + 사선 하나인 데는 이유가 있다. 획이 하나면 가려지는
+    면적이 절반이고, 원이 '금지' 를 맡아주므로 사선을 더 굵게 그릴 필요도 없다.
+    사선 양옆에 투명한 틈을 둬서 밑그림과 겹쳐도 서로 뭉개지지 않게 한다.
+    """
     w, h = img.size
-    s = max(4, int(min(w, h) * stroke_ratio))
-    inset = int(min(w, h) * 0.12)
+    side = min(w, h)
+    s = max(4, int(side * stroke_ratio))
+    gap = max(2, int(s * 0.45))
+    cx, cy = w // 2, h // 2
+    r = int(side * 0.40)
+
     d = ImageDraw.Draw(img)
-    d.line((inset, inset, w - inset, h - inset), fill=INK, width=s)
-    d.line((inset, h - inset, w - inset, inset), fill=INK, width=s)
+    # ① 사선이 지나갈 자리를 먼저 비운다 (밑그림과 붙어 읽히지 않게)
+    for shape in (
+        lambda dd, wdt: dd.ellipse((cx - r, cy - r, cx + r, cy + r), outline=BG, width=wdt),
+        lambda dd, wdt: dd.line((cx - r * 0.72, cy + r * 0.72, cx + r * 0.72, cy - r * 0.72),
+                                fill=BG, width=wdt),
+    ):
+        shape(d, s + gap * 2)
+    # ② 그 위에 기호를 그린다
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=INK, width=s)
+    d.line((cx - r * 0.72, cy + r * 0.72, cx + r * 0.72, cy - r * 0.72), fill=INK, width=s)
 
 
 def _overlay_half(img: Image.Image) -> None:
