@@ -14,6 +14,17 @@
 # actually looks like (`^python train.py`, which a bash wrapper can never
 # match), and never wait on a string that appears in the waiting script.
 #
+# The second rule is wider than it sounds, and it bit twice. It is not only the
+# waiting script: *anything* that mentions the pattern carries it. The second
+# occurrence was a monitor armed to watch the queue — its command line contained
+# `pgrep -f "bash runs/queue.sh"`, so the queue waited on its own observer and
+# the GPU sat idle for an hour with nothing to show for it. Watching a thing
+# should not be able to stop it.
+#
+# And while a script is running, do not edit it. Bash reads a script by byte
+# offset, so inserting lines above the point it has reached moves where it
+# resumes — which silently skipped a run here.
+#
 #     source "$(dirname "$0")/gpu_lock.sh"
 #     gpu_wait
 #     python train.py --tag ...
