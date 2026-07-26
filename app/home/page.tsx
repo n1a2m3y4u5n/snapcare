@@ -11,6 +11,7 @@ import { LEVEL_META } from '@/lib/snapcare/verdict';
 import type { Reminder } from '@/stores/reminders';
 import type { ScanRecord } from '@/lib/snapcare/types';
 import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
+import { SuspectedTriggerCard } from './suspected';
 import { SpeakIcon } from '@/components/sc/Say';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { spokenName } from '@/lib/tts/speakable';
@@ -86,6 +87,12 @@ export default function HomePage() {
             Scan something
           </span>
         </div>
+
+        {/*
+          기록에서 드러난 것이 있으면 먼저 묻는다. 아직 답하지 않은 끼니를 묻는 것보다
+          이쪽이 무겁고, 통계 문턱을 넘었을 때만 뜨므로 자주 보일 일이 없다.
+        */}
+        <SuspectedTriggerCard memberId={activeMemberId} />
 
         {/* 식이 일지 — 아직 답하지 않은 끼니가 있을 때만 뜬다 */}
         {pending && <HowDidItSit key={pending.id} record={pending} />}
