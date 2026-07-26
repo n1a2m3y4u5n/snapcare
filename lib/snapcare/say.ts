@@ -12,7 +12,9 @@ export function itemVoiceScript(item: ScanItem, verdict: Verdict, member: Member
 
   if (item.kind === 'prescription' || item.kind === 'medicine') {
     if (verdict.level === 'avoid') {
-      parts.push(`Do not take. ${verdict.summary}`);
+      // summary 가 이미 "Do not take." 로 시작한다. 앞에 한 번 더 붙이면 같은 말을
+      // 두 번 듣게 되고, 듣는 사람의 주의는 그만큼 낭비된다.
+      parts.push(verdict.summary);
     } else {
       if (item.rx?.dosageText) parts.push(item.rx.dosageText + '.');
       parts.push('Take as prescribed.');

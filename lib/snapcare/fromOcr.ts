@@ -38,7 +38,7 @@ export function ocrToScanItem(ocrText: string): { item: ScanItem; rxInfo: Struct
 
   const item: ScanItem = {
     id: `ocr_${Math.abs(hash(ocrText))}`,
-    name: rx.drugName && rx.drugName !== '처방 의약품' ? rx.drugName : 'Prescription',
+    name: rx.drugName || 'Prescription',
     kind: 'prescription',
     emoji: rx.drugEmoji || '💊',
     detectedVia: 'prescription OCR (Tesseract)',
