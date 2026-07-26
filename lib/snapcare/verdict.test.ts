@@ -76,3 +76,23 @@ test('모르는 조건 id 는 조용히 건너뛴다', () => {
   assert.equal(v.level, 'avoid');
   assert.equal(v.reasons.length, 1);
 });
+
+test('무엇인지 모르면 안전하다고 말하지 않는다', () => {
+  // 자체 모델은 회귀라서 기권할 수 없다 — 무작위 노이즈 사진에도 285 kcal 을 내놓았다.
+  // 숫자가 나왔다는 것과 알아봤다는 것은 다르고, 무엇인지 모르면 알레르기를 대조할
+  // 대상 자체가 없으므로 걸리는 플래그가 없다는 사실은 아무것도 보장하지 않는다.
+  const v = computeVerdict(item([], { unidentified: true }), member());
+  assert.equal(v.level, 'caution');
+  assert.match(v.summary, /Not sure what this is/);
+});
+
+test('알아본 것은 여전히 안전할 수 있다', () => {
+  assert.equal(computeVerdict(item([], { unidentified: false }), member()).level, 'safe');
+  assert.equal(computeVerdict(item(), member()).level, 'safe');
+});
+
+test('모른다는 것이 알레르기 경고를 덮지 않는다', () => {
+  // 둘 다 있으면 더 심한 쪽이 이겨야 한다.
+  const v = computeVerdict(item(['peanut'], { unidentified: true }), member(['peanut_allergy']));
+  assert.equal(v.level, 'avoid');
+});

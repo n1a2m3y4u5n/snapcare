@@ -79,3 +79,6 @@ Thumbs.db
 
 # 폼시트 판독용 로컬 파이썬 (프로덕션은 이미지에 apk 로 설치)
 .venv-cv/
+
+# 빌드 때 nutrition_manager/web/model 에서 복사된다 (scripts/copy-model.mjs)
+public/models/

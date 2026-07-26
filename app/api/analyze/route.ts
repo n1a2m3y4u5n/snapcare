@@ -5,21 +5,13 @@ import { validateDensity } from '@/lib/nutrition/validate';
 import { densityFromTotals, mergeVisionDetail, MIN_PORTION_G, MAX_PORTION_G } from '@/lib/nutrition/mealModel';
 import type { ModelTotals } from '@/lib/nutrition/mealModel';
 import type { NutrientAmounts, NutrientProfile } from '@/lib/nutrition/types';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { writeFile, mkdir, rm } from 'fs/promises';
-import { join } from 'path';
-import { tmpdir } from 'os';
-import { randomUUID } from 'crypto';
 
-const execFileAsync = promisify(execFile);
-const MEAL_MODEL = join(process.cwd(), 'nutrition_manager', 'predict_cli.py');
 
 /**
  * 사진 의도 판별 + 추출 (하이브리드).
  * - demoItemId 가 오면 카탈로그에서 즉시 반환 (오프라인 데모 경로).
  * - image(base64) 는 두 출처를 함께 쓴다:
- *     · 자체 학습 모델(nutrition_manager) — 열량·질량·지방·탄수·단백. 오프라인, 무료.
+ *     · 자체 학습 모델 — 열량·질량·지방·탄수·단백. **브라우저에서** 돈다. 오프라인, 무료.
  *     · Claude Vision — 이름·종류·알레르기·세부 영양소. 인터넷 필요.
  *   서로를 대체하는 게 아니라 상대가 모르는 칸을 채운다. 한쪽이 없어도 나머지로 답한다.
  *
@@ -29,6 +21,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const body = (await req.json().catch(() => ({}))) as {
     demoItemId?: string;
     image?: string; // data URL or base64
+    /**
+     * 기기에서 이미 추정한 다섯 값 (lib/nutrition/estimateOnDevice).
+     * 모델은 브라우저에서 onnxruntime-web 으로 돈다 — 서버가 파이썬을 띄우던
+     * 예전 경로는 이미지에 PyTorch 1.5GB 를 더하면서 정작 오프라인에서 못 썼다.
+     */
+    modelTotals?: ModelTotals;
   };
 
   // ── 데모 경로 ──────────────────────────────────────────────
@@ -45,14 +43,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // ── 사진 경로 ──────────────────────────────────────────────
   const key = process.env.ANTHROPIC_API_KEY;
 
-  // 둘을 동시에 돌린다. 모델은 로컬 추론(수 초), Vision 은 왕복이라 직렬로 하면 합이 그대로 늘어난다.
-  const [modelTotals, vision] = await Promise.all([
-    runMealModel(body.image),
-    key ? analyzeWithClaude(body.image, key).catch((err) => {
-      console.error('[analyze] vision failed:', err);
-      return null;
-    }) : Promise.resolve(null),
-  ]);
+  // 모델 추정은 클라이언트가 이미 끝내서 보낸다. 여기서는 Vision 만 기다린다.
+  const modelTotals = body.modelTotals ?? null;
+  const vision = key
+    ? await analyzeWithClaude(body.image, key).catch((err) => {
+        console.error('[analyze] vision failed:', err);
+        return null;
+      })
+    : null;
 
   // 약·처방전으로 판별됐으면 영양 숫자는 의미가 없다 — 모델 값은 버린다.
   if (vision && (vision.kind === 'medicine' || vision.kind === 'prescription')) {
@@ -73,7 +71,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       name: vision?.item.name ?? 'Meal',
       kind: 'food',
       emoji: vision?.item.emoji ?? '🍽️',
-      detectedVia: vision ? 'photo analysis (measured portion)' : 'on-device meal model',
+      detectedVia: vision?.recognised ? 'photo analysis (measured portion)' : 'on-device estimate',
+      // 모델이 숫자를 냈다고 알아본 것은 아니다. 회귀 모델은 기권할 수 없어서
+      // 무엇을 찍었든 다섯 값을 내놓는다 — 무작위 노이즈에도 285 kcal 이 나왔다.
+      unidentified: !vision?.recognised,
       flags: [],
       profile: {
         source: 'meal-model',
@@ -110,38 +111,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     { error: 'analysis_unavailable', message: 'No photo recognition available on this server.' },
     { status: 501 },
   );
-}
-
-/**
- * 자체 학습 모델 추론. 가중치·파이썬 환경이 없으면 null 을 돌려주고 조용히 물러난다 —
- * 이 경로가 없다고 앱이 멈추면 안 된다 (폼시트 파서와 같은 원칙).
- *
- * 가중치는 레포에 없다(용량). SNAPCARE_MEAL_CHECKPOINT 로 위치를 알려주거나
- * nutrition_manager/checkpoints/best.pt 에 두면 이 경로가 살아난다.
- */
-async function runMealModel(image: string): Promise<ModelTotals | null> {
-  const python = process.env.MEAL_MODEL_PYTHON;
-  if (!python) return null; // 명시적으로 켠 환경에서만 시도한다 (torch 는 기본 이미지에 없다)
-
-  const base64 = image.replace(/^data:image\/[a-zA-Z.+-]+;base64,/, '');
-  const dir = join(tmpdir(), `meal-${randomUUID()}`);
-  const file = join(dir, 'meal.jpg');
-  try {
-    await mkdir(dir, { recursive: true });
-    await writeFile(file, Buffer.from(base64, 'base64'));
-    const { stdout } = await execFileAsync(python, [MEAL_MODEL, file], { timeout: 30_000 });
-    const parsed = JSON.parse(stdout) as { ok: boolean; error?: string; totals?: ModelTotals };
-    if (!parsed.ok || !parsed.totals) {
-      console.warn('[analyze] meal model unavailable:', parsed.error);
-      return null;
-    }
-    return parsed.totals;
-  } catch (err) {
-    console.warn('[analyze] meal model failed:', String(err));
-    return null;
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
 }
 
 const SYSTEM = `You identify what a person is about to consume, from one photo.

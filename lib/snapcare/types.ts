@@ -60,6 +60,14 @@ export interface ScanItem {
    * 바코드가 없어도 — 즉 제품 DB에 없는 로컬 식품이어도 — 계산 엔진이 그대로 돈다.
    */
   profile?: NutrientProfile;
+  /**
+   * 무엇인지 알아내지 못했다.
+   *
+   * 자체 모델은 회귀라서 '모르겠다' 를 말할 수 없다 — 벽을 찍어도 다섯 숫자를 낸다.
+   * 그래서 숫자가 나왔다는 것이 알아봤다는 뜻이 아니고, 알아보지 못했으면 알레르기를
+   * 대조할 대상 자체가 없으므로 'safe' 는 근거 없는 말이 된다.
+   */
+  unidentified?: boolean;
   flags: ItemFlag[];
   /** 음식/음료 영양 요약 (정성 가이드용) */
   nutrition?: { kcal?: number; protein?: string; sugar?: string; note?: string };

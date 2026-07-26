@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, ChangeEvent } from 'react';
+import { useEffect, useRef, useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFamily } from '@/stores/family';
 import { useAnalysis } from '@/stores/analysis';
@@ -8,6 +8,7 @@ import { getItem } from '@/lib/snapcare/catalog';
 import { ocrToScanItem } from '@/lib/snapcare/fromOcr';
 import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } from '@/lib/nutrition/labelOcr';
 import { recognizeText } from '@/lib/ocr';
+import { estimateOnDevice, warmUp } from '@/lib/nutrition/estimateOnDevice';
 import { Hint } from '@/components/sc/Hint';
 import type { ScanItem } from '@/lib/snapcare/types';
 import type { NutrientProfile } from '@/lib/nutrition/types';
@@ -19,7 +20,9 @@ const SAMPLE_RX = [
   // 상호작용 엔진을 건드리는 유일한 샘플 — 혈액희석제를 쓰는 구성원에게 회피가 뜬다
   { src: '/prescription-painkiller.png', label: 'Painkiller Rx' },
   { src: '/prescription-syrup.png', label: 'Syrup Rx' },
-];const SAMPLE_LABELS = [
+];
+
+const SAMPLE_LABELS = [
   { src: '/label-eu-biscuit.png', label: 'Biscuit label' },
   // 라벨만 읽고 알레르기 회피 판정까지 가는 유일한 샘플
   { src: '/label-peanut-bar.png', label: 'Peanut bar label' },
@@ -40,6 +43,9 @@ export default function CameraPage() {
    * 무엇을 눌러야 할지 고르는 일부터 시작된다. 인식이 실패했을 때만 펼친다.
    */
   const [showOptions, setShowOptions] = useState(false);
+
+  // 16MB 를 사진 찍은 뒤에 받기 시작하면 그만큼 기다린다. 화면에 들어올 때 미리 받는다.
+  useEffect(() => { warmUp(); }, []);
 
   function fail(message: string) {
     setHint(message);
@@ -116,10 +122,18 @@ export default function CameraPage() {
   /** 사진 판별 (Vision). 성공하면 결과 화면으로 넘어가고 true를 돌려준다. */
   async function tryVision(image: string | File | Blob): Promise<boolean> {
     const dataUrl = typeof image === 'string' ? image : await toDataUrl(image);
+
+    // 영양 추정은 기기 안에서 먼저 한다 (onnxruntime-web). 인터넷도 서버도 필요 없고,
+    // 사진에서 제일 맞히기 어려운 '얼마나 있나'(질량)를 저울 데이터로 배운 모델이 답한다.
+    // 실패하면 null 이고, 그때는 Vision 이 혼자 답한다.
+    setStatus('Estimating…');
+    const blob = typeof image === 'string' ? await (await fetch(image)).blob() : image;
+    const modelTotals = await estimateOnDevice(blob);
+
     const res = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ image: dataUrl }),
+      body: JSON.stringify({ image: dataUrl, modelTotals }),
     });
     if (res.status === 501) {
       fail('Photo recognition needs a connection. Photograph the nutrition label instead, or pick one below.');
