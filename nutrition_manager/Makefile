@@ -15,7 +15,7 @@
 PYTHON ?= python
 CKPT   ?= checkpoints/best.pt
 
-.PHONY: test eval compare export summary data clean
+.PHONY: test eval compare export summary promote promote-install data clean
 
 test:
 	@$(PYTHON) -m pytest tests -q
@@ -31,6 +31,15 @@ export:
 
 summary:
 	@$(PYTHON) runs/summarize.py
+
+# Which model should the app ship, and install it. Ranks by the mean of both
+# camera views rather than the benchmark, because the benchmark rewards a model
+# that is worse at the job — see promote.py.
+promote:
+	@$(PYTHON) promote.py
+
+promote-install:
+	@$(PYTHON) promote.py --install
 
 # Only needed once, and only if nutrition5k_dataset/ is present.
 data:

@@ -76,15 +76,29 @@ out. All `mealModel.ts` does is resize the shorter side to 258 and centre-crop
 to 224, and the crop matters because it decides how much of the plate the model
 sees — which is how it judges portion size.
 
-## Regenerating the model
+## Replacing it with a better one
+
+Don't do this by hand. `promote.py` reads every run that has been trained,
+filters to models small enough to ship, ranks them, exports the winner, scores
+it, and installs it here:
 
 ```bash
 cd nutrition_manager
-python train.py --tag deploy --set model.backbone=efficientnet_b0 \
-    train.epochs=16 train.lr=6.0e-4 train.select_view=both
-python export_onnx.py --checkpoint checkpoints/deploy.pt --name web --quantize --score
-cp export/web.onnx export/web.json web/model/
+make promote           # show the candidates and what would win
+make promote-install   # export it, score it, replace web/model/
 ```
+
+Then commit `web/model/` and copy it into `public/models/` again.
+
+It ranks by the **mean of the overhead and side-angle scores**, not by the
+headline benchmark number, and that choice is load-bearing: the published
+protocol scores overhead frames only, and optimising for it produces a model
+that is worse at what the app actually does. Training on overhead alone wins
+the benchmark by 0.6 points and is 25 points worse off-axis. A chooser that
+ranked on the benchmark would reliably pick the wrong model.
+
+It always re-exports rather than trusting whatever is in `export/`, because the
+scoring step is what catches a quantized graph that has quietly fallen apart.
 
 `--score` runs the exported graph over the real test split with browser-shaped
 preprocessing and writes the numbers into the manifest. It is not optional: it
