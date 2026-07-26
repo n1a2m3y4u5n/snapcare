@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useFamily } from '@/stores/family';
 import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
+import { sayable } from '@/components/sc/Say';
 import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
 
 /**
@@ -27,10 +28,10 @@ export default function SettingsPage() {
   return (
     <MobileScreen tab="settings">
       <div className="px-5 pt-14">
-        <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Settings</h1>
+        <h1 {...sayable('Settings.')} className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Settings</h1>
 
         {/* 판정 기준이 되는 사람들 */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }} {...sayable('Who we check for.')}>
           WHO WE CHECK FOR
         </p>
         <button
@@ -49,18 +50,18 @@ export default function SettingsPage() {
             ))}
           </span>
           <span className="flex-1">
-            <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+            <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
+                  {...sayable('People and conditions. Who we check for, and what to avoid.')}>
               People &amp; conditions
             </span>
-            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-              Age and allergies decide every verdict
+            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }} {...sayable('Age and allergies decide every verdict.')}>Age and allergies decide every verdict
             </span>
           </span>
           <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
         </button>
 
         {/* 음성 — 접근성 코어라 설정에서 끌 수 있게만 둔다 */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }} {...sayable('Voice.')}>
           VOICE
         </p>
         <button
@@ -69,8 +70,7 @@ export default function SettingsPage() {
           aria-pressed={autoTts}
         >
           <span className="text-lg">{autoTts ? '🔊' : '🔇'}</span>
-          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-            Read results aloud
+          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }} {...sayable('Read results aloud. This is on.')}>Read results aloud
           </span>
           <span
             className="flex h-6 w-11 items-center rounded-full px-0.5 transition-colors"
@@ -119,7 +119,7 @@ export default function SettingsPage() {
         </div>
 
         {/* 기기 — 네트워크 없이 카메라로만 오간다 */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }} {...sayable('Pill device.')}>
           PILL DEVICE
         </p>
         <button
@@ -127,14 +127,13 @@ export default function SettingsPage() {
           className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
         >
           <span className="text-lg">💊</span>
-          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-            Send the schedule to the device
+          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }} {...sayable('Send the schedule to the pill device, using the camera.')}>Send the schedule to the device
           </span>
           <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
         </button>
 
         {/* 의료진 공유 — 타이핑 없이 기록을 넘기는 경로 */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }} {...sayable('At the clinic.')}>
           AT THE CLINIC
         </p>
         <button
@@ -142,8 +141,7 @@ export default function SettingsPage() {
           className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
         >
           <span className="text-lg">👩‍⚕️</span>
-          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-            Show history to a provider
+          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }} {...sayable('Show your history to a health worker.')}>Show history to a provider
           </span>
           <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
         </button>

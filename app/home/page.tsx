@@ -12,7 +12,7 @@ import type { Reminder } from '@/stores/reminders';
 import type { ScanRecord } from '@/lib/snapcare/types';
 import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
 import { SuspectedTriggerCard } from './suspected';
-import { SpeakIcon } from '@/components/sc/Say';
+import { SpeakIcon, sayable } from '@/components/sc/Say';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { spokenName } from '@/lib/tts/speakable';
 
@@ -49,7 +49,8 @@ export default function HomePage() {
   return (
     <MobileScreen tab="home">
       <div className="px-5 pt-14">
-        <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>
+        <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
+            {...sayable('SnapCare. Photograph food or medicine to check it.')}>
           SnapCare
         </h1>
 
@@ -62,7 +63,8 @@ export default function HomePage() {
           >
             <span className="text-xl">{nextDose.item.emoji}</span>
             <span className="flex-1">
-              <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+              <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
+                    {...sayable(`Next dose: ${nextDose.item.name} at ${nextDose.time}.`)}>
                 {nextDose.item.name} · {nextDose.time}
               </span>
               <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
@@ -83,7 +85,8 @@ export default function HomePage() {
           >
             <CameraGlyph />
           </button>
-          <span className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+          <span className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
+                {...sayable('The big blue button takes a photograph.')}>
             Scan something
           </span>
         </div>
@@ -98,7 +101,8 @@ export default function HomePage() {
         {pending && <HowDidItSit key={pending.id} record={pending} />}
 
         {/* 최근 */}
-        <p className="mt-8 text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+        <p className="mt-8 text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
+           {...sayable('Recent. What has been checked lately.')}>
           RECENT
         </p>
         <div className="mt-2 flex flex-col gap-2">

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { ScanRecord, Symptom } from '@/lib/snapcare/types';
 import { useScans } from '@/stores/scans';
+import { sayable } from '@/components/sc/Say';
 
 /**
  * "그거 먹고 괜찮았나요?" — 식이 일지의 입력부.
@@ -54,7 +55,8 @@ export function HowDidItSit({ record }: { record: ScanRecord }) {
 
   return (
     <div className="mt-6 rounded-2xl bg-white p-4 shadow-sm">
-      <p className="text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+      <p className="text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
+         {...sayable(`How did it sit? You had ${record.name}. Tap the smiling face if you were fine, or the unhappy face if you felt unwell.`)}>
         HOW DID IT SIT?
       </p>
 
@@ -72,21 +74,22 @@ export function HowDidItSit({ record }: { record: ScanRecord }) {
             className="flex flex-1 flex-col items-center gap-1 rounded-2xl py-3"
             style={{ background: 'var(--color-safe-bg)', color: 'var(--color-safe)' }}
           >
-            <span className="text-2xl">🙂</span>
-            <span className="text-xs font-semibold">Fine</span>
+            <span className="text-2xl" aria-hidden>🙂</span>
+            <span className="text-xs font-semibold" {...sayable('Fine.')}>Fine</span>
           </button>
           <button
             onClick={() => setAsking(true)}
             className="flex flex-1 flex-col items-center gap-1 rounded-2xl py-3"
             style={{ background: 'var(--color-caution-bg)', color: 'var(--color-caution)' }}
           >
-            <span className="text-2xl">😣</span>
-            <span className="text-xs font-semibold">Unwell</span>
+            <span className="text-2xl" aria-hidden>😣</span>
+            <span className="text-xs font-semibold" {...sayable('Unwell.')}>Unwell</span>
           </button>
         </div>
       ) : (
         <>
-          <p className="mt-3 text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+          <p className="mt-3 text-xs" style={{ color: 'var(--color-sc-muted)' }}
+             {...sayable('Where did it bother you?')}>
             Where?
           </p>
           <div className="mt-2 grid grid-cols-2 gap-2">
@@ -98,7 +101,8 @@ export function HowDidItSit({ record }: { record: ScanRecord }) {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/glyphs/${s.glyph}.png`} alt="" aria-hidden className="h-7 w-7 shrink-0" />
-                <span className="text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+                <span className="text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}
+                      {...sayable(s.label)}>
                   {s.label}
                 </span>
               </button>

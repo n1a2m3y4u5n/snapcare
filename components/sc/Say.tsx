@@ -17,6 +17,22 @@ import { speak, stopSpeaking } from '@/lib/voice';
  * 누르는 곳임을 눈으로도 알 수 있어야 하므로 작은 스피커 표시를 함께 둔다.
  */
 
+/**
+ * 아무 요소나 화면 낭독에 포함시킨다.
+ *
+ *     <h1 {...sayable('SnapCare')}>SnapCare</h1>
+ *
+ * 왜 필요한가: data-say 를 Speakable 에만 붙여뒀더니 홈과 설정 화면의 낭독 대상이
+ * 0개였다. 그 화면의 글은 대부분 버튼 안에 있어서 — 버튼 안에 버튼을 넣을 수 없으니 —
+ * 누를 수 있게 만들 수가 없었기 때문이다.
+ *
+ * 낭독은 속성만 읽으면 되고 상호작용이 필요 없다. 누를 수 있는 것은 Speakable 로,
+ * 그렇지 않은 것은 이걸로 표시하면 화면 전체가 소리로 도착한다.
+ */
+export function sayable(text: string) {
+  return { 'data-say': text };
+}
+
 /** 누르면 `text` 를 읽는 영역. 감싸는 내용은 무엇이든 될 수 있다. */
 export function Speakable({ text, children, className = '', style, label }: {
   text: string;
@@ -112,6 +128,7 @@ export function SpeakIcon({ text, className = '' }: { text: string; className?: 
     <button
       onClick={play}
       aria-label={`Read aloud: ${text}`}
+      {...sayable(text)}
       className={`shrink-0 px-2 py-2 text-base opacity-40 ${className}`}
     >
       {speaking ? '⏸' : '🔊'}
