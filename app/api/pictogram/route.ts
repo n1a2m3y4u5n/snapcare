@@ -50,7 +50,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // 로컬 dev에선 PICTOGRAM_PYTHON 으로 Pillow가 깔린 python을 지정한다.
     // (배포 Docker 이미지엔 python3 + Pillow가 PATH에 있으므로 기본값으로 동작)
     const python = process.env.PICTOGRAM_PYTHON || 'python3';
-    await execFileAsync(python, [ENGINE, srcFile, '--out', outDir, '--no-pdf'], {
+    // --skip-errors: 잘못된 한 줄이 스트립 전체를 없애지 않게 한다.
+    // 스트립은 이 앱의 대표 출력이고, 못 그리는 줄 하나 때문에 나머지 지시까지
+    // 사라지면 사용자는 그림 한 장이 아니라 설명 수단을 통째로 잃는다.
+    await execFileAsync(python, [ENGINE, srcFile, '--out', outDir, '--no-pdf', '--skip-errors'], {
       timeout: 30_000,
       env: {
         ...process.env,

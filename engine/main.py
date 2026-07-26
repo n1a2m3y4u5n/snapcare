@@ -80,17 +80,29 @@ def cmd_compile(args, manifest: Manifest) -> int:
         return 1
 
     rendered = []
+    skipped = 0
     for idx, (lineno, line) in enumerate(raw_labels, start=1):
         try:
             nodes = parse(line, manifest)
         except ParseError as e:
             print(f"{src}:{lineno}: parse error: {e}", file=sys.stderr)
-            return 1
+            # --skip-errors 는 앱이 부를 때 쓴다.
+            #
+            # 저작할 때는 한 줄이 틀리면 멈추는 편이 낫다 — 모르고 지나가면 그림이
+            # 조용히 빠진다. 앱에서는 반대다: 한 줄 때문에 스트립 전체가 사라지면
+            # 사용자는 그림 하나가 아니라 이 앱의 유일한 설명 수단을 통째로 잃는다.
+            if not args.skip_errors:
+                return 1
+            skipped += 1
+            continue
         img = render_label(nodes, manifest, panel_size=args.size)
         path = out / f"{idx:02d}_{_slug(line)}.png"
         img.save(path, "PNG")
         rendered.append((path, img))
         print(f"  {path}")
+
+    if skipped:
+        print(f"  ({skipped} label(s) skipped)", file=sys.stderr)
 
     if not args.no_pdf and rendered:
         pdf = out / f"{src.stem}.pdf"
@@ -149,6 +161,8 @@ def main(argv=None) -> int:
                    help=f"panel size in px (default {DEFAULT_CANVAS})")
     p.add_argument("--no-pdf", action="store_true",
                    help="skip the combined PDF")
+    p.add_argument("--skip-errors", action="store_true",
+                   help="skip labels that fail to parse instead of aborting")
     p.add_argument("--dictionary", default=str(DICT),
                    help="path to dictionary.json")
     p.add_argument("--list", action="store_true",
