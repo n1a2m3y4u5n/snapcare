@@ -21,7 +21,8 @@ const SAMPLE_RX = [
   { src: '/prescription-syrup.png', label: 'Syrup Rx' },
 ];const SAMPLE_LABELS = [
   { src: '/label-eu-biscuit.png', label: 'Biscuit label' },
-  { src: '/label-kr-snack.png', label: 'Korean snack label' },
+  // 라벨만 읽고 알레르기 회피 판정까지 가는 유일한 샘플
+  { src: '/label-peanut-bar.png', label: 'Peanut bar label' },
   { src: '/label-us-cereal.png', label: 'Cereal label' },
 ];
 

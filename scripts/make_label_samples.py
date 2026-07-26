@@ -1,10 +1,11 @@
 """영양성분표 샘플 이미지 생성 (OCR 파이프라인 개발·검증용).
 
 실제 포장지 사진을 구하기 전에 파이프라인을 세우기 위한 합성 라벨이다.
-표기 방식이 지역마다 달라서 세 가지 유형을 만든다:
+표기 방식이 지역마다 달라서 세 가지를 만들고, 서로 다른 분기를 태우게 골랐다:
   - EU 스타일: "per 100 g", "of which sugars/saturates", Salt(g)
   - US 스타일: "Nutrition Facts", "Serving size", Sodium(mg) — 소금이 아니라 나트륨
-  - KR 스타일: 한글 표기, "1회 제공량", 나트륨(mg)
+  - 땅콩 바:   100g 기준인데 나트륨을 mg 으로 적는 조합 + 원재료의 알레르겐 표기.
+               라벨을 읽어 알레르기 회피 판정까지 가는 경로가 이 샘플에만 있다.
 
 Usage: python3 scripts/make_label_samples.py
 Output: public/label-*.png
@@ -18,8 +19,6 @@ OUT = ROOT / "public"
 
 BOLD = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
 REG = "/System/Library/Fonts/Supplemental/Arial.ttf"
-# 한글은 시스템 기본 산돌고딕 계열을 쓴다
-KR = "/System/Library/Fonts/AppleSDGothicNeo.ttc"
 
 W = 620
 PAD = 28
@@ -108,23 +107,26 @@ def main():
         REG,
     )
 
-    # ── KR 스타일 (1회 제공량 + 나트륨 mg)
+    # ── 땅콩 바 (100g 기준 + Sodium mg + 알레르겐 표기)
+    #    나트륨(mg)을 소금(g)으로 환산하는 경로가 US 라벨에만 있었는데, 그건 1회 제공량
+    #    기준이었다. 100g 기준에서 같은 환산이 되는지는 이 샘플이 확인한다.
+    #    그리고 "Contains: peanuts" 는 라벨만 읽고 회피 판정까지 가는 유일한 경로다.
     render(
-        "label-kr-snack.png",
-        "영양정보",
-        "1회 제공량 30g   |   총 2회 제공량",
+        "label-peanut-bar.png",
+        "Nutrition Information",
+        "Per 100 g",
         [
-            ("열량", "160 kcal", 0, True),
-            ("탄수화물", "18 g", 0, True),
-            ("당류", "9 g", 24, False),
-            ("지방", "8.5 g", 0, True),
-            ("포화지방", "3.2 g", 24, False),
-            ("단백질", "2.4 g", 0, True),
-            ("나트륨", "230 mg", 0, True),
-            ("식이섬유", "1.1 g", 0, False),
+            ("Energy", "520 kcal", 0, True),
+            ("Fat", "30.0 g", 0, True),
+            ("of which saturates", "6.0 g", 24, False),
+            ("Carbohydrate", "45.0 g", 0, True),
+            ("of which sugars", "32.0 g", 24, False),
+            ("Fibre", "5.0 g", 0, False),
+            ("Protein", "15.0 g", 0, True),
+            ("Sodium", "300 mg", 0, True),
         ],
-        "원재료: 밀가루, 팜유, 설탕, 우유. 땅콩 함유 제품과 같은 시설에서 제조.",
-        KR,
+        "INGREDIENTS: PEANUTS, SUGAR, GLUCOSE SYRUP, MILK POWDER. Contains: peanuts, milk.",
+        REG,
     )
 
 
