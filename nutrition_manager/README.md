@@ -14,6 +14,31 @@ It answers a narrower question than the vision model — it does not identify th
 dish or name an ingredient, it regresses five totals — so the two compose:
 this first, the network model as a refinement when there is a network.
 
+---
+
+## If you just want to use it
+
+The trained model is committed. You need no GPU, no dataset, and nothing in
+this README below this line.
+
+```bash
+npm install onnxruntime-web
+cp nutrition_manager/web/mealModel.ts   lib/nutrition/
+cp nutrition_manager/web/model/*        public/models/
+```
+
+```ts
+const model = await MealModel.load('/models/web.json');
+const nutrition = await model.estimate(imageBitmap);
+// { calories: 412, mass: 233, fat: 14.2, carb: 51.0, protein: 18.6 }
+```
+
+**[`web/README.md`](web/README.md) is the whole integration guide** — the 16 MB
+download, what accuracy to expect, and the two things not to change. The rest
+of this file is for working on the model itself.
+
+---
+
 ## Where it stands
 
 Official RGB test split, 507 dishes, one overhead frame each.
