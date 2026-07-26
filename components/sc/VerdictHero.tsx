@@ -3,6 +3,7 @@
 import type { ScanItem, Verdict } from '@/lib/snapcare/types';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
 import { Say } from './Say';
+import { spokenName } from '@/lib/tts/speakable';
 
 /**
  * 신호등 판정 히어로 — 큰 아이콘 + headline + 요약 배지.
@@ -32,7 +33,7 @@ export function VerdictHero({ item, verdict }: { item: ScanItem; verdict: Verdic
         <Say>{verdict.headline}</Say>
       </h1>
       <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}>
-        <Say>{item.name}</Say>
+        <Say as={spokenName(item.name, item.kind)}>{item.name}</Say>
       </p>
 
       {item.chips && item.chips.length > 0 && (

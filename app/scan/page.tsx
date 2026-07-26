@@ -7,6 +7,7 @@ import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { NutrientBars } from '@/components/sc/NutrientBars';
 import { Say } from '@/components/sc/Say';
+import { spokenName } from '@/lib/tts/speakable';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
 import { assessForMember, flagsForMember } from '@/lib/nutrition/compute';
@@ -243,7 +244,10 @@ function RxResult({
         <div className="flex h-24 w-24 items-center justify-center rounded-full text-5xl" style={{ background: conflict ? meta.bg : 'var(--color-med-bg)' }}>
           {item.emoji}
         </div>
-        <h1 className="mt-4 text-2xl font-bold" style={{ color: 'var(--color-sc-ink)' }}><Say>{item.name}</Say></h1>
+        <h1 className="mt-4 text-2xl font-bold" style={{ color: 'var(--color-sc-ink)' }}>
+          {/* 화면에는 포장지 원문, 음성은 영어 — 대회 공식 언어가 영어다 */}
+          <Say as={spokenName(item.name, item.kind)}>{item.name}</Say>
+        </h1>
         {item.rx && <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}><Say>{item.rx.dosageText}</Say></p>}
       </div>
 

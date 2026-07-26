@@ -13,6 +13,7 @@ import type { ScanRecord } from '@/lib/snapcare/types';
 import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
 import { SpeakIcon } from '@/components/sc/Say';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
+import { spokenName } from '@/lib/tts/speakable';
 
 export default function HomePage() {
   const router = useRouter();
@@ -131,7 +132,7 @@ export default function HomePage() {
                     </span>
                   </span>
                 </button>
-                <SpeakIcon text={`${s.name}. ${member ? `For ${member.name}. ` : ''}${meta.label}.`} />
+                <SpeakIcon text={`${spokenName(s.name, s.kind)}. ${member ? `For ${member.name}. ` : ''}${meta.label}.`} />
                 {/*
                   판정은 이 목록에서 가장 중요한 정보인데 2.5px 색 점이었다.
                   색만으로 뜻을 싣는 것은 색 규약을 아는 사람에게만 통하고, 적록색약이면

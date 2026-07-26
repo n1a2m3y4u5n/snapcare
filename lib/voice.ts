@@ -81,10 +81,10 @@ export function stopSpeaking(): void {
 /**
  * 마이크로 음성을 인식해 텍스트를 반환한다 (STT)
  */
-export function listen(lang = 'ko-KR'): Promise<string> {
+export function listen(lang = 'en-US'): Promise<string> {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') {
-      reject(new Error('브라우저 환경이 아닙니다'));
+      reject(new Error('not a browser environment'));
       return;
     }
 
@@ -92,7 +92,7 @@ export function listen(lang = 'ko-KR'): Promise<string> {
     const Ctor = (w['SpeechRecognition'] ?? w['webkitSpeechRecognition']) as WebSpeechRecognitionConstructor | undefined;
 
     if (!Ctor) {
-      reject(new Error('이 브라우저는 음성 인식을 지원하지 않습니다'));
+      reject(new Error('speech recognition is not supported in this browser'));
       return;
     }
 

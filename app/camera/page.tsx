@@ -20,7 +20,7 @@ const SAMPLE_RX = [
 ];
 const SAMPLE_LABELS = [
   { src: '/label-eu-biscuit.png', label: 'Biscuit label' },
-  { src: '/label-kr-snack.png', label: '과자 영양정보' },
+  { src: '/label-kr-snack.png', label: 'Korean snack label' },
   { src: '/label-us-cereal.png', label: 'Cereal label' },
 ];
 

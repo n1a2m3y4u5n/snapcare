@@ -7,6 +7,7 @@ import { useFamily } from '@/stores/family';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { usePreferences } from '@/stores/preferences';
 import { speak } from '@/lib/voice';
+import { spokenName } from '@/lib/tts/speakable';
 
 /** 복약 확인 — 알람 시점의 큰 Taken/Missed (와이어프레임 Metformin dose). */
 export default function DosePage() {
@@ -25,7 +26,7 @@ export default function DosePage() {
       return;
     }
     if (autoTts) {
-      speak(`${item.name}. For ${member?.name ?? 'you'}. ${item.rx?.dosageText ?? ''}`, 'en-US');
+      speak(`${spokenName(item.name, item.kind)}. For ${member?.name ?? 'you'}. ${item.rx?.dosageText ?? ''}`, 'en-US');
     }
   }, [item, member, autoTts, router]);
 
