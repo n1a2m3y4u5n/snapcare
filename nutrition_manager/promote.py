@@ -90,13 +90,15 @@ def main() -> int:
                          "'overhead' reproduces the published protocol")
     ap.add_argument("--max-params-m", type=float, default=8.0,
                     help="largest model to consider shipping, in millions")
+    ap.add_argument("--all", action="store_true",
+                    help="list every run, including ones too large to ship")
     ap.add_argument("--install", action="store_true",
                     help="export the winner and replace web/model/")
     ap.add_argument("--name", default="web", help="basename for the installed files")
     args = ap.parse_args()
 
     runs = latest_per_tag(load_runs())
-    candidates = [r for r in runs if deployable(r, args.max_params_m)]
+    candidates = [r for r in runs if args.all or deployable(r, args.max_params_m)]
     if not candidates:
         raise SystemExit(
             f"no run has <= {args.max_params_m}M parameters. "
@@ -104,17 +106,26 @@ def main() -> int:
         )
     candidates.sort(key=lambda r: score_of(r, args.rank))
 
-    print(f"Candidates at most {args.max_params_m:.0f}M parameters, "
-          f"ranked by {'mean of both views' if args.rank == 'both' else 'overhead only'}:\n")
-    print(f"{'tag':<16}{'backbone':<24}{'M':>6}{'overhead':>10}{'side':>8}{'rank':>8}")
-    print("-" * 72)
+    scope = ("every run" if args.all
+             else f"runs at most {args.max_params_m:.0f}M parameters")
+    basis = "mean of both views" if args.rank == "both" else "overhead only"
+    print(f"{scope}, ranked by {basis}:\n")
+    print(f"{'tag':<16}{'backbone':<24}{'px':>5}{'M':>7}{'overhead':>10}{'side':>8}{'rank':>8}")
+    print("-" * 78)
     for run in candidates:
         overhead, side = views_of(run)
         print(f"{run.get('tag', '?'):<16}{run.get('backbone', '?'):<24}"
-              f"{run.get('params_m', 0):>6.1f}"
+              f"{run.get('img_size', '-'):>5}"
+              f"{run.get('params_m', 0):>7.1f}"
               f"{overhead:>10.2f}"
               f"{('-' if side is None else f'{side:.2f}'):>8}"
               f"{score_of(run, args.rank):>8.2f}")
+
+    if args.all:
+        # Listing everything is for reading, not for choosing: the big
+        # backbones in that table are not things a phone can download.
+        print("\nThis list ignores the size limit. Drop --all to see what could ship.")
+        return 0
 
     winner = candidates[0]
     checkpoint = resolve("checkpoints", winner.get("checkpoint", f"{winner['tag']}.pt"))

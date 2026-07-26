@@ -96,24 +96,26 @@ python train.py --set train.select_view=both     # for a model that ships
 Both numbers are printed every epoch either way, because a widening gap means
 the model is specialising to one camera geometry.
 
-Closing that gap is the most valuable thing left to do here, and worth more to
-the app than another point on the leaderboard metric. Two levers, in the order
-worth trying:
+Two attempts at closing the gap, on the small backbone that actually ships:
 
-```bash
-# 1. Sample fewer overhead frames. The table above says this is the strongest
-#    single knob for the mean of the two views, and it costs nothing to try.
-python train.py --set train.overhead_ratio=0.2 train.select_view=both
+| run | change | overhead | side | mean |
+|---|---|---|---|---|
+| `deploy` | select_view=both | 20.58 | 32.55 | 26.56 |
+| `deploy-mix02` | + sample 20% overhead | 22.67 | 31.82 | 27.24 |
+| `deploy-warp` | + off-axis warp | 21.26 | **31.56** | **26.41** |
 
-# 2. Synthesise the missing viewpoints. A random off-axis warp turns an
-#    overhead photo into a plausible angled one *without* changing what is on
-#    the plate, which is precisely the invariance that is absent. Off by
-#    default — turning it on is an experiment, not the baseline.
-python train.py --set train.perspective=0.35 train.select_view=both
-```
+**The warp helped; the sampler change did not.** Lowering the overhead ratio is
+what the convnext sweep above predicted would work, and on efficientnet_b0 it
+made things worse — better off-axis, much worse on the benchmark, net negative.
+The sweep was run on a different backbone and the extrapolation did not
+transfer, which is a reasonable summary of how far any of these findings should
+be trusted without re-measuring.
 
-Selecting on both views is, at least here, not even a trade. The same backbone
-and sampler, differing only in which validation number chose the epoch:
+`deploy-warp` is what ships. It has the best side-angle score of anything small
+enough to serve, and the three are within half a point overall, so it is a
+considered tie-break rather than a win.
+
+Selecting on both views, separately, is not even a trade-off:
 
 | run | selected on | epochs | overhead | side |
 |---|---|---|---|---|
@@ -121,14 +123,10 @@ and sampler, differing only in which validation number chose the epoch:
 | `web-b0` | overhead | 14 | 21.22 | 35.28 |
 
 `both` found a checkpoint better on *both* metrics. Optimising for the
-benchmark alone did not even win the benchmark — it just stopped at a worse
-epoch, which is what over-fitting a selection criterion to one view looks like.
-(The two differ by two epochs as well, so this is suggestive rather than
+benchmark alone did not even win the benchmark — it stopped at a worse epoch,
+which is what over-fitting a selection criterion to one view looks like. (The
+two differ by two epochs as well, so this is suggestive rather than
 controlled.)
-
-The shipped `deploy` model uses the config's 0.5 sampler; the sweep above
-suggests a lower ratio would serve the app better still, and that is what
-`runs/queue2.sh` measures next.
 
 ### What actually moved the number
 
@@ -221,17 +219,18 @@ needs a second copy of `config.yaml`:
 python train.py --tag b0 --set model.backbone=efficientnet_b0 train.epochs=10
 python train.py --tag log --set train.target_space=log1p
 python eval.py --compare checkpoints/*.pt
-python runs/summarize.py
+make results                   # every run so far, ranked
 ```
 
-Each run appends one row to `runs/history.jsonl`. `runs/ablation_v2.sh` is the
-set of runs behind the table above; `runs/queue.sh` runs everything still
-outstanding, in one shell, deployment model first.
+Each run appends one row to `runs/history.jsonl`, so results survive the
+terminal and the table is re-readable at any time. `runs/ablations.sh` is every
+run behind the tables in this README, in one shell — about three hours on an
+RTX 3060, and not needed to *use* the model.
 
-`runs/summarize.py` ranks by the **overhead** score whatever each run was
-selected on, and prints the side score beside it. Those columns are not
-interchangeable — sorting a mixed table by each run's own selection metric
-would compare a model against a different measurement and call it better.
+There is **one** ranking, in `promote.py`, and `make results` and `make
+promote` are the same code with a different filter. Two tools with two
+definitions of "best" is how a project ends up shipping the model that won the
+argument rather than the measurement.
 
 ## Deploying to the app
 

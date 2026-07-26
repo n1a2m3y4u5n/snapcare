@@ -21,8 +21,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import PROJECT, load_config, resolve  # noqa: E402
-from data.dataset import build_transforms  # noqa: E402
-from models.model import build_model  # noqa: E402
+from inference import eval_transform, load_checkpoint  # noqa: E402
 import build_dataset as bd  # noqa: E402  (reuse extract_one)
 
 SCRATCH = Path("/tmp/claude-1000/-home-dh-Projects-snapcare/"
@@ -30,16 +29,8 @@ SCRATCH = Path("/tmp/claude-1000/-home-dh-Projects-snapcare/"
 UNITS = {"calories": "kcal", "mass": "g", "fat": "g", "carb": "g", "protein": "g"}
 
 
-def load_model(ckpt_path, device):
-    ckpt = torch.load(ckpt_path, map_location=device)
-    model = build_model(ckpt["backbone"], num_outputs=len(ckpt["targets"]), pretrained=False)
-    model.load_state_dict(ckpt["model_state"])
-    model.to(device).eval()
-    return model, ckpt
-
-
 @torch.no_grad()
-def predict(model, img_path, tf, device, mean, std):
+def predict(model, img_path, tf, device, codec):
     """Return (pred_vector_np, elapsed_ms) for one image."""
     x = tf(Image.open(img_path).convert("RGB")).unsqueeze(0).to(device)
     if device == "cuda":
@@ -49,7 +40,11 @@ def predict(model, img_path, tf, device, mean, std):
     if device == "cuda":
         torch.cuda.synchronize()
     ms = (time.perf_counter() - t0) * 1000.0
-    return (out * std + mean).clamp_min(0).numpy(), ms
+    # De-normalized through the checkpoint's own codec rather than by hand.
+    # Multiplying by std and adding mean is only correct for an identity-space
+    # checkpoint; a log-space one would come back wrong by a factor, and look
+    # entirely plausible doing it.
+    return codec.decode(out).numpy(), ms
 
 
 def pct_err(pred, gt):
@@ -90,11 +85,9 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if not Path(args.checkpoint).is_file():
         raise SystemExit(f"Checkpoint not found: {args.checkpoint}")
-    model, ckpt = load_model(args.checkpoint, device)
+    model, codec, ckpt = load_checkpoint(args.checkpoint, device)
     targets = ckpt["targets"]
-    mean = torch.tensor(ckpt["target_mean"])
-    std = torch.tensor(ckpt["target_std"])
-    tf = build_transforms(ckpt["img_size"], train=False)
+    tf = eval_transform(ckpt)
 
     cfg = load_config()
     manifest = resolve(cfg.get("manifest_csv", "dataset_processed/manifest.csv"))
@@ -110,7 +103,7 @@ def main():
           f"({args.frames_per_cam} frame(s)/camera)\n")
 
     # warm up so the first timing is not dominated by lazy CUDA init
-    predict(model, PROJECT / dishes.iloc[0].image_path, tf, device, mean, std)
+    predict(model, PROJECT / dishes.iloc[0].image_path, tf, device, codec)
 
     all_times, over_errs, ens_errs = [], [], []
     hdr = "  {:<10}" + "".join(f"{t[:4]:>9}" for t in targets) + "{:>10}{:>9}"
@@ -124,7 +117,7 @@ def main():
         print(hdr.format("view", *(["" ] * len(targets)), "time(ms)", "err%"))
         preds = []
         for name, path in views:
-            p, ms = predict(model, path, tf, device, mean, std)
+            p, ms = predict(model, path, tf, device, codec)
             preds.append(p)
             all_times.append(ms)
             row = "  {:<10}".format(name) + "".join(f"{v:9.1f}" for v in p)
