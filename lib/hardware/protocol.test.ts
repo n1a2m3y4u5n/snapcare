@@ -1,11 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  encodeSchedule, decodeSchedule,
-  encodeEvent, decodeEvent,
-  messageKind, normalizeTime,
-  fitsDeviceScreen, MAX_DEVICE_PAYLOAD,
-} from './protocol.ts';
+import { encodeSchedule, decodeSchedule, encodeEvent, decodeEvent, messageKind, normalizeTime, fitsDeviceScreen, MAX_DEVICE_PAYLOAD, encodeWeekly, decodeWeekly } from './protocol.ts';
 
 /**
  * 광학 프로토콜 회귀 테스트.
@@ -73,4 +68,60 @@ test('깨진 입력은 throw 하지 않고 null 을 준다', () => {
 test('대소문자를 가리지 않는다', () => {
   // QR 영숫자 모드는 대문자만 담지만, 다른 리더가 소문자로 넘길 수 있다.
   assert.equal(decodeEvent('sc1*e*1*0800*t*01')?.slot, 1);
+});
+
+/* ── SC1*W* — 요일·기간까지 실은 일정 ────────────────────────
+ *
+ * 기준은 하드웨어 쪽 참조 구현이다 (pill_dispenser/form_sheet_parser/schedule.py,
+ * firmware/libraries/SC1/SC1.cpp). 같은 문자열을 서로 만들고 서로 읽어야 한다 —
+ * 한쪽만 맞으면 종이 시트가 기기에서 다른 일정이 된다.
+ */
+
+test('요일과 기간이 살아서 왕복한다', () => {
+  // 이 형식이 필요한 이유: SC1*S* 에는 요일·기간 자리가 없어서, 월수금 30일짜리
+  // 시트가 '매일 무기한' 과 같은 payload 가 된다. 일정은 맞아 보이는데 아무도
+  // 요청하지 않은 나흘에 약이 나간다.
+  const slots = [
+    { slot: 1, times: ['0800', '2000'], days: 127, durationDays: 30 },
+    { slot: 3, times: ['1900'], days: 21, durationDays: 0 },
+  ];
+  const payload = encodeWeekly(slots);
+  assert.equal(payload, 'SC1*W*1:0800.2000-127-030/3:1900-021-000');
+  assert.deepEqual(decodeWeekly(payload), slots);
+});
+
+test('필드 폭이 고정이다', () => {
+  // 8비트 펌웨어가 토크나이저 없이 포인터 연산으로 읽는다. 자릿수가 흔들리면
+  // 오프셋이 어긋나고, 기기는 엉뚱한 숫자를 요일로 읽는다.
+  const p = encodeWeekly([{ slot: 1, times: ['0800'], days: 1, durationDays: 7 }]);
+  assert.equal(p, 'SC1*W*1:0800-001-007');
+});
+
+test('구버전 앱이 W 코드를 만나도 죽지 않는다', () => {
+  // 기기·시트 쪽이 먼저 W 를 쓰기 시작해도, 아직 모르는 앱 빌드가 카메라로 그걸
+  // 읽을 수 있다. 모르는 것은 모른다고 해야지 예외를 던지면 스캔 루프가 멈춘다.
+  const w = 'SC1*W*1:0800-127-030';
+  assert.equal(decodeSchedule(w), null);
+  assert.doesNotThrow(() => decodeSchedule(w));
+});
+
+test('무엇을 읽었는지 먼저 가려낸다 (W 포함)', () => {
+  assert.equal(messageKind('SC1*W*1:0800-127-030'), 'weekly');
+  assert.equal(messageKind('SC1*S*1:0800'), 'schedule');
+  assert.equal(messageKind('SC1*C*202607251930*4'), null, '아직 모르는 종류는 null');
+});
+
+test('깨진 W 는 throw 하지 않고 null 을 준다', () => {
+  // 카메라는 프레임에 들어온 아무 QR 이나 읽는다.
+  assert.equal(decodeWeekly('SC1*W*1:0800-127'), null, '필드가 빠짐');
+  assert.equal(decodeWeekly('SC1*W*1:0800-12-030'), null, '마스크 자릿수 부족');
+  assert.equal(decodeWeekly('SC1*W*1:0800-000-030'), null, '아무 요일도 아닌 일정');
+  assert.equal(decodeWeekly('SC1*W*1:0800-128-030'), null, '7비트를 넘음');
+  assert.equal(decodeWeekly('SC1*W*1:2500-127-030'), null, '없는 시각');
+  assert.equal(decodeWeekly('SOMETHING ELSE'), null);
+});
+
+test('기간은 세 자리를 넘지 않는다', () => {
+  const p = encodeWeekly([{ slot: 1, times: ['0800'], days: 127, durationDays: 5000 }]);
+  assert.equal(p, 'SC1*W*1:0800-127-999');
 });

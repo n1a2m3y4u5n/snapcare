@@ -38,8 +38,10 @@
  *   → 화면을 1.3"(같은 128x64, 픽셀이 물리적으로 큼)로 올리면 같은 2px 모듈이 훨씬 잘 읽힌다.
  *
  * 폰 → 기기 : 폰 화면은 크므로 한계는 기기 리더 해상도다. ESP32-CAM(640x480)이면
- *   version 10 (57x57, 영숫자 395자) 까지 무난하다. 8칸 트레이에 하루 3회씩 다 채워도
- *   141자 / version 6 이라 한참 여유가 있다.
+ *   version 10 (57x57, 영숫자 395자) 까지 무난하다. 8칸 트레이 주간 계획을 요일·기간까지
+ *   실어도(SC1*W*) 205자라 여유가 있다.
+ *   ─ 이 205 는 하드웨어 쪽에서 실제로 세어 정정한 값이다. 여기 적혀 있던 141 은
+ *     요일·기간 필드가 없던 시절의 수치였다.
  */
 
 /**
@@ -62,12 +64,32 @@ const SEP = '*';
 const SLOT_SEP = '/';
 /** 슬롯 안 시각 구분자 */
 const TIME_SEP = '.';
+/** W 메시지에서 시각·요일마스크·기간을 가르는 구분자 */
+const ATTR_SEP = '-';
+
+/** 요일 비트마스크: bit 0 = 월요일. 종이 시트의 좌→우 배열과 같은 순서다. */
+export const EVERY_DAY = 0b1111111;   // 127
 
 /** 기기 칸(슬롯) 하나의 복약 일정. slot 은 회전 트레이의 칸 번호(1부터). */
 export interface SlotSchedule {
   slot: number;
   /** 24시간 HHMM (예: '0800'). 하루 안에서 반복되는 시각들. */
   times: string[];
+}
+
+/**
+ * 요일·기간까지 실은 일정.
+ *
+ * 종이 폼시트는 칸·요일·기간·시각 넷을 담는데 SC1*S* 에는 뒤의 둘을 실을 자리가 없다.
+ * 월/수/금 30일짜리 시트가 '매일 무기한' 과 같은 payload 로 인코딩되고, 일정은 맞아
+ * 보이는데 아무도 요청하지 않은 나흘에 약이 나간다 — 조용히 뭉개지는 쪽이 훨씬 나쁘다.
+ * (하드웨어 쪽에서 폼시트 파서를 만들다 발견했다. pill_dispenser/README.md 참조)
+ */
+export interface WeeklySlot extends SlotSchedule {
+  /** 요일 비트마스크. bit 0 = 월요일. */
+  days: number;
+  /** 투약 기간(일). 0 = 무기한. */
+  durationDays: number;
 }
 
 /** 기기가 폰에게 보고하는 사건. */
@@ -113,6 +135,59 @@ export function decodeSchedule(payload: string): SlotSchedule[] | null {
 }
 
 /* ────────────────────────────────────────────────────────────
+ * 폰 → 기기 : 요일·기간까지 실은 일정 (SC1*S* 의 상위집합)
+ * SC1*W*1:0800.2000-127-030/3:1900-021-000
+ *
+ * 슬롯마다 [시각들] - [3자리 요일마스크] - [3자리 기간(일)].
+ * 폭을 고정한 이유: 8비트 펌웨어가 토크나이저 없이 포인터 연산으로 읽는다.
+ * 모든 문자가 QR 영숫자 집합 안에 있어야 한다 — 벗어나면 문자당 5.5비트가 8비트가 되고
+ * 코드가 커져서 기기 카메라에 안 들어간다.
+ *
+ * 이 코드를 모르는 구버전 앱에 보여줘도 안전하다: messageKind 가 모르는 종류에 null 을
+ * 주고 decodeSchedule 은 두 번째 필드가 S 가 아니면 거부하므로, 둘 다 throw 하지 않는다.
+ * ──────────────────────────────────────────────────────────── */
+
+export function encodeWeekly(slots: WeeklySlot[]): string {
+  const body = slots
+    .filter((s) => s.times.length > 0)
+    .map((s) => [
+      `${s.slot}:${s.times.map(normalizeTime).join(TIME_SEP)}`,
+      pad3(s.days),
+      pad3(Math.min(s.durationDays, 999)),
+    ].join(ATTR_SEP))
+    .join(SLOT_SEP);
+  return [PROTOCOL, 'W', body].join(SEP);
+}
+
+export function decodeWeekly(payload: string): WeeklySlot[] | null {
+  const parts = payload.trim().toUpperCase().split(SEP);
+  if (parts.length !== 3 || parts[0] !== PROTOCOL || parts[1] !== 'W') return null;
+  if (parts[2] === '') return [];
+
+  const slots: WeeklySlot[] = [];
+  for (const chunk of parts[2].split(SLOT_SEP)) {
+    const bits = chunk.split(ATTR_SEP);
+    if (bits.length !== 3) return null;
+    const [slotTimes, maskText, durText] = bits;
+
+    const [slotText, timesText] = slotTimes.split(':');
+    const slot = Number(slotText);
+    if (!Number.isInteger(slot) || slot < 1 || slot > 99 || !timesText) return null;
+
+    const times = timesText.split(TIME_SEP);
+    if (!times.every(isValidTime)) return null;
+
+    if (!/^\d{3}$/.test(maskText) || !/^\d{3}$/.test(durText)) return null;
+    const days = Number(maskText);
+    // 마스크 0 은 '어느 요일에도 복용하지 않음' 이라 일정으로서 뜻이 없다.
+    if (days < 1 || days > EVERY_DAY) return null;
+
+    slots.push({ slot, times, days, durationDays: Number(durText) });
+  }
+  return slots;
+}
+
+/* ────────────────────────────────────────────────────────────
  * 기기 → 폰 : 복용 결과  (작은 OLED에 들어가야 하므로 짧게)
  * SC1*E*1*0800*T*07        → 17자 (한계 20자)
  * ──────────────────────────────────────────────────────────── */
@@ -145,10 +220,13 @@ export function decodeEvent(payload: string): DoseEvent | null {
 }
 
 /** 어떤 방향의 메시지인지만 먼저 가려낸다 (카메라가 무엇을 읽었는지 모르므로). */
-export function messageKind(payload: string): 'schedule' | 'event' | null {
+export function messageKind(payload: string): 'schedule' | 'weekly' | 'event' | null {
   const p = payload.trim().toUpperCase().split(SEP);
   if (p[0] !== PROTOCOL) return null;
-  return p[1] === 'S' ? 'schedule' : p[1] === 'E' ? 'event' : null;
+  return p[1] === 'S' ? 'schedule'
+    : p[1] === 'W' ? 'weekly'
+    : p[1] === 'E' ? 'event'
+    : null;
 }
 
 /* ── 시각 표기 ───────────────────────────────────────────── */
@@ -175,6 +253,10 @@ function isValidTime(t: string): boolean {
   const h = Number(t.slice(0, 2));
   const m = Number(t.slice(2));
   return h < 24 && m < 60;
+}
+
+function pad3(n: number): string {
+  return String(Math.max(0, Math.trunc(n))).padStart(3, '0');
 }
 
 function pad2(n: number): string {
