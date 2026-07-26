@@ -39,6 +39,15 @@ function voicesReady(): Promise<SpeechSynthesisVoice[]> {
 
 let chosen: { lang: string; voice: SpeechSynthesisVoice | null } | null = null;
 
+/**
+ * 말하기 속도. 스토어를 여기서 import 하면 lib 이 UI 상태에 의존하게 되므로,
+ * 설정 화면이 값을 밀어 넣는다.
+ */
+let currentRate = 0.95;
+export function setSpeechRate(rate: number): void {
+  currentRate = rate;
+}
+
 /** 이번 세션에서 쓸 음성. 한 번 고르면 재사용한다 (매번 목록을 훑을 이유가 없다). */
 export async function preferredVoice(lang: string): Promise<SpeechSynthesisVoice | null> {
   if (chosen && chosen.lang === lang) return chosen.voice;
@@ -64,8 +73,8 @@ export async function speak(text: string, lang = 'en-US'): Promise<void> {
     const utt = new SpeechSynthesisUtterance(text);
     utt.lang = lang;
     if (voice) utt.voice = voice;
-    // 판정을 처음 듣는 사람이 따라올 수 있는 속도. 너무 느리면 늘어져 더 못 알아듣는다.
-    utt.rate = 0.95;
+    // 사용자가 고른 속도. 설정에서 바꾸면 다음 발화부터 적용된다.
+    utt.rate = currentRate;
     utt.pitch = 1;
     utt.onend = () => resolve();
     utt.onerror = () => resolve();

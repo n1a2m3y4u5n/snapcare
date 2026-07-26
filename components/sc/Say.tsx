@@ -50,6 +50,14 @@ export function Speakable({ text, children, className = '', style, label }: {
       onClick={play}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') play(e); }}
       aria-label={label ?? `Read aloud: ${text}`}
+      /**
+       * data-say 는 화면 전체 낭독이 읽을 목록이다 (components/sc/ReadScreen).
+       * 화면마다 낭독 스크립트를 따로 쓰지 않는 이유: 그러면 화면이 바뀔 때 스크립트가
+       * 따라오지 않아 조용히 어긋난다. 눌러서 들을 수 있는 문장들이 곧 그 화면의 내용이다.
+       */
+      data-say={text}
+      /** 읽는 중인 자리를 눈으로도 보여준다 — 어디를 듣고 있는지 모르면 되짚을 수 없다. */
+      data-speaking={speaking ? '' : undefined}
       className={`cursor-pointer rounded transition-opacity ${speaking ? 'opacity-60' : ''} ${className}`}
       style={style}
     >

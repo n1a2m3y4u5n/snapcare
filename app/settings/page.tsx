@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useFamily } from '@/stores/family';
-import { usePreferences } from '@/stores/preferences';
+import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
+import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
 
 /**
  * 설정 — 판정에 실제로 영향을 주는 것만 둔다.
@@ -19,6 +20,8 @@ export default function SettingsPage() {
   const router = useRouter();
   const members = useFamily((s) => s.members);
   const autoTts = usePreferences((s) => s.autoTts);
+  const speechRate = usePreferences((s) => s.speechRate);
+  const setSpeechRate = usePreferences((s) => s.setSpeechRate);
   const setAutoTts = usePreferences((s) => s.setAutoTts);
 
   return (
@@ -79,6 +82,41 @@ export default function SettingsPage() {
             />
           </span>
         </button>
+
+        {/*
+          말하기 속도.
+          숫자(0.85×)는 이 앱의 사용자가 읽을 수 없는 표기다. 거북이와 토끼는 크기가
+          곧 뜻이라 세지 않아도 읽히고, 고르면 그 속도로 바로 한 문장을 들려준다 —
+          설명을 읽는 대신 들어보고 고르게 하는 편이 이 앱의 방식이다.
+        */}
+        <div className="mt-2 flex items-center gap-2 rounded-2xl bg-white px-4 py-3 shadow-sm">
+          <span className="text-lg">🐢</span>
+          <div className="flex flex-1 gap-1.5">
+            {SPEECH_RATES.map((r) => {
+              const on = Math.abs(speechRate - r) < 0.01;
+              return (
+                <button
+                  key={r}
+                  onClick={() => {
+                    setSpeechRate(r);
+                    setVoiceRate(r);
+                    void speak('This is how fast I will read.');
+                  }}
+                  aria-label={`Speech speed ${r}`}
+                  aria-pressed={on}
+                  className="flex-1 rounded-xl py-2 text-xs font-bold"
+                  style={{
+                    background: on ? 'var(--color-sc-primary)' : 'var(--color-sc-bg)',
+                    color: on ? '#fff' : 'var(--color-sc-muted)',
+                  }}
+                >
+                  {'▪'.repeat(SPEECH_RATES.indexOf(r) + 1)}
+                </button>
+              );
+            })}
+          </div>
+          <span className="text-lg">🐇</span>
+        </div>
 
         {/* 기기 — 네트워크 없이 카메라로만 오간다 */}
         <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
