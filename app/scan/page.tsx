@@ -8,6 +8,7 @@ import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { NutrientBars } from '@/components/sc/NutrientBars';
 import { Say } from '@/components/sc/Say';
 import { doseSentence, storageSentence } from '@/lib/snapcare/say';
+import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
@@ -84,6 +85,9 @@ export default function ScanResultPage() {
     reasons: [...baseVerdict.reasons, ...interactions.map((w) => ({ level: w.level, text: w.text }))],
   };
 
+  // "그럼 뭘 먹어야 하나" — 회피 사유에서 유도한다 (lib/snapcare/alternative.ts)
+  const alternative = item ? alternativeFor(item, verdict) : null;
+
   function finish() {
     addScan({
       id: `r_${cryptoId()}`,
@@ -156,6 +160,7 @@ export default function ScanResultPage() {
           member={member}
           members={members}
           profile={nutrition.profile}
+          alternative={alternative}
           onDone={finish}
         />
       )}
@@ -164,10 +169,10 @@ export default function ScanResultPage() {
 }
 
 function FoodResult({
-  item, verdict, member, members, profile, onDone,
+  item, verdict, member, members, profile, alternative, onDone,
 }: {
   item: ScanItem; verdict: Verdict; member: Member; members: Member[];
-  profile?: NutrientProfile; onDone: () => void;
+  profile?: NutrientProfile; alternative: Alternative | null; onDone: () => void;
 }) {
   return (
     <div className="flex flex-1 flex-col">
@@ -192,13 +197,28 @@ function FoodResult({
           </div>
         )}
 
-        {/* 대체품 */}
-        {item.alt && (
-          <div className="rounded-2xl px-4 py-3" style={{ background: 'var(--color-safe-bg)' }}>
-            <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-safe)' }}>TRY INSTEAD</p>
-            <p className="mt-0.5 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-              <Say>{`${item.alt.name} — ${item.alt.note}`}</Say>
-            </p>
+        {/*
+          대체 기준.
+          예전에는 카탈로그에 손으로 적어둔 대체품이 있을 때만 떴다 — 바코드로 알아본
+          몇 품목뿐이라 라벨 촬영 경로에서는 한 번도 뜨지 않았다(형성 평가: 12/12).
+          이제 회피 사유에서 유도하고, 그림도 함께 낸다. 회피할 것에 부정 연산자를
+          씌운 그림이 곧 "이게 없는 것을 고르라" 는 뜻이다.
+        */}
+        {alternative && (
+          <div className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: 'var(--color-safe-bg)' }}>
+            {alternative.glyph && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={`/api/pictogram?label=${encodeURIComponent(`\\no{\\${alternative.glyph}}`)}`}
+                alt="" aria-hidden className="h-12 w-12 shrink-0"
+              />
+            )}
+            <div>
+              <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-safe)' }}>TRY INSTEAD</p>
+              <p className="mt-0.5 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+                <Say>{alternative.text}</Say>
+              </p>
+            </div>
           </div>
         )}
 
