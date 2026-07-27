@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Reaction, ScanRecord, Symptom } from '@/lib/snapcare/types';
+import { PROFILE_ID } from './profile';
 
 /**
  * 시드 최근 스캔 (와이어프레임 홈 RECENT 피드 기준).
@@ -9,10 +10,10 @@ import type { Reaction, ScanRecord, Symptom } from '@/lib/snapcare/types';
  * barcode·grams 가 있는 기록은 하루 누적 분석에 실제 영양소로 합산된다.
  */
 const SEED_SCANS: ScanRecord[] = [
-  { id: 's1', itemId: 'energy_drink', name: 'Red Bull', kind: 'drink', emoji: '🥤', memberId: 'you', level: 'safe', timeLabel: 'Today · 2:14 PM', dayKey: 'today', barcode: '9002490100070', grams: 250 },
-  { id: 's2', itemId: 'granola_bar', name: 'Snickers', kind: 'food', emoji: '🍫', memberId: 'mia', level: 'avoid', timeLabel: 'Today · 11:02 AM', dayKey: 'today', barcode: '5000159461122', grams: 50 },
-  { id: 's3', itemId: 'amoxicillin', name: 'Amoxicillin 500mg', kind: 'prescription', emoji: '💊', memberId: 'you', level: 'safe', timeLabel: 'Today · 8:00 AM', dayKey: 'today' },
-  { id: 's4', itemId: 'ibuprofen', name: 'Ibuprofen 200mg', kind: 'medicine', emoji: '💊', memberId: 'grandpa', level: 'avoid', timeLabel: 'Yesterday · 6:40 PM', dayKey: 'yesterday' },
+  { id: 's1', itemId: 'energy_drink', name: 'Red Bull', kind: 'drink', emoji: '🥤', memberId: PROFILE_ID, level: 'safe', timeLabel: 'Today · 2:14 PM', dayKey: 'today', barcode: '9002490100070', grams: 250 },
+  { id: 's2', itemId: 'granola_bar', name: 'Snickers', kind: 'food', emoji: '🍫', memberId: PROFILE_ID, level: 'avoid', timeLabel: 'Today · 11:02 AM', dayKey: 'today', barcode: '5000159461122', grams: 50 },
+  { id: 's3', itemId: 'amoxicillin', name: 'Amoxicillin 500mg', kind: 'prescription', emoji: '💊', memberId: PROFILE_ID, level: 'safe', timeLabel: 'Today · 8:00 AM', dayKey: 'today' },
+  { id: 's4', itemId: 'ibuprofen', name: 'Ibuprofen 200mg', kind: 'medicine', emoji: '💊', memberId: PROFILE_ID, level: 'avoid', timeLabel: 'Yesterday · 6:40 PM', dayKey: 'yesterday' },
 ];
 
 interface ScansState {
@@ -43,7 +44,12 @@ export const useScans = create<ScansState>()(
        * 누적 화면이 영원히 비어 보인다 (앱을 한 번이라도 열었던 브라우저 전부).
        * 저장분은 데모 기록이므로 새 시드로 되돌리는 것이 맞다.
        */
-      version: 3,
+      /**
+       * v4: 가족 명단을 없애면서 memberId 가 한 사람으로 모였다. 옛 기록은
+       * 이제 존재하지 않는 구성원을 가리키므로 하루 누적·식이 일지에서 통째로
+       * 빠진다 — 화면이 비는 것이 아니라 조용히 일부만 세는 쪽이라 더 나쁘다.
+       */
+      version: 4,
       migrate: () => ({ scans: SEED_SCANS }),
     },
   ),

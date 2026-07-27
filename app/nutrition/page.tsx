@@ -5,6 +5,7 @@ import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { NutrientBar } from '@/components/sc/NutrientBar';
 import { useScans } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
+import { ConditionTracking } from './tracking';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NUTRIENT_LABEL } from '@/lib/nutrition/types';
 import { speak } from '@/lib/voice';
@@ -87,6 +88,9 @@ export default function NutritionPage() {
             )}
 
             {/* 오늘 먹은 것 */}
+            {/* 조건이 있으면 며칠치 추이를 함께 낸다 (조건이 없으면 스스로 뜨지 않는다) */}
+            <ConditionTracking scans={scans} />
+
             <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
               EATEN TODAY
             </p>
