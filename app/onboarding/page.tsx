@@ -7,7 +7,9 @@ import { useSession } from '@/stores/session';
 const SLIDES = [
   { emoji: '📷', title: 'Point & scan', body: 'Aim your camera at food, medicine or anything you’re about to use.', tint: 'var(--color-sc-primary)' },
   { emoji: '🚦', title: 'Instant verdict', body: 'Green, amber or red — no reading required.', tint: 'var(--color-safe)' },
-  { emoji: '👨‍👩‍👧', title: 'Built for family', body: 'Every verdict shows exactly who it applies to in your household.', tint: 'var(--color-caution)' },
+  // 가족 명단을 없앤 뒤에도 "Built for family" 가 남아 있었다. 첫 화면이 앱에 없는
+  // 기능을 약속하는 자리라, 그대로 두면 처음 여는 사람이 가장 먼저 만나는 것이 거짓이다.
+  { emoji: '⚖️', title: 'Judged for you', body: 'The same food can be fine for an adult and too much for a child — the limits come from your age.', tint: 'var(--color-caution)' },
   { emoji: '🔔', title: 'A few permissions', body: 'Camera to scan, and notifications for dose reminders.', tint: 'var(--color-avoid)' },
 ];
 
