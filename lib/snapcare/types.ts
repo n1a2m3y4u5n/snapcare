@@ -92,6 +92,18 @@ export interface ScanItem {
     storage?: 'refrigerator' | 'room';
     /** 1회 복용 개수 (정·캡슐·방울). 세는 그림이 있는데 부르는 곳이 없었다. */
     doseCount?: number;
+    /**
+     * 1회 복용량 원문 ("1 capsule", "5 mL", "2 drops").
+     *
+     * doseCount 는 셀 수 있는 것만 담는다 — 시럽의 "5 mL" 는 개수가 아니라서 버려진다.
+     * 그런데 형성 평가에서 처방 16시행 전부에 1회 용량이 음성·문자 어디에도 없는 것이
+     * 드러났다. 값은 추출되어 픽토그램에만 쓰이고 있었고, 그림이 통하지 않는 사용자에게는
+     * 정보가 통째로 사라진다 — 삼중 채널을 둔 이유와 정면으로 어긋난다.
+     * 그래서 원문을 그대로 실어 음성과 문자가 함께 말하게 한다.
+     */
+    doseText?: string;
+    /** 보관 방법 원문 ("Keep refrigerated"). storage 와 같은 이유로 문장이 필요하다. */
+    storageText?: string;
     /** 렌즈 착용 금지 (안약). OCR 이 lensRestriction 으로 이미 뽑는다. */
     noLens?: boolean;
   };

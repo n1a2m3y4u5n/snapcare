@@ -76,6 +76,9 @@ export function ocrToScanItem(ocrText: string): { item: ScanItem; rxInfo: Struct
       storage: rx.storageType ?? undefined,
       // "Take 1 capsule" · "5 mL" 의 앞 숫자. 셀 수 있는 개수일 때만 그림으로 옮긴다.
       doseCount: countFromAmount(rx.amountText),
+      // 그림으로 못 옮기는 경우까지 포함해 원문을 함께 넘긴다 — 음성·문자가 이걸 읽는다.
+      doseText: rx.amountText || undefined,
+      storageText: rx.storageText || undefined,
       noLens: rx.lensRestriction,
       schedule,
     },

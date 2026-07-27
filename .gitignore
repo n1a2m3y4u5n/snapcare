@@ -82,3 +82,6 @@ Thumbs.db
 
 # 빌드 때 nutrition_manager/web/model 에서 복사된다 (scripts/copy-model.mjs)
 public/models/
+
+# 글리프 밑그림 — 보고 그리는 용도이고 앱에 들어가지 않는다
+engine/refs/

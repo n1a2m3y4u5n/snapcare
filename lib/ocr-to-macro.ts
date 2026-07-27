@@ -65,7 +65,10 @@ export function extractRxInfo(rawText: string): StructuredRxInfo {
 
   // ── 약 형태 ──────────────────────────────────────────────────────────────
   let drugForm: DrugForm = 'unknown';
-  if      (/안약|점안액|점안/i.test(t))                    drugForm = 'eyedrop';
+  // 영어 패턴이 없어 "Eye Drops" 처방이 unknown 으로 떨어지고 있었다.
+  // 그 여파가 둘이었다: 음성이 "드세요"라고 말했고(제형별 동사가 form 을 본다),
+  // 픽토그램 머리도 골라지지 않아 안약만 그림이 한 장도 안 나왔다.
+  if      (/안약|점안액|점안|eye\s*drops?|ophthalmic|instil{1,2}/i.test(t)) drugForm = 'eyedrop';
   else if (/시럽|액제|현탁액|syrup|suspension/i.test(t))   drugForm = 'syrup';
   else if (/캡슐|캅셀|capsule/i.test(t))                   drugForm = 'capsule';
   else if (/연고|크림|겔|ointment|cream/i.test(t))         drugForm = 'cream';

@@ -7,6 +7,7 @@ import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { NutrientBars } from '@/components/sc/NutrientBars';
 import { Say } from '@/components/sc/Say';
+import { doseSentence, storageSentence } from '@/lib/snapcare/say';
 import { spokenName } from '@/lib/tts/speakable';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
@@ -265,6 +266,34 @@ function RxResult({
         {/* 복약 지시는 잘못 들으면 바로 위험해지는 문장이라 반드시 누를 수 있어야 한다 */}
         <Say>{conflict ? verdict.summary : `Take as prescribed. ${item.rx?.dosageText ?? ''}`}</Say>
       </div>
+
+      {/*
+        1회 용량과 보관.
+        둘 다 OCR 이 뽑아 픽토그램에는 쓰이고 있었는데 문자·음성에는 어디에도 없었다
+        (형성 평가: 처방 16시행 전부). 그림이 통하지 않는 사용자에게는 정보가 통째로
+        사라지는 자리였다. 스케줄보다 위에 두는 이유는 "몇 시에" 보다 "얼마나" 가
+        먼저 필요하기 때문이다.
+      */}
+      {(doseSentence(item.rx) || storageSentence(item.rx)) && (
+        <div className="mt-5 flex flex-col gap-2">
+          {doseSentence(item.rx) && (
+            <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
+              <span className="text-xl" aria-hidden>💊</span>
+              <Say className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+                {doseSentence(item.rx)!}
+              </Say>
+            </div>
+          )}
+          {storageSentence(item.rx) && (
+            <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
+              <span className="text-xl" aria-hidden>🧊</span>
+              <Say className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+                {storageSentence(item.rx)!}
+              </Say>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 복용 스케줄 */}
       {item.rx && (
