@@ -1,6 +1,6 @@
 'use client';
 
-import { useFamily } from '@/stores/family';
+import { useProfile } from '@/stores/profile';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NutrientBar } from '@/components/sc/NutrientBar';
 import { sayable } from '@/components/sc/Say';
@@ -22,8 +22,7 @@ import type { ScanRecord } from '@/lib/snapcare/types';
  * 답이지만, 그 답에 막대 다섯 줄이 필요하지는 않다.
  */
 export function Today({ scans }: { scans: ScanRecord[] }) {
-  const { members, activeMemberId } = useFamily();
-  const member = members.find((m) => m.id === activeMemberId) ?? members[0];
+  const member = useProfile((s) => s.profile);
   const daily = useDailyIntake(scans, member);
 
   // 로딩 중에는 아무것도 내지 않는다 — 자리를 잡았다가 사라지면 화면이 흔들린다.

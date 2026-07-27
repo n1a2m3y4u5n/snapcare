@@ -3,7 +3,7 @@
 import type { SuspectedTrigger } from '@/lib/pattern/infer';
 import { findTriggers, feedbackFrom } from '@/lib/pattern/infer';
 import { useScans } from '@/stores/scans';
-import { useFamily } from '@/stores/family';
+import { useProfile, PROFILE_ID } from '@/stores/profile';
 import { useSuggestions } from '@/stores/suggestions';
 import { Speakable } from '@/components/sc/Say';
 
@@ -46,12 +46,13 @@ function spoken(t: SuspectedTrigger): string {
   return `${eaten} ${other} Should this go on your profile?`;
 }
 
-export function SuspectedTriggerCard({ memberId }: { memberId: string }) {
+export function SuspectedTriggerCard() {
+  const memberId = PROFILE_ID;
   const scans = useScans((s) => s.scans);
-  const { getMember, toggleCondition } = useFamily();
+  const toggleCondition = useProfile((s) => s.toggleCondition);
   const { dismiss, shouldAsk } = useSuggestions();
 
-  const member = getMember(memberId);
+  const member = useProfile((s) => s.profile);
   if (!member) return null;
 
   const found = findTriggers(feedbackFrom(scans, memberId))
@@ -110,7 +111,7 @@ export function SuspectedTriggerCard({ memberId }: { memberId: string }) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            toggleCondition(memberId, t.condition.id);
+            toggleCondition(t.condition.id);
           }}
           className="flex-1 rounded-2xl py-3 text-sm font-semibold text-white"
           style={{ background: 'var(--color-caution)' }}

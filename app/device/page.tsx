@@ -7,7 +7,7 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { Hint } from '@/components/sc/Hint';
 import { useReminders } from '@/stores/reminders';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
-import { useFamily } from '@/stores/family';
+import { useProfile } from '@/stores/profile';
 import { encodeSchedule, encodeWeekly, decodeEvent, messageKind, type SlotSchedule, type WeeklySlot } from '@/lib/hardware/protocol';
 import { toSchedule, type FormSheetValues } from '@/lib/hardware/formSheet';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
@@ -34,8 +34,7 @@ export default function DevicePage() {
   const router = useRouter();
   const reminders = useReminders((s) => s.reminders);
   const addScan = useScans((s) => s.addScan);
-  const { members, activeMemberId } = useFamily();
-  const member = members.find((m) => m.id === activeMemberId) ?? members[0];
+  const member = useProfile((s) => s.profile);
 
   const [reading, setReading] = useState(false);
   const [result, setResult] = useState<string | null>(null);

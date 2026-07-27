@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useFamily } from '@/stores/family';
+import { useProfile } from '@/stores/profile';
 import { useScans } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
 import { pullBlob, pushBlob, isUsable, SYNC_VERSION, type SyncBlob } from '@/lib/snapcare/sync';
@@ -31,8 +31,7 @@ function householdKey(): string {
 function snapshot(): SyncBlob {
   return {
     version: SYNC_VERSION,
-    members: useFamily.getState().members,
-    activeMemberId: useFamily.getState().activeMemberId,
+    profile: useProfile.getState().profile,
     scans: useScans.getState().scans,
     reminders: useReminders.getState().reminders,
   };
@@ -56,10 +55,9 @@ export function SyncProvider() {
       const blob = await pullBlob(household.current);
       if (!alive) return;
       // 버전이 안 맞거나 모양이 깨진 서버 데이터는 무시하고 로컬을 다시 시드한다.
-      const hasServer = isUsable(blob) && ((blob.members?.length ?? 0) > 0 || (blob.scans?.length ?? 0) > 0);
+      const hasServer = isUsable(blob) && (Boolean(blob.profile) || (blob.scans?.length ?? 0) > 0);
       if (hasServer && blob) {
-        if (blob.members) useFamily.setState({ members: blob.members });
-        if (blob.activeMemberId) useFamily.setState({ activeMemberId: blob.activeMemberId });
+        if (blob.profile) useProfile.setState({ profile: blob.profile });
         if (blob.scans) useScans.setState({ scans: blob.scans });
         if (blob.reminders) useReminders.setState({ reminders: blob.reminders });
       } else {
@@ -78,7 +76,7 @@ export function SyncProvider() {
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => void pushBlob(household.current, snapshot()), 600);
     };
-    const unsubs = [useFamily.subscribe(schedule), useScans.subscribe(schedule), useReminders.subscribe(schedule)];
+    const unsubs = [useProfile.subscribe(schedule), useScans.subscribe(schedule), useReminders.subscribe(schedule)];
     return () => unsubs.forEach((u) => u());
   }, []);
 

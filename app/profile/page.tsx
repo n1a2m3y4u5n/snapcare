@@ -1,25 +1,21 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
-import { useFamily } from '@/stores/family';
+import { useProfile } from '@/stores/profile';
 import { CONDITIONS } from '@/lib/snapcare/conditions';
+import { sayable } from '@/components/sc/Say';
 import type { AgeBand } from '@/lib/snapcare/types';
 
 /**
- * 프로필 편집 — 키보드를 한 번도 쓰지 않는다.
+ * 내 프로필 — 키보드를 한 번도 쓰지 않는다.
  *
- * 이전 화면은 "TAP TO TOGGLE · NO TYPING NEEDED"라고 써놓고 바로 위에 이름 입력창을
- * 두고 있었다. 글을 못 읽는 사용자가 전제인 앱에서 프로필을 만들려면 타이핑을 해야 하는
- * 구조였다는 뜻이다. 사람은 그림으로 고르고, 나이대도 그림으로 고른다.
+ * 가족 명단을 없애면서 "구성원 목록 → 한 명 고르기 → 편집" 세 화면이 한 화면이 됐다.
+ * 등록해야 시작할 수 있는 절차가 사라진 것이 이 변경의 요점이다 — 아무것도 고르지
+ * 않아도 성인 기준으로 판정이 나오고, 자기에게 해당하는 것만 눌러 바로잡으면 된다.
  *
- * 나이대가 필요한 이유는 이것이 판정의 입력이기 때문이다 —
- * WHO 권고가 에너지 대비 %라, 나이대가 정해져야 당·소금·포화지방 상한이 정해진다.
- *
- * 구성원 id 를 경로가 아니라 쿼리로 받는 이유: 대회 후 정적 웹앱으로 변환해 전시한다는
- * 요건이 있는데, 동적 경로는 사용자가 만든 id 를 미리 알 수 없어 정적 변환에서 깨진다.
- * 쿼리 파라미터는 클라이언트에서 읽히므로 정적 빌드에서도 그대로 동작한다.
+ * 나이대가 필요한 이유는 이것이 판정의 입력이기 때문이다. WHO 권고가 에너지 대비
+ * 비율이라, 나이대가 정해져야 당·소금·포화지방 상한이 정해진다.
  */
 
 /** 사람을 나타내는 그림 — 이름 대신 이것이 신원이 된다. */
@@ -31,7 +27,7 @@ const FACES = ['🧑', '🧒', '👶', '🧓', '👩', '👨', '👦', '👧'];
  * 아바타는 사용자가 고른 얼굴이라 그대로 두지만(그건 신원이다), 나이대는 기준치를
  * 정하는 입력이라 무엇을 고르는지가 정확해야 한다. 이모지는 기기마다 다르게 그려지고
  * 🧑‍🎓(학사모)는 '십대' 가 아니라 '졸업생' 이다 — 학교를 다니지 않는 아이에게는
- * 아무 뜻도 아니다. 다섯 글리프는 한 계열로 그려져서 나란히 놓으면 나이 차가 보인다.
+ * 아무 뜻도 아니다. 네 글리프는 한 계열로 그려져 나란히 놓으면 나이 차가 보인다.
  */
 const AGE_BANDS: { band: AgeBand; glyph: string; label: string; role: string }[] = [
   { band: 'child', glyph: 'state_child', label: 'Child', role: 'Child · age 7' },
@@ -41,57 +37,33 @@ const AGE_BANDS: { band: AgeBand; glyph: string; label: string; role: string }[]
 ];
 
 /** 화면 묶음 — 진단서가 없어도 답할 수 있는 것부터 묻는다. */
-const GROUPS: { key: 'now' | 'experience' | 'diagnosis'; title: string }[] = [
-  { key: 'now', title: 'RIGHT NOW' },
-  { key: 'experience', title: 'MADE ME SICK BEFORE' },
-  { key: 'diagnosis', title: 'A DOCTOR TOLD ME' },
+const GROUPS: { key: 'now' | 'experience' | 'diagnosis'; title: string; say: string }[] = [
+  { key: 'now', title: 'RIGHT NOW', say: 'Right now. Things that are true today.' },
+  { key: 'experience', title: 'MADE ME SICK BEFORE', say: 'Made me sick before.' },
+  { key: 'diagnosis', title: 'A DOCTOR TOLD ME', say: 'A doctor told me.' },
 ];
 
-export default function MemberEditPage() {
-  // useSearchParams 는 정적 렌더 시 Suspense 경계를 요구한다.
-  return (
-    <Suspense fallback={<MobileScreen><div className="px-5 pt-20" /></MobileScreen>}>
-      <MemberEditor />
-    </Suspense>
-  );
-}
-
-function MemberEditor() {
+export default function ProfilePage() {
   const router = useRouter();
-  const id = useSearchParams().get('id');
-  const { members, toggleCondition, setMemberFace, setMemberAgeBand, removeMember } = useFamily();
-  const member = members.find((m) => m.id === id);
+  const { profile, toggleCondition, setFace, setAgeBand } = useProfile();
 
-  if (!member) {
-    return (
-      <MobileScreen>
-        <div className="px-5 pt-20 text-center" style={{ color: 'var(--color-sc-muted)' }}>
-          Not found.
-        </div>
-      </MobileScreen>
-    );
-  }
-
-  const currentBand: AgeBand = member.ageBand
-    ?? (/\b7\b|child/i.test(member.role) ? 'child'
-      : /teen|1[3-8]/i.test(member.role) ? 'teen'
-      : 'adult');
+  const currentBand: AgeBand = profile.ageBand ?? 'adult';
 
   return (
-    <MobileScreen>
+    <MobileScreen tab="settings">
       <div className="px-5 pt-14 pb-8">
-        <button onClick={() => router.push('/family')} className="text-sm font-semibold" style={{ color: 'var(--color-sc-primary)' }}>
+        <button onClick={() => router.push('/settings')} className="text-sm font-semibold"
+                style={{ color: 'var(--color-sc-primary)' }}>
           ‹ Back
         </button>
 
         <div className="mt-4 flex items-center gap-3">
-          <span
-            className="flex h-16 w-16 items-center justify-center rounded-full text-3xl"
-            style={{ background: member.color }}
-          >
-            {member.emoji}
+          <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl"
+                style={{ background: profile.color }}>
+            {profile.emoji}
           </span>
-          <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
+                {...sayable('Tap a picture. No typing needed.')}>
             TAP A PICTURE — NO TYPING
           </span>
         </div>
@@ -101,11 +73,11 @@ function MemberEditor() {
           {FACES.map((f) => (
             <button
               key={f}
-              onClick={() => setMemberFace(member.id, f)}
+              onClick={() => setFace(f)}
               className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm"
-              style={{ outline: member.emoji === f ? '2px solid var(--color-sc-primary)' : '2px solid transparent' }}
+              style={{ outline: profile.emoji === f ? '2px solid var(--color-sc-primary)' : '2px solid transparent' }}
               aria-label={`Face ${f}`}
-              aria-pressed={member.emoji === f}
+              aria-pressed={profile.emoji === f}
             >
               {f}
             </button>
@@ -113,7 +85,8 @@ function MemberEditor() {
         </div>
 
         {/* 나이대 = 기준치를 정하는 값 */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
+           {...sayable('How old. This decides how much is too much.')}>
           HOW OLD
         </p>
         <div className="mt-2 grid grid-cols-4 gap-2">
@@ -122,10 +95,11 @@ function MemberEditor() {
             return (
               <button
                 key={b.band}
-                onClick={() => setMemberAgeBand(member.id, b.band, b.role)}
+                onClick={() => setAgeBand(b.band, b.role)}
                 className="flex flex-col items-center gap-1 rounded-2xl bg-white py-3 shadow-sm"
                 style={{ outline: on ? '2px solid var(--color-sc-primary)' : '2px solid transparent' }}
                 aria-pressed={on}
+                aria-label={b.label}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/glyphs/${b.glyph}.png`} alt="" aria-hidden className="h-8 w-8" />
@@ -136,7 +110,7 @@ function MemberEditor() {
         </div>
 
         {/*
-          조건은 "진단명"이 아니라 "당신이 알 수 있는 것" 순서로 묻는다.
+          조건은 "진단명" 이 아니라 "당신이 알 수 있는 것" 순서로 묻는다.
           대상 지역엔 알레르기 검사 인프라가 없어서, 진단을 전제하면 프로필이 빈 채로 남는다.
         */}
         {GROUPS.map((g) => {
@@ -144,23 +118,26 @@ function MemberEditor() {
           if (items.length === 0) return null;
           return (
             <div key={g.key}>
-              <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+              <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
+                 {...sayable(g.say)}>
                 {g.title}
               </p>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {items.map((c) => {
-                  const on = member.conditionIds.includes(c.id);
+                  const on = profile.conditionIds.includes(c.id);
                   return (
                     <button
                       key={c.id}
-                      onClick={() => toggleCondition(member.id, c.id)}
+                      onClick={() => toggleCondition(c.id)}
                       className="flex flex-col items-center gap-1.5 rounded-2xl bg-white px-2 py-4 shadow-sm"
                       style={{ outline: on ? '2px solid var(--color-caution)' : '2px solid transparent' }}
                       aria-pressed={on}
                       aria-label={c.label}
+                      {...sayable(`${c.label}. ${on ? 'On.' : 'Off.'}`)}
                     >
                       <span className="text-2xl">{c.emoji}</span>
-                      <span className="text-center text-[11px] font-semibold leading-tight" style={{ color: on ? 'var(--color-caution)' : 'var(--color-sc-muted)' }}>
+                      <span className="text-center text-[11px] font-semibold leading-tight"
+                            style={{ color: on ? 'var(--color-caution)' : 'var(--color-sc-muted)' }}>
                         {c.label}
                       </span>
                     </button>
@@ -170,14 +147,6 @@ function MemberEditor() {
             </div>
           );
         })}
-
-        <button
-          onClick={() => { removeMember(member.id); router.push('/family'); }}
-          className="mt-6 w-full rounded-2xl py-3 text-center text-sm font-semibold"
-          style={{ background: 'var(--color-avoid-bg)', color: 'var(--color-avoid)' }}
-        >
-          Remove
-        </button>
       </div>
     </MobileScreen>
   );

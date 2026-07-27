@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFamily } from '@/stores/family';
 import { useAnalysis } from '@/stores/analysis';
 import { getItem } from '@/lib/snapcare/catalog';
 import { ocrToScanItem } from '@/lib/snapcare/fromOcr';
@@ -18,7 +17,6 @@ const DEMO_IDS = ['energy_drink', 'granola_bar', 'amoxicillin', 'ibuprofen'];
 
 export default function CameraPage() {
   const router = useRouter();
-  const { members, activeMemberId, setActiveMember } = useFamily();
   const setCurrent = useAnalysis((s) => s.setCurrent);
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -194,25 +192,6 @@ export default function CameraPage() {
           <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none">×</button>
           <span className="text-sm font-semibold">Point at something</span>
           <span className="w-6" />
-        </div>
-
-        {/* FOR 가족 선택 */}
-        <div className="flex items-center gap-2 px-5 pb-2">
-          <span className="text-xs opacity-70">FOR</span>
-          {members.map((m) => {
-            const on = m.id === activeMemberId;
-            return (
-              <button
-                key={m.id}
-                onClick={() => setActiveMember(m.id)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
-                style={{ background: on ? m.color : 'rgba(255,255,255,0.15)', color: '#fff', outline: on ? '2px solid #fff' : 'none', outlineOffset: 1 }}
-                aria-label={`For ${m.name}`}
-              >
-                {m.emoji}
-              </button>
-            );
-          })}
         </div>
 
         {/* 프리뷰 */}

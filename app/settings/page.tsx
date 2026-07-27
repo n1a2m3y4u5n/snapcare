@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
-import { useFamily } from '@/stores/family';
+import { useProfile } from '@/stores/profile';
 import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
 import { sayable } from '@/components/sc/Say';
 import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
@@ -19,7 +19,7 @@ import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
  */
 export default function SettingsPage() {
   const router = useRouter();
-  const members = useFamily((s) => s.members);
+  const profile = useProfile((s) => s.profile);
   const autoTts = usePreferences((s) => s.autoTts);
   const speechRate = usePreferences((s) => s.speechRate);
   const setSpeechRate = usePreferences((s) => s.setSpeechRate);
@@ -30,31 +30,27 @@ export default function SettingsPage() {
       <div className="px-5 pt-14">
         <h1 {...sayable('Settings.')} className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Settings</h1>
 
-        {/* 판정 기준이 되는 사람들 */}
+        {/* 판정 기준이 되는 사람 */}
         <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }} {...sayable('Who we check for.')}>
           WHO WE CHECK FOR
         </p>
         <button
-          onClick={() => router.push('/family')}
+          onClick={() => router.push('/profile')}
           className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
         >
-          <span className="flex -space-x-2">
-            {members.slice(0, 4).map((m) => (
-              <span
-                key={m.id}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{ background: m.color, border: '2px solid white' }}
-              >
-                {m.emoji}
-              </span>
-            ))}
+          <span
+            className="flex h-10 w-10 items-center justify-center rounded-full text-xl"
+            style={{ background: profile.color }}
+          >
+            {profile.emoji}
           </span>
           <span className="flex-1">
             <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
-                  {...sayable('People and conditions. Who we check for, and what to avoid.')}>
-              People &amp; conditions
+                  {...sayable('Me and my conditions. Age and allergies decide every verdict.')}>
+              Me &amp; my conditions
             </span>
-            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }} {...sayable('Age and allergies decide every verdict.')}>Age and allergies decide every verdict
+            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+              {profile.role}{profile.conditionIds.length > 0 ? ` · ${profile.conditionIds.length}` : ''}
             </span>
           </span>
           <span style={{ color: 'var(--color-sc-muted)' }}>›</span>

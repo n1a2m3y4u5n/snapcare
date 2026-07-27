@@ -4,7 +4,7 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { NutrientBar } from '@/components/sc/NutrientBar';
 import { useScans } from '@/stores/scans';
-import { useFamily } from '@/stores/family';
+import { useProfile } from '@/stores/profile';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NUTRIENT_LABEL } from '@/lib/nutrition/types';
 import { speak } from '@/lib/voice';
@@ -15,8 +15,7 @@ import { speak } from '@/lib/voice';
  */
 export default function NutritionPage() {
   const scans = useScans((s) => s.scans);
-  const { members, activeMemberId, setActiveMember } = useFamily();
-  const member = members.find((m) => m.id === activeMemberId) ?? members[0];
+  const member = useProfile((s) => s.profile);
   const daily = useDailyIntake(scans, member);
 
   const energy = daily.assessments?.find((a) => a.key === 'energy');
@@ -42,25 +41,6 @@ export default function NutritionPage() {
           {daily.state === 'ready' && (
             <button onClick={() => speak(spoken, 'en-US')} aria-label="Read today's intake aloud" className="text-xl leading-none">🔊</button>
           )}
-        </div>
-
-        {/* 구성원 선택 — 기준치가 사람마다 다르므로 화면 전체가 바뀐다 */}
-        <div className="mt-3 flex gap-2">
-          {members.map((m) => {
-            const on = m.id === member?.id;
-            return (
-              <button
-                key={m.id}
-                onClick={() => setActiveMember(m.id)}
-                className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
-                style={{ background: m.color, outline: on ? '2px solid var(--color-sc-ink)' : 'none', outlineOffset: 2 }}
-                aria-label={m.name}
-                aria-pressed={on}
-              >
-                {m.emoji}
-              </button>
-            );
-          })}
         </div>
 
         {daily.state === 'loading' && (

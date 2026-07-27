@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useScans } from '@/stores/scans';
-import { useFamily } from '@/stores/family';
+import { useProfile, PROFILE_ID } from '@/stores/profile';
 import { useAnalysis } from '@/stores/analysis';
 import { useReminders } from '@/stores/reminders';
 import { getItem } from '@/lib/snapcare/catalog';
@@ -21,7 +21,7 @@ import { spokenName } from '@/lib/tts/speakable';
 export default function HomePage() {
   const router = useRouter();
   const scans = useScans((s) => s.scans);
-  const { setActiveMember, getMember, activeMemberId } = useFamily();
+  const profile = useProfile((s) => s.profile);
   const setCurrent = useAnalysis((s) => s.setCurrent);
   const reminders = useReminders((s) => s.reminders);
 
@@ -31,11 +31,10 @@ export default function HomePage() {
   const nextDose: Reminder | undefined = reminders[0];
 
   // 반응은 먹은 직후에 나오지 않으므로, 아직 답하지 않은 끼니 중 가장 오래된 것을 묻는다.
-  const pending = pendingFeedback(scans, activeMemberId);
+  const pending = pendingFeedback(scans, PROFILE_ID);
 
   function openDose(r: Reminder) {
     setCurrent(r.item);
-    setActiveMember(r.memberId);
     router.push('/dose');
   }
 
@@ -44,7 +43,6 @@ export default function HomePage() {
     const item = rec.item ?? getItem(rec.itemId);
     if (!item) return;
     setCurrent(item);
-    setActiveMember(rec.memberId);
     router.push(rec.kind === 'prescription' || rec.kind === 'medicine' ? '/dose' : '/scan');
   }
 
@@ -70,7 +68,7 @@ export default function HomePage() {
                 {nextDose.item.name} · {nextDose.time}
               </span>
               <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-                {getMember(nextDose.memberId)?.name ?? ''}
+                {profile.name}
               </span>
             </span>
             <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
@@ -103,7 +101,7 @@ export default function HomePage() {
           기록에서 드러난 것이 있으면 먼저 묻는다. 아직 답하지 않은 끼니를 묻는 것보다
           이쪽이 무겁고, 통계 문턱을 넘었을 때만 뜨므로 자주 보일 일이 없다.
         */}
-        <SuspectedTriggerCard memberId={activeMemberId} />
+        <SuspectedTriggerCard />
 
         {/* 오늘 하루 누적 — 오늘 먹은 것이 있을 때만 스스로 뜬다 */}
         <Today scans={scans} />
@@ -125,7 +123,6 @@ export default function HomePage() {
         <div className="mt-2 flex flex-col gap-2">
           {scans.map((s) => {
             const meta = LEVEL_META[s.level];
-            const member = getMember(s.memberId);
             return (
               // 듣기 버튼을 행 버튼 안에 넣으면 버튼이 중첩돼 키보드 탐색이 깨진다.
               // 행을 div 로 두고 두 버튼을 나란히 놓는다.
@@ -144,23 +141,15 @@ export default function HomePage() {
                     <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                       {s.name}
                     </span>
-                    {/* 이름은 아바타로, 시각은 시계로 — 둘 다 이미 그림으로 가진 정보다.
-                        행 자체가 버튼이라 여기서는 누를 수 없는 형태를 쓴다. */}
+                    {/* 시각은 시계로 — 이미 그림으로 가진 정보다.
+                        누구 것인지 표시하던 아바타는 뺐다. 쓰는 사람이 한 명이므로
+                        매 줄에 같은 얼굴이 붙는 것은 정보가 아니라 잡음이다. */}
                     <span className="mt-0.5 flex items-center gap-1.5">
-                      {member && (
-                        <span
-                          className="flex h-4 w-4 items-center justify-center rounded-full text-[9px]"
-                          style={{ background: member.color }}
-                          title={member.name}
-                        >
-                          {member.emoji}
-                        </span>
-                      )}
                       <TimeGlyph label={s.timeLabel} mute />
                     </span>
                   </span>
                 </button>
-                <SpeakIcon text={`${spokenName(s.name, s.kind)}. ${member ? `For ${member.name}. ` : ''}${meta.label}.`} />
+                <SpeakIcon text={`${spokenName(s.name, s.kind)}. ${meta.label}.`} />
                 {/*
                   판정은 이 목록에서 가장 중요한 정보인데 2.5px 색 점이었다.
                   색만으로 뜻을 싣는 것은 색 규약을 아는 사람에게만 통하고, 적록색약이면

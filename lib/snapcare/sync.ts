@@ -11,12 +11,16 @@ import type { Reminder } from '@/stores/reminders';
  *
  * 올릴 때: Member / ScanRecord / Reminder 모양이 바뀌면 +1.
  */
-export const SYNC_VERSION = 2;
+export const SYNC_VERSION = 3;
 
 export interface SyncBlob {
   version?: number;
-  members?: Member[];
-  activeMemberId?: string;
+  /**
+   * 쓰는 사람 한 명. 예전 blob 에는 members 배열과 activeMemberId 가 있었는데,
+   * 가족 명단을 없애면서 하나로 줄었다. 버전이 올라가 옛 blob 은 isUsable 에서
+   * 걸러지므로 여기 옛 필드를 남겨둘 필요가 없다.
+   */
+  profile?: Member;
   scans?: ScanRecord[];
   reminders?: Reminder[];
 }
@@ -24,7 +28,7 @@ export interface SyncBlob {
 /** 서버 데이터를 신뢰해도 되는가 (버전 일치 + 최소 형태 검사). */
 export function isUsable(blob: SyncBlob | null): blob is SyncBlob {
   if (!blob || blob.version !== SYNC_VERSION) return false;
-  if (blob.members && blob.members.some((m) => !m?.id || !m?.name)) return false;
+  if (blob.profile && (!blob.profile.id || !blob.profile.name)) return false;
   if (blob.reminders && blob.reminders.some((r) => !r?.item?.name)) return false;
   return true;
 }

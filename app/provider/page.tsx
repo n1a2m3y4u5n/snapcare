@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useScans } from '@/stores/scans';
-import { useFamily } from '@/stores/family';
+import { useProfile } from '@/stores/profile';
 import { useIsClient } from '@/lib/hooks';
 
 /** 의료진 공유 — 스캔 기록을 담은 일회용 QR (15분 만료). */
 export default function ProviderPage() {
   const router = useRouter();
   const scans = useScans((s) => s.scans);
-  const getMember = useFamily((s) => s.getMember);
+  const profile = useProfile((s) => s.profile);
   const isClient = useIsClient();
   const [left, setLeft] = useState(15 * 60);
 
@@ -37,12 +37,12 @@ export default function ProviderPage() {
       ...token,
       records: scans.slice(0, 12).map((s) => ({
         item: s.name,
-        for: getMember(s.memberId)?.name ?? s.memberId,
+        for: profile.name,
         level: s.level,
         at: s.timeLabel,
       })),
     });
-  }, [isClient, token, scans, getMember]);
+  }, [isClient, token, scans, profile]);
 
   const mm = Math.floor(left / 60);
   const ss = (left % 60).toString().padStart(2, '0');

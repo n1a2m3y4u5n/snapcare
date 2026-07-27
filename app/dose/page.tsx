@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/stores/analysis';
-import { useFamily } from '@/stores/family';
+import { useProfile } from '@/stores/profile';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { usePreferences } from '@/stores/preferences';
 import { speak } from '@/lib/voice';
@@ -14,11 +14,10 @@ export default function DosePage() {
   const router = useRouter();
   const item = useAnalysis((s) => s.current);
   const setCurrent = useAnalysis((s) => s.setCurrent);
-  const { members, activeMemberId } = useFamily();
   const addScan = useScans((s) => s.addScan);
   const autoTts = usePreferences((s) => s.autoTts);
 
-  const member = members.find((m) => m.id === activeMemberId) ?? members[0];
+  const member = useProfile((s) => s.profile);
 
   useEffect(() => {
     if (!item) {

@@ -12,10 +12,8 @@ import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
-import { assessForMember, flagsForMember } from '@/lib/nutrition/compute';
-import type { NutrientProfile } from '@/lib/nutrition/types';
 import { useAnalysis } from '@/stores/analysis';
-import { useFamily } from '@/stores/family';
+import { useProfile } from '@/stores/profile';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
 import { usePreferences } from '@/stores/preferences';
@@ -31,13 +29,12 @@ export default function ScanResultPage() {
   const router = useRouter();
   const item = useAnalysis((s) => s.current);
   const setCurrent = useAnalysis((s) => s.setCurrent);
-  const { members, activeMemberId } = useFamily();
   const addScan = useScans((s) => s.addScan);
   const scans = useScans((s) => s.scans);
   const addReminders = useReminders((s) => s.addReminders);
 
   const autoTts = usePreferences((s) => s.autoTts);
-  const member = members.find((m) => m.id === activeMemberId) ?? members[0];
+  const member = useProfile((s) => s.profile);
 
   // 영양 엔진이 이 사람 기준으로 계산한 플래그를 아이템에 합쳐 판정한다.
   // (카탈로그에 손으로 박아둔 플래그가 아니라 실제 수치·알레르기 태그에서 나온 것)
@@ -158,8 +155,6 @@ export default function ScanResultPage() {
           item={scanned}
           verdict={verdict}
           member={member}
-          members={members}
-          profile={nutrition.profile}
           alternative={alternative}
           onDone={finish}
         />
@@ -169,10 +164,10 @@ export default function ScanResultPage() {
 }
 
 function FoodResult({
-  item, verdict, member, members, profile, alternative, onDone,
+  item, verdict, member, alternative, onDone,
 }: {
-  item: ScanItem; verdict: Verdict; member: Member; members: Member[];
-  profile?: NutrientProfile; alternative: Alternative | null; onDone: () => void;
+  item: ScanItem; verdict: Verdict; member: Member;
+  alternative: Alternative | null; onDone: () => void;
 }) {
   return (
     <div className="flex flex-1 flex-col">
@@ -222,34 +217,6 @@ function FoodResult({
           </div>
         )}
 
-        {/* 가족별 판정 */}
-        <div>
-          <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>CHECKED FOR FAMILY</p>
-          <div className="mt-2 flex gap-3">
-            {members.map((m) => {
-              // 기준치가 사람마다 다르므로 플래그도 구성원별로 다시 계산한다.
-              // (같은 제품이 성인에겐 safe, 7살에겐 caution 이 될 수 있다)
-              const flags = profile
-                ? [...new Set([...item.flags, ...flagsForMember(profile, m)])]
-                : item.flags;
-              const v = computeVerdict(
-                { ...item, flags },
-                m,
-                profile ? assessForMember(profile, m) : undefined,
-              );
-              const meta = LEVEL_META[v.level];
-              return (
-                <div key={m.id} className="flex flex-col items-center gap-1">
-                  <span className="relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: m.color }}>
-                    {m.emoji}
-                    <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white" style={{ background: meta.color }} />
-                  </span>
-                  <span className="text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>{m.name.split(' ')[0]}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
       </div>
 
       <div className="mt-auto px-5 pb-8 pt-4">
