@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { Hint } from '@/components/sc/Hint';
+import { sayable } from '@/components/sc/Say';
 import { useReminders } from '@/stores/reminders';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
@@ -169,14 +170,15 @@ export default function DevicePage() {
         <button onClick={() => router.push('/settings')} className="text-sm font-semibold" style={{ color: 'var(--color-sc-primary)' }}>
           ‹ Settings
         </button>
-        <h1 className="mt-2 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Pill device</h1>
+        <h1 className="mt-2 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
+            {...sayable('Pill device. Send your dose times to the box, or read what it shows.')}>Pill device</h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}>
-          No wiring, no network — the two screens talk by camera.
+          <span {...sayable('The phone and the box are on the same Wi-Fi. Nothing else is needed.')}>Same Wi-Fi — nothing else needed.</span>
         </p>
 
         {/* 폰 → 기기 (WiFi) */}
         <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-          SEND THE SCHEDULE
+          <span {...sayable('Send the schedule to the box.')}>SEND THE SCHEDULE</span>
         </p>
         {trayPlan.plan.length > 0 ? (
           <div className="mt-2 rounded-3xl bg-white px-4 py-4 shadow-sm">
@@ -230,7 +232,7 @@ export default function DevicePage() {
               style={{ background: looksLikeHost(host) ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)' }}
               aria-disabled={!looksLikeHost(host)}
             >
-              Send to the device
+              <span {...sayable('Send to the device. Press once and the box will show what it saved.')}>Send to the device</span>
             </a>
             <p className="mt-1 text-center text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
               Both on the same Wi-Fi. The device shows what it saved.
@@ -238,7 +240,7 @@ export default function DevicePage() {
           </div>
         ) : (
           <p className="mt-2 rounded-2xl bg-white px-4 py-6 text-center text-sm shadow-sm" style={{ color: 'var(--color-sc-muted)' }}>
-            Scan a prescription first — the schedule it creates is what the device needs.
+            <span {...sayable('Photograph a prescription first. The dose times it finds are what the box needs.')}>Scan a prescription first — the schedule it creates is what the device needs.</span>
           </p>
         )}
 
@@ -268,7 +270,7 @@ export default function DevicePage() {
 
         {/* 종이 → 폰 : 의사가 채운 폼시트 */}
         <p className="mt-8 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-          OR READ THE DOCTOR&apos;S SHEET
+          <span {...sayable('Or read the paper sheet the clinic filled in.')}>OR READ THE DOCTOR&apos;S SHEET</span>
         </p>
         <label className="mt-2 flex w-full cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-4 shadow-sm" style={{ opacity: reading ? 0.5 : 1 }}>
           <span className="text-2xl">📄</span>
@@ -295,7 +297,7 @@ export default function DevicePage() {
 
         {/* 기기 → 폰 */}
         <p className="mt-8 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-          READ THE DEVICE
+          <span {...sayable('Read the box. Photograph the code on its screen to record whether the dose was taken.')}>READ THE DEVICE</span>
         </p>
         <label
           className="mt-2 flex w-full cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-4 shadow-sm"

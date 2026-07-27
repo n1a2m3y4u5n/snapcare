@@ -9,6 +9,7 @@ import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } f
 import { recognizeText } from '@/lib/ocr';
 import { estimateOnDevice, warmUp } from '@/lib/nutrition/estimateOnDevice';
 import { Hint } from '@/components/sc/Hint';
+import { sayable } from '@/components/sc/Say';
 import { SAMPLE_LABELS, SAMPLE_RX, sampleBySlug } from '@/lib/snapcare/samples';
 import type { ScanItem } from '@/lib/snapcare/types';
 import type { NutrientProfile } from '@/lib/nutrition/types';
@@ -190,7 +191,10 @@ export default function CameraPage() {
       <div className="relative w-full max-w-[440px] min-h-screen flex flex-col text-white">
         <div className="flex items-center justify-between px-5 pt-14 pb-3">
           <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none">×</button>
-          <span className="text-sm font-semibold">Point at something</span>
+          <span className="text-sm font-semibold"
+                {...sayable('Point at something. Hold the camera over a prescription, a label, or your food.')}>
+            Point at something
+          </span>
           <span className="w-6" />
         </div>
 
@@ -199,7 +203,10 @@ export default function CameraPage() {
           <div className="absolute inset-6 rounded-2xl" style={{ border: '2px solid rgba(255,255,255,0.35)' }} />
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-8">
             <span className="text-5xl">📷</span>
-            <span className="text-xs opacity-70">{busy ? (status ?? 'Analyzing…') : 'camera preview'}</span>
+            <span className="text-xs opacity-70"
+                  {...sayable(busy ? (status ?? 'Working on it.') : 'The camera is pointed here. Press the big round button below to take the photograph.')}>
+              {busy ? (status ?? 'Analyzing…') : 'camera preview'}
+            </span>
             {hint && <Hint text={hint} />}
           </div>
         </div>
@@ -220,13 +227,14 @@ export default function CameraPage() {
               onClick={() => setShowOptions(true)}
               className="text-xs underline underline-offset-4 opacity-60"
             >
-              Can&apos;t take a photo?
+              <span {...sayable('Cannot take a photo? Tap here for things you can try instead.')}>Can&apos;t take a photo?</span>
             </button>
           </div>
         ) : (
           <>
             <div className="px-5 pt-1">
-              <p className="text-[11px] font-bold tracking-wide opacity-60">SCAN A NUTRITION LABEL (OCR)</p>
+              <p className="text-[11px] font-bold tracking-wide opacity-60"
+                 {...sayable('Try a nutrition label. Tap one and it will be read like a photograph.')}>SCAN A NUTRITION LABEL (OCR)</p>
               <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
                 {SAMPLE_LABELS.map((s) => (
                   <button key={s.src} onClick={() => scanSample(s.src)} disabled={busy} className="shrink-0 rounded-2xl px-3 py-2 text-xs font-semibold disabled:opacity-40" style={{ background: 'rgba(255,255,255,0.12)' }}>
@@ -237,7 +245,8 @@ export default function CameraPage() {
             </div>
 
             <div className="px-5 pt-3">
-              <p className="text-[11px] font-bold tracking-wide opacity-60">SCAN A REAL PRESCRIPTION (OCR)</p>
+              <p className="text-[11px] font-bold tracking-wide opacity-60"
+                 {...sayable('Try a prescription.')}>SCAN A REAL PRESCRIPTION (OCR)</p>
               <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
                 {SAMPLE_RX.map((s) => (
                   <button key={s.src} onClick={() => scanSample(s.src)} disabled={busy} className="shrink-0 rounded-2xl px-3 py-2 text-xs font-semibold disabled:opacity-40" style={{ background: 'rgba(255,255,255,0.12)' }}>
@@ -248,7 +257,8 @@ export default function CameraPage() {
             </div>
 
             <div className="px-5 pb-8 pt-3">
-              <p className="text-[11px] font-bold tracking-wide opacity-60">TRY A DEMO ITEM</p>
+              <p className="text-[11px] font-bold tracking-wide opacity-60"
+                 {...sayable('Or try a ready-made item.')}>TRY A DEMO ITEM</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {DEMO_IDS.map((id) => {
                   const it = getItem(id)!;

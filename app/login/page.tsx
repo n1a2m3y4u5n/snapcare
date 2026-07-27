@@ -1,5 +1,6 @@
 'use client';
 
+import { sayable } from '@/components/sc/Say';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import bcrypt from 'bcryptjs';
@@ -52,11 +53,17 @@ export default function LoginPage() {
     <div className="min-h-screen w-full flex justify-center" style={{ background: 'var(--color-sc-bg)' }}>
       <div className="relative w-full max-w-[440px] min-h-screen flex flex-col items-center px-6 pt-16">
         <div className="flex h-12 w-12 items-center justify-center rounded-full text-2xl" style={{ background: 'color-mix(in srgb, var(--color-sc-primary) 12%, white)' }}>🔒</div>
-        <h1 className="mt-4 text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}>
+        <h1 className="mt-4 text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}
+            {...sayable(setup ? 'Create your picture key.' : 'Enter your picture key.')}>
           {setup ? 'Create your picture key' : 'Enter your picture key'}
         </h1>
         <p className="mt-1 text-xs" style={{ color: error ? 'var(--color-avoid)' : 'var(--color-sc-muted)' }}>
-          {error ? 'Wrong key — try again' : setup ? 'Tap 4 pictures in an order you’ll remember' : 'Tap your 4 pictures in order'}
+          {/* 로그인은 앱에 들어오는 유일한 문이다. 여기서 막히면 그 뒤가 전부 없는 것과 같다. */}
+          <span {...sayable(error ? 'Wrong key. Try again.'
+            : setup ? 'Choose four pictures in an order you will remember. Tap them one by one.'
+            : 'Tap your four pictures, in the order you chose.')}>
+            {error ? 'Wrong key — try again' : setup ? 'Tap 4 pictures in an order you’ll remember' : 'Tap your 4 pictures in order'}
+          </span>
         </p>
 
         {/*

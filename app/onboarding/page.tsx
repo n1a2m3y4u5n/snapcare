@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/stores/session';
+import { sayable } from '@/components/sc/Say';
 
 const SLIDES = [
   { emoji: '📷', title: 'Point & scan', body: 'Aim your camera at food, medicine or anything you’re about to use.', tint: 'var(--color-sc-primary)' },
@@ -37,7 +38,12 @@ export default function OnboardingPage() {
           <div className="flex h-32 w-32 items-center justify-center rounded-full text-6xl" style={{ background: 'color-mix(in srgb, ' + s.tint + ' 12%, white)' }}>
             {s.emoji}
           </div>
-          <h1 className="mt-8 text-2xl font-bold" style={{ color: 'var(--color-sc-ink)' }}>{s.title}</h1>
+          {/*
+            슬라이드는 이 앱을 처음 만나는 자리다. 여기서 글을 읽어야 한다면
+            그 뒤의 모든 접근성 작업이 무의미해진다 — 시작하기 전에 걸러진다.
+          */}
+          <h1 className="mt-8 text-2xl font-bold" style={{ color: 'var(--color-sc-ink)' }}
+              {...sayable(`${s.title}. ${s.body}`)}>{s.title}</h1>
           <p className="mt-3 max-w-xs text-sm leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>{s.body}</p>
         </div>
 
