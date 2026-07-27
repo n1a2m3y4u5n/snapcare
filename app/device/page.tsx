@@ -11,15 +11,24 @@ import { useProfile } from '@/stores/profile';
 import { encodeSchedule, encodeWeekly, decodeEvent, messageKind, type SlotSchedule, type WeeklySlot } from '@/lib/hardware/protocol';
 import { toSchedule, type FormSheetValues } from '@/lib/hardware/formSheet';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
+import { DEFAULT_HOST, planTrays, saveUrl, looksLikeHost } from '@/lib/hardware/dispenser';
 import { speak } from '@/lib/voice';
 
 /**
- * 디스펜서와 주고받는 화면 — 네트워크 없이 카메라와 화면만 쓴다.
+ * 디스펜서와 주고받는 화면.
  *
- * 내보내기: 복약 일정을 QR로 띄운다. 기기가 그것을 읽어 트레이를 채운다.
- * 읽기   : 기기가 표시한 QR을 찍어 복용/놓침을 기록에 반영한다.
+ * 우리는 기기를 0.96" OLED 에 카메라가 붙은 것으로 가정하고 광학 프로토콜을 짰는데,
+ * 실제 하드웨어(Shaztech/Pilldispenser)에는 카메라가 없다. 대신 WiFi 와 HTTP GET
+ * API 를 이미 갖고 있다. 그래서 기본 경로를 바꿨다:
  *
- * 두 방향 모두 인터넷도, 페어링도, 같은 네트워크도 필요 없다.
+ *   보내기 — 기기의 /save 로 가는 링크를 만든다. 한 번 누르면 기기 페이지로 이동해
+ *            저장된다. HTTPS 페이지에서 HTTP 를 fetch 하면 막히지만 최상위 이동은
+ *            막히지 않는다는 점을 이용한다. 브로커도 클라우드도 필요 없다.
+ *   읽기   — 기기가 화면에 코드를 띄우면 그것을 찍는다. 이 방향은 카메라가 폰 쪽에
+ *            있으므로 그대로 성립한다.
+ *
+ * 광학 내보내기(QR을 띄워 기기가 읽게 하는 것)는 남겨 두되 WiFi 가 없을 때의 대체로
+ * 내린다 — 지금 하드웨어로는 읽을 수 없고, 읽으려면 펌웨어를 고쳐야 한다.
  */
 function toDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -36,6 +45,7 @@ export default function DevicePage() {
   const addScan = useScans((s) => s.addScan);
   const member = useProfile((s) => s.profile);
 
+  const [host, setHost] = useState(DEFAULT_HOST);
   const [reading, setReading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   // 폼시트에서 읽어낸 일정 — 있으면 알람 대신 이것을 기기로 내보낸다.
@@ -54,6 +64,14 @@ export default function DevicePage() {
   }, [reminders]);
 
   const names = useMemo(() => [...new Set(reminders.map((r) => r.item.name))], [reminders]);
+
+  /**
+   * 기기 트레이 배치.
+   *
+   * 트레이 하나에 알람 시각은 하나뿐이라(하드웨어 사양) "하루 세 번" 은 트레이 세 개가
+   * 된다. 그래서 배치 단위가 약이 아니라 복용 한 번이다 — 위의 slots 와 다른 이유다.
+   */
+  const trayPlan = useMemo(() => planTrays(reminders), [reminders]);
 
   // 폼시트를 읽었으면 그것이 우선한다 — 의사가 직접 채워준 일정이기 때문이다.
   //
@@ -156,31 +174,96 @@ export default function DevicePage() {
           No wiring, no network — the two screens talk by camera.
         </p>
 
-        {/* 폰 → 기기 */}
+        {/* 폰 → 기기 (WiFi) */}
         <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-          SHOW THIS TO THE DEVICE
+          SEND THE SCHEDULE
         </p>
-        {payload ? (
-          <div className="mt-2 flex flex-col items-center rounded-3xl bg-white px-5 py-6 shadow-sm">
-            <QRCodeSVG value={payload} size={200} level="M" />
-            <div className="mt-4 w-full">
-              {slots.map((s, i) => (
-                <div key={s.slot} className="flex items-center gap-2 py-1">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{ background: 'var(--color-sc-primary)' }}>
-                    {s.slot}
+        {trayPlan.plan.length > 0 ? (
+          <div className="mt-2 rounded-3xl bg-white px-4 py-4 shadow-sm">
+            <div className="flex flex-col gap-1">
+              {trayPlan.plan.map((t) => (
+                <div key={t.tray} className="flex items-center gap-2 py-1">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                        style={{ background: 'var(--color-sc-primary)' }}>
+                    {t.tray}
                   </span>
                   <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-                    {names[i] ?? `Compartment ${s.slot}`}
+                    {t.name}
                   </span>
-                  <span className="text-xs" style={{ color: 'var(--color-sc-muted)' }}>{s.times.join(' · ')}</span>
+                  <span className="text-xs" style={{ color: 'var(--color-sc-muted)' }}>{t.time}</span>
                 </div>
               ))}
             </div>
+
+            {/*
+              트레이가 모자라 못 실은 복용이 있으면 반드시 말한다. 조용히 자르면
+              기기에 없는 복용을 있다고 믿게 되는데, 그건 알람이 아예 없는 것보다 나쁘다.
+            */}
+            {trayPlan.dropped.length > 0 && (
+              <p className="mt-2 rounded-2xl px-3 py-2 text-xs font-semibold"
+                 style={{ background: 'var(--color-caution-bg)', color: 'var(--color-caution)' }}>
+                ⚠️ {trayPlan.dropped.length} more dose{trayPlan.dropped.length > 1 ? 's' : ''} did not fit — the device holds {10} trays.
+              </p>
+            )}
+
+            {/* 주소는 이 앱에 남은 유일한 문자 입력이다. 기본값을 채워 두고 바꿀 수만 있게 한다. */}
+            <label className="mt-3 flex items-center gap-2 rounded-2xl px-3 py-2"
+                   style={{ background: 'var(--color-sc-bg)' }}>
+              <span className="text-base" aria-hidden>📡</span>
+              <input
+                value={host}
+                onChange={(e) => setHost(e.target.value)}
+                spellCheck={false}
+                aria-label="Device address"
+                className="flex-1 bg-transparent text-sm outline-none"
+                style={{ color: 'var(--color-sc-ink)' }}
+              />
+            </label>
+
+            {/*
+              fetch 가 아니라 링크다. HTTPS 페이지에서 HTTP 로 요청을 보내면 브라우저가
+              막지만, 최상위 이동은 막지 않는다. 누르면 기기 자신의 확인 화면이 뜬다.
+            */}
+            <a
+              href={looksLikeHost(host) ? saveUrl(host, trayPlan.plan) : undefined}
+              className="mt-2 block rounded-2xl py-3 text-center text-sm font-bold text-white"
+              style={{ background: looksLikeHost(host) ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)' }}
+              aria-disabled={!looksLikeHost(host)}
+            >
+              Send to the device
+            </a>
+            <p className="mt-1 text-center text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
+              Both on the same Wi-Fi. The device shows what it saved.
+            </p>
           </div>
         ) : (
           <p className="mt-2 rounded-2xl bg-white px-4 py-6 text-center text-sm shadow-sm" style={{ color: 'var(--color-sc-muted)' }}>
             Scan a prescription first — the schedule it creates is what the device needs.
           </p>
+        )}
+
+        {/*
+          WiFi 가 없을 때의 대체 — 광학 내보내기.
+
+          지금 하드웨어에는 카메라가 없어 이 QR 을 읽을 수 없다. 그럼에도 지우지 않는
+          이유는 이 경로가 저인프라 환경의 유일한 대안이고(브로커도 인터넷도 필요 없다),
+          펌웨어에 판독기를 붙이는 것이 뒤에 남은 작업이기 때문이다. 지금 지우면
+          그 선택지가 있었다는 사실까지 사라진다. 그래서 접어 두고 상태를 밝힌다.
+        */}
+        {payload && (
+          <details className="mt-6">
+            <summary className="cursor-pointer text-[11px] font-bold tracking-wide"
+                     style={{ color: 'var(--color-sc-muted)' }}>
+              NO WI-FI? SHOW A CODE INSTEAD
+            </summary>
+            <div className="mt-2 flex flex-col items-center rounded-3xl bg-white px-5 py-6 shadow-sm">
+              <QRCodeSVG value={payload} size={180} level="M" />
+              <p className="mt-3 text-center text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
+                Needs a device that can read a code. The current build has no camera —
+                this path is kept for the offline case and is not wired up yet.
+              </p>
+            </div>
+          </details>
         )}
 
         {/* 종이 → 폰 : 의사가 채운 폼시트 */}
