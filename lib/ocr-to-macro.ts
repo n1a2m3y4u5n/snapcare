@@ -1,3 +1,4 @@
+import { fuzzyHasAny } from './fuzzyWord.ts';
 /**
  * OCR 텍스트 → .p 매크로 소스 변환기
  * 한국어 처방전/설명서 텍스트를 eicon 픽토그램 DSL로 변환한다.
@@ -85,11 +86,14 @@ export function extractRxInfo(rawText: string): StructuredRxInfo {
   else if (/1일\s*2회|하루\s*2번|twice|두\s*번/i.test(t))  frequency = 2;
 
   // ── 복용 시간대 ──────────────────────────────────────────────────────────
+  // 시간대는 오독에 관대해야 한다. Tesseract 는 "Morning" 을 "Moming" 으로 읽고
+  // (rn 이 m 으로 붙어 보인다), 그러면 아침 복용이 목록에서 통째로 사라진다.
+  // 관측된 결과: "하루 세 번" 이라 안내하면서 시각은 두 개만 열거되는 불일치.
   const timings: StructuredRxInfo['timings'] = [];
-  if (/아침|오전|morning/i.test(t))                         timings.push('morning');
-  if (/점심|noon|lunch/i.test(t))                          timings.push('noon');
-  if (/저녁|오후|evening|dinner/i.test(t))                 timings.push('evening');
-  if (/취침|자기\s*전|밤|night|bedtime/i.test(t))          timings.push('night');
+  if (/아침|오전/.test(t) || fuzzyHasAny(t, ['morning']))       timings.push('morning');
+  if (/점심/.test(t) || fuzzyHasAny(t, ['noon', 'lunch']))      timings.push('noon');
+  if (/저녁|오후/.test(t) || fuzzyHasAny(t, ['evening', 'dinner'])) timings.push('evening');
+  if (/취침|자기\s*전|밤/.test(t) || fuzzyHasAny(t, ['night', 'bedtime'])) timings.push('night');
 
   // ── 식전/식후 ────────────────────────────────────────────────────────────
   let mealContext: StructuredRxInfo['mealContext'] = null;
@@ -153,8 +157,14 @@ export function extractRxInfo(rawText: string): StructuredRxInfo {
   const contraindications: StructuredRxInfo['contraindications'] = [];
   // 금기는 이 파일에서 가장 중요한 추출이다 — 판정 엔진이 이걸 받아 'avoid' 를 낸다.
   // 영어 처방전에서 안 잡히면 임신부에게 'Safe' 가 뜬다.
-  if (/임산부|임신.*금기|pregnan/i.test(t)) contraindications.push('pregnant');
-  if (/수유부|수유.*(?:금기|주의)|breast[-\s]?feed|nursing\s+mother/i.test(t)) {
+  // 금기는 오독에 가장 관대해야 하는 자리다. 여기서 놓치면 임신부·수유부에게
+  // 'Safe' 가 뜬다. 실측: "breastfeeding" 이 "breastizeding" 으로 읽혀 수유 금기가
+  // 판정 엔진에 도달하지 못하고 있었다.
+  if (/임산부|임신.*금기/.test(t) || fuzzyHasAny(t, ['pregnancy', 'pregnant'])) {
+    contraindications.push('pregnant');
+  }
+  if (/수유부|수유.*(?:금기|주의)/.test(t)
+      || fuzzyHasAny(t, ['breastfeeding', 'breastfeed', 'nursing'])) {
     contraindications.push('breastfeeding');
   }
 

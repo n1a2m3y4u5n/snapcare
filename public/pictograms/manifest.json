@@ -43,5 +43,11 @@
   "e940a582": "\\dropper_bottle{\\time_evening}",
   "0af0d831": "\\dropper_bottle{\\qty_two}",
   "c85c2711": "\\dropper_bottle{\\storage_fridge}",
-  "cb8461a1": "\\no{\\contact_lens}"
+  "cb8461a1": "\\no{\\contact_lens}",
+  "d98407b9": "\\three_times_daily{\\capsule_strip{\\food_bowl}}",
+  "c7197bc1": "\\capsule_strip{\\time_morning}",
+  "567031fe": "\\twice_daily{\\dropper_bottle{\\body_eye}}",
+  "fe723fda": "\\dropper_bottle{\\time_morning}",
+  "a6af924d": "\\four_times_daily{\\liquid_bottle{\\body_mouth}}",
+  "66f76914": "\\liquid_bottle{\\time_morning}"
 }
