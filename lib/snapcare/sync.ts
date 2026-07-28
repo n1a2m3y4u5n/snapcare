@@ -1,5 +1,6 @@
 import type { Member, ScanRecord } from './types';
 import type { Reminder } from '@/stores/reminders';
+import { isSupported, publicKey, sign } from './deviceKey';
 
 /**
  * 서버 blob 스키마 버전.
@@ -33,10 +34,34 @@ export function isUsable(blob: SyncBlob | null): blob is SyncBlob {
   return true;
 }
 
-/** 서버에서 household 데이터를 가져온다 (없으면 null) */
-export async function pullBlob(key: string): Promise<SyncBlob | null> {
+/**
+ * 서명을 붙인 요청 머리말.
+ *
+ * 열쇠를 주소창에 싣지 않는 것이 요점이다. 예전에는 `?key=...` 였고, 그러면 건강
+ * 정보에 접근하는 열쇠가 서버·프록시 기록에 그대로 쌓인다.
+ */
+async function signedHeaders(method: string, body: string): Promise<HeadersInit> {
+  const ts = Date.now();
+  return {
+    'content-type': 'application/json',
+    'x-device': await publicKey(),
+    'x-ts': String(ts),
+    'x-sig': await sign(method, body, ts),
+  };
+}
+
+/**
+ * 서버에서 이 기기의 자료를 가져온다 (없으면 null).
+ *
+ * 어느 파일을 줄지는 우리가 고르지 않는다 — 서버가 **공개키에서 유도**한다. 그래서
+ * 남의 자료를 달라고 요청할 방법이 없다.
+ */
+export async function pullBlob(): Promise<SyncBlob | null> {
+  if (!isSupported()) return null;
   try {
-    const res = await fetch(`/api/store?key=${encodeURIComponent(key)}`, { cache: 'no-store' });
+    const res = await fetch('/api/store', {
+      cache: 'no-store', headers: await signedHeaders('GET', ''),
+    });
     if (!res.ok) return null;
     const { data } = (await res.json()) as { data: SyncBlob | null };
     return data;
@@ -45,13 +70,13 @@ export async function pullBlob(key: string): Promise<SyncBlob | null> {
   }
 }
 
-/** 서버에 household 데이터를 저장한다 */
-export async function pushBlob(key: string, data: SyncBlob): Promise<boolean> {
+/** 서버에 이 기기의 자료를 저장한다 */
+export async function pushBlob(data: SyncBlob): Promise<boolean> {
+  if (!isSupported()) return false;
   try {
+    const body = JSON.stringify(data);
     const res = await fetch('/api/store', {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ key, data }),
+      method: 'PUT', headers: await signedHeaders('PUT', body), body,
     });
     return res.ok;
   } catch {
