@@ -10,8 +10,6 @@
     <string name="capture_failed">Capture failed: %1$s</string>
     <string name="estimate_failed">Could not estimate: %1$s</string>
 
-    <string name="estimate_caption">Estimated from one photo — not a label</string>
-
     <string name="target_calories">Energy</string>
     <string name="target_mass">Mass</string>
     <string name="target_fat">Fat</string>

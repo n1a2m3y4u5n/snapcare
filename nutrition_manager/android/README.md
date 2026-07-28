@@ -2,7 +2,12 @@
 
 A camera with one button. Point it at a plate, press the shutter, and the five
 numbers the model regresses — energy, mass, fat, carbohydrate, protein — appear
-over the live preview for three seconds and then get out of the way.
+over the live preview and stay there until you are done with them — tap the
+panel to dismiss it, or just take the next photo.
+
+Nothing expires on a timer. Reading five numbers is not a fixed-length task, and
+a panel that vanished mid-read would leave taking another photograph as the only
+way to get it back.
 
 Everything a camera app usually offers is deliberately absent: no flash toggle,
 no zoom, no gallery, no review screen, nothing to dismiss and nothing to
@@ -148,7 +153,7 @@ only running the APK on a phone establishes the second.
 ```
 android/
   app/src/main/java/app/snapcare/mealcam/
-    MainActivity.kt     CameraX preview, the one button, the 3-second overlay
+    MainActivity.kt     CameraX preview, the one button, the results overlay
     MealModel.kt        manifest + ONNX session; the port of web/mealModel.ts
     Preprocess.kt       JPEG -> upright bitmap -> crop geometry
     Resample.kt         Pillow's triangle filter, in Kotlin

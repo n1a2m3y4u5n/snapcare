@@ -21,8 +21,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import app.snapcare.mealcam.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ExecutorService
@@ -46,7 +44,6 @@ class MainActivity : AppCompatActivity() {
 
     private var imageCapture: ImageCapture? = null
     private var model: MealModel? = null
-    private var overlayJob: Job? = null
 
     private val requestCamera = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
@@ -67,6 +64,7 @@ class MainActivity : AppCompatActivity() {
 
         cameraExecutor = Executors.newSingleThreadExecutor()
         binding.captureButton.setOnClickListener { capture() }
+        binding.results.setOnClickListener { hideEstimate() }
 
         // The graph is ~16 MB to read and compile. Doing it here, while the user
         // is still framing their first shot, is what keeps the first capture from
@@ -132,6 +130,11 @@ class MainActivity : AppCompatActivity() {
         val model = this.model ?: return
 
         binding.captureButton.isEnabled = false
+        // Clear the previous estimate the moment a new photo is taken, rather
+        // than when the new one is ready. Leaving it up during inference would
+        // show one meal's numbers over another meal's picture.
+        hideEstimate()
+
         capture.takePicture(cameraExecutor, object : ImageCapture.OnImageCapturedCallback() {
             override fun onCaptureSuccess(image: ImageProxy) {
                 // Copy out and close immediately: the capture pipeline stalls
@@ -177,7 +180,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Put the five numbers over the preview, then take them away again.
+     * Put the five numbers over the preview, and leave them there.
+     *
+     * The estimate stays until the user is done with it — either they tap it
+     * away or they take another photograph. Nothing expires on a timer: reading
+     * five numbers is not a fixed-length task, and a panel that vanished
+     * mid-read would make the only way to get it back another photograph.
      *
      * The rows are built from the manifest's target list rather than from five
      * fields in a layout, so exporting a model with different outputs changes
@@ -190,30 +198,18 @@ class MainActivity : AppCompatActivity() {
         estimate.values.forEach { (name, value) ->
             binding.results.addView(row(label(name), format(value), estimate.units[name].orEmpty()))
         }
-        // Not decoration. These are regressed from one photograph and are around
-        // a quarter off on the benchmark's own overhead frames — worse at the
-        // angle a phone is actually held. Presenting five bare numbers would
-        // claim a precision the model does not have.
-        binding.results.addView(caption())
 
-        overlayJob?.cancel()
         binding.results.alpha = 0f
         binding.results.visibility = View.VISIBLE
         binding.results.animate().alpha(1f).setDuration(FADE_MS).start()
-
-        overlayJob = lifecycleScope.launch {
-            delay(OVERLAY_MS)
-            binding.results.animate().alpha(0f).setDuration(FADE_MS).withEndAction {
-                binding.results.visibility = View.GONE
-            }.start()
-        }
     }
 
-    private fun caption(): View = TextView(this).apply {
-        setText(R.string.estimate_caption)
-        setTextColor(Color.parseColor("#B3FFFFFF"))
-        textSize = 12f
-        setPadding(0, 12, 0, 0)
+    /** Take the panel away, from a tap or from the next capture. */
+    private fun hideEstimate() {
+        if (binding.results.visibility != View.VISIBLE) return
+        binding.results.animate().alpha(0f).setDuration(FADE_MS).withEndAction {
+            binding.results.visibility = View.GONE
+        }.start()
     }
 
     private fun row(name: String, value: String, unit: String): View {
@@ -263,7 +259,6 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         const val TAG = "MealCam"
-        const val OVERLAY_MS = 3_000L
         const val FADE_MS = 150L
 
         /**
