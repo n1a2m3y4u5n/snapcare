@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useProfile } from '@/stores/profile';
@@ -43,7 +44,22 @@ const GROUPS: { key: 'now' | 'experience' | 'diagnosis'; title: string; say: str
   { key: 'diagnosis', title: 'A DOCTOR TOLD ME', say: 'A doctor told me.' },
 ];
 
+/**
+ * useSearchParams 는 미리 그려둘 수 없다 — 주소는 요청이 와야 정해진다. Suspense 로
+ * 감싸지 않으면 빌드가 이 페이지에서 멈춘다.
+ *
+ * 타입 검사와 시험만으로는 안 걸린다. 처음 넣었을 때 `npm run build` 를 돌리지 않아
+ * 그대로 커밋됐고, 배포에서 터질 뻔했다.
+ */
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" style={{ background: 'var(--color-sc-bg)' }} />}>
+      <ProfileBody />
+    </Suspense>
+  );
+}
+
+function ProfileBody() {
   const router = useRouter();
   // 첫 실행에 로그인이 여기로 보낸다. 그때는 설정 탭으로 돌아갈 자리가 없고,
   // 대신 다 골랐다고 말할 자리가 있어야 한다.
