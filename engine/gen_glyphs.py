@@ -66,6 +66,10 @@ REFS = ROOT / 'refs'
 #: 생성된 그림에서 뽑아낸 슬롯. 손으로 적은 glyphs.py 의 SLOTS 를 덮어쓴다 —
 #: 생성물이라 사람이 고쳐 쓰는 파일과 섞지 않는다.
 SLOTS_OUT = ROOT / 'slots_gen.json'
+#: 설치한 자산의 이름. build_assets.py 가 이 목록을 보고 다시 그리기를 건너뛴다 —
+#: 그러지 않으면 `--install && build_assets` 순서에서 방금 넣은 그림이 코드로 그린
+#: 그림에 즉시 덮어써진다.
+GENERATED_OUT = ROOT / 'generated.json'
 ASSETS = ROOT / 'assets'
 
 # ── 우리 규격 (engine/draw.py 와 같아야 한다) ────────────────────────────────
@@ -99,6 +103,10 @@ class Target:
     sparse: bool = False  # 점이 적은 것이 곧 뜻인가 (qty_one 등) — 잉크 하한을 면제한다
     parts: int = 0       # 떨어진 덩어리가 정확히 몇 개여야 하는가. 0 이면 세지 않는다.
     slot: bool = False   # 안쪽에 수식어가 들어가는가 — 슬롯을 그림에서 뽑아낸다
+    #: 검사를 통과하더라도 설치하지 않는다. 사람이 둘을 나란히 놓고 본 뒤 지금 자산이
+    #: 낫다고 판정한 것 — 그 판정을 여기 적어두지 않으면 다음 --force 실행이 조용히
+    #: 뒤집는다. 왜 그렇게 봤는지는 해당 Target 의 주석에 남긴다.
+    keep_current: bool = False
 
 
 TARGETS: list[Target] = [
@@ -194,9 +202,9 @@ TARGETS: list[Target] = [
         # 잉크 0.43~0.52 로 세 번 뭉쳤다. 구멍을 더 뚫는 지시는 면적을 줄이지 못했다 —
         # sugar 와 같은 처방으로 방향을 뒤집는다: 덩어리를 작게, 껍질을 선으로.
         'food_bread', 'head', 'food_bread',
-        'one thin slice of bread seen straight on, drawn small in the middle of the frame with wide '
-        'empty white space all around it, the crust drawn as a bold outline only and the inside left '
-        'completely white and empty except for three large round black holes',
+        'one slice of bread seen straight on: a solid filled black square with a rounded dome on top, '
+        'drawn small in the middle of the frame with wide empty white space around it, with three '
+        'very large round white holes punched through it. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
         'a house, a tombstone, a solid block, a mushroom, a filled square',
     ),
     Target(
@@ -215,12 +223,14 @@ TARGETS: list[Target] = [
     ),
     Target(
         'fruit', 'head', 'food_fruit',
+        # 판정: 지금 자산을 쓴다. 실루엣판은 흰 초승달이 베어 먹은 자국처럼 보이고,
+        # 윤곽선판은 세트에서 혼자 다른 언어가 된다. 지금 것으로 충분히 읽힌다.
         # 잉크 0.47 로 뭉쳤다 — 사과는 본래 덩어리라 속을 비워야 한다.
-        'an apple seen straight on, drawn as a bold thick outline with the inside left completely '
-        'open and white: a round body with a clear notch dipping into the top of the outline, one '
-        'short stem rising from the notch, and one pointed leaf beside the stem separated from it '
-        'by white space',
+        'an apple seen straight on: a solid filled black round body with a clear notch dipping into the '
+        'top of its outline and two wide white crescents punched into it, one short stem rising from '
+        'the notch, and one pointed leaf beside the stem separated from it by white space. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
         'a tomato, a cherry, a ball, a heart',
+        keep_current=True,
     ),
     Target(
         # 32px 에서 구멍 2개 소실. 잎을 크게 줄이고 몸통과의 틈을 넓힌다.
@@ -292,9 +302,11 @@ TARGETS: list[Target] = [
     Target(
         'sachet', 'head', 'sachet',
         # 잉크 0.49 로 뭉쳤다 — "large solid black rectangle" 이라고 내가 시켰다.
-        'a powder sachet seen straight on, drawn as a bold thick outline with the inside left open '
-        'and white: a rectangular pouch whose top edge is a clear zigzag saw tooth line where it '
-        'tears open, and one wide notch cut into the side near the top',
+        # 뭉침을 고치려다 속 빈 사각형이 됐다 — 봉지가 아니라 종이로 보인다. 몸통은 채우고
+        # 무게는 구멍으로 던다.
+        'a powder sachet seen straight on: a solid filled black rectangular pouch whose top edge is '
+        'a clear zigzag saw tooth line where it tears open, with two very wide white bands punched '
+        'straight across the body and one wide notch cut into the side near the top. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
         'a bread slice, an envelope, a flag, a crown',
         slot=True,
     ),
@@ -348,11 +360,16 @@ TARGETS: list[Target] = [
     ),
     Target(
         'tablet_split', 'head', 'tablet_split',
+        # 판정: 지금 자산을 쓴다. 꽉 찬 원반은 잉크 경계로 자르면 비율이 원리상 0.5 를
+        # 넘어 검사를 통과할 수 없고, 통과시키려 구멍을 뚫으면 금 간 쿠키가 된다.
         # \no{} 를 씌우면 '쪼개지 마시오' 가 된다.
-        'a round tablet broken into two halves that have been pulled slightly apart, with a wide '
-        'empty white channel running straight down between them, both halves solid black with a '
-        'clearly jagged inner break edge facing each other',
+        # 1차에서 금 간 링이 나왔다 — 갈라진 알약으로 안 읽힌다. 두 반쪽이 각각
+        # 꽉 찬 덩어리여야 '쪼갠 것' 이 된다.
+        'a round tablet broken into two halves pulled apart, each half a completely solid filled '
+        'black half-disc with no hole in it, separated by one wide empty white channel running '
+        'straight down the middle, the facing break edges clearly jagged. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
         'a full circle, a moon phase, a coin, a pill capsule',
+        keep_current=True,
     ),
 
     # ── 기기 ────────────────────────────────────────────────────────────────
@@ -455,9 +472,9 @@ TARGETS: list[Target] = [
     ),
     Target(
         'symptom_cough', 'head', 'symptom_cough',
-        'a head seen from the side facing left with the mouth open, and three short puff shapes coming '
-        'out of the mouth, each puff a separate rounded blob with clear white space between them and '
-        'the face',
+        'a head seen from the side facing left with the mouth open, drawn as a solid filled black '
+        'silhouette, and three short puff shapes coming out of the mouth, each puff a separate solid '
+        'rounded blob with clear white space between them and the face. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
         'a speech bubble, a cloud, a face on its own, steam',
     ),
     Target(
@@ -499,52 +516,61 @@ TARGETS: list[Target] = [
     # ── 사람 상태 ───────────────────────────────────────────────────────────
     Target(
         'state_infant', 'head', 'state_infant',
-        'a baby lying curled on its side seen from the side: a very large round head next to a small '
-        'curled body, the head clearly bigger than the body, with a wide white gap between the head '
-        'and the body',
+        # 판정: 지금 자산을 쓴다. 생성물은 웅크린 태아라 state_pregnant 와 헷갈릴 위험이
+        # 있고, 34px 에서는 덩어리 하나가 된다.
+        # 잉크 0.45 로 뭉쳤다. 몸을 작게 하고 머리와의 틈 하나만 크게 남긴다.
+        # 1차에서 윤곽선으로 그린 태아가 나왔다. 세트의 나머지가 전부 꽉 찬 실루엣이다.
+        'a baby lying curled on its side seen from the side, drawn small in the middle of the frame '
+        'with wide empty white space around it: one very large solid round head beside one small '
+        'solid curled body, with a single wide white channel between them. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
         'a standing child, an adult, a ball, a comma',
+        keep_current=True,
     ),
     Target(
         'state_child', 'head', 'state_child',
-        'a small standing child seen straight on: a large round head above a short wide body with two '
-        'short arms out to the sides and two short legs, with clear white gaps separating the head '
-        'from the body and each limb from the next',
+        'a small standing child seen straight on as one simple pictogram figure: a large round head '
+        'floating above a short wide body, separated only by one wide white gap at the neck; the '
+        'arms and legs are part of the body silhouette with no gaps between them',
         'an adult, a teenager, a snowman, a star',
     ),
     Target(
         'state_teen', 'head', 'state_teen',
         # 아이와 어른 사이 — 머리는 어른 비율, 몸은 아직 가늘다.
-        'a slim standing teenager seen straight on: a medium round head above a narrow tall body with '
-        'two thin arms hanging down at the sides and two long thin legs, with clear white gaps between '
-        'the arms and the body',
+        # 4회 연속 실패했다. '가는 몸' 과 '32px 에서 살아남기' 는 서로 반대라, 팔과 몸
+        # 사이의 얇은 틈은 줄이면 반드시 메워진다. 틈을 목 하나로 줄이고 비례로 구분한다.
+        'a slim standing teenager seen straight on as one simple pictogram figure: a medium round '
+        'head floating above a tall narrow body, separated only by one wide white gap at the neck; '
+        'the arms and legs are part of the body silhouette with no gaps between them',
         'a child, a heavy adult, a stick, a letter T',
     ),
     Target(
         'state_adult', 'head', 'state_adult',
-        'a standing adult seen straight on: a round head above a broad tall body with two arms out at '
-        'the sides and two long legs, the shoulders clearly wider than the head, with white gaps '
-        'separating the head, the arms and the legs',
+        'a standing adult seen straight on as one simple pictogram figure: a round head floating above '
+        'a tall body with broad square shoulders clearly wider than the head, separated only by one '
+        'wide white gap at the neck; the arms and legs are part of the body silhouette',
         'a child, a teenager, a cross, a tree',
     ),
     Target(
         'state_elderly', 'head', 'state_elderly',
-        'an old person seen from the side walking with a stick: a round head above a body bent '
-        'forward at the back, and one straight walking stick held in front, the stick clearly '
-        'separated from the body by a wide white gap',
+        'an old person seen from the side walking with a stick, as one simple pictogram figure: a round '
+        'head floating above a body whose back curves clearly forward, separated only by one wide '
+        'white gap at the neck, and one straight walking stick held well in front of the body with a '
+        'wide white channel between them',
         'a standing adult, a hiker, a letter r, a question mark',
     ),
     Target(
         'state_pregnant', 'head', 'state_pregnant',
-        'a pregnant woman seen from the side facing right: a round head above a body whose front '
-        'bulges out into one large clear rounded belly, with one arm resting under the belly and a '
-        'white gap between the arm and the body',
+        'a pregnant woman seen from the side facing right, as one simple pictogram figure: a round head '
+        'floating above a body whose front bulges out into one large clear rounded belly, separated '
+        'only by one wide white gap at the neck; the arm is part of the body silhouette',
         'a standing adult, a person with a bag, a balloon, a snowman',
     ),
     Target(
         'state_breastfeeding', 'head', 'state_breastfeeding',
-        'a seated woman seen from the side holding a baby to her chest: a large round adult head at '
-        'the top and a smaller round baby head held in the curve of her arms lower down, the two '
-        'heads clearly separate with a wide white gap between them',
+        'a seated woman seen from the side holding a baby to her chest, as one simple pictogram figure: '
+        'one large round adult head at the top and one smaller round baby head held lower down in '
+        'the curve of her arms, the two heads separated by one wide white channel and everything '
+        'else joined as a single silhouette',
         'a pregnant woman, a person holding a bag, a hugging couple',
     ),
 
@@ -598,9 +624,12 @@ TARGETS: list[Target] = [
     # parts 로 세어 확인한다 — 통과했다는 말이 '개수가 맞다' 를 포함하게 만든다.
     Target(
         'qty_one', 'modifier', 'qty_one',
-        'exactly one solid black circle in the centre of the frame, nothing else, plenty of empty '
-        'white space all around it',
-        'two circles, a ring, a donut, a target',
+        # 1차에서 속 빈 고리가 나왔다. qty_two 는 채운 점이라 하나만 고리면 세트 안에서
+        # '1' 이 아니라 '0' 으로 읽힌다. 채워져 있다는 것을 여러 번 못박는다.
+        'exactly one completely solid filled black disc in the centre of the frame, filled in all '
+        'the way through with no hole and no white centre, nothing else, plenty of empty white '
+        'space all around it',
+        'a ring, a donut, a hollow circle, an outlined circle, two circles, a target',
         sparse=True, parts=1,
     ),
     Target(
@@ -697,11 +726,13 @@ TARGETS: list[Target] = [
     ),
     Target(
         'food_empty_bowl', 'modifier', 'food_empty_bowl',
+        # 판정: 지금 자산을 쓴다. 지금 것의 X 표시가 '공복' 을 명시하는데, 생성물은 빈
+        # 그릇일 뿐이라 34px 에서 밥그릇(food_bowl)과 갈리지 않는다.
         # 비어 있음 = 공복. 가득 찬 그릇과 한눈에 갈라져야 한다.
-        'an empty bowl seen from the side: a wide shallow bowl drawn as a thick curved band only, with '
-        'nothing above its rim and a large open white area inside it, and one short straight foot '
-        'under the bowl',
+        'an empty bowl seen from the side: a wide shallow bowl drawn as one thick solid filled black '
+        'curved band with nothing heaped above its rim, and one short straight foot under it. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
         'a bowl of food, a cup, a smile, a boat',
+        keep_current=True,
     ),
     Target(
         'water_glass', 'modifier', 'water_glass',
@@ -730,9 +761,13 @@ def escalate(c: 'Check | None') -> str:
         return ''
     r = ' · '.join(c.reasons)
     if '뭉쳤다' in r:
-        return (' The shape came out far too heavy and solid. Draw it noticeably smaller inside the '
-                'frame with wide empty white space around it, as a bold outline with the inside left '
-                'open and white — do not fill the body in.')
+        # "속을 비우라" 고만 하면 윤곽선 그림이 나온다. 무게는 줄지만 세트의 나머지가
+        # 전부 꽉 찬 실루엣이라 시각 언어가 섞이고, qty_one 은 채운 점이 아니라 고리가
+        # 되어 '1' 이 아니라 '0' 으로 읽혔다. 줄이는 방법을 구멍과 크기로 한정한다.
+        return (' The shape came out far too heavy. Draw it noticeably smaller inside the frame with '
+                'wide empty white space around it, and punch two or three much larger white holes '
+                'through it. Keep it a solid filled black silhouette — do not turn it into a hollow '
+                'outline drawing with an empty white interior.')
     if '가늘다' in r:
         return (' The shape came out too thin and sparse. Make every black part much thicker and '
                 'heavier, and let it fill more of the frame. Fewer, larger, bolder masses.')
@@ -918,8 +953,11 @@ def derive_slot(im: Image.Image, size: int = 64) -> tuple[float, float, float, f
     도 같은 이유로 끝을 고른다. 두 기준 모두 *어디가 그 글리프의 몸통인가* 를 묻지
     않기 때문이다.
 
-    그래서 자리는 가운데로 **제한하고**, 그 안에서 잉크가 가장 많은 곳을 고른다.
-    윤곽을 자르지 않도록 사각형은 잉크 경계에서 떨어진 채로만 움직인다.
+    그래서 자리는 가운데로 **제한하고**, 그 안에서 잉크 안쪽으로 가장 깊은 곳을
+    고른다. 창의 크기도 그 깊이가 정한다 — 경계 상자의 좁은 쪽으로 잡아봤더니
+    주사기가 깨졌다. 대각선으로 누운 물체는 상자가 거의 정사각형이라, 상자 기준으로는
+    큰 창이 나오는데 정작 몸통은 가늘어 창이 물체보다 커진다. 깊이는 그 자리 잉크가
+    실제로 얼마나 두꺼운지를 재므로 물체의 자세와 무관하다.
     """
     a = im.resize((size, size), Image.LANCZOS).split()[-1].point(lambda v: 255 if v > 110 else 0)
     bb = a.getbbox()
@@ -929,36 +967,56 @@ def derive_slot(im: Image.Image, size: int = 64) -> tuple[float, float, float, f
     bw, bh = bx1 - bx0, by1 - by0
     px = a.load()
 
-    S = [[0] * (size + 1) for _ in range(size + 1)]
-    for y in range(size):
-        for x in range(size):
-            S[y + 1][x + 1] = S[y][x + 1] + S[y + 1][x] - S[y][x] + (1 if px[x, y] else 0)
+    # 각 화소에서 가장 가까운 여백까지의 거리 — 그 자리 잉크의 두께 (체임퍼 거리 변환)
+    BIG = size * 4
+    d = [[0 if not px[x, y] else BIG for y in range(size)] for x in range(size)]
+    for x in range(size):
+        for y in range(size):
+            if d[x][y]:
+                d[x][y] = min(d[x][y], d[x - 1][y] + 1 if x else BIG,
+                              d[x][y - 1] + 1 if y else BIG,
+                              d[x - 1][y - 1] + 1 if x and y else BIG)
+    for x in range(size - 1, -1, -1):
+        for y in range(size - 1, -1, -1):
+            if d[x][y]:
+                d[x][y] = min(d[x][y], d[x + 1][y] + 1 if x < size - 1 else BIG,
+                              d[x][y + 1] + 1 if y < size - 1 else BIG,
+                              d[x + 1][y + 1] + 1 if x < size - 1 and y < size - 1 else BIG)
 
-    side = max(int(min(bw, bh) * 0.34), 6)
-    # 사각형의 중심이 놓일 수 있는 범위 — 잉크 경계에서 안쪽으로 물러난 가운데 영역
-    lo_x, hi_x = bx0 + int(bw * 0.22), bx1 - int(bw * 0.22)
-    lo_y, hi_y = by0 + int(bh * 0.22), by1 - int(bh * 0.22)
-    best, best_rect = -1e9, None
+    # 자리는 몸통 가운데 34% 안으로 제한한다. 점수로 누르려 해봤지만 잉크량 차이가
+    # 위치 벌점을 늘 이긴다 — 반창고의 민짜 왼쪽 끝은 구멍 뚫린 가운데 패드보다 항상
+    # 잉크가 많아서, 벌점을 어디까지 올려야 하는지가 글리프마다 달라졌다.
+    lo_x, hi_x = bx0 + int(bw * 0.34), bx1 - int(bw * 0.34)
+    lo_y, hi_y = by0 + int(bh * 0.34), by1 - int(bh * 0.34)
+    best, bx, by, br = -1e9, (bx0 + bx1) // 2, (by0 + by1) // 2, size * 0.14
     for cy in range(lo_y, max(lo_y + 1, hi_y)):
         for cx in range(lo_x, max(lo_x + 1, hi_x)):
-            x, y = cx - side // 2, cy - side // 2
-            if x < 0 or y < 0 or x + side > size or y + side > size:
+            r = d[cx][cy]
+            if r <= 1:
                 continue
-            filled = (S[y + side][x + side] - S[y][x + side]
-                      - S[y + side][x] + S[y][x]) / (side * side)
-            # 잉크량이 최우선, 같은 값이면 몸통 한가운데에 가까운 쪽
-            s = filled * 100 - abs(cx - (bx0 + bx1) / 2) * 0.10 - abs(cy - (by0 + by1) / 2) * 0.10
+            # 깊은 곳이 곧 몸통이다. 같은 깊이면 한가운데에 가까운 쪽.
+            s = r * 3 - abs(cx - (bx0 + bx1) / 2) * 0.2 - abs(cy - (by0 + by1) / 2) * 0.2
             if s > best:
-                best, best_rect = s, (x / size, y / size, (x + side) / size, (y + side) / size)
-    if best_rect is None:
-        return (0.30, 0.35, 0.70, 0.75)
-    return tuple(round(v, 3) for v in best_rect)
+                best, bx, by, br = s, cx, cy, r
+    # 반변은 두께보다 조금 작게 — 윤곽에 딱 붙이면 테두리가 끊긴다.
+    half = max(br * 0.85, size * 0.09)
+    return tuple(round(min(max(v, 0.0), 1.0), 3) for v in
+                 ((bx - half) / size, (by - half) / size,
+                  (bx + half) / size, (by + half) / size))
 
 
 def check(im: Image.Image, sparse_ok: bool = False, parts_want: int = 0) -> Check:
     """
-    sparse_ok: 개수를 세는 글리프(qty_one, qty_two)는 점이 적은 것이 곧 뜻이다.
-    잉크 하한을 적용하면 올바른 설계를 결함으로 센다.
+    sparse_ok: 개수를 세는 글리프(qty_one 등)에는 잉크 상·하한을 둘 다 적용하지 않는다.
+
+    하한을 적용하면 점이 적은 올바른 설계를 결함으로 센다. 상한은 더 나쁜데,
+    conform() 이 잉크 경계로 잘라내므로 점 하나짜리 qty_one 은 그 점이 화면을 꽉
+    채운 그림이 되어 비율이 0.60 이 나온다. 그 값은 그림이 아니라 자르기를 잰 것이라
+    무엇을 그리든 통과할 수 없다.
+
+    이 글리프들에서 뜻을 지는 것은 굵기가 아니라 개수뿐이므로, 판정도 parts_want
+    하나에 맡긴다.
+
     parts_want: 떨어진 덩어리가 정확히 몇 개여야 하는가. 0 이면 세지 않는다.
     """
     reasons: list[str] = []
@@ -969,7 +1027,7 @@ def check(im: Image.Image, sparse_ok: bool = False, parts_want: int = 0) -> Chec
             reasons.append(f'개수가 틀렸다 ({got}개, {parts_want}개여야 한다)')
     if ink < INK_MIN and not sparse_ok:
         reasons.append(f'너무 가늘다 (잉크 {ink:.2f} < {INK_MIN})')
-    if ink > INK_MAX:
+    if ink > INK_MAX and not sparse_ok:
         reasons.append(f'너무 뭉쳤다 (잉크 {ink:.2f} > {INK_MAX})')
 
     small = im.resize((SMALL, SMALL), Image.LANCZOS)
@@ -1048,6 +1106,23 @@ def sheet(path: Path, per_row: int = 8) -> None:
     print(f'검토표 → {path}')
 
 
+def install(t: Target, im: Image.Image, slots: dict, names: set) -> None:
+    """검사를 통과한 그림을 자산으로 옮기고, 슬롯이 있으면 그림에서 뽑아 기록한다."""
+    if t.keep_current:
+        print(f'{t.name:11} 설치 안 함 (지금 자산이 낫다고 판정된 것)')
+        names.discard(t.asset)
+        return
+    names.add(t.asset)
+    dest = ASSETS / t.role / f'{t.asset}.png'
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    im.save(dest)
+    line = f'{t.name:11} 설치 → {dest.relative_to(ROOT.parent)}'
+    if t.slot:
+        slots[t.asset] = derive_slot(im)
+        line += f'  슬롯 {slots[t.asset]}'
+    print(line)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('names', nargs='*', help='생성할 형태소 (비우면 아직 없는 것 전부)')
@@ -1072,12 +1147,22 @@ def main() -> None:
     REFS.mkdir(exist_ok=True)
     # 이번에 뽑지 않은 head 의 슬롯까지 날려버리면 안 되므로 기존 것을 읽고 덮어쓴다.
     slots = json.loads(SLOTS_OUT.read_text()) if SLOTS_OUT.exists() else {}
+    names = set(json.loads(GENERATED_OUT.read_text())) if GENERATED_OUT.exists() else set()
 
     passed, failed = [], []
     for t in chosen:
         out = REFS / f'{t.name}.png'
         if out.exists() and not args.force and args.names == []:
-            print(f'{t.name:11} 건너뜀 (이미 있음)')
+            # 이미 뽑아둔 것은 다시 생성하지 않는다. 그렇다고 설치까지 건너뛰면
+            # --install 이 아무것도 하지 않는다 — 설치는 생성의 결과를 옮기는 일이지
+            # 생성 자체가 아니다. 검사만 다시 하고 통과한 것을 옮긴다.
+            im = Image.open(out).convert('RGBA')
+            c = check(im, sparse_ok=t.sparse, parts_want=t.parts)
+            (passed if c.ok else failed).append((t, c.reasons))
+            if args.install and c.ok and not t.keep_current:
+                install(t, im, slots, names)
+            else:
+                print(f'{t.name:11} 건너뜀 (이미 있음)')
             continue
 
         best = None   # (점수, 이미지, 검사결과, 시도번호)
@@ -1112,17 +1197,14 @@ def main() -> None:
         (passed if c.ok else failed).append((t, c.reasons))
 
         if c.ok and args.install:
-            dest = ASSETS / t.role / f'{t.asset}.png'
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            im.save(dest)
-            print(f'{"":11}   설치 → {dest.relative_to(ROOT.parent)}')
-            if t.slot:
-                slots[t.asset] = derive_slot(im)
-                print(f'{"":11}   슬롯 {slots[t.asset]}')
+            install(t, im, slots, names)
 
-    if args.install and slots:
-        SLOTS_OUT.write_text(json.dumps(slots, indent=1, sort_keys=True) + '\n')
-        print(f'슬롯 {len(slots)}개 → {SLOTS_OUT.relative_to(ROOT.parent)}')
+    if args.install:
+        if slots:
+            SLOTS_OUT.write_text(json.dumps(slots, indent=1, sort_keys=True) + '\n')
+            print(f'슬롯 {len(slots)}개 → {SLOTS_OUT.relative_to(ROOT.parent)}')
+        GENERATED_OUT.write_text(json.dumps(sorted(names), indent=1) + '\n')
+        print(f'설치 목록 {len(names)}개 → {GENERATED_OUT.relative_to(ROOT.parent)}')
 
     print(f'\n통과 {len(passed)} · 실패 {len(failed)}')
     if failed and not args.install:

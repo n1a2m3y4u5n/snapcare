@@ -16,7 +16,8 @@
  * 없을 수 있는데, 그것 때문에 빌드가 깨지면 안 된다.
  */
 import { execFile } from 'node:child_process';
-import { mkdirSync, existsSync, readdirSync, writeFileSync, readFileSync, copyFileSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdirSync, existsSync, readdirSync, statSync, writeFileSync, readFileSync, copyFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
@@ -102,6 +103,35 @@ async function renderBatch(batch, python) {
   return { moved: batch.length, skipped: 0 };
 }
 
+/**
+ * 지금 자산의 지문. 캐시가 어느 그림으로 그려졌는지를 이 값으로 기억한다.
+ *
+ * 캐시 키(dslKey)는 DSL 문자열만 쓴다. 그런데 렌더 결과는 DSL 뿐 아니라 **자산**에도
+ * 달려 있어서, 글리프를 새로 뽑아 넣어도 키는 그대로다 — 옛 그림이 영원히 적중한다.
+ * 실제로 78개 중 74개를 갈아끼운 날 prewarm 은 "전부 캐시에 있음" 이라고 답했다.
+ *
+ * 키에 자산 판을 섞는 방법도 있지만, 그러면 브라우저 쪽 dsl.ts 까지 같은 값을 알아야
+ * 한다. 여기서는 캐시 전체를 한 덩어리로 보고, 지문이 다르면 통째로 버린다.
+ */
+function assetsFingerprint() {
+  const dir = join(ROOT, 'engine', 'assets');
+  if (!existsSync(dir)) return '';
+  const h = createHash('sha1');
+  // 사전도 함께 센다. 합성 결과는 그림뿐 아니라 **슬롯 좌표**에도 달려 있고, 그
+  // 좌표는 dictionary.json 에 있다. 그림만 세면 슬롯을 고친 날 캐시가 그대로 남는다.
+  const dict = join(ROOT, 'engine', 'dictionary.json');
+  if (existsSync(dict)) h.update(readFileSync(dict));
+  const walk = (d) => {
+    for (const name of readdirSync(d).sort()) {
+      const p = join(d, name);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (name.endsWith('.png')) { h.update(name); h.update(readFileSync(p)); }
+    }
+  };
+  walk(dir);
+  return h.digest('hex').slice(0, 16);
+}
+
 async function main() {
   if (!existsSync(ENGINE)) {
     console.log('[prewarm] engine 없음 — 건너뜀');
@@ -109,9 +139,23 @@ async function main() {
   }
   mkdirSync(CACHE, { recursive: true });
 
+  const fp = assetsFingerprint();
+  let manifest = {};
+  try { manifest = JSON.parse(readFileSync(MANIFEST, 'utf8')); } catch { /* 첫 실행 */ }
+  if (manifest.__assets && manifest.__assets !== fp) {
+    const stale = readdirSync(CACHE).filter((f) => f.endsWith('.png'));
+    for (const f of stale) rmSync(join(CACHE, f), { force: true });
+    console.log(`[prewarm] 자산이 바뀌었다 (${manifest.__assets} → ${fp}) — 캐시 ${stale.length}개 버림`);
+    manifest = {};
+  }
+
   const all = labels();
   const missing = all.filter((l) => !existsSync(join(CACHE, cacheName(l))));
   if (missing.length === 0) {
+    if (manifest.__assets !== fp) {
+      manifest.__assets = fp;
+      writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+    }
     console.log(`[prewarm] ${all.length}개 전부 캐시에 있음`);
     return;
   }
@@ -129,11 +173,10 @@ async function main() {
 
   // 매니페스트도 갱신한다 — API 가 키에서 라벨을 되찾는 데 쓴다.
   if (moved > 0) {
-    let manifest = {};
-    try { manifest = JSON.parse(readFileSync(MANIFEST, 'utf8')); } catch { /* 첫 실행 */ }
     for (const l of missing) {
       if (existsSync(join(CACHE, cacheName(l)))) manifest[dslKey(l)] = l;
     }
+    manifest.__assets = fp;
     writeFileSync(MANIFEST, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
   }
   console.log(`[prewarm] ${moved} 렌더${skipped ? `, ${skipped} 건너뜀` : ''} (전체 ${all.length})`);
