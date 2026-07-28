@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Reaction, ScanRecord, Symptom } from '@/lib/snapcare/types';
 import { PROFILE_ID } from './profile';
+import { prune } from '@/lib/snapcare/retention';
 
 /**
  * 시드 최근 스캔 (와이어프레임 홈 RECENT 피드 기준).
@@ -30,13 +31,23 @@ export const useScans = create<ScansState>()(
       scans: SEED_SCANS,
       // 30개는 열흘 남짓이라 식이 일지로는 짧다 — 한 성분이 네 번 이상 나오고
       // 그것이 없는 끼니도 있어야 비교가 성립한다. 늘려도 localStorage 여유 안이다.
-      addScan: (rec) => set((s) => ({ scans: [rec, ...s.scans].slice(0, 200) })),
+      addScan: (rec) => set((s) => ({ scans: prune([rec, ...s.scans], todayKey()) })),
       setReaction: (id, reaction, symptoms) => set((s) => ({
         scans: s.scans.map((r) => (r.id === id ? { ...r, reaction, symptoms } : r)),
       })),
       clear: () => set({ scans: [] }),
     }),
     {
+      /**
+       * 불러올 때도 한 번 떨어낸다.
+       *
+       * addScan 에서만 떨어내면, 앱을 한동안 쓰지 않은 사람의 오래된 기록은 다음에
+       * 무언가를 스캔할 때까지 그대로 남는다. 정작 오래 안 쓴 사람일수록 오래된
+       * 기록을 들고 있게 되는 셈이다.
+       */
+      onRehydrateStorage: () => (state) => {
+        if (state) state.scans = prune(state.scans, todayKey());
+      },
       name: 'snapcare-scans',
       /**
        * v2: 하루 누적 분석을 위해 dayKey/barcode/grams 가 추가됐다.
