@@ -39,12 +39,14 @@ val stageModel by tasks.registering(Copy::class) {
 
 android {
     namespace = "app.snapcare.mealcam"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "app.snapcare.mealcam"
+        // Android 7. Nothing here needs anything newer, and the phones this is
+        // most useful on are not the new ones.
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "0.1"
     }
@@ -69,6 +71,20 @@ android {
         noCompress.add("onnx")
     }
 
+    // ONNX Runtime ships a native library per ABI, and they dominate the APK:
+    // built as one universal file it is 91 MB, of which any given phone uses a
+    // quarter. Splitting gets a real device to ~35 MB. The universal APK is kept
+    // because it is the one that installs anywhere without asking what the
+    // target is.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
+        }
+    }
+
     buildFeatures {
         viewBinding = true
     }
@@ -78,8 +94,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 

@@ -20,11 +20,29 @@ Needs an Android SDK (Android Studio installs one) and JDK 17+.
 cd nutrition_manager/android
 echo "sdk.dir=$HOME/Android/Sdk" > local.properties   # or wherever yours is
 ./gradlew assembleDebug
-# app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Install it with `adb install -r app/build/outputs/apk/debug/app-debug.apk`, or
-open the directory in Android Studio and press Run.
+That writes one APK per ABI plus a universal one:
+
+| | |
+|---|---|
+| `app-arm64-v8a-debug.apk` | **38 MB** — any phone from the last several years |
+| `app-armeabi-v7a-debug.apk` | 33 MB — 32-bit ARM |
+| `app-x86_64-debug.apk` | 40 MB — emulators |
+| `app-universal-debug.apk` | 91 MB — installs anywhere |
+
+The split exists because ONNX Runtime ships a native library per ABI and they
+dominate the download; a single universal APK is 91 MB, of which any given
+phone uses a quarter. Of the 38 MB arm64 build, 17.5 MB is the runtime and
+16 MB is the model.
+
+Install with `adb install -r app/build/outputs/apk/debug/app-arm64-v8a-debug.apk`,
+or open the directory in Android Studio and press Run.
+
+Toolchain versions are pinned together in `build.gradle.kts` and
+`gradle/wrapper/gradle-wrapper.properties`: API 36 needs AGP 8.9+, and AGP 8.13
+needs Gradle 8.13+. Moving one without the others is the usual way this stops
+resolving.
 
 The build is signed with the standard debug key, so it installs on a normal
 phone with "install unknown apps" enabled and does **not** need a rooted device
