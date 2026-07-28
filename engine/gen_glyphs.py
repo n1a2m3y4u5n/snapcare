@@ -107,6 +107,18 @@ class Target:
     #: 낫다고 판정한 것 — 그 판정을 여기 적어두지 않으면 다음 --force 실행이 조용히
     #: 뒤집는다. 왜 그렇게 봤는지는 해당 Target 의 주석에 남긴다.
     keep_current: bool = False
+    #: 사람(또는 Vision)에게 "무엇으로 보이나" 를 물었을 때 나와야 하는 말.
+    #: 비우면 이름에서 만든다 — allergen_peanut → peanut.
+    means: str = ''
+
+
+def expected_meaning(t: 'Target') -> str:
+    if t.means:
+        return t.means
+    n = t.name
+    for p in ('allergen_', 'food_', 'symptom_', 'state_', 'body_', 'storage_', 'time_'):
+        n = n.removeprefix(p)
+    return n.replace('_', ' ')
 
 
 TARGETS: list[Target] = [
@@ -126,6 +138,7 @@ TARGETS: list[Target] = [
         'top, the rim of the cup drawn as a clear zigzag notch across the middle so the outline has '
         'an obvious step, with one wide white crescent punched into the nut',
         'a water drop, a teardrop, a flame, a leaf',
+        means='hazelnut',
     ),
     Target(
         'egg', 'head', 'allergen_egg',
@@ -133,6 +146,7 @@ TARGETS: list[Target] = [
         'circle in the middle, the yolk separated from the rim by a broad white ring so the two read '
         'as clearly different parts',
         'a peanut, a target, a button, a plain circle',
+        means='fried egg',
     ),
     Target(
         'fish', 'head', 'allergen_fish',
@@ -146,6 +160,7 @@ TARGETS: list[Target] = [
         'a milk carton seen straight on: a tall rectangle with a folded triangular gable roof on top, '
         'and one wide horizontal white band punched across the middle to read as a label',
         'a house, a bottle, a box, a bread slice',
+        means='milk carton',
     ),
     Target(
         'gluten', 'head', 'allergen_gluten',
@@ -153,12 +168,14 @@ TARGETS: list[Target] = [
         'pointed grains angled upwards along it, each grain a separate shape with clear white gaps '
         'between it and its neighbours so the outline is strongly serrated',
         'a feather, a leaf, a tree, a fish bone',
+        means='wheat',
     ),
     Target(
         'soy', 'head', 'allergen_soy',
         'a soybean pod seen from the side: a long curved pod, its outline bulging into three rounded '
         'humps, with three large round white circles punched through it to show the beans inside',
         'a peanut, a banana, a caterpillar, a crescent moon',
+        means='soybean pod',
     ),
     Target(
         'sesame', 'head', 'allergen_sesame',
@@ -167,12 +184,14 @@ TARGETS: list[Target] = [
         'small solid black teardrop shape tilted at a different angle, no container, no bowl, nothing '
         'joining them',
         'rice grains, a flower, leaves, a cluster',
+        means='sesame seeds',
     ),
     Target(
         'shellfish', 'head', 'allergen_shellfish',
         'a shrimp seen from the side, its body curved into a strong C shape with the tail fanning out '
         'at one end, and four wide white lines punched across the body to read as segments',
         'a fish, a comma, a crescent moon, a leaf',
+        means='shrimp',
     ),
 
     # ── 음식 ────────────────────────────────────────────────────────────────
@@ -184,12 +203,14 @@ TARGETS: list[Target] = [
         'them, each cube a small solid black square no more than one third of the image wide, drawn '
         'in simple flat front view, the three cubes clearly separate and not touching',
         'a bar chart, a solid block, dice, bricks, one big square',
+        means='sugar cubes',
     ),
     Target(
         'oil', 'head', 'food_oil',
         'a cooking oil bottle with a narrow neck and a wide body, tilted, with one large round drop '
         'falling from the spout and clearly separated from the bottle by white space',
         'a water bottle, a milk carton, a single drop on its own',
+        means='oil bottle',
     ),
     Target(
         'salt', 'head', 'food_salt',
@@ -197,6 +218,7 @@ TARGETS: list[Target] = [
         'round white holes punched through the cap, and three small solid grains falling below the '
         'shaker with clear white space between them and the shaker',
         'a pepper mill, a bottle, a chess pawn, a lighthouse',
+        means='salt shaker',
     ),
     Target(
         # 잉크 0.43~0.52 로 세 번 뭉쳤다. 구멍을 더 뚫는 지시는 면적을 줄이지 못했다 —
@@ -213,6 +235,7 @@ TARGETS: list[Target] = [
         'rounded mound of rice heaped above it, and three wide white notches cut into the mound so it '
         'does not read as one solid lump',
         'a cup, a hat, a hill, an empty bowl, a boat',
+        means='bowl of rice',
     ),
     Target(
         'meat', 'head', 'food_meat',
@@ -220,6 +243,7 @@ TARGETS: list[Target] = [
         'sticking out at one end ending in two small round knobs, and one wide white curved line '
         'punched inside the meat to separate the fat rim from the middle',
         'a chicken leg, a hand, a leaf, a club',
+        means='meat',
     ),
     Target(
         'fruit', 'head', 'food_fruit',
@@ -231,6 +255,7 @@ TARGETS: list[Target] = [
         'the notch, and one pointed leaf beside the stem separated from it by white space. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
         'a tomato, a cherry, a ball, a heart',
         keep_current=True,
+        means='apple',
     ),
     Target(
         # 32px 에서 구멍 2개 소실. 잎을 크게 줄이고 몸통과의 틈을 넓힌다.
@@ -239,6 +264,7 @@ TARGETS: list[Target] = [
         'the leaves clearly detached from the carrot by wide white gaps, and two wide white notches '
         'cut into the side of the carrot',
         'a flame, a tooth, an arrow, an ice cream cone',
+        means='carrot',
     ),
     Target(
         'caffeine', 'head', 'caffeine',
@@ -246,6 +272,7 @@ TARGETS: list[Target] = [
         'the right, the handle a bold ring with a wide white hole through its middle, and two wavy '
         'steam lines rising above the cup clearly separated from it',
         'a mug with no handle, a bucket, a pot, a bell',
+        means='coffee cup',
     ),
     Target(
         'no_alcohol', 'head', 'no_alcohol',
@@ -254,6 +281,7 @@ TARGETS: list[Target] = [
         'base, with the lower half of the bowl filled solid black and the upper half left white and '
         'open so the rim reads as a clear thin line',
         'a trophy, a funnel, a tree, a mushroom, a martini glass',
+        means='wine glass',
     ),
 
     # ── 제형 ────────────────────────────────────────────────────────────────
@@ -317,6 +345,7 @@ TARGETS: list[Target] = [
         'other half drawn as a bold outline with white inside',
         'a battery, a pill bottle, a tablet, a bean',
         slot=True,
+        means='capsule',
     ),
     Target(
         'tablet_blister', 'head', 'tablet_blister',
@@ -357,6 +386,7 @@ TARGETS: list[Target] = [
         'arcs clearly separated from the bottle by white space, and one wide white line across the '
         'neck of the bottle',
         'a bell, a maraca, a plain bottle, a rattle',
+        means='bottle shaking',
     ),
     Target(
         'tablet_split', 'head', 'tablet_split',
@@ -370,6 +400,7 @@ TARGETS: list[Target] = [
         'straight down the middle, the facing break edges clearly jagged. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
         'a full circle, a moon phase, a coin, a pill capsule',
         keep_current=True,
+        means='tablet broken in half',
     ),
 
     # ── 기기 ────────────────────────────────────────────────────────────────
@@ -413,6 +444,7 @@ TARGETS: list[Target] = [
         'wide almond outline with one solid round pupil inside, and the lens is a thin shallow arc '
         'sitting on the finger, clearly separated from the eye by white space',
         'a hill, a bowl, an eye on its own, a smile',
+        means='eye',
     ),
 
     # ── 행동 ────────────────────────────────────────────────────────────────
@@ -423,6 +455,7 @@ TARGETS: list[Target] = [
         'finger so the outline is strongly toothed, with three round water drops falling above it '
         'clearly separated from the hand',
         'a flame, a leaf, a glove, a star, a tree',
+        means='hand',
     ),
     Target(
         'call_help', 'head', 'call_help',
@@ -430,6 +463,7 @@ TARGETS: list[Target] = [
         'earpiece at each end, and two curved sound arcs beside the upper end clearly separated from '
         'the handset by white space',
         'a bone, a banana, a smile, a bracket',
+        means='telephone',
     ),
     Target(
         'vehicle', 'head', 'vehicle',
@@ -438,6 +472,7 @@ TARGETS: list[Target] = [
         'round white wheel holes punched through the bottom, and one wide white window shape punched '
         'into the cabin',
         'a bus, a shoe, a boat, a hill',
+        means='car',
     ),
     Target(
         'finish_course', 'head', 'finish_course',
@@ -446,6 +481,7 @@ TARGETS: list[Target] = [
         'boxes filled solid black and the last two drawn as bold empty outlines, all five the same '
         'size and in a straight line',
         'a bar chart, a calendar grid, a barcode, a ruler',
+        means='row of boxes',
     ),
 
     # ── 증상 ────────────────────────────────────────────────────────────────
@@ -462,6 +498,7 @@ TARGETS: list[Target] = [
         'white opening between them taking up most of the middle, and three large round white dots '
         'above the upper lip to read as a rash or swelling',
         'an eye, a leaf, a closed mouth, a boat',
+        means='swollen mouth',
     ),
     Target(
         'symptom_fever', 'head', 'symptom_fever',
@@ -469,6 +506,7 @@ TARGETS: list[Target] = [
         'bold rounded outline and the thermometer is one straight bar lying horizontally over the '
         'forehead, with a wide white gap between the bar and the top of the head',
         'a plain face, a clock, a sun, a helmet',
+        means='fever',
     ),
     Target(
         'symptom_cough', 'head', 'symptom_cough',
@@ -476,6 +514,7 @@ TARGETS: list[Target] = [
         'silhouette, and three short puff shapes coming out of the mouth, each puff a separate solid '
         'rounded blob with clear white space between them and the face. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
         'a speech bubble, a cloud, a face on its own, steam',
+        means='coughing',
     ),
     Target(
         'symptom_breath', 'head', 'symptom_breath',
@@ -483,6 +522,7 @@ TARGETS: list[Target] = [
         'straight windpipe, with a wide white channel running down between the two lobes and two wide '
         'white branch lines punched inside each lobe',
         'a heart, a tree, a butterfly, a cloud',
+        means='lungs',
     ),
     Target(
         'symptom_gut', 'head', 'symptom_gut',
@@ -490,6 +530,7 @@ TARGETS: list[Target] = [
         'a rounded belly shape with one bold lightning bolt punched through it as a white zigzag, the '
         'zigzag wide enough to stay open in a tiny icon, and nothing else in the frame',
         'an egg, a decorated egg, a balloon, a cloud',
+        means='stomach ache',
     ),
     Target(
         'symptom_vomit', 'head', 'symptom_vomit',
@@ -497,6 +538,7 @@ TARGETS: list[Target] = [
         'downwards out of the open mouth and ending in two separate round drops below, the drops '
         'clearly detached from the stream',
         'a watering can, a face on its own, a teapot, a fountain',
+        means='vomiting',
     ),
     Target(
         'symptom_dizzy', 'head', 'symptom_dizzy',
@@ -504,6 +546,7 @@ TARGETS: list[Target] = [
         'coiled line with wide white space between each turn, the spiral clearly separated from the '
         'head',
         'a face on its own, a snail, a lollipop, a cloud',
+        means='dizzy',
     ),
     Target(
         'warn_bleeding', 'head', 'warn_bleeding',
@@ -511,6 +554,7 @@ TARGETS: list[Target] = [
         'a stomach shown as a curved pouch shape leaning to one side with a short tube at the top and '
         'a short tube at the bottom, and two large round white drop shapes punched inside the pouch',
         'a plain drop, a bean, a kidney, a comma',
+        means='stomach',
     ),
 
     # ── 사람 상태 ───────────────────────────────────────────────────────────
@@ -557,6 +601,7 @@ TARGETS: list[Target] = [
         'white gap at the neck, and one straight walking stick held well in front of the body with a '
         'wide white channel between them',
         'a standing adult, a hiker, a letter r, a question mark',
+        means='old person',
     ),
     Target(
         'state_pregnant', 'head', 'state_pregnant',
@@ -564,6 +609,7 @@ TARGETS: list[Target] = [
         'floating above a body whose front bulges out into one large clear rounded belly, separated '
         'only by one wide white gap at the neck; the arm is part of the body silhouette',
         'a standing adult, a person with a bag, a balloon, a snowman',
+        means='pregnant',
     ),
     Target(
         'state_breastfeeding', 'head', 'state_breastfeeding',
@@ -572,6 +618,7 @@ TARGETS: list[Target] = [
         'the curve of her arms, the two heads separated by one wide white channel and everything '
         'else joined as a single silhouette',
         'a pregnant woman, a person holding a bag, a hugging couple',
+        means='breastfeeding',
     ),
 
     # ── 수식어: 몸 ──────────────────────────────────────────────────────────
@@ -610,6 +657,7 @@ TARGETS: list[Target] = [
         'around them',
         'a solid square, a tile, water waves, a flag, an equals sign',
         parts=3,
+        means='skin',
     ),
     Target(
         'body_stomach', 'modifier', 'body_stomach',
@@ -631,6 +679,7 @@ TARGETS: list[Target] = [
         'space all around it',
         'a ring, a donut, a hollow circle, an outlined circle, two circles, a target',
         sparse=True, parts=1,
+        means='one dot',
     ),
     Target(
         'qty_two', 'modifier', 'qty_two',
@@ -638,6 +687,7 @@ TARGETS: list[Target] = [
         'size, nothing else in the frame',
         'one circle, three circles, a colon, an ellipsis',
         sparse=True, parts=2,
+        means='two dots',
     ),
     Target(
         'qty_three', 'modifier', 'qty_three',
@@ -645,6 +695,7 @@ TARGETS: list[Target] = [
         'all the same size, nothing else in the frame',
         'two circles, four circles, a cluster, a flower',
         sparse=True, parts=3,
+        means='three dots',
     ),
     Target(
         'qty_four', 'modifier', 'qty_four',
@@ -652,6 +703,7 @@ TARGETS: list[Target] = [
         'between them, all the same size, nothing else in the frame',
         'three circles, five circles, a die face, a window',
         sparse=True, parts=4,
+        means='four dots',
     ),
     Target(
         'qty_five', 'modifier', 'qty_five',
@@ -659,6 +711,7 @@ TARGETS: list[Target] = [
         'and one in the middle, wide white gaps between them, nothing else in the frame',
         'four circles, six circles, a flower, an X',
         sparse=True, parts=5,
+        means='five dots',
     ),
 
     # ── 수식어: 시각 ────────────────────────────────────────────────────────
@@ -670,6 +723,7 @@ TARGETS: list[Target] = [
         'a full sun, a setting sun, a moon, an umbrella',
         # 개수를 세지 않는다: 해가 지평선에 닿으면 한 덩어리라 세는 값이 흔들리는데,
         # 여기서 뜻을 지는 것은 개수가 아니라 '지평선 위/아래' 라는 배치다.
+        means='sunrise',
     ),
     Target(
         'time_noon', 'modifier', 'time_noon',
@@ -677,6 +731,7 @@ TARGETS: list[Target] = [
         'rays pointing outwards all around it, every ray clearly detached from the circle by white '
         'space, and no horizon line',
         'a rising sun, a flower, a star, a gear',
+        means='sun',
     ),
     Target(
         'time_evening', 'modifier', 'time_evening',
@@ -684,6 +739,7 @@ TARGETS: list[Target] = [
         'circle sitting below it so most of the sun is hidden, and two short downward arrows above '
         'the line clearly separated from the sun',
         'a rising sun, a full sun, a bowl, a smile',
+        means='sunset',
     ),
     Target(
         'time_night', 'modifier', 'time_night',
@@ -691,6 +747,7 @@ TARGETS: list[Target] = [
         'the top and bottom, with two small solid stars beside the opening clearly separated from the '
         'moon by white space',
         'a full moon, a banana, a letter C, a sun',
+        means='crescent moon',
     ),
 
     # ── 수식어: 보관 ────────────────────────────────────────────────────────
@@ -699,6 +756,7 @@ TARGETS: list[Target] = [
         'a snowflake: six straight bold arms radiating from a common centre at even angles, each arm '
         'with two short side branches, with wide white space between neighbouring arms',
         'a star, an asterisk, a flower, a wheel',
+        means='snowflake',
     ),
     Target(
         'storage_dry', 'modifier', 'storage_dry',
@@ -707,6 +765,7 @@ TARGETS: list[Target] = [
         'X punched right through it as wide white channels so the X reads as empty space cut out of '
         'the drop',
         'a plain drop, a flame, a balloon, a leaf',
+        means='drop crossed out',
     ),
     Target(
         'storage_dark', 'modifier', 'storage_dark',
@@ -714,6 +773,7 @@ TARGETS: list[Target] = [
         'bar crossing the whole shape diagonally from the lower left to the upper right, the bar '
         'separated from the rays by white gaps on both sides',
         'a plain sun, a no entry sign, a clock, a wheel',
+        means='sun crossed out',
     ),
 
     # ── 수식어: 식사·물 ─────────────────────────────────────────────────────
@@ -723,6 +783,7 @@ TARGETS: list[Target] = [
         'rounded mound of food heaped above its rim, and one wide white line separating the mound '
         'from the bowl',
         'an empty bowl, a cup, a hat, a hill',
+        means='bowl of food',
     ),
     Target(
         'food_empty_bowl', 'modifier', 'food_empty_bowl',
@@ -733,6 +794,7 @@ TARGETS: list[Target] = [
         'curved band with nothing heaped above its rim, and one short straight foot under it. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
         'a bowl of food, a cup, a smile, a boat',
         keep_current=True,
+        means='empty bowl',
     ),
     Target(
         'water_glass', 'modifier', 'water_glass',
@@ -740,6 +802,7 @@ TARGETS: list[Target] = [
         'as a bold outline, filled solid black only up to about two thirds of its height, with the '
         'top third left white and open',
         'a wine glass, a bucket, a cup with a handle, a box',
+        means='glass of water',
     ),
 ]
 
@@ -774,6 +837,12 @@ def escalate(c: 'Check | None') -> str:
     if '개수' in r:
         return (' The number of separate shapes was wrong. Draw exactly the number stated, each one '
                 'fully detached from the others with wide white space between them.')
+    if '뜻이 안 맞는다' in r:
+        # 굵기를 고쳐봐야 소용없다 — 잘못 그린 것은 형태이지 무게가 아니다.
+        return (f' The previous attempt was misread: it {r.split("—")[-1].strip()}. '
+                'Redraw it so the object is unmistakable at a glance: change the shape and the '
+                'outline, not the weight. Exaggerate the one feature that makes this object '
+                'different from anything else.')
     if '구멍' in r or '뭉갠다' in r:
         return (' The white holes closed up when the image was shrunk. Use far fewer holes and make '
                 'each one much larger — at most three, each at least one sixth of the image wide.')
@@ -790,6 +859,79 @@ def prompt_for(t: Target, last: 'Check | None' = None) -> str:
 
 
 # ── 생성 ────────────────────────────────────────────────────────────────────
+
+VISION_API = 'https://api.anthropic.com/v1/messages'
+VISION_MODEL = os.environ.get('VISION_MODEL', 'claude-sonnet-5')
+
+
+def verify_meaning(im: Image.Image, expect: str, not_like: str) -> tuple[bool, str]:
+    """이 그림이 무엇으로 보이는지 묻는다. 답이 기대와 다르면 통과시키지 않는다.
+
+    기계 검사가 못 잡는 자리가 여기다. qty_one 이 속 빈 고리로 나온 날, 잉크량도
+    구멍도 개수도 전부 통과했다 — 사람이 확대해서 보고서야 그게 '1' 이 아니라 '0'
+    으로 읽힌다는 것을 알았다.
+
+    묻는 방식이 중요하다. "이것이 땅콩입니까?" 라고 물으면 웬만하면 그렇다고 한다.
+    그래서 **무엇으로 보이는지를 먼저 열어 놓고 묻고**, 그 답이 기대한 것과 맞는지를
+    우리가 판정한다. ISO 9186 의 이해도 시험이 보기를 주지 않고 서술하게 하는 것과
+    같은 이유다.
+
+    작게 줄인 그림을 함께 보낸다. 512px 에서 무엇인지 알아보는 것은 우리 문제가
+    아니다 — 목록에서 34px 로 보일 때 알아보는 것이 문제다.
+    """
+    key = os.environ.get('ANTHROPIC_API_KEY')
+    if not key:
+        return True, '건너뜀 (ANTHROPIC_API_KEY 없음)'
+
+    def b64(img: Image.Image) -> str:
+        flat = Image.new('RGB', img.size, 'white')
+        flat.paste(img, (0, 0), img)
+        buf = io.BytesIO()
+        flat.save(buf, format='PNG')
+        return base64.b64encode(buf.getvalue()).decode()
+
+    small = im.resize((SMALL, SMALL), Image.LANCZOS).resize((256, 256), Image.NEAREST)
+    ask = (
+        'These are two views of the same black-and-white pictogram: the first at full size, '
+        'the second shrunk to 32 pixels and blown back up — that second one is how it will '
+        'actually be seen.\n\n'
+        'Answer as JSON only, no other text:\n'
+        '{"is": "<what single object or idea the SMALL one depicts, 1-4 words>", '
+        '"confusable": "<the one thing it could most easily be mistaken for, 1-4 words>"}\n\n'
+        'Say what you actually see. Do not guess what it is supposed to be.'
+    )
+    body = json.dumps({
+        'model': VISION_MODEL, 'max_tokens': 200,
+        'messages': [{'role': 'user', 'content': [
+            {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/png', 'data': b64(im)}},
+            {'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/png', 'data': b64(small)}},
+            {'type': 'text', 'text': ask},
+        ]}],
+    }).encode()
+    req = urllib.request.Request(VISION_API, data=body, headers={
+        'x-api-key': key, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=90) as resp:
+            text = json.load(resp)['content'][0]['text']
+        seen = json.loads(text[text.index('{'):text.rindex('}') + 1])
+    except Exception as e:                                # noqa: BLE001
+        # 검증이 실패하면 통과시킨다. 판정할 수 없는 것을 실패로 세면, 키가 없거나
+        # 망이 끊긴 것이 그림의 결함으로 기록된다.
+        return True, f'검증 못 함 ({type(e).__name__})'
+
+    got = str(seen.get('is', '')).lower()
+    conf = str(seen.get('confusable', '')).lower()
+    words = {w for w in expect.lower().replace('_', ' ').split() if len(w) > 2}
+    hit = any(w in got for w in words) or any(w in expect.lower() for w in got.split() if len(w) > 2)
+    # 우리 세트 안의 다른 것으로 헷갈린다면 그것도 실패다 — 각각은 잘 그렸는데
+    # 서로 구별되지 않으면 세트로서는 못 쓴다.
+    clash = any(bad.strip() and bad.strip() in conf for bad in not_like.lower().split(','))
+    if not hit:
+        return False, f'"{got}" 로 보인다 (기대: {expect})'
+    if clash:
+        return False, f'"{conf}" 와 헷갈린다'
+    return True, got
+
 
 def generate(t: Target, last: 'Check | None' = None) -> bytes:
     key = os.environ.get('OPENAI_API_KEY')
@@ -1123,6 +1265,73 @@ def install(t: Target, im: Image.Image, slots: dict, names: set) -> None:
     print(line)
 
 
+def describe(concept: str) -> Target:
+    """개념 이름 하나를 우리 프롬프트 형식으로 부풀린다.
+
+    78개는 내가 하나씩 손으로 썼다 — 윤곽에 남는 특징, 내부 구멍, 무엇과 헷갈리면
+    안 되는가. 실행 중에는 그 자리에 사람이 없으므로 같은 형식을 글로 받아 온다.
+    "nebulizer" 만 넘기면 프롬프트가 부실해져서 생성물도 부실해진다.
+    """
+    key = os.environ.get('ANTHROPIC_API_KEY')
+    fallback = Target(concept, 'head', concept,
+                      f'a {concept.replace("_", " ")}, drawn as one solid filled black silhouette '
+                      f'with two or three large white holes punched through it',
+                      'any other medical object', means=concept.replace('_', ' '))
+    if not key:
+        return fallback
+    ask = (
+        f'We draw flat black pictograms for people who cannot read. I need a drawing brief for: '
+        f'"{concept.replace("_", " ")}".\n\n'
+        'Answer as JSON only:\n'
+        '{"subject": "<what to draw: name the object, then the ONE outline feature that makes it '
+        'unmistakable, then the large white holes punched through it. One sentence, no style words>", '
+        '"not_like": "<3-5 things it must not be mistaken for, comma separated>", '
+        '"means": "<what a viewer should say it is, 1-3 words>"}\n\n'
+        'The drawing must survive being shrunk to 32 pixels, so detail can only live in the '
+        'outline and in large punched-out holes — never in thin lines.'
+    )
+    body = json.dumps({'model': VISION_MODEL, 'max_tokens': 400,
+                       'messages': [{'role': 'user', 'content': ask}]}).encode()
+    req = urllib.request.Request(VISION_API, data=body, headers={
+        'x-api-key': key, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            text = json.load(resp)['content'][0]['text']
+        d = json.loads(text[text.index('{'):text.rindex('}') + 1])
+        return Target(concept, 'head', concept, d['subject'], d['not_like'],
+                      means=d.get('means', concept.replace('_', ' ')))
+    except Exception:                                     # noqa: BLE001
+        return fallback
+
+
+def one(concept: str, out: Path, tries: int = 3) -> dict:
+    """개념 하나를 생성해 검사·검증까지 통과하면 저장한다. 결과를 JSON 으로 돌려준다.
+
+    실행 중에 앱이 부르는 자리다. 통과하지 못하면 저장하지 않고 실패를 돌려준다 —
+    읽지 못하는 사람에게 틀린 그림은 그림이 없는 것보다 나쁘다.
+    """
+    t = describe(concept)
+    last, notes = None, []
+    for attempt in range(tries):
+        try:
+            im = conform(Image.open(io.BytesIO(generate(t, last))))
+        except Exception as e:                            # noqa: BLE001
+            notes.append(f'{attempt + 1}: 생성 실패 {e}')
+            break
+        c = check(im)
+        if c.ok:
+            ok, note = verify_meaning(im, expected_meaning(t), t.not_like)
+            if not ok:
+                c = Check(False, [f'뜻이 안 맞는다 — {note}'], c.ink, c.small_ink, c.keeps_holes)
+        notes.append(f'{attempt + 1}: ' + ('통과' if c.ok else ' · '.join(c.reasons)))
+        if c.ok:
+            out.parent.mkdir(parents=True, exist_ok=True)
+            im.save(out)
+            return {'ok': True, 'path': str(out), 'means': expected_meaning(t), 'log': notes}
+        last = c
+    return {'ok': False, 'log': notes}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('names', nargs='*', help='생성할 형태소 (비우면 아직 없는 것 전부)')
@@ -1130,9 +1339,22 @@ def main() -> None:
     ap.add_argument('--install', action='store_true', help='검사를 통과한 것을 자산으로 설치')
     ap.add_argument('--tries', type=int, default=3,
                     help='형태소당 최대 시도 횟수. 실패하면 프롬프트를 강화해 다시 뽑는다')
+    ap.add_argument('--one', metavar='CONCEPT',
+                    help='개념 하나를 생성해 --out 에 저장한다. 결과를 JSON 으로 낸다 '
+                         '(앱이 실행 중에 부르는 자리)')
+    ap.add_argument('--out', metavar='PATH', help='--one 이 저장할 파일')
+    ap.add_argument('--verify', action='store_true',
+                    help='기계 검사를 통과한 것에 "무엇으로 보이나" 를 물어 뜻까지 확인한다 '
+                         '(ANTHROPIC_API_KEY 필요)')
     ap.add_argument('--sheet', metavar='PATH',
                     help='생성하지 않고, 현재 자산과 생성물을 나란히 놓은 검토표만 만든다')
     args = ap.parse_args()
+
+    if args.one:
+        if not args.out:
+            raise SystemExit('--one 에는 --out 이 필요하다')
+        print(json.dumps(one(args.one, Path(args.out), args.tries), ensure_ascii=False))
+        return
 
     if args.sheet:
         sheet(Path(args.sheet))
@@ -1176,6 +1398,13 @@ def main() -> None:
                 print(f'{t.name:11} 시도 {attempt + 1} ✗ {e}')
                 continue
             c = check(im, sparse_ok=t.sparse, parts_want=t.parts)
+            # 의미 검증은 기계 검사를 통과한 것에만 묻는다. 굵기도 안 맞는 그림에
+            # "무엇으로 보이나" 를 묻는 것은 답이 뻔하고 요금만 나간다.
+            if c.ok and args.verify:
+                ok, note = verify_meaning(im, expected_meaning(t), t.not_like)
+                print(f'{t.name:11}   의미: {note}')
+                if not ok:
+                    c = Check(False, [f'뜻이 안 맞는다 — {note}'], c.ink, c.small_ink, c.keeps_holes)
             sc = score(im, c)
             print(f'{t.name:11} 시도 {attempt + 1}  {"통과" if c.ok else "실패"} '
                   f'잉크 {c.ink:.2f} 점수 {sc:5.1f}'
