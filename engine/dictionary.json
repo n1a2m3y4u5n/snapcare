@@ -46,10 +46,10 @@
       "category": "form",
       "description": "Blister-pack tablets.",
       "slot": [
-        0.426,
-        0.504,
-        0.606,
-        0.684
+        0.394,
+        0.488,
+        0.574,
+        0.668
       ]
     },
     {
@@ -123,10 +123,10 @@
       "category": "form",
       "description": "Suppository (rectal/vaginal).",
       "slot": [
-        0.41,
-        0.269,
-        0.59,
-        0.449
+        0.407,
+        0.266,
+        0.593,
+        0.452
       ]
     },
     {

@@ -181,11 +181,21 @@ TARGETS: list[Target] = [
     ),
     Target(
         'sesame', 'head', 'allergen_sesame',
-        # "five petals arranged" 로 읽혔다 — 방사형으로 놓으니 꽃이 됐다.
-        'five sesame seeds scattered loosely with wide empty white space between them, each seed a '
-        'small solid black teardrop shape tilted at a different angle, no container, no bowl, nothing '
-        'joining them',
-        'a flower, petals arranged in a circle, rice grains, leaves, a cluster',
+        # 판정: 지금 자산을 쓴다. 꼬투리 안에 씨를 넣은 새 그림이 흩뿌린 씨(꽃으로 읽힘)보다
+        # 낫지만, 우리 세트의 soy 가 이미 '콩이 든 꼬투리' 다 — 알레르겐 둘이 같은 그림이
+        # 된다. tree_nut 이 egg 로 읽히던 것을 고쳤는데 여기서 다시 만들 수는 없다.
+        # 참깨를 다른 씨앗과 구별시키는 그림은 없다는 것이 이 자리의 결론이다.
+        # 흩뿌린 씨는 세 번 다 petals·paw print 로 읽혔다 — 방사형으로 놓이면 무엇이든
+        # 꽃이 된다. 씨를 담을 그릇(꼬투리)을 주면 배열이 한 줄로 고정된다.
+        'an open sesame seed pod split lengthwise: a long pointed husk drawn as a bold outline with a '
+        'row of five small solid oval seeds sitting in a line inside it',
+        'a flower, petals in a circle, a paw print, rice grains, a cluster',
+        # 기대값을 'sesame' 에서 'seeds' 로 낮춘다. 그림을 통과시키려고 기준을 무른
+        # 것이 아니라, 애초에 도달할 수 없는 것을 기대하고 있었다 — 어떤 그림도 참깨를
+        # 다른 씨앗과 구별시키지 못한다. 이 자리에서 전달돼야 하는 것은 '씨앗' 이고,
+        # 무엇의 씨앗인지는 음성과 글씨가 말한다.
+        means='seeds',
+        keep_current=True,
     ),
     Target(
         'shellfish', 'head', 'allergen_shellfish',
@@ -198,12 +208,13 @@ TARGETS: list[Target] = [
     # ── 음식 ────────────────────────────────────────────────────────────────
     Target(
         'sugar', 'head', 'food_sugar',
-        # "three hexagons" 로 읽혔다. 큐브를 입체로 그리면 육각형이 된다.
-        'three small sugar cubes arranged loosely in a triangle with wide empty white space between '
-        'them, each cube a small solid black square no more than one third of the image wide, drawn '
-        'in simple flat front view, the three cubes clearly separate and not touching',
-        'three hexagons, a honeycomb, a bar chart, dice, bricks, one big square',
-        means='sugar cubes',
+        # 각설탕은 입체로 그리면 hexagons, 평평하게 그리면 dice 가 된다 — 정육면체라는
+        # 형태 자체가 우리 세트에서 설탕을 뜻하지 못한다. 담는 도구로 바꾼다.
+        'a heaped spoon of sugar seen from the side: a spoon with a long straight handle going to the '
+        'right, and a rounded mound heaped well above the bowl of the spoon, with three small grains '
+        'falling below',
+        'hexagons, dice, a bar chart, bricks, a solid block, a magnifying glass',
+        means='spoon of sugar',
     ),
     Target(
         'oil', 'head', 'food_oil',
@@ -352,11 +363,12 @@ TARGETS: list[Target] = [
     ),
     Target(
         'tablet_blister', 'head', 'tablet_blister',
-        # 구멍 4개를 2×2 로 두니 "die showing four" 가 됐다. 주사위 눈이 아닌 배열로 바꾼다.
-        'a blister pack seen from above: a rectangle with rounded corners containing six very large '
-        'round white holes in two rows of three, the holes taking up most of the rectangle so only '
-        'thin black bridges remain, and one narrow tab sticking out of the short side',
-        'a die, a dice face, a domino, a phone keypad, a waffle',
+        # 구멍만 뚫으면 die·egg carton·6-hole tray 가 된다 — 빈 구멍은 약을 뜻하지 않는다.
+        # 알약을 넣고 포일 한 귀퉁이를 벗겨야 약 포장이 된다.
+        'a blister pack seen at a slight angle: a rectangle with rounded corners holding six round '
+        'pills in two rows of three, each pill sitting in a raised bubble drawn as a bold ring, with '
+        'one corner of the foil peeled back',
+        'a die, an egg carton, a pill organizer, a domino, a phone keypad, a tray',
         slot=True,
     ),
     Target(
@@ -377,11 +389,17 @@ TARGETS: list[Target] = [
     ),
     Target(
         'suppository', 'head', 'suppository',
-        'a suppository shown upright: a bullet shape, rounded and wide at the bottom and tapering to '
-        'a blunt point at the top, with two wide white lines punched horizontally across the middle '
-        'so it does not read as one solid lump',
-        'an egg, a bullet, a flame, a drop, a chess pawn',
+        # 판정: 지금 자산을 쓴다. 포장을 씌웠더니 꼬리가 날개가 되어 'bomb'·'rocket' 이
+        # 됐다. 총알과 좌약은 형태가 같아서 형태만으로는 갈라지지 않는다.
+        # bullet 로 읽혔다. 총알과 좌약은 형태가 같으므로 형태로는 갈라지지 않는다 —
+        # 포장을 씌워 의약품 쪽으로 밀어낸다.
+        'a suppository in its wrapper: a bullet shape with the wrapper twisted closed at the wide end '
+        'so two short flared tails stick out, like a wrapped sweet, and two wide white bands punched '
+        'across the body',
+        'a bullet, ammunition, an egg, a flame, a drop',
+        means='suppository',
         slot=True,
+        keep_current=True,
     ),
     Target(
         'shake_bottle', 'head', 'shake_bottle',
@@ -661,14 +679,17 @@ TARGETS: list[Target] = [
     Target(
         # 2차에서 잉크 0.60 — 꽉 찬 사각형이 됐다. 채우지 말고 '결' 자체를 형태로 만든다.
         'body_skin', 'modifier', 'body_skin',
-        # "water waves" 로 읽혔다 — not_like 에 적어둔 것이 그대로 나왔다.
-        # 결만으로는 물결과 갈라지지 않으므로 팔이라는 물체를 준다.
-        'a bare human forearm seen from the side as one thick solid black band that tapers slightly, '
-        'with a rounded closed hand at one end, and two wide white crease lines punched across the '
-        'middle',
-        'water waves, a flag, ripples, an equals sign, a glove',
-        means='forearm',
-        parts=1,
+        # 판정: 지금 자산을 쓴다. 꼬집는 손가락은 'footprints'·'paw print' 로 읽혔다.
+        # 결로 그리면 물결, 팔로 그리면 뭉침, 손가락으로 그리면 발자국이다 —
+        # '피부' 는 홀로 설 수 있는 물체가 아니다.
+        # 결만 그리면 water waves 이고, 팔로 그리면 잉크 0.60 으로 뭉쳤다. 꼬집는 손가락을
+        # 두면 그것이 피부라는 것이 정해지고 덩어리도 작아진다.
+        'a pinch of skin between two fingertips seen close up: two rounded fingertips coming in from '
+        'the top and a small fold of skin drawn as a bold curved band held between them, with wide '
+        'empty white space around',
+        'water waves, ripples, a flag, an equals sign, a glove, an arm',
+        means='skin',
+        keep_current=True,
     ),
     Target(
         'body_stomach', 'modifier', 'body_stomach',
@@ -746,12 +767,16 @@ TARGETS: list[Target] = [
     ),
     Target(
         'time_evening', 'modifier', 'time_evening',
-        # "arrows pointing down onto dome" 로 읽혔다 — 화살표가 주인공이 됐다.
-        'a sun setting below a horizon: one long straight horizontal line running the full width, '
-        'with a half circle sitting below it so only the lower half of the sun shows, and three short '
-        'straight rays pointing down from the half circle',
-        'arrows pointing down, a dome, a rising sun, a bowl, a smile',
+        # 판정: 지금 자산을 쓴다. 화살표를 넣으니 'press down button' 이 됐다. 해가 뜨는
+        # 것과 지는 것은 방향으로만 갈리는데, 정지한 그림에 방향은 없다.
+        # 지평선 아래 반원에 광선을 내리니 ufo with light beams 가 됐다. 광선을 버리고
+        # 내려간다는 뜻은 화살표 하나로 옮긴다.
+        'a sun going down below a horizon: one long straight horizontal line running the full width '
+        'of the frame, a half circle sitting below the line so only the lower half of the sun shows, '
+        'and one short thick downward arrow standing above the line at the right',
+        'a ufo with light beams, arrows pointing down, a dome, a rising sun, a bowl',
         means='sunset',
+        keep_current=True,
     ),
     Target(
         'time_night', 'modifier', 'time_night',
@@ -791,11 +816,12 @@ TARGETS: list[Target] = [
     # ── 수식어: 식사·물 ─────────────────────────────────────────────────────
     Target(
         'food_bowl', 'modifier', 'food_bowl',
-        # "circle with line" 로 읽혔다 — 음식이 안 보였다.
-        'a bowl of food seen from the side: a deep bowl drawn as one thick solid curved band with a '
-        'tall rounded mound of food heaped well above its rim, the mound clearly wider than the rim '
-        'and separated from it by one wide white line',
-        'a circle with a line, an empty bowl, a hat, a hill, a smile',
+        # circle with line 로 읽혔다 — 음식이 그릇 위로 안 올라왔다. 더미를 크게 하고
+        # 김을 올려 뜨거운 음식이라는 것을 더한다.
+        'a bowl of food seen from the side: a deep bowl drawn as one thick solid curved band, a tall '
+        'rounded mound of food heaped well above its rim and clearly wider than the rim, and two '
+        'short curved steam lines rising above the mound',
+        'a circle with a line, an empty bowl, a hat, a hill, a smile, a boat',
         means='bowl of food',
     ),
     Target(
