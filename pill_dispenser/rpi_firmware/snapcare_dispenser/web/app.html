@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SnapCare dispenser</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <h1>SnapCare dispenser</h1>
+  <p class="sub">
+    The device's own test console. Everything here goes through the same
+    firmware paths the phone app uses — there is no test-only shortcut into the
+    servos or the scheduler.
+  </p>
+
+  <div class="card">
+    <h2>Status <span id="dispensing" class="pill">…</span></h2>
+    <dl class="facts">
+      <dt>Clock</dt><dd id="clock">…</dd>
+      <dt>WiFi</dt><dd id="wifi">…</dd>
+      <dt>Servos</dt><dd id="servos">…</dd>
+      <dt>Trays → GPIO</dt><dd id="pins" class="small">…</dd>
+      <dt>Next dose</dt><dd id="next">…</dd>
+      <dt>Loaded plan</dt><dd id="payload"><code>—</code></dd>
+    </dl>
+    <div id="notes"></div>
+    <div class="row" style="margin-top:.9rem">
+      <button class="ghost fit" id="setClock" type="button">Set clock from this browser</button>
+      <button class="ghost fit" id="confirm" type="button">Confirm dose taken</button>
+      <button class="ghost fit" id="dismiss" type="button">Dismiss alert</button>
+    </div>
+    <div class="toast" id="statusMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Drop a tray now</h2>
+    <p class="small muted">
+      Bench check. A manual drop does not touch the schedule — the tray's next
+      scheduled dose still happens.
+    </p>
+    <div class="trays" id="trays"></div>
+    <div class="toast" id="dropMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Schedule</h2>
+    <p class="small muted">
+      One row per tray. Times are 24-hour, comma separated: <code>08:00, 20:00</code>.
+      Leave a row blank to leave that tray out of the plan.
+    </p>
+    <div class="scroll-x">
+      <table id="editor">
+        <thead><tr><th>Tray</th><th>Times</th><th>Days</th><th>Days of course</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:.9rem">
+      <button id="save" type="button" class="fit">Send schedule</button>
+      <button id="clear" type="button" class="ghost fit">Clear all trays</button>
+    </div>
+    <p class="small muted" style="margin:.9rem 0 .3rem">Will send:</p>
+    <p><code id="preview">SC1*W*</code></p>
+    <div class="toast" id="saveMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Send a raw SC1 code</h2>
+    <p class="small muted">
+      Whatever the phone or the paper-sheet reader would have sent — an
+      <code>S</code> schedule, a <code>W</code> schedule, or a <code>C</code> clock.
+      This is the same entry point they use.
+    </p>
+    <div class="row">
+      <input id="raw" placeholder="SC1*W*1:0800.2000-127-030/3:1900-021-000"
+             autocapitalize="characters" autocorrect="off" spellcheck="false">
+      <button class="fit" id="sendRaw" type="button">Send</button>
+    </div>
+    <div class="toast" id="rawMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Dose log</h2>
+    <div class="scroll-x">
+      <table><thead>
+        <tr><th>When</th><th>Tray</th><th>Due</th><th>Result</th><th>SC1</th></tr>
+      </thead><tbody id="events"></tbody></table>
+    </div>
+  </div>
+
+  <p class="small muted">
+    <a href="/setup">WiFi setup</a> · <a href="/label">Printable label</a> ·
+    device address <code>{{device_url}}</code>
+  </p>
+</main>
+
+<script>
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+let TRAYS = [];
+
+const $ = (id) => document.getElementById(id);
+
+function toast(el, ok, text) {
+  el.className = 'toast ' + (ok ? 'ok' : 'bad');
+  el.textContent = text;
+}
+
+async function api(path, options) {
+  const res = await fetch(path, options);
+  return res.json();
+}
+
+async function post(path, body) {
+  return api(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {}),
+  });
+}
+
+/* ── status ─────────────────────────────────────────────────────────── */
+
+async function refresh() {
+  let data;
+  try {
+    data = await api('/api/status');
+  } catch (err) {
+    $('dispensing').className = 'pill bad';
+    $('dispensing').textContent = 'unreachable';
+    return;
+  }
+  const d = data.device;
+
+  $('dispensing').className = 'pill ' + (d.dispensing ? 'ok' : 'bad');
+  $('dispensing').textContent = d.dispensing ? 'dispensing' : 'holding — clock not trusted';
+
+  $('clock').textContent = `${d.clock.now} (${d.clock.source})`;
+  $('wifi').textContent = data.wifi.mode + (data.wifi.ssid ? ` — ${data.wifi.ssid}` : '')
+    + (data.wifi.address ? ` (${data.wifi.address})` : '');
+
+  // A device on the software-PWM fallback works but the servos buzz. Better to
+  // say so on the page than to let somebody spend an afternoon on it.
+  $('servos').textContent = d.servoBackend + (d.servoSteady ? '' : ' — jittery fallback');
+  $('servos').className = d.servoSteady ? '' : 'warn';
+
+  $('pins').textContent = Object.entries(d.pins)
+    .map(([tray, gpio]) => `${tray}→GPIO${gpio}`).join('  ');
+  $('next').textContent = d.nextDose
+    ? `tray ${d.nextDose.tray} at ${hhmm(d.nextDose.time)}`
+    : 'nothing further today';
+  $('payload').innerHTML = '<code></code>';
+  $('payload').firstChild.textContent = d.payload || '—';
+
+  $('notes').innerHTML = '';
+  for (const note of d.notes || []) {
+    const p = document.createElement('p');
+    p.className = 'small warn';
+    p.textContent = note;
+    $('notes').append(p);
+  }
+
+  if (!TRAYS.length) { TRAYS = d.trays; buildTrays(); buildEditor(); loadInto(d.slots); }
+
+  const waiting = d.awaitingConfirmation;
+  $('confirm').disabled = !waiting;
+  if (waiting) $('confirm').textContent = `Confirm tray ${waiting.tray} taken`;
+  else $('confirm').textContent = 'Confirm dose taken';
+}
+
+const hhmm = (t) => `${t.slice(0, 2)}:${t.slice(2)}`;
+
+$('setClock').onclick = async () => {
+  // The device may have no internet and therefore no NTP. The browser reading
+  // this page always knows the time, so this is the offline path to a clock
+  // the firmware will trust enough to dispense on.
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    .toISOString().slice(0, 19);
+  const data = await post('/api/clock', { iso: local });
+  toast($('statusMsg'), data.ok, data.message || data.error);
+  refresh();
+};
+
+$('confirm').onclick = async () => {
+  const data = await post('/api/confirm');
+  toast($('statusMsg'), data.ok, data.ok ? 'Recorded as taken.' : 'Nothing was waiting.');
+  refresh(); loadEvents();
+};
+
+$('dismiss').onclick = async () => {
+  const data = await post('/api/dismiss');
+  toast($('statusMsg'), true, data.hadAlert ? 'Alert dismissed.' : 'Nothing was alerting.');
+  refresh();
+};
+
+/* ── trays ──────────────────────────────────────────────────────────── */
+
+function buildTrays() {
+  const box = $('trays');
+  box.innerHTML = '';
+  for (const tray of TRAYS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = `Drop tray ${tray}`;
+    btn.onclick = async () => {
+      btn.disabled = true;
+      const data = await post('/api/drop', { tray });
+      toast($('dropMsg'), data.ok, data.ok
+        ? `Tray ${tray} swept 0° → 180° → 0°.`
+        : (data.error || 'failed'));
+      btn.disabled = false;
+      loadEvents();
+    };
+    box.append(btn);
+  }
+}
+
+/* ── schedule editor ────────────────────────────────────────────────── */
+
+function buildEditor() {
+  const body = $('editor').querySelector('tbody');
+  body.innerHTML = '';
+  for (const tray of TRAYS) {
+    const tr = document.createElement('tr');
+
+    const th = document.createElement('th');
+    th.textContent = tray;
+    tr.append(th);
+
+    const times = document.createElement('td');
+    const timesInput = document.createElement('input');
+    timesInput.id = `times${tray}`;
+    timesInput.placeholder = '08:00, 20:00';
+    timesInput.oninput = preview;
+    times.append(timesInput);
+    tr.append(times);
+
+    const days = document.createElement('td');
+    const wrap = document.createElement('div');
+    wrap.className = 'days';
+    DAYS.forEach((name, index) => {
+      const label = document.createElement('label');
+      const box2 = document.createElement('input');
+      box2.type = 'checkbox';
+      box2.checked = true;
+      box2.id = `day${tray}_${index}`;
+      box2.onchange = preview;
+      label.append(box2, document.createTextNode(name));
+      wrap.append(label);
+    });
+    days.append(wrap);
+    tr.append(days);
+
+    const duration = document.createElement('td');
+    const durInput = document.createElement('input');
+    durInput.id = `dur${tray}`;
+    durInput.type = 'number';
+    durInput.min = '0';
+    durInput.max = '999';
+    durInput.value = '0';
+    durInput.oninput = preview;
+    duration.append(durInput);
+    const hint = document.createElement('div');
+    hint.className = 'small muted';
+    hint.textContent = '0 = ongoing';
+    duration.append(hint);
+    tr.append(duration);
+
+    body.append(tr);
+  }
+  preview();
+}
+
+function normaliseTime(text) {
+  const digits = text.replace(/\D/g, '');
+  if (digits.length !== 4) return null;
+  const h = Number(digits.slice(0, 2)), m = Number(digits.slice(2));
+  return (h < 24 && m < 60) ? digits : null;
+}
+
+function collect() {
+  const slots = [];
+  for (const tray of TRAYS) {
+    const raw = $(`times${tray}`).value.trim();
+    if (!raw) continue;
+    const times = [];
+    for (const piece of raw.split(',')) {
+      if (!piece.trim()) continue;
+      const t = normaliseTime(piece);
+      if (!t) return { error: `Tray ${tray}: "${piece.trim()}" is not a time of day.` };
+      times.push(t);
+    }
+    if (!times.length) continue;
+
+    let days = 0;
+    DAYS.forEach((_, index) => {
+      if ($(`day${tray}_${index}`).checked) days |= (1 << index);
+    });
+    if (!days) return { error: `Tray ${tray} has no days ticked, so it would never drop.` };
+
+    slots.push({
+      tray,
+      times: [...new Set(times)].sort(),
+      days,
+      durationDays: Number($(`dur${tray}`).value || 0),
+    });
+  }
+  return { slots };
+}
+
+function preview() {
+  const { slots, error } = collect();
+  if (error) { $('preview').textContent = error; return; }
+  const body = slots.map((s) =>
+    `${s.tray}:${s.times.join('.')}-${String(s.days).padStart(3, '0')}`
+    + `-${String(Math.min(s.durationDays, 999)).padStart(3, '0')}`).join('/');
+  $('preview').textContent = 'SC1*W*' + body;
+}
+
+function loadInto(slots) {
+  for (const slot of slots || []) {
+    const timesInput = $(`times${slot.tray}`);
+    if (!timesInput) continue;
+    timesInput.value = slot.times.map(hhmm).join(', ');
+    DAYS.forEach((_, index) => {
+      $(`day${slot.tray}_${index}`).checked = Boolean(slot.days & (1 << index));
+    });
+    $(`dur${slot.tray}`).value = slot.durationDays;
+  }
+  preview();
+}
+
+$('save').onclick = async () => {
+  const { slots, error } = collect();
+  if (error) { toast($('saveMsg'), false, error); return; }
+  const data = await post('/api/schedule', { slots });
+  toast($('saveMsg'), data.ok, data.ok
+    ? `Saved. The device now holds ${data.payload}`
+    : (data.error || 'failed'));
+  refresh();
+};
+
+$('clear').onclick = async () => {
+  for (const tray of TRAYS) $(`times${tray}`).value = '';
+  preview();
+  const data = await post('/api/schedule', { slots: [] });
+  toast($('saveMsg'), data.ok, data.ok ? 'All trays cleared.' : (data.error || 'failed'));
+  refresh();
+};
+
+$('sendRaw').onclick = async () => {
+  const data = await post('/api/schedule', { payload: $('raw').value });
+  toast($('rawMsg'), data.ok, data.message || data.error || 'sent');
+  refresh();
+};
+
+/* ── log ────────────────────────────────────────────────────────────── */
+
+async function loadEvents() {
+  const data = await api('/api/events?limit=40');
+  const body = $('events');
+  body.innerHTML = '';
+  for (const event of data.events || []) {
+    const tr = document.createElement('tr');
+    const result = event.taken
+      ? (event.reason === 'manual' ? 'dropped by hand'
+        : event.confirmed ? 'taken (confirmed)' : 'dispensed')
+      : 'missed';
+    for (const value of [event.at.replace('T', ' '), event.tray, hhmm(event.time),
+                         result, event.sc1]) {
+      const td = document.createElement('td');
+      td.textContent = value;
+      if (value === 'missed') td.className = 'bad';
+      tr.append(td);
+    }
+    body.append(tr);
+  }
+}
+
+refresh();
+loadEvents();
+setInterval(refresh, 5000);
+setInterval(loadEvents, 15000);
+</script>
+</body>
+</html>

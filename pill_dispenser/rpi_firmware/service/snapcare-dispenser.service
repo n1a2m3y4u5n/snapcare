@@ -1,0 +1,49 @@
+[Unit]
+Description=SnapCare pill dispenser
+Documentation=file:/opt/snapcare/README.md
+
+# NetworkManager must exist before we try to drive it, and pigpiod before we
+# try to move a servo. `Wants=` rather than `Requires=` on pigpiod on purpose:
+# if the servo daemon is missing the firmware falls back and says so, which is
+# a device that reports a problem. `Requires=` would make it a device that
+# never starts, and therefore never reports anything at all.
+After=network.target NetworkManager.service pigpiod.service time-sync.target
+Wants=NetworkManager.service pigpiod.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/snapcare
+ExecStart=/usr/bin/python3 -m snapcare_dispenser
+Environment=PYTHONPATH=/opt/snapcare
+Environment=PYTHONUNBUFFERED=1
+Environment=SNAPCARE_STATE_DIR=/var/lib/snapcare
+
+# Root, because this process drives NetworkManager, writes the captive-portal
+# DNS rule, sets the system clock and binds port 80. Each of those could be
+# granted separately — a polkit rule, a capability, a group — and every one of
+# them is another thing to be silently wrong on a headless device that has no
+# way to tell you it is not working. For an appliance whose entire job is this,
+# root plus the sandboxing below is the more honest trade.
+User=root
+
+# Not a read-only filesystem, but /usr and /boot are, and the only writable
+# part of /etc is the one directory the captive portal rule goes in.
+NoNewPrivileges=yes
+ProtectSystem=full
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/etc/NetworkManager/dnsmasq-shared.d
+StateDirectory=snapcare
+StateDirectoryMode=0750
+
+# The device must come back on its own. Nobody is watching it, and a crash at
+# 03:00 that waits for a person means a missed morning dose.
+Restart=always
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=snapcare
+
+[Install]
+WantedBy=multi-user.target

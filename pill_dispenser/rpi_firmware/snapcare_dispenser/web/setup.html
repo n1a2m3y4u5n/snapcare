@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Set up the pill dispenser</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <h1>Set up the pill dispenser</h1>
+  <p class="sub">Choose the WiFi network this device should use.</p>
+
+  <div class="card">
+    <h2>Networks nearby</h2>
+    <div id="list"><p class="muted">Scanning…</p></div>
+    <button class="ghost" id="rescan" type="button">Scan again</button>
+  </div>
+
+  <div class="card" id="joinCard" hidden>
+    <h2>Join <span id="joinName"></span></h2>
+    <form id="joinForm">
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password"
+             autocapitalize="off" autocorrect="off" spellcheck="false">
+      <p class="small muted" style="margin:.5rem 0 .9rem">
+        Once this device joins, it leaves its own setup network — so your phone
+        will drop back to your normal WiFi. That is the setup finishing, not a
+        failure.
+      </p>
+      <div class="row">
+        <button type="submit" id="joinBtn">Join network</button>
+        <button type="button" class="ghost fit" id="cancel">Cancel</button>
+      </div>
+    </form>
+    <div class="toast" id="joinMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>This device</h2>
+    <dl class="facts">
+      <dt>Setup network</dt><dd><code>{{ssid}}</code></dd>
+      <dt>State</dt><dd id="mode">{{mode}} <span id="current" class="muted">{{current}}</span></dd>
+      <dt>Address afterwards</dt><dd><code>{{device_url}}</code></dd>
+      <dt>Identity from</dt><dd class="small muted">{{identity_source}}</dd>
+    </dl>
+    <p class="small muted" style="margin-top:.8rem">
+      The setup network name and password are derived from this board and never
+      change, so the printed code always works.
+      <a href="/label">Print the label</a>.
+    </p>
+  </div>
+</main>
+
+<script>
+// No framework, no build step, nothing fetched from anywhere. This page is
+// served by a device that is, at this moment, the only network the phone
+// reading it can see — anything external would simply never arrive.
+const list = document.getElementById('list');
+const joinCard = document.getElementById('joinCard');
+const joinName = document.getElementById('joinName');
+const joinMsg = document.getElementById('joinMsg');
+const password = document.getElementById('password');
+let chosen = null;
+
+function bars(signal) {
+  return signal >= 75 ? '••••' : signal >= 50 ? '•••' : signal >= 25 ? '••' : '•';
+}
+
+async function scan() {
+  list.innerHTML = '<p class="muted">Scanning…</p>';
+  try {
+    const res = await fetch('/api/wifi/scan');
+    const data = await res.json();
+    if (!data.networks || !data.networks.length) {
+      list.innerHTML = '<p class="muted">No networks found. Move the device closer to the router and scan again.</p>';
+      return;
+    }
+    list.innerHTML = '';
+    for (const net of data.networks) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'net';
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = net.ssid;          // textContent, never innerHTML:
+      const meta = document.createElement('span');  // an SSID is attacker-chosen
+      meta.className = 'meta';              // text and will contain markup one day
+      meta.textContent = [bars(net.signal), net.open ? 'open' : 'locked',
+                          net.saved ? 'saved' : ''].filter(Boolean).join('  ');
+      btn.append(name, meta);
+      btn.onclick = () => choose(net);
+      list.append(btn);
+    }
+  } catch (err) {
+    list.innerHTML = '<p class="bad">Could not scan. Reload the page.</p>';
+  }
+}
+
+function choose(net) {
+  chosen = net;
+  joinName.textContent = net.ssid;
+  password.value = '';
+  password.parentElement.hidden = net.open;
+  joinCard.hidden = false;
+  joinMsg.textContent = '';
+  joinMsg.className = 'toast';
+  joinCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!net.open) password.focus();
+}
+
+document.getElementById('cancel').onclick = () => { joinCard.hidden = true; };
+document.getElementById('rescan').onclick = scan;
+
+document.getElementById('joinForm').onsubmit = async (event) => {
+  event.preventDefault();
+  const btn = document.getElementById('joinBtn');
+  btn.disabled = true;
+  joinMsg.className = 'toast';
+  joinMsg.textContent = 'Joining… this takes a few seconds.';
+
+  try {
+    const res = await fetch('/api/wifi/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ssid: chosen.ssid, password: password.value }),
+    });
+    const data = await res.json();
+    joinMsg.className = 'toast ' + (data.ok ? 'ok' : 'bad');
+    joinMsg.textContent = data.ok
+      ? `${data.message} The dispenser is now at ${data.deviceUrl} on your home WiFi.`
+      : data.message;
+  } catch (err) {
+    // The request having no answer is the *expected* success case: the device
+    // tore down the hotspot to join the network, so the reply had nowhere to
+    // go. Saying "failed" here would be wrong far more often than right.
+    joinMsg.className = 'toast ok';
+    joinMsg.textContent = 'The device left its setup network, which usually means '
+      + 'it joined yours. Reconnect your phone to your home WiFi and open {{device_url}}';
+  }
+  btn.disabled = false;
+};
+
+scan();
+</script>
+</body>
+</html>

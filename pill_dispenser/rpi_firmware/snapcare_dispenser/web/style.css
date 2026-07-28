@@ -1,0 +1,181 @@
+/* Shared by every page the device serves.
+ *
+ * Nothing is loaded from anywhere else. No CDN, no web font, no icon set. A
+ * dispenser is routinely on a network with no internet — during setup it *is*
+ * the network — and a page that waits on fonts.googleapis.com before it
+ * renders is a page that appears blank on the one screen that matters.
+ *
+ * The system font stack is not a compromise here: it is already on the device
+ * reading the page, renders instantly, and is the one the person has already
+ * chosen a size for.
+ */
+
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --ink: #14161a;
+  --muted: #5c6470;
+  --line: #dfe3e8;
+  --accent: #1d63d1;
+  --ok: #12784a;
+  --warn: #8a5300;
+  --bad: #b3261e;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161a;
+    --card: #1d2026;
+    --ink: #eef0f3;
+    --muted: #9aa3b0;
+    --line: #2e333c;
+    --accent: #6aa1ff;
+    --ok: #4cc38a;
+    --warn: #e0a33a;
+    --bad: #ff6b60;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 1.25rem;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+main { max-width: 44rem; margin: 0 auto; }
+
+h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.05rem; margin: 0 0 .75rem; letter-spacing: .01em; }
+p { margin: 0 0 .75rem; }
+
+.sub { color: var(--muted); margin-bottom: 1.5rem; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+/* Buttons are large because a nurse taps them at a bench, sometimes wearing
+ * gloves, and because the same page is used on a phone held in one hand. */
+button, .btn {
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 10px;
+  padding: .7rem 1.1rem;
+  min-height: 2.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+}
+button:disabled { opacity: .45; cursor: default; }
+button.ghost {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--line);
+}
+button.quiet { background: var(--muted); }
+
+input, select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .6rem .7rem;
+  min-height: 2.9rem;
+  width: 100%;
+}
+
+label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .3rem; }
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .88em;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: .1em .35em;
+  word-break: break-all;
+}
+
+.row { display: flex; gap: .6rem; flex-wrap: wrap; align-items: flex-end; }
+.row > * { flex: 1 1 10rem; }
+.row > .fit { flex: 0 0 auto; }
+
+.pill {
+  display: inline-block;
+  font-size: .78rem;
+  font-weight: 600;
+  padding: .18rem .55rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.pill.ok { color: var(--ok); }
+.pill.warn { color: var(--warn); }
+.pill.bad { color: var(--bad); }
+
+.warn { color: var(--warn); }
+.bad { color: var(--bad); }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: .35rem .9rem; margin: 0; }
+dl.facts dt { color: var(--muted); font-size: .85rem; }
+dl.facts dd { margin: 0; font-size: .9rem; word-break: break-word; }
+
+/* Wide content gets its own scroller. The page body must never scroll
+ * sideways — on a phone that makes every vertical swipe feel broken. */
+.scroll-x { overflow-x: auto; }
+
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: .8rem; }
+
+.trays { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: .6rem; }
+
+.net { display: flex; width: 100%; align-items: center; gap: .7rem; text-align: left;
+       background: transparent; color: var(--ink); border: 1px solid var(--line);
+       margin-bottom: .4rem; }
+.net .name { flex: 1; font-weight: 600; }
+.net .meta { color: var(--muted); font-size: .8rem; font-weight: 400; }
+
+.qr { background: #fff; padding: .6rem; border-radius: 8px; display: inline-block; line-height: 0; }
+.qr svg { width: 100%; height: auto; max-width: 15rem; }
+
+.toast {
+  margin-top: .8rem; padding: .7rem .9rem; border-radius: 8px;
+  border: 1px solid var(--line); font-size: .9rem;
+}
+.toast.ok { border-color: var(--ok); color: var(--ok); }
+.toast.bad { border-color: var(--bad); color: var(--bad); }
+.toast:empty { display: none; }
+
+.days { display: flex; gap: .25rem; flex-wrap: wrap; }
+.days label {
+  margin: 0; cursor: pointer; user-select: none;
+  border: 1px solid var(--line); border-radius: 7px;
+  padding: .35rem .5rem; font-size: .8rem; color: var(--ink);
+  display: flex; align-items: center; gap: .25rem;
+}
+.days input { width: auto; min-height: 0; }
+
+@media print {
+  body { background: #fff; color: #000; padding: 0; }
+  .card { border-color: #000; break-inside: avoid; }
+  .noprint { display: none !important; }
+}

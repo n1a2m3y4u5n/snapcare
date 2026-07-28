@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{heading}}</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<!--
+  Where a person lands after tapping a link the phone app built.
+
+  They arrived here by top-level navigation from another website — that is the
+  whole trick behind `lib/hardware/dispenser.ts`, since an HTTPS page may not
+  fetch() an HTTP device but may certainly link to one. So this has to be a
+  real page that says what happened in a sentence, not a JSON body they would
+  otherwise be left staring at.
+-->
+<main>
+  <div class="card">
+    <h1>{{heading}} <span class="pill {{state}}">{{state}}</span></h1>
+    {{message}}
+    <p class="small muted" style="margin-top:1rem">
+      <a href="/">Open the dispenser console</a> ·
+      <code>{{device_url}}</code>
+    </p>
+  </div>
+</main>
+</body>
+</html>

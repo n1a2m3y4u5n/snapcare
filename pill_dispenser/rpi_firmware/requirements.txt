@@ -1,0 +1,23 @@
+# The firmware runs on the Python standard library alone. Everything below is
+# optional, and the firmware says at startup which of them it found.
+#
+# On a Pi, prefer apt over pip — `service/install.sh` does this for you:
+#
+#     sudo apt install pigpio python3-segno avahi-daemon
+#
+# pigpio also needs its daemon running, which is the part people miss:
+#
+#     sudo systemctl enable --now pigpiod
+
+# Steady, DMA-timed servo pulses. Without it the firmware falls back to
+# RPi.GPIO software PWM, which works but makes the servos twitch and hum
+# audibly between doses. Pi only — do not expect this to install on a laptop.
+pigpio>=1.78 ; platform_machine == "armv7l" or platform_machine == "aarch64"
+
+# Draws the setup QR code. Pure Python, no dependencies of its own. Without it
+# the label page falls back to showing the network name and password as text,
+# which a person can still type — so this is a convenience, not a requirement.
+segno>=1.5
+
+# Only for the test suite.
+pytest>=7.0
