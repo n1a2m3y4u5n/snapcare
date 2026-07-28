@@ -307,6 +307,7 @@ class Dispenser:
 
             return {
                 "trays": self.servos.trays,
+                "trayCount": len(self.servos.pins),
                 "pins": {str(t): g for t, g in sorted(self.servos.pins.items())},
                 "servoBackend": self.servos.backend.name,
                 "servoSteady": self.servos.backend.steady,

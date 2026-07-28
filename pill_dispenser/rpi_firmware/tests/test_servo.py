@@ -123,20 +123,62 @@ def test_per_tray_trim_is_applied(monkeypatch):
 
 # ── the pin map ─────────────────────────────────────────────────────────────
 
-def test_the_default_pin_map_covers_eight_trays_on_distinct_pins():
-    pins = config.tray_gpio()
+def test_the_contest_build_has_three_trays():
+    """The map lists eight; three are fitted. Scaling up is one number."""
+    assert sorted(config.tray_gpio()) == [1, 2, 3]
+    assert config.INSTALLED_TRAYS == 3
+
+
+def test_the_full_map_is_eight_trays_on_distinct_pins():
+    pins = config.tray_gpio(installed=config.MAX_TRAYS)
     assert sorted(pins) == list(range(1, 9))
     assert len(set(pins.values())) == 8
 
 
-def test_the_default_pins_avoid_the_ones_that_cost_hardware():
-    """See the comment above TRAY_GPIO for why each of these is excluded."""
-    pins = set(config.tray_gpio().values())
+def test_the_number_of_fitted_trays_can_be_set_from_the_environment(monkeypatch):
+    assert sorted(config.tray_gpio(installed=5)) == [1, 2, 3, 4, 5]
+    monkeypatch.setattr(config, "INSTALLED_TRAYS", 8)
+    assert sorted(config.tray_gpio()) == list(range(1, 9))
+
+
+@pytest.mark.parametrize("count", [0, -1, 9, 99])
+def test_an_impossible_tray_count_is_refused(count):
+    with pytest.raises(ValueError):
+        config.tray_gpio(installed=count)
+
+
+def test_the_pins_avoid_the_ones_that_cost_hardware():
+    """See the comment above TRAY_GPIO for why each of these is excluded.
+
+    Checked over the whole eight, not just the fitted three — a pin that is
+    wrong for tray 6 is worth catching now, not when the sixth hopper is fitted.
+    """
+    pins = set(config.tray_gpio(installed=config.MAX_TRAYS).values())
     assert not pins & {0, 1}, "GPIO 0/1 are the HAT ID EEPROM"
     # GPIO 2/3 have permanent pull-ups; a servo signal idling high before the
-    # software starts slams the horn to one end at power-on.
+    # software starts slams the horn to one end at power-on. They are also
+    # where the DS3231 lives on this build.
     assert not pins & {2, 3}, "GPIO 2/3 are I2C and are pulled up"
     assert not pins & {14, 15}, "GPIO 14/15 are the serial console"
+
+
+def test_no_servo_collides_with_a_fitted_peripheral():
+    """The ring, the buzzer and the button are on pins too, and a clash there
+    is a servo that twitches every time the buzzer sounds."""
+    pins = set(config.tray_gpio(installed=config.MAX_TRAYS).values())
+    for name, pin in (("LED ring", config.RING_GPIO),
+                      ("buzzer", config.BUZZER_GPIO),
+                      ("button", config.BUTTON_GPIO)):
+        assert pin not in pins, f"the {name} pin is also a servo pin"
+
+    assert len({config.RING_GPIO, config.BUZZER_GPIO, config.BUTTON_GPIO}) == 3
+
+
+def test_the_ring_is_on_a_pin_that_can_actually_drive_one():
+    """rpi_ws281x generates the 800 kHz waveform with PWM or PCM, and only
+    these four pins are wired to those peripherals. Any other choice is a ring
+    that never lights and an error message about DMA."""
+    assert config.RING_GPIO in (10, 12, 18, 21)
 
 
 def test_the_pin_map_can_be_patched_from_the_environment(monkeypatch):

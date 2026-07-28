@@ -22,6 +22,7 @@
       <dt>WiFi</dt><dd id="wifi">…</dd>
       <dt>Servos</dt><dd id="servos">…</dd>
       <dt>Trays → GPIO</dt><dd id="pins" class="small">…</dd>
+      <dt>Fitted</dt><dd id="fitted" class="small">…</dd>
       <dt>Next dose</dt><dd id="next">…</dd>
       <dt>Loaded plan</dt><dd id="payload"><code>—</code></dd>
     </dl>
@@ -135,7 +136,12 @@ async function refresh() {
   $('dispensing').className = 'pill ' + (d.dispensing ? 'ok' : 'bad');
   $('dispensing').textContent = d.dispensing ? 'dispensing' : 'holding — clock not trusted';
 
-  $('clock').textContent = `${d.clock.now} (${d.clock.source})`;
+  // The RTC detail is the useful half when the clock is not trusted: "there is
+  // no chip" and "the chip's battery is flat" need completely different fixes.
+  const rtc = d.clock.rtc;
+  $('clock').textContent = `${d.clock.now} (${d.clock.source})`
+    + (rtc && !rtc.trustworthy && rtc.detail ? ` — ${rtc.detail}` : '');
+  $('clock').className = d.clock.trusted ? '' : 'warn';
   $('wifi').textContent = data.wifi.mode + (data.wifi.ssid ? ` — ${data.wifi.ssid}` : '')
     + (data.wifi.address ? ` (${data.wifi.address})` : '');
 
@@ -146,6 +152,9 @@ async function refresh() {
 
   $('pins').textContent = Object.entries(d.pins)
     .map(([tray, gpio]) => `${tray}→GPIO${gpio}`).join('  ');
+  $('fitted').textContent = d.indicators.length
+    ? d.indicators.join(' + ') + ` · ${d.trayCount} tray(s)`
+    : `nothing fitted — the phone is the only notification · ${d.trayCount} tray(s)`;
   $('next').textContent = d.nextDose
     ? `tray ${d.nextDose.tray} at ${hhmm(d.nextDose.time)}`
     : 'nothing further today';

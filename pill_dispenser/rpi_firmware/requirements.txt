@@ -3,7 +3,8 @@
 #
 # On a Pi, prefer apt over pip — `service/install.sh` does this for you:
 #
-#     sudo apt install pigpio python3-segno avahi-daemon
+#     sudo apt install pigpio python3-segno avahi-daemon \
+#                      python3-rpi-ws281x python3-smbus2 i2c-tools
 #
 # pigpio also needs its daemon running, which is the part people miss:
 #
@@ -18,6 +19,15 @@ pigpio>=1.78 ; platform_machine == "armv7l" or platform_machine == "aarch64"
 # the label page falls back to showing the network name and password as text,
 # which a person can still type — so this is a convenience, not a requirement.
 segno>=1.5
+
+# Drives the WS2812 LED ring, using PWM/PCM and DMA — which is why the ring has
+# to be on GPIO 18, 12, 21 or 10. Without it the device dispenses in the dark.
+rpi-ws281x>=5.0 ; platform_machine == "armv7l" or platform_machine == "aarch64"
+
+# Reads the DS3231's oscillator-stop flag, which is what says whether its time
+# can be believed at all. Without it the RTC is reported as present but
+# unverified, and the firmware falls back to NTP or the phone.
+smbus2>=0.4
 
 # Only for the test suite.
 pytest>=7.0

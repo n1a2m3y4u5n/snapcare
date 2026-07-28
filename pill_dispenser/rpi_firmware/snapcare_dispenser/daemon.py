@@ -35,9 +35,10 @@ import threading
 import time
 
 from . import config, provisioning, qr, wifi
+from .button import ConfirmButton
 from .clock import Clock
 from .device import Dispenser
-from .indicators import LogIndicator
+from .indicators import LogIndicator, make_indicator
 from .server import serve_forever
 from .servo import TrayServos, make_backend
 from .store import Store
@@ -48,17 +49,35 @@ log = logging.getLogger("snapcare")
 class Daemon:
     def __init__(self, port: int | None = None, backend: str | None = None,
                  state_dir=None, manage_wifi: bool = True,
-                 identity: provisioning.Identity | None = None):
+                 identity: provisioning.Identity | None = None,
+                 headless: bool = False):
         self.store = Store(state_dir)
         self.identity = identity or provisioning.load_identity(self.store)
         self.servos = TrayServos(backend=make_backend(backend))
-        self.dispenser = Dispenser(store=self.store, servos=self.servos,
-                                   clock=Clock(), indicator=LogIndicator())
+        self.dispenser = Dispenser(
+            store=self.store, servos=self.servos, clock=Clock(),
+            indicator=LogIndicator() if headless else make_indicator(),
+        )
+        # The button and the web page's confirm call the same method, so a
+        # press and a tap are indistinguishable to everything downstream.
+        self.button = None if headless else ConfirmButton(self._confirm)
         self.port = port
         self.manage_wifi = manage_wifi
         self._stop = threading.Event()
         self._server = None
         self._ntp_trusted = False
+
+    def _confirm(self) -> None:
+        """Somebody pressed the button.
+
+        A press with nothing waiting records nothing — `confirm_taken` returns
+        None — which is the right reading of a curious visitor pressing it.
+        """
+        record = self.dispenser.confirm_taken()
+        if record:
+            log.info("tray %d confirmed taken by button press", record["tray"])
+        else:
+            log.debug("button pressed with no dose waiting")
 
     # ── network ─────────────────────────────────────────────────────────────
 
@@ -182,6 +201,8 @@ class Daemon:
         self._stop.set()
 
     def close(self) -> None:
+        if self.button:
+            self.button.close()
         if self._server:
             self._server.shutdown()
             self._server.server_close()
@@ -207,6 +228,10 @@ def main(argv: list[str] | None = None) -> int:
                         help=f"where to keep the schedule and log (default {config.STATE_DIR})")
     parser.add_argument("--no-wifi", action="store_true",
                         help="do not manage the network — for development on a laptop")
+    parser.add_argument("--headless", action="store_true",
+                        help="no LED ring, buzzer or button — log what they would have done")
+    parser.add_argument("--trays", type=int, default=None, metavar="N",
+                        help=f"how many hoppers are fitted (default {config.INSTALLED_TRAYS})")
     parser.add_argument("--show-qr", action="store_true",
                         help="print this device's permanent setup QR code and exit")
     parser.add_argument("--show-label", action="store_true",
@@ -215,6 +240,9 @@ def main(argv: list[str] | None = None) -> int:
                         help="sweep one tray once and exit — for checking wiring")
     parser.add_argument("--verbose", "-v", action="store_true")
     args = parser.parse_args(argv)
+
+    if args.trays is not None:
+        config.INSTALLED_TRAYS = args.trays
 
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
@@ -251,7 +279,7 @@ def main(argv: list[str] | None = None) -> int:
 
     daemon = Daemon(port=args.port, backend=args.servo_backend,
                     state_dir=args.state_dir, manage_wifi=not args.no_wifi,
-                    identity=identity)
+                    identity=identity, headless=args.headless)
     signal.signal(signal.SIGTERM, daemon.stop)
     signal.signal(signal.SIGINT, daemon.stop)
     try:

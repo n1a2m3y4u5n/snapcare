@@ -36,7 +36,7 @@ import subprocess
 import time
 from datetime import datetime, timedelta
 
-from . import config
+from . import config, rtc
 from .sc1 import ClockSet
 
 log = logging.getLogger(__name__)
@@ -85,15 +85,24 @@ class Clock:
         if self.now() < datetime.fromisoformat(config.CLOCK_SANITY_EPOCH):
             # Earlier than this firmware existed, so no correct clock reads it.
             return False
-        return self._vouched_by is not None or ntp_synchronised()
+        return self.source != "untrusted"
 
     @property
     def source(self) -> str:
-        """Who vouched for the time, for the status page and the logs."""
-        if self._vouched_by:
-            return self._vouched_by
+        """What is vouching for the time, for the status page and the logs.
+
+        Order is by authority. NTP is continuously corrected and beats
+        everything. The RTC is next: it is only consulted when its oscillator
+        flag says it has run without interruption, and then it is right whether
+        or not there is a network. The phone comes last — it was right once, at
+        the moment somebody held up a code.
+        """
         if ntp_synchronised():
             return "ntp"
+        if config.USE_RTC and rtc.read_status().trustworthy:
+            return "rtc"
+        if self._vouched_by:
+            return self._vouched_by
         return "untrusted"
 
     def status(self) -> dict:
@@ -101,6 +110,7 @@ class Clock:
             "now": self.now().isoformat(timespec="seconds"),
             "trusted": self.trusted,
             "source": self.source,
+            "rtc": rtc.read_status().to_json() if config.USE_RTC else None,
             "setAt": self._vouched_at.isoformat(timespec="seconds") if self._vouched_at else None,
         }
 
@@ -118,7 +128,14 @@ class Clock:
         self._vouched_by = source
         self._vouched_at = target
         log.info("clock set to %s by %s", target.isoformat(timespec="seconds"), source)
-        _try_set_system_clock(target)
+        if _try_set_system_clock(target) and config.USE_RTC:
+            # Push it into the DS3231 too, and only then clear the flag that
+            # says the chip lost time. Order matters: clearing it first would
+            # leave the hardware asserting, across every future boot, that a
+            # time nobody has corrected is trustworthy.
+            if _write_system_clock_to_rtc():
+                rtc.clear_oscillator_flag()
+            rtc.invalidate()
 
     def trust_ntp(self) -> bool:
         """Adopt the system clock because NTP says it is right.
@@ -170,7 +187,7 @@ def ntp_synchronised(now=time.monotonic) -> bool:
     return answer
 
 
-def _try_set_system_clock(target: datetime) -> None:
+def _try_set_system_clock(target: datetime) -> bool:
     """Best effort, and only as root. Failure is logged — see `Clock`.
 
     The euid check is not an optimisation. Unprivileged `timedatectl set-time`
@@ -181,7 +198,7 @@ def _try_set_system_clock(target: datetime) -> None:
     """
     if os.geteuid() != 0:
         log.info("not root; keeping the corrected time as an internal offset")
-        return
+        return False
 
     stamp = target.strftime("%Y-%m-%d %H:%M:%S")
     try:
@@ -191,9 +208,34 @@ def _try_set_system_clock(target: datetime) -> None:
         )
     except (OSError, subprocess.SubprocessError) as exc:
         log.info("could not set the system clock (%s); using an internal offset", exc)
-        return
+        return False
     if result.returncode != 0:
         log.info(
             "could not set the system clock (%s); using an internal offset",
             result.stderr.strip() or f"exit {result.returncode}",
         )
+        return False
+    return True
+
+
+def _write_system_clock_to_rtc() -> bool:
+    """`hwclock -w` — copy the freshly-set system time into the DS3231.
+
+    Without this the correction lives only in RAM: the next power cut restores
+    whatever the chip has been holding since its battery died, and the device
+    goes back to refusing to dispense.
+    """
+    if not rtc.kernel_rtc_present():
+        return False
+    try:
+        result = subprocess.run(["hwclock", "--systohc"], capture_output=True,
+                                text=True, timeout=15, check=False)
+    except (OSError, subprocess.SubprocessError) as exc:
+        log.info("could not write the time to the RTC (%s)", exc)
+        return False
+    if result.returncode != 0:
+        log.info("could not write the time to the RTC (%s)",
+                 result.stderr.strip() or f"exit {result.returncode}")
+        return False
+    log.info("system time written to the DS3231")
+    return True

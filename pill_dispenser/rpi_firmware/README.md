@@ -1,24 +1,28 @@
 # Dispenser firmware — Raspberry Pi 3B
 
-Eight trays, eight servos, one scan to get on the WiFi, and a schedule that
-survives a power cut.
+One scan to get on the WiFi, a light and a chirp when a dose is due, and a
+schedule that survives a power cut.
 
 ```
    phone / any browser                                  the person
         │                                                    ▲
-        │  http://pilldispenser.local            green light │ chime
-        ▼                                                    │
-   ┌────────────────────────────────────────────────────────────┐
-   │  Raspberry Pi 3B                                           │
-   │    onboard WiFi ── setup hotspot + captive portal          │
-   │    web server ──── native JSON API + the app's own URLs    │
-   │    scheduler ───── SC1, day masks, course lengths          │
-   │    pigpio ──────── GPIO 17 27 22 5 6 13 19 26              │
-   └────────────────────────────────────────────────────────────┘
-                                 │
-                                 ▼
-                          eight servos, one sweep each
+        │  http://pilldispenser.local            green ring  │  chirp
+        ▼                                        ▲           │  every 20s
+   ┌─────────────────────────────────────────────┼───────────┼──────┐
+   │  Raspberry Pi 3B                            │           │      │
+   │    onboard WiFi ── setup hotspot + captive portal       │      │
+   │    web server ──── native JSON API + the app's own URLs │      │
+   │    scheduler ───── SC1, day masks, course lengths       │      │
+   │    DS3231 ──────── knows the time after a power cut     │      │
+   │    pigpio ──────── GPIO 17 27 22   ring 18   buzzer 23  │      │
+   └───────────────────────┬─────────────────────────────────┴──────┘
+                           │                          confirm button 24
+                           ▼
+                    three servos, one sweep each
 ```
+
+The contest unit is built with **three trays**; the firmware handles eight and
+the pin map already lists them.
 
 This replaces the two-board Arduino + ESP32-CAM build in [`../firmware/`](../firmware/).
 The protocol is unchanged — the same `SC1` grammar, the same test vectors — so a
@@ -84,7 +88,13 @@ sudo python3 -m snapcare_dispenser --show-label   # the same values as JSON
 
 ### 2. Manage the pill drop schedule
 
-Eight trays maximum. **The pin for each is one dict at the top of
+Eight trays maximum, **three fitted on the contest unit** (`INSTALLED_TRAYS`).
+A schedule naming a tray that is not fitted is refused by name, while somebody
+is still looking at the screen that sent it — accepting it would mean a dose
+that is scheduled, never dispensed, and reported by nothing, because an absent
+servo cannot jam and has no error to raise.
+
+**The pin for each is one dict at the top of
 [`config.py`](snapcare_dispenser/config.py), and nothing else in the firmware
 names a pin:**
 
@@ -100,7 +110,8 @@ paper form sheet all follow. It can also be patched without editing the file,
 which is what a bench setup should do:
 
 ```bash
-SNAPCARE_TRAY_GPIO="3=21,4=20" python3 -m snapcare_dispenser
+SNAPCARE_TRAY_GPIO="3=21" python3 -m snapcare_dispenser   # move one servo
+SNAPCARE_TRAYS=8         python3 -m snapcare_dispenser   # fit the other five
 ```
 
 Two trays on one pin, a tray outside 1–8, or a GPIO that does not exist on a 3B
@@ -132,17 +143,73 @@ the Pi *while a compartment is open*.
 
 ## Wiring
 
+The contest unit is **three trays**, an LED ring, a buzzer, a confirm button and
+a DS3231. `INSTALLED_TRAYS = 3` in `config.py` is the only thing that says
+three; the pin map lists all eight so scaling up is one number and some servos.
+
 | Signal | Pin | Notes |
 |---|---|---|
-| Servo 1..8 signal | GPIO 17, 27, 22, 5, 6, 13, 19, 26 | signal wire only — **not** power |
-| Servo V+ / GND | separate 5 V supply | see below |
+| Servo 1..3 signal | GPIO **17, 27, 22** | signal wire only — **not** power |
+| *(servo 4..8, unfitted)* | *GPIO 5, 6, 13, 19, 26* | reserved in the map |
+| Servo V+ / GND | separate 5 V 2 A+ supply | see below |
 | Pi GND ↔ supply GND | — | **required**, see below |
+| WS2812 ring data | GPIO **18** | through 330 Ω, close to the ring |
+| WS2812 5 V / GND | the servo supply | ~700 mA at full white; see brightness |
+| Piezo buzzer | GPIO **23** | through 100 Ω |
+| Confirm button | GPIO **24** | other side to GND; internal pull-up, no resistor |
+| DS3231 SDA / SCL | GPIO **2 / 3** | the module's own pull-ups are enough |
+| DS3231 VCC / GND | 3.3 V, GND | with its coin cell fitted |
 
-Those eight avoid every pin that costs hardware on a 3B: GPIO 0/1 are the HAT ID
-EEPROM, 2/3 have permanent I²C pull-ups (a servo signal idling high before the
-software starts slams the horn to one end at power-on, with a loaded tray on it),
-and 14/15 are the serial console — the one way back into a Pi whose network you
-have just broken.
+The servo pins avoid every pin that costs hardware on a 3B: GPIO 0/1 are the HAT
+ID EEPROM, 2/3 have permanent I²C pull-ups (a servo signal idling high before
+the software starts slams the horn to one end at power-on, with a loaded tray on
+it) — and are where the DS3231 now lives — and 14/15 are the serial console, the
+one way back into a Pi whose network you have just broken. A test asserts all of
+that, and that no peripheral shares a pin with a servo.
+
+### The ring must be on GPIO 18, 12, 21 or 10
+
+`rpi_ws281x` generates the WS2812's 800 kHz waveform with the PWM or PCM
+peripheral and the DMA controller. Those four pins are the only ones wired to
+them; any other choice is a ring that never lights and an error message about
+DMA. GPIO 18 is PWM0 and is not in the servo map.
+
+The 330 Ω series resistor is not folklore — it damps the reflection on the first
+data edge, which is what makes the first pixel latch a wrong colour on a long
+lead. Put it at the ring end, not the Pi end.
+
+`RING_BRIGHTNESS` is 60 of 255. Full brightness on a 12-pixel ring is both
+dazzling in a dark bedroom at 3 a.m. and roughly another servo's worth of
+current on the same rail.
+
+**On pigpio and the ring coexisting**: both want DMA, and both can want PWM.
+pigpio times itself from PCM by default, which leaves PWM0 free, so the two
+default configurations happen to be compatible. If the ring ever flickers when a
+servo moves, that is the first thing to look at — start `pigpiod` with `-t 0` to
+pin it to PCM explicitly.
+
+### What the person sees and hears
+
+Carried over from the Arduino build unchanged, so somebody who has used one
+device understands the other:
+
+| | |
+|---|---|
+| **green ring, repeating chirp** | a dose is in the cup; press the button |
+| **blue ring** | button pressed, recorded as taken |
+| **amber ring** | the dose went untaken, or its window closed |
+| **violet ring** | a new schedule was accepted |
+
+The chirp repeats every `BUZZER_REPEAT_S` (20 s) until the button is pressed or
+the alert is dismissed. That pairing is the point rather than redundancy: a ring
+alone only works if somebody is looking at it, and without a sound the confirm
+button is close to useless — nobody acknowledges what they never noticed, and
+the log fills with doses marked dispensed-but-unconfirmed.
+
+Any of these three parts can be absent. A missing one is logged at startup and
+skipped; the status page reports what is actually fitted rather than pretending.
+A dispenser that will not start because its buzzer is unplugged is strictly
+worse than a quiet one — the pills are what matter.
 
 ### Powering the servos
 
@@ -199,25 +266,60 @@ journalctl -u snapcare-dispenser -f
 
 ## The clock, and why the tray stays shut
 
-**A Raspberry Pi has no real-time clock and no battery.** This is a real
-regression from the DS3231 on the Arduino build, and it is handled rather than
-hoped about.
+A Raspberry Pi has no real-time clock of its own, which was this build's worst
+regression from the DS3231 on the Arduino board. **Fitting a DS3231 fixes it
+properly** — but only if the firmware asks the right question about it.
 
 A Pi that boots with no network does not report *no* time. `fake-hwclock`
-restores the time it last recorded, so a device unplugged on Friday evening
-comes back on Tuesday believing it is Friday — confidently, with a plausible
-clock and the wrong day of the week. A tray acting on that opens the
-Mon/Wed/Fri compartment on a Tuesday and looks perfectly healthy doing it.
+restores whatever was last written to disk, so a device unplugged on Friday
+evening comes back on Tuesday believing it is Friday — confidently, with a
+plausible clock and the wrong day of the week. A tray acting on that opens the
+Mon/Wed/Fri compartment on a Tuesday and looks perfectly healthy doing it. The
+installer disables `fake-hwclock`, because with a real RTC present it does
+nothing but overwrite a good time with a stale one during boot.
 
-So nothing is dispensed until something vouches for the time:
+Three things can vouch for the time, in this order of authority:
 
-- **NTP**, once the WiFi is up. The normal path; needs nobody's attention.
-- **The phone**, by `SC1*C*` code or `POST /api/clock`. The path for a device
-  on a network with no internet.
+- **NTP**, once the WiFi is up. Continuously corrected, so it beats everything.
+- **The DS3231**, whether or not there is ever a network.
+- **The phone**, by `SC1*C*` code or `POST /api/clock` — right once, at the
+  moment somebody held up a code.
 
-`fake-hwclock`'s guess counts as neither. A tray that stays shut is a problem
-someone notices within hours; a tray that opens at the wrong times is one that
-nobody notices at all.
+Until one of them does, nothing is dispensed.
+
+### "Is there an RTC" is the wrong question
+
+A dead coin cell does not make the chip disappear from the I²C bus. It makes the
+chip answer, promptly and confidently, with a time that is nonsense — which is
+precisely the failure this whole section exists to refuse.
+
+The right question is answered by one bit. The DS3231 latches an **oscillator
+stop flag** (bit 7 of the status register at `0x0F`) whenever its oscillator has
+stopped since it was last set — exactly "this chip lost both supply and battery
+at some point, and everything it has said since is invented". The firmware reads
+it, and only a clear flag counts as vouching. If the flag cannot be read at all,
+that is reported as *unknown* rather than as a failure, and unknown falls
+towards the tray staying shut.
+
+The time itself reaches the system clock through the kernel, not through this
+firmware — `dtoverlay=i2c-rtc,ds3231`, applied by the installer. That happens
+before systemd timestamps anything, and it is a path other people have
+maintained for a decade.
+
+After a reboot, check it and seed it once:
+
+```bash
+ls -l /dev/rtc0 && sudo hwclock -r    # is the chip there, and what does it think
+sudo hwclock --systohc                # once the Pi's time is right, write it in
+```
+
+Setting the clock through the API does all of this for you: system clock,
+`hwclock --systohc`, then the oscillator flag is cleared — in that order,
+because clearing the flag first would leave the hardware asserting across every
+future boot that a time nobody corrected is trustworthy.
+
+A tray that stays shut is a problem someone notices within hours; a tray that
+opens at the wrong times is one that nobody notices at all.
 
 ---
 
@@ -309,6 +411,12 @@ grace window, finds the dose owed, and dispenses it again.
 **The servos**: the shape of the sweep, the trailing signal-cut, and eight
 threads proving only one pin is ever driven at once.
 
+**The fitted hardware**: that the chirp repeats until confirmed and stops the
+instant it is, that a broken ring is dropped rather than retried forever, that a
+device with neither part still dispenses, and that a stopped DS3231 oscillator
+leaves the tray shut while an unreadable flag is reported as unknown rather than
+as failure.
+
 **The identity** is pinned to an exact value, because a change to the salt or
 the alphabet would leave the derivation perfectly deterministic and perfectly
 different — every device already in the world would stop matching its label,
@@ -321,9 +429,10 @@ and nothing else in the suite would notice.
 | | Arduino + ESP32-CAM | Raspberry Pi 3B |
 |---|---|---|
 | Boards | two, plus a level shifter on A1 | one |
+| Trays | eight | **three fitted**, eight in the map |
 | Phone → device | QR into a camera | HTTP over the home WiFi |
 | Device → phone | QR on a 128×64 OLED | JSON, and the `SC1*E*` string in it |
-| Clock | DS3231 on a coin cell | NTP, or a phone — **no RTC at all** |
+| Clock | DS3231 on a coin cell | DS3231, NTP, or a phone |
 | Servo timing | hardware `Servo` library | pigpio DMA |
 | Schedule storage | EEPROM | JSON, atomically replaced |
 | Setup | flash it | scan a QR |
@@ -355,10 +464,12 @@ rpi_firmware/
     qr.py             segno, or OpenCV, or an honest apology
     server.py         both APIs, the captive portal, the pages
     daemon.py         the process
-    indicators.py     the seam for an LED ring and a buzzer, if they get fitted
+    indicators.py     the LED ring and the buzzer
+    button.py         the confirm button, debounced in the GPIO daemon
+    rtc.py            the DS3231, and the one bit that says whether to believe it
     web/              four pages, no build step, nothing external
   service/            systemd unit + install.sh
-  tests/              220 tests, none of which need hardware
+  tests/              272 tests, none of which need hardware
 ```
 
 `NOTES-FOR-WEBAPP.md` is for whoever is building the production web app.

@@ -30,16 +30,23 @@ these with a real HTML page, so the person lands on something readable rather
 than a JSON blob.
 
 **One difference in behaviour, and it is deliberate.** `MAX_TRAYS` in
-`dispenser.ts` is 10. This machine has **8**. A `/save` naming trays 9 or 10 is
-refused with a page saying which trays exist, rather than accepted and silently
-half-applied. If you want the app to stop offering the extra two:
+`dispenser.ts` is 10. The firmware handles **8**, and the contest unit is built
+with **3 hoppers fitted**. A `/save` naming a tray that is not fitted is refused
+with a page saying which trays exist, rather than accepted and silently
+half-applied — an absent servo cannot jam, so the alternative is a dose that is
+scheduled, never dispensed, and reported by nothing.
+
+`GET /api/status` reports `device.trays` and `device.trayCount`, so the app can
+ask rather than assume:
 
 ```ts
-export const MAX_TRAYS = 8;
+const { device } = await (await fetch(`http://${host}/api/status`)).json();
+const { plan, dropped } = planTrays(reminders, device.trayCount);
 ```
 
 `planTrays` already returns `dropped` for what did not fit, so the app can tell
-the user which doses were left out. That path just starts being used.
+the user which doses were left out. That path just starts being used — and with
+three trays it will be used often, so it is worth making that message good.
 
 ---
 

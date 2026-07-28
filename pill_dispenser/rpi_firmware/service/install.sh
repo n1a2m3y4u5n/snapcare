@@ -16,6 +16,13 @@
 #                    lib/hardware/dispenser.ts in the web app looks for.
 #   python3-segno    draws the setup QR. Optional — everything works without it
 #                    except the printed label, which falls back to plain text.
+#   rpi-ws281x       drives the LED ring. Optional; without it the device is dark.
+#   i2c + smbus2     talks to the DS3231, and reads the one register that says
+#                    whether its battery has ever died.
+#   i2c-rtc overlay  lets the kernel set the clock from the DS3231 at boot,
+#                    before userspace starts. This is what makes the device know
+#                    the time after a power cut with no network.
+#   fake-hwclock     disabled — it would overwrite a good RTC time with a stale one.
 #   hostname         set to `pilldispenser` so avahi publishes the right name.
 #
 set -euo pipefail
@@ -53,8 +60,34 @@ say "Installing packages"
 apt-get update
 # python3-segno is not in every suite; the firmware works without it, so a
 # failure to find it must not abort an otherwise good install.
-apt-get install -y pigpio avahi-daemon python3
+apt-get install -y pigpio avahi-daemon python3 i2c-tools python3-smbus2
 apt-get install -y python3-segno || echo "  (segno unavailable — the label will show text instead of a QR)"
+apt-get install -y python3-rpi-ws281x || echo "  (rpi-ws281x unavailable — the LED ring will be skipped)"
+
+say "Enabling I2C and the DS3231 real-time clock"
+# This is what removes the Pi's worst weakness. The kernel reads the chip and
+# sets the system clock before userspace starts — earlier and more reliably
+# than any Python could — so the device knows the time after a power cut with
+# no network at all.
+CONFIG_TXT=/boot/firmware/config.txt
+[[ -f $CONFIG_TXT ]] || CONFIG_TXT=/boot/config.txt
+for line in "dtparam=i2c_arm=on" "dtoverlay=i2c-rtc,ds3231"; do
+  if grep -qxF "$line" "$CONFIG_TXT"; then
+    echo "  already set: $line"
+  else
+    echo "  adding to $CONFIG_TXT: $line"
+    echo "$line" >> "$CONFIG_TXT"
+    NEEDS_REBOOT=1
+  fi
+done
+
+# fake-hwclock restores the time the Pi was last shut down at. That is better
+# than nothing on a Pi with no RTC and actively harmful on one with a good
+# one: it overwrites a correct time with a stale one during boot.
+if systemctl list-unit-files 2>/dev/null | grep -q '^fake-hwclock'; then
+  say "Disabling fake-hwclock (the DS3231 supersedes it)"
+  systemctl disable --now fake-hwclock 2>/dev/null || true
+fi
 
 say "Copying the firmware to $INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
@@ -96,6 +129,14 @@ cp "$here/service/$UNIT" /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable "$UNIT"
 systemctl restart "$UNIT"
+
+if [[ -n "${NEEDS_REBOOT:-}" ]]; then
+  say "A REBOOT IS NEEDED for the I2C/RTC overlay to load"
+  echo "  After rebooting, check the clock chip is seen:"
+  echo "      ls -l /dev/rtc0 && sudo hwclock -r"
+  echo "  And once the Pi has the right time, write it to the RTC:"
+  echo "      sudo hwclock --systohc"
+fi
 
 say "Done"
 python3 - <<'PY'
