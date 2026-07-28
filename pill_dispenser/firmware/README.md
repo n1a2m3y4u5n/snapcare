@@ -186,7 +186,7 @@ If the clock has lost power the board says so and dispenses nothing until it is
 set. Paste the time in the same way, or show it as a code:
 
 ```
-SC1*C*202607251930*4          2026-07-25 19:30, Friday (0 = Monday)
+SC1*C*202607251930*5          2026-07-25 19:30, Saturday (0 = Monday)
 ```
 
 `python -m form_sheet_parser.cli --clock-qr clock.png` prints one from the

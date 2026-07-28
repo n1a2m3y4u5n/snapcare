@@ -319,17 +319,17 @@ static void test_the_structs_stay_small_enough_for_an_uno() {
 static void test_a_clock_message_round_trips() {
     section("wall-clock time survives the trip to the device");
     char buf[32];
-    sc1::ClockSet set{2026, 7, 25, 19, 30, 4};   // a Friday
+    sc1::ClockSet set{2026, 7, 25, 19, 30, 5};   // a Saturday
     const size_t n = sc1::encodeClock(set, buf, sizeof buf);
     // Exactly 20 characters — the same wall the dose event lives under, so a
     // clock code can be shown on the device's own screen as well as read by it.
     CHECK(n == sc1::MAX_DEVICE_PAYLOAD);
-    CHECK_STR(buf, "SC1*C*202607251930*4");
+    CHECK_STR(buf, "SC1*C*202607251930*5");
 
     sc1::ClockSet back;
     CHECK(sc1::decodeClock(buf, back));
     CHECK(back.year == 2026 && back.month == 7 && back.day == 25);
-    CHECK(back.hour == 19 && back.minute == 30 && back.weekday == 4);
+    CHECK(back.hour == 19 && back.minute == 30 && back.weekday == 5);
 
     CHECK(sc1::messageKind(buf) == sc1::Kind::Clock);
     // It is not a schedule, whatever else it is.

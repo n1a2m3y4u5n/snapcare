@@ -476,7 +476,7 @@ void setup() {
         // looked fine.
         Serial.println(F("! RTC lost power — not dispensing until the clock is set."));
         Serial.println(F("  Show the device an SC1*C* code, or paste one here:"));
-        Serial.println(F("  SC1*C*202607251930*4   (2026-07-25 19:30, Friday; 0=Mon)"));
+        Serial.println(F("  SC1*C*202607251930*5   (2026-07-25 19:30, Saturday; 0=Mon)"));
     } else {
         clockTrusted = true;
     }

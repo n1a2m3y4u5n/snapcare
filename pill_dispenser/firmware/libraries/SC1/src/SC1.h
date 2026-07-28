@@ -30,7 +30,7 @@
  *                     the same, plus a day-of-week mask and a course length,
  *                     which the paper sheet can express and `S` cannot
  *
- *   phone -> device   SC1*C*202607251930*4
+ *   phone -> device   SC1*C*202607251930*5
  *                     wall-clock time. The device refuses to dispense until it
  *                     has one it can trust; see ClockSet.
  *
@@ -83,11 +83,18 @@ enum class Kind : uint8_t { Unknown, Schedule, Weekly, Event, Clock };
  * the one it already uses: something held in front of the camera. The phone
  * knows the time; a printed or displayed code carries it across the air gap.
  *
- * `SC1*C*202607251930*4`  — 2026-07-25 19:30, a Friday.
+ * `SC1*C*202607251930*5`  — 2026-07-25 19:30, a Saturday.
  *
  * The weekday is carried rather than computed. Working it out from the date
  * needs calendar arithmetic that costs flash on an AVR and is a classic source
  * of off-by-one bugs, and the sender already knows it.
+ *
+ * Carrying it means it can also *disagree* with the date, and this decoder does
+ * not check that it does not — the Python and Raspberry Pi implementations do.
+ * The reason for the difference is what the field is used for on each side: an
+ * AVR only writes it into a DS3231 register, whereas a firmware that matches it
+ * against a day-of-week mask would dispense a Mon/Wed/Fri course on the wrong
+ * three days if it were out by one, and look healthy doing it.
  */
 struct ClockSet {
     uint16_t year;      // 2000..2099

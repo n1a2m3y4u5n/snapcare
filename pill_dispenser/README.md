@@ -36,12 +36,38 @@ pill_dispenser/
     cli.py                   command line
     form_sheet/              the printable sheet, its ArUco markers, the bubble map
     tests/                   75 tests, no printer required
-  firmware/                see firmware/README.md
+  firmware/                the two-board build — see firmware/README.md
     libraries/SC1/           protocol + scheduler, host-testable
     arduino/snapcare_tray/         Uno/Nano: servos, clock, button, ring
     esp32/snapcare_optical_head/   ESP32-CAM: camera in, OLED out
     test/                    `make` — ~24,000 assertions, no board
+  rpi_firmware/            the one-board build — see rpi_firmware/README.md
+    snapcare_dispenser/      SC1, scheduler, servos, WiFi, web server
+    service/                 systemd unit + install.sh
+    tests/                   `make` — 220 tests, no board
 ```
+
+## Two builds, one protocol
+
+There are two firmwares here because there are two machines.
+
+`firmware/` is the original: an Arduino Uno driving eight servos and a DS3231,
+with an ESP32-CAM beside it as an optical modem — the phone shows a QR, the
+camera reads it, and a 128x64 OLED answers with another. No network at all.
+
+`rpi_firmware/` is the same device on a Raspberry Pi 3B. One board instead of
+two, no camera and no OLED, and the link to the phone is the Pi's own WiFi: it
+raises a setup hotspot with a captive portal, joins the house network, and
+answers on `pilldispenser.local`. Getting a dispenser onto WiFi is one QR scan
+from a printed label — and that label never changes, because the hotspot's name
+and password are derived from the SoC serial number rather than generated.
+
+They share the SC1 grammar and its test vectors, so a schedule from the app or
+from a photographed paper sheet reaches either one unchanged. What differs is
+what each can be told and what each can say back, and both READMEs are explicit
+about it. The Pi's one real regression is the clock: it has no RTC and no
+battery at all, so it refuses to dispense until NTP or a phone vouches for the
+time.
 
 ## Reading a sheet
 
@@ -161,7 +187,7 @@ caller is told which is which.
 ```
 SC1*S*1:0800/3:1900                    app-compatible, exact only if all seven days
 SC1*W*1:0800-127-030/3:1900-021-000    lossless: day mask and course length kept
-SC1*C*202607251930*4                   wall-clock time, to set the device's RTC
+SC1*C*202607251930*5                   wall-clock time, to set the device's RTC
 ```
 
 `SC1*W*` is safe to show to an app build that predates it: `messageKind` returns
