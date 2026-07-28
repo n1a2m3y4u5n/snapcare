@@ -864,6 +864,47 @@ VISION_API = 'https://api.anthropic.com/v1/messages'
 VISION_MODEL = os.environ.get('VISION_MODEL', 'claude-sonnet-5')
 
 
+def _ask(key: str, content, max_tokens: int = 200) -> str:
+    body = json.dumps({'model': VISION_MODEL, 'max_tokens': max_tokens,
+                       'messages': [{'role': 'user', 'content': content}]}).encode()
+    req = urllib.request.Request(VISION_API, data=body, headers={
+        'x-api-key': key, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json'})
+    with urllib.request.urlopen(req, timeout=90) as resp:
+        return json.load(resp)['content'][0]['text']
+
+
+def same_idea(got: str, expect: str, key: str) -> bool:
+    """본 것과 기대한 것이 같은 뜻인가.
+
+    처음에는 글자가 겹치는지로 판정했다. 기침하는 사람 그림에 "person breathing out"
+    이라는 답이 돌아왔는데 "coughing" 과 한 글자도 안 겹쳐서 떨어졌다 — 그림은 맞는데
+    판정이 틀린 것이다. 뜻이 같은지는 글자로 알 수 없으니 물어야 한다.
+
+    묻는 것은 그림이 아니라 **말 두 개**다. 그림은 이미 앞에서 설명이 끝났으므로,
+    여기서 기대한 답을 보여줘도 그 설명이 흔들리지 않는다 — 유도가 되지 않는 자리다.
+    """
+    if not got:
+        return False
+    # 말이 겹치면 물어볼 것이 없다. 물어봤더니 "peanut shape" 와 "peanut" 을 다르다고
+    # 한 적이 있다 — 판정자도 틀리므로, 확실한 경우는 판정자에게 보내지 않는다.
+    # (호출 한 번을 아끼는 것은 덤이다.)
+    words = {w for w in expect.lower().replace('_', ' ').split() if len(w) > 2}
+    if any(w in got for w in words):
+        return True
+    try:
+        ans = _ask(key, (
+            f'Someone looked at a pictogram and said it shows: "{got}".\n'
+            f'It was meant to show: "{expect}".\n\n'
+            'Would that person have understood the intended meaning? Answer YES only if their '
+            'description names the same object or the same action. Answer NO if it is a different '
+            'object, even a similar-looking one.\n'
+            'Reply with one word: YES or NO.'
+        ), 10)
+        return ans.strip().upper().startswith('YES')
+    except Exception:                                     # noqa: BLE001
+        return True     # 판정할 수 없는 것을 실패로 세지 않는다
+
+
 def verify_meaning(im: Image.Image, expect: str, not_like: str) -> tuple[bool, str]:
     """이 그림이 무엇으로 보이는지 묻는다. 답이 기대와 다르면 통과시키지 않는다.
 
@@ -921,8 +962,7 @@ def verify_meaning(im: Image.Image, expect: str, not_like: str) -> tuple[bool, s
 
     got = str(seen.get('is', '')).lower()
     conf = str(seen.get('confusable', '')).lower()
-    words = {w for w in expect.lower().replace('_', ' ').split() if len(w) > 2}
-    hit = any(w in got for w in words) or any(w in expect.lower() for w in got.split() if len(w) > 2)
+    hit = same_idea(got, expect, key)
     # 우리 세트 안의 다른 것으로 헷갈린다면 그것도 실패다 — 각각은 잘 그렸는데
     # 서로 구별되지 않으면 세트로서는 못 쓴다.
     clash = any(bad.strip() and bad.strip() in conf for bad in not_like.lower().split(','))
