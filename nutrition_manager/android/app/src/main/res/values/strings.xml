@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Meal Camera</string>
+    <string name="capture">Estimate this meal</string>
+
+    <string name="loading_model">Loading the model…</string>
+    <string name="camera_denied">Camera access is needed to photograph a meal. Grant it in Settings and reopen the app.</string>
+    <string name="camera_failed">Camera unavailable: %1$s</string>
+    <string name="model_failed">Could not load the model: %1$s</string>
+    <string name="capture_failed">Capture failed: %1$s</string>
+    <string name="estimate_failed">Could not estimate: %1$s</string>
+
+    <string name="estimate_caption">Estimated from one photo — not a label</string>
+
+    <string name="target_calories">Energy</string>
+    <string name="target_mass">Mass</string>
+    <string name="target_fat">Fat</string>
+    <string name="target_carb">Carbohydrate</string>
+    <string name="target_protein">Protein</string>
+</resources>

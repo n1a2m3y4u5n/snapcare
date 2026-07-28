@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark enough to stay readable over a bright plate under kitchen lighting,
+     translucent enough that the preview underneath is still visible. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#CC000000" />
+    <corners android:radius="16dp" />
+</shape>

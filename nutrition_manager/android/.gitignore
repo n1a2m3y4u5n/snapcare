@@ -1,0 +1,11 @@
+# Gradle / Android Studio
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+captures/
+
+# The wrapper JAR is a binary Gradle regenerates with `gradle wrapper`; the
+# properties file beside it, which pins the version, is committed.
+gradle/wrapper/gradle-wrapper.jar
