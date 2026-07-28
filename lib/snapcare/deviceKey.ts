@@ -105,3 +105,68 @@ export function isSupported(): boolean {
     && typeof crypto !== 'undefined'
     && typeof crypto.subtle !== 'undefined';
 }
+
+/* ── 자료 암호화 ────────────────────────────────────────────────────────────
+ *
+ * 서버(fly 볼륨)에 자료가 평문으로 있었다. 디스크 자체는 암호화돼 있지만 그 열쇠는
+ * fly 가 들고 있어서, 막아 주는 것은 디스크를 물리적으로 훔쳐가는 경우뿐이다.
+ * 우리도, fly 도, 서버에 침입한 사람도 그냥 읽는다.
+ *
+ * 그래서 올리기 전에 기기에서 잠근다. 여는 열쇠는 신원 열쇠와 같은 방식으로
+ * **꺼낼 수 없게** 만들어 이 기기에만 둔다 — 우리 코드조차 값을 읽을 수 없다.
+ *
+ * 열쇠를 잃으면 서버의 암호문을 못 여는데, 그때는 신원 열쇠도 같이 사라져서 어차피
+ * 그 파일에 접근할 수 없다. 잃는 것이 없다.
+ */
+
+const DATA_ID = 'data-key';
+/** 암호문 앞에 붙는 표시. 예전에 올라간 평문과 구별하기 위한 것. */
+const ENVELOPE = 'scb1:';
+
+let cachedData: CryptoKey | null = null;
+
+async function dataKey(): Promise<CryptoKey> {
+  if (cachedData) return cachedData;
+  const found = await tx<CryptoKey | undefined>('readonly', (s) => s.get(DATA_ID));
+  if (found) {
+    cachedData = found;
+    return found;
+  }
+  const k = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false,
+    ['encrypt', 'decrypt']);
+  await tx('readwrite', (s) => s.put(k, DATA_ID));
+  cachedData = k;
+  return k;
+}
+
+/** 올리기 전에 잠근다. 매번 새 IV 를 쓰고 앞에 붙인다. */
+export async function sealBlob(plain: string): Promise<string> {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const body = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await dataKey(),
+    new TextEncoder().encode(plain));
+  const out = new Uint8Array(iv.length + body.byteLength);
+  out.set(iv, 0);
+  out.set(new Uint8Array(body), iv.length);
+  return ENVELOPE + btoa(String.fromCharCode(...out));
+}
+
+/**
+ * 받아서 연다.
+ *
+ * 표시가 없으면 **예전에 평문으로 올라간 것**이다. 그대로 돌려주고, 다음에 올릴 때
+ * 암호문이 된다 — 켜는 순간 기존 사용자의 자료가 사라지면 안 된다.
+ *
+ * 표시가 있는데 열리지 않으면 그것은 진짜 실패다(열쇠가 다르거나 변조됐다).
+ * 이때 억지로 돌려주면 쓰레기를 자료로 넘기게 되므로 null 을 준다.
+ */
+export async function openBlob(stored: string): Promise<string | null> {
+  if (!stored.startsWith(ENVELOPE)) return stored;
+  try {
+    const raw = Uint8Array.from(atob(stored.slice(ENVELOPE.length)), (c) => c.charCodeAt(0));
+    const body = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) },
+      await dataKey(), raw.slice(12));
+    return new TextDecoder().decode(body);
+  } catch {
+    return null;
+  }
+}

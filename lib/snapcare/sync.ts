@@ -1,6 +1,6 @@
 import type { Member, ScanRecord } from './types';
 import type { Reminder } from '@/stores/reminders';
-import { isSupported, publicKey, sign } from './deviceKey';
+import { isSupported, openBlob, publicKey, sealBlob, sign } from './deviceKey';
 
 /**
  * 서버 blob 스키마 버전.
@@ -63,8 +63,13 @@ export async function pullBlob(): Promise<SyncBlob | null> {
       cache: 'no-store', headers: await signedHeaders('GET', ''),
     });
     if (!res.ok) return null;
-    const { data } = (await res.json()) as { data: SyncBlob | null };
-    return data;
+    const { data } = (await res.json()) as { data: unknown };
+    if (data === null || data === undefined) return null;
+    // 암호화를 켜기 전에 올라간 것은 **객체**로 저장돼 있다. 그대로 읽어 쓰고, 다음
+    // 저장에서 암호문이 되게 한다 — 켜는 순간 기존 사용자의 자료가 사라지면 안 된다.
+    if (typeof data !== 'string') return data as SyncBlob;
+    const plain = await openBlob(data);
+    return plain === null ? null : (JSON.parse(plain) as SyncBlob);
   } catch {
     return null; // 오프라인 — localStorage 폴백
   }
@@ -74,7 +79,9 @@ export async function pullBlob(): Promise<SyncBlob | null> {
 export async function pushBlob(data: SyncBlob): Promise<boolean> {
   if (!isSupported()) return false;
   try {
-    const body = JSON.stringify(data);
+    // 올리기 전에 기기에서 잠근다. 서버는 열 수 없는 덩어리만 받는다 — fly 볼륨에
+    // 침입해도, 우리가 ssh 로 들어가도 알레르기·처방 기록을 읽을 수 없다.
+    const body = JSON.stringify(await sealBlob(JSON.stringify(data)));
     const res = await fetch('/api/store', {
       method: 'PUT', headers: await signedHeaders('PUT', body), body,
     });
