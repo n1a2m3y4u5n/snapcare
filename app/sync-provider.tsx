@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useProfile } from '@/stores/profile';
-import { useScans } from '@/stores/scans';
+import { seedDemoIfEmpty, useScans } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
 import { pullBlob, pushBlob, isUsable, SYNC_VERSION, type SyncBlob } from '@/lib/snapcare/sync';
 
@@ -43,6 +43,11 @@ export function SyncProvider() {
         if (blob.scans) useScans.setState({ scans: blob.scans });
         if (blob.reminders) useReminders.setState({ reminders: blob.reminders });
       } else {
+        // 서버에도 없다 = 이 사람의 첫 실행이다. 시연 모드면 여기서 채운다.
+        //
+        // 마운트 직후에 넣어 봤더니 이 pull 이 끝나면서 빈 자료로 덮어썼다. 서버가
+        // 무엇을 갖고 있는지 안 뒤에 넣어야 한다.
+        seedDemoIfEmpty();
         void pushBlob(snapshot());
       }
       ready.current = true;
