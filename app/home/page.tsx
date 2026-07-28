@@ -22,6 +22,7 @@ export default function HomePage() {
   const router = useRouter();
   const scans = useScans((s) => s.scans);
   const profile = useProfile((s) => s.profile);
+  const confirmed = useProfile((s) => s.confirmed);
   const setCurrent = useAnalysis((s) => s.setCurrent);
   const reminders = useReminders((s) => s.reminders);
 
@@ -53,6 +54,30 @@ export default function HomePage() {
             {...sayable('SnapCare. Photograph food or medicine to check it.')}>
           SnapCare
         </h1>
+
+        {/*
+          프로필을 한 번도 확인하지 않은 사람에게, 지금 무엇을 기준으로 판정하고
+          있는지 보여준다. 기본값은 '어른, 조건 없음' 인데 그것이 아무 표시 없이
+          정해져 왔다 — 아이가 써도 어른 기준이고, 알레르기가 있어도 등록할 자리를
+          만나지 못했다. 첫 실행에서 건너뛴 사람이 여기로 돌아올 수 있어야 한다.
+        */}
+        {!confirmed && (
+          <button onClick={() => router.push('/profile?setup=1')}
+                  className="mt-4 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
+                  style={{ background: 'color-mix(in srgb, var(--color-caution) 14%, white)' }}
+                  {...sayable('We are checking as an adult with no conditions. Tap to set who this is for.')}>
+            <span className="text-xl" aria-hidden>⚖️</span>
+            <span className="flex-1">
+              <span className="block text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}>
+                Checking as an adult
+              </span>
+              <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                Tap to set your age and allergies
+              </span>
+            </span>
+            <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
+          </button>
+        )}
 
         {/* 복약 리마인더 — 실제로 만든 알람이 있을 때만 */}
         {nextDose && (

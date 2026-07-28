@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useProfile } from '@/stores/profile';
 import { CONDITIONS } from '@/lib/snapcare/conditions';
@@ -43,19 +44,57 @@ const GROUPS: { key: 'now' | 'experience' | 'diagnosis'; title: string; say: str
   { key: 'diagnosis', title: 'A DOCTOR TOLD ME', say: 'A doctor told me.' },
 ];
 
+/**
+ * useSearchParams 는 미리 그려둘 수 없다 — 주소는 요청이 와야 정해진다. Suspense 로
+ * 감싸지 않으면 빌드가 이 페이지에서 멈춘다.
+ *
+ * 타입 검사와 시험만으로는 안 걸린다. 처음 넣었을 때 `npm run build` 를 돌리지 않아
+ * 그대로 커밋됐고, 배포에서 터질 뻔했다.
+ */
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" style={{ background: 'var(--color-sc-bg)' }} />}>
+      <ProfileBody />
+    </Suspense>
+  );
+}
+
+function ProfileBody() {
   const router = useRouter();
-  const { profile, toggleCondition, setFace, setAgeBand } = useProfile();
+  // 첫 실행에 로그인이 여기로 보낸다. 그때는 설정 탭으로 돌아갈 자리가 없고,
+  // 대신 다 골랐다고 말할 자리가 있어야 한다.
+  const setup = useSearchParams().get('setup') === '1';
+  const { profile, toggleCondition, setFace, setAgeBand, confirm } = useProfile();
+
+  function done() {
+    confirm();
+    router.replace('/home');
+  }
 
   const currentBand: AgeBand = profile.ageBand ?? 'adult';
 
   return (
     <MobileScreen tab="settings">
       <div className="px-5 pt-14 pb-8">
-        <button onClick={() => router.push('/settings')} className="text-sm font-semibold"
-                style={{ color: 'var(--color-sc-primary)' }}>
-          ‹ Back
-        </button>
+        {setup ? (
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}
+                  {...sayable('Who are we checking for? Your age and conditions decide every verdict.')}>
+              Who are we checking for?
+            </span>
+            {/* 건너뛰기를 남겨 둔다 — 첫 화면에서 막히면 앱을 아예 못 쓴다.
+                건너뛰면 홈이 계속 누구 기준인지 보여준다. */}
+            <button onClick={() => router.replace('/home')} className="text-sm font-semibold"
+                    style={{ color: 'var(--color-sc-muted)' }}>
+              Skip
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => router.push('/settings')} className="text-sm font-semibold"
+                  style={{ color: 'var(--color-sc-primary)' }}>
+            ‹ Back
+          </button>
+        )}
 
         <div className="mt-4 flex items-center gap-3">
           <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl"
@@ -147,6 +186,14 @@ export default function ProfilePage() {
             </div>
           );
         })}
+        {setup && (
+          <button onClick={done}
+                  className="mt-8 w-full rounded-2xl py-4 text-base font-bold text-white active:scale-[0.98] transition-transform"
+                  style={{ background: 'var(--color-sc-primary)' }}
+                  {...sayable('Done. Start using SnapCare.')}>
+            Done
+          </button>
+        )}
       </div>
     </MobileScreen>
   );

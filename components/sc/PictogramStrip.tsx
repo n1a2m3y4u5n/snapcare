@@ -14,7 +14,14 @@ import { splitDslLines, dslKey, cachedPictogramPath, type PictogramManifest } fr
  *     엔진 장애로 최대 차별점이 통째로 사라지지 않게 하는 것이 이 컴포넌트의 요점이다.
  */
 export function PictogramStrip({ source }: { source: string }) {
-  const lines = useMemo(() => splitDslLines(source), [source]);
+  const all = useMemo(() => splitDslLines(source), [source]);
+  // \?개념 은 "이 개념의 그림이 우리에게 없다" 는 표시다. 엔진은 이 줄을 파싱할 수
+  // 없으므로 갈라서 따로 다룬다.
+  const lines = useMemo(() => all.filter((l) => !l.startsWith('\\?')), [all]);
+  const missing = useMemo(
+    () => all.filter((l) => l.startsWith('\\?')).map((l) => l.slice(2)),
+    [all],
+  );
   const [images, setImages] = useState<string[] | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -57,7 +64,8 @@ export function PictogramStrip({ source }: { source: string }) {
     };
   }, [lines, source]);
 
-  if (failed || lines.length === 0) return null;
+  if (failed && missing.length === 0) return null;
+  if (lines.length === 0 && missing.length === 0) return null;
 
   return (
     <div className="mt-1">
@@ -65,6 +73,9 @@ export function PictogramStrip({ source }: { source: string }) {
         PICTOGRAM GUIDE
       </p>
       <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
+        {missing.map((c) => (
+          <MadeGlyph key={c} concept={c} />
+        ))}
         {images
           ? images.map((src, i) => (
               // eslint-disable-next-line @next/next/no-img-element
@@ -79,6 +90,56 @@ export function PictogramStrip({ source }: { source: string }) {
               <div key={i} className="h-24 w-24 shrink-0 animate-pulse rounded-2xl bg-white shadow-sm" />
             ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * 우리 세트에 없는 개념 한 칸.
+ *
+ * 온라인 판은 서버에 만들어 달라고 하고, 만드는 동안 이 칸만 비어 있다 — 판정과
+ * 음성은 이미 화면에 있다. 기다림이 그림 한 장으로 갇히므로 1분이 걸려도 사용자는
+ * 판정을 기다리지 않는다.
+ *
+ * 만들지 못하면 "맞는 그림이 없다" 를 그대로 보여준다. 온디바이스 판이 늘 보게 될
+ * 화면이기도 하다. 비슷한 그림을 대신 보여주지 않는 것이 요점이다 — 읽지 못하는
+ * 사람에게 틀린 그림은 그림이 없는 것보다 나쁘다. 없으면 음성으로 넘어가지만, 틀린
+ * 그림은 자신 있게 틀리고 사용자는 그것이 틀렸다는 것을 알 방법이 없다.
+ */
+function MadeGlyph({ concept }: { concept: string }) {
+  const [state, setState] = useState<{ url?: string; done: boolean }>({ done: false });
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/glyph', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ concept }),
+    })
+      .then((r) => r.json())
+      .then((r: { ok: boolean; url?: string }) => {
+        if (alive) setState({ url: r.ok ? r.url : undefined, done: true });
+      })
+      .catch(() => alive && setState({ done: true }));
+    return () => { alive = false; };
+  }, [concept]);
+
+  if (state.url) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={state.url} alt={concept}
+      className="h-24 w-24 shrink-0 rounded-2xl bg-white p-2 shadow-sm" />;
+  }
+  if (!state.done) {
+    return <div className="h-24 w-24 shrink-0 animate-pulse rounded-2xl bg-white shadow-sm" />;
+  }
+  return (
+    <div className="flex h-24 w-24 shrink-0 flex-col items-center justify-center gap-1
+                    rounded-2xl border-2 border-dashed bg-white p-2 text-center"
+         style={{ borderColor: 'var(--color-sc-line)' }}>
+      <span className="text-2xl" aria-hidden>—</span>
+      <span className="text-[10px] leading-tight" style={{ color: 'var(--color-sc-muted)' }}>
+        No picture for this
+      </span>
     </div>
   );
 }

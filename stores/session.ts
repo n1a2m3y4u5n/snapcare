@@ -18,7 +18,10 @@ export const useSession = create<SessionState>()(
       onboarded: false,
       authed: false,
       // 데모 기본 픽처키 = ☀️🌙💧🔥 (인덱스 0,1,2,3). 로그인 화면에 힌트로 표시됨.
-      pinHash: '$2b$10$0Xrx5jWlNoZS/sYknOwOn.BF1ASI3ZzR..RmGPCWMHFvpO08ATBJm',
+      // 기본값은 null 이어야 한다. 여기에 해시가 박혀 있으면 처음 여는 사람도
+      // '확인' 모드로 들어가서, 자기가 정한 적 없는 그림 4개를 맞히라는 화면을 만난다.
+      // 시연용 키는 app/login/page.tsx 가 시연 모드일 때만 넣는다.
+      pinHash: null,
       setOnboarded: (onboarded) => set({ onboarded }),
       setAuthed: (authed) => set({ authed }),
       setPinHash: (pinHash) => set({ pinHash }),

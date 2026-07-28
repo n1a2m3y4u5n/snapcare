@@ -98,7 +98,18 @@ const FORM_SITE: Record<string, string> = {
 function medicineLabels(item: ScanItem, avoid: boolean): string[] {
   const labels: string[] = [];
   const rx = item.rx;
-  const head = (rx?.form && FORM_HEAD[rx.form]) || 'pill_bottle';
+  // 모르는 제형이면 지금까지 조용히 pill_bottle 로 떨어졌다 — 흡입기든 네뷸라이저든
+  // 약병 그림이 떴고, 그런 일이 얼마나 자주 일어나는지 아무 기록도 없었다.
+  //
+  // 이제 진짜 물건을 앞에 한 칸 세운다 (\? 는 "이 개념의 그림이 없다" 는 표시로,
+  // 온라인 판은 그 자리에서 만들어 넣고 온디바이스 판은 없다고 알린다).
+  //
+  // 부분적인 해결이다: head 는 시각·개수·보관 줄의 **그릇**이기도 해서, 그 줄들은
+  // 여전히 일반형 약병 위에 그려진다. 제대로 고치려면 그 개념이 정식 형태소가 되어야
+  // 한다 — /api/glyph 가 남기는 목록이 그래서 있다.
+  const known = rx?.form ? FORM_HEAD[rx.form] : undefined;
+  if (rx?.form && !known) labels.push(`\\?${rx.form}`);
+  const head = known || 'pill_bottle';
   const site = rx?.form ? FORM_SITE[rx.form] : undefined;
   const dosage = rx?.dosageText ?? '';
   const freq = rx?.schedule.length ?? 1;
