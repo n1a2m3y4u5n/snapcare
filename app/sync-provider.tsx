@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useProfile } from '@/stores/profile';
 import { seedDemoIfEmpty, useScans } from '@/stores/scans';
+import { isDemo } from '@/lib/snapcare/demo';
 import { useReminders } from '@/stores/reminders';
 import { pullBlob, pushBlob, isUsable, SYNC_VERSION, type SyncBlob } from '@/lib/snapcare/sync';
 
@@ -30,6 +31,12 @@ export function SyncProvider() {
   const ready = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 렌더가 아니라 이펙트에서 읽는다 (localStorage·randomUUID 는 서버에 없다).
+
+  // 주소의 ?demo 를 **가장 먼저** 읽어 둔다. isDemo() 는 읽을 때 그 값을 브라우저에
+  // 남기는데, 그 첫 읽기가 늦으면 문제가 된다 — 주소에 ?demo=1 이 붙는 것은 첫 화면
+  // 뿐이고, 로그인 화면으로 넘어가면 주소에서 사라진다. 실제로 동기화가 끝난 뒤에야
+  // 읽고 있어서, 시연 모드인데 로그인 화면이 그것을 모른 채 그려졌다.
+  useEffect(() => { isDemo(); }, []);
 
   useEffect(() => {
     let alive = true;

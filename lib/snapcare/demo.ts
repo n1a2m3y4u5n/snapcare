@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 /**
  * 시연용 자료를 채울 것인가.
  *
@@ -47,4 +51,16 @@ export function isDemo(): boolean {
     return false;
   }
   return localStorage.getItem(FLAG) === '1';
+}
+
+/**
+ * 화면에서 쓰는 형태.
+ *
+ * isDemo() 를 그리는 중에 그냥 부르면 안 된다 — 서버는 false, 브라우저는 true 라
+ * 두 화면이 어긋난다. 붙은 뒤에 한 번 알려주는 방식으로 그 어긋남을 없앤다.
+ */
+export function useIsDemo(): boolean {
+  const [demo, setDemo] = useState(false);
+  useEffect(() => setDemo(isDemo()), []);
+  return demo;
 }

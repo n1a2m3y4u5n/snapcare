@@ -1,21 +1,31 @@
 'use client';
 
 import { sayable } from '@/components/sc/Say';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import { useSession } from '@/stores/session';
 import { useProfile } from '@/stores/profile';
+import { useIsDemo } from '@/lib/snapcare/demo';
 
 /** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개 순서 (bcrypt로 실제 설정·검증). */
 const TILES = ['☀️', '🌙', '💧', '🔥', '🌸', '🐦', '🏠', '⛰️', '🛣️', '🚪', '🔔', '🔑'];
 const KEY_LEN = 4;
-/** 데모용 기본 픽처키 (stores/session 기본 pinHash와 일치) */
+/** 시연용 픽처키와 그 해시. 시연 모드에서만 쓴다. */
 const DEMO_KEY = [0, 1, 2, 3];
+const DEMO_HASH = '$2b$10$0Xrx5jWlNoZS/sYknOwOn.BF1ASI3ZzR..RmGPCWMHFvpO08ATBJm';
 
 export default function LoginPage() {
   const router = useRouter();
   const { pinHash, setPinHash, setAuthed } = useSession();
+  const demo = useIsDemo();
+  // 시연 모드면 알려진 키를 미리 넣어 둔다. 그래야 심사 중에 그림을 새로 정하는
+  // 단계 없이 바로 들어갈 수 있다. 실제 사용자에게는 넣지 않는다 — 정한 적 없는
+  // 그림을 맞히라는 화면이 되기 때문이다.
+  useEffect(() => {
+    if (demo && !pinHash) setPinHash(DEMO_HASH);
+  }, [demo, pinHash, setPinHash]);
+
   const setup = !pinHash; // 최초면 설정 모드
   const [picked, setPicked] = useState<number[]>([]);
   const [error, setError] = useState(false);
@@ -102,8 +112,8 @@ export default function LoginPage() {
           })}
         </div>
 
-        {/* 데모 힌트 — 검증 모드에서 정답 픽처키 표시 */}
-        {!setup && (
+        {/* 시연용 힌트. 시연 모드에서만 — 실제 사용자에게 잠금 답이 보이면 잠금이 아니다. */}
+        {!setup && demo && (
           <div className="mt-4 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--color-caution-bg)' }}>
             <span className="rounded-md px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--color-caution)', color: '#fff' }}>DEMO</span>
             <span className="text-sm" style={{ color: 'var(--color-sc-ink)' }}>Tap in order:</span>
