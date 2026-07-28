@@ -11,7 +11,9 @@
 이름은 assets/{role}/{name}.png 로 그대로 나간다 (engine.py 의 계약).
 """
 
+import json as _json
 import math
+from pathlib import Path as _Path
 
 from draw import Canvas, STROKE, THIN, HAIR, HOLE
 
@@ -567,6 +569,14 @@ SLOTS = {
     "spray": (0.36, 0.44, 0.64, 0.82),
     "suppository": (0.36, 0.34, 0.64, 0.68),
 }
+
+# 위 좌표는 손으로 그린 글리프를 전제한다. 자산을 새로 뽑으면 같은 약병이라도 몸통이
+# 어디 있는지가 달라지므로, gen_glyphs.py 가 그림에서 직접 뽑아둔 값이 있으면 그쪽을 쓴다.
+# (엔진은 슬롯 자리를 뚫으므로, 좌표가 어긋나면 수식어가 병 밖 허공에 뜬다.)
+_slots_gen = _Path(__file__).parent / 'slots_gen.json'
+if _slots_gen.exists():
+    SLOTS.update({k: tuple(v) for k, v in _json.loads(_slots_gen.read_text()).items()
+                  if k in SLOTS})
 
 
 # ─────────────────────────────────────────────────────────────

@@ -63,6 +63,9 @@ API = 'https://api.openai.com/v1/images/generations'
 MODEL = os.environ.get('IMAGE_MODEL', 'gpt-image-1')
 ROOT = Path(__file__).parent
 REFS = ROOT / 'refs'
+#: 생성된 그림에서 뽑아낸 슬롯. 손으로 적은 glyphs.py 의 SLOTS 를 덮어쓴다 —
+#: 생성물이라 사람이 고쳐 쓰는 파일과 섞지 않는다.
+SLOTS_OUT = ROOT / 'slots_gen.json'
 ASSETS = ROOT / 'assets'
 
 # ── 우리 규격 (engine/draw.py 와 같아야 한다) ────────────────────────────────
@@ -93,9 +96,13 @@ class Target:
     asset: str           # engine/assets/{role}/{asset}.png
     subject: str         # 무엇을 그리는가 — 윤곽 특징과 내부 구멍을 반드시 포함
     not_like: str        # 우리 세트 안에서 헷갈리면 안 되는 것
+    sparse: bool = False  # 점이 적은 것이 곧 뜻인가 (qty_one 등) — 잉크 하한을 면제한다
+    parts: int = 0       # 떨어진 덩어리가 정확히 몇 개여야 하는가. 0 이면 세지 않는다.
+    slot: bool = False   # 안쪽에 수식어가 들어가는가 — 슬롯을 그림에서 뽑아낸다
 
 
 TARGETS: list[Target] = [
+    # ── 알레르겐 ────────────────────────────────────────────────────────────
     Target(
         'peanut', 'head', 'allergen_peanut',
         'a whole peanut still in its shell, standing upright, its outline clearly pinched inwards '
@@ -113,11 +120,62 @@ TARGETS: list[Target] = [
         'a water drop, a teardrop, a flame, a leaf',
     ),
     Target(
+        'egg', 'head', 'allergen_egg',
+        'a fried egg seen from above: a wide rounded blob of white with one large solid black yolk '
+        'circle in the middle, the yolk separated from the rim by a broad white ring so the two read '
+        'as clearly different parts',
+        'a peanut, a target, a button, a plain circle',
+    ),
+    Target(
+        'fish', 'head', 'allergen_fish',
+        'a whole fish seen from the side, pointing left, with a clear triangular notched tail fin at '
+        'the right, one triangular fin on the back, and one large round white eye punched near the '
+        'head, plus one wide white curved gill line behind the head',
+        'a leaf, an arrow, a boat, a whale',
+    ),
+    Target(
+        'milk', 'head', 'allergen_milk',
+        'a milk carton seen straight on: a tall rectangle with a folded triangular gable roof on top, '
+        'and one wide horizontal white band punched across the middle to read as a label',
+        'a house, a bottle, a box, a bread slice',
+    ),
+    Target(
+        'gluten', 'head', 'allergen_gluten',
+        'a single ear of wheat standing upright: a straight vertical stalk with about five pairs of '
+        'pointed grains angled upwards along it, each grain a separate shape with clear white gaps '
+        'between it and its neighbours so the outline is strongly serrated',
+        'a feather, a leaf, a tree, a fish bone',
+    ),
+    Target(
+        'soy', 'head', 'allergen_soy',
+        'a soybean pod seen from the side: a long curved pod, its outline bulging into three rounded '
+        'humps, with three large round white circles punched through it to show the beans inside',
+        'a peanut, a banana, a caterpillar, a crescent moon',
+    ),
+    Target(
+        'sesame', 'head', 'allergen_sesame',
+        # 개수가 곧 뜻이 아니라 '흩어진 작은 씨' 라는 인상이 뜻이므로 개수는 세지 않는다.
+        'five sesame seeds scattered loosely with wide empty white space between them, each seed a '
+        'small solid black teardrop shape tilted at a different angle, no container, no bowl, nothing '
+        'joining them',
+        'rice grains, a flower, leaves, a cluster',
+    ),
+    Target(
+        'shellfish', 'head', 'allergen_shellfish',
+        'a shrimp seen from the side, its body curved into a strong C shape with the tail fanning out '
+        'at one end, and four wide white lines punched across the body to read as segments',
+        'a fish, a comma, a crescent moon, a leaf',
+    ),
+
+    # ── 음식 ────────────────────────────────────────────────────────────────
+    Target(
         'sugar', 'head', 'food_sugar',
-        'three sugar cubes stacked in a pyramid, two side by side below and one resting on top, each '
-        'cube drawn as a solid black square with wide white lines punched between them so the three '
-        'separate cubes are unmistakable',
-        'a bar chart, stacked boxes, dice, bricks',
+        # 1·2차 모두 잉크 0.45~0.50 으로 뭉쳤다. 덩어리를 늘리는 지시는 역효과라
+        # 방향을 뒤집는다: 큐브를 작게, 사이 흰 틈을 아주 넓게.
+        'three small sugar cubes arranged loosely in a triangle with wide empty white space between '
+        'them, each cube a small solid black square no more than one third of the image wide, drawn '
+        'in simple flat front view, the three cubes clearly separate and not touching',
+        'a bar chart, a solid block, dice, bricks, one big square',
     ),
     Target(
         'oil', 'head', 'food_oil',
@@ -126,45 +184,579 @@ TARGETS: list[Target] = [
         'a water bottle, a milk carton, a single drop on its own',
     ),
     Target(
+        'salt', 'head', 'food_salt',
+        'a salt shaker seen straight on: a rounded body narrowing to a flat domed cap, with five large '
+        'round white holes punched through the cap, and three small solid grains falling below the '
+        'shaker with clear white space between them and the shaker',
+        'a pepper mill, a bottle, a chess pawn, a lighthouse',
+    ),
+    Target(
+        # 잉크 0.43~0.52 로 세 번 뭉쳤다. 구멍을 더 뚫는 지시는 면적을 줄이지 못했다 —
+        # sugar 와 같은 처방으로 방향을 뒤집는다: 덩어리를 작게, 껍질을 선으로.
+        'food_bread', 'head', 'food_bread',
+        'one thin slice of bread seen straight on, drawn small in the middle of the frame with wide '
+        'empty white space all around it, the crust drawn as a bold outline only and the inside left '
+        'completely white and empty except for three large round black holes',
+        'a house, a tombstone, a solid block, a mushroom, a filled square',
+    ),
+    Target(
+        'rice', 'head', 'food_rice',
+        'a bowl of rice seen from the side: a wide shallow bowl drawn as a bold curved band, with a '
+        'rounded mound of rice heaped above it, and three wide white notches cut into the mound so it '
+        'does not read as one solid lump',
+        'a cup, a hat, a hill, an empty bowl, a boat',
+    ),
+    Target(
+        'meat', 'head', 'food_meat',
+        'a bone-in meat chop seen from the side: a thick rounded piece of meat with a straight bone '
+        'sticking out at one end ending in two small round knobs, and one wide white curved line '
+        'punched inside the meat to separate the fat rim from the middle',
+        'a chicken leg, a hand, a leaf, a club',
+    ),
+    Target(
+        'fruit', 'head', 'food_fruit',
+        # 잉크 0.47 로 뭉쳤다 — 사과는 본래 덩어리라 속을 비워야 한다.
+        'an apple seen straight on, drawn as a bold thick outline with the inside left completely '
+        'open and white: a round body with a clear notch dipping into the top of the outline, one '
+        'short stem rising from the notch, and one pointed leaf beside the stem separated from it '
+        'by white space',
+        'a tomato, a cherry, a ball, a heart',
+    ),
+    Target(
+        # 32px 에서 구멍 2개 소실. 잎을 크게 줄이고 몸통과의 틈을 넓힌다.
+        'food_vegetable', 'head', 'food_vegetable',
+        'a carrot pointing down: one thick tapering black wedge with two large separate leaves on top, '
+        'the leaves clearly detached from the carrot by wide white gaps, and two wide white notches '
+        'cut into the side of the carrot',
+        'a flame, a tooth, an arrow, an ice cream cone',
+    ),
+    Target(
+        'caffeine', 'head', 'caffeine',
+        'a coffee cup seen from the side: a rounded cup on a flat saucer with one large open handle on '
+        'the right, the handle a bold ring with a wide white hole through its middle, and two wavy '
+        'steam lines rising above the cup clearly separated from it',
+        'a mug with no handle, a bucket, a pot, a bell',
+    ),
+    Target(
+        'no_alcohol', 'head', 'no_alcohol',
+        # 금지는 \no{} 가 얹는다 — 여기서는 술 그 자체만 그린다.
+        'a stemmed wine glass seen straight on: a wide bowl narrowing to a thin stem and a flat round '
+        'base, with the lower half of the bowl filled solid black and the upper half left white and '
+        'open so the rim reads as a clear thin line',
+        'a trophy, a funnel, a tree, a mushroom, a martini glass',
+    ),
+
+    # ── 제형 ────────────────────────────────────────────────────────────────
+    Target(
+        'pill_bottle', 'head', 'pill_bottle',
+        'a medicine bottle seen straight on: a wide rectangular body with rounded corners and a '
+        'narrower cap on top, the cap separated from the body by one wide white line, and the middle '
+        'of the body left as a large solid black rectangle',
+        'a milk carton, a battery, a box, a can',
+        slot=True,
+    ),
+    Target(
+        'liquid_bottle', 'head', 'liquid_bottle',
+        'a syrup bottle seen straight on: a tall narrow neck opening out into a wide rounded body, a '
+        'small flat cap on top, and one wide white line across the neck where it meets the body, the '
+        'lower body a large solid black area',
+        'a pill bottle, a vase, a light bulb, a chess piece',
+        slot=True,
+    ),
+    Target(
+        'dropper_bottle', 'head', 'dropper_bottle',
+        'an eye drop bottle seen straight on: a rounded body with a long narrow nozzle tapering to a '
+        'point at the top, one round drop falling from the tip clearly separated by white space, and '
+        'one wide white line across the shoulder of the bottle',
+        'a syrup bottle, a rocket, a pen, a flame',
+        slot=True,
+    ),
+    Target(
+        'cream_tube', 'head', 'cream_tube',
+        # 32px 에서 구멍 5개 중 4개가 메워졌다 — 적고 크게.
+        'an ointment tube seen straight on: a long rounded rectangle with a small screw cap at the '
+        'top, the bottom end crimped flat, and exactly two very wide white bands punched straight '
+        'across the tube, each band at least one sixth of the image tall',
+        'a battery, a pill bottle, a crayon, a toothbrush',
+        slot=True,
+    ),
+    Target(
+        # 32px 에서 구멍 1개 소실. 흡입기는 입에 닿는 부분이 보여야 흡입기다.
+        'inhaler', 'head', 'inhaler',
+        'an asthma inhaler seen from the side as an L shape: an upright canister with a mouthpiece '
+        'sticking out at the bottom front, with one wide white slot punched where the canister meets '
+        'the mouthpiece so the two parts read separately',
+        'a camera, a stapler, a boot, a letter L',
+        slot=True,
+    ),
+    Target(
+        'sachet', 'head', 'sachet',
+        # 잉크 0.49 로 뭉쳤다 — "large solid black rectangle" 이라고 내가 시켰다.
+        'a powder sachet seen straight on, drawn as a bold thick outline with the inside left open '
+        'and white: a rectangular pouch whose top edge is a clear zigzag saw tooth line where it '
+        'tears open, and one wide notch cut into the side near the top',
+        'a bread slice, an envelope, a flag, a crown',
+        slot=True,
+    ),
+    Target(
+        'capsule_strip', 'head', 'capsule_strip',
+        'one medicine capsule lying horizontally: a long rounded pill shape with one wide white line '
+        'punched straight across its middle where the two halves join, one half solid black and the '
+        'other half drawn as a bold outline with white inside',
+        'a battery, a pill bottle, a tablet, a bean',
+        slot=True,
+    ),
+    Target(
+        'tablet_blister', 'head', 'tablet_blister',
+        # 잉크 0.42 로 뭉쳤다 — "테두리를 넓게 두르라" 고 내가 시킨 것이 원인이다.
+        'a blister pack seen from above: a rectangle with rounded corners containing four very large '
+        'round white holes in two rows, the holes taking up most of the rectangle so that only thin '
+        'black bridges remain between them and a narrow rim runs around the edge',
+        'a domino, a die, a phone keypad, a waffle',
+        slot=True,
+    ),
+    Target(
+        'syringe', 'head', 'syringe',
+        'a syringe lying at a diagonal: a long barrel with a thin needle at one end and a flat round '
+        'plunger flange at the other, with three wide white lines punched across the barrel to read '
+        'as measuring marks',
+        'a pen, an arrow, a thermometer, a nail',
+        slot=True,
+    ),
+    Target(
+        'spray', 'head', 'spray',
+        'a pump spray bottle seen from the side: a rectangular body with a flat trigger head on top '
+        'angled to the left, three short spray lines coming out of the nozzle clearly separated from '
+        'the bottle by white space, and one wide white line across the neck',
+        'a watering can, a hairdryer, a gun, a kettle',
+        slot=True,
+    ),
+    Target(
+        'suppository', 'head', 'suppository',
+        'a suppository shown upright: a bullet shape, rounded and wide at the bottom and tapering to '
+        'a blunt point at the top, with two wide white lines punched horizontally across the middle '
+        'so it does not read as one solid lump',
+        'an egg, a bullet, a flame, a drop, a chess pawn',
+        slot=True,
+    ),
+    Target(
+        'shake_bottle', 'head', 'shake_bottle',
+        'a medicine bottle tilted to one side with two curved motion arcs on each side of it, the '
+        'arcs clearly separated from the bottle by white space, and one wide white line across the '
+        'neck of the bottle',
+        'a bell, a maraca, a plain bottle, a rattle',
+    ),
+    Target(
+        'tablet_split', 'head', 'tablet_split',
+        # \no{} 를 씌우면 '쪼개지 마시오' 가 된다.
+        'a round tablet broken into two halves that have been pulled slightly apart, with a wide '
+        'empty white channel running straight down between them, both halves solid black with a '
+        'clearly jagged inner break edge facing each other',
+        'a full circle, a moon phase, a coin, a pill capsule',
+    ),
+
+    # ── 기기 ────────────────────────────────────────────────────────────────
+    Target(
+        'thermometer', 'head', 'thermometer',
+        'a medical thermometer standing upright: a long thin straight stem with a large solid round '
+        'bulb at the bottom, the bulb clearly wider than the stem, and three short white marks '
+        'punched across the stem',
+        'a syringe, a match, a key, a balloon',
+        slot=True,
+    ),
+    Target(
+        'glucometer', 'head', 'glucometer',
+        'a blood glucose meter seen straight on: a small handheld rectangle standing upright with a '
+        'large white rectangular screen punched into its upper half and a short test strip sticking '
+        'out of the bottom edge',
+        'a phone, a calculator, a remote control, a card',
+        slot=True,
+    ),
+    Target(
+        'bp_monitor', 'head', 'bp_monitor',
+        'a blood pressure cuff wrapped around an arm: a thick black band forming a broad C shape with '
+        'a wide white gap in the middle where the arm passes through, and one short tube leaving the '
+        'band at the top right',
+        'a belt, a watch, a horseshoe, a letter C',
+        slot=True,
+    ),
+    Target(
+        # 32px 에서 구멍 6개가 전부 메워졌다. 반창고의 구멍을 크고 적게.
+        'patch', 'head', 'patch',
+        'a sticking plaster shown flat and straight, a wide rectangle with rounded ends and a bigger '
+        'square pad in the middle, with four large round white holes punched into the pad, the holes '
+        'big enough to stay open in a tiny icon',
+        'a chocolate bar, a ruler, a battery, a domino',
+        slot=True,
+    ),
+    Target(
+        'contact_lens', 'head', 'contact_lens',
+        # 렌즈만 그리면 언덕이 된다 — 눈과 함께 있어야 무엇인지가 정해진다.
+        'an eye seen straight on with a contact lens held on a fingertip just below it: the eye is a '
+        'wide almond outline with one solid round pupil inside, and the lens is a thin shallow arc '
+        'sitting on the finger, clearly separated from the eye by white space',
+        'a hill, a bowl, an eye on its own, a smile',
+    ),
+
+    # ── 행동 ────────────────────────────────────────────────────────────────
+    Target(
+        'hand_wash', 'head', 'hand_wash',
+        # 손 전체를 곡선 덩어리로 그리면 불꽃이 된다 — 손가락 사이 틈이 손을 만든다.
+        'an open human hand seen palm on, fingers spread wide apart with deep white gaps between every '
+        'finger so the outline is strongly toothed, with three round water drops falling above it '
+        'clearly separated from the hand',
+        'a flame, a leaf, a glove, a star, a tree',
+    ),
+    Target(
+        'call_help', 'head', 'call_help',
+        'an old telephone handset seen from the side, curved like a wide bracket with a rounded '
+        'earpiece at each end, and two curved sound arcs beside the upper end clearly separated from '
+        'the handset by white space',
+        'a bone, a banana, a smile, a bracket',
+    ),
+    Target(
+        'vehicle', 'head', 'vehicle',
+        # 졸음 유발 약의 '운전 금지'. 금지는 \no{} 가 얹는다.
+        'a small car seen from the side: a low body with a raised cabin in the middle, two large '
+        'round white wheel holes punched through the bottom, and one wide white window shape punched '
+        'into the cabin',
+        'a bus, a shoe, a boat, a hill',
+    ),
+    Target(
+        'finish_course', 'head', 'finish_course',
+        # "며칠간" — 먹은 날과 남은 날이 한 줄에 같이 보여야 한다.
+        'a row of five square boxes side by side with clear white gaps between them, the first three '
+        'boxes filled solid black and the last two drawn as bold empty outlines, all five the same '
+        'size and in a straight line',
+        'a bar chart, a calendar grid, a barcode, a ruler',
+    ),
+
+    # ── 증상 ────────────────────────────────────────────────────────────────
+    Target(
         'skin_rash', 'head', 'symptom_skin',
         'a bare human forearm shown from the elbow to the wrist as one simple solid black band, with '
         'about eight large round white dots punched into the middle of it to read as a rash',
         'dice, a domino, a die face, a keypad',
     ),
     Target(
-        # 1차 실패: 손이 팔을 꼬집는 장면은 요소가 셋이라 작은 크기에서 뭉갰다.
-        # 요소를 하나로 줄이고, 살결을 내부 구멍으로 표현한다.
+        # 32px 에서 구멍 소실. 입은 벌어진 틈이 곧 뜻이라 그 틈이 커야 한다.
+        'symptom_mouth', 'head', 'symptom_mouth',
+        'an open mouth seen straight on: two thick lips forming a wide almond shape with one large '
+        'white opening between them taking up most of the middle, and three large round white dots '
+        'above the upper lip to read as a rash or swelling',
+        'an eye, a leaf, a closed mouth, a boat',
+    ),
+    Target(
+        'symptom_fever', 'head', 'symptom_fever',
+        'a human forehead and face seen straight on with a thermometer held across it: the head is a '
+        'bold rounded outline and the thermometer is one straight bar lying horizontally over the '
+        'forehead, with a wide white gap between the bar and the top of the head',
+        'a plain face, a clock, a sun, a helmet',
+    ),
+    Target(
+        'symptom_cough', 'head', 'symptom_cough',
+        'a head seen from the side facing left with the mouth open, and three short puff shapes coming '
+        'out of the mouth, each puff a separate rounded blob with clear white space between them and '
+        'the face',
+        'a speech bubble, a cloud, a face on its own, steam',
+    ),
+    Target(
+        'symptom_breath', 'head', 'symptom_breath',
+        'a pair of lungs seen straight on: two rounded lobes side by side joined at the top by a short '
+        'straight windpipe, with a wide white channel running down between the two lobes and two wide '
+        'white branch lines punched inside each lobe',
+        'a heart, a tree, a butterfly, a cloud',
+    ),
+    Target(
+        'symptom_gut', 'head', 'symptom_gut',
+        # 물결을 파낸 타원은 장식된 달걀로 보였다 — 배와 통증을 나눠 싣는다.
+        'a rounded belly shape with one bold lightning bolt punched through it as a white zigzag, the '
+        'zigzag wide enough to stay open in a tiny icon, and nothing else in the frame',
+        'an egg, a decorated egg, a balloon, a cloud',
+    ),
+    Target(
+        'symptom_vomit', 'head', 'symptom_vomit',
+        'a head seen from the side facing left and tipped forward, with a thick stream pouring '
+        'downwards out of the open mouth and ending in two separate round drops below, the drops '
+        'clearly detached from the stream',
+        'a watering can, a face on its own, a teapot, a fountain',
+    ),
+    Target(
+        'symptom_dizzy', 'head', 'symptom_dizzy',
+        'a head seen straight on as a bold rounded outline, with one spiral drawn above it as a thick '
+        'coiled line with wide white space between each turn, the spiral clearly separated from the '
+        'head',
+        'a face on its own, a snail, a lollipop, a cloud',
+    ),
+    Target(
+        'warn_bleeding', 'head', 'warn_bleeding',
+        # 방울로만 그리면 기름·건조 표시와 겹친다 — 위(胃) 안에 피를 둔다.
+        'a stomach shown as a curved pouch shape leaning to one side with a short tube at the top and '
+        'a short tube at the bottom, and two large round white drop shapes punched inside the pouch',
+        'a plain drop, a bean, a kidney, a comma',
+    ),
+
+    # ── 사람 상태 ───────────────────────────────────────────────────────────
+    Target(
+        'state_infant', 'head', 'state_infant',
+        'a baby lying curled on its side seen from the side: a very large round head next to a small '
+        'curled body, the head clearly bigger than the body, with a wide white gap between the head '
+        'and the body',
+        'a standing child, an adult, a ball, a comma',
+    ),
+    Target(
+        'state_child', 'head', 'state_child',
+        'a small standing child seen straight on: a large round head above a short wide body with two '
+        'short arms out to the sides and two short legs, with clear white gaps separating the head '
+        'from the body and each limb from the next',
+        'an adult, a teenager, a snowman, a star',
+    ),
+    Target(
+        'state_teen', 'head', 'state_teen',
+        # 아이와 어른 사이 — 머리는 어른 비율, 몸은 아직 가늘다.
+        'a slim standing teenager seen straight on: a medium round head above a narrow tall body with '
+        'two thin arms hanging down at the sides and two long thin legs, with clear white gaps between '
+        'the arms and the body',
+        'a child, a heavy adult, a stick, a letter T',
+    ),
+    Target(
+        'state_adult', 'head', 'state_adult',
+        'a standing adult seen straight on: a round head above a broad tall body with two arms out at '
+        'the sides and two long legs, the shoulders clearly wider than the head, with white gaps '
+        'separating the head, the arms and the legs',
+        'a child, a teenager, a cross, a tree',
+    ),
+    Target(
+        'state_elderly', 'head', 'state_elderly',
+        'an old person seen from the side walking with a stick: a round head above a body bent '
+        'forward at the back, and one straight walking stick held in front, the stick clearly '
+        'separated from the body by a wide white gap',
+        'a standing adult, a hiker, a letter r, a question mark',
+    ),
+    Target(
+        'state_pregnant', 'head', 'state_pregnant',
+        'a pregnant woman seen from the side facing right: a round head above a body whose front '
+        'bulges out into one large clear rounded belly, with one arm resting under the belly and a '
+        'white gap between the arm and the body',
+        'a standing adult, a person with a bag, a balloon, a snowman',
+    ),
+    Target(
+        'state_breastfeeding', 'head', 'state_breastfeeding',
+        'a seated woman seen from the side holding a baby to her chest: a large round adult head at '
+        'the top and a smaller round baby head held in the curve of her arms lower down, the two '
+        'heads clearly separate with a wide white gap between them',
+        'a pregnant woman, a person holding a bag, a hugging couple',
+    ),
+
+    # ── 수식어: 몸 ──────────────────────────────────────────────────────────
+    Target(
+        'body_mouth', 'modifier', 'body_mouth',
+        'a simple open mouth seen straight on, two thick curved lips with one big white gap between '
+        'them filling most of the shape, nothing else',
+        'an eye, a leaf, an almond, a boat',
+    ),
+    Target(
+        'body_eye', 'modifier', 'body_eye',
+        'a single eye seen straight on: a wide almond outline drawn as a bold line, with one large '
+        'solid round pupil in the middle and wide white space between the pupil and the outline on '
+        'both sides',
+        'a mouth, a leaf, a football, a fish',
+    ),
+    Target(
+        'body_ear', 'modifier', 'body_ear',
+        'a human ear seen from the side: a bold rounded outer rim shaped like a C opening to the left, '
+        'with one large white hollow inside it and one short curved inner fold, the hollow big enough '
+        'to stay open in a tiny icon',
+        'a letter C, a shell, a comma, a question mark',
+    ),
+    Target(
+        'body_nose', 'modifier', 'body_nose',
+        'a nose seen from the side facing left: a bold profile line that rises, juts out to a point '
+        'and curves back under to a rounded tip, with one large round white nostril hole punched '
+        'underneath',
+        'a triangle, an arrow, a mountain, a beak',
+    ),
+    Target(
+        # 2차에서 잉크 0.60 — 꽉 찬 사각형이 됐다. 채우지 말고 '결' 자체를 형태로 만든다.
         'body_skin', 'modifier', 'body_skin',
-        'a single square patch of skin seen close up, drawn as one solid black rounded square with '
-        'three or four wide white wavy grooves punched across it to read as skin texture, and one '
-        'small notch in the outline so it is clearly a piece of something and not a plain tile',
-        'a barcode, a keyboard key, a plain square, a striped flag',
+        'three thick separate wavy horizontal bands stacked with wide white space between them, like '
+        'a fold of skin drawn as bold contour lines only, no enclosing box, no frame, no outline '
+        'around them',
+        'a solid square, a tile, water waves, a flag, an equals sign',
+        parts=3,
+    ),
+    Target(
+        'body_stomach', 'modifier', 'body_stomach',
+        'a stomach shown as a curved pouch leaning to one side, with a short tube entering at the top '
+        'left and a short narrow tube leaving at the bottom right, and one wide white curved line '
+        'punched inside the pouch',
+        'a bean, a kidney, a drop, a comma',
+    ),
+
+    # ── 수식어: 개수 ────────────────────────────────────────────────────────
+    # 여기서는 개수가 곧 뜻이다. 이미지 모델이 가장 자주 틀리는 것도 개수이므로
+    # parts 로 세어 확인한다 — 통과했다는 말이 '개수가 맞다' 를 포함하게 만든다.
+    Target(
+        'qty_one', 'modifier', 'qty_one',
+        'exactly one solid black circle in the centre of the frame, nothing else, plenty of empty '
+        'white space all around it',
+        'two circles, a ring, a donut, a target',
+        sparse=True, parts=1,
+    ),
+    Target(
+        'qty_two', 'modifier', 'qty_two',
+        'exactly two solid black circles side by side with a wide white gap between them, the same '
+        'size, nothing else in the frame',
+        'one circle, three circles, a colon, an ellipsis',
+        sparse=True, parts=2,
+    ),
+    Target(
+        'qty_three', 'modifier', 'qty_three',
+        'exactly three solid black circles arranged in a triangle with wide white gaps between them, '
+        'all the same size, nothing else in the frame',
+        'two circles, four circles, a cluster, a flower',
+        sparse=True, parts=3,
+    ),
+    Target(
+        'qty_four', 'modifier', 'qty_four',
+        'exactly four solid black circles arranged in a two by two square with wide white gaps '
+        'between them, all the same size, nothing else in the frame',
+        'three circles, five circles, a die face, a window',
+        sparse=True, parts=4,
+    ),
+    Target(
+        'qty_five', 'modifier', 'qty_five',
+        'exactly five solid black circles arranged like the five face of a die, four at the corners '
+        'and one in the middle, wide white gaps between them, nothing else in the frame',
+        'four circles, six circles, a flower, an X',
+        sparse=True, parts=5,
+    ),
+
+    # ── 수식어: 시각 ────────────────────────────────────────────────────────
+    Target(
+        'time_morning', 'modifier', 'time_morning',
+        'a sun rising over a horizon: one straight horizontal line across the bottom with a half '
+        'circle sitting on top of it, and four short straight rays above the half circle each clearly '
+        'separated from it by white space',
+        'a full sun, a setting sun, a moon, an umbrella',
+        # 개수를 세지 않는다: 해가 지평선에 닿으면 한 덩어리라 세는 값이 흔들리는데,
+        # 여기서 뜻을 지는 것은 개수가 아니라 '지평선 위/아래' 라는 배치다.
+    ),
+    Target(
+        'time_noon', 'modifier', 'time_noon',
+        'a full sun high in the frame: one solid black circle in the middle with eight short straight '
+        'rays pointing outwards all around it, every ray clearly detached from the circle by white '
+        'space, and no horizon line',
+        'a rising sun, a flower, a star, a gear',
+    ),
+    Target(
+        'time_evening', 'modifier', 'time_evening',
+        'a sun setting below a horizon: one straight horizontal line across the middle with a half '
+        'circle sitting below it so most of the sun is hidden, and two short downward arrows above '
+        'the line clearly separated from the sun',
+        'a rising sun, a full sun, a bowl, a smile',
+    ),
+    Target(
+        'time_night', 'modifier', 'time_night',
+        'a crescent moon opening to the right, drawn as a thick curved sickle with pointed tips at '
+        'the top and bottom, with two small solid stars beside the opening clearly separated from the '
+        'moon by white space',
+        'a full moon, a banana, a letter C, a sun',
+    ),
+
+    # ── 수식어: 보관 ────────────────────────────────────────────────────────
+    Target(
+        'storage_fridge', 'modifier', 'storage_fridge',
+        'a snowflake: six straight bold arms radiating from a common centre at even angles, each arm '
+        'with two short side branches, with wide white space between neighbouring arms',
+        'a star, an asterisk, a flower, a wheel',
+    ),
+    Target(
+        'storage_dry', 'modifier', 'storage_dry',
+        # 채운 방울 위에 잉크로 X 를 그으면 검정 위 검정이라 사라진다 — 구멍으로 판다.
+        'one large solid black water drop, rounded at the bottom and pointed at the top, with a bold '
+        'X punched right through it as wide white channels so the X reads as empty space cut out of '
+        'the drop',
+        'a plain drop, a flame, a balloon, a leaf',
+    ),
+    Target(
+        'storage_dark', 'modifier', 'storage_dark',
+        'a sun with straight rays whose middle circle is drawn as a bold ring, and one thick straight '
+        'bar crossing the whole shape diagonally from the lower left to the upper right, the bar '
+        'separated from the rays by white gaps on both sides',
+        'a plain sun, a no entry sign, a clock, a wheel',
+    ),
+
+    # ── 수식어: 식사·물 ─────────────────────────────────────────────────────
+    Target(
+        'food_bowl', 'modifier', 'food_bowl',
+        'a bowl of food seen from the side: a wide shallow bowl drawn as a thick curved band with a '
+        'rounded mound of food heaped above its rim, and one wide white line separating the mound '
+        'from the bowl',
+        'an empty bowl, a cup, a hat, a hill',
+    ),
+    Target(
+        'food_empty_bowl', 'modifier', 'food_empty_bowl',
+        # 비어 있음 = 공복. 가득 찬 그릇과 한눈에 갈라져야 한다.
+        'an empty bowl seen from the side: a wide shallow bowl drawn as a thick curved band only, with '
+        'nothing above its rim and a large open white area inside it, and one short straight foot '
+        'under the bowl',
+        'a bowl of food, a cup, a smile, a boat',
+    ),
+    Target(
+        'water_glass', 'modifier', 'water_glass',
+        'a drinking glass seen straight on: a straight sided tumbler slightly wider at the top drawn '
+        'as a bold outline, filled solid black only up to about two thirds of its height, with the '
+        'top third left white and open',
+        'a wine glass, a bucket, a cup with a handle, a box',
     ),
 ]
 
 
 # 재시도할 때마다 덧붙이는 지시. 실패는 대개 두 방향 중 하나라서, 그 방향을
 # 되돌리는 말을 얹는다. 사람이 프롬프트를 고쳐 다시 돌리던 자리를 대신한다.
-ESCALATION = [
-    '',
-    ' Make the shape noticeably chunkier and simplify it: fewer, larger parts.',
-    ' Punch the white holes much larger and fewer, so they stay open when the image is tiny.',
-    ' Remove every small detail. Keep only the two or three biggest shapes that make it recognisable.',
-]
+def escalate(c: 'Check | None') -> str:
+    """직전 실패의 **사유에 맞춰** 다시 시킨다.
+
+    처음에는 시도 횟수에 따라 고정된 사다리를 올렸다. 그 두 번째 칸이
+    "Make the shape noticeably chunkier" 였는데, 뭉쳐서 실패한 것에 이 말을 하면
+    실패한 방향으로 더 밀게 된다. food_bread 가 0.52 → 0.47 → 0.51 로 세 번 헛돈
+    것이 그래서다 — 재시도가 수렴하지 않고 진동했다.
+
+    사유는 검사기가 이미 알고 있으니 그대로 쓴다. 고칠 방향을 모르면서 다시 뽑는 것은
+    그냥 같은 주사위를 다시 굴리는 것이고, 굴릴 때마다 요금이 나간다.
+    """
+    if c is None:
+        return ''
+    r = ' · '.join(c.reasons)
+    if '뭉쳤다' in r:
+        return (' The shape came out far too heavy and solid. Draw it noticeably smaller inside the '
+                'frame with wide empty white space around it, as a bold outline with the inside left '
+                'open and white — do not fill the body in.')
+    if '가늘다' in r:
+        return (' The shape came out too thin and sparse. Make every black part much thicker and '
+                'heavier, and let it fill more of the frame. Fewer, larger, bolder masses.')
+    if '개수' in r:
+        return (' The number of separate shapes was wrong. Draw exactly the number stated, each one '
+                'fully detached from the others with wide white space between them.')
+    if '구멍' in r or '뭉갠다' in r:
+        return (' The white holes closed up when the image was shrunk. Use far fewer holes and make '
+                'each one much larger — at most three, each at least one sixth of the image wide.')
+    return ' Remove every small detail. Keep only the two or three biggest shapes.'
 
 
-def prompt_for(t: Target, attempt: int = 0) -> str:
+def prompt_for(t: Target, last: 'Check | None' = None) -> str:
     return (
         f'{t.subject}. '
         f'It must not look like {t.not_like}. '
         f'{STYLE}'
-        f'{ESCALATION[min(attempt, len(ESCALATION) - 1)]}'
+        f'{escalate(last)}'
     )
 
 
 # ── 생성 ────────────────────────────────────────────────────────────────────
 
-def generate(t: Target, attempt: int = 0) -> bytes:
+def generate(t: Target, last: 'Check | None' = None) -> bytes:
     key = os.environ.get('OPENAI_API_KEY')
     if not key:
         raise SystemExit(
@@ -173,7 +765,7 @@ def generate(t: Target, attempt: int = 0) -> bytes:
             '  (키를 이 파일이나 저장소 안 어디에도 적지 말 것)'
         )
     body = json.dumps({
-        'model': MODEL, 'prompt': prompt_for(t, attempt), 'size': '1024x1024', 'n': 1,
+        'model': MODEL, 'prompt': prompt_for(t, last), 'size': '1024x1024', 'n': 1,
     }).encode()
     req = urllib.request.Request(
         API, data=body,
@@ -282,10 +874,100 @@ def holes_count(im: Image.Image, size: int) -> int:
     return holes
 
 
-def check(im: Image.Image) -> Check:
+def parts_count(im: Image.Image, size: int = 128) -> int:
+    """떨어져 있는 잉크 덩어리의 개수.
+
+    qty_three 가 점 두 개로 나오면 검사기의 다른 항목은 전부 통과한다 — 잉크도
+    적당하고 구멍도 남는다. 그런데 이 글리프에서 개수는 장식이 아니라 뜻 자체이고,
+    이미지 모델이 가장 자주 틀리는 것도 개수다. 그래서 따로 센다.
+    """
+    a = im.resize((size, size), Image.LANCZOS).split()[-1].point(lambda v: 255 if v > 110 else 0)
+    w, h = a.size
+    px = a.load()
+    seen = [[False] * h for _ in range(w)]
+    n = 0
+    for x in range(w):
+        for y in range(h):
+            if px[x, y] != 255 or seen[x][y]:
+                continue
+            n += 1
+            stack = [(x, y)]
+            while stack:
+                a2, b2 = stack.pop()
+                if a2 < 0 or b2 < 0 or a2 >= w or b2 >= h or seen[a2][b2] or px[a2, b2] != 255:
+                    continue
+                seen[a2][b2] = True
+                stack += [(a2 + 1, b2), (a2 - 1, b2), (a2, b2 + 1), (a2, b2 - 1),
+                          (a2 + 1, b2 + 1), (a2 - 1, b2 - 1), (a2 + 1, b2 - 1), (a2 - 1, b2 + 1)]
+    return n
+
+
+def derive_slot(im: Image.Image, size: int = 64) -> tuple[float, float, float, float]:
+    """그림에서 수식어가 들어갈 사각형을 뽑아낸다.
+
+    사전에 손으로 적어둔 슬롯 좌표는 손으로 그린 글리프를 전제한다. 생성된 그림은
+    같은 약병이라도 몸통이 어디 있는지가 매번 다르므로, 그 좌표를 그대로 쓰면
+    수식어가 병 밖 허공에 뜬다.
+
+    엔진은 슬롯 자리를 **뚫고** 그 안에 수식어를 그린다. 그러니 좋은 슬롯은 잉크
+    한가운데다 — 빈 곳을 뚫으면 창이 아니라 아무것도 아니고, 윤곽에 걸치게 뚫으면
+    실루엣이 잘려 무엇을 그린 것인지가 사라진다.
+
+    "가장 꽉 찬 사각형" 으로 찾으면 안 된다: 반창고의 가운데 패드는 구멍이 뚫려 있어
+    덜 차 있고, 그래서 아무 무늬 없는 왼쪽 끝이 뽑힌다. "잉크 안쪽으로 가장 깊은 곳"
+    도 같은 이유로 끝을 고른다. 두 기준 모두 *어디가 그 글리프의 몸통인가* 를 묻지
+    않기 때문이다.
+
+    그래서 자리는 가운데로 **제한하고**, 그 안에서 잉크가 가장 많은 곳을 고른다.
+    윤곽을 자르지 않도록 사각형은 잉크 경계에서 떨어진 채로만 움직인다.
+    """
+    a = im.resize((size, size), Image.LANCZOS).split()[-1].point(lambda v: 255 if v > 110 else 0)
+    bb = a.getbbox()
+    if bb is None:
+        return (0.30, 0.35, 0.70, 0.75)
+    bx0, by0, bx1, by1 = bb
+    bw, bh = bx1 - bx0, by1 - by0
+    px = a.load()
+
+    S = [[0] * (size + 1) for _ in range(size + 1)]
+    for y in range(size):
+        for x in range(size):
+            S[y + 1][x + 1] = S[y][x + 1] + S[y + 1][x] - S[y][x] + (1 if px[x, y] else 0)
+
+    side = max(int(min(bw, bh) * 0.34), 6)
+    # 사각형의 중심이 놓일 수 있는 범위 — 잉크 경계에서 안쪽으로 물러난 가운데 영역
+    lo_x, hi_x = bx0 + int(bw * 0.22), bx1 - int(bw * 0.22)
+    lo_y, hi_y = by0 + int(bh * 0.22), by1 - int(bh * 0.22)
+    best, best_rect = -1e9, None
+    for cy in range(lo_y, max(lo_y + 1, hi_y)):
+        for cx in range(lo_x, max(lo_x + 1, hi_x)):
+            x, y = cx - side // 2, cy - side // 2
+            if x < 0 or y < 0 or x + side > size or y + side > size:
+                continue
+            filled = (S[y + side][x + side] - S[y][x + side]
+                      - S[y + side][x] + S[y][x]) / (side * side)
+            # 잉크량이 최우선, 같은 값이면 몸통 한가운데에 가까운 쪽
+            s = filled * 100 - abs(cx - (bx0 + bx1) / 2) * 0.10 - abs(cy - (by0 + by1) / 2) * 0.10
+            if s > best:
+                best, best_rect = s, (x / size, y / size, (x + side) / size, (y + side) / size)
+    if best_rect is None:
+        return (0.30, 0.35, 0.70, 0.75)
+    return tuple(round(v, 3) for v in best_rect)
+
+
+def check(im: Image.Image, sparse_ok: bool = False, parts_want: int = 0) -> Check:
+    """
+    sparse_ok: 개수를 세는 글리프(qty_one, qty_two)는 점이 적은 것이 곧 뜻이다.
+    잉크 하한을 적용하면 올바른 설계를 결함으로 센다.
+    parts_want: 떨어진 덩어리가 정확히 몇 개여야 하는가. 0 이면 세지 않는다.
+    """
     reasons: list[str] = []
     ink = ink_ratio(im)
-    if ink < INK_MIN:
+    if parts_want:
+        got = parts_count(im)
+        if got != parts_want:
+            reasons.append(f'개수가 틀렸다 ({got}개, {parts_want}개여야 한다)')
+    if ink < INK_MIN and not sparse_ok:
         reasons.append(f'너무 가늘다 (잉크 {ink:.2f} < {INK_MIN})')
     if ink > INK_MAX:
         reasons.append(f'너무 뭉쳤다 (잉크 {ink:.2f} > {INK_MAX})')
@@ -318,6 +1000,54 @@ def score(im: Image.Image, c: Check) -> float:
 
 # ── 실행 ────────────────────────────────────────────────────────────────────
 
+def sheet(path: Path, per_row: int = 8) -> None:
+    """생성물과 현재 자산을 나란히 놓은 검토표를 만든다.
+
+    검사기가 판정하는 것은 '작게 줄여도 살아남는가' 지 '맞는 것으로 보이는가' 가
+    아니다. 후자는 기계로 물을 수 없으므로 사람이 볼 그림을 남긴다 — 물방울처럼
+    생긴 견과는 모든 항목을 통과하고도 그냥 틀린 그림이다.
+    """
+    from PIL import ImageDraw, ImageFont
+    # 기본 비트맵 글꼴에는 한글이 없어 판정이 네모로 나온다 — 읽으라고 만든 표이므로 채운다.
+    def _font(sz: int):
+        for p in ('/System/Library/Fonts/AppleSDGothicNeo.ttc',
+                  '/System/Library/Fonts/Supplemental/AppleGothic.ttf'):
+            if Path(p).exists():
+                return ImageFont.truetype(p, sz)
+        return ImageFont.load_default()
+    F, FS = _font(12), _font(11)
+    CELL, BIG, TINY, PAD = 118, 74, 34, 26
+    rows = (len(TARGETS) + per_row - 1) // per_row
+    W = per_row * CELL + PAD * 2
+    H = rows * (CELL + 46) + 44
+    im = Image.new('RGB', (W, H), 'white')
+    d = ImageDraw.Draw(im)
+    d.text((PAD, 12), '왼쪽=현재 자산  오른쪽=생성  ·  아래 작은 것은 34px 축소', fill=(90, 90, 90), font=F)
+
+    for i, t in enumerate(TARGETS):
+        cx = PAD + (i % per_row) * CELL
+        cy = 44 + (i // per_row) * (CELL + 46)
+        for j, p in enumerate((ASSETS / t.role / f'{t.asset}.png', REFS / f'{t.name}.png')):
+            if not p.exists():
+                continue
+            g = Image.open(p).convert('RGBA')
+            for side, oy in ((BIG // 2 + 8, 0), (TINY, BIG // 2 + 14)):
+                r = g.resize((side, side), Image.LANCZOS)
+                im.paste(r, (cx + j * (CELL // 2) + 6, cy + oy), r)
+        ref = REFS / f'{t.name}.png'
+        if ref.exists():
+            c = check(Image.open(ref).convert('RGBA'), sparse_ok=t.sparse, parts_want=t.parts)
+            d.text((cx + 2, cy + CELL + 2), t.name[:16], fill=(20, 20, 20), font=FS)
+            d.text((cx + 2, cy + CELL + 15), f'{"통과" if c.ok else "실패"} {c.ink:.2f}',
+                   fill=(0, 130, 60) if c.ok else (200, 30, 30), font=FS)
+            if not c.ok:
+                d.text((cx + 2, cy + CELL + 28), c.reasons[0][:18], fill=(200, 30, 30), font=FS)
+        else:
+            d.text((cx + 2, cy + CELL + 2), t.name[:16] + ' (없음)', fill=(150, 150, 150), font=FS)
+    im.save(path)
+    print(f'검토표 → {path}')
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('names', nargs='*', help='생성할 형태소 (비우면 아직 없는 것 전부)')
@@ -325,7 +1055,13 @@ def main() -> None:
     ap.add_argument('--install', action='store_true', help='검사를 통과한 것을 자산으로 설치')
     ap.add_argument('--tries', type=int, default=3,
                     help='형태소당 최대 시도 횟수. 실패하면 프롬프트를 강화해 다시 뽑는다')
+    ap.add_argument('--sheet', metavar='PATH',
+                    help='생성하지 않고, 현재 자산과 생성물을 나란히 놓은 검토표만 만든다')
     args = ap.parse_args()
+
+    if args.sheet:
+        sheet(Path(args.sheet))
+        return
 
     by_name = {t.name: t for t in TARGETS}
     unknown = [n for n in args.names if n not in by_name]
@@ -334,6 +1070,8 @@ def main() -> None:
 
     chosen = [by_name[n] for n in args.names] if args.names else TARGETS
     REFS.mkdir(exist_ok=True)
+    # 이번에 뽑지 않은 head 의 슬롯까지 날려버리면 안 되므로 기존 것을 읽고 덮어쓴다.
+    slots = json.loads(SLOTS_OUT.read_text()) if SLOTS_OUT.exists() else {}
 
     passed, failed = [], []
     for t in chosen:
@@ -343,19 +1081,21 @@ def main() -> None:
             continue
 
         best = None   # (점수, 이미지, 검사결과, 시도번호)
+        last = None   # 직전 시도의 검사 결과 — 다음 프롬프트의 방향을 여기서 정한다
         for attempt in range(args.tries):
             try:
-                im = conform(Image.open(io.BytesIO(generate(t, attempt))))
+                im = conform(Image.open(io.BytesIO(generate(t, last))))
             except SystemExit:
                 raise
             except Exception as e:                   # noqa: BLE001
                 print(f'{t.name:11} 시도 {attempt + 1} ✗ {e}')
                 continue
-            c = check(im)
+            c = check(im, sparse_ok=t.sparse, parts_want=t.parts)
             sc = score(im, c)
             print(f'{t.name:11} 시도 {attempt + 1}  {"통과" if c.ok else "실패"} '
                   f'잉크 {c.ink:.2f} 점수 {sc:5.1f}'
                   + ('' if c.ok else '  | ' + ' · '.join(c.reasons)))
+            last = c
             if best is None or sc > best[0]:
                 best = (sc, im, c, attempt)
             # 통과했으면 더 뽑을 이유가 없다 — 호출 한 번이 곧 비용이다.
@@ -376,6 +1116,13 @@ def main() -> None:
             dest.parent.mkdir(parents=True, exist_ok=True)
             im.save(dest)
             print(f'{"":11}   설치 → {dest.relative_to(ROOT.parent)}')
+            if t.slot:
+                slots[t.asset] = derive_slot(im)
+                print(f'{"":11}   슬롯 {slots[t.asset]}')
+
+    if args.install and slots:
+        SLOTS_OUT.write_text(json.dumps(slots, indent=1, sort_keys=True) + '\n')
+        print(f'슬롯 {len(slots)}개 → {SLOTS_OUT.relative_to(ROOT.parent)}')
 
     print(f'\n통과 {len(passed)} · 실패 {len(failed)}')
     if failed and not args.install:
