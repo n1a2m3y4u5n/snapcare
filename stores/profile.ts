@@ -33,6 +33,20 @@ const SEED: Member = {
 
 interface ProfileState {
   profile: Member;
+  /**
+   * 사용자가 이 프로필을 한 번이라도 확인했는가.
+   *
+   * 없을 때 문제가 되는 이유: 기본값이 '어른, 조건 없음' 이고 아무 표시 없이
+   * 조용히 정해진다. 그런데 온보딩은 "the limits come from your age" 라고 약속한다 —
+   * 나이에서 기준이 나온다고 말해 놓고 나이를 묻지 않았다. 아이가 써도 어른 기준으로
+   * 판정하고, 땅콩 알레르기가 있어도 등록할 자리가 없어 경고가 뜨지 않는다.
+   *
+   * 확인했는지를 알아야 처음 한 번 물어볼 수 있고, 건너뛴 사람에게는 지금 누구
+   * 기준으로 보고 있는지를 계속 보여줄 수 있다.
+   */
+  confirmed: boolean;
+  /** 프로필을 확인했다고 표시한다 (건너뛰기로는 서지 않는다). */
+  confirm: () => void;
   toggleCondition: (conditionId: string) => void;
   /** 신원은 그림으로 정한다 (타이핑 없음) */
   setFace: (emoji: string) => void;
@@ -58,22 +72,36 @@ export const useProfile = create<ProfileState>()(
         }),
       setFace: (emoji) => set((s) => ({ profile: { ...s.profile, emoji } })),
       setAgeBand: (ageBand, role) => set((s) => ({ profile: { ...s.profile, ageBand, role } })),
+      confirmed: false,
+      confirm: () => set({ confirmed: true }),
     }),
     {
       name: 'snapcare-profile',
-      version: 1,
+      version: 2,
       /**
-       * 가족 명단을 쓰던 저장분에서 옮겨온다.
+       * 두 가지 옛 저장분을 받는다.
        *
-       * 예전 저장소(snapcare-family)에는 구성원이 여럿 있고 그중 하나가 활성이었다.
-       * 활성 구성원의 조건과 나이대를 가져오고 나머지는 버린다 — 이 앱은 이제
-       * 한 명만 다루므로, 남겨두면 어디서도 쓰이지 않는 자료가 조용히 쌓인다.
+       * v0 — 가족 명단(snapcare-family). 구성원이 여럿이고 그중 하나가 활성이었다.
+       *      활성 구성원의 조건과 나이대만 가져오고 나머지는 버린다. 이 앱은 이제
+       *      한 명만 다루므로 남겨두면 어디서도 쓰이지 않는 자료가 쌓인다.
+       *
+       * v1 — 이미 지금 형태. profile 은 그대로 두고 confirmed 만 채운다.
+       *      가족 명단 형태만 가정하고 짜면 v1 사용자의 members 가 없으므로 프로필이
+       *      통째로 SEED 로 초기화된다 — 고치려던 화면에서 자료를 지우는 셈이다.
+       *
+       * 어느 쪽이든 **쓰던 사람은 확인한 것으로 본다.** 쓰던 앱이 갑자기 설정을
+       * 요구하면 고친 것이 아니라 방해가 된다. 처음 여는 사람만 묻는다.
        */
       migrate: (persisted) => {
-        const old = persisted as { members?: Member[]; activeMemberId?: string } | undefined;
+        const old = persisted as
+          { profile?: Member; members?: Member[]; activeMemberId?: string } | undefined;
+
+        if (old?.profile) return { ...old, confirmed: true } as ProfileState;
+
         const active = old?.members?.find((m) => m.id === old.activeMemberId) ?? old?.members?.[0];
-        if (!active) return { profile: SEED } as ProfileState;
+        if (!active) return { profile: SEED, confirmed: false } as ProfileState;
         return {
+          confirmed: true,
           profile: {
             ...SEED,
             emoji: active.emoji ?? SEED.emoji,

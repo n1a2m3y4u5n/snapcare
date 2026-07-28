@@ -8,7 +8,7 @@ export type TabKey = 'home' | 'nutrition' | 'settings';
 const TABS: { key: TabKey; href: string; label: string; emoji: string; says: string }[] = [
   { key: 'home', href: '/home', label: 'Home', emoji: '🏠', says: 'Home. Take a photograph, and see what was checked.' },
   { key: 'nutrition', href: '/nutrition', label: 'Nutrition', emoji: '🥗', says: "Nutrition. Everything eaten today." },
-  { key: 'settings', href: '/settings', label: 'Settings', emoji: '⚙️', says: 'Settings. Who is in the family, and the voice.' },
+  { key: 'settings', href: '/settings', label: 'Settings', emoji: '⚙️', says: 'Settings. Who we check for, and the voice.' },
 ];
 
 export function TabBar({ active }: { active: TabKey }) {

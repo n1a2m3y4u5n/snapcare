@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import { useSession } from '@/stores/session';
+import { useProfile } from '@/stores/profile';
 
 /** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개 순서 (bcrypt로 실제 설정·검증). */
 const TILES = ['☀️', '🌙', '💧', '🔥', '🌸', '🐦', '🏠', '⛰️', '🛣️', '🚪', '🔔', '🔑'];
@@ -19,6 +20,13 @@ export default function LoginPage() {
   const [picked, setPicked] = useState<number[]>([]);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
+  // 프로필을 한 번도 확인하지 않았으면 홈이 아니라 프로필로 보낸다.
+  //
+  // 여기가 아니면 물어볼 자리가 없다: /profile 로 가는 링크는 설정 탭 안의 버튼
+  // 하나뿐이라, 찾아 들어가지 않은 사람은 '어른, 조건 없음' 이라는 기본값으로
+  // 계속 쓰게 된다. 그런데 온보딩은 나이에서 기준이 나온다고 약속한다.
+  const confirmed = useProfile((s) => s.confirmed);
+  const next = confirmed ? '/home' : '/profile?setup=1';
 
   async function complete(seq: number[]) {
     setBusy(true);
@@ -27,12 +35,12 @@ export default function LoginPage() {
       const hash = await bcrypt.hash(keyStr, 10);
       setPinHash(hash);
       setAuthed(true);
-      router.replace('/home');
+      router.replace(next);
     } else {
       const ok = await bcrypt.compare(keyStr, pinHash!);
       if (ok) {
         setAuthed(true);
-        router.replace('/home');
+        router.replace(next);
       } else {
         setError(true);
         setPicked([]);
