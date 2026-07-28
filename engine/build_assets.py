@@ -19,8 +19,27 @@ from glyphs import HEADS, MODIFIERS, SLOTS  # noqa: E402
 
 ROLES = {"head": HEADS, "modifier": MODIFIERS}
 
+#: gen_glyphs.py --install 이 넣어둔 자산의 이름. 이 목록에 있는 것은 다시 그리지
+#: 않는다 — build() 는 glyphs.py 의 그리기 코드에서 자산을 만들어 내는데, 파이프라인이
+#: `--install && build_assets --publish` 순서라 생성한 그림이 매번 즉시 덮어써졌다.
+#: 설치했다는 말이 아무 뜻도 없던 자리다.
+GENERATED = HERE / "generated.json"
 
-def build() -> int:
+
+def generated_names() -> set[str]:
+    if not GENERATED.exists():
+        return set()
+    import json
+    return set(json.loads(GENERATED.read_text()))
+
+
+def build(redraw_all: bool = False) -> int:
+    """glyphs.py 의 그리기 코드로 자산을 만든다.
+
+    생성 모델로 뽑아 설치한 것은 건너뛴다. --redraw-all 을 주면 전부 코드 쪽으로
+    되돌린다 — 생성물이 마음에 안 들 때 원래 그림으로 돌아가는 길이 있어야 한다.
+    """
+    keep = set() if redraw_all else generated_names()
     n = 0
     for role, table in ROLES.items():
         out = HERE / "assets" / role
@@ -31,6 +50,9 @@ def build() -> int:
             if stale.stem not in table:
                 stale.unlink()
         for name, fn in table.items():
+            if name in keep:
+                n += 1
+                continue
             c = Canvas()
             fn(c)
             c.save(out / f"{name}.png")
@@ -113,7 +135,10 @@ def sync_dictionary() -> None:
 
 
 if __name__ == "__main__":
-    count = build()
+    count = build(redraw_all="--redraw-all" in sys.argv)
+    kept = len(generated_names()) if "--redraw-all" not in sys.argv else 0
+    if kept:
+        print(f"{kept} glyphs 는 생성물이라 다시 그리지 않음")
     sync_dictionary()
     print(f"{publish()} glyphs -> public/glyphs/")
     print(f"{count} glyphs -> {SIZE}px")
