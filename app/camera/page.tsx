@@ -117,7 +117,12 @@ export default function CameraPage() {
       // 글자는 있지만 성분표도 처방전도 아니다 → 음식 사진으로 보고 판별에 맡긴다
       await tryVision(image);
       return;
-    } catch {
+    } catch (err) {
+      // 사용자에게는 다시 해보라고만 말하지만, 무엇이 터졌는지는 남긴다.
+      // 이 자리가 조용했던 탓에 OCR 이 배포본에서 통째로 죽어 있는 것을 오래 몰랐다 —
+      // 화면에는 "다시 시도하세요" 만 뜨고 콘솔에는 아무것도 없어서, 표본이 원래
+      // 어려운 것처럼 보였다.
+      console.error('[ocr] 읽기 실패:', err);
       fail('Could not read that. Try again, or pick one below.');
     } finally {
       setBusy(false);

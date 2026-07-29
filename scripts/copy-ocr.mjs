@@ -23,7 +23,7 @@
  * CDN 으로 떨어진다.
  */
 import { createWriteStream } from 'node:fs';
-import { copyFile, mkdir, access } from 'node:fs/promises';
+import { copyFile, mkdir, access, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
@@ -31,14 +31,19 @@ import { Readable } from 'node:stream';
 const ROOT = process.cwd();
 const OUT = join(ROOT, 'public', 'ocr');
 
-/** 워커와 코어는 패키지 안에 있다. 그대로 복사한다. */
-const LOCAL = [
-  ['tesseract.js/dist/worker.min.js', 'worker.min.js'],
-  ['tesseract.js-core/tesseract-core-simd-lstm.wasm.js', 'tesseract-core-simd-lstm.wasm.js'],
-  ['tesseract.js-core/tesseract-core-simd-lstm.wasm', 'tesseract-core-simd-lstm.wasm'],
-  ['tesseract.js-core/tesseract-core-lstm.wasm.js', 'tesseract-core-lstm.wasm.js'],
-  ['tesseract.js-core/tesseract-core-lstm.wasm', 'tesseract-core-lstm.wasm'],
-];
+/**
+ * 워커와 코어는 패키지 안에 있다.
+ *
+ * 코어는 **전부** 옮긴다. 처음에는 쓸 것 같은 두 판만 골라 담았는데, tesseract 가
+ * 브라우저 기능을 보고 고르는 판이 그중에 없었다:
+ *
+ *     Failed to load .../tesseract-core-relaxedsimd-lstm.wasm.js
+ *
+ * 어느 판이 필요한지는 기기가 정한다 — SIMD 유무, relaxed SIMD 유무. 골라 담으면
+ * 우리 노트북에서만 되고 사용자 폰에서 안 되는 일이 생긴다. 다 합쳐 몇 MB 이고,
+ * 서비스워커는 실제로 받은 것만 캐시하므로 폰에 쌓이는 것은 한 판뿐이다.
+ */
+const WORKER = ['tesseract.js/dist/worker.min.js', 'worker.min.js'];
 
 /** 언어 데이터는 따로 받는다. 한국어와 영어 둘 다 읽어야 한다. */
 const LANGS = ['kor', 'eng'];
@@ -51,13 +56,16 @@ async function have(path) {
 async function main() {
   await mkdir(OUT, { recursive: true });
 
-  for (const [from, to] of LOCAL) {
-    const src = join(ROOT, 'node_modules', from);
-    if (!(await have(src))) {
-      console.log(`[copy-ocr] ${from} 없음 — 건너뜀`);
-      continue;
-    }
-    await copyFile(src, join(OUT, to));
+  const [from, to] = WORKER;
+  const worker = join(ROOT, 'node_modules', from);
+  if (await have(worker)) await copyFile(worker, join(OUT, to));
+  else console.log(`[copy-ocr] ${from} 없음 — 건너뜀`);
+
+  const coreDir = join(ROOT, 'node_modules', 'tesseract.js-core');
+  if (await have(coreDir)) {
+    const files = (await readdir(coreDir)).filter((f) => /\.wasm(\.js)?$/.test(f));
+    for (const f of files) await copyFile(join(coreDir, f), join(OUT, f));
+    console.log(`[copy-ocr] 코어 ${files.length}개 복사`);
   }
 
   for (const lang of LANGS) {

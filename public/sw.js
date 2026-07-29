@@ -96,8 +96,10 @@ const MATCH = { ignoreVary: true };
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
-    const cache = await caches.open(SHELL);
-    cache.put(request, response.clone());
+    if (response.ok) {
+      const cache = await caches.open(SHELL);
+      cache.put(request, response.clone());
+    }
     return response;
   } catch {
     const cached = await caches.match(request, MATCH);
@@ -117,8 +119,13 @@ async function cacheFirst(request) {
   if (cached) return cached;
   try {
     const response = await fetch(request);
-    const cache = await caches.open(ASSETS);
-    cache.put(request, response.clone());
+    // 성공한 응답만 담는다. 상태를 안 보고 담았더니 404 가 캐시에 들어앉아, 파일을
+    // 나중에 추가해도 계속 404 를 내줬다 — OCR 코어 하나가 없어서 시작한 실패가
+    // 파일을 채운 뒤에도 그대로 재현되어, 원인을 엉뚱한 데서 찾게 만들었다.
+    if (response.ok) {
+      const cache = await caches.open(ASSETS);
+      cache.put(request, response.clone());
+    }
     return response;
   } catch {
     return Response.error();
