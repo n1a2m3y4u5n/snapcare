@@ -126,18 +126,27 @@ export default function DevicePage() {
         if (!sheetRead.foundPage) sheetRead = parseFormSheet(await decodeToGray(file, RETRY_WORK_DIM));
         values = sheetRead.values;
         problems = sheetRead.problems;
-      } catch {
+      } catch (err) {
         // 캔버스나 createImageBitmap 이 없는 아주 오래된 브라우저 — 서버가 대신 읽는다.
-        const res = await fetch('/api/form-sheet', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ image: await toDataUrl(file) }),
-        });
-        if (!res.ok) {
+        //
+        // 이 대체 경로도 실패할 수 있다는 것을 잊고 있었다. 망이 끊기면 fetch 는 값을
+        // 돌려주는 게 아니라 던지고, 그 예외는 아래 finally 를 지나 밖으로 새어 나갔다 —
+        // 물레방아가 멈추고 **화면에는 아무 말도 뜨지 않는다.** 사용자는 앱이 멎은
+        // 것인지 자기가 잘못 찍은 것인지 알 방법이 없다. 실패해도 말은 해야 한다.
+        console.error('[form-sheet] 기기에서 읽지 못했다:', err);
+        try {
+          const res = await fetch('/api/form-sheet', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ image: await toDataUrl(file) }),
+          });
+          if (!res.ok) throw new Error(String(res.status));
+          ({ values, problems = [] } = (await res.json()) as { values: FormSheetValues; problems?: string[] });
+        } catch (err2) {
+          console.error('[form-sheet] 서버도 읽지 못했다:', err2);
           setResult('Could not read the sheet — lay it flat so all four corner marks are in frame.');
           return;
         }
-        ({ values, problems = [] } = (await res.json()) as { values: FormSheetValues; problems?: string[] });
       }
 
       const reading = toSchedule(values);

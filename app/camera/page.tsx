@@ -141,13 +141,32 @@ export default function CameraPage() {
     const blob = typeof image === 'string' ? await (await fetch(image)).blob() : image;
     const modelTotals = await estimateOnDevice(blob);
 
-    const res = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ image: dataUrl, modelTotals }),
-    });
+    // 망이 끊기면 fetch 는 값을 돌려주는 게 아니라 **던진다.** 예전에는 그 예외가
+    // runOcr 의 바깥 catch 까지 올라갔고, 두 가지가 함께 잘못됐다.
+    //
+    //  - 화면에는 "읽지 못했다" 가 떴다. 실제로는 읽었다 — OCR 은 기기에서 돌아
+    //    끝까지 갔고 망을 타는 마지막 단계만 실패했다. 사용자는 사진을 다시 찍는다.
+    //  - 성분표를 **일부만** 읽어낸 경우, 아래쪽의 "부분적으로라도 읽힌 게 있으면
+    //    그것만이라도 쓴다" 갈래에 닿기 전에 예외가 튀어 나갔다. 오프라인에서
+    //    반쯤 읽힌 라벨은 그렇게 통째로 버려졌다.
+    //
+    // 그래서 여기서 잡고 501(서버에 판별 수단이 없음)과 같은 답으로 돌려보낸다.
+    // 둘 다 "다시 찍어도 소용없다, 성분표를 찍어라" 이기 때문이다.
+    const NEEDS_NET = 'Photo recognition needs a connection. Photograph the nutrition label instead, or pick one below.';
+    let res: Response;
+    try {
+      res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl, modelTotals }),
+      });
+    } catch (err) {
+      console.warn('[camera] 판별 요청 실패 (오프라인이면 정상):', err);
+      fail(NEEDS_NET);
+      return false;
+    }
     if (res.status === 501) {
-      fail('Photo recognition needs a connection. Photograph the nutrition label instead, or pick one below.');
+      fail(NEEDS_NET);
       return false;
     }
     if (!res.ok) {
