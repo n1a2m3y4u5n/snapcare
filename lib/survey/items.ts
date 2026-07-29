@@ -111,6 +111,19 @@ export const BACKGROUND: Item[] = [
     q: T('주로 일하는 국가', 'Country where you mainly work', 'Țara în care lucrați în principal'),
   },
   {
+    // 이름과 소속은 선택이다. 필수로 두면 비판적인 답이 줄어든다 — 이 설문에서
+    // 가장 값어치 있는 것이 A2("이 시스템이 환자를 해칠 경로")의 솔직한 답이라
+    // 익명을 허용하는 편이 낫다. 다만 익명 응답은 중복을 걸러낼 수 없다.
+    id: 'b_name',
+    kind: 'text',
+    q: T('성함 (선택)', 'Your name (optional)', 'Numele dumneavoastră (opțional)'),
+    note: T(
+      '익명으로 답하셔도 됩니다. 이름을 남기시면 같은 분의 응답이 중복 집계되는 것을 막고, 인용을 허락하신 범위 안에서 출처를 밝힐 수 있습니다.',
+      'You may answer anonymously. Giving a name lets us avoid counting the same person twice and lets us attribute your view within the citation scope you choose.',
+      'Puteți răspunde anonim. Dacă vă dați numele, putem evita numărarea dublă și vă putem atribui opinia în limitele de citare pe care le alegeți.',
+    ),
+  },
+  {
     id: 'b_affil',
     kind: 'text',
     q: T('소속 (선택)', 'Affiliation (optional)', 'Afiliere (opțional)'),
