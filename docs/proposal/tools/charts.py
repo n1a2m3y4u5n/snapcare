@@ -226,6 +226,27 @@ def chart_glyphs():
     save(fig, 'chart07_glyph_check')
 
 
+# ── 영양 추정 모델의 항목별 오차 (표 19) ───────────────────────────
+def chart_model():
+    """직접 채점한 값이다 — n5k 공식 테스트 split 507접시, web.onnx 그대로."""
+    rows = [('질량', 16.61), ('열량', 22.75), ('탄수화물', 30.60),
+            ('단백질', 30.96), ('지방', 32.82)]
+    mean = 26.75
+    fig, ax = plt.subplots(figsize=(4.6, 2.3))
+    xs = range(len(rows))
+    ax.bar(list(xs), [r[1] for r in rows], width=0.55, color=GREY, zorder=2)
+    for x, r in zip(xs, rows):
+        ax.text(x, r[1] + 0.9, f'{r[1]:.1f}%', ha='center', fontsize=8, color=INK)
+    ax.axhline(mean, color=ORANGE, linestyle='--', linewidth=1.0, zorder=3)
+    ax.text(len(rows) - 0.42, mean + 1.2, f'평균 {mean}%', fontsize=7.4,
+            color=ORANGE, ha='right')
+    ax.set_xticks(list(xs), [r[0] for r in rows])
+    ax.set_ylabel('MAE% (n = 507)')
+    ax.set_ylim(0, 42)
+    frame(ax)
+    save(fig, 'chart08_model_mae')
+
+
 if __name__ == '__main__':
     chart_literacy()
     chart_health_literacy()
@@ -234,3 +255,4 @@ if __name__ == '__main__':
     chart_pictogram()
     chart_eval()
     chart_glyphs()
+    chart_model()
