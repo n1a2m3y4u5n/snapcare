@@ -145,7 +145,9 @@ export default function ScanResultPage() {
       <div className="flex items-center justify-between px-5 pt-14 pb-1">
         <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none" style={{ color: 'var(--color-sc-muted)' }}>×</button>
         <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>{header}</span>
-        <button onClick={() => speak(itemVoiceScript(scanned, verdict, member), 'en-US')} aria-label="Replay voice" className="text-xl leading-none">🔊</button>
+        {/* 20px 이모지였다. 이 화면에서 판정 전체를 다시 듣는 유일한 버튼인데 손끝보다
+            작았다. 다른 화면과 같은 44 짜리로 맞춘다. */}
+        <Hear text={itemVoiceScript(scanned, verdict, member)} />
       </div>
 
       {isRx ? (

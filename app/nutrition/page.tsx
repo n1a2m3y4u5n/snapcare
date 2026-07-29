@@ -8,8 +8,7 @@ import { useProfile } from '@/stores/profile';
 import { ConditionTracking } from './tracking';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NUTRIENT_LABEL } from '@/lib/nutrition/types';
-import { speak } from '@/lib/voice';
-import { Speakable } from '@/components/sc/Say';
+import { ask, Hear, Speakable } from '@/components/sc/Say';
 
 /**
  * 하루 누적 분석 — 오늘 이 사람이 먹은 것을 합산해 하루 기준치와 대조한다.
@@ -38,11 +37,16 @@ export default function NutritionPage() {
   return (
     <MobileScreen tab="nutrition">
       <div className="px-5 pt-14">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Today</h1>
-          {daily.state === 'ready' && (
-            <button onClick={() => speak(spoken, 'en-US')} aria-label="Read today's intake aloud" className="text-xl leading-none">🔊</button>
-          )}
+        {/*
+          제목 옆 듣기 버튼이 20px 짜리 이모지였다. 다른 화면을 전부 44 로 맞추면서
+          여기만 남았는데, 하필 이 화면은 숫자로만 말하는 화면이라 소리가 제일 필요하다.
+        */}
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
+              {...ask('Today. Everything you have eaten so far, added up against your daily amount.')}>
+            Today
+          </h1>
+          {daily.state === 'ready' && <Hear text={spoken} />}
         </div>
 
         {daily.state === 'loading' && (
@@ -98,6 +102,11 @@ export default function NutritionPage() {
               <span className="flex-1">EATEN TODAY</span>
             </Speakable>
             <div className="mt-2 flex flex-col gap-2">
+              {/*
+                이 줄들은 소리로 닿는 길이 시각 글리프에 붙은 표시 하나뿐이었다 —
+                누르면 "오전 8시" 만 들리고 무엇을 먹었는지는 안 들렸다. 홈의 최근
+                목록과 같은 모양으로 맞춘다: 줄 전체를 한 문장으로 읽는 버튼 하나.
+              */}
               {daily.entries.map(({ record, amounts }) => (
                 <div key={record.id} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
                   <span className="flex h-9 w-9 items-center justify-center rounded-full text-lg" style={{ background: 'var(--color-sc-bg)' }}>
@@ -106,12 +115,13 @@ export default function NutritionPage() {
                   <span className="flex-1">
                     <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{record.name}</span>
                     <span className="mt-0.5 block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-                      <TimeGlyph label={record.timeLabel} />
+                      <TimeGlyph label={record.timeLabel} mute />
                     </span>
                   </span>
                   <span className="text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}>
                     {Math.round(amounts.energy ?? 0)}
                   </span>
+                  <Hear text={`${record.name}, ${record.timeLabel}. About ${Math.round(amounts.energy ?? 0)} calories.`} />
                 </div>
               ))}
             </div>
