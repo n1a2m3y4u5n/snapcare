@@ -1,7 +1,7 @@
-import type { Member, ScanRecord } from './types';
+import type { Member, ScanRecord } from './types.ts';
 import type { Reminder } from '@/stores/reminders';
-import { isSupported, openBlob, publicKey, sealBlob, sign } from './deviceKey';
-import { activeAccountId, listAccounts, mergeRoster, type Account } from './accounts';
+import { isSupported, openBlob, publicKey, sealBlob, sign } from './deviceKey.ts';   // 확장자 필수 — 시험이 --experimental-strip-types 로 돈다
+import { activeAccountId, listAccounts, mergeRoster, type Account } from './accounts.ts';
 
 /**
  * 서버 blob 스키마 버전.
@@ -90,13 +90,37 @@ export async function pull(): Promise<PersonBlob | null> {
   return blob.people?.[activeAccountId()] ?? null;
 }
 
+/**
+ * 올릴 blob 을 만든다 — **내 자리만 갈아 끼우고 나머지 사람은 그대로 둔다.**
+ *
+ * 이 파일에서 가장 위험한 두 줄이라 따로 꺼내 두었다. 화면은 지금 사람 것밖에
+ * 모르는데 서버 파일 하나에 모두가 들어 있어서, `remote` 를 읽지 않고 그대로 올리면
+ * **올릴 때마다 나머지 사람이 지워진다.** 그리고 그 실패는 화면에 아무 표시도 내지
+ * 않는다 — 지워진 사람이 다음에 앱을 열어야 알고, 그때는 서버에도 없다.
+ *
+ * 명단은 서버 것이 아니라 **로컬 것**을 올린다. 이 기기가 자기 사람 목록의 주인이고,
+ * 서버 것을 되올리면 방금 지운 사람이 다시 붙는다.
+ */
+export function withPerson(
+  seen: SyncBlob | null, roster: Account[], id: string, mine: PersonBlob,
+): SyncBlob {
+  return {
+    version: SYNC_VERSION,
+    roster,
+    people: { ...(seen?.people ?? {}), [id]: mine },
+  };
+}
+
+/** 한 사람을 뺀 blob. 나머지는 손대지 않는다. */
+export function withoutPerson(seen: SyncBlob | null, roster: Account[], id: string): SyncBlob {
+  const people = { ...(seen?.people ?? {}) };
+  delete people[id];
+  return { version: SYNC_VERSION, roster, people };
+}
+
 /** 지금 사람 몫을 올린다. 나머지 사람은 받아 둔 것을 그대로 되올린다. */
 export async function push(mine: PersonBlob): Promise<boolean> {
-  return pushBlob({
-    version: SYNC_VERSION,
-    roster: listAccounts(),
-    people: { ...(remote?.people ?? {}), [activeAccountId()]: mine },
-  });
+  return pushBlob(withPerson(remote, listAccounts(), activeAccountId(), mine));
 }
 
 /**
@@ -107,10 +131,8 @@ export async function push(mine: PersonBlob): Promise<boolean> {
  */
 export async function forget(id: string): Promise<void> {
   if (!remote?.people) return;
-  const people = { ...remote.people };
-  delete people[id];
-  remote = { ...remote, people };
-  await pushBlob({ version: SYNC_VERSION, roster: listAccounts(), people });
+  remote = withoutPerson(remote, listAccounts(), id);
+  await pushBlob(remote);
 }
 
 /**
