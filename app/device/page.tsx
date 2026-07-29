@@ -12,7 +12,7 @@ import { useProfile } from '@/stores/profile';
 import { encodeSchedule, encodeWeekly, decodeEvent, messageKind, type SlotSchedule, type WeeklySlot } from '@/lib/hardware/protocol';
 import { toSchedule, type FormSheetValues } from '@/lib/hardware/formSheet';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
-import { DEFAULT_HOST, FITTED_TRAYS, MAX_TRAYS, planTrays, saveUrl, looksLikeHost, weeklyFrom } from '@/lib/hardware/dispenser';
+import { DEFAULT_HOST, FITTED_TRAYS, MAX_TRAYS, planTrays, saveUrl, looksLikeHost } from '@/lib/hardware/dispenser';
 import { speak } from '@/lib/voice';
 
 /**
@@ -84,13 +84,16 @@ export default function DevicePage() {
   // 월/수/금 30일이 '매일 무기한' 으로 도착한다 — 화면은 맞아 보이는데 기기가 나흘을
   // 더 연다. 앱 안에서 만든 알람에는 요일 개념이 없으므로 그쪽은 지금처럼 S 로 간다.
   //
-  // 앱에서 만든 알람도 이제 W 로 보낸다. 요일은 여전히 매일이지만(앱이 묻지 않는다)
-  // **복용 기간**은 처방전에서 읽어 실을 수 있다 — S 로 보내면 30일 코스가 트레이가
-  // 빌 때까지 계속된다. 라즈베리파이 펌웨어에 카메라가 생겨서 이 QR 을 직접 읽는다.
-  const weekly = useMemo(() => weeklyFrom(reminders, trays), [reminders, trays]);
+  // 알람에서 온 일정을 여기서 W 로 바꿔 QR 에 실으려다 되돌렸다. 라즈베리파이 판에
+  // **카메라가 없다** — qr.py 는 QR 을 그리기만 하고(폰이 찍으라고, WiFi 설정용),
+  // 읽는 쪽은 아예 없다. 아두이노+ESP32-CAM 시절의 전제를 새 하드웨어에 잘못 옮겨
+  // 붙였던 것이다.
+  //
+  // 복용 기간을 기기에 전달할 길은 지금 없다. /save 에는 그 칸이 없고, 칸이 있는
+  // /api/schedule 은 POST 라서 HTTPS 페이지에서 부를 수 없다(주소창 이동만 뚫린다).
+  // 펌웨어가 GET 으로도 받아 주면 dispenser.ts 의 weeklyFrom 이 그 자리에 쓰인다.
   const payload = sheet?.schedule.length
     ? encodeWeekly(sheet.schedule)
-    : weekly.slots.length > 0 ? encodeWeekly(weekly.slots)
     : slots.length > 0 ? encodeSchedule(slots) : null;
 
   /** 의사가 준 종이 폼시트를 찍어 일정을 받는다 (인터넷도 DB도 필요 없는 경로). */

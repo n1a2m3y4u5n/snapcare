@@ -309,29 +309,6 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"ok": True, "networks": [n.to_json() for n in wifi.scan()]})
             return
 
-        if path == "/api/schedule" and query.get("payload"):
-            # A schedule sent by walking in through the front door.
-            #
-            # POST /api/schedule already accepts this, but the web app cannot
-            # reach it. The app is served over HTTPS and the device speaks
-            # HTTP, so the browser blocks every fetch() between them; the one
-            # thing it does not block is a top-level navigation, and that is a
-            # GET. So POST is unreachable from the deployed app, and the only
-            # route that was reachable — /save — has no field for days of the
-            # week or for how long a course runs.
-            #
-            # The consequence was not cosmetic: a Mon/Wed/Fri prescription sent
-            # through /save dispenses seven days a week, and a 30-day course
-            # runs until the hopper is empty, with nothing reporting a fault.
-            #
-            # Same handler as the POST, same validation, same refusal of a tray
-            # that is not fitted. The person lands on the confirmation page
-            # rather than a JSON blob, because they arrived by navigation.
-            payload = str(query["payload"][0]).strip()
-            ok, message = device.apply_payload(payload, source="link")
-            self._confirmation("Schedule saved" if ok else "Not saved", message, ok=ok)
-            return
-
         # ── Shaztech-compatible API (see the module docstring) ──────────────
 
         if path == "/save":
