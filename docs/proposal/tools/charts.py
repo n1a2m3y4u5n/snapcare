@@ -204,6 +204,31 @@ def chart_model():
     save(fig, 'chart08_model_mae')
 
 
+# ── 성인 문해율이 낮은 15개국 (표 1) ───────────────────────────────
+def chart_country():
+    rows = [('차드', 28), ('남수단', 35), ('부르키나파소', 37), ('아프가니스탄', 37),
+            ('니제르', 38), ('중앙아프리카공화국', 38), ('말리', 44), ('기니', 48),
+            ('라이베리아', 48), ('에티오피아', 51.8), ('소말리아', 54),
+            ('기니비사우', 56), ('베냉', 58), ('파키스탄', 58), ('시에라리온', 60)]
+    fig, ax = plt.subplots(figsize=(6.0, 4.0))
+    title(fig, '성인 문해율이 가장 낮은 15개국')
+    ys = list(range(len(rows)))
+    ax.barh(ys, [r[1] for r in rows], height=0.66, color=DARK, zorder=2)
+    for y, (_, v) in zip(ys, rows):
+        ax.text(v + 1.2, y, f'{v}%', va='center', fontsize=8.6,
+                fontweight='bold', color=INK)
+    ax.axvline(88, color=RED, linestyle=(0, (4, 3)), linewidth=1.3, zorder=3)
+    ax.text(86.5, len(rows) - 0.4, '세계 평균 88%', fontsize=8.2, color=RED,
+            ha='right', fontweight='bold')
+    ax.set_yticks(ys, [r[0] for r in rows])
+    ax.invert_yaxis()
+    ax.set_xlabel('성인(15세 이상) 문해율 (%)')
+    ax.set_xlim(0, 100)
+    fig.subplots_adjust(left=0.24)
+    frame(ax, grid='x')
+    save(fig, 'chart09_country_literacy')
+
+
 if __name__ == '__main__':
     chart_literacy()
     chart_health_literacy()
@@ -213,3 +238,4 @@ if __name__ == '__main__':
     chart_eval()
     chart_glyphs()
     chart_model()
+    chart_country()
