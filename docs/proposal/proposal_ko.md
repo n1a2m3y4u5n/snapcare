@@ -347,6 +347,33 @@ SnapCare 는 라벨을 읽어 주는 도구가 아니라 **판정하는 도구**
 
 이 기술 방식이 중요하다. 권고 자체가 비율로 쓰여 있으므로, 고정된 그램 수 표를 들고 있는 것이 아니라 **그 사람의 에너지 요구량에서 유도하는 것**이 지침의 올바른 구현이다. 그 결과 같은 음료 한 캔이 7세 아동에게는 경고가 되고 성인에게는 무해가 된다.
 
+유도는 다음 여섯 줄이 전부다.
+
+```ts
+/** 나이대 → 대표 나이. 프로필에서 그림으로 고른 값이 문자열 파싱보다 우선한다. */
+const BAND_AGE = { child: 7, teen: 15, adult: 35, senior: 70 };
+
+export function referenceFor(member: Member): DailyReference {
+  const age = member.ageBand ? BAND_AGE[member.ageBand] : ageFromRole(member.role);
+  const { energyKcal, weightKg } = bandFor(age);
+
+  // WHO 백분율 권고를 g 으로 환산 — 이 유도가 엔진의 핵심이다.
+  const sugarsLimit = (energyKcal * 0.10) / KCAL_PER_G.carb;   // 유리당  <10 %E
+  const satFatLimit = (energyKcal * 0.10) / KCAL_PER_G.fat;    // 포화지방 <10 %E
+
+  // 소금·식이섬유는 절대량 권고 → 에너지 요구량 비율로 소아 하향
+  const energyRatio = energyKcal / ADULT_ENERGY_KCAL;
+  const saltLimit   = ADULT_SALT_LIMIT_G * Math.min(1, energyRatio);
+  ...
+}
+```
+
+설계 의도. 나이를 **대표값 네 개**로 접는 것이 요점이다. 사용자는 숫자를 입력하지 않고 그림 넷 중 하나를 고르므로(§3.2), 앱이 아는 것은 구간뿐이다. 구간을 그대로 두고 계산하려면 구간별 기준치 표를 손으로 만들어야 하는데, 그러면 WHO 권고가 바뀔 때 표를 다시 짜야 하고 그 표가 어디서 왔는지 아무도 확인할 수 없게 된다. 대표 나이 하나로 접으면 계산이 권고 문장을 그대로 따른다.
+
+`Math.min(1, energyRatio)` 에도 판단이 있다. 소금과 식이섬유는 권고가 절대량이라 비율로 환산할 수 없다. 아동은 에너지 요구량에 비례해 낮추되(§2.4 의 근거가 되는 권고 자체가 "아동은 에너지 섭취량에 따라 더 적어야 한다" 고 말한다), 성인보다 많이 먹는 사람에게 소금 한도를 올려 주지는 않는다. 권고가 상한이기 때문이다.
+
+`basis` 문자열을 함께 돌려주는 것도 의도적이다. 화면 아래에 "70세 기준 1,800 kcal, 유리당 10% 미만" 이 그대로 표시된다(그림 10 의 (b)). 판정이 어디서 나왔는지를 사용자가 볼 수 없으면, 그 판정은 근거가 아니라 선언이 된다.
+
 여기에 사용자의 조건이 더해진다. 당뇨가 있으면 당류 기준이 좁아지고, 혈액희석제를 복용 중이면 이부프로펜 계열이 회피 대상이 되며, 임신·수유 중이면 금기 목록이 달라진다.
 
 ### 2.5 진단을 전제하지 않고 묻는다
@@ -368,6 +395,40 @@ SnapCare 는 라벨을 읽어 주는 도구가 아니라 **판정하는 도구**
 이 추론이 **말하지 않아야 할 때 말하지 않는지**를 검사로 고정했다. 통계적 추론을 화면에 내보내는 기능에서 위험한 것은 놓치는 쪽이 아니라 없는 것을 있다고 하는 쪽이기 때문이다. 검사는 다음을 확인한다 — 한 성분에서만 반복해 탈이 나면 지목하고, 우연히 겹친 정도로는 지목하지 않으며, 기록이 적으면 비율이 아무리 높아도 말하지 않고, 탈이 나지 않은 끼니(대조군)가 없으면 비교 자체를 성립시키지 않는다. 또한 성분을 여러 개 볼수록 기준을 높이고, 답하지 않은 끼니는 자료로 세지 않으며, 땅콩과 견과류를 하나로 묶지 않는다. Fisher 검정 자체는 알려진 값과 대조해 고정했다.
 
 증상의 양상도 함께 본다. 두드러기·부어오름처럼 알레르기를 시사하는 것과 더부룩함처럼 불내성을 시사하는 것을 갈라, 같은 성분이라도 어느 쪽으로 제시할지를 바꾼다. 알레르기라고 말하는 것과 소화가 잘 안 된다고 말하는 것은 사용자가 취할 행동이 다르다.
+
+말하지 않기 위한 조건이 검정 자체보다 길다.
+
+```ts
+export function findTriggers(log: MealFeedback[]): SuspectedTrigger[] {
+  // 검사 대상: 기록에 실제로 등장한 성분만. 먹은 적 없는 성분을 검정하면
+  // Bonferroni 분모만 키워서 진짜 신호를 죽인다.
+  const testable = [...flags].map(...).filter(...);
+  const threshold = ALPHA / testable.length;              // Bonferroni
+
+  for (const { flag, condition } of testable) {
+    const withIt  = log.filter((m) =>  flagsOf(m.tags).includes(flag));
+    const without = log.filter((m) => !flagsOf(m.tags).includes(flag));
+
+    const a = withIt.filter((m) => m.reaction === 'unwell').length;   // 먹고 탈남
+    const b = withIt.length - a;                                     // 먹고 괜찮음
+    const c = without.filter((m) => m.reaction === 'unwell').length; // 안 먹고 탈남
+    const d = without.length - c;                                    // 안 먹고 괜찮음
+
+    if (a < MIN_UNWELL || withIt.length < MIN_EATEN
+                       || without.length < MIN_CONTROL) continue;     // 증거 부족
+    if (fisherRightTail(a, b, c, d) > threshold) continue;            // 우연 범위
+    ...
+  }
+}
+```
+
+설계 의도. `continue` 두 줄이 이 함수가 하는 일의 대부분이다. 첫 줄은 **증거의 양**을 본다 — 탈이 난 횟수, 먹은 횟수, 그리고 **먹지 않은 끼니의 수**까지 본다. 마지막 것이 없으면 비교가 성립하지 않는다. 매 끼니에 들어가는 성분은 탈이 날 때마다 함께 있었으므로 아무 검정이나 통과시키기 때문이다.
+
+둘째 줄의 문턱은 `ALPHA / 검사한 성분 수` 다. 성분을 열 개 보면 문턱이 10분의 1이 된다. 스무 개를 놓고 각각 5% 문턱으로 보면 아무 관계가 없어도 하나쯤은 걸리는데, 그 하나를 "당신은 이것에 알레르기가 있을 수 있습니다" 로 화면에 띄우는 것이 이 기능의 최악이다.
+
+검사 대상을 **기록에 실제로 등장한 성분**으로 좁힌 것도 같은 이유다. 먹은 적 없는 성분까지 목록에 넣으면 분모만 커져 진짜 신호가 문턱 아래로 내려간다. 보수적으로 만드는 장치가 지나치면 아무것도 못 찾는 장치가 된다.
+
+Fisher 정확검정을 쓴 이유는 표본이 작기 때문이다. 카이제곱은 기대빈도가 5 미만이면 쓸 수 없는데, 식이 일지의 표는 늘 그렇다 — 사람이 한 성분을 스무 번 먹고 그중 몇 번 탈이 났는지를 기록하는 일은 드물다.
 
 ### 2.6 기존 접근과의 차별점
 
@@ -638,6 +699,39 @@ export function validateDensity(per100: NutrientAmounts): ValidationResult {
 판독은 네 단계다. 서식 네 귀퉁이의 ArUco 마커를 찾아 원근을 보정하고(1000×1000으로 펴고), 적응형 이진화를 걸고, 설정 파일에 적힌 좌표에서 각 버블의 **채움 비율**을 재고, 그 비율로 무엇이 표시되었는지 정한다. 마커를 찾지 못하면 값을 지어내지 않고 "종이 전체가 화면에 들어오지 않았다" 는 뜻의 오류를 돌려준다.
 
 값을 정하는 규칙에 한 가지 판단이 들어 있다. 항목마다 **하나만 고르는 것**(칸 번호·기간·시각)과 **여럿 고를 수 있는 것**(요일)이 다르게 처리된다. 전자는 가장 진한 칸 하나를 고르되 2등과의 차이가 충분해야 하고, 그렇지 않으면 값을 내지 않고 문제로 보고한다. 애매한 것을 그럴듯하게 고르는 것이 이 경로에서 가장 나쁜 실패이기 때문이다 — 잘못 읽은 복용 시각은 아무 값도 읽지 못한 것보다 위험하다.
+
+```python
+if group["mode"] == "one":
+    ranked = sorted(s.items(), key=lambda kv: -kv[1])
+    best, second = ranked[0], ranked[1]
+
+    if best[1] < abs_min:                      # ① 아무것도 안 칠했다
+        values[name] = None
+        problems.append(f"{name}: nothing filled")
+
+    elif second[1] >= abs_min:                 # ② 둘 다 제대로 칠했다
+        # 둘 사이의 간격만 보면, 마음을 바꿔 다른 칸을 칠하고 앞의 것을 지우지
+        # 않은 종이에서 펜이 더 덮은 쪽을 조용히 고르게 된다. 종이는 서로 다른
+        # 두 가지를 말하고 있고, 어느 쪽이었는지는 그것을 쓴 사람만 안다.
+        values[name] = None
+        problems.append(f"{name}: two boxes filled ... erase one and retake")
+
+    elif best[1] - second[1] < margin:         # ③ 갈라지지 않는다
+        values[name] = None
+        problems.append(f"{name}: ambiguous ...")
+
+    else:
+        values[name] = best[0]
+else:                                          # 여럿 고르는 항목 (요일)
+    picked  = [k for k in group["bubbles"] if s[k] >= abs_min]
+    unclear = [k for k in group["bubbles"] if abs_min - margin <= s[k] < abs_min]
+```
+
+설계 의도. 갈래 ①②③ 이 모두 **값을 내지 않는 쪽**으로 끝난다는 것이 이 함수의 성격이다. 특히 ② 가 그렇다 — 두 칸이 모두 제대로 칠해져 있으면 더 진한 쪽을 고르는 것이 기술적으로는 쉽지만, 그것은 종이가 하지 않은 말을 만들어 내는 것이다.
+
+이름이 붙은 문제(`problems`)는 사용자를 종이로 돌려보내며 **되돌릴 수 있다.** 확신에 찬 오독은 되돌릴 수 없다. 판독기가 "모르겠다" 고 말할 수 있어야 하는 이유가 여기 있고, 이것은 §2.2 의 파서가 지어낸 이름을 그림 대신 오류로 만드는 것, §5.2 의 검사기가 통과 기준을 결과에 맞추어 낮추지 않는 것과 같은 원칙이다.
+
+요일처럼 여럿 고르는 항목에서는 `unclear` — 비어 있다고 하기에도 칠했다고 하기에도 애매한 띠 — 를 따로 모아 함께 보고한다. 값은 내되 무엇이 미심쩍은지를 함께 말하는 쪽이, 조용히 빠뜨리는 것보다 낫다.
 
 #### 어디까지 견디는지 재었다
 
