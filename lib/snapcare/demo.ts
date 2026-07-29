@@ -54,6 +54,20 @@ export function isDemo(): boolean {
 }
 
 /**
+ * 모드를 바꾼다. 화면의 선택 버튼이 부른다.
+ *
+ * 주소로만 바꿀 수 있게 두었더니 안내가 어려웠다 — 심사장에서 "물음표 데모 이퀄
+ * 일" 을 불러줄 수는 없다. 값은 같은 곳에 남으므로 주소 방식도 그대로 통한다.
+ *
+ * 바꾼 뒤에는 다시 읽어 들여야 하므로 부르는 쪽이 새로고침한다.
+ */
+export function setDemo(on: boolean): void {
+  if (typeof localStorage === 'undefined') return;
+  if (on) localStorage.setItem(FLAG, '1');
+  else localStorage.removeItem(FLAG);
+}
+
+/**
  * 화면에서 쓰는 형태.
  *
  * isDemo() 를 그리는 중에 그냥 부르면 안 된다 — 서버는 false, 브라우저는 true 라

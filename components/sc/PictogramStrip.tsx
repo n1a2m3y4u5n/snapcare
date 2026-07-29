@@ -97,6 +97,47 @@ export function PictogramStrip({ source }: { source: string }) {
 }
 
 /**
+ * DSL 한 줄을 그림 한 장으로. 스트립 밖(대체 기준 등)에서 쓴다.
+ *
+ * 전에는 여기서 `<img src="/api/pictogram?label=…">` 를 썼는데, 그 라우트의 GET 은
+ * 캐시 현황 JSON 을 돌려주지 PNG 를 주지 않는다. 이미지가 한 번도 뜬 적이 없고
+ * 요청은 200 이라 콘솔에도 아무 것도 안 남았다. 스트립과 같은 경로(캐시 → POST)를
+ * 쓰면 이런 두 번째 경로 자체가 없어진다.
+ */
+export function OneGlyph({ line, className }: { line: string; className?: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const manifest = await loadManifest();
+      if (manifest && manifest[dslKey(line)] !== undefined) {
+        if (alive) setSrc(cachedPictogramPath(line));
+        return;
+      }
+      try {
+        const res = await fetch('/api/pictogram', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ source: line }),
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        const { images } = (await res.json()) as { images: string[] };
+        if (alive && images[0]) setSrc(images[0]);
+      } catch (err) {
+        console.error('[pictogram] 한 장 합성 실패:', err);
+      }
+    })();
+    return () => { alive = false; };
+  }, [line]);
+
+  // 못 그리면 자리도 만들지 않는다 — 옆의 문장이 이미 같은 말을 하고 있다.
+  if (!src) return null;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" aria-hidden className={className} />;
+}
+
+/**
  * 우리 세트에 없는 개념 한 칸.
  *
  * 온라인 판은 서버에 만들어 달라고 하고, 만드는 동안 이 칸만 비어 있다 — 판정과

@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import bcrypt from 'bcryptjs';
 import { useSession } from '@/stores/session';
 import { useProfile } from '@/stores/profile';
-import { useIsDemo } from '@/lib/snapcare/demo';
+import { seedDemoIfEmpty } from '@/stores/scans';
+import { setDemo, useIsDemo } from '@/lib/snapcare/demo';
 
 /** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개 순서 (bcrypt로 실제 설정·검증). */
 const TILES = ['☀️', '🌙', '💧', '🔥', '🌸', '🐦', '🏠', '⛰️', '🛣️', '🚪', '🔔', '🔑'];
@@ -23,7 +24,18 @@ export default function LoginPage() {
   // 단계 없이 바로 들어갈 수 있다. 실제 사용자에게는 넣지 않는다 — 정한 적 없는
   // 그림을 맞히라는 화면이 되기 때문이다.
   useEffect(() => {
-    if (demo && !pinHash) setPinHash(DEMO_HASH);
+    if (!demo) return;
+    if (!pinHash) setPinHash(DEMO_HASH);
+    // 시연 자료도 여기서 확정한다. 원래는 서버 응답을 받은 뒤에 넣었는데 두 가지가
+    // 어긋났다:
+    //
+    //  - 아래 next 가 그보다 먼저 계산되어, 시연 모드인데도 프로필 설정 화면으로
+    //    보내졌다 — 그 화면을 건너뛰려고 만든 것이 정작 작동하지 않았다.
+    //  - 일반 모드로 한 번 들어갔다 나오면 서버에 빈 자료가 올라가고, 그다음부터는
+    //    "서버에 자료가 있다" 로 판단해 시연 기록이 영영 안 들어왔다.
+    //
+    // 로그인은 두 모드 모두 반드시 지나는 자리라 여기서 정하는 것이 확실하다.
+    seedDemoIfEmpty();
   }, [demo, pinHash, setPinHash]);
 
   const setup = !pinHash; // 최초면 설정 모드
@@ -151,6 +163,40 @@ export default function LoginPage() {
             <span className="text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>Undo</span>
           </button>
         )}
+
+        {/*
+          모드 선택.
+          
+          주소에 ?demo=1 을 붙이는 방식만 있었는데, 심사장에서 그것을 불러주기가
+          어렵다. 그렇다고 첫 화면에 크게 물으면 안 된다 — 몰도바 어르신에게
+          "시연용인가 실사용인가" 는 앱을 시작하기도 전에 만나는 벽이다.
+          
+          그래서 로그인 화면 **아래쪽에 작게** 둔다. 처음 여는 사람은 그냥 지나가고,
+          아는 사람만 누른다. 누르면 그 브라우저에 기억되므로 한 번이면 끝난다.
+        */}
+        <div className="mt-auto pt-8 flex items-center gap-2 text-[11px]"
+             style={{ color: 'var(--color-sc-muted)' }}>
+          <button
+            onClick={() => { setDemo(false); location.href = '/'; }}
+            className="rounded-full px-3 py-1.5"
+            style={{
+              background: demo ? 'transparent' : 'var(--color-sc-line)',
+              fontWeight: demo ? 400 : 700,
+              color: demo ? 'var(--color-sc-muted)' : 'var(--color-sc-ink)',
+            }}>
+            Start empty
+          </button>
+          <button
+            onClick={() => { setDemo(true); location.href = '/'; }}
+            className="rounded-full px-3 py-1.5"
+            style={{
+              background: demo ? 'var(--color-sc-line)' : 'transparent',
+              fontWeight: demo ? 700 : 400,
+              color: demo ? 'var(--color-sc-ink)' : 'var(--color-sc-muted)',
+            }}>
+            Demo data
+          </button>
+        </div>
       </div>
     </div>
   );

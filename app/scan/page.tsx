@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
-import { PictogramStrip } from '@/components/sc/PictogramStrip';
+import { PictogramStrip, OneGlyph } from '@/components/sc/PictogramStrip';
 import { NutrientBars } from '@/components/sc/NutrientBars';
 import { Say } from '@/components/sc/Say';
 import { doseSentence, storageSentence } from '@/lib/snapcare/say';
@@ -202,11 +202,7 @@ function FoodResult({
         {alternative && (
           <div className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: 'var(--color-safe-bg)' }}>
             {alternative.glyph && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={`/api/pictogram?label=${encodeURIComponent(`\\no{\\${alternative.glyph}}`)}`}
-                alt="" aria-hidden className="h-12 w-12 shrink-0"
-              />
+              <OneGlyph line={`\\no{\\${alternative.glyph}}`} className="h-12 w-12 shrink-0" />
             )}
             <div>
               <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-safe)' }}>TRY INSTEAD</p>
