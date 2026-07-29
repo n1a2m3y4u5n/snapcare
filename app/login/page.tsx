@@ -1,6 +1,7 @@
 'use client';
 
 import { sayable } from '@/components/sc/Say';
+import { ReadScreen } from '@/components/sc/ReadScreen';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import bcrypt from 'bcryptjs';
@@ -174,6 +175,11 @@ export default function LoginPage() {
           그래서 로그인 화면 **아래쪽에 작게** 둔다. 처음 여는 사람은 그냥 지나가고,
           아는 사람만 누른다. 누르면 그 브라우저에 기억되므로 한 번이면 끝난다.
         */}
+        {/* 낭독 버튼은 모든 화면의 같은 자리에 있어야 한다 — 읽지 못하는 사람이
+            버튼을 찾는 방법은 '늘 거기 있다' 뿐인데, 이 화면과 온보딩에만 없었다.
+            정작 처음으로 무언가를 해야 하는 화면이 여기다. */}
+        <ReadScreen />
+
         <div className="mt-auto pt-8 flex items-center gap-2 text-[11px]"
              style={{ color: 'var(--color-sc-muted)' }}>
           <button

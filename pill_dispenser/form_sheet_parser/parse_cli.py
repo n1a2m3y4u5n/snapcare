@@ -44,8 +44,12 @@ def main() -> int:
 
     warped = warp_form_sheet(img, quad)
     result = read_form_sheet(preprocess_form_sheet(warped), str(HERE / "form_sheet" / "form_sheet_config.json"))
-    print(json.dumps({"ok": True, **result}, ensure_ascii=False))
-    return 0
+    # read_form_sheet 는 dict 가 아니라 SheetResult 를 준다. 예전에는 `**result` 로
+    # 펼치려다 매번 TypeError 로 죽었고, 라우트는 그 실패를 "parser_unavailable"(501)
+    # 로 옮겨 적었다 — 코드가 틀린 것을 환경이 없는 것처럼 보이게 하는 실패였다.
+    # ok 도 넘겨받은 값이 아니라 결과에서 읽는다. 읽다 만 장을 성공이라 부르지 않는다.
+    print(json.dumps({"ok": result.ok, **result.to_json()}, ensure_ascii=False))
+    return 0 if result.ok else 1
 
 
 if __name__ == "__main__":

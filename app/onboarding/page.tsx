@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/stores/session';
 import { sayable } from '@/components/sc/Say';
+import { ReadScreen } from '@/components/sc/ReadScreen';
+import { speak } from '@/lib/voice';
 
 const SLIDES = [
   { emoji: '📷', title: 'Point & scan', body: 'Aim your camera at food, medicine or anything you’re about to use.', tint: 'var(--color-sc-primary)' },
@@ -20,6 +22,18 @@ export default function OnboardingPage() {
   const [i, setI] = useState(0);
   const last = i === SLIDES.length - 1;
   const s = SLIDES[i];
+
+  /*
+    슬라이드가 바뀌면 스스로 읽는다.
+    
+    다른 화면은 눌러야 읽어주는데, 그 규칙을 알려주는 곳이 여기다 — 여기가 침묵하면
+    "글자를 누르면 읽어준다" 를 배울 자리가 없다. 글을 못 읽는 사람이 처음 만나는
+    화면이 조용하면, 그 사람에게 이 앱은 그냥 읽을 수 없는 화면 넷이다.
+    
+    첫 슬라이드는 브라우저가 막는다 — 사용자가 아무것도 누르기 전에는 소리를 못 낸다.
+    그래서 Next 를 누른 뒤부터 들린다. 그 전에도 글자를 누르면 읽힌다.
+  */
+  useEffect(() => { void speak(`${s.title}. ${s.body}`); }, [s.title, s.body]);
 
   function finish() {
     setOnboarded(true);
@@ -53,6 +67,8 @@ export default function OnboardingPage() {
             <span key={k} className="h-2 rounded-full transition-all" style={{ width: k === i ? 20 : 8, background: k === i ? 'var(--color-sc-primary)' : 'var(--color-sc-line)' }} />
           ))}
         </div>
+
+        <ReadScreen />
 
         <button
           onClick={() => (last ? finish() : setI(i + 1))}
