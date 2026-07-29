@@ -19,7 +19,21 @@ import { usePreferences } from '@/stores/preferences';
  * 자리는 고정이다. 읽지 못하는 사람이 버튼을 찾는 방법은 '늘 거기 있다' 뿐이다.
  */
 
-export function ReadScreen() {
+/**
+ * 어디에 그릴 것인가.
+ *
+ *  tab   — 하단 탭바의 네 번째 칸. 탭바가 있는 화면은 여기다.
+ *  float — 탭바가 없는 화면(로그인·안내·카메라)의 떠 있는 버튼.
+ *  none  — 버튼 없이 이 컴포넌트의 일(도착 안내·말하기 속도 적용)만 한다.
+ *
+ * 왜 떠 있는 버튼을 걷어냈나: 줄마다 듣기 버튼이 생기면서 화면 양옆이 컨트롤 열이
+ * 됐는데, 떠 있는 원이 그 위에 앉아 실제로 누를 것을 가렸다. 오른쪽에서 왼쪽으로
+ * 옮겨도 같은 일이 반복됐다 — 어느 구석이든 내용이 있기 때문이다. 탭바는 이미
+ * 아무 내용도 지나가지 않는 자리이고, "늘 거기 있다" 는 성질도 그대로다.
+ */
+export type ReadScreenVariant = 'float' | 'tab' | 'none';
+
+export function ReadScreen({ variant = 'float' }: { variant?: ReadScreenVariant } = {}) {
   const [playing, setPlaying] = useState(false);
   const cancelled = useRef(false);
   const pathname = usePathname();
@@ -98,18 +112,26 @@ export function ReadScreen() {
     }
   }
 
+  if (variant === 'none') return null;
+
+  if (variant === 'tab') {
+    return (
+      <button
+        onClick={play}
+        aria-label={playing ? 'Stop reading' : 'Read this screen aloud'}
+        className="flex flex-1 flex-col items-center gap-1 py-1"
+        style={{ color: playing ? 'var(--color-caution)' : 'var(--color-sc-muted)' }}
+      >
+        <span className="text-xl leading-none" aria-hidden>{playing ? '⏹' : '🔊'}</span>
+        <span className="text-[11px] font-semibold">{playing ? 'Stop' : 'Listen'}</span>
+      </button>
+    );
+  }
+
   return (
     <button
       onClick={play}
       aria-label={playing ? 'Stop reading' : 'Read this screen aloud'}
-      /*
-       * 왼쪽 아래로 옮겼다. 줄마다 듣기 버튼이 생기면서 화면 오른쪽이 컨트롤 열이
-       * 됐는데, 이 버튼이 그 위에 떠서 실제로 누를 것을 가렸다 — 하루 누적 막대와
-       * 최근 목록의 듣기 버튼이 이 검은 원 밑에 깔렸다.
-       *
-       * 자리가 고정이라는 성질은 그대로다. 읽지 못하는 사람이 버튼을 찾는 방법은
-       * '늘 거기 있다' 뿐이고, 어느 구석인지는 그다음 문제다.
-       */
       className="fixed bottom-28 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-lg active:scale-95 transition-transform"
       style={{ background: playing ? 'var(--color-caution)' : 'var(--color-sc-ink)' }}
     >
