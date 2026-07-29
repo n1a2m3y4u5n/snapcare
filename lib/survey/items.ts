@@ -40,14 +40,22 @@ export const CONSENT = {
   title: T('동의', 'Consent', 'Consimțământ'),
   body: T(
     '이 설문은 제16회 e-ICON 세계대회 출품작 SnapCare 에 대한 전문가 의견을 모읍니다. ' +
-      '수집 항목은 응답 내용과 (선택 입력 시) 소속·이메일입니다. 대회 종료 후 12개월간 보관하고 그 뒤 삭제합니다. ' +
-      '삭제나 열람을 원하시면 아래 연락처로 알려 주시면 됩니다. 응답은 프로젝트 문서에 인용될 수 있으며, 실명·소속을 밝힐지 익명으로 할지는 마지막 문항에서 직접 고르실 수 있습니다. 인용을 원하지 않으신다는 선택도 있습니다.',
+      '수집 항목은 응답 내용, 성함·소속·국가, 그리고 기술 정보입니다. 기술 정보란 메일에 담긴 수신자 식별 문자열, ' +
+      '설문을 시작하고 제출한 시각, 표준시간대와 언어 설정, 화면이 모바일인지 데스크톱인지입니다. 브라우저 식별 정보는 수집하지 않습니다. ' +
+      '대회 종료 후 12개월간 보관하고 그 뒤 삭제하며, 삭제나 열람을 원하시면 아래 연락처로 알려 주시면 됩니다. ' +
+      '응답은 프로젝트 문서에 인용될 수 있으며, 실명·소속을 밝힐지 익명으로 할지는 마지막 문항에서 직접 고르실 수 있습니다. 인용을 원하지 않으신다는 선택도 있습니다.',
     'This survey collects expert feedback on SnapCare, an entry in the 16th e-ICON World Contest. ' +
-      'We collect your answers and, if you choose to enter them, your affiliation and email. We keep responses for 12 months ' +
-      'after the contest and then delete them. Write to the address below to access or delete yours. Email is optional — you may answer anonymously.',
+      'We collect your answers, your name, affiliation and country, and some technical information: the recipient identifier carried ' +
+      'in the invitation link, the times you started and submitted, your time zone and language setting, and whether you answered on a ' +
+      'mobile or desktop screen. We do not collect browser fingerprinting data. We keep responses for 12 months after the contest and ' +
+      'then delete them; write to the address below to access or delete yours. Your response may be quoted in the project documents, and ' +
+      'in the final question you choose whether that is with your name, with your affiliation only, or anonymously — one option is not to be quoted at all.',
     'Acest chestionar colectează opinii de specialitate despre SnapCare, o lucrare înscrisă la a 16-a ediție e-ICON World Contest. ' +
-      'Colectăm răspunsurile dumneavoastră și, dacă alegeți să le introduceți, afilierea și adresa de e-mail. Păstrăm răspunsurile 12 luni ' +
-      'după concurs, apoi le ștergem. Scrieți la adresa de mai jos pentru acces sau ștergere. E-mailul este opțional — puteți răspunde anonim.',
+      'Colectăm răspunsurile, numele, afilierea și țara dumneavoastră, precum și unele informații tehnice: identificatorul destinatarului ' +
+      'din linkul de invitație, momentele în care ați început și ați trimis, fusul orar și setarea de limbă, și dacă ați răspuns pe un ecran ' +
+      'mobil sau desktop. Nu colectăm date de amprentare a browserului. Păstrăm răspunsurile 12 luni după concurs, apoi le ștergem; ' +
+      'scrieți la adresa de mai jos pentru acces sau ștergere. Răspunsul poate fi citat în documentele proiectului, iar în ultima întrebare ' +
+      'alegeți dacă acest lucru se face cu numele, doar cu afilierea sau anonim — una dintre opțiuni este să nu fiți citat deloc.',
   ),
   agree: T(
     '위 내용을 읽었고 참여에 동의합니다.',
@@ -186,33 +194,29 @@ export const CORE: Item[] = [
     follow: T('왜 그렇습니까?', 'Why?', 'De ce?'),
   },
   {
-    id: 'a4_onefix',
-    kind: 'longtext',
-    required: true,
-    q: T(
-      '실제 환자가 쓰기 전에 딱 하나만 반드시 고치라고 요구한다면 무엇입니까?',
-      'If you could require one change before real patients use this, what would it be?',
-      'Dacă ați putea impune o singură modificare înainte ca pacienții reali să o folosească, care ar fi?',
-    ),
-  },
-  {
-    id: 'a5_notrecommend',
-    kind: 'longtext',
-    q: T(
-      '당신의 현장에서 이 앱을 환자에게 권하지 않게 될 사유는 무엇입니까?',
-      'In your setting, what would make you not recommend this to a patient?',
-      'În contextul dumneavoastră, ce v-ar face să nu recomandați aceasta unui pacient?',
-    ),
-  },
-  {
+    // a2(해칠 경로)·a4(하나만 고치라면)·a5(권하지 않을 사유)는 "무엇이 잘못됐나" 를
+    // 세 번 다르게 물은 것이었다. 서술 세 칸을 받아 가면서 얻는 것은 거의 같으므로
+    // 가장 구체적인 a2 만 남기고 둘을 지웠다.
+    //
+    // a6 은 서술이었는데 선택으로 바꿨다. 서술만 받으면 답이 제각각이라 셀 수 없다.
+    // 후보를 주고 고르게 하면 분모가 생기고, §5 에서 우리가 무엇을 재야 하는지가
+    // 표로 나온다. 어떻게 재야 하는지는 이어지는 서술에서 받는다.
     id: 'a6_evidence',
-    kind: 'longtext',
+    kind: 'single',
     required: true,
     q: T(
-      '이것이 효과가 있는지 없는지, 무엇을 보면 판단하겠습니까? 어떤 결과가 나오면 납득하겠습니까?',
-      'How would you judge whether this works — what outcome would convince you?',
-      'Cum ați aprecia dacă funcționează — ce rezultat v-ar convinge?',
+      '이것이 효과가 있다고 납득하시려면 무엇이 확인되어야 합니까? 가장 중요한 하나를 골라 주십시오.',
+      'What would have to be shown before you accepted that this works? Pick the single most important one.',
+      'Ce ar trebui demonstrat pentru a accepta că funcționează? Alegeți cel mai important element.',
     ),
+    options: [
+      T('실제 환자가 픽토그램을 의도대로 읽어낸다', 'Real patients read the pictograms as intended', 'Pacienții reali citesc pictogramele conform intenției'),
+      T('복약 오류가 실제로 줄어든다', 'Dosing errors actually go down', 'Erorile de dozare scad efectiv'),
+      T('약사의 복약지도와 어긋나지 않는다', 'It does not diverge from what a pharmacist would say', 'Nu se abate de la ce ar spune un farmacist'),
+      T('도움 없이 혼자서 끝까지 쓸 수 있다', 'People can complete it without help', 'Oamenii îl pot folosi fără ajutor'),
+      T('오래 써도 계속 쓴다', 'People keep using it over time', 'Oamenii continuă să îl folosească în timp'),
+    ],
+    follow: T('그것을 어떻게 재야 한다고 보십니까?', 'How should that be measured?', 'Cum ar trebui măsurat?'),
   },
   {
     id: 'a7_framing',
@@ -489,6 +493,21 @@ export const UI = {
   retry: T('다시 시도', 'Try again', 'Încercați din nou'),
   contact: T('문의', 'Contact', 'Contact'),
   optional: T('선택', 'optional', 'opțional'),
+  previewTitle: T(
+    '먼저 화면을 보십시오',
+    'Please look at the screens first',
+    'Vă rugăm să priviți mai întâi ecranele',
+  ),
+  previewNote: T(
+    '아래 문항은 이 화면들을 보고 답해 주시면 됩니다. 왼쪽은 판정 결과, 가운데는 픽토그램 세트, 오른쪽은 연동되는 알약 디스펜서입니다.',
+    'The questions below refer to these screens. Left: the verdict shown to the user. Middle: the pictogram set. Right: the pill dispenser it links to.',
+    'Întrebările de mai jos se referă la aceste ecrane. Stânga: verdictul afișat utilizatorului. Mijloc: setul de pictograme. Dreapta: dozatorul de pastile conectat.',
+  ),
+  tryIt: T(
+    '실제로 열어 보기 (새 창)',
+    'Open the actual app (new tab)',
+    'Deschideți aplicația reală (filă nouă)',
+  ),
   moreSections: T(
     '다른 분야 문항도 보기',
     'Show the other field sections',

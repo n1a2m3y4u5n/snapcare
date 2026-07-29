@@ -45,6 +45,18 @@ type Step =
 export default function SurveyPage() {
   const [lang, setLang] = useState<Lang>('ko');
   const [pinned, setPinned] = useState<string | null>(null);
+  /**
+   * 수신자 토큰과 접속 맥락.
+   *
+   * 링크의 `?r=` 값을 그대로 되돌려 보낸다. 서버는 이 불투명한 문자열만 기록하고,
+   * 누가 답했는지는 우리 손에 있는 명단으로만 풀린다 — 서버에 이메일과 사람의
+   * 대응표를 올리지 않는 것이 요점이다.
+   *
+   * 시각은 두 개를 남긴다. 시작한 때와 낸 때가 있어야 얼마나 걸렸는지 알 수 있고,
+   * 그 값이 문항이 너무 길었는지 판단하는 근거가 된다.
+   */
+  const [meta] = useState(() => ({ startedAt: new Date().toISOString() }));
+  const [recipient, setRecipient] = useState<string | null>(null);
   const [step, setStep] = useState<Step>({ k: 'intro' });
   const [consent, setConsent] = useState(false);
   const [ans, setAns] = useState<Answers>({});
@@ -69,6 +81,8 @@ export default function SurveyPage() {
       setPinned(s);
       setOpenBranches([s]);
     }
+    const r = p.get('r');
+    if (r && /^[a-z0-9]{4,32}$/.test(r)) setRecipient(r);
     const l = p.get('lang');
     if (l === 'en' || l === 'ro' || l === 'ko') setLang(l);
     else if (navigator.language?.startsWith('ro')) setLang('ro');
@@ -148,7 +162,18 @@ export default function SurveyPage() {
       pinnedSection: pinned,
       answers: ans,
       openedBranches: openBranches,
+      recipient,
+      startedAt: meta.startedAt,
       clientTime: new Date().toISOString(),
+      // 응답 환경 — 문항이 길어서 중간에 닫았는지, 어느 화면에서 답했는지를
+      // 나중에 보려면 필요하다. 개인을 식별하려는 것이 아니므로 사용자
+      // 에이전트 문자열은 담지 않고 대략적인 분류만 남긴다.
+      env: {
+        tz: (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return null; } })(),
+        locale: navigator.language || null,
+        screen: window.innerWidth < 700 ? 'mobile' : window.innerWidth < 1100 ? 'tablet' : 'desktop',
+        fromLink: recipient !== null,
+      },
     };
     try {
       const res = await fetch('/api/survey', {
@@ -259,6 +284,40 @@ export default function SurveyPage() {
       )}
 
       {step.k === 'core' && (
+        <>
+          {/*
+            문항 앞에 실제 화면을 보여준다. 글 두 문장으로 설명하고 곧바로 "환자를
+            해칠 경로가 무엇입니까" 를 물으면 추측을 적게 되고, 우리가 이미 아는
+            답만 돌아온다. 화면을 보고 답하는 것과 설명을 읽고 답하는 것은 다르다.
+          */}
+          <section className="mb-6">
+            <h2 className="text-sm font-bold">{t(UI.previewTitle)}</h2>
+            <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
+              {t(UI.previewNote)}
+            </p>
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {['fig06_verdict_rx', 'fig02_sigil_sheet', 'fig10_dispenser'].map((f) => (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  key={f}
+                  src={`/survey/${f}.png`}
+                  alt=""
+                  aria-hidden
+                  className="h-56 shrink-0 rounded-xl border bg-white object-contain p-1"
+                  style={{ borderColor: 'var(--color-sc-line)' }}
+                />
+              ))}
+            </div>
+            <a
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-xs underline"
+              style={{ color: 'var(--color-sc-primary)' }}
+            >
+              {t(UI.tryIt)}
+            </a>
+          </section>
         <Questions
           items={CORE}
           {...{ ans, set, t }}
@@ -267,6 +326,7 @@ export default function SurveyPage() {
           nextLabel={t(UI.next)}
           backLabel={t(UI.back)}
         />
+        </>
       )}
 
 
