@@ -2,7 +2,8 @@
 #
 #     make            the whole suite
 #     make run        start it here, with mock servos and no WiFi meddling
-#     make label      print this machine's setup QR to the terminal
+#     make cloud      the same, pointed at a relay on this machine
+#     make label      print this machine's setup QR and pairing code
 #     make lint       compile-check every module
 #     make clean
 #
@@ -13,8 +14,9 @@
 PYTHON ?= python
 PORT   ?= 8099
 STATE  ?= /tmp/snapcare-dev
+RELAY  ?= http://localhost:8088
 
-.PHONY: all test run label lint clean
+.PHONY: all test run cloud label lint clean
 
 all: test
 
@@ -28,6 +30,14 @@ run:
 	@mkdir -p $(STATE)
 	SNAPCARE_STATE_DIR=$(STATE) $(PYTHON) -m snapcare_dispenser \
 		--no-wifi --port $(PORT) --servo-backend mock --verbose
+
+# The same, but talking to a relay. Start one first — `make run` in
+# ../cloud_relay — or use `make demo` there, which starts both.
+cloud:
+	@mkdir -p $(STATE)
+	SNAPCARE_STATE_DIR=$(STATE) $(PYTHON) -m snapcare_dispenser \
+		--no-wifi --port $(PORT) --servo-backend mock \
+		--relay-url $(RELAY) --verbose
 
 label:
 	@SNAPCARE_STATE_DIR=$(STATE) $(PYTHON) -m snapcare_dispenser --show-qr

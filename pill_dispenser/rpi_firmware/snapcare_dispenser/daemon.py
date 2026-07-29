@@ -12,7 +12,11 @@ Order of business at boot
 3. Give any known network some seconds to come up. If none does, raise the
    setup hotspot, which is the same SSID and passphrase as the printed label,
    every time.
-4. Tick.
+4. Open the cloud link, if one is configured, on its own threads. It is not
+   waited for and its failure is not this function's problem — a dispenser with
+   an unreachable relay is a dispenser, and the schedule it is running is
+   already on the SD card.
+5. Tick.
 
 The tick loop
 -------------
@@ -37,6 +41,7 @@ import time
 from . import config, provisioning, qr, wifi
 from .button import ConfirmButton
 from .clock import Clock
+from .cloud import CloudLink
 from .device import Dispenser
 from .indicators import LogIndicator, make_indicator
 from .server import serve_forever
@@ -50,7 +55,8 @@ class Daemon:
     def __init__(self, port: int | None = None, backend: str | None = None,
                  state_dir=None, manage_wifi: bool = True,
                  identity: provisioning.Identity | None = None,
-                 headless: bool = False):
+                 headless: bool = False, relay_url: str | None = None,
+                 cloud: bool | None = None):
         self.store = Store(state_dir)
         self.identity = identity or provisioning.load_identity(self.store)
         self.servos = TrayServos(backend=make_backend(backend))
@@ -61,6 +67,14 @@ class Daemon:
         # The button and the web page's confirm call the same method, so a
         # press and a tap are indistinguishable to everything downstream.
         self.button = None if headless else ConfirmButton(self._confirm)
+        # Constructed even when it will not run, so that the status page can
+        # say *why* — "no relay configured" is a different thing to explain
+        # than "cannot reach the relay", and a None here would collapse them.
+        self.cloud = CloudLink(self.dispenser, self.identity,
+                               relay_url=relay_url, enabled=cloud)
+        # Every recorded dose goes up promptly, whichever of the five things
+        # that can cause one caused it. See `Dispenser.on_event`.
+        self.dispenser.on_event = lambda _record: self.cloud.nudge()
         self.port = port
         self.manage_wifi = manage_wifi
         self._stop = threading.Event()
@@ -147,8 +161,15 @@ class Daemon:
     # ── the loop ────────────────────────────────────────────────────────────
 
     def run(self) -> int:
-        self._server = serve_forever(self.dispenser, self.port, self.identity)
+        self._server = serve_forever(self.dispenser, self.port, self.identity,
+                                     cloud=self.cloud)
         self.bring_up_network()
+
+        # After the network, because there is no point dialling a relay over an
+        # interface that is not up yet — and *not* conditional on it having
+        # worked, because the link's own retry loop is better at waiting than
+        # anything this function could do, and the WiFi may arrive later.
+        self.cloud.start()
 
         if not self.dispenser.clock.trusted:
             log.warning(
@@ -199,8 +220,14 @@ class Daemon:
     def stop(self, *_args) -> None:
         log.info("shutting down")
         self._stop.set()
+        # Asked to stop here rather than in `close`, so its threads have the
+        # whole of the shutdown to notice. They are daemon threads and cannot
+        # hold the process open either way; this just keeps a poll that is
+        # mid-flight from logging a failure on the way out.
+        self.cloud.stop()
 
     def close(self) -> None:
+        self.cloud.stop()
         if self.button:
             self.button.close()
         if self._server:
@@ -230,6 +257,11 @@ def main(argv: list[str] | None = None) -> int:
                         help="do not manage the network — for development on a laptop")
     parser.add_argument("--headless", action="store_true",
                         help="no LED ring, buzzer or button — log what they would have done")
+    parser.add_argument("--relay-url", default=None, metavar="URL",
+                        help="cloud relay to sync schedules through "
+                             f"(default {config.CLOUD_RELAY_URL or 'none — LAN only'})")
+    parser.add_argument("--no-cloud", action="store_true",
+                        help="do not open a cloud connection, whatever is configured")
     parser.add_argument("--trays", type=int, default=None, metavar="N",
                         help=f"how many hoppers are fitted (default {config.INSTALLED_TRAYS})")
     parser.add_argument("--show-qr", action="store_true",
@@ -264,6 +296,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{exc}\nthe code would be: {identity.wifi_qr}")
             return 1
         print(f"\nthen open {provisioning.setup_url()}")
+        print(f"\npairing code: {identity.claim}")
+        print("(for the app, once the device is on the home WiFi. "
+              "It is derived from this board and never changes.)")
         return 0
 
     if args.drop is not None:
@@ -279,7 +314,9 @@ def main(argv: list[str] | None = None) -> int:
 
     daemon = Daemon(port=args.port, backend=args.servo_backend,
                     state_dir=args.state_dir, manage_wifi=not args.no_wifi,
-                    identity=identity, headless=args.headless)
+                    identity=identity, headless=args.headless,
+                    relay_url=args.relay_url,
+                    cloud=False if args.no_cloud else None)
     signal.signal(signal.SIGTERM, daemon.stop)
     signal.signal(signal.SIGINT, daemon.stop)
     try:

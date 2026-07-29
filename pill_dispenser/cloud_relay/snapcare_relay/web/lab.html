@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SnapCare dispenser lab</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="wide">
+  <h1>Dispenser lab</h1>
+  <p class="sub">
+    The app's half of the cloud link, with everything it does shown as it does
+    it. Pair with a dispenser's code and edit its schedule; or run the
+    simulated device below and exercise the whole path with no hardware at all.
+  </p>
+
+  <div class="toast" id="selfTest"></div>
+
+  <!-- ── pairing ──────────────────────────────────────────────────────── -->
+  <div class="card">
+    <h2>Pair <span id="pairState" class="pill">not paired</span></h2>
+    <p class="small muted">
+      The code printed on the dispenser's label, or shown by
+      <code>python3 -m snapcare_dispenser --show-qr</code>. Every key below is
+      derived from it in this page — the relay is never told the code, and could
+      not decrypt anything with what it is told.
+    </p>
+    <div class="row">
+      <div>
+        <label for="claim">Pairing code</label>
+        <input id="claim" placeholder="6V9F5-9QK67" autocapitalize="characters"
+               autocorrect="off" spellcheck="false">
+      </div>
+      <button class="fit" id="connect" type="button">Pair</button>
+      <button class="ghost fit" id="forget" type="button">Forget</button>
+    </div>
+    <dl class="facts" style="margin-top:.9rem">
+      <dt>Device ID</dt><dd class="small"><code id="deviceId">—</code></dd>
+      <dt>Access token</dt><dd class="small"><code id="tokenShown">—</code></dd>
+      <dt>Box key</dt><dd class="small muted" id="keyShown">—</dd>
+    </dl>
+    <div class="toast" id="pairMsg"></div>
+  </div>
+
+  <div class="card" id="live" hidden>
+    <div class="stat">
+      <div><b id="statDesired">0</b>schedule revision</div>
+      <div><b id="statReported">0</b>report revision</div>
+      <div><b id="statSeen">never</b>device last seen</div>
+      <div><b id="statRtt">—</b>last round trip</div>
+    </div>
+    <p class="small muted" style="margin:0">
+      <span class="dot" id="watchDot"></span><span id="watchText">idle</span>
+    </p>
+  </div>
+
+  <div class="cols" id="panels" hidden>
+    <!-- ── sending a schedule ─────────────────────────────────────────── -->
+    <div>
+      <div class="card">
+        <h2>Send a schedule</h2>
+        <p class="small muted">
+          Build one, or type a payload straight in. What is sent is exactly the
+          text in the box — the builder only writes into it, so you can always
+          see the string the firmware will be asked to parse.
+        </p>
+
+        <div class="scroll-x">
+          <table id="editor">
+            <thead><tr><th>Tray</th><th>Times</th><th>Days</th><th>Course</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="row" style="margin-top:.7rem">
+          <button class="ghost fit" id="build" type="button">Build payload</button>
+        </div>
+
+        <label for="payload" style="margin-top:.9rem">Payload</label>
+        <textarea id="payload" rows="3"
+                  placeholder="SC1*W*1:0800.2000-127-030/3:1900-021-000"></textarea>
+
+        <div class="row" style="margin-top:.7rem">
+          <button class="fit" id="publish" type="button">Publish to the device</button>
+          <button class="ghost fit" id="pull" type="button">Read what is stored</button>
+        </div>
+        <div class="toast" id="sendMsg"></div>
+      </div>
+
+      <!-- ── the awkward cases ────────────────────────────────────────── -->
+      <div class="card">
+        <h2>Fault injection</h2>
+        <p class="small muted">
+          The paths that are hard to reach on purpose. Each one should fail in
+          a specific way, and the log below is where you check that it did.
+        </p>
+        <div class="row">
+          <button class="ghost fit" id="faultStale" type="button">Replay an old revision</button>
+          <button class="ghost fit" id="faultKey" type="button">Send under a wrong key</button>
+        </div>
+        <div class="row" style="margin-top:.5rem">
+          <button class="ghost fit" id="faultJunk" type="button">Send an unparseable payload</button>
+          <button class="ghost fit" id="faultTray" type="button">Send a tray that is not fitted</button>
+        </div>
+        <div class="toast" id="faultMsg"></div>
+      </div>
+    </div>
+
+    <!-- ── what comes back ────────────────────────────────────────────── -->
+    <div>
+      <div class="card">
+        <h2>What the device reports</h2>
+        <p class="small muted">
+          Long-polled and decrypted here. A dispenser that has been unplugged
+          simply stops appearing — which is why the report carries a timestamp
+          rather than the relay reporting "connected".
+        </p>
+        <dl class="facts">
+          <dt>Reported at</dt><dd id="repAt" class="small">—</dd>
+          <dt>Firmware</dt><dd id="repFw" class="small">—</dd>
+          <dt>Clock</dt><dd id="repClock" class="small">—</dd>
+          <dt>Dispensing</dt><dd id="repDispensing" class="small">—</dd>
+          <dt>Loaded plan</dt><dd class="small"><code id="repPayload">—</code></dd>
+          <dt>Next dose</dt><dd id="repNext" class="small">—</dd>
+          <dt>Applied revision</dt><dd id="repRev" class="small">—</dd>
+        </dl>
+        <div id="repError"></div>
+        <p class="small muted" style="margin:.9rem 0 .3rem">Recent doses</p>
+        <div class="scroll-x">
+          <table><thead>
+            <tr><th>When</th><th>Tray</th><th>Due</th><th>Result</th></tr>
+          </thead><tbody id="repEvents"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ── the device, simulated ────────────────────────────────────── -->
+      <div class="card">
+        <h2>Simulated device <span id="simState" class="pill">off</span></h2>
+        <p class="small muted">
+          This browser tab behaving as the dispenser: it long-polls for a
+          schedule, applies it, and publishes a report. It runs the same
+          protocol as the firmware, not the same code — so it proves the relay
+          and the envelope, and proves nothing about the servos.
+        </p>
+        <div class="row">
+          <button class="fit" id="simToggle" type="button">Start the simulated device</button>
+          <button class="ghost fit" id="simDose" type="button">Report a dose</button>
+        </div>
+        <dl class="facts" style="margin-top:.9rem">
+          <dt>Holding</dt><dd id="simPayload" class="small"><code>nothing</code></dd>
+          <dt>Applied</dt><dd id="simRev" class="small">revision 0</dd>
+        </dl>
+        <div class="toast" id="simMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── the traffic ──────────────────────────────────────────────────── -->
+  <div class="card" id="logCard" hidden>
+    <h2>Traffic</h2>
+    <p class="small muted">
+      Every request this page makes, with the plaintext beside it. The
+      ciphertext is what the relay stores; the plaintext never leaves here.
+    </p>
+    <div class="row" style="margin-bottom:.7rem">
+      <button class="ghost fit" id="clearLog" type="button">Clear</button>
+      <label class="fit" style="display:flex;align-items:center;gap:.4rem;margin:0">
+        <input type="checkbox" id="showRaw" style="width:auto;min-height:0">
+        <span class="small">show sealed envelopes</span>
+      </label>
+    </div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <p class="small muted">
+    Relay <code id="relayHost">—</code> ·
+    <a href="/v1/health">health</a> ·
+    the dispenser's own console is at <code>http://pilldispenser.local/</code>
+  </p>
+</main>
+
+<script>
+/*
+ * No framework, no build step, nothing fetched from anywhere.
+ *
+ * This page is the reference implementation of the app's half of the cloud
+ * link. Everything the production web app has to do is here in about four
+ * hundred lines: derive three keys from the printed code, seal a payload, PUT
+ * it, and long-poll for what comes back.
+ *
+ * The derivation below has to agree byte for byte with
+ * `snapcare_dispenser/provisioning.py`. If you change either one, change both,
+ * and check `test_the_three_keys_are_pinned_and_differ_from_each_other`, which
+ * pins the values a real device already derives.
+ */
+
+const $ = (id) => document.getElementById(id);
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+/* ── the derivation, matching provisioning.py ───────────────────────── */
+
+const HKDF_SALT = enc.encode('snapcare/pill-dispenser/cloud/v1');
+const ALPHABET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+const CLAIM_LEN = 10;
+const ENVELOPE_VERSION = 1;
+
+function normaliseClaim(text) {
+  const kept = [...(text || '').toUpperCase()].filter((c) => ALPHABET.includes(c)).join('');
+  // Length is checked rather than padded. A code with a character missing
+  // derives a perfectly valid key for a mailbox that does not exist, and the
+  // symptom is silence — see the firmware's note on the same function.
+  return kept.length === CLAIM_LEN ? kept : '';
+}
+
+function formatClaim(bare) {
+  return bare ? `${bare.slice(0, 5)}-${bare.slice(5)}` : '';
+}
+
+async function hkdf(claim, info, bytes) {
+  const ikm = await crypto.subtle.importKey('raw', enc.encode(claim), 'HKDF', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'HKDF', hash: 'SHA-256', salt: HKDF_SALT, info: enc.encode(info) },
+    ikm, bytes * 8);
+  return new Uint8Array(bits);
+}
+
+const b64url = (u8) => btoa(String.fromCharCode(...u8))
+  .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+function unb64url(text) {
+  const standard = text.replace(/-/g, '+').replace(/_/g, '/');
+  // The padding is stripped on the way out because it is noise in JSON, and it
+  // has to be put back before decoding. `atob` is lenient about this and
+  // Python's b64decode is not, so leaving it out works here and fails at the
+  // other end — on exactly the one message in four whose length lands wrong.
+  return Uint8Array.from(
+    atob(standard + '='.repeat((4 - standard.length % 4) % 4)),
+    (c) => c.charCodeAt(0));
+}
+
+/* ── the sealed envelope, matching envelope.py ──────────────────────── */
+
+const aad = (deviceId, slot, rev) =>
+  enc.encode(`snapcare/relay/v${ENVELOPE_VERSION}|${deviceId}|${slot}|${rev}`);
+
+async function seal(key, deviceId, slot, rev, payload) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv, additionalData: aad(deviceId, slot, rev) },
+    key, enc.encode(JSON.stringify(payload)));
+  return { v: ENVELOPE_VERSION, rev, alg: 'A256GCM',
+           iv: b64url(iv), ct: b64url(new Uint8Array(ct)) };
+}
+
+async function unseal(key, deviceId, slot, envelope) {
+  if (!envelope || envelope.v !== ENVELOPE_VERSION || envelope.alg !== 'A256GCM') {
+    throw new Error('unrecognised envelope format');
+  }
+  const rev = Number(envelope.rev);
+  // The revision is read from the envelope and fed into the AAD, which is the
+  // check rather than a circularity: a forged rev makes this throw.
+  const plain = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: unb64url(envelope.iv), additionalData: aad(deviceId, slot, rev) },
+    key, unb64url(envelope.ct));
+  return JSON.parse(dec.decode(plain));
+}
+
+/* ── SC1, only the two forms this page needs ────────────────────────── */
+
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const EVERY_DAY = 127;
+
+/*
+ * A fifth implementation of the SC1 grammar would be a liability — there are
+ * four already and the only thing keeping them in step is a shared set of test
+ * vectors. So this writes the one form it needs and never parses: the payload
+ * goes into a text box you can read before it is sent, and the firmware is the
+ * thing that decides whether it is valid. If the two disagree, the firmware is
+ * right and this is a bug in a debugging tool.
+ */
+function encodeWeekly(rows) {
+  const body = rows
+    .filter((r) => r.times.length)
+    .map((r) => [
+      `${r.tray}:${r.times.join('.')}`,
+      String(r.days).padStart(3, '0'),
+      String(Math.min(r.course, 999)).padStart(3, '0'),
+    ].join('-'))
+    .join('/');
+  return `SC1*W*${body}`;
+}
+
+const hhmm = (t) => (t && t.length === 4 ? `${t.slice(0, 2)}:${t.slice(2)}` : t || '—');
+
+/* ── the traffic log ────────────────────────────────────────────────── */
+
+function logEntry(kind, verb, detail, ms, body) {
+  const entry = document.createElement('div');
+  entry.className = `entry ${kind}`;
+
+  const head = document.createElement('div');
+  head.className = 'head';
+  const v = document.createElement('span');
+  v.className = 'verb';
+  v.textContent = verb;
+  const d = document.createElement('span');
+  d.className = 'muted';
+  d.textContent = detail;
+  const t = document.createElement('span');
+  t.className = 'ms';
+  t.textContent = new Date().toLocaleTimeString() + (ms == null ? '' : ` · ${ms} ms`);
+  head.append(v, d, t);
+  entry.append(head);
+
+  if (body !== undefined) {
+    const pre = document.createElement('pre');
+    // textContent, never innerHTML: this renders a payload that came off the
+    // network, and one day it will contain a tag.
+    pre.textContent = typeof body === 'string' ? body : JSON.stringify(body, null, 1);
+    entry.append(pre);
+  }
+
+  const log = $('log');
+  log.prepend(entry);
+  while (log.children.length > 200) log.lastChild.remove();
+}
+
+$('clearLog').onclick = () => { $('log').innerHTML = ''; };
+
+/* ── the relay ──────────────────────────────────────────────────────── */
+
+const state = {
+  claim: '', deviceId: '', token: '', key: null,
+  desiredRev: 0, reportedRev: 0,
+  watching: false, sim: null,
+};
+
+async function relay(method, suffix, body, { quiet = false, label = '', signal } = {}) {
+  const url = `/v1/devices/${state.deviceId}${suffix}`;
+  const started = performance.now();
+  const options = {
+    method,
+    headers: { 'Authorization': `Bearer ${state.token}` },
+    // Passed through so that stopping a watch actually cuts the request. Held
+    // polls last the best part of a minute; without this, "Forget" leaves one
+    // in flight and the page goes on talking about a device it has forgotten.
+    signal,
+  };
+  if (body !== undefined) {
+    options.headers['Content-Type'] = 'application/json';
+    options.body = JSON.stringify(body);
+  }
+
+  let res;
+  try {
+    res = await fetch(url, options);
+  } catch (err) {
+    // A poll we cancelled ourselves is not a fault and does not belong in a
+    // log whose whole value is that everything in it is worth looking at.
+    if (err.name === 'AbortError') throw err;
+    // A long poll that was cut, or the relay being restarted. Normal enough
+    // that it is logged rather than shouted about — the caller retries.
+    logEntry('err', method, `${label || suffix} — ${err.message}`,
+             Math.round(performance.now() - started));
+    throw err;
+  }
+
+  const ms = Math.round(performance.now() - started);
+  $('statRtt').textContent = `${ms} ms`;
+
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!quiet || !res.ok) {
+    logEntry(res.ok ? (method === 'GET' ? 'in' : 'out') : 'err',
+             `${method} ${res.status}`, label || suffix, ms,
+             $('showRaw').checked ? data : undefined);
+  }
+  return { status: res.status, data };
+}
+
+/* ── pairing ────────────────────────────────────────────────────────── */
+
+async function pair(text) {
+  const bare = normaliseClaim(text);
+  if (!bare) {
+    toast($('pairMsg'), false,
+      'That is not a pairing code. It is ten characters — no O, I, L, 0 or 1.');
+    return false;
+  }
+
+  state.claim = bare;
+  state.deviceId = b64url(await hkdf(bare, 'device-id', 16));
+  state.token = b64url(await hkdf(bare, 'access', 32));
+  state.key = await crypto.subtle.importKey(
+    'raw', await hkdf(bare, 'box', 32), 'AES-GCM', false, ['encrypt', 'decrypt']);
+
+  $('claim').value = formatClaim(bare);
+  $('deviceId').textContent = state.deviceId;
+  // Shown truncated. It is a credential, and this page gets screenshotted into
+  // bug reports — enough to confirm two ends agree, not enough to reuse.
+  $('tokenShown').textContent = state.token.slice(0, 10) + '…';
+  $('keyShown').textContent = 'held in this page only — never sent to the relay';
+  $('pairState').className = 'pill ok';
+  $('pairState').textContent = 'paired';
+  for (const id of ['live', 'panels', 'logCard']) $(id).hidden = false;
+
+  // Kept so a reload does not mean reading the sticker again. It is a
+  // credential in localStorage, which is a real trade-off and the right one
+  // for a debugging tool on a laptop — the production app should decide for
+  // itself, and the note in NOTES-FOR-WEBAPP.md says so.
+  try { localStorage.setItem('snapcare.lab.claim', bare); } catch (e) { /* private mode */ }
+
+  logEntry('out', 'PAIR', `device ${state.deviceId}`, null);
+  toast($('pairMsg'), true, 'Paired. Keys derived here; the relay was told nothing.');
+
+  await refreshMeta();
+  startWatching();
+  return true;
+}
+
+$('connect').onclick = () => pair($('claim').value);
+$('claim').addEventListener('keydown', (e) => { if (e.key === 'Enter') pair($('claim').value); });
+
+$('forget').onclick = () => {
+  stopWatching();
+  if (state.sim) toggleSim();
+  Object.assign(state, { claim: '', deviceId: '', token: '', key: null,
+                         desiredRev: 0, reportedRev: 0 });
+  try { localStorage.removeItem('snapcare.lab.claim'); } catch (e) { /* ignore */ }
+  $('pairState').className = 'pill';
+  $('pairState').textContent = 'not paired';
+  for (const id of ['live', 'panels', 'logCard']) $(id).hidden = true;
+  $('claim').value = '';
+  toast($('pairMsg'), true, 'Forgotten on this browser. The device is untouched.');
+};
+
+function toast(el, ok, text) {
+  el.className = 'toast ' + (ok ? 'ok' : 'bad');
+  el.textContent = text;
+}
+
+/* ── reading the mailbox ────────────────────────────────────────────── */
+
+async function refreshMeta() {
+  const { status, data } = await relay('GET', '', undefined,
+                                       { quiet: true, label: 'mailbox' });
+  if (status === 404) {
+    $('statSeen').textContent = 'never';
+    logEntry('in', 'GET 404', 'no mailbox yet — nothing has written to it', null);
+    return;
+  }
+  if (status !== 200) return;
+
+  state.desiredRev = data.desired.rev;
+  state.reportedRev = data.reported.rev;
+  $('statDesired').textContent = data.desired.rev;
+  $('statReported').textContent = data.reported.rev;
+  $('statSeen').textContent = data.deviceLastSeen
+    ? new Date(data.deviceLastSeen).toLocaleTimeString() : 'never';
+}
+
+/* ── publishing a schedule ──────────────────────────────────────────── */
+
+async function publish(payload, { rev = null, key = null, quiet = false } = {}) {
+  const useRev = rev == null ? state.desiredRev + 1 : rev;
+  const envelope = await seal(key || state.key, state.deviceId, 'desired', useRev,
+                              { payload, issuedAt: new Date().toISOString(), by: 'lab' });
+
+  if (!quiet) logEntry('out', 'SEAL', `desired rev ${useRev}`, null, { payload });
+
+  const { status, data } = await relay('PUT', '/desired', { envelope },
+                                       { label: `desired rev ${useRev}` });
+  if (status === 200) {
+    state.desiredRev = data.rev;
+    $('statDesired').textContent = data.rev;
+    return { ok: true, rev: data.rev };
+  }
+  return { ok: false, status, error: (data && data.error) || `HTTP ${status}` };
+}
+
+$('publish').onclick = async () => {
+  const payload = $('payload').value.trim();
+  if (!payload) {
+    toast($('sendMsg'), false, 'Nothing to send — build a payload or type one.');
+    return;
+  }
+  const result = await publish(payload);
+  toast($('sendMsg'), result.ok, result.ok
+    ? `Stored as revision ${result.rev}. The device collects it on its open poll.`
+    : `Refused: ${result.error}`);
+};
+
+$('pull').onclick = async () => {
+  const { status, data } = await relay('GET', '/desired?since=0',
+                                       undefined, { label: 'stored schedule' });
+  if (status === 204) {
+    toast($('sendMsg'), true, 'The mailbox holds no schedule.');
+    return;
+  }
+  if (status !== 200) {
+    toast($('sendMsg'), false, `Could not read it: ${(data && data.error) || status}`);
+    return;
+  }
+  try {
+    const opened = await unseal(state.key, state.deviceId, 'desired', data.envelope);
+    logEntry('in', 'OPEN', `desired rev ${data.rev}`, null, opened);
+    $('payload').value = opened.payload || '';
+    toast($('sendMsg'), true, `Revision ${data.rev}, sealed ${data.updatedAt}.`);
+  } catch (err) {
+    // The interesting failure: the relay had something, and this key did not
+    // open it. Almost always a different pairing code, not a broken relay.
+    logEntry('err', 'OPEN', 'did not open — wrong pairing code?', null);
+    toast($('sendMsg'), false, 'Something is stored, but this code does not open it.');
+  }
+};
+
+/* ── the schedule builder ───────────────────────────────────────────── */
+
+const TRAYS = [1, 2, 3];
+
+function buildEditor() {
+  const body = $('editor').querySelector('tbody');
+  body.innerHTML = '';
+  for (const tray of TRAYS) {
+    const row = document.createElement('tr');
+
+    const number = document.createElement('td');
+    number.textContent = tray;
+
+    const times = document.createElement('td');
+    const timeInput = document.createElement('input');
+    timeInput.id = `t${tray}`;
+    timeInput.placeholder = '08:00, 20:00';
+    timeInput.autocapitalize = 'off';
+    times.append(timeInput);
+
+    const days = document.createElement('td');
+    days.className = 'days';
+    DAYS.forEach((name, index) => {
+      const label = document.createElement('label');
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = true;
+      box.id = `d${tray}_${index}`;
+      label.append(box, document.createTextNode(name[0]));
+      days.append(label);
+    });
+
+    const course = document.createElement('td');
+    const courseInput = document.createElement('input');
+    courseInput.id = `c${tray}`;
+    courseInput.placeholder = '0';
+    courseInput.inputMode = 'numeric';
+    course.append(courseInput);
+
+    row.append(number, times, days, course);
+    body.append(row);
+  }
+}
+
+$('build').onclick = () => {
+  const rows = TRAYS.map((tray) => {
+    const raw = ($(`t${tray}`).value || '').trim();
+    const times = raw ? raw.split(',').map((t) => t.trim().replace(/\D/g, ''))
+                           .filter((t) => t.length === 4) : [];
+    let days = 0;
+    DAYS.forEach((_, i) => { if ($(`d${tray}_${i}`).checked) days |= (1 << i); });
+    return { tray, times, days: days || EVERY_DAY,
+             course: Number($(`c${tray}`).value) || 0 };
+  });
+  const payload = encodeWeekly(rows);
+  $('payload').value = payload;
+  toast($('sendMsg'), true, payload === 'SC1*W*'
+    ? 'No trays have times, so that payload is empty. The device will refuse it.'
+    : 'Built. Read it, then send it.');
+};
+
+/* ── watching what the device reports ───────────────────────────────── */
+
+let watchAbort = null;
+
+function setWatch(tone, text) {
+  $('watchDot').className = 'dot ' + tone;
+  $('watchText').textContent = text;
+}
+
+async function startWatching() {
+  if (state.watching) return;
+  state.watching = true;
+  setWatch('warn', 'watching for reports…');
+
+  let backoff = 2000;
+  while (state.watching) {
+    try {
+      watchAbort = new AbortController();
+      const { status, data } = await relay(
+        'GET', `/reported?since=${state.reportedRev}&wait=50`,
+        undefined, { quiet: true, label: 'report', signal: watchAbort.signal });
+
+      if (status === 200) {
+        state.reportedRev = data.rev;
+        $('statReported').textContent = data.rev;
+        await showReport(data);
+        setWatch('ok', 'connected to the relay');
+      } else if (status === 204) {
+        setWatch('ok', 'connected — nothing new');
+      } else if (status === 404) {
+        setWatch('warn', 'no mailbox yet — nothing has ever written to it');
+        await sleep(5000);
+      }
+      backoff = 2000;
+    } catch (err) {
+      if (!state.watching) break;
+      setWatch('bad', 'relay unreachable — retrying');
+      await sleep(backoff);
+      backoff = Math.min(backoff * 2, 30000);
+    }
+  }
+  setWatch('', 'idle');
+}
+
+function stopWatching() {
+  state.watching = false;
+  if (watchAbort) watchAbort.abort();
+}
+
+async function showReport(data) {
+  let report;
+  try {
+    report = await unseal(state.key, state.deviceId, 'reported', data.envelope);
+  } catch (err) {
+    logEntry('err', 'OPEN', 'a report did not open — wrong pairing code?', null);
+    return;
+  }
+  logEntry('in', 'OPEN', `report rev ${data.rev}`, null,
+           $('showRaw').checked ? report : `reported at ${report.at}`);
+
+  const status = report.status || {};
+  $('repAt').textContent = report.at || '—';
+  $('repFw').textContent = report.firmware || '—';
+  $('repClock').textContent = status.clock
+    ? `${status.clock.now} (${status.clock.source})` : '—';
+  $('repDispensing').textContent = status.dispensing === undefined
+    ? '—' : (status.dispensing ? 'yes' : 'no — the clock is not trusted');
+  $('repDispensing').className = 'small ' + (status.dispensing ? '' : 'warn');
+  $('repPayload').textContent = status.payload || '—';
+  $('repNext').textContent = status.nextDose
+    ? `tray ${status.nextDose.tray} at ${hhmm(status.nextDose.time)}`
+    : 'nothing further today';
+  $('repRev').textContent = report.desiredRev ?? '—';
+
+  $('repError').innerHTML = '';
+  if (report.lastError) {
+    const p = document.createElement('p');
+    p.className = 'small bad';
+    p.textContent = `The device last said: ${report.lastError}`;
+    $('repError').append(p);
+  }
+
+  const body = $('repEvents');
+  body.innerHTML = '';
+  for (const event of (report.events || []).slice(0, 12)) {
+    const row = document.createElement('tr');
+    for (const value of [event.at, event.tray, hhmm(event.time),
+                         event.taken ? (event.confirmed ? 'confirmed' : 'dispensed') : 'MISSED']) {
+      const cell = document.createElement('td');
+      cell.textContent = value;
+      row.append(cell);
+    }
+    body.append(row);
+  }
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+$('statSeen').textContent = 'never';
+
+/* ── fault injection ────────────────────────────────────────────────── */
+
+$('faultStale').onclick = async () => {
+  // The relay refuses this by itself. The device's own check against the SD
+  // card is the second line, and the one that matters after a power cut —
+  // exercise that by pointing a device at a relay you have rolled back.
+  const result = await publish('SC1*W*1:0800-127-000', { rev: state.desiredRev });
+  toast($('faultMsg'), !result.ok,
+    result.ok
+      ? 'It was accepted, which is wrong — the relay must refuse a revision that does not increase.'
+      : `Refused, correctly: ${result.error}`);
+};
+
+$('faultKey').onclick = async () => {
+  const wrong = await crypto.subtle.importKey(
+    'raw', crypto.getRandomValues(new Uint8Array(32)), 'AES-GCM', false, ['encrypt']);
+  const result = await publish('SC1*W*1:0800-127-000', { key: wrong });
+  toast($('faultMsg'), result.ok,
+    result.ok
+      ? `Stored as revision ${result.rev}. The relay cannot tell — it never could. `
+        + 'Watch the device report that it did not open.'
+      : `Refused: ${result.error}`);
+};
+
+$('faultJunk').onclick = async () => {
+  const result = await publish('NOT-AN-SC1-CODE');
+  toast($('faultMsg'), result.ok,
+    result.ok
+      ? `Stored as revision ${result.rev}. The relay does not parse payloads — `
+        + 'the device should refuse it and say so in its next report.'
+      : `Refused: ${result.error}`);
+};
+
+$('faultTray').onclick = async () => {
+  const result = await publish('SC1*W*8:0800-127-000');
+  toast($('faultMsg'), result.ok,
+    result.ok
+      ? `Stored as revision ${result.rev}. A three-tray dispenser should refuse `
+        + 'tray 8 by name rather than half-applying it.'
+      : `Refused: ${result.error}`);
+};
+
+/* ── the simulated device ───────────────────────────────────────────── */
+
+const sim = { rev: 0, payload: '', reportRev: 0, running: false, seq: 0, events: [] };
+
+async function simPublishReport(note) {
+  sim.reportRev = Math.max(sim.reportRev, state.reportedRev) + 1;
+  const report = {
+    at: new Date().toISOString().slice(0, 19),
+    firmware: 'lab-simulator',
+    desiredRev: sim.rev,
+    lastError: note || '',
+    status: {
+      trays: TRAYS, trayCount: TRAYS.length,
+      dispensing: true,
+      clock: { now: new Date().toISOString().slice(0, 19), source: 'browser', trusted: true },
+      payload: sim.payload,
+      nextDose: null,
+      servoBackend: 'simulated', servoSteady: true,
+    },
+    events: sim.events,
+  };
+  const envelope = await seal(state.key, state.deviceId, 'reported', sim.reportRev, report);
+  const { status, data } = await relay('PUT', '/reported', { envelope },
+                                       { label: `report rev ${sim.reportRev}` });
+  if (status === 409) {
+    // Somebody else — a real dispenser on the same code, most likely — is
+    // writing to this slot. Catch up rather than climbing one at a time.
+    await refreshMeta();
+    sim.reportRev = state.reportedRev;
+    return;
+  }
+  if (status === 200) sim.reportRev = data.rev;
+}
+
+async function simLoop() {
+  await simPublishReport('');
+  let backoff = 2000;
+  while (sim.running) {
+    try {
+      const { status, data } = await relay('GET', `/desired?since=${sim.rev}&wait=50`,
+                                           undefined, { quiet: true, label: 'sim poll' });
+      if (status === 200) {
+        const rev = Number(data.envelope.rev);
+        let note = '';
+        try {
+          const opened = await unseal(state.key, state.deviceId, 'desired', data.envelope);
+          const payload = String(opened.payload || '');
+          if (!/^SC1\*[SW]\*/.test(payload)) {
+            note = 'that is not a schedule code';
+          } else {
+            sim.payload = payload;
+          }
+          logEntry(note ? 'err' : 'in', 'DEVICE',
+                   note ? `refused rev ${rev}: ${note}` : `applied rev ${rev}`, null, payload);
+        } catch (err) {
+          note = 'the envelope did not open — wrong key';
+          logEntry('err', 'DEVICE', `refused rev ${rev}: ${note}`, null);
+        }
+        // The revision is recorded either way. A schedule this device refuses
+        // will be refused identically forever, and re-fetching it every fifty
+        // seconds is a device hammering the relay about something only a
+        // person can fix — the same rule the firmware follows.
+        sim.rev = rev;
+        $('simPayload').innerHTML = '<code></code>';
+        $('simPayload').firstChild.textContent = sim.payload || 'nothing';
+        $('simRev').textContent = `revision ${sim.rev}`;
+        await simPublishReport(note);
+      }
+      backoff = 2000;
+    } catch (err) {
+      if (!sim.running) break;
+      await sleep(backoff);
+      backoff = Math.min(backoff * 2, 30000);
+    }
+  }
+}
+
+function toggleSim() {
+  sim.running = !sim.running;
+  state.sim = sim.running;
+  $('simState').className = 'pill ' + (sim.running ? 'ok' : '');
+  $('simState').textContent = sim.running ? 'running' : 'off';
+  $('simToggle').textContent = sim.running
+    ? 'Stop the simulated device' : 'Start the simulated device';
+  if (sim.running) {
+    toast($('simMsg'), true, 'Polling as a dispenser would. Publish a schedule and watch it arrive.');
+    simLoop();
+  } else {
+    toast($('simMsg'), true, 'Stopped. The mailbox is left exactly as it is.');
+  }
+}
+
+$('simToggle').onclick = toggleSim;
+
+$('simDose').onclick = async () => {
+  if (!sim.running) {
+    toast($('simMsg'), false, 'Start the simulated device first.');
+    return;
+  }
+  const now = new Date();
+  sim.events.unshift({
+    at: now.toISOString().slice(0, 19),
+    tray: 1,
+    time: String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0'),
+    taken: true, confirmed: true, reason: 'manual', seq: sim.seq,
+    sc1: `SC1*E*1*${String(now.getHours()).padStart(2, '0')}`
+       + `${String(now.getMinutes()).padStart(2, '0')}*T*${String(sim.seq).padStart(2, '0')}`,
+  });
+  sim.seq = (sim.seq + 1) % 100;
+  sim.events = sim.events.slice(0, 25);
+  await simPublishReport('');
+  toast($('simMsg'), true, 'Reported. It appears in the panel opposite.');
+};
+
+/* ── proving this page agrees with the firmware ─────────────────────── */
+
+/*
+ * The two implementations of this crypto share no code — Python in
+ * `snapcare_dispenser/`, JavaScript here — and they have to agree exactly. A
+ * phone and a dispenser deriving different keys from the same printed code is
+ * a pairing that never works, with no error at either end and nothing in any
+ * log to say why.
+ *
+ * The firmware's suite pins these values from the Python side
+ * (`tests/test_envelope.py`), and cannot check this side: there is no browser
+ * in a pytest run. So the check happens here, at load, in the environment that
+ * actually matters. The envelope below was sealed *by Python* and committed;
+ * opening it exercises every place the two could disagree at once — the HKDF
+ * salt and info strings, the AES-GCM mode, the additional authenticated data,
+ * and the base64url flavour on both fields.
+ *
+ * If this ever fails, do not pair. The banner says so.
+ */
+const SELF_TEST = {
+  claim: '6V9F59QK67',
+  deviceId: 'kmPLb2W8Zx1NEc1bdYQgXw',
+  envelope: {
+    v: 1, rev: 7, alg: 'A256GCM',
+    iv: 'j4ys0rZoaGh_zN6q',
+    ct: 'vOBaWbVwZjyPkBSmfc_sDsmmmxguRIK4Rq2A60xGf8gEma34v8BGbT9oM8r8gzOPU0w6z2_GVg',
+  },
+  payload: 'SC1*W*1:0800.2000-127-030',
+};
+
+async function selfTest() {
+  const box = $('selfTest');
+  try {
+    const deviceId = b64url(await hkdf(SELF_TEST.claim, 'device-id', 16));
+    if (deviceId !== SELF_TEST.deviceId) {
+      throw new Error(`derived ${deviceId}, expected ${SELF_TEST.deviceId}`);
+    }
+    const key = await crypto.subtle.importKey(
+      'raw', await hkdf(SELF_TEST.claim, 'box', 32), 'AES-GCM', false, ['decrypt']);
+    const opened = await unseal(key, SELF_TEST.deviceId, 'desired', SELF_TEST.envelope);
+    if (opened.payload !== SELF_TEST.payload) {
+      throw new Error(`opened into ${JSON.stringify(opened)}`);
+    }
+    box.className = 'toast ok';
+    box.textContent = 'Self-check passed — this browser derives the same keys as the '
+      + 'firmware and opened an envelope Python sealed.';
+    setTimeout(() => { box.className = 'toast'; box.textContent = ''; }, 6000);
+    return true;
+  } catch (err) {
+    // Left on screen. Pairing from here would produce a device id nothing
+    // answers on, and the symptom would be a dispenser that appears to have
+    // been unplugged.
+    box.className = 'toast bad';
+    box.textContent = 'Self-check FAILED — this page does not agree with the firmware, '
+      + `so do not pair from it. ${err.message}`;
+    return false;
+  }
+}
+
+/* ── starting up ────────────────────────────────────────────────────── */
+
+buildEditor();
+$('relayHost').textContent = location.host;
+
+(async function () {
+  // The label's QR points at /pair#CODE. A fragment is never sent to the
+  // server, so the code reaches this line and nothing else — not the request
+  // line, not the access log, not a proxy in between.
+  const fromUrl = location.hash ? decodeURIComponent(location.hash.slice(1)) : '';
+  let saved = '';
+  try { saved = localStorage.getItem('snapcare.lab.claim') || ''; } catch (e) { /* ignore */ }
+
+  // Taken out of the address bar once it has been read, whether or not it is
+  // used. Otherwise it sits in the browser history and in whatever gets pasted
+  // into a bug report.
+  if (fromUrl) history.replaceState(null, '', location.pathname);
+
+  // Before pairing, not after. A page that disagrees with the firmware would
+  // otherwise go on to derive a device id nothing answers on, and everything
+  // after that looks exactly like a dispenser that has been unplugged.
+  if (!await selfTest()) return;
+
+  const code = normaliseClaim(fromUrl) || saved;
+  if (code) pair(code);
+})();
+</script>
+</body>
+</html>

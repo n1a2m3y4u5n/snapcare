@@ -6,16 +6,20 @@ to the phone — without a network, an account, or a word of text.
 
 ```
   paper sheet ──photograph──► form_sheet_parser ──┐
-                                                  ├──► SC1 payload ──QR──► dispenser
-  the app ────────────────────────────────────────┘                          │
-                                                                             │
-  phone camera ◄──────────────── QR on a 128x64 OLED ◄───────────────────────┘
+                                                  ├──► SC1 payload ──┐
+  the app ────────────────────────────────────────┘                  │
+      │                                                              │
+      │  cloud relay ── one connection the device holds open ────────┤
+      │                                                              ▼
+      │                                                          dispenser
+      │                                                              │
+  phone camera ◄──────────────── QR on a 128x64 OLED ◄───────────────┘
                                    "dose taken" / "dose missed"
 ```
 
-Two ways in, one way out, and the same protocol on every arrow.
+Three ways in, and the same protocol on every arrow.
 
-## Two paths in, because not everyone has the app
+## Three paths in, because not everyone has the app — or the same WiFi
 
 A caregiver filling trays for someone else may not be the person the app is set
 up for. So the schedule can arrive either from the app or from a **paper form**:
@@ -24,6 +28,17 @@ and the reader turns it into the same payload the app would have sent.
 
 Nothing about that path requires reading — the marks are boxes — and nothing
 about it requires the network.
+
+The third path is for the situation the first two quietly assume away: the
+person managing the prescription is often **not in the house.** The carer is at
+work, the clinic is across town, and a dose time changes on a Tuesday
+afternoon. So the Pi build holds one outbound connection to a small relay
+(`cloud_relay/`), and a schedule edited in the app arrives in about a second
+from anywhere. The relay is a mailbox that cannot read its own post — everything
+crossing it is sealed with a key derived from the code printed on the device —
+and it is an extra way in rather than a dependency: with no relay configured,
+or with the internet down, the dispenser runs the schedule cached on its SD
+card against a battery-backed clock, exactly as before.
 
 ## Layout
 
@@ -42,10 +57,15 @@ pill_dispenser/
     esp32/snapcare_optical_head/   ESP32-CAM: camera in, OLED out
     test/                    `make` — ~24,000 assertions, no board
   rpi_firmware/            the one-board build — see rpi_firmware/README.md
-    snapcare_dispenser/      SC1, scheduler, servos, WiFi, web server
+    snapcare_dispenser/      SC1, scheduler, servos, WiFi, cloud link, web server
     service/                 systemd unit + install.sh
-    tests/                   `make` — 272 tests, no board
+    tests/                   `make` — 359 tests, no board
     ASSEMBLY.md              building the machine, stage by stage
+  cloud_relay/             the mailbox between the app and the device
+    snapcare_relay/          six endpoints, a long poll, and no ability to read
+    snapcare_relay/web/      the demo app — pair, publish, watch, inject faults
+    tests/                   `make` — 63 tests, no container, no account
+    Dockerfile               one layer, nothing to install
 ```
 
 ## Two builds, one protocol
@@ -71,8 +91,25 @@ confidently, which is worse than none — so this build fits a DS3231 as well.
 Three things can vouch for the time: the RTC, NTP, or a `SC1*C*` code from the
 phone. Until one of them does, nothing is dispensed.
 
+The Pi build also has the third path in: `cloud_relay/`, which is what lets a
+schedule change reach a device nobody is standing next to. See
+[`cloud_relay/README.md`](cloud_relay/README.md) for what it can and cannot see,
+and what it costs to run. The two-board build has no network and does not have
+this; its answer to the same problem is the paper form sheet.
+
 [`rpi_firmware/ASSEMBLY.md`](rpi_firmware/ASSEMBLY.md) builds that machine from a
 bare Pi, one subsystem per stage, with the command that proves each one.
+
+### Trying the whole thing without hardware
+
+```bash
+make demo        # a relay and a dispenser on this machine, wired together
+```
+
+Then open `http://localhost:8088/lab`, pair with the code it prints, and edit
+the schedule — the firmware applies it while you watch, with every request and
+its plaintext in the traffic log. The servos are mocked; everything else is the
+real firmware, the real relay and the real protocol.
 
 ## Reading a sheet
 
@@ -266,10 +303,18 @@ python -m form_sheet_parser.cli sheet.jpg --emit weekly \
 ```
 
 A photograph goes through the Python reader and out through the exact C++ that
-runs on the dispenser. Three implementations of SC1 — TypeScript in the app,
-Python here, C++ on the device — share no code, so the common vectors in their
-three test suites are the only thing keeping them speaking the same language.
-A mismatch has no symptom on hardware except a device that stops listening.
+runs on the dispenser. Four implementations of SC1 — TypeScript in the app,
+Python here, Python again in `rpi_firmware/`, and C++ on the device — share no
+code, so the common vectors in their test suites are the only thing keeping them
+speaking the same language. A mismatch has no symptom on hardware except a
+device that stops listening.
+
+The cloud path has the same problem in a second place, and the same answer: the
+crypto behind pairing exists twice, in Python and in the browser's JavaScript.
+The firmware's suite checks its half against RFC 5869's own vectors, and the
+demo app checks the other half in the browser at load, by opening an envelope
+Python sealed. A disagreement there is a pairing that never works, with no error
+at either end — so neither side is left to assume.
 
 And onto real hardware without the app at all:
 

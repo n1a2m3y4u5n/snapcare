@@ -17,6 +17,12 @@
 #   python3-segno    draws the setup QR. Optional — everything works without it
 #                    except the printed label, which falls back to plain text.
 #   rpi-ws281x       drives the LED ring. Optional; without it the device is dark.
+#   python3-cryptography
+#                    AES-GCM for cloud sync — the one thing Python's standard
+#                    library cannot do. Optional: without it the dispenser still
+#                    dispenses and says on its status page that cloud sync
+#                    cannot run. apt rather than pip, because pip builds it from
+#                    source on a Pi 3B and that needs a Rust toolchain.
 #   i2c + smbus2     talks to the DS3231, and reads the one register that says
 #                    whether its battery has ever died.
 #   i2c-rtc overlay  lets the kernel set the clock from the DS3231 at boot,
@@ -63,6 +69,7 @@ apt-get update
 apt-get install -y pigpio avahi-daemon python3 i2c-tools python3-smbus2
 apt-get install -y python3-segno || echo "  (segno unavailable — the label will show text instead of a QR)"
 apt-get install -y python3-rpi-ws281x || echo "  (rpi-ws281x unavailable — the LED ring will be skipped)"
+apt-get install -y python3-cryptography || echo "  (cryptography unavailable — cloud sync will be off; the device still dispenses)"
 
 say "Enabling I2C and the DS3231 real-time clock"
 # This is what removes the Pi's worst weakness. The kernel reads the chip and

@@ -1,0 +1,76 @@
+# The relay as its own fly.io app.
+#
+#     cp fly.toml.example fly.toml
+#     fly launch --no-deploy --copy-config
+#     fly volumes create snapcare_relay_data --size 1
+#     fly deploy
+#
+# Its own app on purpose. The repository root has a fly.toml for the web app,
+# which belongs to somebody else, and folding a second service into it would
+# mean the two share a deploy, a restart and a bad afternoon.
+
+app = "snapcare-relay"
+primary_region = "nrt"          # the same region as the web app
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  SNAPCARE_RELAY_DATA = "/data"
+
+  # Serve the demo app at /lab. Fine for the contest; turn it off for anything
+  # long-lived — it is a debugging tool and it is deliberately generous.
+  SNAPCARE_RELAY_LAB = "1"
+
+  # Under the 60 s that most proxies cut an idle connection at, so the relay
+  # closes its own connections tidily rather than having them cut underneath it.
+  SNAPCARE_RELAY_MAX_HOLD = "50"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+
+  # ── the part that costs money, stated plainly ─────────────────────────────
+  #
+  # A dispenser holding a long poll is, by design, a connection that is always
+  # open. So the machine never goes idle and never stops: one shared-cpu-1x
+  # running continuously, which on fly's pay-as-you-go is a couple of US
+  # dollars a month. That is the whole price of cloud sync, and there is no
+  # arrangement where a device gets a schedule in one second without something
+  # being awake to hand it over.
+  #
+  # If that is not wanted, the cheap mode is on the *device*, not here: set
+  # SNAPCARE_CLOUD_IDLE_S=900 in the firmware and it checks every fifteen
+  # minutes instead of holding a connection. Then set auto_stop_machines to
+  # "stop" and min_machines_running to 0 below, and the machine sleeps between
+  # checks. The cost is that an edit can sit for a quarter of an hour.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    # Connections, not requests: nearly every connection here is a poll being
+    # held open, so this is "how many dispensers and phones at once", and it is
+    # the number that decides when a second machine is needed.
+    type = "connections"
+    hard_limit = 180
+    soft_limit = 150
+
+[[mounts]]
+  source = "snapcare_relay_data"
+  destination = "/data"
+
+[checks.health]
+  type = "http"
+  port = 8080
+  path = "/v1/health"
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "10s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  # The relay holds one parked thread per open poll and a few hundred bytes of
+  # mailbox each. 256 MB is comfortable for the contest; raise it before
+  # raising the connection limits above.
+  memory = "256mb"

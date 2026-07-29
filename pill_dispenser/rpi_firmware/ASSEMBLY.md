@@ -25,6 +25,11 @@ three of the five fail silently — a servo on the wrong pin, a ring that never
 lights, and an RTC with a dead cell all look like a machine sitting there doing
 nothing.
 
+Stages 0 to 8 build the machine. Stage 9 is optional — it connects the finished
+machine to the app over the internet — and stage 10 is the label. If you only
+want a working dispenser, stop after stage 8 and print the label; nothing in
+stages 0 to 8 depends on there being a network beyond the house.
+
 ---
 
 ## Bill of materials
@@ -33,6 +38,7 @@ nothing.
 |---|---|---|
 | 1 | Raspberry Pi 3B | Any Pi with the 40-pin header works; the pin map assumes a 3B |
 | 1 | microSD card, 8 GB+ | Raspberry Pi OS **Bookworm or newer** — the firmware drives WiFi through NetworkManager |
+| — | a relay, if you want cloud sync | Not a part. One container, deployed once for all your devices — see [`../cloud_relay/`](../cloud_relay/). Skip it and the dispenser is LAN-only |
 | 1 | Pi power supply, 5 V 2.5 A | The official one. Servos do **not** come off this |
 | 3 | SG90 micro servo | One per fitted tray. The firmware handles eight |
 | 1 | 5 V supply, 2 A or better | Separate, for the servos and the ring |
@@ -76,8 +82,8 @@ sudo reboot            # the installer will tell you if the I²C overlay needs o
 The installer prints every change before making it and is safe to re-run. It
 installs pigpio and enables `pigpiod`, sets the hostname to `pilldispenser`,
 publishes it over avahi, writes the captive-portal DNS rule, turns on I²C with
-the `i2c-rtc,ds3231` overlay, disables `fake-hwclock`, and installs the systemd
-unit.
+the `i2c-rtc,ds3231` overlay, disables `fake-hwclock`, installs
+`python3-cryptography` for cloud sync, and installs the systemd unit.
 
 **Prove it:**
 
@@ -87,7 +93,8 @@ curl -s http://localhost/api/status
 ```
 
 You should get JSON. It will say the clock is untrusted and that no servo
-hardware is present — both correct, nothing is wired yet.
+hardware is present — both correct, nothing is wired yet. The `cloud` object
+will say `unpaired`, which is also correct: no relay has been named.
 
 Do this stage first because it is the only one that can be done comfortably
 with the Pi on a desk and a keyboard attached. Once the servos are on it, every
@@ -364,18 +371,91 @@ simply waiting out the clock.
 
 ---
 
-## Stage 9 — the label
+## Stage 9 — cloud sync, if you want it
+
+Skip this stage entirely and everything still works: the schedule arrives from
+the app over the home WiFi or off a photographed paper sheet, and the device
+runs it from the SD card against the DS3231. That is the whole machine, and it
+is a reasonable way to ship one.
+
+What this stage adds is that a schedule edited in the app reaches the device
+**without anybody being in the house** — which is the normal case, because the
+person managing a prescription is usually not the person taking it.
+
+You need a relay, which is not a part in the bill of materials: it is one
+container, deployed once, serving every dispenser you build. See
+[`../cloud_relay/README.md`](../cloud_relay/README.md). Then name it here:
+
+```bash
+curl -X POST http://localhost/api/cloud \
+     -H 'Content-Type: application/json' \
+     -d '{"relayUrl":"https://snapcare-relay.fly.dev"}'
+```
+
+or type it into the device's own console, or set `SNAPCARE_RELAY_URL` in the
+systemd unit if you are building more than one.
+
+**Prove it:**
+
+```bash
+curl -s http://localhost/api/status     # the "cloud" object
+```
+
+`state` should reach `connected` within a few seconds, with `lastError` empty
+and `reportedRev` at 1 or more — that last one is the device having published
+its own state, which is what creates its mailbox.
+
+Then prove the direction that matters, from the relay's demo app: open
+`https://<your relay>/lab`, pair with this device's code, and send it a
+schedule. It should appear in `payload` here within a second or two.
+
+**If it does not:**
+
+| `state` | What it means |
+|---|---|
+| `unpaired` | No relay URL. The POST above did not take, or was sent to the wrong host |
+| `unsupported` | `python3-cryptography` is missing. `sudo apt install python3-cryptography` |
+| `retrying` | The relay is not answering. `lastError` says why — usually DNS or a firewall |
+| `offline` | It was reachable and has not been for fifteen minutes |
+| `off` | Switched off — `--no-cloud`, or `SNAPCARE_CLOUD=0` |
+
+The test worth doing here is the one nobody does: **unplug the internet, not the
+device.** Pull the router's WAN cable, leave the dispenser on its LAN, and check
+that a scheduled dose still comes out on time. It must, and the commissioning
+checklist below asks for it — because a build that has just gained a cloud
+feature is exactly when a dependency on it gets introduced by accident, and the
+symptom is a machine that works perfectly in every test anyone runs at a desk.
+
+---
+
+## Stage 10 — the label
 
 The setup code is printed once and never changes. It is derived, not generated:
 HMAC-SHA256 over the SoC serial in `/proc/cpuinfo`, so it survives a reimage and
-differs per board.
+differs per board. The pairing code on it comes from the same derivation, so it
+is permanent in the same way.
 
 ```bash
 sudo python3 -m snapcare_dispenser --show-qr      # scannable, in the terminal
 ```
 
 or print the proper one from `http://pilldispenser.local/label`. Stick it on the
-device. Two QRs: one joins the hotspot, one opens the setup page.
+device. Four codes: one joins the hotspot, one opens the setup page, one is the
+device's address afterwards, and one pairs it with the app.
+
+**The pairing code is a credential.** Anyone who can read it can send this
+device a schedule, in the same way anyone who can read the WiFi password can
+join the hotspot. Put the label where the owner can find it and a visitor
+cannot — inside a battery door, or on the underside.
+
+One caveat, and it is the only part of the label that is not permanent: the
+pairing QR encodes *your relay's address* alongside the code, because that is
+what makes a phone camera able to open it. Move to a different relay and that QR
+points at the old one. The code printed beside it in text still works — it is
+derived from the board, not from the relay — so the fix is to reprint, not to
+re-pair. If you expect to move relays, print the label with no relay configured:
+the QR then carries the code alone, which the app can read and a plain camera
+cannot.
 
 ---
 
@@ -449,9 +529,30 @@ curl -s http://localhost/api/status
 - [ ] Unplug the Pi's network, reboot: the DS3231 still vouches for the time
 - [ ] The printed label's QR joins the hotspot and opens the setup page
 
-The power-cut test is the one worth doing properly. A cut at 08:30 after the
-08:00 dose is exactly the case that dispenses twice without persisted state, and
-it is invisible in a demo.
+And if you did Stage 9:
+
+- [ ] `cloud.state` is `connected`, `lastError` empty
+- [ ] A schedule sent from the app appears in `payload` within a few seconds
+- [ ] A dose given here appears at the app end within a few seconds
+- [ ] **Cut the internet, keep the LAN: a scheduled dose still comes out on time**
+- [ ] Restore it: `state` returns to `connected` on its own, with nothing restarted
+- [ ] The doses given while it was offline arrive at the app afterwards
+- [ ] Send the same schedule revision twice: the second is ignored, not re-applied
+
+Three of these are worth doing properly rather than ticking.
+
+**The power cut.** A cut at 08:30 after the 08:00 dose is exactly the case that
+dispenses twice without persisted state, and it is invisible in a demo.
+
+**The internet cut.** Not the same test as unplugging the network, and it is the
+one that catches a dependency on the relay introduced by accident — which is a
+live risk on any build that has just gained a cloud feature, because everything
+still passes at a desk with working internet.
+
+**The repeated revision.** The relay refuses it, so the only way to see the
+*device's* own check is to test it here. That check is what stands between a
+rolled-back or restored relay and last month's prescription being applied as if
+it were new.
 
 ---
 
@@ -472,14 +573,23 @@ it is invisible in a demo.
 | Clock right at shutdown, wrong at boot | `fake-hwclock` is back, overwriting the RTC. The installer disables it |
 | `pilldispenser.local` does not resolve | avahi, and the hostname. The web app's `DEFAULT_HOST` is that exact string |
 | A schedule is refused by tray number | That tray is not fitted. `INSTALLED_TRAYS`, or `SNAPCARE_TRAYS=8` |
+| Cloud `state: unsupported` | `sudo apt install python3-cryptography`. Everything else still works meanwhile |
+| Cloud `state: retrying`, DNS in `lastError` | The Pi has no working resolver. It joined the WiFi but got no DNS, or the router blocks it |
+| Cloud connects, but no schedule ever arrives | The app is paired to a different code. Compare `cloud.deviceId` here with the one the app shows — they must match exactly |
+| The app shows the device as never seen | Nothing has written to the mailbox. Check `reportedRev` here is 1 or more |
+| A schedule sent from the app is refused | `cloud.lastError` says why, in the same words the LAN API would use. Usually a tray that is not fitted |
+| Cloud fine, but doses take minutes to appear | `SNAPCARE_CLOUD_IDLE_S` is set. That is the cheap mode working as asked |
 
 Nothing here needs the hardware to reproduce the *logic* side of it:
 
 ```bash
-make            # the full suite, no board, under two seconds
+make            # the full suite, no board, no servos, no network
 make run        # the whole firmware on a laptop, mock servos, port 8099
+make -C .. demo # the same, plus a relay and the demo app on localhost:8088
 ```
 
 `make run` is the real firmware with the servo driver swapped for one that
 records what it was told — the API, the scheduler, the web console and the
-persistence all work, and nothing moves.
+persistence all work, and nothing moves. `make demo` adds the other end: a
+relay and a browser page that pairs with it, so the whole cloud path can be
+exercised, including the failure cases, without a Raspberry Pi anywhere.

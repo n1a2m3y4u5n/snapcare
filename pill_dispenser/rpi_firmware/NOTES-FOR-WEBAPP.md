@@ -8,6 +8,15 @@ against it.
 `dispenser.ts` works against the new firmware as-is. Everything below is about
 what you *gain* if you want it.
 
+> **Since 2026-07-29 there is a second, better path: cloud sync.** The
+> dispenser now holds an outbound connection to a relay, so a schedule edited
+> in the app reaches it in about a second — from anywhere, with no mixed-content
+> problem, no `pilldispenser.local`, and no requirement that the phone be in the
+> house. That is [section 7](#7-cloud-sync-the-path-that-does-not-need-the-same-wifi),
+> and it is the one to read if you are choosing where to put new work. Sections
+> 1 to 6 describe the LAN path, which is unchanged and still the fallback when
+> there is no internet.
+
 ---
 
 ## 1. What already works, unchanged
@@ -187,17 +196,148 @@ not for first contact.)
 
 ---
 
-## 6. One thing I did not do
+## 6. The LAN API has no authentication
 
-**There is no authentication.** Anything on the home network can post a schedule
-or drop a tray. That matches the Shaztech firmware and what `dispenser.ts`
-expects, and adding a token would have broken the compatibility the rest of this
-document is about — so it was the wrong call to make unilaterally.
+**Anything on the home network can post a schedule or drop a tray.** That
+matches the Shaztech firmware and what `dispenser.ts` expects, and adding a
+token would have broken the compatibility the rest of this document is about —
+so it was the wrong call to make unilaterally.
 
 It is a real gap for a device that dispenses medication, and it is worth a
-decision rather than a default. If we want it, the cheapest version that does not
-break the app is a device-specific token baked into the same derivation as the
-WiFi identity, printed on the same label, sent as a query parameter — which the
-`/save` link approach can carry as easily as anything else. Happy to build it;
-it needs about half a day and a decision about what happens to a device that is
-already deployed.
+decision rather than a default.
+
+Note that this now also means **`GET /api/identity` serves the cloud pairing
+code to anything on the LAN**, and that code is enough to pair with the device
+(see below). That is deliberate and consistent — `/label` has always served the
+WiFi passphrase the same way, and it is what lets the app pair a device
+automatically when it happens to be on the same WiFi, with nobody reading a
+sticker. But it is the same gap, now with a slightly longer reach: previously
+somebody on your WiFi could change your schedule while they were on it, and now
+they could keep doing so afterwards.
+
+If we close it, the cheapest version that does not break the app is a
+device-specific token from the same derivation, printed on the same label, sent
+as a query parameter — which the `/save` link approach carries as easily as
+anything else. Half a day, plus a decision about devices already deployed.
+
+---
+
+## 7. Cloud sync — the path that does not need the same WiFi
+
+Since 2026-07-29 the dispenser holds one outbound connection to a **relay**
+(`pill_dispenser/cloud_relay/`), so the app can reach it from anywhere. This
+solves the three things sections 1–3 have to work around:
+
+| | LAN path | cloud path |
+|---|---|---|
+| Mixed content | blocks `fetch`; you use a link | not an issue — the relay is HTTPS |
+| Where the phone must be | on the same WiFi | anywhere |
+| Days of the week, course length | only via `/api/schedule`, which you cannot call | carried, always |
+
+The device is still LAN-only until a relay is configured, and everything in
+sections 1–6 keeps working either way.
+
+### What the app does
+
+Three things, once you have the pairing code:
+
+```ts
+// 1. derive — the same three values the device derives, from the printed code
+const salt = new TextEncoder().encode('snapcare/pill-dispenser/cloud/v1');
+async function hkdf(claim: string, info: string, bytes: number) {
+  const ikm = await crypto.subtle.importKey('raw', new TextEncoder().encode(claim),
+                                            'HKDF', false, ['deriveBits']);
+  return new Uint8Array(await crypto.subtle.deriveBits(
+    { name: 'HKDF', hash: 'SHA-256', salt, info: new TextEncoder().encode(info) },
+    ikm, bytes * 8));
+}
+const deviceId = b64url(await hkdf(claim, 'device-id', 16));   // the address
+const token    = b64url(await hkdf(claim, 'access', 32));      // the bearer token
+const boxKey   = await crypto.subtle.importKey('raw',
+  await hkdf(claim, 'box', 32), 'AES-GCM', false, ['encrypt', 'decrypt']);
+
+// 2. seal — AAD binds it to this device, this direction and this revision
+const aad = new TextEncoder().encode(`snapcare/relay/v1|${deviceId}|desired|${rev}`);
+const iv = crypto.getRandomValues(new Uint8Array(12));
+const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: aad },
+  boxKey, new TextEncoder().encode(JSON.stringify({ payload: encodeWeekly(slots) })));
+
+// 3. publish
+await fetch(`${RELAY}/v1/devices/${deviceId}/desired`, {
+  method: 'PUT',
+  headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ envelope: { v: 1, rev, alg: 'A256GCM',
+                                     iv: b64url(iv), ct: b64url(new Uint8Array(ct)) } }),
+});
+```
+
+`claim` is normalised first: upper-cased, with anything outside
+`23456789ABCDEFGHJKMNPQRSTUVWXYZ` discarded, and it must be exactly ten
+characters — **not** padded or truncated to fit. A code with a character missing
+derives a perfectly valid key for a mailbox that does not exist, and the only
+symptom is a dispenser that appears to have been unplugged.
+
+`b64url` is base64url with the padding stripped, on both fields. Python is
+strict about padding where `atob` is not, so getting this wrong fails at the
+device end on about one message in four.
+
+**There is a working reference implementation of all of this**, about four
+hundred readable lines, at `cloud_relay/snapcare_relay/web/lab.html`. It is
+served at `/lab` on any running relay. Copy from it rather than from the sketch
+above.
+
+### Reading what the device says
+
+```ts
+const res = await fetch(
+  `${RELAY}/v1/devices/${deviceId}/reported?since=${rev}&wait=50`,
+  { headers: { 'Authorization': `Bearer ${token}` } });
+```
+
+`204` means nothing new — reconnect. `200` carries an envelope you open with
+`slot = 'reported'`, giving the device's full `/api/status`, its recent dose
+events, and when it last said anything. **Use that timestamp rather than the
+word "connected"**: a dispenser whose power has been pulled sends nothing and
+otherwise looks identical to a healthy one, and "the dispenser has been
+unplugged since Tuesday" is the single most useful thing a carer can be told.
+
+The `wait=50` is a long poll, which is what makes an edit arrive in about a
+second. Treat a dropped connection as normal and reconnect with backoff — it
+happens whenever a phone locks its screen.
+
+### Getting the pairing code
+
+Three ways, in order of how little the person has to do:
+
+1. **Scan the label.** Its fourth QR is `https://<relay>/pair#CODE`. The code is
+   in the **fragment**, which browsers never send to the server — so it reaches
+   the page's JavaScript and neither the relay, its access log, nor any proxy.
+   Keep that property if you build your own pairing page.
+2. **Ask the device**, when the phone is on the same WiFi:
+   `GET http://pilldispenser.local/api/identity` → `{ claim, deviceId, pairQr }`.
+   No typing at all. (Same-origin/mixed-content rules still apply — this is the
+   HTTP device, so it needs the link trick or a local origin.)
+3. **Type it.** Ten characters, `6V9F5-9QK67`, printed on the label. The
+   alphabet has no O, I, L, 0 or 1 in it for exactly this reason.
+
+### What the relay can and cannot see
+
+It stores ciphertext, revisions, sizes and timestamps. It is given the device id
+and the access token — different HKDF branches — and never the box key, so it
+cannot read a schedule or a dose log. This is the same posture as
+`/api/store`: **the server is not trusted with health data.**
+
+Storing the claim code on the phone is therefore the same decision you already
+made for the device key in `deviceKey.ts`, and it deserves the same care. The
+lab puts it in `localStorage`, which is right for a debugging tool on a laptop
+and probably not what the production app should do — it is a credential that
+grants schedule-writing access to a medical device, and unlike an ECDSA key in
+IndexedDB it is extractable by anything that can run script on your origin.
+
+### One thing to get right
+
+**Revisions must increase, and you do not own the counter.** Read the current
+one from `GET /v1/devices/<id>` before writing, and handle `409` by re-reading
+rather than retrying blind. Two phones editing the same prescription is the
+case this exists for; the loser is holding a stale copy and should be shown the
+newer one, not allowed to overwrite it.

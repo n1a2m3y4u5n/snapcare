@@ -279,6 +279,90 @@ WIFI_JOIN_TIMEOUT_S = 45
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  CLOUD SYNC
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# The device holds one outbound connection to a relay so that a schedule edited
+# in the web app arrives without anybody being on the same WiFi. Outbound and
+# HTTPS on purpose: a home router will not forward a port to a dispenser, and
+# should not be asked to.
+#
+# Everything here is optional. With no relay configured the firmware behaves
+# exactly as it did before — the schedule arrives over the LAN or off a paper
+# sheet, and the local cache and the DS3231 keep the alarms running. Cloud sync
+# is an extra way *in*, never a dependency: a relay that is down, unreachable
+# or never configured must not cost anybody a dose.
+
+#: Base URL of the relay, e.g. https://snapcare-relay.fly.dev. Empty is off.
+CLOUD_RELAY_URL = os.environ.get("SNAPCARE_RELAY_URL", "").strip().rstrip("/")
+
+#: Master switch, separate from the URL so a device can be taken off the cloud
+#: for a demo without losing the address it goes back to.
+CLOUD_ENABLED = os.environ.get("SNAPCARE_CLOUD", "1").strip().lower() not in (
+    "0", "false", "no", "off",
+)
+
+#: How long the relay holds a poll open before answering "nothing new".
+#:
+#: This is the whole responsiveness/cost trade-off in one number, and it is
+#: worth being honest about which way it cuts. At 50 s the device is
+#: effectively always connected and an edit in the app reaches it in about a
+#: second — and the relay is therefore never idle, which on a host that stops
+#: idle machines means it never stops. Raise CLOUD_IDLE_POLL_S instead if the
+#: bill matters more than the latency.
+#:
+#: The ceiling is not ours: proxies and load balancers cut idle connections,
+#: commonly at 60 s. Answering at 50 leaves the relay closing its own
+#: connections tidily rather than having them cut underneath it, which is the
+#: difference between a clean reconnect and a stack trace every minute.
+CLOUD_HOLD_S = int(os.environ.get("SNAPCARE_CLOUD_HOLD_S", "50"))
+
+#: Seconds to wait between polls once the device decides nothing is happening.
+#:
+#: Zero — the default — means "reconnect immediately", which is what makes sync
+#: feel instant. Set it to 900 and the device checks every fifteen minutes
+#: instead: the relay is then idle almost all the time and a machine that stops
+#: when idle actually gets to stop. The cost is exactly what it looks like — an
+#: edit made in the app can sit for fifteen minutes before the device hears it.
+CLOUD_IDLE_POLL_S = int(os.environ.get("SNAPCARE_CLOUD_IDLE_S", "0"))
+
+#: Backoff after a failed poll: first wait, ceiling, and the multiplier.
+#:
+#: A relay that is down is the normal case during a deploy, and every dispenser
+#: in the world reconnecting on the same second afterwards is a thundering herd
+#: that keeps it down. The jitter below is what spreads them out.
+CLOUD_BACKOFF_MIN_S = 5
+CLOUD_BACKOFF_MAX_S = 300
+CLOUD_BACKOFF_FACTOR = 2.0
+
+#: How much of the wait to randomise, 0..1. At 0.5 a computed 60 s wait becomes
+#: a random 30-90 s.
+CLOUD_BACKOFF_JITTER = 0.5
+
+#: How often the device republishes its state even when nothing has changed.
+#:
+#: This is what makes the app able to say "last heard from, four minutes ago"
+#: rather than "connected" forever. A device whose power has been pulled sends
+#: nothing and looks identical to a healthy one otherwise — and "the dispenser
+#: has been unplugged since Tuesday" is the single most useful thing a carer
+#: can be told.
+CLOUD_HEARTBEAT_S = 300
+
+#: Seconds without a successful exchange before the status page calls the cloud
+#: link down. Comfortably more than one heartbeat plus one backoff, so a single
+#: missed poll is not reported as an outage.
+CLOUD_STALE_S = 900
+
+#: Largest response the device will read from the relay.
+#:
+#: The device trusts the relay to be a mailbox, not to be well-behaved. Without
+#: a ceiling a compromised or simply broken relay could hand a Pi 3B a body
+#: large enough to exhaust its memory, and a dispenser that has been OOM-killed
+#: does not dispense. A schedule is a few hundred bytes.
+CLOUD_MAX_BODY = 256 * 1024
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  STORAGE
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -291,6 +375,11 @@ SCHEDULE_FILE = STATE_DIR / "schedule.json"
 SCHEDULER_STATE_FILE = STATE_DIR / "scheduler.json"
 EVENT_LOG_FILE = STATE_DIR / "events.jsonl"
 IDENTITY_FILE = STATE_DIR / "identity.json"
+
+#: The cloud client's memory: the last revision applied, and when the relay was
+#: last reached. Its job is to stop a schedule being applied twice, and to stop
+#: an *older* one being replayed over a newer one after a reboot.
+CLOUD_STATE_FILE = STATE_DIR / "cloud.json"
 
 #: Events kept in the log. One dose is one line; eight trays three times a day
 #: is 24 a day, so this is about four months of history in a file small enough

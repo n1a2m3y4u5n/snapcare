@@ -36,6 +36,29 @@
   </div>
 
   <div class="card">
+    <h2>Cloud sync <span id="cloudState" class="pill">…</span></h2>
+    <p class="small muted">
+      With a relay set, a schedule edited in the app arrives here by itself —
+      the phone does not have to be on this WiFi. Without one the device is
+      LAN-only, which is what it was before, and everything else still works.
+    </p>
+    <dl class="facts">
+      <dt>Relay</dt><dd id="cloudRelay">…</dd>
+      <dt>Device ID</dt><dd id="cloudId" class="small"><code>—</code></dd>
+      <dt>Last contact</dt><dd id="cloudSeen">…</dd>
+      <dt>Schedule revision</dt><dd id="cloudRev" class="small">…</dd>
+    </dl>
+    <div id="cloudErr"></div>
+    <div class="row" style="margin-top:.9rem">
+      <input id="relayUrl" placeholder="https://snapcare-relay.fly.dev"
+             autocapitalize="off" autocorrect="off" spellcheck="false">
+      <button class="fit" id="saveRelay" type="button">Use this relay</button>
+      <button class="ghost fit" id="clearRelay" type="button">Go LAN-only</button>
+    </div>
+    <div class="toast" id="cloudMsg"></div>
+  </div>
+
+  <div class="card">
     <h2>Drop a tray now</h2>
     <p class="small muted">
       Bench check. A manual drop does not touch the schedule — the tray's next
@@ -169,6 +192,8 @@ async function refresh() {
     $('notes').append(p);
   }
 
+  showCloud(data.cloud);
+
   if (!TRAYS.length) { TRAYS = d.trays; buildTrays(); buildEditor(); loadInto(d.slots); }
 
   const waiting = d.awaitingConfirmation;
@@ -178,6 +203,66 @@ async function refresh() {
 }
 
 const hhmm = (t) => `${t.slice(0, 2)}:${t.slice(2)}`;
+
+/* ── cloud sync ─────────────────────────────────────────────────────── */
+
+// Each state gets a sentence rather than a word. "offline" on its own sends
+// somebody to look at the WiFi when the actual answer may be that no relay was
+// ever configured, or that a Python package is missing.
+const CLOUD_STATES = {
+  off:         ['',     'switched off on this device'],
+  unpaired:    ['warn', 'no relay set — this dispenser is LAN-only'],
+  unsupported: ['bad',  'cannot run here'],
+  connecting:  ['warn', 'connecting…'],
+  connected:   ['ok',   'connected'],
+  retrying:    ['warn', 'retrying'],
+  offline:     ['bad',  'not reached recently'],
+};
+
+let relayEdited = false;
+$('relayUrl').oninput = () => { relayEdited = true; };
+
+function showCloud(c) {
+  if (!c) return;
+  const [tone, label] = CLOUD_STATES[c.state] || ['', c.state];
+  $('cloudState').className = 'pill ' + tone;
+  $('cloudState').textContent = label;
+
+  $('cloudRelay').textContent = c.relayUrl || 'none';
+  $('cloudId').innerHTML = '<code></code>';
+  $('cloudId').firstChild.textContent = c.deviceId || '—';
+  $('cloudSeen').textContent = c.lastContactSecondsAgo == null
+    ? 'never' : `${c.lastContactSecondsAgo} s ago`;
+  $('cloudRev').textContent = `applied ${c.desiredRev || 0}`
+    + (c.appliedAt ? ` at ${c.appliedAt}` : '')
+    + ` · reported ${c.reportedRev || 0}`;
+
+  $('cloudErr').innerHTML = '';
+  const detail = c.hint || c.lastError;
+  if (detail) {
+    const p = document.createElement('p');
+    p.className = 'small ' + (c.hint ? 'bad' : 'warn');
+    p.textContent = detail;
+    $('cloudErr').append(p);
+  }
+
+  // Only while nobody is typing in it. Refresh runs on a timer, and a field
+  // that rewrites itself under the cursor is unusable — which is exactly what
+  // happened the first time this was wired straight to the poll.
+  if (!relayEdited) $('relayUrl').value = c.relayUrl || '';
+}
+
+async function setRelay(url) {
+  const data = await post('/api/cloud', { relayUrl: url, enabled: url !== '' });
+  relayEdited = false;
+  toast($('cloudMsg'), data.ok, data.ok
+    ? (url ? `Now syncing through ${url}.` : 'Cloud sync off — the device is LAN-only.')
+    : data.error);
+  if (data.ok) showCloud(data.cloud);
+}
+
+$('saveRelay').onclick = () => setRelay($('relayUrl').value.trim());
+$('clearRelay').onclick = () => setRelay('');
 
 $('setClock').onclick = async () => {
   // The device may have no internet and therefore no NTP. The browser reading

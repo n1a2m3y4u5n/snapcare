@@ -13,9 +13,11 @@ tested without hardware:
     clock.py         whether the time can be believed at all
     wifi.py          nmcli
     provisioning.py  the identity behind the QR that never changes
+    cloud.py         the connection held open to the relay, and its retries
+    envelope.py      what crosses that connection, sealed so the relay cannot read it
     server.py        the JSON API, the app-compatible API, and the pages
     daemon.py        the process
     config.py        the pin map and every other knob
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

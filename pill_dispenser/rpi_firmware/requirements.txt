@@ -3,7 +3,7 @@
 #
 # On a Pi, prefer apt over pip — `service/install.sh` does this for you:
 #
-#     sudo apt install pigpio python3-segno avahi-daemon \
+#     sudo apt install pigpio python3-segno avahi-daemon python3-cryptography \
 #                      python3-rpi-ws281x python3-smbus2 i2c-tools
 #
 # pigpio also needs its daemon running, which is the part people miss:
@@ -28,6 +28,20 @@ rpi-ws281x>=5.0 ; platform_machine == "armv7l" or platform_machine == "aarch64"
 # can be believed at all. Without it the RTC is reported as present but
 # unverified, and the firmware falls back to NTP or the phone.
 smbus2>=0.4
+
+# AES-256-GCM for cloud sync. This is the one thing the firmware cannot do with
+# the standard library — Python ships no AES — and it is the only reason the
+# device needs a package at all.
+#
+# Without it the dispenser still dispenses: the schedule is on the SD card and
+# the DS3231 knows the time. Cloud sync is reported as unavailable at startup
+# and on the status page, exactly like a missing LED ring, rather than being a
+# silent absence somebody discovers by wondering why nothing syncs.
+#
+# `apt install python3-cryptography` on a Pi. Do not pip-install it there
+# unless you have to — it wants a Rust toolchain to build from source, and on a
+# Pi 3B that is a long afternoon.
+cryptography>=41.0
 
 # Only for the test suite.
 pytest>=7.0

@@ -18,6 +18,24 @@ Environment=PYTHONPATH=/opt/snapcare
 Environment=PYTHONUNBUFFERED=1
 Environment=SNAPCARE_STATE_DIR=/var/lib/snapcare
 
+# Cloud sync. Empty means the dispenser is LAN-only, which is the default and a
+# perfectly good way to run it — a schedule then arrives from the app over the
+# home WiFi or off a photographed paper sheet.
+#
+# Set this to a relay and the device holds a connection open to it, so a
+# schedule edited in the app reaches it in about a second from anywhere. It can
+# also be set at runtime from the device's own console, which persists it — so
+# this line is the fleet default, not the only way in.
+#
+#   Environment=SNAPCARE_RELAY_URL=https://snapcare-relay.fly.dev
+#
+# And the cost knob. 0 holds a connection open and an edit arrives at once,
+# which means the relay is never idle. 900 checks every fifteen minutes
+# instead, letting a relay on a host that stops idle machines actually stop.
+#
+#   Environment=SNAPCARE_CLOUD_IDLE_S=900
+Environment=SNAPCARE_RELAY_URL=
+
 # Root, because this process drives NetworkManager, writes the captive-portal
 # DNS rule, sets the system clock and binds port 80. Each of those could be
 # granted separately — a polkit rule, a capability, a group — and every one of

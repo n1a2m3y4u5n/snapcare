@@ -1,18 +1,28 @@
 # Dispenser firmware — Raspberry Pi 3B
 
-One scan to get on the WiFi, a light and a chirp when a dose is due, and a
-schedule that survives a power cut.
+One scan to get on the WiFi, one to pair it with the app, a light and a chirp
+when a dose is due, and a schedule that survives both a power cut and the
+internet going away.
 
 ```
-   phone / any browser                                  the person
+   the web app, anywhere                                the person
         │                                                    ▲
-        │  http://pilldispenser.local            green ring  │  chirp
+        │  https                                 green ring  │  chirp
         ▼                                        ▲           │  every 20s
+   ┌─────────────┐   one outbound connection,    │           │
+   │ cloud relay │◄───── held open ──────┐       │           │
+   └─────────────┘                       │       │           │
+                                         │       │           │
+   phone on the same WiFi                │       │           │
+        │  http://pilldispenser.local    │       │           │
+        ▼                                ▼       │           │
    ┌─────────────────────────────────────────────┼───────────┼──────┐
    │  Raspberry Pi 3B                            │           │      │
    │    onboard WiFi ── setup hotspot + captive portal       │      │
    │    web server ──── native JSON API + the app's own URLs │      │
+   │    cloud link ──── sealed; the relay cannot read it     │      │
    │    scheduler ───── SC1, day masks, course lengths       │      │
+   │    store ───────── the schedule, cached on the card     │      │
    │    DS3231 ──────── knows the time after a power cut     │      │
    │    pigpio ──────── GPIO 17 27 22   ring 18   buzzer 23  │      │
    └───────────────────────┬─────────────────────────────────┴──────┘
@@ -20,6 +30,10 @@ schedule that survives a power cut.
                            ▼
                     three servos, one sweep each
 ```
+
+The cloud link is an extra way *in*, never a dependency. The schedule is on the
+SD card and the DS3231 knows the time, so a relay that is down, unreachable or
+never configured costs nobody a dose.
 
 The contest unit is built with **three trays**; the firmware handles eight and
 the pin map already lists them.
@@ -31,7 +45,7 @@ firmware without anything in between being rewritten.
 
 ---
 
-## The two things it had to do
+## The three things it had to do
 
 ### 1. Get onto the WiFi with one scan
 
@@ -42,7 +56,8 @@ whole design falls out of.
  ┌─ printed on the device ────────────┐
  │  [QR]  join   SnapCare-V5XH        │   1. camera → joins the hotspot
  │  [QR]  open   http://10.42.0.1/    │   2. the setup page opens by itself
- └────────────────────────────────────┘   3. tap your network, type its password
+ │  [QR]  pair   6V9F5-9QK67          │   3. tap your network, type its password
+ └────────────────────────────────────┘   4. scan the third code, once, from anywhere
 ```
 
 Nobody types an SSID, an IP address or a URL. Nobody installs an app — iOS
@@ -138,6 +153,71 @@ mechanically.
 Only one servo is ever driven at a time. A stalled SG90 pulls about 700 mA, and
 eight starting together is not a blown regulator — it is a brown-out that reboots
 the Pi *while a compartment is open*.
+
+### 3. Keep the schedule in step without anyone being in the house
+
+The first two are enough for a device sitting next to the person who manages
+it. They are not enough for the actual situation: the carer is at work, the
+clinic is across town, and a prescription changes on a Tuesday afternoon.
+
+So the device holds one **outbound** connection to a relay
+([`../cloud_relay/`](../cloud_relay/)) and a schedule edited in the app is
+waiting on the other end of it. Outbound because a home router will not forward
+a port to a dispenser and should not be asked to.
+
+```
+   app ──PUT sealed schedule──►  relay  ◄──GET, held open 50 s── dispenser
+                                        ──answered the instant it lands──►
+```
+
+**The relay cannot read any of it.** Everything crossing it is AES-256-GCM under
+a key both ends derive from the printed pairing code and neither transmits. The
+relay is given a different branch of the same derivation — enough to tell one
+mailbox from another, useless for opening one:
+
+```
+ claim code ──HKDF──► device id      the relay's address for it   (it sees this)
+            ──HKDF──► access token   proves the right to it       (it sees this)
+            ──HKDF──► box key        opens the schedule           (it never does)
+```
+
+The code itself is derived exactly like the WiFi credentials — HMAC over the
+SoC serial — so it is printable on the same label that gets glued on once, and
+survives a reimage.
+
+**Nothing about this is allowed to reach the trays.** The cloud link runs on its
+own threads, catches everything, and applies a schedule through the same method
+the LAN API calls. Pull the network out and the device keeps its schedule, keeps
+its clock, and keeps dispensing; that is what `store.py` and the DS3231 were for
+in the first place, and cloud sync is not permitted to quietly become the thing
+they were protecting against.
+
+Off by default. With no relay configured the firmware behaves exactly as it did
+before:
+
+```bash
+python3 -m snapcare_dispenser --relay-url https://snapcare-relay.fly.dev
+SNAPCARE_RELAY_URL=https://snapcare-relay.fly.dev python3 -m snapcare_dispenser
+curl -X POST http://pilldispenser.local/api/cloud -d '{"relayUrl":"https://…"}'
+```
+
+Two knobs decide how responsive it is, and they are the same trade-off seen
+from either end:
+
+```python
+CLOUD_HOLD_S      = 50   # how long the relay holds a poll open
+CLOUD_IDLE_POLL_S = 0    # 0 = reconnect at once; 900 = check every 15 minutes
+```
+
+At the default an edit arrives in about a second and the relay is never idle,
+which on a host that stops idle machines means it never stops — a couple of US
+dollars a month. Set `SNAPCARE_CLOUD_IDLE_S=900` and the machine gets to sleep,
+at the cost of an edit sitting for up to a quarter of an hour.
+
+This is the one part of the firmware that needs a package: Python has no AES.
+If `python3-cryptography` is missing, cloud sync is reported as unavailable at
+startup and on the status page, and **the dispenser goes on dispensing** —
+handled exactly like a missing LED ring.
 
 ---
 
@@ -360,7 +440,8 @@ curl -X POST http://pilldispenser.local/api/clock -d '{"iso":"2026-07-29T09:15:0
 | `POST /api/clock` | `{"payload": "SC1*C*..."}` or `{"iso": "..."}` |
 | `GET /api/events` | the dose log, each line carrying its `SC1*E*` form |
 | `GET /api/wifi/scan` · `POST /api/wifi/connect` | provisioning |
-| `GET /api/identity` | SSID, passphrase, the QR payloads |
+| `GET /api/identity` | SSID, passphrase, pairing code, the QR payloads |
+| `GET`/`POST /api/cloud` | the relay link: state, revisions, last contact |
 
 ### App-compatible — `/save`, `/dropout`, `/dismiss`
 
@@ -387,9 +468,10 @@ one screen that matters.
 ## Testing it without a Pi
 
 ```bash
-make            # 272 tests, no board, no servos, no network, under two seconds
+make            # 359 tests, no board, no servos, no network
 make run        # the whole firmware on a laptop, mock servos, port 8099
-make label      # this machine's setup QR, in the terminal
+make label      # this machine's setup QR and pairing code, in the terminal
+make cloud      # the same, wired to a relay on this machine — see ../cloud_relay
 ```
 
 `make run` is the real firmware with the servo driver swapped for one that
@@ -426,6 +508,19 @@ as failure.
 the alphabet would leave the derivation perfectly deterministic and perfectly
 different — every device already in the world would stop matching its label,
 and nothing else in the suite would notice.
+
+**The cloud link**, whose failures are all of the invisible kind: a schedule
+applied twice after a power cut, an older one replayed over a newer one, a
+relay that is down reaching the trays, a poll that spins because the answer
+came back instantly, and a report that carries the pairing code up to a server
+that must never see it.
+
+**The crypto, against RFC 5869's own test vectors and a golden envelope.** There
+are two implementations of it sharing no code — this one and the JavaScript the
+app side uses — and a disagreement between them is a pairing that simply never
+works, with no error at either end. The vectors establish that this side is the
+standard construction WebCrypto implements; the demo app checks the other
+direction in the browser, at load, by opening an envelope Python sealed.
 
 ---
 
@@ -465,7 +560,9 @@ rpi_firmware/
     store.py          what survives a power cut, and how
     clock.py          whether the time can be believed at all
     wifi.py           nmcli
-    provisioning.py   the identity behind the permanent QR
+    provisioning.py   the identity behind the permanent QR, and the three keys
+    cloud.py          the connection held open to the relay, and its retries
+    envelope.py       what crosses it, sealed so the relay cannot read it
     qr.py             segno, or OpenCV, or an honest apology
     server.py         both APIs, the captive portal, the pages
     daemon.py         the process
@@ -474,7 +571,7 @@ rpi_firmware/
     rtc.py            the DS3231, and the one bit that says whether to believe it
     web/              four pages, no build step, nothing external
   service/            systemd unit + install.sh
-  tests/              272 tests, none of which need hardware
+  tests/              359 tests; only the end-to-end one opens a socket
 ```
 
 `NOTES-FOR-WEBAPP.md` is for whoever is building the production web app.

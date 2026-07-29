@@ -119,7 +119,8 @@ def test_the_label_page_carries_the_permanent_credentials(http):
     assert status == 200
     assert "SnapCare-V5XH" in body
     assert "3k8krnp8pv8s" in body
-    assert body.count("<svg") == 3   # join, setup, device
+    assert "6V9F5-9QK67" in body                # the pairing code
+    assert body.count("<svg") == 4   # join, setup, device, pair
 
 
 def test_the_qr_endpoints_return_svg(http):

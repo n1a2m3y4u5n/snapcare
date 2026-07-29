@@ -1,0 +1,253 @@
+/* The relay's demo app.
+ *
+ * A copy of the dispenser's own stylesheet, plus the few rules the traffic log
+ * needs. Copied rather than shared on purpose: the relay and the firmware are
+ * deployed separately — one to a container, one to an SD card — and a relay
+ * that imports from the firmware package is a relay that cannot be built
+ * without it. The two looking identical is worth one duplicated file.
+ *
+ * Nothing is loaded from anywhere else. No CDN, no web font, no icon set.
+ */
+
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --ink: #14161a;
+  --muted: #5c6470;
+  --line: #dfe3e8;
+  --accent: #1d63d1;
+  --ok: #12784a;
+  --warn: #8a5300;
+  --bad: #b3261e;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161a;
+    --card: #1d2026;
+    --ink: #eef0f3;
+    --muted: #9aa3b0;
+    --line: #2e333c;
+    --accent: #6aa1ff;
+    --ok: #4cc38a;
+    --warn: #e0a33a;
+    --bad: #ff6b60;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 1.25rem;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+main { max-width: 44rem; margin: 0 auto; }
+
+h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.05rem; margin: 0 0 .75rem; letter-spacing: .01em; }
+p { margin: 0 0 .75rem; }
+
+.sub { color: var(--muted); margin-bottom: 1.5rem; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+/* Buttons are large because a nurse taps them at a bench, sometimes wearing
+ * gloves, and because the same page is used on a phone held in one hand. */
+button, .btn {
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: 0;
+  border-radius: 10px;
+  padding: .7rem 1.1rem;
+  min-height: 2.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+}
+button:disabled { opacity: .45; cursor: default; }
+button.ghost {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--line);
+}
+button.quiet { background: var(--muted); }
+
+input, select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .6rem .7rem;
+  min-height: 2.9rem;
+  width: 100%;
+}
+
+label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .3rem; }
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .88em;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: .1em .35em;
+  word-break: break-all;
+}
+
+.row { display: flex; gap: .6rem; flex-wrap: wrap; align-items: flex-end; }
+.row > * { flex: 1 1 10rem; }
+.row > .fit { flex: 0 0 auto; }
+
+.pill {
+  display: inline-block;
+  font-size: .78rem;
+  font-weight: 600;
+  padding: .18rem .55rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.pill.ok { color: var(--ok); }
+.pill.warn { color: var(--warn); }
+.pill.bad { color: var(--bad); }
+
+.warn { color: var(--warn); }
+.bad { color: var(--bad); }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: .35rem .9rem; margin: 0; }
+dl.facts dt { color: var(--muted); font-size: .85rem; }
+dl.facts dd { margin: 0; font-size: .9rem; word-break: break-word; }
+
+/* Wide content gets its own scroller. The page body must never scroll
+ * sideways — on a phone that makes every vertical swipe feel broken. */
+.scroll-x { overflow-x: auto; }
+
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: .8rem; }
+
+.trays { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: .6rem; }
+
+.net { display: flex; width: 100%; align-items: center; gap: .7rem; text-align: left;
+       background: transparent; color: var(--ink); border: 1px solid var(--line);
+       margin-bottom: .4rem; }
+.net .name { flex: 1; font-weight: 600; }
+.net .meta { color: var(--muted); font-size: .8rem; font-weight: 400; }
+
+.qr { background: #fff; padding: .6rem; border-radius: 8px; display: inline-block; line-height: 0; }
+.qr svg { width: 100%; height: auto; max-width: 15rem; }
+
+.toast {
+  margin-top: .8rem; padding: .7rem .9rem; border-radius: 8px;
+  border: 1px solid var(--line); font-size: .9rem;
+}
+.toast.ok { border-color: var(--ok); color: var(--ok); }
+.toast.bad { border-color: var(--bad); color: var(--bad); }
+.toast:empty { display: none; }
+
+.days { display: flex; gap: .25rem; flex-wrap: wrap; }
+.days label {
+  margin: 0; cursor: pointer; user-select: none;
+  border: 1px solid var(--line); border-radius: 7px;
+  padding: .35rem .5rem; font-size: .8rem; color: var(--ink);
+  display: flex; align-items: center; gap: .25rem;
+}
+.days input { width: auto; min-height: 0; }
+
+@media print {
+  body { background: #fff; color: #000; padding: 0; }
+  .card { border-color: #000; break-inside: avoid; }
+  .noprint { display: none !important; }
+}
+
+/* ── the lab ──────────────────────────────────────────────────────────────
+ *
+ * Wider than the device's own pages: this one is read on a laptop next to a
+ * dispenser, and its whole purpose is showing two columns of traffic at once.
+ */
+
+main.wide { max-width: 68rem; }
+
+textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .85rem;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: .6rem .7rem;
+  width: 100%;
+  resize: vertical;
+}
+
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+@media (max-width: 52rem) { .cols { grid-template-columns: 1fr; } }
+
+/* The log is the point of the page, so it gets height and its own scroll —
+ * a log that grows the page pushes the controls off the screen exactly when
+ * you are trying to press them again. */
+.log {
+  max-height: 26rem;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .78rem;
+  line-height: 1.5;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.log:empty::after {
+  content: "nothing yet";
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+  display: block;
+  padding: .8rem;
+}
+
+.entry { border-bottom: 1px solid var(--line); padding: .45rem .6rem; }
+.entry:last-child { border-bottom: 0; }
+.entry .head { display: flex; gap: .5rem; flex-wrap: wrap; align-items: baseline; }
+.entry .verb { font-weight: 700; }
+.entry .ms { color: var(--muted); margin-left: auto; }
+.entry pre {
+  margin: .35rem 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--muted);
+}
+.entry.in  { border-left: 3px solid var(--ok); }
+.entry.out { border-left: 3px solid var(--accent); }
+.entry.err { border-left: 3px solid var(--bad); }
+.entry.err .verb { color: var(--bad); }
+
+.dot {
+  display: inline-block; width: .6rem; height: .6rem;
+  border-radius: 999px; background: var(--muted); margin-right: .35rem;
+  vertical-align: middle;
+}
+.dot.ok { background: var(--ok); }
+.dot.bad { background: var(--bad); }
+.dot.warn { background: var(--warn); }
+
+.stat { display: flex; gap: 1.2rem; flex-wrap: wrap; margin: 0 0 .6rem; }
+.stat div { font-size: .85rem; color: var(--muted); }
+.stat b { display: block; font-size: 1.15rem; color: var(--ink); font-weight: 700; }

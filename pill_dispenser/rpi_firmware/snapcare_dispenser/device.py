@@ -43,11 +43,20 @@ log = logging.getLogger(__name__)
 class Dispenser:
     def __init__(self, store: Store | None = None, servos: TrayServos | None = None,
                  clock: Clock | None = None, indicator: Indicator | None = None,
-                 grace_minutes: int | None = None):
+                 grace_minutes: int | None = None, on_event=None):
         self.store = store or Store()
         self.servos = servos or TrayServos()
         self.clock = clock or Clock()
         self.indicator = indicator or LogIndicator()
+        #: Called with every recorded dose, whatever caused it.
+        #:
+        #: The cloud link hangs off this rather than off the callers, because
+        #: there are five ways a dose gets recorded — the scheduler, the button,
+        #: the web console, the app's `/dropout` link, a confirmation timing
+        #: out — and hanging it off each of them means the day somebody adds a
+        #: sixth, that one is silently not reported. This is the one place they
+        #: all pass through.
+        self.on_event = on_event
         self.scheduler = Scheduler(
             grace_minutes if grace_minutes is not None else config.GRACE_MINUTES
         )
@@ -287,6 +296,15 @@ class Dispenser:
             "sc1": sc1.encode_event(event) or "",
         }
         self.store.append_event(record)
+        if self.on_event:
+            try:
+                self.on_event(record)
+            except Exception:  # noqa: BLE001
+                # A listener is a nice-to-have. This runs while a tray is open
+                # and holding the lock, so anything it raises must stop here —
+                # a broken notifier is not allowed to become a dose that was
+                # dispensed and never written down.
+                log.exception("an event listener failed; the dose is recorded regardless")
         return record
 
     def _save_state(self) -> None:

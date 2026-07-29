@@ -64,6 +64,29 @@
     </div>
   </div>
 
+  <div class="card">
+    <h2>4 · Pair it with the app</h2>
+    <div class="row">
+      <div class="fit qr">{{pair_qr}}</div>
+      <div>
+        <dl class="facts">
+          <dt>Pairing code</dt><dd><code>{{claim}}</code></dd>
+        </dl>
+        <p class="small muted" style="margin-top:.7rem">
+          Do this once, from anywhere. Afterwards a schedule changed in the app
+          reaches the dispenser by itself, over the internet — the phone does
+          not have to be in the house or on the same WiFi again.
+        </p>
+        <p class="small muted">{{pair_note}}</p>
+      </div>
+    </div>
+    <p class="small warn" style="margin-top:.7rem">
+      This code is what proves a dispenser is yours, and it is enough on its own
+      — treat it like the WiFi password above. Anyone who can read it can send
+      this device a schedule.
+    </p>
+  </div>
+
   <p class="small muted noprint">
     Identity derived from: <code>{{identity_source}}</code>.
     A source of <code>fallback</code> means this machine has no Raspberry Pi

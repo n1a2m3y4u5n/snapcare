@@ -39,7 +39,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from . import config, provisioning, qr, sc1, wifi
+from . import config, envelope, provisioning, qr, sc1, wifi
 from .device import Dispenser
 
 log = logging.getLogger(__name__)
@@ -65,10 +65,24 @@ MAX_BODY = 64 * 1024
 class Router:
     """Everything the handler needs, so the handler stays a thin adapter."""
 
-    def __init__(self, dispenser: Dispenser, identity: provisioning.Identity | None = None):
+    def __init__(self, dispenser: Dispenser, identity: provisioning.Identity | None = None,
+                 cloud=None):
         self.dispenser = dispenser
         self.identity = identity or provisioning.load_identity(dispenser.store)
+        self.cloud = cloud
         self._pages: dict[str, str] = {}
+
+    def cloud_status(self) -> dict:
+        """What the cloud link is doing, or a stand-in when there is none.
+
+        A `None` here is a firmware started without one — `make run` does it,
+        and so does anything constructing a server directly. Reporting a shape
+        the caller can read either way keeps the branch out of the page.
+        """
+        if self.cloud is None:
+            return {"enabled": False, "configured": False, "state": "off",
+                    "relayUrl": "", "deviceId": "", "supported": envelope.available()}
+        return self.cloud.status()
 
     def page(self, name: str, **values: str) -> str:
         """Load a page from `web/`, substituting `{{name}}` placeholders."""
@@ -226,6 +240,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/setup":
             state = wifi.status()
+            cloud = router.cloud_status()
             self._html(router.page(
                 "setup.html",
                 ssid=_escape(router.identity.ssid),
@@ -234,10 +249,16 @@ class Handler(BaseHTTPRequestHandler):
                 current=_escape(state.ssid or ""),
                 device_url=provisioning.device_url(),
                 setup_url=provisioning.setup_url(),
+                claim=_escape(router.identity.claim),
+                cloud_state=_escape(cloud.get("state", "off")),
+                relay_url=_escape(cloud.get("relayUrl", "")),
             ))
             return
 
         if path == "/label":
+            cloud = router.cloud_status()
+            relay = cloud.get("relayUrl", "")
+            pair_payload = provisioning.pair_qr_payload(router.identity.claim, relay)
             self._html(router.page(
                 "label.html",
                 ssid=_escape(router.identity.ssid),
@@ -248,6 +269,18 @@ class Handler(BaseHTTPRequestHandler):
                 wifi_qr=_svg(router.identity.wifi_qr),
                 setup_qr=_svg(provisioning.setup_url()),
                 device_qr=_svg(provisioning.device_url()),
+                claim=_escape(router.identity.claim),
+                pair_qr=_svg(pair_payload) if pair_payload else "",
+                # The one part of the label that is not permanent: it names the
+                # relay, and a relay can move. Said on the page rather than
+                # left for somebody to discover from a code that stopped
+                # working — the code itself is still printed as text below it.
+                pair_note=(
+                    f"Scanning it opens <code>{_escape(relay)}</code>."
+                    if relay else
+                    "No relay is configured on this device yet, so this code carries "
+                    "the pairing code alone rather than a web address. Set a relay "
+                    "and reprint if you want a code a phone camera can open."),
             ))
             return
 
@@ -269,10 +302,15 @@ class Handler(BaseHTTPRequestHandler):
                 "ok": True,
                 "device": device.status(),
                 "wifi": state.to_json(),
+                "cloud": router.cloud_status(),
                 "identity": {"ssid": router.identity.ssid, "source": router.identity.source},
                 "urls": {"device": provisioning.device_url(),
                          "setup": provisioning.setup_url()},
             })
+            return
+
+        if path == "/api/cloud":
+            self._json({"ok": True, "cloud": router.cloud_status()})
             return
 
         if path == "/api/schedule":
@@ -291,6 +329,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/identity":
+            cloud = router.cloud_status()
             self._json({
                 "ok": True,
                 "ssid": router.identity.ssid,
@@ -298,6 +337,16 @@ class Handler(BaseHTTPRequestHandler):
                 "wifiQr": router.identity.wifi_qr,
                 "setupUrl": provisioning.setup_url(),
                 "deviceUrl": provisioning.device_url(),
+                # The pairing code, so an app already on the home WiFi can pair
+                # without anybody reading a sticker. It is a credential, and it
+                # is served here without authentication — which is the same
+                # decision this firmware already makes about the WiFi
+                # passphrase on /label, and is recorded in NOTES-FOR-WEBAPP.md
+                # rather than being quietly different for this one value.
+                "claim": router.identity.claim,
+                "deviceId": router.identity.device_id if router.identity.claim else "",
+                "pairQr": provisioning.pair_qr_payload(
+                    router.identity.claim, cloud.get("relayUrl", "")),
             })
             return
 
@@ -418,6 +467,32 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/wifi/hotspot":
             ok, message = wifi.start_hotspot(self.router.identity)
             self._json({"ok": ok, "message": message})
+            return
+
+        if path == "/api/cloud":
+            if self.router.cloud is None:
+                self._json({"ok": False,
+                            "error": "this firmware was started without a cloud link"},
+                           HTTPStatus.CONFLICT)
+                return
+
+            relay_url = body.get("relayUrl")
+            if relay_url is not None:
+                relay_url = str(relay_url).strip()
+                # An empty string is how the page says "forget the relay", and
+                # it has to stay distinguishable from the key being absent —
+                # which means "change only what I sent".
+                if relay_url and not relay_url.startswith(("http://", "https://")):
+                    self._json({"ok": False,
+                                "error": "the relay URL must start with http:// or https://"},
+                               HTTPStatus.BAD_REQUEST)
+                    return
+
+            enabled = body.get("enabled")
+            status = self.router.cloud.reconfigure(
+                relay_url=relay_url,
+                enabled=None if enabled is None else bool(enabled))
+            self._json({"ok": True, "cloud": status})
             return
 
         self._json({"ok": False, "error": "no such endpoint"}, HTTPStatus.NOT_FOUND)
@@ -552,8 +627,9 @@ def _limit(query: dict, default: int) -> int:
 
 
 def make_server(dispenser: Dispenser, port: int | None = None,
-                identity: provisioning.Identity | None = None) -> ThreadingHTTPServer:
-    router = Router(dispenser, identity)
+                identity: provisioning.Identity | None = None,
+                cloud=None) -> ThreadingHTTPServer:
+    router = Router(dispenser, identity, cloud)
 
     handler = type("BoundHandler", (Handler,), {"router": router})
     # 0.0.0.0 because the device is reached from the home network and from the
@@ -566,9 +642,10 @@ def make_server(dispenser: Dispenser, port: int | None = None,
 
 
 def serve_forever(dispenser: Dispenser, port: int | None = None,
-                  identity: provisioning.Identity | None = None) -> ThreadingHTTPServer:
+                  identity: provisioning.Identity | None = None,
+                  cloud=None) -> ThreadingHTTPServer:
     """Start the server on a background thread and return it."""
-    server = make_server(dispenser, port, identity)
+    server = make_server(dispenser, port, identity, cloud)
     thread = threading.Thread(target=server.serve_forever, name="http", daemon=True)
     thread.start()
     log.info("web server listening on port %d", server.server_address[1])
