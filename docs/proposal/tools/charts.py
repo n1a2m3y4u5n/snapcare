@@ -80,9 +80,10 @@ def chart_literacy():
 
 # ── 제한적 건강 문해력 (표 1) ──────────────────────────────────────
 def chart_health_literacy():
-    rows = [('한국 65세 이상', 59.7, True), ('덴마크', 47.0, False),
-            ('유럽 17개국', 46.0, False), ('노르웨이', 46.0, False),
-            ('한국 19~64세', 34.1, False)]
+    # HLS19 의 국가별 값은 보고서가 국가 간 비교를 신중히 하라고 명시하므로 빼고,
+    # 원자료를 확인한 국민건강영양조사(2023) 안에서 비교한다.
+    rows = [('65세 이상', 59.7, True), ('소득 하위층', 45.6, False),
+            ('전체 성인', 39.6, False), ('소득 상위층', 33.7, False)]
     fig, ax = plt.subplots(figsize=(4.6, 2.2))
     ys = range(len(rows))
     ax.barh(list(ys), [r[1] for r in rows], height=0.6,
@@ -91,7 +92,7 @@ def chart_health_literacy():
         ax.text(r[1] + 1.2, y, f'{r[1]}%', va='center', fontsize=8, color=INK)
     ax.set_yticks(list(ys), [r[0] for r in rows])
     ax.invert_yaxis()
-    ax.set_xlabel('제한적 건강 문해력 비율 (%)')
+    ax.set_xlabel('건강정보이해능력이 충분하지 않은 비율 (%)')
     ax.set_xlim(0, 72)
     frame(ax, grid_axis='x')
     save(fig, 'chart02_health_literacy')
