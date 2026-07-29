@@ -15,8 +15,11 @@ import { activeAccountId, listAccounts, mergeRoster, type Account } from './acco
  *
  * v4 — 한 폰을 여럿이 쓸 수 있게 되면서 blob 이 사람별로 갈렸다. 서버 파일은 기기
  *      공개키에서 유도하므로 여전히 기기당 하나이고, 그 안이 사람 수만큼 나뉜다.
+ * v5 — 시연 자료가 실제 자리(`me`)에 저장되던 것을 시연 전용 표(`demo_me`,
+ *      `demo_kid`)로 옮겼다. 올리지 않으면 로컬을 아무리 치워도 다음에 받아올 때
+ *      서버에 남은 시연 자료가 실제 자리로 되돌아온다.
  */
-export const SYNC_VERSION = 4;
+export const SYNC_VERSION = 5;
 
 /** 한 사람 몫. */
 export interface PersonBlob {

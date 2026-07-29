@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { isDemo } from '@/lib/snapcare/demo';
-import { accountStorage, activeAccountId, PRIMARY_ID, setActiveFace } from '@/lib/snapcare/accounts';
+import { accountStorage, activeAccountId, DEMO_KID, DEMO_PRIMARY, setActiveFace } from '@/lib/snapcare/accounts';
 import type { AgeBand, Member } from '@/lib/snapcare/types';
 
 /**
@@ -144,11 +144,11 @@ export const useProfile = create<ProfileState>()(
  * 것에 도달하기 전에 시간을 쓴다.
  */
 const DEMO_PROFILES: Record<string, Pick<Member, 'ageBand' | 'role' | 'emoji' | 'conditionIds'>> = {
-  [PRIMARY_ID]: {
+  [DEMO_PRIMARY]: {
     ageBand: 'senior', role: 'Older', emoji: '🧓',
     conditionIds: ['diabetic', 'blood_thinner_conflict'],
   },
-  kid: {
+  [DEMO_KID]: {
     ageBand: 'child', role: 'Child · age 7', emoji: '👧',
     conditionIds: ['peanut_allergy'],
   },

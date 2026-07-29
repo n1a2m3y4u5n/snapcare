@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from '@/stores/session';
 import { useSessionHydrated } from '@/lib/hooks';
 import { isDemo } from '@/lib/snapcare/demo';
-import { activeAccountId, PRIMARY_ID } from '@/lib/snapcare/accounts';
+import { activeAccountId, DEMO_KID } from '@/lib/snapcare/accounts';
 
 /**
  * 진입 게이트 — 저장된 세션이 복원된 뒤 온보딩/로그인/홈으로 보낸다.
@@ -26,7 +26,7 @@ export default function Index() {
     // 심사에서 얼굴을 바꿔 보일 때마다 슬라이드 다섯 장을 다시 넘기게 되면, 정작
     // 보여주려던 것(같은 것을 찍어도 판정이 다르다)에 닿기 전에 시간을 쓴다.
     // 첫 사람은 그대로 안내를 본다 — 첫 실행 흐름 자체도 보여줄 것이기 때문이다.
-    if (isDemo() && activeAccountId() !== PRIMARY_ID && !onboarded) {
+    if (isDemo() && activeAccountId() === DEMO_KID && !onboarded) {
       setOnboarded(true);
       return;
     }

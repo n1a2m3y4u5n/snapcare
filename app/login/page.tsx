@@ -10,7 +10,7 @@ import { useProfile } from '@/stores/profile';
 import { seedDemoIfEmpty } from '@/stores/scans';
 import { setDemo } from '@/lib/snapcare/demo';
 import { useIsDemo } from '@/lib/hooks';
-import { activeAccountId, leaveDemo, listAccounts, switchTo, type Account } from '@/lib/snapcare/accounts';
+import { activeAccountId, listAccounts, switchTo, type Account } from '@/lib/snapcare/accounts';
 
 /** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개 순서 (bcrypt로 실제 설정·검증). */
 const TILES = ['☀️', '🌙', '💧', '🔥', '🌸', '🐦', '🏠', '⛰️', '🛣️', '🚪', '🔔', '🔑'];
@@ -238,7 +238,7 @@ export default function LoginPage() {
         <div className="mt-auto pt-8 flex items-center gap-2 text-[11px]"
              style={{ color: 'var(--color-sc-muted)' }}>
           <button
-            onClick={() => { leaveDemo(); location.href = '/'; }}
+            onClick={() => { setDemo(false); location.href = '/'; }}
             className="rounded-full px-3 py-1.5"
             style={{
               background: demo ? 'transparent' : 'var(--color-sc-line)',

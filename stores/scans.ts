@@ -4,7 +4,7 @@ import type { Reaction, ScanRecord, Symptom } from '@/lib/snapcare/types';
 import { PROFILE_ID, seedDemoProfile } from './profile';
 import { prune } from '@/lib/snapcare/retention';
 import { isDemo } from '@/lib/snapcare/demo';
-import { accountStorage, activeAccountId, PRIMARY_ID } from '@/lib/snapcare/accounts';
+import { accountStorage, activeAccountId, DEMO_KID, DEMO_PRIMARY } from '@/lib/snapcare/accounts';
 
 /**
  * 시드 최근 스캔 (와이어프레임 홈 RECENT 피드 기준).
@@ -52,7 +52,7 @@ const KID_SCANS: ScanRecord[] = [
 ];
 
 /** 시연 기록은 사람마다 다르다. 명단에 없는 사람이면 비어 있는 것이 맞다. */
-const DEMO_SCANS: Record<string, ScanRecord[]> = { [PRIMARY_ID]: SEED_SCANS, kid: KID_SCANS };
+const DEMO_SCANS: Record<string, ScanRecord[]> = { [DEMO_PRIMARY]: SEED_SCANS, [DEMO_KID]: KID_SCANS };
 
 
 interface ScansState {

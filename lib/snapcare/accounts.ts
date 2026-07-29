@@ -1,7 +1,7 @@
 'use client';
 
 import { createJSONStorage } from 'zustand/middleware';
-import { isDemo, setDemo } from './demo.ts';   // 확장자 필수 — 시험이 --experimental-strip-types 로 돈다
+import { isDemo } from './demo.ts';   // 확장자 필수 — 시험이 --experimental-strip-types 로 돈다
 
 /**
  * 이 폰을 쓰는 사람들.
@@ -62,10 +62,16 @@ const FIRST: Account = { id: PRIMARY_ID, emoji: '🧑', color: COLORS[0] };
  * 한 명만 두면 심사에서 이 기능이 아예 안 보인다. 그리고 둘을 나이로 갈라 두면
  * **같은 것을 찍어도 판정이 다르다**는 것을 화면 두 개로 보일 수 있다 — 이 앱이
  * 라벨 판독기와 다른 지점이 정확히 거기다.
+ *
+ * 표가 둘 다 첫 사람(me)이 아닌 것이 요점이다. 그래서 시연 자료는 전부 `#demo_me`,
+ * `#demo_kid` 로 붙어 저장되고, 실제 자료가 있는 자리에는 손이 닿지 않는다.
  */
+export const DEMO_PRIMARY = 'demo_me';
+export const DEMO_KID = 'demo_kid';
+
 const DEMO_ROSTER: Account[] = [
-  { id: PRIMARY_ID, emoji: '🧓', color: COLORS[0] },
-  { id: 'kid', emoji: '👧', color: COLORS[1] },
+  { id: DEMO_PRIMARY, emoji: '🧓', color: COLORS[0] },
+  { id: DEMO_KID, emoji: '👧', color: COLORS[1] },
 ];
 
 /** 사람마다 따로 쌓이는 저장 열쇠. 사람을 지울 때 같이 지운다. */
@@ -82,14 +88,29 @@ function ok(a: unknown): a is Account {
   return Boolean(v && typeof v.id === 'string' && typeof v.emoji === 'string');
 }
 
-/** 만들어진 그대로인가 — 사람을 더한 적도, 얼굴을 바꾼 적도 없는 명단. */
-function pristine(list: Account[]): boolean {
-  return list.length === 1 && list[0].id === PRIMARY_ID && list[0].emoji === FIRST.emoji;
+/**
+ * 명단도 모드마다 따로 둔다.
+ *
+ * 전에는 한 자리를 같이 썼다. 그래서 시연 모드를 끄고 "처음부터 시작" 을 눌러도
+ * 시연 명단과 시연 기록이 그대로 남았다 — 끈 것은 **앞으로 채우지 않겠다**는 표시일
+ * 뿐이고, 이미 들어간 것을 치우지는 않았기 때문이다. 모드를 나눠도 저장 자리가
+ * 하나면 나눈 것이 아니다.
+ *
+ * 자리를 갈라 두면 지울 것이 없어진다. 표시만 바꾸면 그 모드의 자료가 통째로
+ * 보이고 안 보인다. 시연을 껐다 켜도 시연 상태가 그대로 남아 있고, 실제 자료는
+ * 시연이 무엇을 하든 손이 닿지 않는다.
+ */
+function rosterKey(): string {
+  return isDemo() ? `${ROSTER}~demo` : ROSTER;
+}
+
+function activeKey(): string {
+  return isDemo() ? `${ACTIVE}~demo` : ACTIVE;
 }
 
 function save(list: Account[]): void {
   if (typeof localStorage === 'undefined') return;
-  localStorage.setItem(ROSTER, JSON.stringify(list));
+  localStorage.setItem(rosterKey(), JSON.stringify(list));
 }
 
 /**
@@ -101,23 +122,11 @@ function save(list: Account[]): void {
  */
 export function listAccounts(): Account[] {
   if (typeof localStorage === 'undefined') return [FIRST];
-  const raw = localStorage.getItem(ROSTER);
+  const raw = localStorage.getItem(rosterKey());
   if (raw) {
     try {
       const list = JSON.parse(raw) as unknown;
-      if (Array.isArray(list) && list.length > 0 && list.every(ok)) {
-        // 시연 모드인데 아직 아무도 손대지 않은 기본 명단이면 시연용 두 사람으로 바꾼다.
-        //
-        // 없으면 이런 일이 생긴다: 앱을 한 번 그냥 열면 그때 기본 명단이 만들어지고,
-        // 그다음에 ?demo=1 을 붙여도 "명단이 이미 있다" 며 한 명인 채로 남는다.
-        // 심사장에서 앱을 먼저 켜 보는 것은 당연한 순서인데, 그 순서로는 이 기능이
-        // 아예 안 보인다.
-        if (isDemo() && pristine(list as Account[])) {
-          save(DEMO_ROSTER);
-          return DEMO_ROSTER;
-        }
-        return list as Account[];
-      }
+      if (Array.isArray(list) && list.length > 0 && list.every(ok)) return list as Account[];
     } catch {
       // 깨졌으면 아래에서 새로 만든다. 명단을 못 읽는 것이 앱을 못 여는 이유가 되면 안 된다.
       console.warn('[accounts] 명단을 읽지 못해 새로 만든다');
@@ -132,7 +141,7 @@ export function listAccounts(): Account[] {
 export function activeAccountId(): string {
   if (typeof localStorage === 'undefined') return PRIMARY_ID;
   const list = listAccounts();
-  const id = localStorage.getItem(ACTIVE);
+  const id = localStorage.getItem(activeKey());
   if (id && list.some((a) => a.id === id)) return id;
   return list[0].id;
 }
@@ -221,34 +230,76 @@ export function setActiveFace(emoji: string): void {
  */
 export function switchTo(id: string): void {
   if (typeof localStorage === 'undefined') return;
-  localStorage.setItem(ACTIVE, id);
+  localStorage.setItem(activeKey(), id);
   location.href = '/';
 }
 
 /**
- * 시연 모드를 끌 때, 시연이 만든 두 번째 사람을 거둔다.
- *
- * 안 하면 깨끗한 상태로 돌아가겠다고 눌렀는데 얼굴 두 개가 그대로 남는다. 현지
- * 평가에서 어르신이 처음 여는 화면에 자기가 모르는 사람이 있으면, 우리가 재려던
- * 것("이 사람이 이 화면을 이해하는가")이 그 순간 성립하지 않는다.
- *
- * **시연이 만든 그대로일 때만** 거둔다. 사람을 더했거나 얼굴을 바꿨다면 그것은
- * 사용자가 한 일이므로 건드리지 않는다.
+ * 시연 기록의 표. 사람이 찍은 기록은 이 값이 될 수 없다 — 저 넷은 시드에 박아 둔
+ * 문자열이고 실제 기록의 표는 그때그때 만들어진다. 그래서 이 표만 들어 있는
+ * 저장분은 사람이 만든 것이 아니라고 단정할 수 있다.
  */
-export function leaveDemo(): void {
-  if (typeof localStorage === 'undefined') return;
-  // 표시를 **먼저** 끈다. 이 아래 listAccounts 가 시연 모드를 보면 방금 거둔 명단을
-  // 그 자리에서 다시 만든다. 부르는 쪽에 "끄고 나서 불러라" 를 맡기면 그 순서가
-  // 언젠가 뒤집히고, 뒤집혀도 화면에는 아무 표시가 안 난다.
-  setDemo(false);
-  const list = listAccounts();
-  const same = list.length === DEMO_ROSTER.length
-    && list.every((a, i) => a.id === DEMO_ROSTER[i].id && a.emoji === DEMO_ROSTER[i].emoji);
-  if (!same) return;
-  DEMO_ROSTER.slice(1).forEach((a) => SCOPED.forEach((k) => localStorage.removeItem(scopedKey(k, a.id))));
-  localStorage.removeItem(ACTIVE);
-  save([FIRST]);
+const SEED_IDS = new Set(['s1', 's2', 's3', 's4', 'k1', 'k2']);
+
+function onlySeedScans(raw: string): boolean {
+  try {
+    const list = (JSON.parse(raw) as { state?: { scans?: { id?: string }[] } }).state?.scans;
+    return Array.isArray(list) && list.length > 0 && list.every((s) => SEED_IDS.has(s?.id ?? ''));
+  } catch {
+    return false;
+  }
 }
+
+/**
+ * 앞선 판이 실제 자리에 남긴 시연 자국을 한 번 치운다.
+ *
+ * 짧게 배포됐던 판에서는 시연 자료가 실제 자료와 같은 자리에 저장됐다. 그 상태로
+ * "처음부터 시작" 을 눌러도 시연 기록이 그대로 남는데, 바로 그것을 고치는 변경이므로
+ * 자국도 같이 거둬야 고쳐진 것이 된다.
+ *
+ * 두 가지를 알아본다. 어느 쪽도 사람이 만들 수 없는 모양이라, 실제 자료를 지울 일은
+ * 없다:
+ *
+ *   - 표가 `kid` 인 사람 — 그 판의 시연 시드 말고는 만들어지지 않는다 (지금은 얼굴을
+ *     고르면 `p_…` 가 붙는다).
+ *   - 시드 기록만 들어 있는 저장분 — 표가 s1..s4 인 기록은 사람이 만들 수 없다.
+ *     프로필도 같이 거둔다. 시연 프로필은 "아직 아무 조건도 없을 때" 만 들어가므로,
+ *     시드 기록이 있다는 것은 그 프로필도 시연이 넣은 것이라는 뜻이다. 안 거두면
+ *     처음부터 시작해도 당뇨에 혈액희석제를 쓰는 사람으로 판정된다.
+ *
+ * 서버 사본은 SYNC_VERSION 을 올려 버린다 — 지우지 않으면 다음에 받아올 때 시연
+ * 자료가 실제 자리로 되돌아온다.
+ */
+function clearOldDemoResidue(): void {
+  if (typeof localStorage === 'undefined') return;
+
+  const roster = localStorage.getItem(ROSTER);
+  if (roster?.includes('"id":"kid"')) {
+    SCOPED.forEach((k) => localStorage.removeItem(`${k}#kid`));
+    localStorage.removeItem(ROSTER);
+    localStorage.removeItem(ACTIVE);
+  } else if (roster?.includes('"id":"demo_')) {
+    // 시연 명단이 서버 동기화를 타고 실제 명단에 붙었던 판이 있다. 그 자리들은
+    // 시연 쪽(`snapcare-accounts~demo`)에 그대로 있으므로 여기서는 떼어내기만 한다.
+    try {
+      const list = (JSON.parse(roster) as Account[]).filter((a) => !a.id.startsWith('demo_'));
+      if (list.length > 0) localStorage.setItem(ROSTER, JSON.stringify(list));
+      else localStorage.removeItem(ROSTER);
+    } catch {
+      localStorage.removeItem(ROSTER);
+    }
+  }
+
+  const scans = localStorage.getItem('snapcare-scans');
+  if (scans && onlySeedScans(scans)) {
+    localStorage.removeItem('snapcare-scans');
+    localStorage.removeItem('snapcare-profile');
+  }
+}
+
+// 스토어가 저장소를 읽기 전에 끝나야 한다. 이 파일은 스토어들이 먼저 불러들이므로
+// 여기(모듈이 읽히는 시점)가 그 조건을 만족하는 유일하게 확실한 자리다.
+clearOldDemoResidue();
 
 /**
  * 서버에 있던 명단을 되살린다 (모르는 사람만 더한다).
@@ -261,7 +312,10 @@ export function mergeRoster(remote: Account[]): void {
   if (typeof localStorage === 'undefined') return;
   const list = listAccounts();
   const have = new Set(list.map((a) => a.id));
-  const add = remote.filter((a) => ok(a) && !have.has(a.id));
+  // 시연 표는 실제 명단에 들어오지 않는다. 지금은 시연이 서버에 오가지 않으므로
+  // 올 일이 없지만, 한 번 샜을 때의 증상이 나빴다 — 실제 모드로 돌아와도 받아올
+  // 때마다 시연 두 사람이 명단에 다시 붙었고, 지워도 다음 열기에 또 나타났다.
+  const add = remote.filter((a) => ok(a) && !have.has(a.id) && !a.id.startsWith('demo_'));
   if (add.length === 0) return;
   save([...list, ...add]);
 }
