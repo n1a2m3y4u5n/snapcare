@@ -9,7 +9,7 @@ import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } f
 import { recognizeText } from '@/lib/ocr';
 import { estimateOnDevice, warmUp } from '@/lib/nutrition/estimateOnDevice';
 import { Hint } from '@/components/sc/Hint';
-import { sayable } from '@/components/sc/Say';
+import { sayable, ask, Speakable } from '@/components/sc/Say';
 import { SAMPLE_LABELS, SAMPLE_RX, sampleBySlug } from '@/lib/snapcare/samples';
 import type { ScanItem } from '@/lib/snapcare/types';
 import type { NutrientProfile } from '@/lib/nutrition/types';
@@ -198,7 +198,7 @@ export default function CameraPage() {
         <div className="flex items-center justify-between px-5 pt-14 pb-3">
           <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none">×</button>
           <span className="text-sm font-semibold"
-                {...sayable('Point at something. Hold the camera over a prescription, a label, or your food.')}>
+                {...ask('Point at something. Hold the camera over a prescription, a label, or your food.')}>
             Point at something
           </span>
           <span className="w-6" />
@@ -239,8 +239,9 @@ export default function CameraPage() {
         ) : (
           <>
             <div className="px-5 pt-1">
-              <p className="text-[11px] font-bold tracking-wide opacity-60"
-                 {...sayable('Try a nutrition label. Tap one and it will be read like a photograph.')}>SCAN A NUTRITION LABEL (OCR)</p>
+              <Speakable text={'Try a nutrition label. Tap one and it will be read like a photograph.'} className="text-[11px] font-bold tracking-wide opacity-60 flex w-full items-center gap-2">
+          <span className="flex-1">SCAN A NUTRITION LABEL (OCR)</span>
+        </Speakable>
               <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
                 {SAMPLE_LABELS.map((s) => (
                   <button key={s.src} onClick={() => scanSample(s.src)} disabled={busy} className="shrink-0 rounded-2xl px-3 py-2 text-xs font-semibold disabled:opacity-40" style={{ background: 'rgba(255,255,255,0.12)' }}>
@@ -251,8 +252,9 @@ export default function CameraPage() {
             </div>
 
             <div className="px-5 pt-3">
-              <p className="text-[11px] font-bold tracking-wide opacity-60"
-                 {...sayable('Try a prescription.')}>SCAN A REAL PRESCRIPTION (OCR)</p>
+              <Speakable text={'Try a prescription.'} className="text-[11px] font-bold tracking-wide opacity-60 flex w-full items-center gap-2">
+          <span className="flex-1">SCAN A REAL PRESCRIPTION (OCR)</span>
+        </Speakable>
               <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
                 {SAMPLE_RX.map((s) => (
                   <button key={s.src} onClick={() => scanSample(s.src)} disabled={busy} className="shrink-0 rounded-2xl px-3 py-2 text-xs font-semibold disabled:opacity-40" style={{ background: 'rgba(255,255,255,0.12)' }}>
@@ -263,8 +265,9 @@ export default function CameraPage() {
             </div>
 
             <div className="px-5 pb-8 pt-3">
-              <p className="text-[11px] font-bold tracking-wide opacity-60"
-                 {...sayable('Or try a ready-made item.')}>TRY A DEMO ITEM</p>
+              <Speakable text={'Or try a ready-made item.'} className="text-[11px] font-bold tracking-wide opacity-60 flex w-full items-center gap-2">
+          <span className="flex-1">TRY A DEMO ITEM</span>
+        </Speakable>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {DEMO_IDS.map((id) => {
                   const it = getItem(id)!;

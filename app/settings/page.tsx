@@ -4,7 +4,8 @@ import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useProfile } from '@/stores/profile';
 import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
-import { sayable } from '@/components/sc/Say';
+import { sayable, ask, Speakable } from '@/components/sc/Say';
+import { useMyColor } from '@/lib/hooks';
 import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
 
 /**
@@ -20,6 +21,7 @@ import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
 export default function SettingsPage() {
   const router = useRouter();
   const profile = useProfile((s) => s.profile);
+  const myColor = useMyColor(profile.color);
   const autoTts = usePreferences((s) => s.autoTts);
   const speechRate = usePreferences((s) => s.speechRate);
   const setSpeechRate = usePreferences((s) => s.setSpeechRate);
@@ -28,19 +30,19 @@ export default function SettingsPage() {
   return (
     <MobileScreen tab="settings">
       <div className="px-5 pt-14">
-        <h1 {...sayable('Settings.')} className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Settings</h1>
+        <h1 {...ask('Settings. Change who we check for, how the voice reads, and the pill device.')} className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Settings</h1>
 
         {/* 판정 기준이 되는 사람 */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }} {...sayable('Who we check for.')}>
-          WHO WE CHECK FOR
-        </p>
+        <Speakable text={'Who we check for.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">WHO WE CHECK FOR</span>
+        </Speakable>
         <button
           onClick={() => router.push('/profile')}
           className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
         >
           <span
             className="flex h-10 w-10 items-center justify-center rounded-full text-xl"
-            style={{ background: profile.color }}
+            style={{ background: myColor }}
           >
             {profile.emoji}
           </span>
@@ -56,10 +58,37 @@ export default function SettingsPage() {
           <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
         </button>
 
+        {/*
+          한 폰을 여럿이 쓰는 경우.
+
+          위의 "나와 내 조건" 바로 아래에 둔다. 둘은 같은 질문의 두 켜다 — 위는 지금
+          누구 기준으로 보고 있는지고, 여기는 그 '누구' 가 몇 명인지다.
+
+          하단 탭이 아니라 설정 안에 두는 이유는 가족 명단을 없앨 때와 같다. 탭에 있으면
+          '가족 관리 앱' 으로 읽히는데, 이것은 하루에 한 번 있는 일도 아니다.
+        */}
+        <button
+          onClick={() => router.push('/people')}
+          className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-full text-xl"
+                style={{ background: 'var(--color-sc-line)' }}>👥</span>
+          <span className="flex-1">
+            <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
+                  {...sayable('Who uses this phone. Add someone else, or switch to them.')}>
+              Who uses this phone
+            </span>
+            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+              Share this phone — each person keeps their own
+            </span>
+          </span>
+          <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
+        </button>
+
         {/* 음성 — 접근성 코어라 설정에서 끌 수 있게만 둔다 */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }} {...sayable('Voice.')}>
-          VOICE
-        </p>
+        <Speakable text={'Voice.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">VOICE</span>
+        </Speakable>
         <button
           onClick={() => setAutoTts(!autoTts)}
           className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
@@ -115,9 +144,9 @@ export default function SettingsPage() {
         </div>
 
         {/* 기기 — 네트워크 없이 카메라로만 오간다 */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }} {...sayable('Pill device.')}>
-          PILL DEVICE
-        </p>
+        <Speakable text={'Pill device.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">PILL DEVICE</span>
+        </Speakable>
         <button
           onClick={() => router.push('/device')}
           className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
@@ -129,9 +158,9 @@ export default function SettingsPage() {
         </button>
 
         {/* 의료진 공유 — 타이핑 없이 기록을 넘기는 경로 */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }} {...sayable('At the clinic.')}>
-          AT THE CLINIC
-        </p>
+        <Speakable text={'At the clinic.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">AT THE CLINIC</span>
+        </Speakable>
         <button
           onClick={() => router.push('/provider')}
           className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"

@@ -4,9 +4,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
-import { PictogramStrip } from '@/components/sc/PictogramStrip';
+import { PictogramStrip, OneGlyph } from '@/components/sc/PictogramStrip';
 import { NutrientBars } from '@/components/sc/NutrientBars';
-import { Say } from '@/components/sc/Say';
+import { Say, Speakable } from '@/components/sc/Say';
 import { doseSentence, storageSentence } from '@/lib/snapcare/say';
 import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
@@ -141,7 +141,7 @@ export default function ScanResultPage() {
     : `FOR ${member.name.toUpperCase()}`;
 
   return (
-    <MobileScreen>
+    <MobileScreen ownRead>
       <div className="flex items-center justify-between px-5 pt-14 pb-1">
         <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none" style={{ color: 'var(--color-sc-muted)' }}>×</button>
         <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>{header}</span>
@@ -193,25 +193,50 @@ function FoodResult({
         )}
 
         {/*
-          대체 기준.
+          대체 기준 — 이것 말고 저것.
+
           예전에는 카탈로그에 손으로 적어둔 대체품이 있을 때만 떴다 — 바코드로 알아본
           몇 품목뿐이라 라벨 촬영 경로에서는 한 번도 뜨지 않았다(형성 평가: 12/12).
-          이제 회피 사유에서 유도하고, 그림도 함께 낸다. 회피할 것에 부정 연산자를
-          씌운 그림이 곧 "이게 없는 것을 고르라" 는 뜻이다.
+          이제 회피 사유에서 유도한다.
+
+          왜 짝으로 바꿨나
+          ----------------
+          그림이 하나일 때는 위의 픽토그램 줄과 **똑같은 그림**이었다. 땅콩이 든 과자를
+          찍으면 줄에도 🚫🥜, 여기에도 🚫🥜 가 떴다. 이 칸이 답해야 하는 질문은
+          "그럼 뭘 먹지" 인데, 그림으로는 방금 들은 말을 되풀이할 뿐이라 새 정보가
+          하나도 없었다. 화면에서 가장 값진 자리를 반복에 쓴 셈이다.
+
+          IKEA 설명서의 오래된 수법이 이 자리에 맞는다: **틀린 것과 맞는 것을 나란히**
+          놓는다. 왼쪽은 지금 손에 든 바로 그 물건이고(✕), 오른쪽은 다음에 고를 기준
+          이다(✓). 그러면 두 그림이 서로 다른 것을 말하고, 화살표가 둘을 잇는다 —
+          글자 없이 "이거 말고 저거" 가 성립한다.
         */}
         {alternative && (
-          <div className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ background: 'var(--color-safe-bg)' }}>
-            {alternative.glyph && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={`/api/pictogram?label=${encodeURIComponent(`\\no{\\${alternative.glyph}}`)}`}
-                alt="" aria-hidden className="h-12 w-12 shrink-0"
-              />
-            )}
-            <div>
-              <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-safe)' }}>TRY INSTEAD</p>
-              <p className="mt-0.5 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-                <Say>{alternative.text}</Say>
+          <div className="rounded-2xl px-4 py-3" style={{ background: 'var(--color-safe-bg)' }}>
+            <Speakable text={`Try instead. ${alternative.text}`}
+                       className="flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                       style={{ color: 'var(--color-safe)' }}>
+              <span className="flex-1">TRY INSTEAD</span>
+            </Speakable>
+            <div className="mt-2 flex items-center gap-3">
+              <SwapSide
+                mark="✕"
+                color="var(--color-avoid)"
+                say={`Not this one. ${spokenName(item.name, item.kind)}.`}
+              >
+                <span className="text-3xl" aria-hidden>{item.emoji}</span>
+              </SwapSide>
+
+              <span className="text-2xl" style={{ color: 'var(--color-sc-muted)' }} aria-hidden>→</span>
+
+              <SwapSide mark="✓" color="var(--color-safe)" say={alternative.text}>
+                {alternative.glyph
+                  ? <OneGlyph line={`\\no{\\${alternative.glyph}}`} className="h-10 w-10" />
+                  : <span className="text-3xl" aria-hidden>🛒</span>}
+              </SwapSide>
+
+              <p className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+                <Say bare>{alternative.text}</Say>
               </p>
             </div>
           </div>
@@ -255,6 +280,22 @@ function RxResult({
       </div>
 
       {/*
+        그림 줄을 여기로 올렸다.
+
+        전에는 화면 맨 아래, 용량·보관·복용시각 세 덩어리 **뒤**에 있었다. 글을 읽는
+        사람에게는 요약이지만, 못 읽는 사람에게는 그 세 덩어리가 통째로 비어 있고
+        **이 줄이 지시의 전부**다. 그 사람이 실제로 만나는 순서는 [빈칸][빈칸][빈칸]
+        [진짜 내용] 이었던 셈이다.
+
+        음식 화면은 이미 판정 바로 다음에 그림 줄이 온다. 같은 것이 화면마다 다른
+        자리에 있으면, 매번 어디를 봐야 하는지 다시 찾아야 한다 — 설명서의 연속성이
+        새로 배울 것을 줄인다는 IKEA 의 원칙이 여기에도 그대로 걸린다.
+      */}
+      <div className="mt-5">
+        <PictogramStrip source={itemToDsl(item, verdict.level !== 'safe')} />
+      </div>
+
+      {/*
         1회 용량과 보관.
         둘 다 OCR 이 뽑아 픽토그램에는 쓰이고 있었는데 문자·음성에는 어디에도 없었다
         (형성 평가: 처방 16시행 전부). 그림이 통하지 않는 사용자에게는 정보가 통째로
@@ -285,7 +326,11 @@ function RxResult({
       {/* 복용 스케줄 */}
       {item.rx && (
         <div className="mt-5">
-          <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>INTAKE SCHEDULE</p>
+          <Speakable text="Intake schedule. When to take it."
+                     className="flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                     style={{ color: 'var(--color-sc-muted)' }}>
+            <span className="flex-1">INTAKE SCHEDULE</span>
+          </Speakable>
           <div className="mt-2 flex flex-col gap-2">
             {item.rx.schedule.map((s, i) => (
               <div key={i} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
@@ -298,11 +343,6 @@ function RxResult({
         </div>
       )}
 
-      {/* SIGIL 자체 엔진 픽토그램 (읽기 없이 이해) */}
-      <div className="mt-5">
-        <PictogramStrip source={itemToDsl(item, verdict.level !== 'safe')} />
-      </div>
-
       <div className="mt-auto pb-8 pt-6">
         <PrimaryButton onClick={onDone} level="safe">Create reminders</PrimaryButton>
       </div>
@@ -310,6 +350,29 @@ function RxResult({
   );
 }
 
+
+/**
+ * "이것 말고 저것" 의 한쪽.
+ *
+ * 표시(✕/✓)를 그림 위 모서리에 얹는다. 옆에 두면 어느 표시가 어느 그림 것인지가
+ * 흐려지고, 이 칸은 두 그림이 서로 반대라는 것 하나로 뜻이 성립하는 자리다.
+ */
+function SwapSide({ mark, color, say, children }: {
+  mark: string; color: string; say: string; children: React.ReactNode;
+}) {
+  return (
+    <Speakable text={say} bare className="relative flex h-14 w-14 shrink-0 items-center justify-center
+                                          rounded-2xl bg-white shadow-sm">
+      {children}
+      <span aria-hidden
+            className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full
+                       text-xs font-bold text-white"
+            style={{ background: color }}>
+        {mark}
+      </span>
+    </Speakable>
+  );
+}
 
 function PrimaryButton({ children, onClick, level }: { children: React.ReactNode; onClick: () => void; level: 'safe' | 'caution' | 'avoid' }) {
   const bg = level === 'avoid' ? 'var(--color-avoid)' : level === 'caution' ? 'var(--color-caution)' : 'var(--color-sc-primary)';

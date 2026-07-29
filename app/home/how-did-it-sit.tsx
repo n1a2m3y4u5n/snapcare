@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { ScanRecord, Symptom } from '@/lib/snapcare/types';
 import { useScans } from '@/stores/scans';
-import { sayable } from '@/components/sc/Say';
+import { sayable, Speakable } from '@/components/sc/Say';
 
 /**
  * "그거 먹고 괜찮았나요?" — 식이 일지의 입력부.
@@ -55,10 +55,14 @@ export function HowDidItSit({ record }: { record: ScanRecord }) {
 
   return (
     <div className="mt-6 rounded-2xl bg-white p-4 shadow-sm">
-      <p className="text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-         {...sayable(`How did it sit? You had ${record.name}. Tap the smiling face if you were fine, or the unhappy face if you felt unwell.`)}>
-        HOW DID IT SIT?
-      </p>
+      {/* 이 화면에서 유일하게 답을 요구하는 질문이다 — 아래 두 얼굴은 답이지 물음이
+          아니다. 물음이 소리로만 있으면 무엇을 고르라는 것인지 알 수 없다. */}
+      <Speakable
+        text={`How did it sit? You had ${record.name}. Tap the smiling face if you were fine, or the unhappy face if you felt unwell.`}
+        className="flex w-full items-center gap-2 text-xs font-bold tracking-wide"
+        style={{ color: 'var(--color-sc-muted)' }}>
+        <span className="flex-1">HOW DID IT SIT?</span>
+      </Speakable>
 
       <div className="mt-2 flex items-center gap-2">
         <span className="text-xl">{record.emoji}</span>

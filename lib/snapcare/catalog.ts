@@ -25,7 +25,11 @@ export const CATALOG: ScanItem[] = [
     emoji: '🍫',
     detectedVia: 'barcode lookup',
     barcode: '5000159461122',
-    flags: [],
+    // 이름이 '땅콩' 이고 대체품 설명이 'peanut-free' 인데 표시가 비어 있었다. 땅콩
+    // 표시는 바코드 조회(OpenFoodFacts)나 성분표 판독으로 붙는데, 둘 다 못 하는
+    // 상황 — 인터넷이 없거나 사진이 흐릴 때 — 에서는 이 목록이 전부다. 그러면 땅콩
+    // 알레르기가 있는 사람이 이것을 찍어도 아무 경고가 안 뜬다.
+    flags: ['peanut'],
     alt: { name: 'Oat bar', note: 'peanut-free' },
   },
   {

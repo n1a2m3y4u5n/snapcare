@@ -9,6 +9,7 @@ import { ConditionTracking } from './tracking';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NUTRIENT_LABEL } from '@/lib/nutrition/types';
 import { speak } from '@/lib/voice';
+import { Speakable } from '@/components/sc/Say';
 
 /**
  * 하루 누적 분석 — 오늘 이 사람이 먹은 것을 합산해 하루 기준치와 대조한다.
@@ -91,9 +92,11 @@ export default function NutritionPage() {
             {/* 조건이 있으면 며칠치 추이를 함께 낸다 (조건이 없으면 스스로 뜨지 않는다) */}
             <ConditionTracking scans={scans} />
 
-            <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-              EATEN TODAY
-            </p>
+            <Speakable text="Eaten today. Everything you checked since this morning."
+                       className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                       style={{ color: 'var(--color-sc-muted)' }}>
+              <span className="flex-1">EATEN TODAY</span>
+            </Speakable>
             <div className="mt-2 flex flex-col gap-2">
               {daily.entries.map(({ record, amounts }) => (
                 <div key={record.id} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">

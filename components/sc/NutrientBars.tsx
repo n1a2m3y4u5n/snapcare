@@ -7,6 +7,17 @@ import { NutrientBar } from './NutrientBar';
 import { speak } from '@/lib/voice';
 
 /**
+ * 이름을 소유격으로. 기본 이름이 "You" 라서 그냥 붙이면 "YOU'S DAY" 가 됐다.
+ * s 로 끝나는 이름은 아포스트로피만 붙인다 (JAMES' DAY).
+ */
+function possessive(name: string) {
+  const n = name.trim();
+  if (n.toLowerCase() === 'you') return 'YOUR';
+  const up = n.toUpperCase();
+  return up.endsWith('S') ? `${up}’` : `${up}’S`;
+}
+
+/**
  * 스캔한 제품 1회 섭취량이 그 사람의 하루 기준치에서 차지하는 비중.
  * 기준치는 구성원마다 다르므로 같은 제품도 사람이 바뀌면 막대가 달라진다.
  */
@@ -44,7 +55,7 @@ export function NutrientBars(
     <div>
       <div className="flex items-center justify-between">
         <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-          {grams} G · SHARE OF {member.name.toUpperCase()}&apos;S DAY
+          {grams} G · SHARE OF {possessive(member.name)} DAY
         </p>
         <button onClick={() => speak(spoken, 'en-US')} aria-label="Read nutrition aloud" className="text-base leading-none">
           🔊

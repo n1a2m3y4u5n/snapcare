@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+// 상대 경로 + 확장자 — 이 스토어는 시험(lib/pattern/reask.test.ts)에서도 불려서
+// `@/` 별칭이 통하지 않는다.
+import { accountStorage } from '../lib/snapcare/accounts.ts';
 
 /**
  * 추론 제안을 사용자가 물린 기록.
@@ -39,6 +42,7 @@ export const useSuggestions = create<SuggestionState>()(
       },
       clear: () => set({ dismissed: {} }),
     }),
-    { name: 'snapcare-suggestions' },
+    // 물린 제안은 그 사람의 판단이다. 남이 아니라고 한 것을 나에게 묻지 않으면 안 된다.
+    { name: 'snapcare-suggestions', storage: accountStorage },
   ),
 );

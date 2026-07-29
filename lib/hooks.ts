@@ -1,7 +1,9 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useSession } from '@/stores/session';
+import { isDemo } from '@/lib/snapcare/demo';
+import { activeAccount } from '@/lib/snapcare/accounts';
 
 const noopSubscribe = () => () => {};
 
@@ -28,4 +30,31 @@ export function useSessionHydrated(): boolean {
     () => useSession.persist.hasHydrated(),
     () => false,
   );
+}
+
+/**
+ * 시연 모드인지 — 화면에서 쓰는 형태.
+ *
+ * isDemo() 를 그리는 중에 그냥 부르면 안 된다: 서버는 false, 브라우저는 true 라
+ * 두 화면이 어긋난다. 붙은 뒤에 한 번 알려주는 방식으로 그 어긋남을 없앤다.
+ */
+export function useIsDemo(): boolean {
+  const [demo, setDemo] = useState(false);
+  useEffect(() => setDemo(isDemo()), []);
+  return demo;
+}
+
+/**
+ * 내 자리의 색.
+ *
+ * 잠금화면의 얼굴 배경과 프로필·설정의 아바타 배경이 **같은 색**이어야 한다. 글을
+ * 못 읽는 사람이 화면 사이를 잇는 단서가 그 두 가지(얼굴, 색)뿐인데, 같은 사람이
+ * 화면마다 다른 색이면 그 단서가 거짓이 된다.
+ *
+ * 명단은 브라우저에만 있으므로 붙은 뒤에 읽는다.
+ */
+export function useMyColor(fallback: string): string {
+  const [color, setColor] = useState(fallback);
+  useEffect(() => setColor(activeAccount().color), []);
+  return color;
 }

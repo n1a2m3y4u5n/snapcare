@@ -33,13 +33,56 @@ export function sayable(text: string) {
   return { 'data-say': text };
 }
 
+/**
+ * 이 화면이 무엇을 묻는지 — 도착하면 스스로 읽는 한 줄.
+ *
+ * 누르는 것은 **무엇이 있는지 이미 아는 사람**의 도구다. 처음 오는 사람은 소리가
+ * 있다는 것조차 모르므로, 스피커를 아무리 크게 그려도 그것을 누를 이유를 모른다.
+ * 화면이 먼저 말하면 찾을 것이 없어진다 (components/sc/ReadScreen 이 읽는다).
+ *
+ * 화면당 하나다. 여러 개면 도착할 때마다 문단이 흘러나오고, 그러면 사람들은
+ * 소리를 꺼 버린다 — 정작 필요할 때 아무것도 안 들리게 된다.
+ */
+export function ask(text: string) {
+  return { 'data-say': text, 'data-ask': '' };
+}
+
+/**
+ * 눌러서 듣는 자리라는 표시.
+ *
+ * 전에는 0.75em 에 투명도 40% 짜리 🔊 였다. 시력이 떨어지는 사람에게 그것은 없는
+ * 것과 같고, 실제로 화면에 78곳이 소리를 갖고 있는데 눈에 보이는 표시는 아홉 곳
+ * 뿐이었다. 눌러서 듣는 기능은 있는데 누를 곳이 안 보였던 것이다.
+ *
+ * 누르는 것은 이 표시가 아니라 **줄 전체**다. 표시만 누르게 하면 떨리는 손으로
+ * 작은 원을 정조준해야 한다. 표시는 "여기는 소리가 있다" 만 말하고 손가락은
+ * 아무 데나 대면 된다.
+ */
+function SpeakerMark({ speaking }: { speaking: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none flex h-8 w-8 shrink-0 select-none items-center justify-center
+                 rounded-full text-base"
+      style={{
+        background: speaking ? 'var(--color-sc-primary)' : 'var(--color-sc-line)',
+        color: speaking ? '#fff' : 'var(--color-sc-ink)',
+      }}
+    >
+      {speaking ? '⏸' : '🔊'}
+    </span>
+  );
+}
+
 /** 누르면 `text` 를 읽는 영역. 감싸는 내용은 무엇이든 될 수 있다. */
-export function Speakable({ text, children, className = '', style, label }: {
+export function Speakable({ text, children, className = '', style, label, bare = false }: {
   text: string;
   children: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   label?: string;
+  /** 표시를 숨긴다 — 이미 옆에 듣기 버튼이 있는 자리에서만. */
+  bare?: boolean;
 }) {
   const [speaking, setSpeaking] = useState(false);
   const alive = useRef(true);
@@ -78,6 +121,7 @@ export function Speakable({ text, children, className = '', style, label }: {
       style={style}
     >
       {children}
+      {!bare && <SpeakerMark speaking={speaking} />}
     </span>
   );
 }
@@ -97,28 +141,55 @@ export function Say({ children, as, className = '', style, bare = false }: SayPr
     <Speakable
       text={as ?? children}
       label={`Read aloud: ${children}`}
-      className={`inline-flex items-start gap-1 ${className}`}
+      className={`inline-flex items-center gap-2 ${className}`}
       style={style}
+      bare={bare}
     >
       <span>{children}</span>
-      {!bare && (
-        <span aria-hidden className="shrink-0 select-none text-[0.75em] leading-relaxed opacity-40">
-          🔊
-        </span>
-      )}
     </Speakable>
   );
 }
 
 /**
- * 목록 행 옆에 붙는 작은 듣기 버튼.
+ * 묶음 머리글 — `TODAY` · `RECENT` 처럼 아래 내용을 소개하는 한 줄.
+ *
+ * 처음에는 표시를 안 달았다. 아래 카드가 이미 자기 소리를 갖고 있으니 두 번 되는
+ * 자리라고 봤는데, 그것은 화면을 **위에서 아래로 읽는 사람**의 셈법이다. 소리로
+ * 화면을 아는 사람은 지금 듣고 있는 것이 어느 묶음에 속하는지를 알아야 하고, 그
+ * 정보는 머리글에만 있다. 어떤 줄은 되고 어떤 줄은 안 되면 "눌러도 되는 곳" 이라는
+ * 규칙 자체가 무너진다 — 규칙이 있어야 시험 삼아 눌러 볼 수 있다.
+ */
+export function SectionLabel({ children, say, className = '' }: {
+  children: React.ReactNode;
+  /** 화면 글자보다 길게 읽어야 할 때 (머리글은 대개 두 단어라 그것만으로는 부족하다). */
+  say: string;
+  className?: string;
+}) {
+  return (
+    <Speakable
+      text={say}
+      className={`flex w-full items-center gap-2 text-[11px] font-bold tracking-wide ${className}`}
+      style={{ color: 'var(--color-sc-muted)' }}
+    >
+      <span className="flex-1">{children}</span>
+    </Speakable>
+  );
+}
+
+/**
+ * 행 옆에 붙는 듣기 버튼.
+ *
  * 행 자체가 버튼인 자리에서 쓴다 — 버튼 안에 버튼을 넣으면 키보드 탐색이 깨지므로
  * Speakable 로 감싸지 않고 형제로 놓는다.
+ *
+ * 크기가 44 인 것은 임의의 값이 아니다. 손끝이 화면에 닿는 면적이 대략 그만큼이고,
+ * 그보다 작으면 조준을 요구하게 된다. 이 앱을 쓰는 사람의 손은 떨린다.
  */
-export function SpeakIcon({ text, className = '' }: { text: string; className?: string }) {
+export function Hear({ text, className = '' }: { text: string; className?: string }) {
   const [speaking, setSpeaking] = useState(false);
   async function play(e: React.MouseEvent) {
     e.stopPropagation();
+    e.preventDefault();
     if (speaking) { stopSpeaking(); setSpeaking(false); return; }
     setSpeaking(true);
     await speak(text);
@@ -127,9 +198,14 @@ export function SpeakIcon({ text, className = '' }: { text: string; className?: 
   return (
     <button
       onClick={play}
-      aria-label={`Read aloud: ${text}`}
+      aria-label={speaking ? 'Stop' : `Read aloud: ${text}`}
       {...sayable(text)}
-      className={`shrink-0 px-2 py-2 text-base opacity-40 ${className}`}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg
+                  active:scale-95 transition-transform ${className}`}
+      style={{
+        background: speaking ? 'var(--color-sc-primary)' : 'var(--color-sc-line)',
+        color: speaking ? '#fff' : 'var(--color-sc-ink)',
+      }}
     >
       {speaking ? '⏸' : '🔊'}
     </button>

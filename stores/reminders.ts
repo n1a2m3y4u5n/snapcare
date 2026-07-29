@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { accountStorage } from '@/lib/snapcare/accounts';
 import type { ScanItem } from '@/lib/snapcare/types';
 
 export interface Reminder {
@@ -29,6 +30,8 @@ export const useReminders = create<RemindersState>()(
     }),
     {
       name: 'snapcare-reminders',
+      // 약은 사람 것이다. 한 폰에 둘이 있으면 알람도 둘로 갈라져야 한다.
+      storage: accountStorage,
       // v2: Reminder 모양이 바뀌었다 (name/emoji → item 스냅샷).
       // 이전 저장분은 새 화면에서 읽을 수 없으므로 비우고 시작한다.
       version: 2,

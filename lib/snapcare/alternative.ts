@@ -59,8 +59,19 @@ export function alternativeFor(item: ScanItem, verdict: Verdict): Alternative | 
   // 안전하다고 판정된 것에 대체를 권하면 판정을 스스로 뒤집는 셈이다.
   if (verdict.level === 'safe') return null;
 
-  if (item.alt) return { text: `${item.alt.name} — ${item.alt.note}` };
+  const derived = deriveAlternative(item, verdict);
 
+  // 이름은 카탈로그 것을 쓰되 **그림은 유도한 것을 빌려온다.**
+  //
+  // 전에는 카탈로그 대체품이 있으면 그림 없이 문장만 나갔다. 화면에서는 ✓ 쪽 칸이
+  // 비어서 장바구니 아이콘으로 떨어졌는데, 이 칸의 일이 "그럼 뭘 고르나" 를 그림으로
+  // 말하는 것이라 정작 그림이 필요한 자리에서 그림이 사라진 셈이다. 이름이 있든
+  // 없든 피해야 할 것은 같으므로, 그림은 그대로 쓸 수 있다.
+  if (item.alt) return { text: `${item.alt.name} — ${item.alt.note}`, glyph: derived?.glyph };
+  return derived;
+}
+
+function deriveAlternative(item: ScanItem, verdict: Verdict): Alternative | null {
   // 판정 이유로 걸린 조건부터 본다. 이유가 여럿이면 가장 무거운 것 하나만 —
   // 듣는 사람에게 회피 목록을 읽어주는 것은 도움이 아니라 부담이다.
   const ordered = [...verdict.reasons].sort(

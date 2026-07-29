@@ -5,17 +5,19 @@ import { useProfile } from '@/stores/profile';
 import { seedDemoIfEmpty, useScans } from '@/stores/scans';
 import { isDemo } from '@/lib/snapcare/demo';
 import { useReminders } from '@/stores/reminders';
-import { pullBlob, pushBlob, isUsable, SYNC_VERSION, type SyncBlob } from '@/lib/snapcare/sync';
+import { pull, push, type PersonBlob } from '@/lib/snapcare/sync';
 
 /*
  * 예전에는 이 자리에서 무작위 문자열을 만들어 localStorage 에 두고, 그것을 주소창에
  * 실어 보냈다. 이제 신원은 기기의 **꺼낼 수 없는 열쇠**가 지고(lib/snapcare/deviceKey.ts),
  * 어느 자료를 줄지는 서버가 그 공개키에서 유도한다. 여기서 고를 것이 없어졌다.
+ *
+ * 한 폰을 여럿이 써도 서버 파일은 여전히 기기당 하나다. 그 안에서 사람이 갈리고,
+ * 이 화면은 늘 **지금 사람** 몫만 다룬다 (lib/snapcare/sync.ts 가 나머지를 지킨다).
  */
 
-function snapshot(): SyncBlob {
+function snapshot(): PersonBlob {
   return {
-    version: SYNC_VERSION,
     profile: useProfile.getState().profile,
     scans: useScans.getState().scans,
     reminders: useReminders.getState().reminders,
@@ -42,16 +44,26 @@ export function SyncProvider() {
 
   useEffect(() => {
     let alive = true;
+    // 시연 모드는 서버에 오가지 않는다.
+    //
+    // 서버 파일은 이 사람의 실제 자료를 지키려고 있는 것인데, 거기에 시연 자료를
+    // 올리면 지킬 것이 무엇인지가 흐려진다. 실제로 한 번 새면 되돌리기도 어렵다 —
+    // 시연 명단이 올라간 뒤로는 실제 모드로 돌아와도 받아올 때마다 그 사람들이
+    // 명단에 다시 붙었다. 시연은 브라우저 안에서만 도는 것이 맞다.
+    if (isDemo()) {
+      seedDemoIfEmpty();
+      return () => { alive = false; };
+    }
     // 사용자가 무언가 고치면 즉시 표시한다. 이 구독을 아래 pull 보다 **먼저** 건다 —
     // 다른 useEffect 에 두었더니 서버 응답이 클릭보다 늦게 도착하는 경우를 놓쳤고,
     // 첫 실행에서 조건을 누른 것이 서버 사본에 덮여 사라졌다.
     const mark = () => { touched.current = true; };
     const watch = [useProfile.subscribe(mark), useScans.subscribe(mark), useReminders.subscribe(mark)];
     (async () => {
-      const blob = await pullBlob();
+      const blob = await pull();
       if (!alive) return;
       // 버전이 안 맞거나 모양이 깨진 서버 데이터는 무시하고 로컬을 다시 시드한다.
-      const hasServer = isUsable(blob) && (Boolean(blob.profile) || (blob.scans?.length ?? 0) > 0);
+      const hasServer = Boolean(blob) && (Boolean(blob!.profile) || (blob!.scans?.length ?? 0) > 0);
       if (hasServer && blob) {
         // 사용자가 기다리는 동안 무언가 고쳤다면 서버 사본으로 덮지 않는다.
         //
@@ -62,7 +74,7 @@ export function SyncProvider() {
         // 어느 쪽이 옳은지는 정할 수 없지만, **지금 손으로 누른 것**과 **몇 초 전
         // 다른 기기에서 온 것** 중에는 앞의 것이 사용자의 뜻에 가깝다.
         if (touched.current) {
-          void pushBlob(snapshot());
+          void push(snapshot());
         } else {
           if (blob.profile) useProfile.setState({ profile: blob.profile });
           if (blob.scans) useScans.setState({ scans: blob.scans });
@@ -74,7 +86,7 @@ export function SyncProvider() {
         // 마운트 직후에 넣어 봤더니 이 pull 이 끝나면서 빈 자료로 덮어썼다. 서버가
         // 무엇을 갖고 있는지 안 뒤에 넣어야 한다.
         seedDemoIfEmpty();
-        void pushBlob(snapshot());
+        void push(snapshot());
       }
       ready.current = true;
     })();
@@ -85,10 +97,11 @@ export function SyncProvider() {
   }, []);
 
   useEffect(() => {
+    if (isDemo()) return;
     const schedule = () => {
       if (!ready.current) return;
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => void pushBlob(snapshot()), 600);
+      timer.current = setTimeout(() => void push(snapshot()), 600);
     };
     const unsubs = [useProfile.subscribe(schedule), useScans.subscribe(schedule), useReminders.subscribe(schedule)];
     return () => unsubs.forEach((u) => u());

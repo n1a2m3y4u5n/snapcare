@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { Hint } from '@/components/sc/Hint';
-import { sayable } from '@/components/sc/Say';
+import { sayable, ask, Speakable } from '@/components/sc/Say';
 import { useReminders } from '@/stores/reminders';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
@@ -184,15 +184,17 @@ export default function DevicePage() {
           ‹ Settings
         </button>
         <h1 className="mt-2 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
-            {...sayable('Pill device. Send your dose times to the box, or read what it shows.')}>Pill device</h1>
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}>
-          <span {...sayable('The phone and the box are on the same Wi-Fi. Nothing else is needed.')}>Same Wi-Fi — nothing else needed.</span>
-        </p>
+            {...ask('Pill device. Send your dose times to the box, or read what it shows.')}>Pill device</h1>
+        <Speakable text="The phone and the box are on the same Wi-Fi. Nothing else is needed."
+                   className="mt-1 text-sm flex w-full items-center gap-2">
+          <span className="flex-1">Same Wi-Fi — nothing else needed.</span>
+        </Speakable>
 
         {/* 폰 → 기기 (WiFi) */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-          <span {...sayable('Send the schedule to the box.')}>SEND THE SCHEDULE</span>
-        </p>
+        <Speakable text="Send the schedule to the box."
+                   className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2">
+          <span className="flex-1">SEND THE SCHEDULE</span>
+        </Speakable>
         {trayPlan.plan.length > 0 ? (
           <div className="mt-2 rounded-3xl bg-white px-4 py-4 shadow-sm">
             <div className="flex flex-col gap-1">
@@ -228,10 +230,9 @@ export default function DevicePage() {
               늘어놓는다.
             */}
             <div className="mt-3">
-              <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-                 {...sayable('How many trays does this device have?')}>
-                TRAYS ON THIS DEVICE
-              </p>
+              <Speakable text={'How many trays does this device have?'} className="text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">TRAYS ON THIS DEVICE</span>
+        </Speakable>
               <div className="mt-2 flex gap-2">
                 {Array.from({ length: MAX_TRAYS }, (_, i) => i + 1).map((n) => (
                   <button key={n} onClick={() => setTrays(n)}
@@ -278,9 +279,10 @@ export default function DevicePage() {
             </p>
           </div>
         ) : (
-          <p className="mt-2 rounded-2xl bg-white px-4 py-6 text-center text-sm shadow-sm" style={{ color: 'var(--color-sc-muted)' }}>
-            <span {...sayable('Photograph a prescription first. The dose times it finds are what the box needs.')}>Scan a prescription first — the schedule it creates is what the device needs.</span>
-          </p>
+          <Speakable text="Photograph a prescription first. The dose times it finds are what the box needs."
+                   className="mt-2 rounded-2xl bg-white px-4 py-6 text-center text-sm shadow-sm flex w-full items-center gap-2">
+          <span className="flex-1">Scan a prescription first — the schedule it creates is what the device needs.</span>
+        </Speakable>
         )}
 
         {/*
@@ -308,9 +310,10 @@ export default function DevicePage() {
         )}
 
         {/* 종이 → 폰 : 의사가 채운 폼시트 */}
-        <p className="mt-8 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-          <span {...sayable('Or read the paper sheet the clinic filled in.')}>OR READ THE DOCTOR&apos;S SHEET</span>
-        </p>
+        <Speakable text="Or read the paper sheet the clinic filled in."
+                   className="mt-8 text-[11px] font-bold tracking-wide flex w-full items-center gap-2">
+          <span className="flex-1">OR READ THE DOCTOR&apos;S SHEET</span>
+        </Speakable>
         <label className="mt-2 flex w-full cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-4 shadow-sm" style={{ opacity: reading ? 0.5 : 1 }}>
           <span className="text-2xl">📄</span>
           <span className="flex-1">
@@ -335,9 +338,10 @@ export default function DevicePage() {
         </label>
 
         {/* 기기 → 폰 */}
-        <p className="mt-8 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-          <span {...sayable('Read the box. Photograph the code on its screen to record whether the dose was taken.')}>READ THE DEVICE</span>
-        </p>
+        <Speakable text="Read the box. Photograph the code on its screen to record whether the dose was taken."
+                   className="mt-8 text-[11px] font-bold tracking-wide flex w-full items-center gap-2">
+          <span className="flex-1">READ THE DEVICE</span>
+        </Speakable>
         <label
           className="mt-2 flex w-full cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-4 shadow-sm"
           style={{ opacity: reading ? 0.5 : 1 }}

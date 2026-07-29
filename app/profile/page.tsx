@@ -1,11 +1,13 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useProfile } from '@/stores/profile';
 import { CONDITIONS } from '@/lib/snapcare/conditions';
-import { sayable } from '@/components/sc/Say';
+import { ask, sayable, Speakable } from '@/components/sc/Say';
+import { FACES, freeFaces } from '@/lib/snapcare/accounts';
+import { useMyColor } from '@/lib/hooks';
 import type { AgeBand } from '@/lib/snapcare/types';
 
 /**
@@ -19,8 +21,11 @@ import type { AgeBand } from '@/lib/snapcare/types';
  * 비율이라, 나이대가 정해져야 당·소금·포화지방 상한이 정해진다.
  */
 
-/** 사람을 나타내는 그림 — 이름 대신 이것이 신원이 된다. */
-const FACES = ['🧑', '🧒', '👶', '🧓', '👩', '👨', '👦', '👧'];
+/*
+ * 사람을 나타내는 그림(FACES)은 lib/snapcare/accounts.ts 에 있다 — 잠금화면의 사람
+ * 고르기와 **같은 목록**이어야 하기 때문이다. 두 벌로 두면 여기서 고른 얼굴이 저기에
+ * 없는 경우가 생기고, 그러면 자기 자리를 못 찾는다.
+ */
 
 /**
  * 나이대는 이모지 대신 우리 글리프로 보인다.
@@ -37,11 +42,22 @@ const AGE_BANDS: { band: AgeBand; glyph: string; label: string; role: string }[]
   { band: 'senior', glyph: 'state_elderly', label: 'Older', role: 'Older adult' },
 ];
 
-/** 화면 묶음 — 진단서가 없어도 답할 수 있는 것부터 묻는다. */
-const GROUPS: { key: 'now' | 'experience' | 'diagnosis'; title: string; say: string }[] = [
-  { key: 'now', title: 'RIGHT NOW', say: 'Right now. Things that are true today.' },
-  { key: 'experience', title: 'MADE ME SICK BEFORE', say: 'Made me sick before.' },
-  { key: 'diagnosis', title: 'A DOCTOR TOLD ME', say: 'A doctor told me.' },
+/**
+ * 화면 묶음 — 진단서가 없어도 답할 수 있는 것부터 묻는다.
+ *
+ * 머리글에 그림을 붙인 이유: 이 세 줄은 화면에서 **유일하게 그림이 없는 글**이었다.
+ * 아래 칸들은 전부 그림 + 한 단어라 못 읽어도 짐작이 되는데, 정작 "이 칸들이 무엇을
+ * 묻는 것인가" 를 말하는 줄만 순수한 문장이었다. 묶음의 뜻을 모르면 칸 하나하나는
+ * 알아봐도 무엇을 고르라는 것인지 모른다.
+ *
+ * 그림은 답이 아니라 **질문의 종류**를 가리킨다 — 지금(시계), 먹고 탈 났다(메스꺼움),
+ * 의사가 말했다(의사). 셋 다 아래 칸의 어떤 답과도 겹치지 않으므로, 그림을 답으로
+ * 오해할 자리가 없다.
+ */
+const GROUPS: { key: 'now' | 'experience' | 'diagnosis'; title: string; emoji: string; say: string }[] = [
+  { key: 'now', title: 'RIGHT NOW', emoji: '🕐', say: 'Right now. Things that are true today.' },
+  { key: 'experience', title: 'MADE ME SICK BEFORE', emoji: '🤢', say: 'Made me sick before. Things that made you feel bad after eating them.' },
+  { key: 'diagnosis', title: 'A DOCTOR TOLD ME', emoji: '👩‍⚕️', say: 'A doctor told me.' },
 ];
 
 /**
@@ -65,6 +81,21 @@ function ProfileBody() {
   // 대신 다 골랐다고 말할 자리가 있어야 한다.
   const setup = useSearchParams().get('setup') === '1';
   const { profile, toggleCondition, setFace, setAgeBand, confirm } = useProfile();
+  const myColor = useMyColor(profile.color);
+
+  /*
+   * 남이 쓰는 얼굴은 안 보인다.
+   *
+   * 잠금화면에서 서로를 가려내는 단서가 얼굴뿐이라, 둘이 같은 얼굴을 고르면 자기
+   * 자리를 찾을 방법이 없어진다. 지금 내 얼굴은 남겨 둔다 — 안 그러면 내가 쓰는
+   * 것이 목록에서 빠져 무엇이 선택돼 있는지가 안 보인다.
+   *
+   * 혼자 쓰면 여덟 개가 전부 보인다.
+   */
+  const [faces, setFaces] = useState<string[]>(FACES);
+  useEffect(() => {
+    setFaces(FACES.filter((f) => f === profile.emoji || freeFaces().includes(f)));
+  }, [profile.emoji]);
 
   function done() {
     confirm();
@@ -79,7 +110,7 @@ function ProfileBody() {
         {setup ? (
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}
-                  {...sayable('Who are we checking for? Your age and conditions decide every verdict.')}>
+                  {...ask('Who are we checking for? Tap how old you are, and anything you must stay away from.')}>
               Who are we checking for?
             </span>
             {/* 건너뛰기를 남겨 둔다 — 첫 화면에서 막히면 앱을 아예 못 쓴다.
@@ -96,9 +127,19 @@ function ProfileBody() {
           </button>
         )}
 
+        {/*
+          얼굴 고르기는 첫 실행에서 빼고 설정에서만 보여준다.
+          
+          판정에 아무 영향이 없는데(꾸밈이다) 첫 화면에서 가장 먼저 여덟 개를 고르라고
+          했다. 처음 여는 사람이 만나는 첫 요구가 아무 값도 없는 선택이면, 그다음의
+          진짜 질문 — 나이와 조건 — 까지 같은 무게로 보인다.
+          
+          기본 얼굴은 그대로 쓰이고, 바꾸고 싶은 사람은 설정에서 바꾼다.
+        */}
+        {!setup && (
         <div className="mt-4 flex items-center gap-3">
           <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl"
-                style={{ background: profile.color }}>
+                style={{ background: myColor }}>
             {profile.emoji}
           </span>
           <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
@@ -106,10 +147,12 @@ function ProfileBody() {
             TAP A PICTURE — NO TYPING
           </span>
         </div>
+        )}
 
         {/* 신원 = 그림 */}
+        {!setup && (
         <div className="mt-4 flex flex-wrap gap-2">
-          {FACES.map((f) => (
+          {faces.map((f) => (
             <button
               key={f}
               onClick={() => setFace(f)}
@@ -122,12 +165,19 @@ function ProfileBody() {
             </button>
           ))}
         </div>
+        )}
 
         {/* 나이대 = 기준치를 정하는 값 */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-           {...sayable('How old. This decides how much is too much.')}>
-          HOW OLD
-        </p>
+        {/*
+          여기만 그림이 없다. 아래 네 칸이 곧 그 그림이기 때문이다 — 작은 사람에서
+          지팡이 짚은 사람까지 한 줄로 놓이면 무엇을 묻는지가 보인다. 머리글에 또
+          그림을 얹으면 답과 겹쳐서, 그중 하나를 고르라는 뜻으로 읽힐 수 있다.
+        */}
+        <Speakable text="How old. This decides how much is too much."
+                   className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                   style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">HOW OLD</span>
+        </Speakable>
         <div className="mt-2 grid grid-cols-4 gap-2">
           {AGE_BANDS.map((b) => {
             const on = currentBand === b.band;
@@ -157,10 +207,12 @@ function ProfileBody() {
           if (items.length === 0) return null;
           return (
             <div key={g.key}>
-              <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-                 {...sayable(g.say)}>
-                {g.title}
-              </p>
+              <Speakable text={g.say}
+                         className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                         style={{ color: 'var(--color-sc-muted)' }}>
+                <span className="text-xl" aria-hidden>{g.emoji}</span>
+                <span className="flex-1">{g.title}</span>
+              </Speakable>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {items.map((c) => {
                   const on = profile.conditionIds.includes(c.id);

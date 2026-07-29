@@ -19,11 +19,26 @@ import { usePreferences } from '@/stores/preferences';
  * 자리는 고정이다. 읽지 못하는 사람이 버튼을 찾는 방법은 '늘 거기 있다' 뿐이다.
  */
 
-export function ReadScreen() {
+/**
+ * 어디에 그릴 것인가.
+ *
+ *  tab   — 하단 탭바의 네 번째 칸. 탭바가 있는 화면은 여기다.
+ *  float — 탭바가 없는 화면(로그인·안내·카메라)의 떠 있는 버튼.
+ *  none  — 버튼 없이 이 컴포넌트의 일(도착 안내·말하기 속도 적용)만 한다.
+ *
+ * 왜 떠 있는 버튼을 걷어냈나: 줄마다 듣기 버튼이 생기면서 화면 양옆이 컨트롤 열이
+ * 됐는데, 떠 있는 원이 그 위에 앉아 실제로 누를 것을 가렸다. 오른쪽에서 왼쪽으로
+ * 옮겨도 같은 일이 반복됐다 — 어느 구석이든 내용이 있기 때문이다. 탭바는 이미
+ * 아무 내용도 지나가지 않는 자리이고, "늘 거기 있다" 는 성질도 그대로다.
+ */
+export type ReadScreenVariant = 'float' | 'tab' | 'none';
+
+export function ReadScreen({ variant = 'float' }: { variant?: ReadScreenVariant } = {}) {
   const [playing, setPlaying] = useState(false);
   const cancelled = useRef(false);
   const pathname = usePathname();
   const speechRate = usePreferences((s) => s.speechRate);
+  const autoTts = usePreferences((s) => s.autoTts);
 
   // 저장된 속도를 음성 계층에 밀어 넣는다. 이 컴포넌트가 모든 화면에 있으므로
   // 어디로 들어와도 적용된다 — 설정에서 고른 값이 새로고침에 사라지면 안 된다.
@@ -43,6 +58,32 @@ export function ReadScreen() {
     stop();
     return stop;
   }, [pathname, stop]);
+
+  /*
+   * 도착하면 이 화면이 무엇을 묻는지 한 줄 말한다.
+   *
+   * 스피커를 크게 그리는 것으로는 부족하다. 누르는 것은 **소리가 있다는 것을 이미
+   * 아는 사람**의 도구고, 처음 오는 사람에게 스피커는 그냥 그림 하나다. 화면이 먼저
+   * 말하면 찾을 것이 없어진다 — 그다음부터 스피커는 "다시 듣기" 로 쓰인다.
+   *
+   * 한 줄만 읽는다. 전부 읽으면 화면을 옮길 때마다 문단이 흘러나오고, 그러면 사람들은
+   * 소리를 꺼 버린다. 그것이 이 앱에서 제일 나쁜 결과다 — 끄고 나면 아무것도 안 들린다.
+   *
+   * 그려진 뒤에 찾아야 하므로 한 틀 미룬다. 이 컴포넌트는 화면 안에 있어서 대개는
+   * 형제가 이미 붙어 있지만, 자료를 기다렸다 그리는 화면(판정·하루 누적)은 늦게 온다.
+   */
+  useEffect(() => {
+    if (!autoTts) return;
+    let alive = true;
+    const timer = setTimeout(() => {
+      const el = document.querySelector<HTMLElement>('[data-ask]');
+      const text = el?.getAttribute('data-say');
+      if (!alive || !text) return;
+      el!.setAttribute('data-reading', '');
+      void speak(text).finally(() => el!.removeAttribute('data-reading'));
+    }, 350);
+    return () => { alive = false; clearTimeout(timer); };
+  }, [pathname, autoTts]);
 
   async function play() {
     if (playing) { stop(); setPlaying(false); return; }
@@ -71,11 +112,27 @@ export function ReadScreen() {
     }
   }
 
+  if (variant === 'none') return null;
+
+  if (variant === 'tab') {
+    return (
+      <button
+        onClick={play}
+        aria-label={playing ? 'Stop reading' : 'Read this screen aloud'}
+        className="flex flex-1 flex-col items-center gap-1 py-1"
+        style={{ color: playing ? 'var(--color-caution)' : 'var(--color-sc-muted)' }}
+      >
+        <span className="text-xl leading-none" aria-hidden>{playing ? '⏹' : '🔊'}</span>
+        <span className="text-[11px] font-semibold">{playing ? 'Stop' : 'Listen'}</span>
+      </button>
+    );
+  }
+
   return (
     <button
       onClick={play}
       aria-label={playing ? 'Stop reading' : 'Read this screen aloud'}
-      className="fixed bottom-28 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-lg active:scale-95 transition-transform"
+      className="fixed bottom-28 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-lg active:scale-95 transition-transform"
       style={{ background: playing ? 'var(--color-caution)' : 'var(--color-sc-ink)' }}
     >
       {playing ? '⏹' : '🔊'}

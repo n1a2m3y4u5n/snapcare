@@ -14,7 +14,7 @@ import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
 import { SuspectedTriggerCard } from './suspected';
 import { Today } from './today';
 import { TryIt } from './try-it';
-import { SpeakIcon, sayable } from '@/components/sc/Say';
+import { Hear, sayable, ask, Speakable } from '@/components/sc/Say';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { spokenName } from '@/lib/tts/speakable';
 
@@ -51,7 +51,7 @@ export default function HomePage() {
     <MobileScreen tab="home">
       <div className="px-5 pt-14">
         <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
-            {...sayable('SnapCare. Photograph food or medicine to check it.')}>
+            {...ask('SnapCare. Photograph food or medicine to check it. The big blue button takes a photograph.')}>
           SnapCare
         </h1>
 
@@ -140,10 +140,9 @@ export default function HomePage() {
           뭔가 놓친 것처럼 들린다.
         */}
         {scans.length > 0 && (
-          <p className="mt-8 text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-             {...sayable('Recent. What has been checked lately.')}>
-            RECENT
-          </p>
+          <Speakable text={'Recent. What has been checked lately.'} className="mt-8 text-xs font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">RECENT</span>
+        </Speakable>
         )}
         <div className="mt-2 flex flex-col gap-2">
           {scans.map((s) => {
@@ -174,7 +173,7 @@ export default function HomePage() {
                     </span>
                   </span>
                 </button>
-                <SpeakIcon text={`${spokenName(s.name, s.kind)}. ${meta.label}.`} />
+                <Hear text={`${spokenName(s.name, s.kind)}. ${meta.label}.`} />
                 {/*
                   판정은 이 목록에서 가장 중요한 정보인데 2.5px 색 점이었다.
                   색만으로 뜻을 싣는 것은 색 규약을 아는 사람에게만 통하고, 적록색약이면

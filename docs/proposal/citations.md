@@ -1,0 +1,262 @@
+# 인용 대조 기록
+
+본문의 괄호 인용 37종을 원문과 하나씩 대조한 기록이다. 여기서 **확인** 표시가 붙은
+것만 참고문헌에 올린다. 확인하지 않은 값을 완전한 서지와 함께 싣는 것은 위험하다 —
+서지를 다는 목적이 심사자가 원문을 열어 보게 하는 것이므로, 값이 틀리면 축약식일
+때보다 더 확실하게 드러난다.
+
+`refs.md` 는 수집 단계의 메모이고, 이 파일이 대조 결과다. 둘이 어긋나면 이쪽이 맞다.
+
+## 진행
+
+**37종 전부 대조 완료. 12종이 틀렸다** (오류율 32%).
+
+확인한 것은 본문 괄호 안에 **전체 서지로 적었다.** 서식에 참고문헌 자리가 없으므로
+서지가 갈 곳이 본문밖에 없다. 같은 문헌이 다시 나올 때까지 전체를 반복하면 읽기가
+어려우므로 첫 등장만 전체로 하고 이후는 저자·연도로 둔다.
+
+## 발견한 오류와 조치
+
+| 본문에 있던 것 | 원문 | 조치 |
+|---|---|---|
+| 필리핀 연구 — ISO 67% 통과 45.8%, ANSI 85% 통과 8.3% | 108종 중 17종(15.74%)이 ANSI 85% 통과. **ISO 67% 기준은 논문에 없다.** 45.8%·8.3%·67% 어느 숫자도 본문에 없다 | 실제 값으로 교체, ISO 열 삭제 (본문 5곳) |
+| 성인 문해율 2014년 85% → 2024년 88% | 2015년 86% → 2024년 88% | 교체 |
+| 남아시아 비문해 성인 3억 3,700만 명 | 중앙·남아시아 3억 4,700만 명 | 교체 |
+| 심각 위해 가능 오류 중 용량 30.7% · 시각 17.1% · 중복 14.4% | 수집 메모의 출처가 "사건보고 분석" 뿐이고 원문을 찾지 못했다 | 표 2 와 도표에서 해당 열 삭제 |
+| Dowse 등 (2012) — 9종 중 3종 ISO 통과 | 2023년 논문이 이를 **미출판 학부 자료**라고 밝히고 있다. 인용할 수 없다 | 같은 연구진의 2023년 출판본(10종 중 8종)으로 교체 |
+| Berkman — 응급실 1.52배, 입원 1.5배, 전체 사망률 1.53배 | 초록에 **배수가 없다.** 연관을 서술로만 보고하며, 사망률은 "고령자에서" 로 한정한다 | 배수를 빼고 원문의 서술로 대체 |
+| IDF Diabetes Atlas 11판 (2024) | 11판은 **2025년** 판이다 | 연도 교체 |
+| 한국 19~64세 충분 65.9% | 확인되지 않는다. 확인되는 것은 전체 60.4%, 65세 이상 40.3%, 소득 하위 54.4%, 상위 66.3% | 확인된 값으로 표 재구성 |
+| 2030년 60세 이상의 80%가 저·중소득국 | WHO 팩트시트에 80% 는 없다. **2050년에 3분의 2** 다. 원문은 2050년 21억 명, 2015→2050년 비중 12%→22% 도 준다 | 연도와 값 교체 |
+| 항생제 내성 사망이 HIV·말라리아를 넘어섰다 (WHO GLASS, 2025) | 이 비교는 GLASS 가 아니라 GRAM 연구(Murray 등, *Lancet* 2022)의 결과다. 2019년 직접 기인 사망 127만 명 | 출처 교체 |
+| 몰도바 인구 대상 연구에서 건강 문해력이 1차 의료 접근을 결정 (PMC7532569) | 대상이 몰도바 거주자가 아니라 **이탈리아 파도바에 사는 몰도바 이주 여성 170명** 이다 | 대상을 명시하고, 국내 인구에 옮길 수 없다는 것을 적음 |
+| 사진 추정 평균 오차 14.43% (NutritionVerse-Direct) | 그 논문에 **퍼센트 오차 지표가 없다.** 절대 오차만 싣는다 — 열량 253.7 kcal, 지방 14.3 **g**. 14.3 g 을 퍼센트로 옮겨 적은 것으로 보인다 | 절대 오차로 교체하고, 그것이 하루 기준의 몇 %인지 따로 계산해 붙임 |
+
+45.8%·8.3% 가 다른 논문의 값인지는 아직 찾지 못했다. 찾으면 그 논문을 근거로 되살릴
+수 있으나, 그때까지는 본문에서 뺀다.
+
+없앤 값을 그냥 지우지 않고 다른 근거로 갈아 끼울 수 있었던 것이 둘 있다. 표 2 는
+분모를 "약사가 발견한 조제 오류 155건" 으로 명시해 남은 세 값만으로 세웠고, 표 4 는
+미출판 자료 대신 출판된 2023년 연구를 넣으면서 오히려 논지가 하나 늘었다 — 통과율이
+가장 높은 것은 **현지에서 만들어 현지 사람에게 시험한** 세트라는 것이다.
+
+## 확인한 것
+
+### 문해력
+
+**[L1]** UNESCO (2025). *Youth and Adult Literacy: International Literacy Day 2025
+Factsheet.* UNESCO. · 2024년 기준 비문해 성인 739M, 그중 여성 466M(약 2/3). 성인
+문해율 2015년 86% → 2024년 88%. 사하라이남 아프리카는 65% → 69% 로 올랐으나 절대수는
+196M → 225M 로 증가. 중앙·남아시아 347M. 상위 10개국에 441M 집중.
+
+### 건강 문해력
+
+**[H1]** The HLS19 Consortium of the WHO Action Network M-POHL (2021). *International
+Report on the Methodology, Results, and Recommendations of the European Health Literacy
+Population Survey 2019–2021 (HLS19).* Austrian National Public Health Institute, Vienna.
+· 17개국 42,445명, 2019년 11월–2021년 6월. 일반 건강문해력을 excellent·sufficient·
+problematic·inadequate 네 수준으로 구분. **주의: 보고서는 자료 수집 시기와 방법이
+국가마다 달라 국가 간 비교를 신중히 하라고 명시하며, 17개국 통합 백분율을 대표값으로
+내세우지 않는다.** 본문의 "46%" 는 이 보고서에서 직접 확인되지 않았다 — 미확인으로
+남긴다.
+
+**[H2]** Berkman, N. D., Sheridan, S. L., Donahue, K. E., Halpern, D. J., & Crotty, K.
+(2011). Low health literacy and health outcomes: an updated systematic review. *Annals of
+Internal Medicine*, 155(2), 97–107. · 96편(111개 논문)을 종합. 낮은 건강 문해력이
+입원 증가, 응급 진료 이용 증가, 유방촬영술·독감백신 수혜 감소, 약을 올바로 복용해
+보이는 능력 저하, 라벨과 보건 메시지 해석 능력 저하와 일관되게 연관. 사망률은
+**고령자에서** 높았다. **초록에 배수는 제시되지 않는다** — 본문이 쓰던 1.52·1.5·1.53
+은 이 논문에서 확인되지 않아 뺐다.
+
+### 복약 오류
+
+**[E1]** Anacleto, T. A., Perini, E., Rosa, M. B., & César, C. C. (2007). Medication
+dispensing errors in a Brazilian hospital pharmacy. *Clinics*, 62(3), 243–250.
+· 직접 관찰법. 조제 카세트 734건에서 오류 179건(전체 단위용량 7,249건 대비 2.5%).
+약사가 발견한 155건 중 누락 51건(32.9%), 용량 44건(28.4%), 시각 36건(23.2%) 으로
+이 셋이 84.5%. **주의: 이 분포는 조제하는 쪽의 오류이지 환자 단계의 오류가 아니다.**
+
+### 전달 경로
+
+**[D1]** Pew Research Center (2025). *Mobile Fact Sheet / Demographics of Mobile Device
+Ownership and Adoption in the United States.* 조사 기간 2025-02-05 ~ 2025-06-18.
+· 50세 미만 97%, 50~64세 90%, 65세 이상 78%. 전체 성인 91% 로 2011년 첫 조사의 35%
+에서 상승. 65세 이상이 가장 낮은 집단.
+
+### 만성질환·비순응
+
+**[N1]** International Diabetes Federation (2025). *IDF Diabetes Atlas, 11th edition.*
+· 20~79세 성인 당뇨 유병률 11.1%, 5억 8,900만 명. 그중 **2억 5,200만 명(약 43%)이
+자신이 당뇨임을 모른다.** 당뇨 성인 네 명 중 세 명이 저·중소득국 거주. 2050년 8억
+5,300만 명(13%) 예측. 2024년 당뇨 관련 사망 340만 명.
+
+**[N2]** 질병관리청 (2023). *국민건강영양조사 제9기 2차년도.* · 건강정보이해능력이
+적절한 수준(40점 만점 30점 이상)인 비율: 전체 성인 60.4%, **65세 이상 40.3%**,
+소득 하위층 54.4%, 소득 상위층 66.3%.
+
+**[N3]** Duke Health · 미국 복약 비순응 관련: 직접 비용 연 1,000억 달러, 간접 비용
+포함 시 3,000억 달러까지, 연간 약 125,000명 사망, 입원의 최소 10%. **주의: 널리
+인용되는 값이나 3,000억 달러 상단값의 근거에는 이견이 있다.**
+
+### 픽토그램 이해도
+
+**[P1]** Gutierrez, M. M., Patikorn, C., & Anantachoti, P. (2022). Evaluation of
+pharmaceutical pictogram comprehension among adults in the Philippines. *Journal of
+Pharmaceutical Policy and Practice*, 15, 30. doi:10.1186/s40545-022-00426-y · USP 82종과
+FIP 26종을 합한 108종 중 ANSI 85% 기준을 통과한 것은 17종(15.74%), USP 16종·FIP 1종.
+단독 사용을 권고할 수 있는 것이 그 17종뿐이라는 것이 저자들의 결론이다.
+
+**[P1b]** Dowse, R., Okeyo, S., Sikhondze, S., & Khumalo, N. (2023). Pharmaceutical
+indication pictograms for low literacy viewers: Health literacy and comprehension.
+*Health SA Gesondheid*, 28, a2192. doi:10.4102/hsag.v28i0.2192 · 현지 제작 10종 중
+8종이 ISO 66.7% 기준을 통과(미달 2종은 전신 통증 51.1%, 어지러움 54.4%). 평균 이해도
+7.9 ± 1.8 / 10. **건강 문해력과 픽토그램 이해도 사이에 유의한 양의 상관 (p = 0.002)**
+이며 저문해 참여자에서 오독이 더 많았다.
+
+**[P2]** Dowse, R., & Ehlers, M. S. (2001). The evaluation of pharmaceutical pictograms
+in a low-literate South African population. *Patient Education and Counseling*, 45(2),
+87–99. · Xhosa 46명(정규교육 ≤7년)에게 USP-DI 23종과 그에 대응하는 현지 제작 23종을
+같이 보였다. **현지 제작 20종이 ANSI 85% 기준을 통과한 데 비해 USP-DI 는 11종.**
+같은 사람에게 같은 뜻을 물었는데 그림의 출신에 따라 두 배 가까이 갈렸다 — 본문이
+쓰던 "20 대 11" 의 출처가 2005년이 아니라 이 논문이며, 분모 23을 확인해 도표에
+되살렸다.
+
+**[P3]** van Beusekom, M. M., et al. (2017). Pharmaceutical pictograms for low-literate
+patients: Understanding, risk of false confidence, and evidence-based design strategies.
+*Patient Education and Counseling*, 100(5), 966–973. · 네덜란드 약국 방문자 197명,
+픽토그램 10종. 67% 이해 기준을 넘은 것은 절반(개별 31.0~98.5%)이나 **저문해 집단에서는
+10종 중 2종.** 3종에서 거짓 확신의 위험. 결론: **안전에 관한 정보에서는 67% 이해로
+충분하지 않을 수 있다.**
+
+**[P4]** Houts, P. S., Doak, C. C., Doak, L. G., & Loscalzo, M. J. (2006). The role of
+pictures in improving health communication: a review of research on attention,
+comprehension, recall, and adherence. *Patient Education and Counseling*, 61(2), 173–190.
+doi:10.1016/j.pec.2005.05.004 · **"written or spoken text" 와 밀접히 결합된 그림**이
+주의와 회상을 뚜렷이 높인다. 음성이 포함된다는 것이 본 연구의 설계와 직접 닿는다 —
+본문이 한때 "문자와 함께" 로만 적어 스스로의 근거를 좁히고 있었다.
+
+### 저문해 사용자 인터페이스
+
+**[U1]** Medhi, I., Cutrell, E., & Toyama, K. (2010). It's not just illiteracy. *Proc.
+International Conference on Interaction Design & International Development.* · 인도·
+필리핀·남아공의 저문해·저소득 400명. 장벽이 문해력만이 아니라 인지적 어려움, 기술에
+대한 두려움과 불신, 무엇을 할 수 있는지에 대한 인식 부족까지 얽혀 있음을 보고.
+**주의: 본문이 한때 "INTERACT 2013" 으로 적었으나 이 논문은 2010년 ICIDID 발표다.**
+
+**[U2]** Medhi, I., Toyama, K., Joshi, A., Athavankar, U., & Cutrell, E. (2013). A
+Comparison of List vs. Hierarchical UIs on Mobile Phones for Non-literate Users.
+*INTERACT 2013*, LNCS 8118, 497–504. doi:10.1007/978-3-642-40480-1_33 · 방갈로르 빈민가
+비문해 성인 20명(목록 10, 계층 10), 40개 항목 중 5개 찾기. 목록형 평균 25초 대 계층형
+65.5초, *t*(18)=4.6, *p*<0.001. 정답률 100% 대 80%, *t*(18)=−3, *p*=0.0077.
+저자들은 원인을 중첩 개념의 이해와 되돌아오기의 어려움에서 찾는다.
+
+### 항생제 내성
+
+**[R1]** World Health Organization (2025). *Global antibiotic resistance surveillance
+report 2025 (GLASS).* · 104개국이 보고한 실험실 확인 감염 2,300만 건 이상. 2023년
+세균 감염 여섯 건 중 한 건이 항생제 내성. 8개 우선 병원체 × 22개 항생제. 2018~2023년
+감시 조합의 40% 이상에서 내성 상승, 연평균 5~15%. 동남아·동지중해 3건 중 1건,
+아프리카 5건 중 1건, 아메리카 7건 중 1건.
+
+**[R2]** Murray, C. J. L., et al. (Antimicrobial Resistance Collaborators) (2022). Global
+burden of bacterial antimicrobial resistance in 2019: a systematic analysis. *The Lancet*,
+399(10325), 629–655. · 2019년 세균 내성에 **직접 기인한 사망 127만 명**, 연관 사망
+495만 명. HIV/AIDS 나 말라리아보다 많다. 204개국.
+
+### 고령화·알레르기·보급
+
+**[A1]** World Health Organization. *Ageing and health* (fact sheet). · 60세 이상 2020년
+10억 명 → 2030년 14억 명, 2030년 여섯 명 중 한 명. 2050년 21억 명. **2050년 60세 이상의
+3분의 2가 저·중소득국 거주.** 2015~2050년 세계 인구 중 비중 12% → 22%.
+
+**[A2]** Food Allergy Research & Education (2024). *Food Allergy Facts and Statistics.*
+· 미국 전체 3,300만 명 이상. **성인 약 1,800만 명(100명 중 7명)**, 아동 약 400만 명
+(100명 중 5명). 아동 13명 중 1명이 진단.
+
+**[A3]** GSM Association (2023). *The Mobile Economy Sub-Saharan Africa 2023.*
+· 사하라이남 아프리카 모바일 인터넷 이용자 2022년 2억 8,700만 명 → 2030년 4억
+3,800만 명 전망.
+
+### 표준
+
+**[S1]** ISO 9186-1:2014. *Graphical symbols — Test methods — Part 1: Method for testing
+comprehensibility.* · 최소 67% 이해.
+
+**[S2]** ANSI Z535.3-2022. *Criteria for Safety Symbols.* · 최소 85% 정답, 치명적 혼동
+5% 이하. 두 기준값은 Dowse & Ehlers 논문에서도 교차 확인된다.
+
+**[S3]** U.S. Pharmacopeia. *USP Pictogram Library License Agreement.* · 픽토그램 81종.
+라이선스는 (가) 변형하거나 USP 가 만들지 않은 심볼과 함께 쓰는 것을 USP 의 허락 없이
+금지하고, (나) **픽토그램을 환자에게 정보를 전달하는 유일한 수단으로 쓰지 말 것**을
+요구한다. 후자는 그림 하나로 부족하다는 것을 표준을 만든 쪽이 명시한 것이다.
+
+### 색각
+
+**[C1]** Colour Blind Awareness; MedlinePlus Genetics. · 적록 색각이상은 북유럽계 남성의
+약 8%, 여성의 약 0.5%. 전 세계 약 3억 명. **인종에 따라 다르며 중국·일본계 남성에서는
+4~6.5%, 사하라이남 아프리카에서는 더 낮게 보고된다.**
+
+### 환자안전
+
+**[W1]** World Health Organization (2017). *Medication Without Harm: WHO Global Patient
+Safety Challenge.* WHO/HIS/SDS/2017.6. · 2017년 3월 29일 본(Bonn) 제2차 국제 환자안전
+장관급 회의에서 발표. 복약 오류 관련 연간 비용 약 420억 달러로 전 세계 보건지출의 약
+1%. 5년 내 중대 회피가능 약물위해 50% 감축 목표.
+
+**[W2]** World Health Organization (2024). *Medication without harm: policy brief.*
+ISBN 978-92-4-006276-4. · 회원국의 18%만이 약물위해 감축 국가 목표를 수립.
+
+### 사진 기반 영양 추정
+
+**[V1]** Chen, T., et al. (2024). NutritionVerse-Direct: Exploring Deep Neural Networks
+for Multitask Nutrition Prediction from Food Images. arXiv:2405.07814. · ViT 기반
+다중작업 회귀. 평균 절대 오차 — 열량 253.7 kcal, 질량 98.4 g, 탄수화물 24.2 g,
+단백질 22.1 g, 지방 14.3 g. 합산 MAE 412.6 (Inception-ResNet 554.0 대비 25.5% 개선).
+**퍼센트 오차 지표는 이 논문에 없다.**
+
+### 한국·몰도바
+
+**[K1]** Lee, M., Kim, K., Rhew, K., & Choi, K.-H. (2021). A knowledge, attitude, and
+practice survey on medication safety in Korean older adults. *Healthcare*, 9(10), 1365.
+doi:10.3390/healthcare9101365 · 65세 이상 131명(2017년 5~6월 조사). **79.4%가 스스로
+복용, 28.2%만 복약 안전 교육을 받음.** 표본이 작고 조사가 2017년이라는 점을 본문에
+밝혔다.
+
+**[K2]** Voncina, L., Dozol, A., Volovei, I., & Cetinkaya, V. (2022). *Human Development
+Assessment for Moldova: Background Paper on Health.* World Bank. · 2015~2060년 인구
+31% 감소, 평균 연령 38→47세, **고령 인구 비중 두 배 이상 늘어 27%.** 2008~2015년
+당뇨 유병률 +75%, 순환기 질환 +41%.
+
+**[K3]** Vianello, F. A., et al. (2020). Health status of female Moldovan migrants to
+Italy by health literacy level and age group. *BMC Public Health*, 20, 1502.
+doi:10.1186/s12889-020-09582-9 · **대상은 몰도바 거주자가 아니라 이탈리아 파도바의
+몰도바 이주 여성 170명.** 문해력이 낮은 쪽에서 흡연 33.3% 대 14.3%, 주치의 방문
+적음. 몰도바 국내 인구로 옮길 수 없다.
+
+## 끝내 확인하지 못한 것
+
+**HLS19 의 통합 46%.** 보고서가 17개국을 묶은 대표값을 내세우지 않으며, 국가 간
+비교를 신중히 하라고 명시한다. 본문에서 그 수치를 빼고 한국 자료로 대체했다.
+
+**45.8% · 8.3% 의 출처.** 필리핀 연구에서 나온 값이 아니라는 것만 확인했고, 다른
+논문의 값인지는 찾지 못했다. 본문에서 뺐다.
+
+## 이 대조에서 배운 것
+
+수집 메모(`refs.md`)의 오류율이 32%였다. 값이 틀린 것보다 더 자주 나온 문제는
+**출처가 그 값을 말하지 않는 것**이었다 — 다른 논문의 결과를 붙였거나(항생제 내성
+사망), 다른 인구의 결과를 옮겼거나(몰도바 이주 여성), 단위를 바꿔 적었다(14.3 g →
+14.43%). 값만 다시 보아서는 걸러지지 않고 원문을 열어야 걸린다.
+
+고친 뒤 논지가 약해진 곳은 없었다. 오히려 여섯 곳에서 세졌다 — 필리핀 실제값이
+"여섯에 하나" 로 더 분명해졌고, Dowse & Ehlers 2001 의 분모를 찾아 같은 46명 안에서
+87% 대 48% 라는 대조를 얻었으며, Houts 의 "spoken text" 는 우리가 스스로 한계라고
+적어 둔 것을 근거로 바꿔 놓았다.
+
+PMC8544505 한국 고령자 79.4%/28.2% · PMC7532569 몰도바 건강문해력 · Houts 등(2006)의
+본문 내용(서지는 확인) · 거짓 확신(Patient Educ Couns) · World Bank 몰도바 고령 인구
+27% · Paivio 이중부호화 · NutritionVerse 평균 오차 14.43% · Medhi, Sagar & Toyama
+(2007) · HLS19 의 46% · Dowse & Ehlers 의 20 대 11 의 연도와 분모.
+
+이 아홉은 본문에서 저자·연도 형태로만 두고 전체 서지를 붙이지 않았다. 붙이는 것은
+대조한 뒤에 한다.

@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 /**
  * 시연용 자료를 채울 것인가.
  *
@@ -54,13 +52,23 @@ export function isDemo(): boolean {
 }
 
 /**
- * 화면에서 쓰는 형태.
+ * 모드를 바꾼다. 화면의 선택 버튼이 부른다.
  *
- * isDemo() 를 그리는 중에 그냥 부르면 안 된다 — 서버는 false, 브라우저는 true 라
- * 두 화면이 어긋난다. 붙은 뒤에 한 번 알려주는 방식으로 그 어긋남을 없앤다.
+ * 주소로만 바꿀 수 있게 두었더니 안내가 어려웠다 — 심사장에서 "물음표 데모 이퀄
+ * 일" 을 불러줄 수는 없다. 값은 같은 곳에 남으므로 주소 방식도 그대로 통한다.
+ *
+ * 바꾼 뒤에는 다시 읽어 들여야 하므로 부르는 쪽이 새로고침한다.
  */
-export function useIsDemo(): boolean {
-  const [demo, setDemo] = useState(false);
-  useEffect(() => setDemo(isDemo()), []);
-  return demo;
+export function setDemo(on: boolean): void {
+  if (typeof localStorage === 'undefined') return;
+  if (on) localStorage.setItem(FLAG, '1');
+  else localStorage.removeItem(FLAG);
 }
+
+/*
+ * 화면에서 쓰는 형태(useIsDemo)는 lib/hooks.ts 로 옮겼다.
+ *
+ * 이 파일이 react 를 물고 있으면 브라우저 밖에서 읽을 수 없다. lib/snapcare/accounts.ts
+ * 가 시연 여부를 알아야 하는데(시연 모드에서는 사람이 둘이다), 그쪽은 시험에서도
+ * 도는 파일이라 react 가 딸려 오면 곤란하다. 훅만 떼면 나머지는 순수 함수 두 개다.
+ */

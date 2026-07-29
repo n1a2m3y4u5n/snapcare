@@ -1,6 +1,6 @@
 'use client';
 
-import { sayable } from '@/components/sc/Say';
+import { sayable, ask } from '@/components/sc/Say';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
@@ -57,7 +57,7 @@ export default function ProviderPage() {
           무엇을 보여주는 화면인지 알아야 상대에게 내밀 수 있다.
         */}
         <h1 className="mt-3 text-xl font-bold" style={{ color: 'var(--color-sc-ink)' }}
-            {...sayable('Show this to your provider. It holds what you have taken and what you have checked. The code expires by itself.')}>
+            {...ask('Show this to your provider. It holds what you have taken and what you have checked. The code expires by itself.')}>
           Show this to your provider
         </h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}>Your medication &amp; scan history, no typing.</p>
