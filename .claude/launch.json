@@ -2,33 +2,13 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "snapcare",
+      "name": "survey-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",
         "dev"
       ],
-      "port": 3000,
-      "autoPort": true
-    },
-    {
-      "name": "snapcare-figs",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev"
-      ],
-      "port": 3200,
-      "autoPort": true
-    },
-    {
-      "name": "snapcare-survey",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": [
-        "run",
-        "dev"
-      ],
-      "port": 3300,
+      "port": 3410,
       "autoPort": true
     }
   ]

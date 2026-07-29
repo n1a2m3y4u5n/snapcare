@@ -116,7 +116,7 @@ export const BACKGROUND: Item[] = [
     // 익명을 허용하는 편이 낫다. 다만 익명 응답은 중복을 걸러낼 수 없다.
     id: 'b_name',
     kind: 'text',
-    q: T('성함 (선택)', 'Your name (optional)', 'Numele dumneavoastră (opțional)'),
+    q: T('성함', 'Your name', 'Numele dumneavoastră'),
     note: T(
       '익명으로 답하셔도 됩니다. 이름을 남기시면 같은 분의 응답이 중복 집계되는 것을 막고, 인용을 허락하신 범위 안에서 출처를 밝힐 수 있습니다.',
       'You may answer anonymously. Giving a name lets us avoid counting the same person twice and lets us attribute your view within the citation scope you choose.',
@@ -126,7 +126,7 @@ export const BACKGROUND: Item[] = [
   {
     id: 'b_affil',
     kind: 'text',
-    q: T('소속 (선택)', 'Affiliation (optional)', 'Afiliere (opțional)'),
+    q: T('소속', 'Affiliation', 'Afiliere'),
   },
 ];
 
@@ -427,9 +427,9 @@ export const CLOSE: Item[] = [
     id: 'd3_email',
     kind: 'text',
     q: T(
-      '후속 질문으로 다시 연락드려도 되면 이메일을 남겨 주십시오. (선택)',
-      'If we may follow up, please leave an email. (optional)',
-      'Dacă putem reveni cu întrebări, vă rugăm să lăsați un e-mail. (opțional)',
+      '후속 질문으로 다시 연락드려도 되면 이메일을 남겨 주십시오.',
+      'If we may follow up, please leave an email.',
+      'Dacă putem reveni cu întrebări, vă rugăm să lăsați un e-mail.',
     ),
   },
 ];
