@@ -3,6 +3,20 @@
 `proposal_ko.md` 가 본문이고, `refs.md` 는 그 근거로 쓴 통계·선행연구 121건이다.
 본문의 그림 경로는 `fig/` 상대경로이므로 두 폴더를 함께 옮겨야 그림이 붙어 온다.
 
+## 제출본
+
+`SnapCare_H1_Final_Proposal_KO.docx` 가 제출 형식이다. 마크다운을 손으로 옮긴 것이
+아니라 `tools/build_docx.py` 가 `proposal_ko.md` 에서 만들어 낸다. 본문을 고쳤으면
+다시 돌리면 되고, 두 파일이 어긋날 일이 없다.
+
+```bash
+pip install python-docx
+python3 docs/proposal/tools/build_docx.py
+```
+
+공식 서식 `template.docx` 의 빈 칸을 채우는 방식이다. 표지·안내문·쪽 설정이 심사
+서식 그 자체라 새로 그리지 않는다. 서식이 개정되면 `template.docx` 만 바꾸면 된다.
+
 ## 도판
 
 그림 1–14. 파일 이름의 숫자가 본문의 그림 번호와 같다.
