@@ -25,7 +25,16 @@ export async function recognizeText(
   image: string | File | Blob,
   onProgress?: (progress: number) => void
 ): Promise<string> {
-  const result = await Tesseract.recognize(image, 'kor+eng', {
+  // 영어만 읽는다.
+  //
+  // 예전에는 'kor+eng' 였다. 언어를 하나 더 얹으면 받는 자료가 1.5MB 늘고, 두 모델이
+  // 같은 글자를 두고 경쟁하면서 인식률이 떨어진다. 대상 지역은 몰도바이고 화면도
+  // 전부 영어다.
+  //
+  // 파서(lib/ocr-to-macro.ts)의 한글 패턴 35개는 그대로 둔다 — 전부 `안약|eye drops`
+  // 처럼 영어와 나란히 적혀 있어서, 영어만 읽어도 같은 자리를 잡아낸다.
+  // 한국어 라벨을 읽어야 할 때가 오면 여기에 'kor' 을 되돌리면 된다.
+  const result = await Tesseract.recognize(image, 'eng', {
     ...OCR_ASSETS,
     logger: (m) => {
       if (m.status === 'recognizing text' && onProgress) {

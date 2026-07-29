@@ -45,8 +45,13 @@ const OUT = join(ROOT, 'public', 'ocr');
  */
 const WORKER = ['tesseract.js/dist/worker.min.js', 'worker.min.js'];
 
-/** 언어 데이터는 따로 받는다. 한국어와 영어 둘 다 읽어야 한다. */
-const LANGS = ['kor', 'eng'];
+/**
+ * 언어 데이터는 따로 받는다.
+ *
+ * 영어만 받는다 — lib/ocr.ts 가 'eng' 로만 읽는다. 언어를 하나 더 얹으면 사용자가
+ * 받는 자료가 늘고 두 모델이 경쟁해 인식률이 떨어진다.
+ */
+const LANGS = ['eng'];
 const LANG_BASE = 'https://cdn.jsdelivr.net/npm/@tesseract.js-data';
 
 async function have(path) {
