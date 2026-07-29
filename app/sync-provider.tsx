@@ -30,6 +30,8 @@ function snapshot(): SyncBlob {
 export function SyncProvider() {
   const ready = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** 서버 응답을 기다리는 사이에 사용자가 무언가 고쳤는가. */
+  const touched = useRef(false);
   // 렌더가 아니라 이펙트에서 읽는다 (localStorage·randomUUID 는 서버에 없다).
 
   // 주소의 ?demo 를 **가장 먼저** 읽어 둔다. isDemo() 는 읽을 때 그 값을 브라우저에
@@ -40,15 +42,32 @@ export function SyncProvider() {
 
   useEffect(() => {
     let alive = true;
+    // 사용자가 무언가 고치면 즉시 표시한다. 이 구독을 아래 pull 보다 **먼저** 건다 —
+    // 다른 useEffect 에 두었더니 서버 응답이 클릭보다 늦게 도착하는 경우를 놓쳤고,
+    // 첫 실행에서 조건을 누른 것이 서버 사본에 덮여 사라졌다.
+    const mark = () => { touched.current = true; };
+    const watch = [useProfile.subscribe(mark), useScans.subscribe(mark), useReminders.subscribe(mark)];
     (async () => {
       const blob = await pullBlob();
       if (!alive) return;
       // 버전이 안 맞거나 모양이 깨진 서버 데이터는 무시하고 로컬을 다시 시드한다.
       const hasServer = isUsable(blob) && (Boolean(blob.profile) || (blob.scans?.length ?? 0) > 0);
       if (hasServer && blob) {
-        if (blob.profile) useProfile.setState({ profile: blob.profile });
-        if (blob.scans) useScans.setState({ scans: blob.scans });
-        if (blob.reminders) useReminders.setState({ reminders: blob.reminders });
+        // 사용자가 기다리는 동안 무언가 고쳤다면 서버 사본으로 덮지 않는다.
+        //
+        // 이걸 안 하면 앱을 열자마자 프로필을 고친 사람의 편집이 조용히 사라진다.
+        // 실제로 첫 실행에서 조건 두 개를 눌렀는데 하나만 남았다 — 먼저 누른 것이
+        // 이 pull 에 덮인 것이었고, 화면에는 아무 표시도 나지 않았다.
+        //
+        // 어느 쪽이 옳은지는 정할 수 없지만, **지금 손으로 누른 것**과 **몇 초 전
+        // 다른 기기에서 온 것** 중에는 앞의 것이 사용자의 뜻에 가깝다.
+        if (touched.current) {
+          void pushBlob(snapshot());
+        } else {
+          if (blob.profile) useProfile.setState({ profile: blob.profile });
+          if (blob.scans) useScans.setState({ scans: blob.scans });
+          if (blob.reminders) useReminders.setState({ reminders: blob.reminders });
+        }
       } else {
         // 서버에도 없다 = 이 사람의 첫 실행이다. 시연 모드면 여기서 채운다.
         //
@@ -61,6 +80,7 @@ export function SyncProvider() {
     })();
     return () => {
       alive = false;
+      watch.forEach((u) => u());
     };
   }, []);
 

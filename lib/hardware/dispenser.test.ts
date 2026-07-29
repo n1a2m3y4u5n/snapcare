@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   to24h, planTrays, saveUrl, dropUrl, cleanHost, looksLikeHost, MAX_TRAYS,
+  durationDays, weeklyFrom,
 } from './dispenser.ts';
 import type { Reminder } from '@/stores/reminders';
 
@@ -66,4 +67,33 @@ test('사용자가 적은 주소의 흔한 실수를 걸러낸다', () => {
 
 test('주소를 정리한 뒤에도 URL 이 겹치지 않는다', () => {
   assert.ok(dropUrl('http://pill.local/', 2).startsWith('http://pill.local/dropout'));
+});
+
+test('처방 기간을 날수로 읽는다 — 없으면 무기한(0)', () => {
+  assert.equal(durationDays('for 7 days'), 7);
+  assert.equal(durationDays('7일간'), 7);
+  assert.equal(durationDays('2 weeks'), 14);
+  assert.equal(durationDays('ongoing'), 0);
+  assert.equal(durationDays(undefined), 0);
+});
+
+test('주간 슬롯에 복용 기간이 실린다 — /save 로는 보낼 수 없는 것', () => {
+  const r = {
+    id: 'a', memberId: 'me', time: '8:00 AM',
+    item: { name: 'Amox', rx: { durationText: 'for 7 days' } },
+  } as unknown as Reminder;
+  const { slots } = weeklyFrom([r], 3);
+  assert.equal(slots.length, 1);
+  assert.deepEqual(slots[0].times, ['0800']);
+  assert.equal(slots[0].durationDays, 7);
+  assert.equal(slots[0].days, 127);   // 요일은 앱이 묻지 않아 매일
+});
+
+test('달려 있는 트레이 수를 넘으면 남는다 — 출품 기기는 3개뿐이다', () => {
+  const many = Array.from({ length: 5 }, (_, i) => ({
+    id: String(i), memberId: 'me', time: `${i + 1}:00 AM`, item: { name: 'X' },
+  } as unknown as Reminder));
+  const { slots, dropped } = weeklyFrom(many, 3);
+  assert.equal(slots.length, 3);
+  assert.equal(dropped.length, 2);
 });

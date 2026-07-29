@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { isDemo } from '@/lib/snapcare/demo';
 import type { AgeBand, Member } from '@/lib/snapcare/types';
 
 /**
@@ -114,3 +115,30 @@ export const useProfile = create<ProfileState>()(
     },
   ),
 );
+
+
+/**
+ * 시연용 프로필. 기록만 넣으면 판정이 성립하지 않는다.
+ *
+ * 당뇨 + 혈액희석제를 쓰는 어르신으로 둔다. 실제로 흔히 겹치는 조합이고, 우리가
+ * 대상으로 삼은 사람이다. 이 둘이 있어야 시연 기록의 회피 두 건이 뜻을 갖는다 —
+ * 설탕 때문에, 그리고 이부프로펜이 혈액희석제와 겹치기 때문에.
+ *
+ * 확인한 것으로 표시한다. 시연 중에 프로필 설정 화면부터 거치게 하면 정작 보여줄
+ * 것에 도달하기 전에 시간을 쓴다.
+ */
+export function seedDemoProfile(): void {
+  if (!isDemo()) return;
+  const { profile, confirmed } = useProfile.getState();
+  if (confirmed || profile.conditionIds.length > 0) return;
+  useProfile.setState({
+    confirmed: true,
+    profile: {
+      ...profile,
+      ageBand: 'senior',
+      role: 'Older',
+      emoji: '🧓',
+      conditionIds: ['diabetic', 'blood_thinner_conflict'],
+    },
+  });
+}

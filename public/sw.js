@@ -12,7 +12,7 @@
  *  - API        : 통과 (판정은 신선해야 하고, 오프라인 폴백은 앱 코드가 직접 처리한다)
  */
 
-const VERSION = 'snapcare-v2';
+const VERSION = 'snapcare-9deecb296fb5db3d';
 const SHELL = `${VERSION}-shell`;
 const ASSETS = `${VERSION}-assets`;
 
@@ -68,6 +68,16 @@ self.addEventListener('fetch', (event) => {
   if (
     url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/pictograms/') ||
+    // 영양 추정 모델(16MB)과 그 설정. 앱의 요점이 "인터넷 없이 기기에서 판정한다"
+    // 인데 이것이 빠져 있어서, 계산은 기기에서 하면서 정작 모델을 못 받아왔다.
+    //
+    // 미리 받아두지 않고 처음 쓸 때 받는다(cacheFirst 가 그렇게 동작한다). 첫 화면에서
+    // 16MB 를 요구하면 망이 느린 곳에서는 앱이 안 뜬 것처럼 보이는데, 우리 사용자가
+    // 있는 곳이 정확히 그런 곳이다. 앱이 안 열리는 것보다 기능 하나가 늦는 편이 낫다.
+    url.pathname.startsWith('/models/') ||
+    // OCR 의 워커·코어·언어 데이터. 성분표 판독은 이 앱의 핵심 경로다 — 대상 지역의
+    // 현지 식품은 어느 제품 데이터베이스에도 없어서, 직접 읽는 것 말고는 길이 없다.
+    url.pathname.startsWith('/ocr/') ||
     url.pathname.startsWith('/nutrition/') ||
     url.pathname.startsWith('/icons/')
   ) {
@@ -86,8 +96,10 @@ const MATCH = { ignoreVary: true };
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
-    const cache = await caches.open(SHELL);
-    cache.put(request, response.clone());
+    if (response.ok) {
+      const cache = await caches.open(SHELL);
+      cache.put(request, response.clone());
+    }
     return response;
   } catch {
     const cached = await caches.match(request, MATCH);
@@ -107,8 +119,13 @@ async function cacheFirst(request) {
   if (cached) return cached;
   try {
     const response = await fetch(request);
-    const cache = await caches.open(ASSETS);
-    cache.put(request, response.clone());
+    // 성공한 응답만 담는다. 상태를 안 보고 담았더니 404 가 캐시에 들어앉아, 파일을
+    // 나중에 추가해도 계속 404 를 내줬다 — OCR 코어 하나가 없어서 시작한 실패가
+    // 파일을 채운 뒤에도 그대로 재현되어, 원인을 엉뚱한 데서 찾게 만들었다.
+    if (response.ok) {
+      const cache = await caches.open(ASSETS);
+      cache.put(request, response.clone());
+    }
     return response;
   } catch {
     return Response.error();

@@ -1,4 +1,5 @@
 import type { Reminder } from '@/stores/reminders';
+import { EVERY_DAY, type WeeklySlot } from './protocol.ts';   // 확장자 필수 — 시험이 --experimental-strip-types 로 돈다
 
 /**
  * 실제 디스펜서와 이야기하는 법.
@@ -25,7 +26,15 @@ import type { Reminder } from '@/stores/reminders';
 export const DEFAULT_HOST = 'pilldispenser.local';
 
 /** 트레이 수 상한 (하드웨어 사양). */
-export const MAX_TRAYS = 10;
+/**
+ * 펌웨어가 다루는 최대 트레이 수. 대회 출품 기기에는 **3개만 달려 있다** —
+ * 실제 개수는 화면에서 받아 planTrays 에 넘긴다. 없는 트레이를 지정하면 펌웨어가
+ * 거절한다(요청을 반만 받아들이면, 예정만 되고 나오지 않는 복용이 생긴다).
+ */
+export const MAX_TRAYS = 8;
+
+/** 대회 출품 기기에 실제로 달린 개수. 화면의 기본값. */
+export const FITTED_TRAYS = 3;
 
 /** 기기가 쓰는 색 인덱스 0..7. 우리 판정색과 뜻이 겹치는 것만 골라 매핑한다. */
 export const TRAY_COLORS = {
@@ -35,7 +44,7 @@ export const TRAY_COLORS = {
 } as const;
 
 export interface TrayPlan {
-  /** 1..10 */
+  /** 1..MAX_TRAYS */
   tray: number;
   /** 기기 화면에 뜰 이름 */
   name: string;
@@ -43,6 +52,8 @@ export interface TrayPlan {
   time: string;
   /** 0..7 */
   color: number;
+  /** 이 칸을 만든 알람. 복용 기간처럼 URL 에 실을 수 없는 것을 여기서 꺼낸다. */
+  source?: Reminder;
 }
 
 /** '6:00 PM' → '18:00'. 기기는 24시간 표기만 받는다. */
@@ -77,6 +88,7 @@ export function planTrays(reminders: Reminder[], maxTrays = MAX_TRAYS): {
       tray: plan.length + 1,
       // 기기 화면은 좁다. 약 이름을 자르되 어느 약인지는 남아야 한다.
       name: r.item.name.slice(0, 16),
+      source: r,
       time: to24h(r.time),
       color: TRAY_COLORS.green,
     });
@@ -128,4 +140,48 @@ export function cleanHost(host: string): string {
 export function looksLikeHost(host: string): boolean {
   const h = cleanHost(host);
   return h.length > 0 && !/\s/.test(h) && /^[a-z0-9.\-:]+$/i.test(h);
+}
+
+
+/**
+ * 처방전에 적힌 복용 기간을 날수로.
+ *
+ * "for 7 days", "7일간", "2 weeks" 같은 표현을 받는다. 알 수 없으면 0 —
+ * 펌웨어에서 0 은 '무기한' 이다.
+ */
+export function durationDays(text: string | undefined): number {
+  if (!text || /ongoing/i.test(text)) return 0;
+  const m = text.match(/(\d+)\s*(day|days|일|week|weeks|주)/i);
+  if (!m) return 0;
+  const n = Number(m[1]);
+  return /week|주/i.test(m[2]) ? n * 7 : n;
+}
+
+/**
+ * 알람을 주간 슬롯으로. `/save` 로는 보낼 수 없는 것을 담는다.
+ *
+ * **아직 쓰이는 곳이 없다.** 기기가 이것을 받을 경로가 없기 때문이다 — /save 에는
+ * 요일·기간 칸이 없고, 칸이 있는 /api/schedule 은 POST 라서 HTTPS 페이지에서 부를
+ * 수 없다. 펌웨어가 `GET /api/schedule?payload=…` 로도 받아 주면 그때 연결된다.
+ * (QR 로 보내려 했다가 되돌렸다: 라즈베리파이 판에는 카메라가 없다.)
+ *
+ * `/save` 에는 **요일 칸도 복용 기간 칸도 없다.** 그래서 그 경로로 보내면 월·수·금
+ * 처방이 매일 나오고 30일 코스가 트레이가 빌 때까지 계속된다. 라즈베리파이 펌웨어는
+ * 이 둘을 받으므로, 기기 카메라로 읽힐 QR 에는 담아 보낸다.
+ *
+ * 요일은 매일(EVERY_DAY)로 둔다 — 앱이 아직 요일을 묻지 않기 때문이고, 모르는 것을
+ * 지어내는 것보다 매일이 안전하다. 기간은 처방전에서 읽은 값을 쓴다.
+ */
+export function weeklyFrom(reminders: Reminder[], maxTrays = FITTED_TRAYS): {
+  slots: WeeklySlot[];
+  dropped: Reminder[];
+} {
+  const { plan, dropped } = planTrays(reminders, maxTrays);
+  const slots: WeeklySlot[] = plan.map((p) => ({
+    slot: p.tray,
+    times: [p.time.replace(':', '')],
+    days: EVERY_DAY,
+    durationDays: durationDays(p.source?.item?.rx?.durationText),
+  }));
+  return { slots, dropped };
 }

@@ -27,7 +27,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const execFileAsync = promisify(execFile);
 const ROOT = process.cwd();
-const OUT_DIR = join(ROOT, 'public', 'glyphs-gen');
+/**
+ * 만든 그림을 어디에 둘 것인가.
+ *
+ * public/ 안에 두었더니 두 방향으로 틀렸다. 배포할 때마다 앱 이미지가 통째로 새로
+ * 만들어지므로 **서버가 만든 그림은 사라지고**, 반대로 개발 중에 시험 삼아 만든
+ * 파일은 이미지에 구워져 **실제 서비스로 올라갔다.**
+ *
+ * 사라지면 다음 사용자가 다시 45초를 기다리고 요금도 다시 나간다. misses.json 은
+ * "무엇의 그림이 없었는가" 를 쌓으라고 만든 것인데 배포마다 비워지면 아무것도 쌓이지
+ * 않는다 — 만든 의미가 없어진다.
+ *
+ * 그래서 사용자 자료와 같은 볼륨에 둔다. 배포해도 지워지지 않는 유일한 자리다.
+ * 대신 public/ 밖이라 정적으로 서빙되지 않으므로 아래 GET 이 읽어서 내보낸다.
+ */
+const OUT_DIR = join(process.env.SNAPCARE_DATA_DIR || join(ROOT, '.data'), 'glyphs-gen');
 const MISSES = join(OUT_DIR, 'misses.json');
 const GEN = join(ROOT, 'engine', 'gen_glyphs.py');
 
@@ -69,7 +83,7 @@ async function make(key: string): Promise<Result> {
   const file = join(OUT_DIR, `${key}.png`);
   try {
     await access(file);
-    return { ok: true, url: `/glyphs-gen/${key}.png` };
+    return { ok: true, url: `/api/glyph?name=${key}` };
   } catch { /* 없으면 만든다 */ }
 
   if (!process.env.OPENAI_API_KEY) {
@@ -89,7 +103,7 @@ async function make(key: string): Promise<Result> {
       console.warn('[glyph]', key, '실패:', r.log?.join(' | '));
       return { ok: false, reason: 'rejected' };
     }
-    return { ok: true, url: `/glyphs-gen/${key}.png`, means: r.means };
+    return { ok: true, url: `/api/glyph?name=${key}`, means: r.means };
   } catch (e) {
     console.error('[glyph]', key, e);
     return { ok: false, reason: 'error' };
@@ -113,11 +127,32 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json(result);
 }
 
-/** 무엇이 부족했는지 — 다음 배포에서 정식 형태소로 넣을 목록. */
-export async function GET(): Promise<NextResponse> {
+/**
+ * name 이 있으면 그 그림을, 없으면 "무엇이 부족했는지" 목록을 준다.
+ *
+ * 그림이 public/ 밖에 있어서 이 경로가 필요하다. 한 번 만든 그림은 내용이 바뀌지
+ * 않으므로 오래 캐시하게 둔다 — 두 번째 사람부터는 서버에 묻지도 않는다.
+ */
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  const name = req.nextUrl.searchParams.get('name');
+  if (!name) {
+    try {
+      return NextResponse.json(JSON.parse(await readFile(MISSES, 'utf8')));
+    } catch {
+      return NextResponse.json({});
+    }
+  }
+  const key = slug(name);
+  if (!key) return NextResponse.json({ error: 'bad name' }, { status: 400 });
   try {
-    return NextResponse.json(JSON.parse(await readFile(MISSES, 'utf8')));
+    const png = await readFile(join(OUT_DIR, `${key}.png`));
+    return new NextResponse(new Uint8Array(png), {
+      headers: {
+        'content-type': 'image/png',
+        'cache-control': 'public, max-age=31536000, immutable',
+      },
+    });
   } catch {
-    return NextResponse.json({});
+    return NextResponse.json({ error: 'not found' }, { status: 404 });
   }
 }

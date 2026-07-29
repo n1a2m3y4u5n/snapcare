@@ -8,3 +8,8 @@ node_modules
 README.md
 Dockerfile
 .dockerignore
+
+# 실행 중에 만든 글리프. 개발 중 시험물이 배포 이미지에 섞이면 안 되고,
+# 서버가 만든 것은 볼륨에 남는다.
+public/glyphs-gen
+.data

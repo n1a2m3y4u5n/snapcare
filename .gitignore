@@ -89,3 +89,6 @@ engine/refs/
 # 실행 중에 만든 글리프 — 서버가 필요할 때 다시 만든다. 사람 검토를 거치지
 # 않은 그림이라 검토된 78개(engine/assets)와 같은 자리에 두지 않는다.
 public/glyphs-gen/
+
+# OCR 자산 — scripts/copy-ocr.mjs 가 node_modules 와 CDN 에서 채운다 (14MB)
+public/ocr/

@@ -50,7 +50,9 @@ export function PictogramStrip({ source }: { source: string }) {
         if (!res.ok) throw new Error(String(res.status));
         const { images } = (await res.json()) as { images: string[] };
         if (alive) setImages(images);
-      } catch {
+      } catch (err) {
+        // 픽토그램은 이 앱의 핵심 기여다. 조용히 사라지면 "원래 없는 기능" 처럼 보인다.
+        console.error('[pictogram] 합성 실패:', err);
         // 3) 부분 폴백 — 캐시에 있는 줄만
         const partial = fromCache.filter((c): c is string => c !== null);
         if (!alive) return;
