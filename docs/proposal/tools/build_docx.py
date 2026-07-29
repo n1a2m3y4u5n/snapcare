@@ -55,10 +55,14 @@ HEADER = {                             # 표 0 위쪽 정보칸
     (6, 1): 'Deployment URL: https://snapcare.fly.dev',
 }
 
-BODY_PT = 9.5
+BODY_PT = 10        # 세리프는 같은 pt 에서 작아 보인다
+LINE = 1.15         # 논문 본문에 가까운 행간
 MAX_W, MAX_H = 6.0, 5.2                # 그림 최대 크기(인치)
 MONO = 'Consolas'
-LATIN, HANGUL = 'Arial', '맑은 고딕'   # 템플릿의 안내문과 같은 계열
+# 논문 조판의 관례를 따른다 — 라틴은 Times New Roman, 한글은 바탕(명조 계열).
+# 바탕을 고른 것은 심사자가 Windows 워드로 열 가능성이 높기 때문이다. macOS 에
+# 바탕이 없으면 워드가 다른 명조로 대체하는데, 그래도 세리프라는 성격은 남는다.
+LATIN, HANGUL = 'Times New Roman', '바탕'
 MUTED = RGBColor(0x60, 0x60, 0x68)
 
 
@@ -189,19 +193,19 @@ def render(cell, md: str):
     for kind, val in blocks(md):
         if kind == 'h':
             p = para()
-            p.paragraph_format.space_before = Pt(10)
-            p.paragraph_format.space_after = Pt(3)
+            p.paragraph_format.space_before = Pt(9)
+            p.paragraph_format.space_after = Pt(2)
             write_inline(p, val, size=BODY_PT + 1.5, bold=True)
 
         elif kind == 'p':
             p = para()
-            p.paragraph_format.space_after = Pt(6)
-            p.paragraph_format.line_spacing = 1.35
+            p.paragraph_format.space_after = Pt(4)
+            p.paragraph_format.line_spacing = LINE
             p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             # 그림 설명은 가운데로, 조금 작게.
             if val.startswith('**[그림'):
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                p.paragraph_format.space_after = Pt(12)
+                p.paragraph_format.space_after = Pt(10)
                 write_inline(p, val, size=BODY_PT - 1)
                 for r in p.runs:
                     r.font.color.rgb = MUTED
