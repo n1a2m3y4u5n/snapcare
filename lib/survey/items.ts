@@ -323,13 +323,53 @@ export const BRANCHES: Branch[] = [
     ],
   },
   {
+    // 처음에는 이 구획이 "몰도바에서 쓸 수 있는가" 였다. 그것이 잘못이었다.
+    // 몰도바는 팀원이 있는 나라이지 문제가 몰린 나라가 아니고, 이 프로젝트는
+    // 몰도바를 겨냥해 만든 것도 아니다. 게다가 몰도바 보건부 연락처 페이지가
+    // 30명을 공개해 놓은 탓에, 주소를 구할 수 있다는 사실이 구획의 크기를
+    // 정해 버렸다 — 문항이 명단을 정해야 하는데 반대로 간 것이다.
+    //
+    // 실제로 물어야 할 것은 나라가 아니라 **전이** 다. 우리 78개 형태소는
+    // 한국에서 만들어 한 번도 다른 문화에서 시험된 적이 없고, 현지 제작
+    // 픽토그램이 국제 표준 세트보다 이해도가 높다는 결과가 이미 있다
+    // (Dowse & Ehlers, 2005). 몰도바는 그 질문의 첫 사례일 뿐 주제가 아니다.
     id: 'q7',
-    title: T('Q7. 몰도바에서 실제로 쓸 수 있는가', 'Q7. Can this actually be used in Moldova?', 'Q7. Poate fi folosit efectiv în Moldova?'),
+    title: T(
+      'Q7. 문화와 언어를 넘어가면 무엇이 깨지는가',
+      'Q7. What breaks when this crosses into another language and culture?',
+      'Q7. Ce se rupe când trece într-o altă limbă și cultură?',
+    ),
     items: [
-      short('q7_practice', '현지 복약지도 실무와 맞습니까?', 'Does this fit local medication-counselling practice?', 'Se potrivește cu practica locală de consiliere medicamentoasă?'),
-      short('q7_retest', '픽토그램을 현지에서 다시 시험해야 합니까?', 'Do the pictograms need to be retested locally?', 'Trebuie pictogramele retestate local?'),
-      short('q7_device', '라즈베리파이 기반 디스펜서의 기기 분류와 규제', 'Device classification and regulation for a Raspberry Pi based dispenser', 'Clasificarea și reglementarea unui dozator bazat pe Raspberry Pi'),
-      short('q7_digital', '무계정·오프라인 설계가 국가 디지털헬스 규정상 허용됩니까?', 'Is an account-free, offline design permitted under national digital-health rules?', 'Este permis un design fără cont și offline conform reglementărilor naționale de sănătate digitală?'),
+      short(
+        'q7_firstbreak',
+        '우리 78개 형태소는 한국에서 만들어 다른 문화에서 시험된 적이 없습니다. 가장 먼저 깨질 그림은 어떤 종류라고 보십니까?',
+        'Our 78 morphemes were drawn in Korea and have never been tested in another culture. What kind of image do you expect to break first?',
+        'Cele 78 de morfeme au fost desenate în Coreea și nu au fost testate niciodată în altă cultură. Ce fel de imagine credeți că se va rupe prima?',
+      ),
+      short(
+        'q7_remake',
+        '현지 제작 픽토그램이 국제 표준 세트보다 이해도가 높았다는 결과가 있습니다 (Dowse & Ehlers, 2005). 그렇다면 세트를 나라마다 다시 만들어야 합니까, 조합 문법만 옮기면 됩니까?',
+        'Locally produced pictograms have outperformed an international standard set (Dowse & Ehlers, 2005). Does that mean the set must be redrawn per country, or is it enough to carry over the composition grammar?',
+        'Pictogramele produse local au depășit un set standard internațional (Dowse & Ehlers, 2005). Înseamnă că setul trebuie redesenat pentru fiecare țară sau este suficient să transferăm gramatica de compunere?',
+      ),
+      short(
+        'q7_mustretest',
+        '문화를 넘을 때 반드시 다시 시험해야 하는 범주는 무엇입니까? 반대로 그대로 통할 것 같은 범주가 있습니까?',
+        'Which categories must be retested when crossing cultures, and are there any you would expect to transfer unchanged?',
+        'Ce categorii trebuie retestate la trecerea între culturi și există unele care ați aștepta să se transfere neschimbate?',
+      ),
+      short(
+        'q7_voice',
+        '음성 안내를 현지 언어로 옮길 때 주의할 점은 무엇입니까? 저희 음성은 문장을 다시 구성해서 읽습니다.',
+        'What should we watch for when moving the spoken guidance into another language? Our voice engine reconstructs the sentence rather than reading a label aloud.',
+        'La ce trebuie să fim atenți când mutăm ghidajul vocal în altă limbă? Motorul nostru vocal reconstruiește propoziția, nu citește o etichetă.',
+      ),
+      short(
+        'q7_regulatory',
+        '귀국의 제도에서는 어떻습니까 — 픽토그램만으로 하는 복약 안내가 허용됩니까, 저가 자동 디스펜서는 어떻게 분류됩니까?',
+        'How does it stand in your country — is pictogram-only medication guidance permitted, and how would a low-cost automatic dispenser be classified?',
+        'Cum stau lucrurile în țara dumneavoastră — este permis ghidajul medicamentos doar prin pictograme și cum ar fi clasificat un dozator automat ieftin?',
+      ),
     ],
   },
   {
