@@ -22,6 +22,16 @@
       ],
       "port": 3200,
       "autoPort": false
+    },
+    {
+      "name": "snapcare-survey",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 3300,
+      "autoPort": true
     }
   ]
 }
