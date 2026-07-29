@@ -6,7 +6,7 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip, OneGlyph } from '@/components/sc/PictogramStrip';
 import { NutrientBars } from '@/components/sc/NutrientBars';
-import { Say, Speakable } from '@/components/sc/Say';
+import { Hear, Say, Speakable } from '@/components/sc/Say';
 import { doseSentence, storageSentence } from '@/lib/snapcare/say';
 import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
@@ -245,7 +245,10 @@ function FoodResult({
       </div>
 
       <div className="mt-auto px-5 pb-8 pt-4">
-        <PrimaryButton onClick={onDone} level={verdict.level}>Done</PrimaryButton>
+        <PrimaryButton onClick={onDone} level={verdict.level}
+                       say="Done. This is saved to your history, and you go back to the start.">
+          Done
+        </PrimaryButton>
       </div>
     </div>
   );
@@ -344,7 +347,10 @@ function RxResult({
       )}
 
       <div className="mt-auto pb-8 pt-6">
-        <PrimaryButton onClick={onDone} level="safe">Create reminders</PrimaryButton>
+        <PrimaryButton onClick={onDone} level="safe"
+                       say="Create reminders. The phone will tell you at each time on the list above.">
+          Create reminders
+        </PrimaryButton>
       </div>
     </div>
   );
@@ -374,12 +380,36 @@ function SwapSide({ mark, color, say, children }: {
   );
 }
 
-function PrimaryButton({ children, onClick, level }: { children: React.ReactNode; onClick: () => void; level: 'safe' | 'caution' | 'avoid' }) {
+/**
+ * 화면을 끝내는 버튼 — 옆에 듣기 버튼을 하나 둔다.
+ *
+ * 이 화면에서 소리가 없는 마지막 요소였다. 그런데 여기가 **누르면 되돌릴 수 없는
+ * 자리**다. 판정을 기록으로 남기고, 처방이면 알람까지 만든다. 무슨 일이 일어나는지
+ * 모르고 누르는 버튼이 하필 그것이면 안 된다.
+ *
+ * 버튼 글자가 아니라 **누르면 무엇이 되는지**를 말한다. "Done" 을 읽어 주는 것은
+ * 이미 보이는 것을 되풀이하는 것이고, 정작 모르는 것 — 그래서 어떻게 되는가 — 은
+ * 그대로 남는다.
+ */
+function PrimaryButton({ children, onClick, level, say }: {
+  children: React.ReactNode;
+  onClick: () => void;
+  level: 'safe' | 'caution' | 'avoid';
+  say: string;
+}) {
   const bg = level === 'avoid' ? 'var(--color-avoid)' : level === 'caution' ? 'var(--color-caution)' : 'var(--color-sc-primary)';
   return (
-    <button onClick={onClick} className="w-full rounded-2xl py-4 text-center text-base font-bold text-white active:scale-[0.98] transition-transform" style={{ background: bg }}>
-      {children}
-    </button>
+    <div className="flex items-stretch gap-2">
+      <button onClick={onClick}
+              className="flex-1 rounded-2xl py-4 text-center text-base font-bold text-white
+                         active:scale-[0.98] transition-transform"
+              style={{ background: bg }}>
+        {children}
+      </button>
+      {/* 듣기 버튼은 흰 바탕에 둔다 — 같은 색으로 붙이면 버튼 하나가 두 칸으로
+          쪼개진 것처럼 보여서, 오른쪽을 눌러도 끝나는 줄 안다. */}
+      <Hear text={say} className="h-auto w-14 shadow-sm" />
+    </div>
   );
 }
 
