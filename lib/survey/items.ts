@@ -78,6 +78,18 @@ export const FIELDS: { id: string; label: Record<Lang, string> }[] = [
   { id: 'other', label: T('그 밖', 'Other', 'Altele') },
 ];
 
+/**
+ * 배경 문항의 답(영문 선택지 문자열)에서 직군 id 를 되짚는다.
+ *
+ * `Field` 는 선택지의 영문 표기를 값으로 저장한다. 언어를 바꿔도 저장값이 흔들리지
+ * 않게 하려고 그렇게 했는데, 그래서 직군 구획을 찾을 때 한 번 되짚어야 한다.
+ */
+export function fieldIdOf(answer: string | undefined): string | null {
+  if (!answer) return null;
+  const hit = FIELDS.find((f) => f.label.en === answer);
+  return hit ? hit.id : null;
+}
+
 export const BACKGROUND: Item[] = [
   {
     id: 'b_field',
@@ -129,6 +141,17 @@ export const BACKGROUND: Item[] = [
     ),
   },
   {
+    id: 'b_title',
+    kind: 'text',
+    required: true,
+    q: T('직함', 'Your role or title', 'Funcția dumneavoastră'),
+    note: T(
+      '교수·약사·연구원·과장 등으로 적어 주시면 됩니다. 같은 문항에 답하셔도 어느 자리에서 보신 것인지에 따라 저희가 다르게 읽어야 하기 때문입니다.',
+      'Professor, pharmacist, researcher, programme officer, and so on. The same answer reads differently to us depending on where you sit.',
+      'Profesor, farmacist, cercetător, responsabil de program și așa mai departe. Același răspuns se citește diferit în funcție de poziția dumneavoastră.',
+    ),
+  },
+  {
     id: 'b_affil',
     kind: 'text',
     required: true,
@@ -167,21 +190,6 @@ export const CORE: Item[] = [
       T('유해하다', 'Harmful', 'Dăunătoare'),
     ],
     follow: T('한 문장으로 이유를 적어 주십시오.', 'Give your reason in one sentence.', 'Motivați într-o singură frază.'),
-  },
-  {
-    id: 'a2_harm',
-    kind: 'longtext',
-    required: true,
-    q: T(
-      '이 시스템 때문에 환자가 약을 잘못 복용하게 되는 가장 그럴듯한 경로는 무엇입니까?',
-      'What is the most likely way this system leads a patient to take medication incorrectly?',
-      'Care este modul cel mai probabil în care acest sistem duce un pacient să ia medicamentul greșit?',
-    ),
-    note: T(
-      '칭찬보다 이 답이 훨씬 쓸모 있습니다. 구체적으로 적어 주시면 그대로 설계를 고칩니다.',
-      'This answer is far more useful to us than praise. The more concrete it is, the more directly we change the design.',
-      'Acest răspuns ne este mult mai util decât laudele. Cu cât este mai concret, cu atât schimbăm mai direct designul.',
-    ),
   },
   {
     // 이 문항도 사실과 달랐다. "문서 설명은 넣지 않습니다" 로 되어 있었는데, 화면에는
@@ -250,10 +258,52 @@ export const CORE: Item[] = [
       T('맞다', 'Yes', 'Da'),
       T('부분적으로', 'Partly', 'Parțial'),
       T('아니다', 'No', 'Nu'),
+      T('제 분야가 아니어서 판단할 근거가 없다', 'Not my field — I have no basis to judge', 'Nu este domeniul meu — nu am o bază pentru a judeca'),
     ],
     follow: T('덧붙일 말이 있으면 적어 주십시오.', 'Anything to add?', 'Aveți ceva de adăugat?'),
   },
+  {
+    // 직군을 가리지 않는 문항이다. 법제 응답자는 개인정보 쪽 반론을, 약사는 임상
+    // 쪽 반론을 댈 수 있다. 논문 하나만 대 주어도 우리는 발표에서 당하지 않는다.
+    id: 'c_counter',
+    kind: 'longtext',
+    q: T(
+      '이 접근에 반대되는 근거나 사례를 아십니까?',
+      'Do you know of evidence or a case that argues against this approach?',
+      'Cunoașteți dovezi sau un caz care contrazice această abordare?',
+    ),
+    note: T(
+      '논문 하나, 사례 하나만 대 주셔도 충분합니다. 저희에게는 찬성보다 반대 근거가 값어치 있습니다 — 발표 자리에서 처음 듣는 것보다 지금 아는 편이 낫습니다.',
+      'A single paper or a single case is enough. Counter-evidence is worth more to us than agreement — we would much rather hear it now than for the first time at the presentation.',
+      'O singură lucrare sau un singur caz este suficient. Contraargumentele valorează mai mult decât acordul — preferăm să le aflăm acum decât pentru prima dată la prezentare.',
+    ),
+  },
+  {
+    // 이 설문에서 가장 값어치 있는 문항이다. §5.2 는 이해도를 사람이 아니라 시각
+    // 언어 모델에게 물어 확인한 상태이고, 기관 하나가 그것을 실제 연구로 바꾼다.
+    // 선택으로 먼저 받아 분모를 만들고, 구체적인 것은 이어지는 서술에서 받는다.
+    id: 'c_recruit',
+    kind: 'single',
+    required: true,
+    q: T(
+      '저문해 성인이나 고령 환자를 대상으로 픽토그램 이해도를 실제로 시험할 수 있는 경로를 알고 계십니까?',
+      'Do you know of a route by which we could test pictogram comprehension with actual low-literacy or older adult participants?',
+      'Cunoașteți o cale prin care am putea testa comprehensiunea pictogramelor cu participanți reali cu alfabetizare redusă sau vârstnici?',
+    ),
+    note: T(
+      '저희는 아직 사람을 대상으로 이해도를 시험한 적이 없습니다. 기관, 프로그램, 또는 소개해 주실 분이 있다면 그것이 이 설문에서 저희가 가장 필요한 답입니다.',
+      'We have not yet tested comprehension with people. An institution, a programme, or someone who could introduce us — that is the single most useful answer we could receive.',
+      'Nu am testat încă comprehensiunea cu oameni. O instituție, un program sau cineva care ne-ar putea face legătura — acesta este cel mai util răspuns posibil.',
+    ),
+    options: [
+      T('예, 소개해 드릴 수 있습니다', 'Yes, I could introduce you', 'Da, v-aș putea face legătura'),
+      T('아마 가능할 것 같습니다', 'Possibly', 'Posibil'),
+      T('알지 못합니다', 'I do not know of one', 'Nu cunosc'),
+    ],
+    follow: T('어디인지 적어 주십시오.', 'Please say where.', 'Vă rugăm să precizați unde.'),
+  },
 ];
+
 
 /* ──────────── S. 서비스 피드백 — 동작하는 데모를 보고 답한다 ──────────── */
 
@@ -318,161 +368,444 @@ export const SERVICE: Item[] = [
 
 export type Branch = { id: string; title: Record<Lang, string>; items: Item[] };
 
-const short = (id: string, ko: string, en: string, ro: string, note?: Record<Lang, string>): Item => ({
-  id,
-  kind: 'longtext',
-  q: T(ko, en, ro),
-  note,
-});
-
+/**
+ * 직군별 구획.
+ *
+ * 처음에는 Q1~Q8 로 나누고 링크로 지목했다. 그것이 잘못이었다 — Q1~Q8 은 **우리가
+ * 알고 싶은 것**으로 나눈 것이고 **누가 답할 수 있는지**로 나눈 것이 아니다. 약사가
+ * 표준 충돌 구획에 배정되면 답할 근거가 없다.
+ *
+ * 지금은 `id` 가 배경 문항 `b_field` 의 선택지 id 와 같다. 응답자가 자기 분야를
+ * 고르면 그 구획이 열린다. 링크로 지목하지 않으므로 **잘못 배정될 일이 없다** —
+ * 1103명의 전문분야를 키워드로 훑어 직군에 매핑하는 방식은 그 자체로 사고를 부른다.
+ *
+ * 구획당 3문항이고, 선택 하나를 반드시 둔다. 서술만 있으면 그 구획의 분모가 없어서
+ * "이 직군 응답자 N명 중 M명" 을 쓸 수 없다.
+ */
 export const BRANCHES: Branch[] = [
   {
-    id: 'q1',
+    id: 'pharmacy',
     title: T(
-      'Q1. 글 못 읽는 성인은 실제로 복약 정보를 어떻게 다루는가',
-      'Q1. How do adults who cannot read actually handle medication information?',
-      'Q1. Cum gestionează efectiv adulții care nu pot citi informațiile despre medicamente?',
+      '약국·복약지도 실무',
+      'Pharmacy and medication counselling',
+      'Farmacie și consiliere medicamentoasă',
     ),
     items: [
-      short('q1_now', '그 사람들이 지금 실제로 쓰는 방법은 무엇입니까?', 'What do those people actually do today?', 'Ce fac efectiv acele persoane în prezent?'),
-      short('q1_proxy', '가족·약사 같은 매개자에게 의존하는 비중은 어느 정도로 보십니까?', 'How much do they rely on an intermediary — family, pharmacist?', 'Cât de mult depind de un intermediar — familie, farmacist?'),
-      short('q1_phone', '스마트폰을 쓸 수 있는 사람의 비중은 어떻습니까?', 'What share of them can use a smartphone?', 'Ce proporție dintre ei pot folosi un smartphone?'),
-      short(
-        'q1_replace',
-        '이 앱이 매개자를 대체하려 드는 것이 옳습니까, 매개자를 도와야 합니까?',
-        'Should this app try to replace the intermediary, or support them?',
-        'Ar trebui ca aplicația să înlocuiască intermediarul sau să îl sprijine?',
-      ),
-    ],
-  },
-  {
-    id: 'q2',
-    title: T('Q2. 픽토그램 단독으로 충분한가', 'Q2. Are pictograms alone sufficient?', 'Q2. Sunt pictogramele suficiente singure?'),
-    items: [
-      short('q2_limit', '픽토그램만으로 전달 가능한 복약 지시의 한계선은 어디입니까?', 'Where is the limit of what a pictogram alone can convey?', 'Unde este limita a ceea ce poate transmite singură o pictogramă?'),
-      short('q2_culture', '문화나 지역에 따라 달리 읽히는 그림의 예를 들어 주십시오.', 'Give an example of an image that reads differently across cultures.', 'Dați un exemplu de imagine care se citește diferit în funcție de cultură.'),
-      short('q2_grammar', '78개 형태소를 문법으로 결합한다는 접근에 대한 의견', 'Your view on composing 78 visual morphemes by a grammar', 'Părerea dumneavoastră despre compunerea a 78 de morfeme vizuale printr-o gramatică'),
-      short(
-        'q2_against',
-        '우리 설계에 반대되는 근거를 알고 계시면 알려 주십시오.',
-        'If you know evidence that argues against our design, please tell us.',
-        'Dacă cunoașteți dovezi care contrazic designul nostru, vă rugăm să ni le spuneți.',
-        T(
-          '반대 근거가 찬성보다 값어치 있습니다. 발표 전에 알아야 합니다.',
-          'Counter-evidence is worth more to us than agreement. We would rather know before we present.',
-          'Contraargumentele valorează mai mult decât acordul. Preferăm să aflăm înainte de prezentare.',
+      {
+        id: 'ph1_missing',
+        kind: 'single',
+        q: T(
+          '실제 복약지도에서 말로 전하시는 것 중, 이 앱이 가장 놓칠 만한 것은 무엇입니까?',
+          'Of the things you say aloud when counselling a patient, which would this app most likely miss?',
+          'Dintre lucrurile pe care le spuneți în consiliere, ce ar rata cel mai probabil aplicația?',
         ),
-      ),
-    ],
-  },
-  {
-    id: 'q3',
-    title: T('Q3. 복약지도 실무와 맞는가', 'Q3. Does this match real medication-counselling practice?', 'Q3. Corespunde practicii reale de consiliere medicamentoasă?'),
-    items: [
-      short('q3_spoken', '실제 복약지도에서 말로 전달하는 것 중 이 앱이 놓치는 것은 무엇입니까?', 'What do you say aloud in counselling that this app misses?', 'Ce spuneți verbal în consiliere și ce omite aplicația?'),
-      short('q3_duty', '약사의 법적 복약지도 의무와 충돌하는 지점이 있습니까?', 'Does this conflict with a pharmacist’s legal counselling duty?', 'Intră în conflict cu obligația legală de consiliere a farmacistului?'),
-      short('q3_review', '이 앱이 출력하는 지시를 약사가 검토해야 합니까?', 'Should a pharmacist review the instructions this app produces?', 'Ar trebui un farmacist să revizuiască instrucțiunile generate?'),
-      short('q3_adr', '부작용·이상반응 보고 경로와 어떻게 이어야 합니까?', 'How should this connect to adverse-event reporting?', 'Cum ar trebui să se conecteze la raportarea reacțiilor adverse?'),
-    ],
-  },
-  {
-    id: 'q4',
-    title: T('Q4. 이해도 시험을 어떻게 설계하는가', 'Q4. How should the comprehension test be designed?', 'Q4. Cum ar trebui proiectat testul de comprehensiune?'),
-    items: [
-      short('q4_smalln', '소규모 표본으로 ISO 67% · ANSI 85% 를 재는 현실적 방법', 'A realistic way to measure ISO 67% / ANSI 85% with a small sample', 'O metodă realistă de a măsura ISO 67% / ANSI 85% cu un eșantion mic'),
-      short(
-        'q4_prescreen',
-        '시각 언어 모델 채점을 사람 시험 앞의 사전 선별로 쓰는 것이 타당합니까?',
-        'Is it methodologically sound to use vision-language-model scoring as a pre-screen ahead of human testing?',
-        'Este corect din punct de vedere metodologic să folosim evaluarea printr-un model vizual-lingvistic ca pre-filtrare înaintea testării cu oameni?',
-        T(
-          '우리는 78개를 사람이 아니라 기계에게 물어 걸렀습니다. 사람 시험을 대체하려는 것이 아니라 그 앞에 두려는 것인데, 그 위치가 정당한지 판단을 듣고 싶습니다.',
-          'We screened all 78 by asking a model, not people. We do not mean it to replace human testing but to sit in front of it — we want your judgement on whether that position is defensible.',
-          'Am filtrat toate cele 78 întrebând un model, nu oameni. Nu intenționăm să înlocuim testarea umană, ci să o precedăm — dorim opinia dumneavoastră dacă această poziție este justificabilă.',
+        options: [
+          T('환자가 이해했는지 되묻는 확인', 'Checking back whether the patient understood', 'Verificarea faptului că pacientul a înțeles'),
+          T('그 환자에게만 해당하는 예외 설명', 'Exceptions that apply only to that patient', 'Excepții care se aplică doar acelui pacient'),
+          T('부작용이 생기면 어떻게 하라는 지시', 'What to do if a side effect appears', 'Ce să facă dacă apare o reacție adversă'),
+          T('다른 약이나 음식과의 상호작용', 'Interactions with other medicines or foods', 'Interacțiuni cu alte medicamente sau alimente'),
+          T('안심시키는 말', 'Reassurance', 'Liniștirea pacientului'),
+        ],
+        follow: T('덧붙일 말이 있으면 적어 주십시오.', 'Anything to add?', 'Aveți ceva de adăugat?'),
+      },
+      {
+        id: 'ph2_review',
+        kind: 'single',
+        q: T(
+          '이 앱이 만들어 낸 복약 지시를 약사가 검토해야 합니까?',
+          'Should a pharmacist review the dosing instructions this app produces?',
+          'Ar trebui un farmacist să revizuiască instrucțiunile de dozare generate de aplicație?',
         ),
-      ),
-      short('q4_outcome', '이해도에서 복약 오류로 넘어가려면 무엇을 재야 합니까?', 'To move from comprehension to actual dosing errors, what should we measure?', 'Pentru a trece de la comprehensiune la erorile reale de dozare, ce ar trebui măsurat?'),
-      short('q4_recruit', '저문해 참가자를 모집할 때 유의할 점', 'What to watch for when recruiting low-literacy participants', 'La ce trebuie atenție când recrutați participanți cu alfabetizare redusă'),
+        options: [
+          T('반드시 매번 검토해야 한다', 'Yes, every time', 'Da, de fiecare dată'),
+          T('처음 한 번만 검토하면 된다', 'Once at the start is enough', 'O singură dată la început este suficient'),
+          T('검토 없이 써도 된다', 'It can be used without review', 'Poate fi folosită fără revizuire'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T('왜 그렇습니까?', 'Why?', 'De ce?'),
+      },
+      {
+        id: 'ph3_current',
+        kind: 'longtext',
+        q: T(
+          '글을 읽지 못하는 환자를 만나면 지금은 실제로 어떻게 하십니까?',
+          'When you meet a patient who cannot read, what do you actually do now?',
+          'Când întâlniți un pacient care nu poate citi, ce faceți efectiv în prezent?',
+        ),
+        note: T(
+          '지금의 방법을 알면 저희가 무엇을 대체하려 하는지, 무엇을 도와야 하는지 판단할 수 있습니다. 저희는 이 자리를 본 적이 없습니다.',
+          'Knowing what happens now tells us what we would be replacing and what we should be supporting instead. We have never seen this moment.',
+          'Ce se întâmplă acum ne spune ce am înlocui și ce ar trebui să sprijinim. Nu am văzut niciodată acest moment.',
+        ),
+      },
     ],
   },
   {
-    id: 'q5',
-    title: T('Q5. 78개 형태소 체계가 일관·확장 가능한가', 'Q5. Is the 78-morpheme system coherent and extensible?', 'Q5. Este sistemul de 78 de morfeme coerent și extensibil?'),
+    id: 'nursing',
+    title: T('간호·보건', 'Nursing and public health', 'Nursing și sănătate publică'),
     items: [
-      short('q5_break', '형태소 조합이 늘어날 때 시각적으로 깨지는 지점은 어디라고 보십니까?', 'Where does a composed set start to break down visually as combinations grow?', 'Unde începe să se destrame vizual un set compus, pe măsură ce combinațiile cresc?'),
-      short('q5_iconicity', '도상성(transparency · translucency)을 어떤 지표로 보고해야 합니까?', 'Which iconicity measures should we report — transparency, translucency?', 'Ce indicatori de iconicitate ar trebui să raportăm — transparență, translucență?'),
-      short('q5_compare', '조합 규칙을 공개한 기존 체계(ARASAAC · Blissymbolics)와 비교하면 어떻습니까?', 'How does this compare with existing systems that publish composition rules (ARASAAC, Blissymbolics)?', 'Cum se compară cu sistemele existente care publică reguli de compunere (ARASAAC, Blissymbolics)?'),
-      short('q5_color', '색·크기·배치가 뜻에 관여할 때 주의할 점', 'What to watch for when colour, size, or placement carries meaning', 'La ce trebuie atenție când culoarea, dimensiunea sau poziția transmit sens'),
+      {
+        id: 'nu1_measure',
+        kind: 'single',
+        q: T(
+          '이 앱의 효과를 재려면 어느 측정도구를 쓰는 것이 맞습니까?',
+          'To measure whether this app works, which instrument should be used?',
+          'Pentru a măsura dacă aplicația funcționează, ce instrument ar trebui folosit?',
+        ),
+        options: [
+          T('건강정보이해력 도구 (K-HLAT-8, HLS 계열 등)', 'A health-literacy instrument (K-HLAT-8, HLS family)', 'Un instrument de alfabetizare în sănătate (K-HLAT-8, familia HLS)'),
+          T('eHealth 문해력 도구 (eHEALS 등)', 'An eHealth literacy instrument (eHEALS)', 'Un instrument de alfabetizare eHealth (eHEALS)'),
+          T('복약순응도 도구', 'A medication-adherence instrument', 'Un instrument de aderență la tratament'),
+          T('복약 오류 발생을 직접 센다', 'Count actual dosing errors directly', 'Numărați direct erorile de dozare'),
+          T('기존 도구로는 맞지 않는다', 'None of the existing instruments fit', 'Niciunul dintre instrumentele existente nu se potrivește'),
+        ],
+        follow: T('사용 조건이나 주의할 점이 있으면 적어 주십시오.', 'Any conditions or caveats on using it?', 'Există condiții sau atenționări privind utilizarea?'),
+      },
+      {
+        id: 'nu2_where_fails',
+        kind: 'single',
+        q: T(
+          '독거 고령 환자에게 이 방식은 어디서 먼저 실패할 것 같습니까?',
+          'For an older adult living alone, where would this approach fail first?',
+          'Pentru un vârstnic care trăiește singur, unde ar eșua prima dată această abordare?',
+        ),
+        options: [
+          T('화면을 조작하지 못한다', 'They cannot operate the screen', 'Nu poate folosi ecranul'),
+          T('음성을 듣지 못한다', 'They cannot hear the speech', 'Nu poate auzi vocea'),
+          T('기기를 관리하지 못한다 (충전·분실)', 'They cannot keep the device going — charging, loss', 'Nu poate întreține dispozitivul — încărcare, pierdere'),
+          T('앱을 신뢰하지 않는다', 'They do not trust the app', 'Nu are încredere în aplicație'),
+          T('먼저 실패할 지점이 없다', 'It would not fail first anywhere', 'Nu ar eșua prima dată nicăieri'),
+        ],
+        follow: T('덧붙일 말이 있으면 적어 주십시오.', 'Anything to add?', 'Aveți ceva de adăugat?'),
+      },
+      {
+        id: 'nu3_causal',
+        kind: 'longtext',
+        q: T(
+          '"문해력이 낮으면 복약 오류가 늘어난다" 는 저희 가설을 뒷받침하거나 반박하는 자료를 아십니까?',
+          'Do you know data that supports or refutes our hypothesis that lower literacy leads to more dosing errors?',
+          'Cunoașteți date care susțin sau infirmă ipoteza noastră că alfabetizarea scăzută duce la mai multe erori de dozare?',
+        ),
+        note: T(
+          '이 가설이 제안서 §1.3 의 근거입니다. 반박하는 자료라면 더욱 알고 싶습니다.',
+          'This hypothesis is the basis of §1.3 in our proposal. If the data refutes it, we want to know that even more.',
+          'Această ipoteză este baza §1.3 din propunerea noastră. Dacă datele o infirmă, dorim să știm cu atât mai mult.',
+        ),
+      },
     ],
   },
   {
-    id: 'q6',
-    title: T('Q6. 익명 인증으로 건강정보를 다뤄도 되는가', 'Q6. Is anonymous authentication acceptable for health data?', 'Q6. Este acceptabilă autentificarea anonimă pentru datele de sănătate?'),
+    id: 'aac',
+    title: T('AAC·특수교육', 'AAC and special education', 'CAA și educație specială'),
     items: [
-      short('q6_status', '계정·비밀번호 없이 기기 내 키로만 인증하는 설계의 법적 지위', 'The legal standing of authenticating only with an in-device key, with no account or password', 'Statutul juridic al autentificării doar cu o cheie din dispozitiv, fără cont sau parolă'),
-      short('q6_blob', '서버가 암호화된 데이터만 보관하면 개인정보 처리에 해당합니까?', 'If the server holds only encrypted blobs, is that still processing personal data?', 'Dacă serverul păstrează doar date criptate, aceasta constituie totuși prelucrare de date personale?'),
-      short('q6_loss', '기기를 잃으면 데이터가 사라지는 설계는 받아들여집니까?', 'Is a design where losing the device loses the data acceptable?', 'Este acceptabil un design în care pierderea dispozitivului duce la pierderea datelor?'),
-      short('q6_consent', '저문해 사용자에게 동의를 받는 방법', 'How to obtain informed consent from a user who cannot read', 'Cum se obține consimțământul informat de la un utilizator care nu poate citi'),
+      {
+        id: 'aa1_grammar',
+        kind: 'single',
+        q: T(
+          '78개 형태소를 문법으로 결합해 새 지시를 만드는 접근이 성립한다고 보십니까?',
+          'Does composing 78 visual morphemes by a grammar to generate new instructions hold up?',
+          'Compunerea a 78 de morfeme vizuale printr-o gramatică pentru a genera instrucțiuni noi este o abordare validă?',
+        ),
+        note: T(
+          '아래 형태소 전체를 펼쳐 보실 수 있습니다. Blissymbolics 처럼 요소를 결합하는 체계와 같은 전제입니다.',
+          'You can expand the full morpheme set below. The premise is the same as symbol systems that combine elements, such as Blissymbolics.',
+          'Puteți extinde setul complet de morfeme mai jos. Premisa este aceeași ca la sistemele care combină elemente, precum Blissymbolics.',
+        ),
+        options: [
+          T('성립한다', 'It holds up', 'Este validă'),
+          T('조건이 붙으면 성립한다', 'It holds up with conditions', 'Este validă cu anumite condiții'),
+          T('낱개로 그리는 편이 낫다', 'Drawing each instruction separately is better', 'Este mai bine să desenați fiecare instrucțiune separat'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T('왜 그렇습니까?', 'Why?', 'De ce?'),
+      },
+      {
+        id: 'aa2_which_fail',
+        kind: 'single',
+        q: T(
+          '저희 형태소 중 어떤 종류가 가장 먼저 잘못 읽힐 것 같습니까?',
+          'Which kind of morpheme in our set is most likely to be misread first?',
+          'Ce tip de morfem din setul nostru este cel mai probabil să fie citit greșit primul?',
+        ),
+        options: [
+          T('추상적 개념 (공복, 상호작용 등)', 'Abstract concepts such as empty stomach or interaction', 'Concepte abstracte precum stomac gol sau interacțiune'),
+          T('수량', 'Quantity', 'Cantitate'),
+          T('시간과 시점', 'Time of day', 'Momentul zilei'),
+          T('신체 부위', 'Body parts', 'Părți ale corpului'),
+          T('금지와 경고', 'Prohibitions and warnings', 'Interdicții și avertismente'),
+        ],
+        follow: T('어느 그림이 특히 그렇습니까?', 'Which specific images?', 'Care imagini anume?'),
+      },
+      {
+        id: 'aa3_how_test',
+        kind: 'single',
+        q: T(
+          '글을 읽지 못하는 사람에게 그림의 이해도를 재려면 어느 방법이 맞습니까?',
+          'To measure whether someone who cannot read understands an image, which method is right?',
+          'Pentru a măsura dacă o persoană care nu poate citi înțelege o imagine, ce metodă este corectă?',
+        ),
+        options: [
+          T('자유응답을 받아 연구자가 분류한다', 'Take an open-ended answer and have researchers classify it', 'Se ia un răspuns deschis și cercetătorii îl clasifică'),
+          T('보기 중에서 고르게 한다', 'Have them choose from options', 'Se alege dintre variante'),
+          T('실제로 약을 꺼내 보이게 한다', 'Ask them to demonstrate the dose', 'Se cere demonstrarea dozei'),
+          T('보호자가 대신 답한다', 'Have a carer answer on their behalf', 'Un îngrijitor răspunde în locul lor'),
+          T('그 밖', 'Other', 'Altele'),
+        ],
+        follow: T('설계할 때 주의할 점을 적어 주십시오.', 'What should we watch for in the design?', 'La ce ar trebui să fim atenți în proiectare?'),
+      },
     ],
   },
   {
-    // 처음에는 이 구획이 "몰도바에서 쓸 수 있는가" 였다. 그것이 잘못이었다.
-    // 몰도바는 팀원이 있는 나라이지 문제가 몰린 나라가 아니고, 이 프로젝트는
-    // 몰도바를 겨냥해 만든 것도 아니다. 게다가 몰도바 보건부 연락처 페이지가
-    // 30명을 공개해 놓은 탓에, 주소를 구할 수 있다는 사실이 구획의 크기를
-    // 정해 버렸다 — 문항이 명단을 정해야 하는데 반대로 간 것이다.
-    //
-    // 실제로 물어야 할 것은 나라가 아니라 **전이** 다. 우리 78개 형태소는
-    // 한국에서 만들어 한 번도 다른 문화에서 시험된 적이 없고, 현지 제작
-    // 픽토그램이 국제 표준 세트보다 이해도가 높다는 결과가 이미 있다
-    // (Dowse & Ehlers, 2005). 몰도바는 그 질문의 첫 사례일 뿐 주제가 아니다.
-    id: 'q7',
+    id: 'literacy',
+    title: T('성인문해교육', 'Adult literacy education', 'Educația alfabetizării adulților'),
+    items: [
+      {
+        id: 'li1_now',
+        kind: 'longtext',
+        q: T(
+          '문해교육 학습자가 약 정보를 만났을 때, 지금 실제로 어떻게 합니까?',
+          'When an adult literacy learner is faced with medication information, what do they actually do now?',
+          'Când un cursant adult se confruntă cu informații despre medicamente, ce face efectiv?',
+        ),
+        note: T(
+          '이것이 저희 프로젝트에서 가장 검증되지 않은 부분입니다. 제안서 §1.1~1.3 전체가 이 가정 위에 서 있는데, 저희는 당사자를 한 번도 만난 적이 없습니다.',
+          'This is the least verified part of our whole project. Sections 1.1 to 1.3 of our proposal rest on this assumption and we have never once met the people concerned.',
+          'Aceasta este partea cel mai puțin verificată a proiectului. Secțiunile 1.1–1.3 se bazează pe această presupunere și nu am întâlnit niciodată persoanele în cauză.',
+        ),
+      },
+      {
+        id: 'li2_pilot',
+        kind: 'single',
+        q: T(
+          '학습자를 대상으로 그림 이해도 시험을 하려면, 어떤 형태가 현장에서 받아들여집니까?',
+          'If we wanted to run a comprehension test with learners, what format would your setting accept?',
+          'Dacă am dori să facem un test de comprehensiune cu cursanții, ce format ar accepta instituția dumneavoastră?',
+        ),
+        options: [
+          T('수업 시간의 일부로', 'As part of a class session', 'Ca parte a unei ore de curs'),
+          T('개별 면담으로', 'As individual interviews', 'Ca interviuri individuale'),
+          T('기관 협조 공문이 있으면 가능', 'Possible with a formal request to the institution', 'Posibil cu o solicitare oficială către instituție'),
+          T('학습자 대상 시험은 어렵다', 'Testing with learners would be difficult', 'Testarea cu cursanții ar fi dificilă'),
+        ],
+        follow: T('절차나 조건을 적어 주십시오.', 'What procedure or conditions would apply?', 'Ce procedură sau condiții s-ar aplica?'),
+      },
+      {
+        id: 'li3_what_worked',
+        kind: 'longtext',
+        q: T(
+          '문해교육 현장에서 그림으로 전달할 때, 효과가 있었던 것과 없었던 것은 무엇입니까?',
+          'In literacy education, what has worked and what has not when conveying meaning by picture?',
+          'În educația alfabetizării, ce a funcționat și ce nu, atunci când sensul a fost transmis prin imagini?',
+        ),
+      },
+    ],
+  },
+  {
+    id: 'hci',
+    title: T('HCI·디자인', 'HCI and design', 'HCI și design'),
+    items: [
+      {
+        id: 'hc1_smalln',
+        kind: 'single',
+        q: T(
+          '소규모 표본으로 ISO 9186 의 67% 나 ANSI Z535.3 의 85% 기준을 재려면 어느 방법이 현실적입니까?',
+          'With a small sample, which approach to claiming the ISO 9186 67% or ANSI Z535.3 85% criterion is realistic?',
+          'Cu un eșantion mic, ce abordare pentru criteriul ISO 9186 de 67% sau ANSI Z535.3 de 85% este realistă?',
+        ),
+        options: [
+          T('자유응답을 연구자가 분류하는 방식', 'Open-ended answers classified by researchers', 'Răspunsuri deschise clasificate de cercetători'),
+          T('보기 중 고르게 하는 방식', 'Multiple-choice matching', 'Alegere din variante'),
+          T('실제 행동을 관찰하는 방식', 'Observing what they actually do', 'Observarea comportamentului real'),
+          T('소표본으로는 기준을 주장할 수 없다', 'With a small sample you cannot claim the criterion', 'Cu un eșantion mic nu se poate invoca criteriul'),
+        ],
+        follow: T('표본 수와 절차를 어떻게 잡아야 합니까?', 'What sample size and procedure would you set?', 'Ce dimensiune a eșantionului și ce procedură ați stabili?'),
+      },
+      {
+        id: 'hc2_prescreen',
+        kind: 'single',
+        q: T(
+          '저희는 78개를 사람이 아니라 시각 언어 모델에게 물어 걸렀습니다. 이것을 사람 시험 앞의 사전 선별로 쓰는 것이 방법론적으로 정당합니까?',
+          'We screened all 78 morphemes by asking a vision-language model rather than people. Is it methodologically defensible to use that as a pre-screen ahead of human testing?',
+          'Am filtrat toate cele 78 de morfeme întrebând un model vizual-lingvistic, nu oameni. Este justificabil metodologic să folosim asta ca pre-filtrare înaintea testării umane?',
+        ),
+        note: T(
+          '사람 시험을 대체하려는 것이 아니라 그 앞에 두려는 것입니다. 그 위치가 정당한지에 대한 판단을 듣고 싶습니다.',
+          'We do not mean it to replace human testing but to sit in front of it. We want your judgement on whether that position is defensible.',
+          'Nu intenționăm să înlocuim testarea umană, ci să o precedăm. Dorim opinia dumneavoastră dacă această poziție este justificabilă.',
+        ),
+        options: [
+          T('정당하다', 'Defensible', 'Justificabil'),
+          T('조건이 붙으면 정당하다', 'Defensible with conditions', 'Justificabil cu anumite condiții'),
+          T('정당하지 않다', 'Not defensible', 'Nejustificabil'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T('왜 그렇습니까?', 'Why?', 'De ce?'),
+      },
+      {
+        id: 'hc3_breaks',
+        kind: 'single',
+        q: T(
+          '형태소 조합이 늘어날 때 무엇이 가장 먼저 깨질 것 같습니까?',
+          'As the number of composed combinations grows, what breaks first?',
+          'Pe măsură ce numărul de combinații crește, ce se rupe primul?',
+        ),
+        options: [
+          T('두 요소가 서로 가린다', 'Elements start occluding each other', 'Elementele se acoperă reciproc'),
+          T('무엇이 주된 뜻인지 알 수 없어진다', 'It stops being clear which element carries the main meaning', 'Nu mai este clar care element are sensul principal'),
+          T('비슷한 조합끼리 구별되지 않는다', 'Similar combinations become indistinguishable', 'Combinațiile similare devin imposibil de distins'),
+          T('작게 표시하면 무너진다', 'It collapses at small sizes', 'Se destramă la dimensiuni mici'),
+        ],
+        follow: T('덧붙일 말이 있으면 적어 주십시오.', 'Anything to add?', 'Aveți ceva de adăugat?'),
+      },
+    ],
+  },
+  {
+    id: 'law',
+    title: T('법·개인정보', 'Law and data protection', 'Drept și protecția datelor'),
+    items: [
+      {
+        id: 'la1_standing',
+        kind: 'single',
+        q: T(
+          '계정도 비밀번호도 없이 기기 안의 키로만 인증하고, 서버는 암호화된 데이터만 보관하는 설계입니다. 건강정보를 이렇게 다루는 것이 법적으로 문제가 됩니까?',
+          'The design has no account and no password: authentication uses a key held on the device, and the server stores only encrypted data. Is handling health data this way legally problematic?',
+          'Designul nu are cont și nici parolă: autentificarea folosește o cheie păstrată pe dispozitiv, iar serverul stochează doar date criptate. Este problematic juridic să gestionăm astfel datele de sănătate?',
+        ),
+        options: [
+          T('문제되지 않는다', 'Not problematic', 'Nu este problematic'),
+          T('조건을 갖추면 문제되지 않는다', 'Not problematic if certain conditions are met', 'Nu este problematic dacă sunt îndeplinite anumite condiții'),
+          T('문제가 된다', 'It is problematic', 'Este problematic'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T('근거가 되는 조항이나 판단 기준을 적어 주십시오.', 'Which provision or test applies?', 'Ce prevedere sau criteriu se aplică?'),
+      },
+      {
+        id: 'la2_processing',
+        kind: 'single',
+        q: T(
+          '서버가 복호화할 수 없는 암호문만 보관한다면, 그것도 개인정보 처리에 해당합니까?',
+          'If the server holds only ciphertext it cannot decrypt, does that still count as processing personal data?',
+          'Dacă serverul păstrează doar text cifrat pe care nu îl poate decripta, aceasta constituie totuși prelucrare de date personale?',
+        ),
+        options: [
+          T('해당한다', 'Yes', 'Da'),
+          T('조건에 따라 다르다', 'It depends', 'Depinde'),
+          T('해당하지 않는다', 'No', 'Nu'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T('덧붙일 말이 있으면 적어 주십시오.', 'Anything to add?', 'Aveți ceva de adăugat?'),
+      },
+      {
+        id: 'la3_consent',
+        kind: 'longtext',
+        q: T(
+          '글을 읽지 못하는 사용자에게서 유효한 동의를 받으려면 어떻게 해야 합니까?',
+          'How should valid consent be obtained from a user who cannot read?',
+          'Cum ar trebui obținut un consimțământ valid de la un utilizator care nu poate citi?',
+        ),
+        note: T(
+          '동의서를 읽을 수 없는 사람에게 동의를 받는 문제입니다. 저희는 이 지점에 답을 갖고 있지 않습니다.',
+          'The problem is obtaining consent from someone who cannot read the consent form. We do not have an answer here.',
+          'Problema este obținerea consimțământului de la cineva care nu poate citi formularul. Nu avem un răspuns aici.',
+        ),
+      },
+    ],
+  },
+  {
+    id: 'standards',
+    title: T('표준·규제', 'Standards and regulation', 'Standardizare și reglementare'),
+    items: [
+      {
+        id: 'st1_coexist',
+        kind: 'single',
+        q: T(
+          '자체 제작한 픽토그램 세트가 기존 표준 세트와 병존할 수 있습니까?',
+          'Can an in-house pictogram set coexist with the established standard sets?',
+          'Poate coexista un set propriu de pictograme cu seturile standard consacrate?',
+        ),
+        options: [
+          T('병존할 수 있다', 'Yes', 'Da'),
+          T('검증 절차를 거치면 가능하다', 'Yes, if it goes through a validation procedure', 'Da, dacă trece printr-o procedură de validare'),
+          T('표준 세트를 써야 한다', 'No, an established set should be used', 'Nu, ar trebui folosit un set consacrat'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T('근거가 되는 표준이나 조항을 적어 주십시오.', 'Which standard or provision applies?', 'Ce standard sau prevedere se aplică?'),
+      },
+      {
+        id: 'st2_wcag',
+        kind: 'single',
+        q: T(
+          '글자를 읽지 않고도 쓸 수 있게 만든 이 경로가 WCAG 와 인지접근성(COGA) 지침을 만족합니까?',
+          'Does this path — usable without reading any text — satisfy WCAG and the cognitive accessibility (COGA) guidance?',
+          'Această cale — utilizabilă fără a citi text — satisface WCAG și ghidul de accesibilitate cognitivă (COGA)?',
+        ),
+        options: [
+          T('만족한다', 'Yes', 'Da'),
+          T('조건을 갖추면 만족한다', 'Yes, under certain conditions', 'Da, în anumite condiții'),
+          T('만족하지 않는다', 'No', 'Nu'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T('어느 항목이 문제가 됩니까?', 'Which criteria are at issue?', 'Care criterii sunt problematice?'),
+      },
+      {
+        id: 'st3_country',
+        kind: 'longtext',
+        q: T(
+          '귀국의 제도에서는 그림과 음성만으로 하는 복약 안내가 허용됩니까? 저가 자동 알약 디스펜서는 어떻게 분류됩니까?',
+          'In your country, is medication guidance given only by picture and speech permitted? How would a low-cost automatic pill dispenser be classified?',
+          'În țara dumneavoastră, este permis ghidajul medicamentos doar prin imagine și voce? Cum ar fi clasificat un dozator automat ieftin?',
+        ),
+      },
+    ],
+  },
+  {
+    id: 'industry',
     title: T(
-      'Q7. 문화와 언어를 넘어가면 무엇이 깨지는가',
-      'Q7. What breaks when this crosses into another language and culture?',
-      'Q7. Ce se rupe când trece într-o altă limbă și cultură?',
+      '산업 실무 — 제품 개발·운영',
+      'Industry practice — building and operating products',
+      'Practică industrială — dezvoltare și operare',
     ),
     items: [
-      short(
-        'q7_firstbreak',
-        '우리 78개 형태소는 한국에서 만들어 다른 문화에서 시험된 적이 없습니다. 가장 먼저 깨질 그림은 어떤 종류라고 보십니까?',
-        'Our 78 morphemes were drawn in Korea and have never been tested in another culture. What kind of image do you expect to break first?',
-        'Cele 78 de morfeme au fost desenate în Coreea și nu au fost testate niciodată în altă cultură. Ce fel de imagine credeți că se va rupe prima?',
-      ),
-      short(
-        'q7_remake',
-        '현지 제작 픽토그램이 국제 표준 세트보다 이해도가 높았다는 결과가 있습니다 (Dowse & Ehlers, 2005). 그렇다면 세트를 나라마다 다시 만들어야 합니까, 조합 문법만 옮기면 됩니까?',
-        'Locally produced pictograms have outperformed an international standard set (Dowse & Ehlers, 2005). Does that mean the set must be redrawn per country, or is it enough to carry over the composition grammar?',
-        'Pictogramele produse local au depășit un set standard internațional (Dowse & Ehlers, 2005). Înseamnă că setul trebuie redesenat pentru fiecare țară sau este suficient să transferăm gramatica de compunere?',
-      ),
-      short(
-        'q7_mustretest',
-        '문화를 넘을 때 반드시 다시 시험해야 하는 범주는 무엇입니까? 반대로 그대로 통할 것 같은 범주가 있습니까?',
-        'Which categories must be retested when crossing cultures, and are there any you would expect to transfer unchanged?',
-        'Ce categorii trebuie retestate la trecerea între culturi și există unele care ați aștepta să se transfere neschimbate?',
-      ),
-      short(
-        'q7_voice',
-        '음성 안내를 현지 언어로 옮길 때 주의할 점은 무엇입니까? 저희 음성은 문장을 다시 구성해서 읽습니다.',
-        'What should we watch for when moving the spoken guidance into another language? Our voice engine reconstructs the sentence rather than reading a label aloud.',
-        'La ce trebuie să fim atenți când mutăm ghidajul vocal în altă limbă? Motorul nostru vocal reconstruiește propoziția, nu citește o etichetă.',
-      ),
-      short(
-        'q7_regulatory',
-        '귀국의 제도에서는 어떻습니까 — 픽토그램만으로 하는 복약 안내가 허용됩니까, 저가 자동 디스펜서는 어떻게 분류됩니까?',
-        'How does it stand in your country — is pictogram-only medication guidance permitted, and how would a low-cost automatic dispenser be classified?',
-        'Cum stau lucrurile în țara dumneavoastră — este permis ghidajul medicamentos doar prin pictograme și cum ar fi clasificat un dozator automat ieftin?',
-      ),
-    ],
-  },
-  {
-    id: 'q8',
-    title: T('Q8. 기존 표준과 충돌하지 않는가', 'Q8. Does it conflict with existing standards?', 'Q8. Intră în conflict cu standardele existente?'),
-    items: [
-      short('q8_coexist', '자체 제작 픽토그램 세트가 기존 표준과 병존 가능합니까?', 'Can an in-house pictogram set coexist with the established standards?', 'Poate coexista un set propriu de pictograme cu standardele consacrate?'),
-      short('q8_wcag', '문자 없는 UI 가 WCAG · 인지접근성(COGA) 지침을 만족합니까?', 'Does a text-free UI satisfy WCAG and the cognitive-accessibility (COGA) guidance?', 'O interfață fără text satisface WCAG și ghidul de accesibilitate cognitivă (COGA)?'),
-      short('q8_iso', 'KS S ISO 7001 · ISO 9186 과의 관계에서 유의할 점', 'What to watch for in relation to KS S ISO 7001 and ISO 9186', 'La ce trebuie atenție în raport cu KS S ISO 7001 și ISO 9186'),
-      short('q8_labeling', '라벨링·환자정보 관련 규정과 충돌 가능성', 'Possible conflicts with labelling and patient-information regulation', 'Posibile conflicte cu reglementările privind etichetarea și informarea pacientului'),
+      {
+        id: 'in1_breaks',
+        kind: 'single',
+        q: T(
+          '이 구조를 실제로 운영하면 무엇이 가장 먼저 깨질 것 같습니까?',
+          'If this were actually operated in the field, what would break first?',
+          'Dacă acest sistem ar fi operat efectiv pe teren, ce s-ar rupe primul?',
+        ),
+        options: [
+          T('그림 생성이 실패하거나 느려진다', 'Pictogram generation fails or gets slow', 'Generarea pictogramelor eșuează sau devine lentă'),
+          T('오프라인 상태의 데이터 동기화', 'Syncing data while offline', 'Sincronizarea datelor offline'),
+          T('기기 분실과 데이터 복구', 'A lost device and unrecoverable data', 'Un dispozitiv pierdut și date nerecuperabile'),
+          T('사용자가 며칠 뒤 그만 쓴다', 'Users stop after a few days', 'Utilizatorii renunță după câteva zile'),
+          T('하드웨어 고장', 'The hardware fails', 'Hardware-ul se defectează'),
+        ],
+        follow: T('덧붙일 말이 있으면 적어 주십시오.', 'Anything to add?', 'Aveți ceva de adăugat?'),
+      },
+      {
+        id: 'in2_offline',
+        kind: 'longtext',
+        q: T(
+          '오프라인 우선이나 계정 없는 구조를 실제로 운영해 보셨다면, 무엇이 예상과 달랐습니까?',
+          'If you have actually operated an offline-first or account-free system, what differed from what you expected?',
+          'Dacă ați operat efectiv un sistem offline-first sau fără cont, ce a fost diferit de ce vă așteptați?',
+        ),
+        note: T(
+          '설계로만 주장하는 것과 몇 년 돌려 본 것은 다릅니다. 저희는 아직 전자입니다.',
+          'Claiming it in a design and running it for years are different things. We are still doing the former.',
+          'A afirma ceva într-un design și a-l rula ani de zile sunt lucruri diferite. Noi suntem încă în prima situație.',
+        ),
+      },
+      {
+        id: 'in3_differently',
+        kind: 'longtext',
+        q: T(
+          '같은 문제를 다시 푼다면 무엇을 다르게 하시겠습니까?',
+          'If you were solving the same problem, what would you do differently?',
+          'Dacă ați rezolva aceeași problemă, ce ați face diferit?',
+        ),
+      },
     ],
   },
 ];
@@ -494,25 +827,6 @@ export const CLOSE_CITE = {
 };
 
 export const CLOSE: Item[] = [
-  {
-    // 이해도 시험을 설문에서 뺀 자리를 이 문항이 대신한다. ISO 9186 과 ANSI
-    // Z535.3 의 이해도 시험은 실제 사용자를 대상으로 해야 한다. 전문가가 우리
-    // 그림을 읽어내는지는 글을 읽지 못하는 환자가 읽어내는지에 대해 거의 아무것도
-    // 말해 주지 않으므로, 전문가에게서 얻은 수치를 기준 통과로 쓸 수 없다.
-    // 그래서 묻는 것을 바꿨다 — 시험해 달라고 하는 대신 대상자에게 닿는 경로를 묻는다.
-    id: 'd1_recruit',
-    kind: 'longtext',
-    q: T(
-      '저문해 성인이나 고령 환자를 대상으로 픽토그램 이해도를 실제로 시험할 수 있는 경로를 알고 계십니까?',
-      'Do you know of a route by which we could test pictogram comprehension with actual low-literacy or older adult participants?',
-      'Cunoașteți o cale prin care am putea testa comprehensiunea pictogramelor cu participanți reali cu alfabetizare redusă sau vârstnici?',
-    ),
-    note: T(
-      '저희는 아직 사람을 대상으로 이해도를 시험한 적이 없습니다. 기관, 프로그램, 또는 소개해 주실 분이 있다면 그것이 이 설문에서 저희가 가장 필요한 답입니다.',
-      'We have not yet tested comprehension with people. If you know an institution, a programme, or someone who could introduce us, that is the single most useful answer we could receive.',
-      'Nu am testat încă comprehensiunea cu oameni. Dacă știți o instituție, un program sau pe cineva care ne-ar putea face legătura, acesta este cel mai util răspuns pe care l-am putea primi.',
-    ),
-  },
   {
     id: 'd2_referral',
     kind: 'longtext',
@@ -582,6 +896,16 @@ export const UI = {
     'Introduceți o prescripție și pictogramele de mai jos sunt rezultatul. Apăsați un simbol de difuzor și motorul nostru vocal citește rândul — dacă pictogramele și vocea sunt suficiente este ceva ce trebuie auzit. Dacă nu se aude nimic, browserul nu are voce pentru acea limbă; vă rugăm să continuați.',
   ),
   rxLabel: T('처방 문구', 'The prescription', 'Prescripția'),
+  glyphsToggle: T(
+    '형태소 78개 전부 보기',
+    'Show all 78 morphemes',
+    'Afișați toate cele 78 de morfeme',
+  ),
+  glyphsNote: T(
+    '위 그림들은 이 78개를 문법으로 결합해 만든 것입니다. 새 지시가 필요할 때 그림을 새로 그리지 않고 이것들을 조합합니다.',
+    'The pictures above are composed from these 78 by a grammar. When a new instruction is needed we combine these rather than drawing a new picture.',
+    'Imaginile de mai sus sunt compuse din aceste 78 printr-o gramatică. Când este nevoie de o instrucțiune nouă, le combinăm în loc să desenăm o imagine nouă.',
+  ),
   previewTitle: T(
     '먼저 화면을 보십시오',
     'Please look at the screens first',

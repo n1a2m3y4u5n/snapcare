@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { DEMO } from '@/lib/survey/demo';
+import { GLYPH_NAMES } from '@/lib/survey/glyphNames';
 import {
-  BACKGROUND, BRANCHES, CLOSE, CLOSE_CITE, CONSENT, CORE, LANGS, SERVICE, UI,
+  BACKGROUND, BRANCHES, CLOSE, CLOSE_CITE, CONSENT, CORE, LANGS, SERVICE, UI, fieldIdOf,
   type Branch, type Item, type Lang,
 } from '@/lib/survey/items';
 
@@ -79,10 +80,7 @@ export default function SurveyPage() {
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const s = p.get('s');
-    if (s && BRANCHES.some((b) => b.id === s)) {
-      setPinned(s);
-      setOpenBranches([s]);
-    }
+    if (s) setPinned(s);   // 어떤 링크로 들어왔는지만 기록한다. 구획은 본인 선택으로 정해진다.
     const r = p.get('r');
     if (r && /^[a-z0-9]{4,32}$/.test(r)) setRecipient(r);
     const l = p.get('lang');
@@ -113,13 +111,21 @@ export default function SurveyPage() {
   const t = useCallback((r: Record<Lang, string>) => r[lang], [lang]);
   const set = (id: string, v: string) => setAns((a) => ({ ...a, [id]: v }));
 
+  /*
+   * 구획은 응답자가 고른 분야에 따라 열린다.
+   *
+   * 처음에는 링크의 `?s=` 로 지목했다. 그것이 잘못이었다 — 1103명의 전문분야를
+   * 키워드로 훑어 직군에 매핑해야 하는데, 그 방식은 이 프로젝트에서 이미 두 번
+   * 사고를 냈다. 본인이 첫 문항에서 고르면 잘못 배정될 일이 아예 없다.
+   */
+  const mine = fieldIdOf(ans['b_field']);
   const branchesToShow: Branch[] = useMemo(
-    () => (pinned ? BRANCHES.filter((b) => b.id === pinned) : BRANCHES),
-    [pinned],
+    () => (mine ? BRANCHES.filter((b) => b.id === mine) : BRANCHES),
+    [mine],
   );
   const otherBranches: Branch[] = useMemo(
-    () => (pinned ? BRANCHES.filter((b) => b.id !== pinned) : []),
-    [pinned],
+    () => (mine ? BRANCHES.filter((b) => b.id !== mine) : []),
+    [mine],
   );
 
   /** 필수 문항이 비었으면 그 id 를 돌려준다. */
@@ -313,6 +319,23 @@ export default function SurveyPage() {
                 <PictogramStrip source={d.dsl} />
               </div>
             ))}
+            {/*
+              형태소 전체를 접어 둔다. AAC·HCI·디자인 문항은 이 세트를 봐야 답이
+              달라지지만, 78장을 펼쳐 두면 다른 응답자에게는 화면만 길어진다.
+            */}
+            <details className="mt-3 rounded-2xl border p-3" style={{ borderColor: 'var(--color-sc-line)' }}>
+              <summary className="cursor-pointer text-xs font-bold">{t(UI.glyphsToggle)}</summary>
+              <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
+                {t(UI.glyphsNote)}
+              </p>
+              <div className="mt-2 grid grid-cols-6 gap-1 sm:grid-cols-10">
+                {GLYPH_NAMES.map((g) => (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img key={g} src={`/glyphs/${g}.png`} alt={g} loading="lazy"
+                       className="w-full rounded bg-white p-0.5" />
+                ))}
+              </div>
+            </details>
             <a
               href="/"
               target="_blank"
