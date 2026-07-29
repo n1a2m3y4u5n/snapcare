@@ -9,15 +9,11 @@
 
 ## 진행
 
-37종 중 **28종 확인 · 10종에서 오류 발견 · 9종 미확인**.
+**37종 전부 대조 완료. 12종이 틀렸다** (오류율 32%).
 
 확인한 것은 본문 괄호 안에 **전체 서지로 적었다.** 서식에 참고문헌 자리가 없으므로
 서지가 갈 곳이 본문밖에 없다. 같은 문헌이 다시 나올 때까지 전체를 반복하면 읽기가
 어려우므로 첫 등장만 전체로 하고 이후는 저자·연도로 둔다.
-
-**여기서 확인되지 않은 것은 본문 괄호에 전체 서지로 적지 않는다.** 서지를 다는
-목적이 심사자가 원문을 열어 보게 하는 것이므로, 확인하지 않은 값에 서지를 붙이면
-틀렸을 때 축약식보다 더 확실하게 드러난다.
 
 ## 발견한 오류와 조치
 
@@ -33,6 +29,8 @@
 | 한국 19~64세 충분 65.9% | 확인되지 않는다. 확인되는 것은 전체 60.4%, 65세 이상 40.3%, 소득 하위 54.4%, 상위 66.3% | 확인된 값으로 표 재구성 |
 | 2030년 60세 이상의 80%가 저·중소득국 | WHO 팩트시트에 80% 는 없다. **2050년에 3분의 2** 다. 원문은 2050년 21억 명, 2015→2050년 비중 12%→22% 도 준다 | 연도와 값 교체 |
 | 항생제 내성 사망이 HIV·말라리아를 넘어섰다 (WHO GLASS, 2025) | 이 비교는 GLASS 가 아니라 GRAM 연구(Murray 등, *Lancet* 2022)의 결과다. 2019년 직접 기인 사망 127만 명 | 출처 교체 |
+| 몰도바 인구 대상 연구에서 건강 문해력이 1차 의료 접근을 결정 (PMC7532569) | 대상이 몰도바 거주자가 아니라 **이탈리아 파도바에 사는 몰도바 이주 여성 170명** 이다 | 대상을 명시하고, 국내 인구에 옮길 수 없다는 것을 적음 |
+| 사진 추정 평균 오차 14.43% (NutritionVerse-Direct) | 그 논문에 **퍼센트 오차 지표가 없다.** 절대 오차만 싣는다 — 열량 253.7 kcal, 지방 14.3 **g**. 14.3 g 을 퍼센트로 옮겨 적은 것으로 보인다 | 절대 오차로 교체하고, 그것이 하루 기준의 몇 %인지 따로 계산해 붙임 |
 
 45.8%·8.3% 가 다른 논문의 값인지는 아직 찾지 못했다. 찾으면 그 논문을 근거로 되살릴
 수 있으나, 그때까지는 본문에서 뺀다.
@@ -115,11 +113,27 @@ indication pictograms for low literacy viewers: Health literacy and comprehensio
 7.9 ± 1.8 / 10. **건강 문해력과 픽토그램 이해도 사이에 유의한 양의 상관 (p = 0.002)**
 이며 저문해 참여자에서 오독이 더 많았다.
 
-**[P2]** Dowse, R., & Ehlers, M. (2005). Medicine labels incorporating pictograms: do
-they influence understanding and adherence? *Patient Education and Counseling*, 58(1),
-63–70. · 서지 확인. 짧은 항생제 처방을 받은 Xhosa 외래환자 87명, 정규교육 10년 이하.
-**주의: 본문이 쓴 "현지 20종 vs USP 11종" 은 이 논문이 아니라 같은 저자들의 2001년
-연구일 가능성이 있다. 확인 전까지 연도를 단정하지 않는다.**
+**[P2]** Dowse, R., & Ehlers, M. S. (2001). The evaluation of pharmaceutical pictograms
+in a low-literate South African population. *Patient Education and Counseling*, 45(2),
+87–99. · Xhosa 46명(정규교육 ≤7년)에게 USP-DI 23종과 그에 대응하는 현지 제작 23종을
+같이 보였다. **현지 제작 20종이 ANSI 85% 기준을 통과한 데 비해 USP-DI 는 11종.**
+같은 사람에게 같은 뜻을 물었는데 그림의 출신에 따라 두 배 가까이 갈렸다 — 본문이
+쓰던 "20 대 11" 의 출처가 2005년이 아니라 이 논문이며, 분모 23을 확인해 도표에
+되살렸다.
+
+**[P3]** van Beusekom, M. M., et al. (2017). Pharmaceutical pictograms for low-literate
+patients: Understanding, risk of false confidence, and evidence-based design strategies.
+*Patient Education and Counseling*, 100(5), 966–973. · 네덜란드 약국 방문자 197명,
+픽토그램 10종. 67% 이해 기준을 넘은 것은 절반(개별 31.0~98.5%)이나 **저문해 집단에서는
+10종 중 2종.** 3종에서 거짓 확신의 위험. 결론: **안전에 관한 정보에서는 67% 이해로
+충분하지 않을 수 있다.**
+
+**[P4]** Houts, P. S., Doak, C. C., Doak, L. G., & Loscalzo, M. J. (2006). The role of
+pictures in improving health communication: a review of research on attention,
+comprehension, recall, and adherence. *Patient Education and Counseling*, 61(2), 173–190.
+doi:10.1016/j.pec.2005.05.004 · **"written or spoken text" 와 밀접히 결합된 그림**이
+주의와 회상을 뚜렷이 높인다. 음성이 포함된다는 것이 본 연구의 설계와 직접 닿는다 —
+본문이 한때 "문자와 함께" 로만 적어 스스로의 근거를 좁히고 있었다.
 
 ### 저문해 사용자 인터페이스
 
@@ -192,7 +206,52 @@ Safety Challenge.* WHO/HIS/SDS/2017.6. · 2017년 3월 29일 본(Bonn) 제2차 �
 **[W2]** World Health Organization (2024). *Medication without harm: policy brief.*
 ISBN 978-92-4-006276-4. · 회원국의 18%만이 약물위해 감축 국가 목표를 수립.
 
-## 아직 대조하지 않은 것
+### 사진 기반 영양 추정
+
+**[V1]** Chen, T., et al. (2024). NutritionVerse-Direct: Exploring Deep Neural Networks
+for Multitask Nutrition Prediction from Food Images. arXiv:2405.07814. · ViT 기반
+다중작업 회귀. 평균 절대 오차 — 열량 253.7 kcal, 질량 98.4 g, 탄수화물 24.2 g,
+단백질 22.1 g, 지방 14.3 g. 합산 MAE 412.6 (Inception-ResNet 554.0 대비 25.5% 개선).
+**퍼센트 오차 지표는 이 논문에 없다.**
+
+### 한국·몰도바
+
+**[K1]** Lee, M., Kim, K., Rhew, K., & Choi, K.-H. (2021). A knowledge, attitude, and
+practice survey on medication safety in Korean older adults. *Healthcare*, 9(10), 1365.
+doi:10.3390/healthcare9101365 · 65세 이상 131명(2017년 5~6월 조사). **79.4%가 스스로
+복용, 28.2%만 복약 안전 교육을 받음.** 표본이 작고 조사가 2017년이라는 점을 본문에
+밝혔다.
+
+**[K2]** Voncina, L., Dozol, A., Volovei, I., & Cetinkaya, V. (2022). *Human Development
+Assessment for Moldova: Background Paper on Health.* World Bank. · 2015~2060년 인구
+31% 감소, 평균 연령 38→47세, **고령 인구 비중 두 배 이상 늘어 27%.** 2008~2015년
+당뇨 유병률 +75%, 순환기 질환 +41%.
+
+**[K3]** Vianello, F. A., et al. (2020). Health status of female Moldovan migrants to
+Italy by health literacy level and age group. *BMC Public Health*, 20, 1502.
+doi:10.1186/s12889-020-09582-9 · **대상은 몰도바 거주자가 아니라 이탈리아 파도바의
+몰도바 이주 여성 170명.** 문해력이 낮은 쪽에서 흡연 33.3% 대 14.3%, 주치의 방문
+적음. 몰도바 국내 인구로 옮길 수 없다.
+
+## 끝내 확인하지 못한 것
+
+**HLS19 의 통합 46%.** 보고서가 17개국을 묶은 대표값을 내세우지 않으며, 국가 간
+비교를 신중히 하라고 명시한다. 본문에서 그 수치를 빼고 한국 자료로 대체했다.
+
+**45.8% · 8.3% 의 출처.** 필리핀 연구에서 나온 값이 아니라는 것만 확인했고, 다른
+논문의 값인지는 찾지 못했다. 본문에서 뺐다.
+
+## 이 대조에서 배운 것
+
+수집 메모(`refs.md`)의 오류율이 32%였다. 값이 틀린 것보다 더 자주 나온 문제는
+**출처가 그 값을 말하지 않는 것**이었다 — 다른 논문의 결과를 붙였거나(항생제 내성
+사망), 다른 인구의 결과를 옮겼거나(몰도바 이주 여성), 단위를 바꿔 적었다(14.3 g →
+14.43%). 값만 다시 보아서는 걸러지지 않고 원문을 열어야 걸린다.
+
+고친 뒤 논지가 약해진 곳은 없었다. 오히려 여섯 곳에서 세졌다 — 필리핀 실제값이
+"여섯에 하나" 로 더 분명해졌고, Dowse & Ehlers 2001 의 분모를 찾아 같은 46명 안에서
+87% 대 48% 라는 대조를 얻었으며, Houts 의 "spoken text" 는 우리가 스스로 한계라고
+적어 둔 것을 근거로 바꿔 놓았다.
 
 PMC8544505 한국 고령자 79.4%/28.2% · PMC7532569 몰도바 건강문해력 · Houts 등(2006)의
 본문 내용(서지는 확인) · 거짓 확신(Patient Educ Couns) · World Bank 몰도바 고령 인구

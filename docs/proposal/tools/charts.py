@@ -140,27 +140,33 @@ def chart_smartphone():
 def chart_pictogram():
     """분자와 분모가 모두 확인된 연구만 넣는다.
 
-    Dowse & Ehlers 의 20 대 11 은 분모를 확인하지 못해 뺐다. 처음에는 Dowse 등
-    (2012) 의 "9종 중 3종" 을 썼는데, 2023년 논문이 그것을 미출판 학부 자료라고
-    밝히고 있어 인용할 수 없다. 같은 연구진의 2023년 출판본으로 갈아 끼웠다.
+    Dowse & Ehlers 의 20 대 11 은 처음에 분모를 몰라 뺐다가, 2001년 원논문을 찾아
+    각 23종임을 확인하고 되살렸다. 이 둘은 같은 46명에게 같은 지시를 담은 두 세트를
+    보인 대조군·실험군이므로 나란히 두는 것이 맞다.
+
+    처음에는 Dowse 등 (2012) 의 "9종 중 3종" 을 썼는데, 2023년 논문이 그것을 미출판
+    학부 자료라고 밝히고 있어 인용할 수 없다. 같은 연구진의 2023년 출판본으로 교체.
 
     막대마다 적용된 기준이 다르므로 축 라벨에 기준을 함께 적는다. 적지 않으면
     같은 자로 잰 값처럼 보인다.
     """
-    rows = [('Gutierrez 등 (2022)\nUSP+FIP 108종\nANSI 85% 기준', 15.7, False),
-            ('Dowse 등 (2023)\n현지 제작 10종\nISO 66.7% 기준', 80.0, False),
-            ('본 연구 SIGIL\n78종 · 기계 판정\n의미 일치 여부', 69.2, True)]
-    fig, ax = plt.subplots(figsize=(4.6, 2.6))
+    # 가운데 둘은 같은 연구의 대조군·실험군이다 — 색을 나눠 한 쌍으로 보이게 한다.
+    rows = [('Gutierrez (2022)\nUSP+FIP 108종\nANSI 85%', 15.7, GREY),
+            ('Dowse & Ehlers (2001)\nUSP-DI 23종\nANSI 85%', 47.8, '#9aa3b2'),
+            ('같은 연구 · 같은 46명\n현지 제작 23종\nANSI 85%', 87.0, '#4a5568'),
+            ('Dowse (2023)\n현지 제작 10종\nISO 66.7%', 80.0, GREY),
+            ('본 연구 SIGIL\n78종 · 기계 판정', 69.2, ORANGE)]
+    fig, ax = plt.subplots(figsize=(6.2, 2.8))
     xs = range(len(rows))
-    ax.bar(list(xs), [r[1] for r in rows], width=0.5,
-           color=[ORANGE if r[2] else GREY for r in rows], zorder=2)
+    ax.bar(list(xs), [r[1] for r in rows], width=0.55,
+           color=[r[2] for r in rows], zorder=2)
     for x, r in zip(xs, rows):
-        ax.text(x, r[1] + 2, f'{r[1]}%', ha='center', fontsize=8, color=INK)
+        ax.text(x, r[1] + 2, f'{r[1]:.0f}%', ha='center', fontsize=8, color=INK)
     ax.axhline(67, color=CRIT, linestyle='--', linewidth=0.9, zorder=1)
     ax.text(-0.44, 68.5, 'ISO 9186-1  67%', fontsize=7.2, color=CRIT, ha='left')
     ax.axhline(85, color=CRIT, linestyle=':', linewidth=0.9, zorder=1)
     ax.text(-0.44, 86.5, 'ANSI Z535.3  85%', fontsize=7.2, color=CRIT, ha='left')
-    ax.set_xticks(list(xs), [r[0] for r in rows])
+    ax.set_xticks(list(xs), [r[0] for r in rows], fontsize=6.6)
     ax.set_ylabel('기준을 통과한 픽토그램 비율 (%)')
     ax.set_ylim(0, 100)
     frame(ax)
