@@ -18,9 +18,11 @@ ROOT = HERE.parents[2]             # 레포 루트
 from PIL import Image, ImageDraw, ImageFont
 S = 2
 
-INK, SUB, MUTE = (24, 24, 27), (82, 81, 78), (140, 140, 148)
-LINE, FILL = (196, 200, 210), (247, 249, 252)
-BLUE, GREEN, ORANGE = (42, 120, 214), (22, 130, 90), (200, 120, 30)
+# 색은 charts.py 와 같은 Office 팔레트를 쓴다 (참고 보고서에서 뽑은 값).
+INK, SUB, MUTE = (0, 0, 0), (89, 89, 89), (140, 140, 148)
+LINE, FILL = (191, 191, 191), (245, 245, 245)
+BLUE, GREEN, ORANGE = (68, 114, 196), (84, 130, 53), (237, 125, 49)
+RED = (192, 0, 0)
 
 
 def F(sz, bold=False):
@@ -55,7 +57,7 @@ def pin(x, y, text, color=SUB):
 
 # ── 왼쪽: 결선 구조 ────────────────────────────────────────────────
 PX, PY, PW, PH = 152, 232, 128, 96
-box(PX, PY, PW, PH, 'Raspberry Pi 3B', '40핀 헤더 · BCM 번호', color=INK, fill=(255, 255, 255))
+box(PX, PY, PW, PH, 'Raspberry Pi 3B', '40핀 헤더 · BCM 번호', color=BLUE, fill=(220, 230, 245))
 
 PERIPH = [
     (24, 40, 'DS3231 RTC', 'GPIO 2/3 (I²C) · 3.3 V', '전원이 끊겨도 시각을 안다'),
@@ -76,7 +78,7 @@ for i, (tray, gpio) in enumerate([(1, 17), (2, 27), (3, 22)]):
 d.text((322 * S, (196 + 3 * 58 + 4) * S), '트레이 4–8은 핀만 예약되어 있다', font=F(7), fill=MUTE)
 
 # 전원 두 갈래 — 이 도판에서 가장 중요한 부분
-box(152, 400, 276, 86, '전원 레일이 둘인 이유', None, color=ORANGE, fill=(255, 250, 243))
+box(152, 400, 276, 86, '전원 레일이 둘인 이유', None, color=ORANGE, fill=(251, 229, 210))
 d.text((161 * S, 424 * S), 'Pi 전용 5 V 2.5 A  ·  서보·링 전용 5 V 2 A+', font=F(9), fill=INK)
 d.text((161 * S, 440 * S),
        'SG90 한 개가 걸리면 약 700 mA 를 끈다. 같은 레일에서 뽑으면 Pi 가',
