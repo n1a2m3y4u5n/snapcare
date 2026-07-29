@@ -44,7 +44,8 @@ pill_dispenser/
   rpi_firmware/            the one-board build — see rpi_firmware/README.md
     snapcare_dispenser/      SC1, scheduler, servos, WiFi, web server
     service/                 systemd unit + install.sh
-    tests/                   `make` — 220 tests, no board
+    tests/                   `make` — 272 tests, no board
+    ASSEMBLY.md              building the machine, stage by stage
 ```
 
 ## Two builds, one protocol
@@ -65,9 +66,13 @@ and password are derived from the SoC serial number rather than generated.
 They share the SC1 grammar and its test vectors, so a schedule from the app or
 from a photographed paper sheet reaches either one unchanged. What differs is
 what each can be told and what each can say back, and both READMEs are explicit
-about it. The Pi's one real regression is the clock: it has no RTC and no
-battery at all, so it refuses to dispense until NTP or a phone vouches for the
-time.
+about it. The Pi has no clock of its own — `fake-hwclock` restores a stale time
+confidently, which is worse than none — so this build fits a DS3231 as well.
+Three things can vouch for the time: the RTC, NTP, or a `SC1*C*` code from the
+phone. Until one of them does, nothing is dispensed.
+
+[`rpi_firmware/ASSEMBLY.md`](rpi_firmware/ASSEMBLY.md) builds that machine from a
+bare Pi, one subsystem per stage, with the command that proves each one.
 
 ## Reading a sheet
 

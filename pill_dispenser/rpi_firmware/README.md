@@ -147,6 +147,11 @@ The contest unit is **three trays**, an LED ring, a buzzer, a confirm button and
 a DS3231. `INSTALLED_TRAYS = 3` in `config.py` is the only thing that says
 three; the pin map lists all eight so scaling up is one number and some servos.
 
+To *build* one rather than look up a pin, [`ASSEMBLY.md`](ASSEMBLY.md) goes from
+a bare Pi to a commissioned machine one subsystem at a time, each stage ending
+with the command that proves it. The table below is the reference; that is the
+procedure.
+
 | Signal | Pin | Notes |
 |---|---|---|
 | Servo 1..3 signal | GPIO **17, 27, 22** | signal wire only — **not** power |
@@ -382,7 +387,7 @@ one screen that matters.
 ## Testing it without a Pi
 
 ```bash
-make            # 220 tests, no board, no servos, no network, under two seconds
+make            # 272 tests, no board, no servos, no network, under two seconds
 make run        # the whole firmware on a laptop, mock servos, port 8099
 make label      # this machine's setup QR, in the terminal
 ```
