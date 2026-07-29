@@ -92,9 +92,3 @@ public/glyphs-gen/
 
 # OCR 자산 — scripts/copy-ocr.mjs 가 node_modules 와 CDN 에서 채운다 (14MB)
 public/ocr/
-
-# 전문가 연락처 — 실명과 이메일이 들어 있다. 대회 조직 계정 아래 레포이므로
-# 개인정보를 올리지 않는다. 문서 작성용 자료이며 로컬에만 둔다.
-scratchpad/contacts/
-scratchpad/email_list.md
-scratchpad/experts.md
