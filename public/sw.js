@@ -12,7 +12,7 @@
  *  - API        : 통과 (판정은 신선해야 하고, 오프라인 폴백은 앱 코드가 직접 처리한다)
  */
 
-const VERSION = 'snapcare-v2';
+const VERSION = 'snapcare-9deecb296fb5db3d';
 const SHELL = `${VERSION}-shell`;
 const ASSETS = `${VERSION}-assets`;
 
@@ -68,6 +68,13 @@ self.addEventListener('fetch', (event) => {
   if (
     url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/pictograms/') ||
+    // 영양 추정 모델(16MB)과 그 설정. 앱의 요점이 "인터넷 없이 기기에서 판정한다"
+    // 인데 이것이 빠져 있어서, 계산은 기기에서 하면서 정작 모델을 못 받아왔다.
+    //
+    // 미리 받아두지 않고 처음 쓸 때 받는다(cacheFirst 가 그렇게 동작한다). 첫 화면에서
+    // 16MB 를 요구하면 망이 느린 곳에서는 앱이 안 뜬 것처럼 보이는데, 우리 사용자가
+    // 있는 곳이 정확히 그런 곳이다. 앱이 안 열리는 것보다 기능 하나가 늦는 편이 낫다.
+    url.pathname.startsWith('/models/') ||
     url.pathname.startsWith('/nutrition/') ||
     url.pathname.startsWith('/icons/')
   ) {

@@ -418,3 +418,32 @@ def test_a_form_encoded_body_also_works(http):
         assert response.status == 200
     _, data = http.get_json("/api/schedule")
     assert data["payload"] == "SC1*W*6:0730-127-000"
+
+
+def test_a_schedule_can_arrive_by_navigation_with_days_and_duration(http):
+    """The web app is served over HTTPS and the device speaks HTTP, so the
+    browser blocks every fetch() between them. The one thing it does not block
+    is a top-level navigation — a GET. POST /api/schedule is therefore
+    unreachable from the deployed app, and /save, which was reachable, has no
+    field for days of the week or course length.
+
+    Without this route a Mon/Wed/Fri prescription dispenses seven days a week
+    and a 30-day course runs until the hopper is empty."""
+    payload = "SC1*W*1:0800-021-030"          # Mon/Wed/Fri, thirty days
+    status, headers, body = http.get(f"/api/schedule?payload={payload.replace('*', '%2A')}")
+    assert status == 200
+    # Arrived by navigation, so it must be a page a person can read.
+    assert headers["Content-Type"].startswith("text/html")
+    assert "Schedule saved" in body
+
+    _, data = http.get_json("/api/schedule")
+    assert data["payload"] == payload
+
+
+def test_a_schedule_link_that_is_malformed_changes_nothing(http):
+    _, before = http.get_json("/api/schedule")
+    status, _, body = http.get("/api/schedule?payload=SC1%2AW%2Anonsense")
+    assert status == 400
+    assert "Not saved" in body
+    _, after = http.get_json("/api/schedule")
+    assert after["payload"] == before["payload"]
