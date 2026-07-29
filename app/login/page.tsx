@@ -8,7 +8,9 @@ import bcrypt from 'bcryptjs';
 import { useSession } from '@/stores/session';
 import { useProfile } from '@/stores/profile';
 import { seedDemoIfEmpty } from '@/stores/scans';
-import { setDemo, useIsDemo } from '@/lib/snapcare/demo';
+import { setDemo } from '@/lib/snapcare/demo';
+import { useIsDemo } from '@/lib/hooks';
+import { activeAccountId, leaveDemo, listAccounts, switchTo, type Account } from '@/lib/snapcare/accounts';
 
 /** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개 순서 (bcrypt로 실제 설정·검증). */
 const TILES = ['☀️', '🌙', '💧', '🔥', '🌸', '🐦', '🏠', '⛰️', '🛣️', '🚪', '🔔', '🔑'];
@@ -51,6 +53,26 @@ export default function LoginPage() {
   const confirmed = useProfile((s) => s.confirmed);
   const next = confirmed ? '/home' : '/profile?setup=1';
 
+  /*
+   * 이 폰을 쓰는 사람들.
+   *
+   * 잠금화면에 둔 이유: 따로 "누구세요" 화면을 만들면 화면이 하나 더 늘고, 잘못 골랐을
+   * 때 되돌아갈 길이 필요해진다. 윈도우 잠금화면이 사람 목록과 비밀번호를 한 화면에
+   * 두는 것과 같은 이유다 — 얼굴이 계속 보이므로 "내가 아니다" 를 언제든 고칠 수 있다.
+   *
+   * 혼자 쓰면 아무것도 안 보인다. 사람이 한 명일 때 고르라고 하는 것은 없는 선택을
+   * 시키는 것이고, 지금까지 쓰던 사람에게는 화면이 그대로여야 한다.
+   *
+   * 그릴 때 읽지 않고 붙은 뒤에 읽는다 — 명단은 브라우저에만 있어서, 서버가 그린
+   * 화면과 어긋난다.
+   */
+  const [people, setPeople] = useState<Account[]>([]);
+  const [meId, setMeId] = useState('');
+  useEffect(() => {
+    setPeople(listAccounts());
+    setMeId(activeAccountId());
+  }, []);
+
   async function complete(seq: number[]) {
     setBusy(true);
     const keyStr = seq.join(',');
@@ -82,7 +104,40 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full flex justify-center" style={{ background: 'var(--color-sc-bg)' }}>
-      <div className="relative w-full max-w-[440px] min-h-screen flex flex-col items-center px-6 pt-16">
+      <div className="relative w-full max-w-[440px] min-h-screen flex flex-col items-center px-6 pt-10">
+        {people.length > 1 && (
+          <>
+            <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
+               {...sayable('Who are you? Tap your picture.')}>
+              WHO ARE YOU?
+            </p>
+            <div className="mt-3 mb-6 flex flex-wrap justify-center gap-4">
+              {people.map((p) => {
+                const on = p.id === meId;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => { if (!on) switchTo(p.id); }}
+                    aria-pressed={on}
+                    aria-label={`Person ${p.emoji}`}
+                    className="flex h-16 w-16 items-center justify-center rounded-full text-3xl
+                               transition-transform active:scale-95"
+                    style={{
+                      background: p.color,
+                      // 고른 사람만 또렷하다. 테두리만으로 가르면 무엇이 지금 것인지가
+                      // 색 하나에 걸리는데, 이 앱은 시력이 떨어지는 사람이 쓴다.
+                      opacity: on ? 1 : 0.4,
+                      outline: on ? '3px solid var(--color-sc-primary)' : '3px solid transparent',
+                      outlineOffset: '3px',
+                    }}
+                  >
+                    {p.emoji}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
         <div className="flex h-12 w-12 items-center justify-center rounded-full text-2xl" style={{ background: 'color-mix(in srgb, var(--color-sc-primary) 12%, white)' }}>🔒</div>
         <h1 className="mt-4 text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}
             {...sayable(setup ? 'Create your picture key.' : 'Enter your picture key.')}>
@@ -183,7 +238,7 @@ export default function LoginPage() {
         <div className="mt-auto pt-8 flex items-center gap-2 text-[11px]"
              style={{ color: 'var(--color-sc-muted)' }}>
           <button
-            onClick={() => { setDemo(false); location.href = '/'; }}
+            onClick={() => { leaveDemo(); location.href = '/'; }}
             className="rounded-full px-3 py-1.5"
             style={{
               background: demo ? 'transparent' : 'var(--color-sc-line)',

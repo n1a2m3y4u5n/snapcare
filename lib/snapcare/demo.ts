@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 /**
  * 시연용 자료를 채울 것인가.
  *
@@ -67,14 +65,10 @@ export function setDemo(on: boolean): void {
   else localStorage.removeItem(FLAG);
 }
 
-/**
- * 화면에서 쓰는 형태.
+/*
+ * 화면에서 쓰는 형태(useIsDemo)는 lib/hooks.ts 로 옮겼다.
  *
- * isDemo() 를 그리는 중에 그냥 부르면 안 된다 — 서버는 false, 브라우저는 true 라
- * 두 화면이 어긋난다. 붙은 뒤에 한 번 알려주는 방식으로 그 어긋남을 없앤다.
+ * 이 파일이 react 를 물고 있으면 브라우저 밖에서 읽을 수 없다. lib/snapcare/accounts.ts
+ * 가 시연 여부를 알아야 하는데(시연 모드에서는 사람이 둘이다), 그쪽은 시험에서도
+ * 도는 파일이라 react 가 딸려 오면 곤란하다. 훅만 떼면 나머지는 순수 함수 두 개다.
  */
-export function useIsDemo(): boolean {
-  const [demo, setDemo] = useState(false);
-  useEffect(() => setDemo(isDemo()), []);
-  return demo;
-}

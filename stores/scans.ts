@@ -4,6 +4,7 @@ import type { Reaction, ScanRecord, Symptom } from '@/lib/snapcare/types';
 import { PROFILE_ID, seedDemoProfile } from './profile';
 import { prune } from '@/lib/snapcare/retention';
 import { isDemo } from '@/lib/snapcare/demo';
+import { accountStorage, activeAccountId, PRIMARY_ID } from '@/lib/snapcare/accounts';
 
 /**
  * 시드 최근 스캔 (와이어프레임 홈 RECENT 피드 기준).
@@ -36,6 +37,22 @@ const SEED_SCANS: ScanRecord[] = [
   { id: 's3', itemId: 'ibuprofen', name: 'Ibuprofen 200mg', kind: 'medicine', emoji: '💊', memberId: PROFILE_ID, level: 'avoid', timeLabel: 'Today · 2:14 PM', dayKey: 'today' },
   { id: 's4', itemId: 'granola_bar', name: 'Peanut chocolate bar', kind: 'food', emoji: '🍫', memberId: PROFILE_ID, level: 'caution', timeLabel: 'Yesterday · 6:40 PM', dayKey: 'yesterday', barcode: '5000159461122', grams: 50 },
 ];
+
+/**
+ * 같은 폰의 두 번째 사람 — 땅콩 알레르기가 있는 일곱 살.
+ *
+ * 일부러 **같은 두 가지**를 넣었다. 어르신 쪽에서 초콜릿 바는 주의(설탕)였는데
+ * 여기서는 회피(땅콩)고, 에너지음료는 어르신에게 설탕 때문에 걸리지만 아이에게는
+ * 카페인 때문에 걸린다. 얼굴을 바꿔 같은 화면을 두 번 보이면, 이 앱이 라벨을 읽어
+ * 주는 것이 아니라 **누가 먹는지를 보고 판정한다**는 것이 설명 없이 드러난다.
+ */
+const KID_SCANS: ScanRecord[] = [
+  { id: 'k1', itemId: 'granola_bar', name: 'Peanut chocolate bar', kind: 'food', emoji: '🍫', memberId: PROFILE_ID, level: 'avoid', timeLabel: 'Today · 4:10 PM', dayKey: 'today', barcode: '5000159461122', grams: 50 },
+  { id: 'k2', itemId: 'energy_drink', name: 'Energy drink 250 mL', kind: 'drink', emoji: '🥤', memberId: PROFILE_ID, level: 'avoid', timeLabel: 'Today · 4:25 PM', dayKey: 'today', barcode: '9002490100070', grams: 250 },
+];
+
+/** 시연 기록은 사람마다 다르다. 명단에 없는 사람이면 비어 있는 것이 맞다. */
+const DEMO_SCANS: Record<string, ScanRecord[]> = { [PRIMARY_ID]: SEED_SCANS, kid: KID_SCANS };
 
 
 interface ScansState {
@@ -84,6 +101,9 @@ export const useScans = create<ScansState>()(
         return { ...current, ...p, scans: prune(p.scans ?? [], todayKey()) };
       },
       name: 'snapcare-scans',
+      // 기록은 사람 것이다. 한 폰을 여럿이 쓸 때 이것이 섞이면 하루 누적과 식이 일지가
+      // 남의 끼니를 세게 된다 — 화면이 비는 것이 아니라 조용히 틀린 숫자가 나온다.
+      storage: accountStorage,
       /**
        * v2: 하루 누적 분석을 위해 dayKey/barcode/grams 가 추가됐다.
        * 이전에 저장된 기록엔 그 필드가 없어서, 그대로 두면 저장분이 새 시드를 가리고
@@ -142,7 +162,9 @@ export function isToday(rec: ScanRecord, today: string): boolean {
 export function seedDemoIfEmpty(): void {
   if (!isDemo()) return;
   if (useScans.getState().scans.length > 0) return;
-  useScans.setState({ scans: SEED_SCANS });
+  const seed = DEMO_SCANS[activeAccountId()];
+  if (!seed) return;
+  useScans.setState({ scans: seed });
   // 기록만 넣으면 소용이 없다 — 판정은 프로필에서 나온다. 조건이 비어 있으면 위의
   // 회피 두 건이 왜 회피인지 화면 어디에도 설명이 없다.
   seedDemoProfile();

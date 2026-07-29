@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { accountStorage } from '@/lib/snapcare/accounts';
 
 interface SessionState {
   onboarded: boolean;
@@ -29,6 +30,9 @@ export const useSession = create<SessionState>()(
     }),
     {
       name: 'snapcare-session',
+      // 픽처키는 사람마다 다르다. 한 폰을 여럿이 쓰면 잠금이 한 개일 이유가 없고,
+      // 자기 자리에 들어가는 방법이 곧 자기 그림 네 개다.
+      storage: accountStorage,
       // authed는 저장 안 함 → 매 로드마다 로그인 화면을 거친다 (데모용). onboarded·pinHash만 유지.
       partialize: (s) => ({ onboarded: s.onboarded, pinHash: s.pinHash }),
     },

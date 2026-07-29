@@ -1,11 +1,13 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useProfile } from '@/stores/profile';
 import { CONDITIONS } from '@/lib/snapcare/conditions';
 import { sayable } from '@/components/sc/Say';
+import { FACES, freeFaces } from '@/lib/snapcare/accounts';
+import { useMyColor } from '@/lib/hooks';
 import type { AgeBand } from '@/lib/snapcare/types';
 
 /**
@@ -19,8 +21,11 @@ import type { AgeBand } from '@/lib/snapcare/types';
  * 비율이라, 나이대가 정해져야 당·소금·포화지방 상한이 정해진다.
  */
 
-/** 사람을 나타내는 그림 — 이름 대신 이것이 신원이 된다. */
-const FACES = ['🧑', '🧒', '👶', '🧓', '👩', '👨', '👦', '👧'];
+/*
+ * 사람을 나타내는 그림(FACES)은 lib/snapcare/accounts.ts 에 있다 — 잠금화면의 사람
+ * 고르기와 **같은 목록**이어야 하기 때문이다. 두 벌로 두면 여기서 고른 얼굴이 저기에
+ * 없는 경우가 생기고, 그러면 자기 자리를 못 찾는다.
+ */
 
 /**
  * 나이대는 이모지 대신 우리 글리프로 보인다.
@@ -65,6 +70,21 @@ function ProfileBody() {
   // 대신 다 골랐다고 말할 자리가 있어야 한다.
   const setup = useSearchParams().get('setup') === '1';
   const { profile, toggleCondition, setFace, setAgeBand, confirm } = useProfile();
+  const myColor = useMyColor(profile.color);
+
+  /*
+   * 남이 쓰는 얼굴은 안 보인다.
+   *
+   * 잠금화면에서 서로를 가려내는 단서가 얼굴뿐이라, 둘이 같은 얼굴을 고르면 자기
+   * 자리를 찾을 방법이 없어진다. 지금 내 얼굴은 남겨 둔다 — 안 그러면 내가 쓰는
+   * 것이 목록에서 빠져 무엇이 선택돼 있는지가 안 보인다.
+   *
+   * 혼자 쓰면 여덟 개가 전부 보인다.
+   */
+  const [faces, setFaces] = useState<string[]>(FACES);
+  useEffect(() => {
+    setFaces(FACES.filter((f) => f === profile.emoji || freeFaces().includes(f)));
+  }, [profile.emoji]);
 
   function done() {
     confirm();
@@ -108,7 +128,7 @@ function ProfileBody() {
         {!setup && (
         <div className="mt-4 flex items-center gap-3">
           <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl"
-                style={{ background: profile.color }}>
+                style={{ background: myColor }}>
             {profile.emoji}
           </span>
           <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
@@ -121,7 +141,7 @@ function ProfileBody() {
         {/* 신원 = 그림 */}
         {!setup && (
         <div className="mt-4 flex flex-wrap gap-2">
-          {FACES.map((f) => (
+          {faces.map((f) => (
             <button
               key={f}
               onClick={() => setFace(f)}

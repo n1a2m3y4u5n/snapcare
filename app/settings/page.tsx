@@ -5,6 +5,7 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useProfile } from '@/stores/profile';
 import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
 import { sayable } from '@/components/sc/Say';
+import { useMyColor } from '@/lib/hooks';
 import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
 
 /**
@@ -20,6 +21,7 @@ import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
 export default function SettingsPage() {
   const router = useRouter();
   const profile = useProfile((s) => s.profile);
+  const myColor = useMyColor(profile.color);
   const autoTts = usePreferences((s) => s.autoTts);
   const speechRate = usePreferences((s) => s.speechRate);
   const setSpeechRate = usePreferences((s) => s.setSpeechRate);
@@ -40,7 +42,7 @@ export default function SettingsPage() {
         >
           <span
             className="flex h-10 w-10 items-center justify-center rounded-full text-xl"
-            style={{ background: profile.color }}
+            style={{ background: myColor }}
           >
             {profile.emoji}
           </span>
@@ -51,6 +53,33 @@ export default function SettingsPage() {
             </span>
             <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
               {profile.role}{profile.conditionIds.length > 0 ? ` · ${profile.conditionIds.length}` : ''}
+            </span>
+          </span>
+          <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
+        </button>
+
+        {/*
+          한 폰을 여럿이 쓰는 경우.
+
+          위의 "나와 내 조건" 바로 아래에 둔다. 둘은 같은 질문의 두 켜다 — 위는 지금
+          누구 기준으로 보고 있는지고, 여기는 그 '누구' 가 몇 명인지다.
+
+          하단 탭이 아니라 설정 안에 두는 이유는 가족 명단을 없앨 때와 같다. 탭에 있으면
+          '가족 관리 앱' 으로 읽히는데, 이것은 하루에 한 번 있는 일도 아니다.
+        */}
+        <button
+          onClick={() => router.push('/people')}
+          className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-full text-xl"
+                style={{ background: 'var(--color-sc-line)' }}>👥</span>
+          <span className="flex-1">
+            <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
+                  {...sayable('Who uses this phone. Add someone else, or switch to them.')}>
+              Who uses this phone
+            </span>
+            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+              Share this phone — each person keeps their own
             </span>
           </span>
           <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
