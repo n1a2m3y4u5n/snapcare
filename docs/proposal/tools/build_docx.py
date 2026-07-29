@@ -268,14 +268,20 @@ def sections(md: str) -> dict[str, str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default=str(DOC / 'SnapCare_H1_Final_Proposal_KO.docx'))
+    ap.add_argument('--src', default='proposal_ko.md',
+                    help='본문 마크다운 (docs/proposal/ 기준)')
+    ap.add_argument('--out', default=None)
     args = ap.parse_args()
+    src = DOC / args.src
+    if args.out is None:
+        lang = 'EN' if src.stem.endswith('_en') else 'KO'
+        args.out = str(DOC / f'SnapCare_H1_Final_Proposal_{lang}.docx')
 
     if not TEMPLATE.exists():
         raise SystemExit(f'템플릿을 찾지 못했다: {TEMPLATE}')
 
     d = docx.Document(str(TEMPLATE))
-    body = sections((DOC / 'proposal_ko.md').read_text())
+    body = sections(src.read_text())
 
     for (ri, ci), text in HEADER.items():
         write_inline(clear(d.tables[0].rows[ri].cells[ci]), text, size=BODY_PT)
