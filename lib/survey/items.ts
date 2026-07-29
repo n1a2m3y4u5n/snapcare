@@ -140,16 +140,27 @@ export const BACKGROUND: Item[] = [
 
 export const CORE: Item[] = [
   {
+    // 이 문항은 처음에 "판단 경로에서 문자를 완전히 없앴습니다" 로 되어 있었다.
+    // 사실이 아니다. 코드를 확인하니 판정 화면에는 약 이름·복용법·판정 배지·조언
+    // 줄·복용 시각이 모두 보이는 글자로 있고, 글자가 없는 것은 픽토그램 줄 하나뿐이다
+    // (거기서만 문장이 alt·aria-label 과 음성으로만 들어간다).
+    //
+    // 실제 설계 의도는 app/scan/page.tsx 의 주석에 적혀 있다 — 글을 읽는 사람에게는
+    // 글자가 쓸모 있으므로 남겨 두고, 읽지 못하는 사람을 위해 그림과 음성으로 **독립된
+    // 경로**를 따로 깐 것이다. 문자를 없앤 것이 아니라 문자 없이도 성립하게 만든 것이다.
+    //
+    // 데모를 화면에 놓은 뒤로는 응답자가 글자를 직접 보게 되므로, 틀린 서술을 두면
+    // 문항 자체를 믿지 않는다.
     id: 'a1_notext',
     kind: 'single',
     required: true,
     q: T(
-      'SnapCare 는 판단 경로에서 문자를 완전히 없앴습니다. 이 선택은 어떻습니까?',
-      'SnapCare removes text entirely from the decision path. What do you make of that choice?',
-      'SnapCare elimină complet textul din traseul decizional. Ce părere aveți despre această alegere?',
+      'SnapCare 는 화면의 글자를 없애지 않았습니다. 대신 글을 읽지 못하는 사람이 글자를 하나도 읽지 않고도 복약 지시를 온전히 받을 수 있도록, 픽토그램과 음성으로 독립된 경로를 깔았습니다. 이 접근은 어떻습니까?',
+      'SnapCare does not remove the text from the screen. Instead it lays down an independent path — pictograms and speech — so that someone who cannot read any of the text still receives the full dosing instruction. What do you make of that approach?',
+      'SnapCare nu elimină textul din ecran. În schimb, creează o cale independentă — pictograme și voce — astfel încât cineva care nu poate citi niciun text să primească totuși instrucțiunea completă de dozare. Ce părere aveți despre această abordare?',
     ),
     options: [
-      T('필요조건이다', 'Necessary', 'Necesară'),
+      T('옳은 접근이다', 'The right approach', 'Abordarea corectă'),
       T('도움은 되나 불충분하다', 'Helpful but insufficient', 'Utilă, dar insuficientă'),
       T('중립', 'Neutral', 'Neutră'),
       T('위험하다', 'Risky', 'Riscantă'),
@@ -173,21 +184,29 @@ export const CORE: Item[] = [
     ),
   },
   {
+    // 이 문항도 사실과 달랐다. "문서 설명은 넣지 않습니다" 로 되어 있었는데, 화면에는
+    // 글자가 남아 있다. 우리가 한 것은 문서를 뺀 것이 아니라, 글자를 읽지 못해도
+    // 성립하도록 그림과 음성 경로를 따로 완성한 것이다.
+    //
+    // 그러면 Gutierrez 권고에 대한 우리 위치도 달라진다. 그 논문은 픽토그램 단독 대신
+    // 구두 **와** 문서 병행을 권고했는데, 우리는 셋 다 갖고 있다. 다만 읽지 못하는
+    // 사람에게는 그중 둘만 남으므로, 물어야 할 것은 "문서를 빼도 되는가" 가 아니라
+    // "둘만으로 충분한가" 다.
     id: 'a3_voice',
     kind: 'single',
     required: true,
     q: T(
-      '이 앱은 픽토그램과 음성을 함께 제시하고 문서 설명은 넣지 않습니다. 음성이 문서 설명을 충분히 대신합니까?',
-      'The app pairs pictograms with synthesized speech and provides no written text. Does the speech channel adequately substitute for written instructions?',
-      'Aplicația combină pictograme cu voce sintetizată și nu oferă text scris. Canalul vocal înlocuiește în mod adecvat instrucțiunile scrise?',
+      '이 앱은 그림·음성·글자 세 경로를 함께 제시합니다. 글을 읽지 못하는 사람에게는 그림과 음성 둘만 남습니다. 그 두 경로만으로 충분합니까?',
+      'The app presents three channels at once — pictograms, speech, and text. For someone who cannot read, only the pictograms and the speech remain. Are those two channels enough on their own?',
+      'Aplicația prezintă trei canale simultan — pictograme, voce și text. Pentru cineva care nu poate citi, rămân doar pictogramele și vocea. Sunt suficiente aceste două canale?',
     ),
     note: T(
-      '선행 연구(Gutierrez et al., 2022)는 픽토그램 단독 대신 구두와 문서 설명을 함께 쓰라고 권고했고, USP 픽토그램 라이선스도 픽토그램을 정보 전달의 유일한 수단으로 쓰지 말라고 정합니다. 우리는 구두는 받아들이고 문서는 뺐습니다. 그 판단이 옳은지 묻는 문항입니다.',
-      'Prior work (Gutierrez et al., 2022) recommends complementing pictograms with verbal *and* written instructions, and the USP pictogram licence states pictograms should not be the sole means of conveying information. We adopted the verbal channel and dropped the written one. This question asks whether that was right.',
-      'Studiile anterioare (Gutierrez et al., 2022) recomandă completarea pictogramelor cu instrucțiuni verbale *și* scrise, iar licența pictogramelor USP prevede că pictogramele nu trebuie să fie singurul mijloc de transmitere a informației. Am adoptat canalul verbal și am renunțat la cel scris. Această întrebare verifică dacă a fost corect.',
+      '선행 연구(Gutierrez et al., 2022)는 픽토그램 단독 대신 구두와 문서 설명을 함께 쓰라고 권고했고, USP 픽토그램 라이선스도 픽토그램을 정보 전달의 유일한 수단으로 쓰지 말라고 정합니다. 저희는 세 경로를 다 두었으나, 글을 읽지 못하는 분에게는 문서 경로가 사실상 없는 것과 같습니다. 위 데모에서 스피커 표시를 눌러 음성을 들어 보신 뒤 답해 주시면 좋겠습니다.',
+      'Prior work (Gutierrez et al., 2022) recommends complementing pictograms with verbal *and* written instructions, and the USP pictogram licence states pictograms should not be the sole means of conveying information. We kept all three channels, but for someone who cannot read, the written one is effectively absent. Please press a speaker mark in the demo above and listen before answering.',
+      'Studiile anterioare (Gutierrez et al., 2022) recomandă completarea pictogramelor cu instrucțiuni verbale *și* scrise, iar licența pictogramelor USP prevede că pictogramele nu trebuie să fie singurul mijloc de transmitere a informației. Am păstrat toate trei canalele, dar pentru cineva care nu poate citi, cel scris este practic absent. Vă rugăm să apăsați un simbol de difuzor în demonstrația de mai sus și să ascultați înainte de a răspunde.',
     ),
     options: [
-      T('예, 충분하다', 'Yes, adequately', 'Da, în mod adecvat'),
+      T('예, 충분하다', 'Yes, enough', 'Da, suficiente'),
       T('부분적으로', 'Partly', 'Parțial'),
       T('아니오', 'No', 'Nu'),
     ],
@@ -233,6 +252,65 @@ export const CORE: Item[] = [
       T('아니다', 'No', 'Nu'),
     ],
     follow: T('덧붙일 말이 있으면 적어 주십시오.', 'Anything to add?', 'Aveți ceva de adăugat?'),
+  },
+];
+
+/* ──────────── S. 서비스 피드백 — 동작하는 데모를 보고 답한다 ──────────── */
+
+/**
+ * 이 세 문항은 위에 놓인 데모를 보고(그리고 들어 보고) 답하는 것이다.
+ *
+ * S1 을 필수로 둔 이유는 이것이 제안서에 쓸 대표 숫자가 되기 때문이다 — 그림
+ * 하나만 보면 누구나 답할 수 있고, "전문가 N명 중 M명이 혼자 복용이 어렵다고
+ * 보았다" 는 문장은 우리가 아직 갖지 못한 종류의 근거다.
+ *
+ * S2·S3 은 선택입력이다. 서술을 강제하면 응답을 잃는다.
+ */
+export const SERVICE: Item[] = [
+  {
+    id: 's1_alone',
+    kind: 'single',
+    required: true,
+    q: T(
+      '위 데모만 보고, 글을 읽지 못하는 환자가 혼자서 약을 제대로 복용할 수 있을 것 같습니까?',
+      'Looking only at the demo above, could a patient who cannot read take the medicine correctly on their own?',
+      'Privind doar demonstrația de mai sus, ar putea un pacient care nu poate citi să ia corect medicamentul singur?',
+    ),
+    options: [
+      T('예, 가능할 것 같다', 'Yes, probably', 'Da, probabil'),
+      T('부분적으로 — 일부는 되고 일부는 안 된다', 'Partly — some of it, not all', 'Parțial — o parte, nu tot'),
+      T('아니오', 'No', 'Nu'),
+      T('판단할 근거가 없다', 'I have no basis to judge', 'Nu am o bază pentru a judeca'),
+    ],
+    follow: T('한 문장으로 이유를 적어 주십시오.', 'Give your reason in one sentence.', 'Motivați într-o singură frază.'),
+  },
+  {
+    id: 's2_misread',
+    kind: 'longtext',
+    q: T(
+      '위 데모에서 잘못 읽힐 곳이 있으면 짚어 주십시오.',
+      'If anything in the demo above would be misread, please point to it.',
+      'Dacă ceva din demonstrația de mai sus ar fi citit greșit, vă rugăm să indicați.',
+    ),
+    note: T(
+      '그림 하나, 문장 하나만 지적해 주셔도 됩니다. 어느 것인지 적어 주시면 그대로 고칩니다. 칭찬보다 이 답이 훨씬 쓸모 있습니다.',
+      'Pointing at a single pictogram or a single line is enough. Tell us which one and we will change it. This is far more useful to us than praise.',
+      'Este suficient să indicați o singură pictogramă sau un singur rând. Spuneți-ne care și o vom schimba. Acest lucru ne este mult mai util decât laudele.',
+    ),
+  },
+  {
+    id: 's3_tried',
+    kind: 'longtext',
+    q: T(
+      '앱을 직접 열어 보셨다면, 무엇이 예상과 달랐습니까?',
+      'If you opened the actual app, what differed from what you expected?',
+      'Dacă ați deschis aplicația reală, ce a fost diferit de ceea ce vă așteptați?',
+    ),
+    note: T(
+      '열어 보지 않으셨다면 비워 두셔도 됩니다.',
+      'Leave this blank if you did not open it.',
+      'Lăsați necompletat dacă nu ați deschis-o.',
+    ),
   },
 ];
 
@@ -460,11 +538,11 @@ export const CLOSE: Item[] = [
 export const UI = {
   title: T('SnapCare 전문가 의견 조사', 'SnapCare — Expert Feedback', 'SnapCare — Opinia specialiștilor'),
   intro: T(
-    'SnapCare 는 글을 읽지 못하는 사람이 약을 안전하게 복용하도록 돕는 웹앱입니다. 문자 대신 픽토그램과 음성으로 복약 지침을 전달합니다. ' +
+    'SnapCare 는 글을 읽지 못하는 사람이 약을 안전하게 복용하도록 돕는 웹앱입니다. 글자를 하나도 읽지 못해도 복약 지시가 온전히 전달되도록, 픽토그램과 음성으로 독립된 경로를 깔았습니다. ' +
       '제16회 e-ICON 세계대회에 한국·몰도바 합동 팀으로 출품했습니다. 저희는 고등학생 팀이고, 이 조사는 영리 목적이 아닙니다.',
-    'SnapCare is a web app that helps people who cannot read text take medication safely. It delivers dosing instructions as pictograms and synthesized speech instead of writing. ' +
+    'SnapCare is a web app that helps people who cannot read text take medication safely. It lays down an independent path — pictograms and synthesized speech — so that the full dosing instruction arrives even if none of the writing can be read. ' +
       'It is the joint Korea–Moldova entry in the 16th e-ICON World Contest. We are a high-school team and this survey is not commercial.',
-    'SnapCare este o aplicație web care ajută persoanele care nu pot citi să își administreze medicamentele în siguranță. Transmite instrucțiunile de dozare prin pictograme și voce sintetizată, în loc de text. ' +
+    'SnapCare este o aplicație web care ajută persoanele care nu pot citi să își administreze medicamentele în siguranță. Creează o cale independentă — pictograme și voce sintetizată — astfel încât instrucțiunea completă de dozare să ajungă chiar dacă textul nu poate fi citit. ' +
       'Este lucrarea comună Coreea–Moldova la a 16-a ediție e-ICON World Contest. Suntem o echipă de liceu, iar acest chestionar nu are scop comercial.',
   ),
   timeNote: T(
@@ -493,6 +571,17 @@ export const UI = {
   retry: T('다시 시도', 'Try again', 'Încercați din nou'),
   contact: T('문의', 'Contact', 'Contact'),
   optional: T('선택', 'optional', 'opțional'),
+  demoTitle: T(
+    '실제로 동작하는 데모입니다',
+    'This is the working thing, not a screenshot',
+    'Aceasta este versiunea funcțională, nu o captură de ecran',
+  ),
+  demoNote: T(
+    '처방 문구를 넣으면 아래처럼 픽토그램이 나옵니다. 스피커 표시를 누르면 저희 음성 엔진이 그 줄을 읽어 줍니다 — 그림과 음성만으로 충분한지는 들어 보셔야 판단하실 수 있습니다. 소리가 나지 않으면 브라우저에 해당 언어 음성이 없는 경우이니 그대로 넘어가 주십시오.',
+    'Enter a prescription and the pictograms below are what comes out. Press a speaker mark and our voice engine reads that line aloud — whether the pictograms and the speech are enough on their own is something you have to hear to judge. If nothing plays, your browser has no voice for that language; please move on.',
+    'Introduceți o prescripție și pictogramele de mai jos sunt rezultatul. Apăsați un simbol de difuzor și motorul nostru vocal citește rândul — dacă pictogramele și vocea sunt suficiente este ceva ce trebuie auzit. Dacă nu se aude nimic, browserul nu are voce pentru acea limbă; vă rugăm să continuați.',
+  ),
+  rxLabel: T('처방 문구', 'The prescription', 'Prescripția'),
   previewTitle: T(
     '먼저 화면을 보십시오',
     'Please look at the screens first',

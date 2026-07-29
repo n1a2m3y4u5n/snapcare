@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { PictogramStrip } from '@/components/sc/PictogramStrip';
+import { DEMO } from '@/lib/survey/demo';
 import {
-  BACKGROUND, BRANCHES, CLOSE, CLOSE_CITE, CONSENT, CORE, LANGS, UI,
+  BACKGROUND, BRANCHES, CLOSE, CLOSE_CITE, CONSENT, CORE, LANGS, SERVICE, UI,
   type Branch, type Item, type Lang,
 } from '@/lib/survey/items';
 
@@ -286,42 +288,61 @@ export default function SurveyPage() {
       {step.k === 'core' && (
         <>
           {/*
-            문항 앞에 실제 화면을 보여준다. 글 두 문장으로 설명하고 곧바로 "환자를
-            해칠 경로가 무엇입니까" 를 물으면 추측을 적게 되고, 우리가 이미 아는
-            답만 돌아온다. 화면을 보고 답하는 것과 설명을 읽고 답하는 것은 다르다.
+            정지 화면이 아니라 동작하는 것을 넣는다. A3 은 "음성이 문서 설명을
+            충분히 대신합니까" 를 묻는데, 스크린샷으로는 음성을 판단할 수 없다.
+            보여주지 않은 것을 평가해 달라고 하고 있었던 셈이다.
+
+            그리고 모두가 같은 것을 본다. 어떤 사람은 앱을 열어 보고 어떤 사람은
+            그림만 봤다면 답을 나란히 놓을 수 없다.
           */}
-          <section className="mb-6">
-            <h2 className="text-sm font-bold">{t(UI.previewTitle)}</h2>
+          <section className="mb-7">
+            <h2 className="text-sm font-bold">{t(UI.demoTitle)}</h2>
             <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
-              {t(UI.previewNote)}
+              {t(UI.demoNote)}
             </p>
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-              {['fig06_verdict_rx', 'fig02_sigil_sheet', 'fig10_dispenser'].map((f) => (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  key={f}
-                  src={`/survey/${f}.png`}
-                  alt=""
-                  aria-hidden
-                  className="h-56 shrink-0 rounded-xl border bg-white object-contain p-1"
-                  style={{ borderColor: 'var(--color-sc-line)' }}
-                />
-              ))}
-            </div>
+            {DEMO.map((d) => (
+              <div
+                key={d.id}
+                className="mt-3 rounded-2xl border p-3"
+                style={{ borderColor: 'var(--color-sc-line)', background: 'var(--color-sc-surface)' }}
+              >
+                <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+                  {t(UI.rxLabel)}
+                </p>
+                <p className="mt-1 text-sm">{d.rx[lang]}</p>
+                <PictogramStrip source={d.dsl} />
+              </div>
+            ))}
             <a
               href="/"
               target="_blank"
               rel="noreferrer"
-              className="mt-2 inline-block text-xs underline"
+              className="mt-3 inline-block text-xs underline"
               style={{ color: 'var(--color-sc-primary)' }}
             >
               {t(UI.tryIt)}
             </a>
           </section>
+
+          {/* 데모를 보고 답하는 문항. 위에 있는 것에 대해서만 묻는다. */}
+          <section className="mb-7 space-y-6">
+            {SERVICE.map((it) => (
+              <Field
+                key={it.id}
+                item={it}
+                value={ans[it.id] ?? ''}
+                onChange={(v) => set(it.id, v)}
+                followValue={ans[`${it.id}__why`] ?? ''}
+                onFollowChange={(v) => set(`${it.id}__why`, v)}
+                t={t}
+              />
+            ))}
+          </section>
+
         <Questions
           items={CORE}
           {...{ ans, set, t }}
-          onNext={() => advance({ k: 'branch' }, CORE)}
+          onNext={() => advance({ k: 'branch' }, [...SERVICE, ...CORE])}
           onBack={() => setStep({ k: 'background' })}
           nextLabel={t(UI.next)}
           backLabel={t(UI.back)}
