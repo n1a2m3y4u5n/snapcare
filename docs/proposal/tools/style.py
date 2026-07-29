@@ -34,14 +34,16 @@ LIGHT  = '#D9D9D9'      # 비교 대상 막대
 INK, MUTED, GRIDC, SPINE = '#000000', '#595959', '#D9D9D9', '#BFBFBF'
 
 plt.rcParams.update({
-    # 참고 도판은 엑셀로 만들어졌고 한글이 맑은 고딕이다. 그 글꼴이 문서에서
-    # 익숙하게 읽히는 이유이기도 하다. Word 번들의 malgun.ttf 를 개인 글꼴로
-    # 복사해 쓴다 (굵기 400·700).
-    'font.family': 'Malgun Gothic',
+    # 학술 도판의 첫 규칙은 **문서 본문과 같은 글꼴을 쓰는 것**이다. 본문이
+    # 바탕 + Times New Roman 인데 도판만 고딕이면, 아무리 잘 그려도 문서에
+    # 붙여넣은 남의 그림처럼 보인다. 라틴은 Times, 한글은 바탕으로 떨어지게
+    # 목록으로 준다.
+    'font.family': ['Times New Roman', 'Batang'],
     'axes.unicode_minus': False,
     'font.size': 10.0, 'axes.labelsize': 10.4,
     'xtick.labelsize': 9.6, 'ytick.labelsize': 9.6, 'legend.fontsize': 9.6,
     'axes.edgecolor': SPINE, 'axes.linewidth': 0.9,
+    'xtick.direction': 'out', 'ytick.direction': 'out',
     'xtick.major.width': 0.9, 'ytick.major.width': 0.9,
     'xtick.major.size': 3.5, 'ytick.major.size': 3.5,
     'xtick.color': MUTED, 'ytick.color': MUTED,
