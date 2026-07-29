@@ -39,7 +39,9 @@ const SHOTS = [
   { file: 'fig07_verdict_label.png', path: '/camera?try=peanut&demo=1', wait: 'PICTOGRAM GUIDE', ms: 90000 },
   { file: 'fig08_today.png', path: '/nutrition?demo=1', wait: 'TODAY' },
   { file: 'fig09_device.png', path: '/device?demo=1', wait: 'Pill device' },
-  { file: 'fig13_profile.png', path: '/profile?demo=1', wait: 'HOW OLD' },
+  // 첫 실행 화면을 찍는다(setup=1). 그냥 /profile 은 설정에서 들어온 화면이라
+  // 얼굴 고르기가 함께 나오는데, 본문(§3.2)이 서술하는 것은 그것을 뺀 첫 실행이다.
+  { file: 'fig13_profile.png', path: '/profile?setup=1&demo=1', wait: 'HOW OLD' },
   { file: 'fig12_onboarding.png', path: '/onboarding?demo=1', wait: 'Point & scan' },
 ];
 
