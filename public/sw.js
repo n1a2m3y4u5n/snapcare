@@ -75,6 +75,9 @@ self.addEventListener('fetch', (event) => {
     // 16MB 를 요구하면 망이 느린 곳에서는 앱이 안 뜬 것처럼 보이는데, 우리 사용자가
     // 있는 곳이 정확히 그런 곳이다. 앱이 안 열리는 것보다 기능 하나가 늦는 편이 낫다.
     url.pathname.startsWith('/models/') ||
+    // OCR 의 워커·코어·언어 데이터. 성분표 판독은 이 앱의 핵심 경로다 — 대상 지역의
+    // 현지 식품은 어느 제품 데이터베이스에도 없어서, 직접 읽는 것 말고는 길이 없다.
+    url.pathname.startsWith('/ocr/') ||
     url.pathname.startsWith('/nutrition/') ||
     url.pathname.startsWith('/icons/')
   ) {
