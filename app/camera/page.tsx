@@ -184,7 +184,8 @@ export default function CameraPage() {
     try {
       const blob = await (await fetch(src)).blob();
       await runOcr(blob);
-    } catch {
+    } catch (err) {
+      console.error('[camera] 표본을 불러오지 못했다:', err);
       fail('Sample could not be loaded.');
       setBusy(false);
       setStatus(null);

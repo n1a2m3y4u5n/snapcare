@@ -42,7 +42,9 @@ async function toBitmap(source: File | Blob | string): Promise<ImageBitmap | HTM
     img.src = source;
     await img.decode();
     return img;
-  } catch {
+  } catch (err) {
+    // 사진이 나쁘면 흔히 실패하지만, 그 실패가 무엇이었는지는 남긴다.
+    console.warn('[qr] 이미지를 읽지 못했다:', err);
     return null;
   }
 }

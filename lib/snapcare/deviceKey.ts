@@ -166,7 +166,10 @@ export async function openBlob(stored: string): Promise<string | null> {
     const body = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) },
       await dataKey(), raw.slice(12));
     return new TextDecoder().decode(body);
-  } catch {
+  } catch (err) {
+    // 여기서 조용하면 자료가 '없는 것' 으로 보인다. 열쇠가 다르거나 내용이 변조된
+    // 것인데, 화면에는 그냥 빈 앱이 뜬다 — 무엇을 잃었는지 아무도 모른다.
+    console.error('[vault] 백업을 열지 못했다 (열쇠 불일치 또는 변조):', err);
     return null;
   }
 }

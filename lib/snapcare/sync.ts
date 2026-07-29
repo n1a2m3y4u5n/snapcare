@@ -70,8 +70,11 @@ export async function pullBlob(): Promise<SyncBlob | null> {
     if (typeof data !== 'string') return data as SyncBlob;
     const plain = await openBlob(data);
     return plain === null ? null : (JSON.parse(plain) as SyncBlob);
-  } catch {
-    return null; // 오프라인 — localStorage 폴백
+  } catch (err) {
+    // 오프라인이면 정상이다. 그렇지 않은데 계속 실패하면 동기화가 아예 안 되고
+    // 있다는 뜻인데, 조용하면 그것을 알 방법이 없다.
+    console.warn('[sync] 받아오지 못했다 (오프라인이면 정상):', err);
+    return null;
   }
 }
 
@@ -86,7 +89,8 @@ export async function pushBlob(data: SyncBlob): Promise<boolean> {
       method: 'PUT', headers: await signedHeaders('PUT', body), body,
     });
     return res.ok;
-  } catch {
+  } catch (err) {
+    console.warn('[sync] 올리지 못했다 (오프라인이면 정상):', err);
     return false;
   }
 }
