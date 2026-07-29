@@ -235,6 +235,39 @@ SIGIL(Symbol Intuitive Glyph Image Lab)은 팀이 직접 설계·구현한 픽�
 
 각 줄이 하나의 그림으로 합성되며, 머리 안쪽에 수식어가 들어갈 자리(슬롯)를 뚫고 그 안에 그린다. 형태소를 하나 추가하는 데 필요한 것은 그림 한 장이며, 나머지 조합은 문법이 만들어 낸다.
 
+문법이 규칙으로만 있는 것이 아니라 파서가 강제한다. 재귀 하향 파서의 중심부는 다음과 같다.
+
+```python
+def _pictogram(self, in_slot: bool = False) -> Node:
+    if self._peek() != "\\":
+        raise ParseError(f"expected '\\' at position {self.i}")
+    self.i += 1
+    name = self._name()
+
+    if self.m.is_operator(name):                     # \no{...} — 자식이 정확히 하나
+        if self._peek() != "{":
+            raise ParseError(f"\\{name} requires a child: \\{name}{{...}}")
+        ...
+        return Node(name=name, kind=NodeKind.OPERATOR, children=[child])
+
+    if self.m.is_head(name):                         # 머리 — 슬롯에 수식어만
+        children = self._slots()
+        for c in children:
+            if c.kind != NodeKind.MODIFIER:
+                raise ParseError(f"\\{name} slots only accept modifiers; got \\{c.name}")
+        return Node(name=name, kind=NodeKind.HEAD, children=children)
+
+    if self.m.is_modifier(name):                     # 수식어 — 홀로 설 수 없다
+        if not in_slot:
+            raise ParseError(f"\\{name} is a modifier; must appear inside a head's slot")
+        return Node(name=name, kind=NodeKind.MODIFIER)
+
+    raise ParseError(f"unknown macro \\{name}")
+```
+
+설계 의도. 세 갈래가 각각 문법의 한 조항이다. 수식어가 슬롯 밖에 오면 파스가 실패하고, 머리의 슬롯에 다른 머리를 넣어도 실패하며, 사전에 없는 이름은 그림 대신 오류가 된다. 이것이 중요한 이유는 이 DSL 을 사람이 손으로 쓰는 것이 아니라 **언어 모델이 처방 문장을 보고 만들어 내기** 때문이다. 모델이 그럴듯한 이름을 지어내면 그것은 화면에서 그럴듯한 그림이 아니라 파스 오류가 되어야 한다. 안전이 걸린 화면에서 확률적 출력에 결정론적 검증 계층을 두는 것이 이 파서의 역할이며, 같은 구조를 §4.2 의 영양 판정에서도 쓴다.
+
+
 ![그림 7](fig/fig02_sigil_sheet.png)
 
 **[그림 7]** SIGIL 형태소 78종 전체(머리 57 + 수식어 21). 각 형태소 아래의 작은 그림은 같은 것을 34픽셀로 줄인 것이다. 축소본을 함께 싣는 이유는 이 그림들이 실제로는 손바닥만 한 화면에서, 때로는 목록의 한 칸으로 쓰이기 때문이다. 크게 그렸을 때만 구별되는 그림은 이 앱에서 쓸 수 없다.
@@ -438,6 +471,32 @@ Atwater 항등식이 특히 유용하다. 이것은 어떤 출처에서 온 값�
 
 이 검사가 실제로 필요했던 사례가 있다. 개발 과정에서 라벨 파서가 지방 값을 실제의 10배로 읽으면서, 올바르게 읽은 탄수화물과 단백질 값을 오히려 버리는 동작이 발견되었다. Atwater 검사는 이 조합을 통과시키지 않는다.
 
+검사는 판정 엔진 앞단의 한 함수에 모여 있다. 세 경로가 모두 이 함수를 통과한 뒤에야 값이 된다.
+
+```ts
+export function validateDensity(per100: NutrientAmounts): ValidationResult {
+  const problems: string[] = [];
+
+  for (const [k, v] of Object.entries(per100) as [NutrientKey, number][]) {
+    const b = BOUNDS[k];                                   // ① 물리적 범위
+    if (b && (v < b[0] || v > b[1])) problems.push(`${k}=${v} out of range ${b[0]}–${b[1]}`);
+  }
+
+  if (gt(per100.sugars, per100.carbohydrates)) problems.push('sugars > carbohydrates');
+  if (gt(per100.saturatedFat, per100.fat)) problems.push('saturatedFat > fat');   // ② 부분집합
+
+  const mass = (['carbohydrates', 'fat', 'protein', 'fiber', 'salt'] as NutrientKey[])
+    .reduce((s, k) => s + (per100[k] ?? 0), 0);
+  if (mass > MASS_LIMIT) problems.push(`mass ${mass.toFixed(1)} g per 100 g`);     // ③ 질량 보존
+  ...
+}
+```
+
+설계 의도. 검사를 경로마다 두지 않고 한 곳에 모은 것이 요점이다. 경로마다 두면 새 경로가 생길 때마다 검사를 다시 붙여야 하고, 붙이는 것을 잊은 경로가 곧 검증 없는 통로가 된다. 실제로 이 앱에는 세 번째 경로(사진 추정)가 나중에 들어왔는데, 그때 추가로 작성한 검증 코드는 없다. 이미 있는 관문을 지나가게 했을 뿐이다.
+
+`problems` 를 참·거짓 대신 문자열 배열로 돌려주는 것도 의도가 있다. 값이 거절되었을 때 화면은 "읽지 못했습니다" 대신 무엇이 어긋났는지를 말할 수 있어야 하고, 개발 중에는 그 문자열이 그대로 로그가 된다. 앞서 지방 값을 10배로 읽던 사례를 찾아낸 것이 이 문자열이었다.
+
+
 ### 4.3 하드웨어 연동 — 제약이 선택지를 지운 과정
 
 폰과 디스펜서를 잇는 경로는 여러 제약이 동시에 걸리는 문제였다.
@@ -487,6 +546,28 @@ Atwater 항등식이 특히 유용하다. 이것은 어떤 출처에서 온 값�
 | 전송 | 서명은 요청 헤더로 전달한다. 주소창이나 접속 기록에 남지 않는다 |
 
 이 가운데 마지막 세 항목은 개발 중에 발견된 문제를 고친 결과다. 초기 구현은 무작위 문자열을 주소 질의로 전달했는데, 이는 건강 정보에 접근하는 열쇠가 서버 기록에 그대로 축적되는 구조였고, 그 값을 한 번 관찰한 사람이 그대로 재현할 수 있었다.
+
+고친 방식은 문자열 대신 **열쇠 한 쌍**을 쓰는 것이다.
+
+```ts
+// extractable: false — 이 한 글자가 요점이다. true 면 저장소를 읽은 사람이 열쇠를
+// 그대로 가져가고, 그러면 지금 문자열을 쓰는 것과 다를 바가 없다.
+const pair = await crypto.subtle.generateKey(ALG, false, ['sign', 'verify']);
+
+export async function sign(method: string, body: string, ts: number): Promise<string> {
+  const { privateKey } = await keyPair();
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(body));
+  const payload = `${ts}.${method}.${b64(digest)}`;
+  return b64(await crypto.subtle.sign(SIGN, privateKey, new TextEncoder().encode(payload)));
+}
+```
+
+설계 의도. `generateKey` 의 두 번째 인자가 `false` 라는 것은 개인키를 **우리 코드조차 읽을 수 없다**는 뜻이다. 브라우저에게 "이것으로 서명해 달라" 고 시킬 수만 있다. 그래서 기기의 저장소를 통째로 가져가도 가져갈 값이 없다 — 관찰해서 흉내 낼 수 있는 값이 아니라, 그 기기를 가지고 있어야만 쓸 수 있는 것이 된다.
+
+서명하는 대상의 구성에도 각각 이유가 있다. 시각(`ts`)을 넣는 것은 서명 하나를 가로챈 사람이 그것을 나중에 다시 쓰지 못하게 하기 위해서다. 서명 안에 시각이 들어 있으므로 서버가 오래된 것을 거절할 수 있고, 실제로 5분을 넘긴 요청은 받지 않는다. 본문 해시를 넣는 것은 서명만 떼어 **다른 내용**에 붙이지 못하게 하기 위해서다. 둘 중 하나라도 빠지면 서명은 있으나 마나가 된다.
+
+가구 ID 를 공개키의 SHA-256 해시로 유도한 것도 같은 맥락이다. 등록 절차가 없어지고, 남의 자료를 요청하려면 그 사람의 개인키가 있어야 하는데 그 열쇠는 그 기기 밖으로 나갈 수 없다. 접근 통제가 규칙이 아니라 구조가 된다.
+
 
 ### 4.7 저장소와 협업
 
@@ -549,6 +630,45 @@ Atwater 항등식이 특히 유용하다. 이것은 어떤 출처에서 온 값�
 두 번째 관문의 질문 방식이 중요하다. **"이것이 땅콩입니까"** 라고 물으면 대개 그렇다고 답한다. 따라서 보기를 주지 않고 서술하게 한 뒤, 그 답이 의도와 일치하는지를 별도로 판정한다. 이는 ISO 9186 의 이해도 시험이 보기를 제시하지 않는 것과 같은 이유다.
 
 또한 512px 원본과 32px 축소본을 함께 제시하고 **축소본을 기준으로** 답하게 한다. 목록에서 실제로 보이는 크기가 그것이기 때문이다.
+
+
+#### 검사에서 떨어진 그림을 어떻게 다시 뽑는가
+
+관문을 두는 것만으로는 절반이다. 떨어진 그림을 다시 만들어야 하고, 그 재시도가 수렴해야 한다.
+
+처음에는 시도 횟수에 따라 고정된 지시 사다리를 올렸다. 첫 시도가 실패하면 1번 지시, 두 번째가 실패하면 2번 지시를 덧붙이는 방식이다. 이 사다리의 두 번째 칸이 "형태를 더 두툼하게 그려라" 였는데, **너무 뭉쳐서 떨어진 그림에 이 지시를 하면 실패한 방향으로 더 미는 것이 된다.** `food_bread` 의 잉크 비율이 0.52 → 0.47 → 0.51 로 세 번을 헛돈 것이 그래서다. 재시도가 수렴하지 않고 진동했다.
+
+검사기는 이미 **왜** 떨어졌는지를 알고 있다. 그 사유를 쓰지 않고 횟수만 세는 것은 같은 주사위를 다시 굴리는 것과 같고, 굴릴 때마다 요금이 나간다. 그래서 지시를 사유에 걸었다.
+
+```python
+def escalate(c: 'Check | None') -> str:
+    """직전 실패의 **사유에 맞춰** 다시 시킨다."""
+    r = ' · '.join(c.reasons)
+
+    if '뭉쳤다' in r:
+        return (' The shape came out far too heavy. Draw it noticeably smaller inside the frame '
+                'with wide empty white space around it, and punch two or three much larger white '
+                'holes through it. Keep it a solid filled black silhouette — do not turn it into '
+                'a hollow outline drawing with an empty white interior.')
+    if '가늘다' in r:
+        return (' The shape came out too thin and sparse. Make every black part much thicker and '
+                'heavier, and let it fill more of the frame.')
+    if '개수' in r:
+        return (' The number of separate shapes was wrong. Draw exactly the number stated, each '
+                'one fully detached from the others with wide white space between them.')
+    if '뜻이 안 맞는다' in r:
+        return (f' The previous attempt was misread: it {r.split("—")[-1].strip()}. '
+                'Redraw it so the object is unmistakable at a glance: change the shape and the '
+                'outline, not the weight.')
+```
+
+설계 의도. 네 갈래가 각각 다른 방향으로 민다. 특히 마지막 갈래가 중요하다 — 뜻이 어긋난 것은 **형태**의 문제이지 무게의 문제가 아니므로, 굵기를 건드리라고 하면 잘못 그린 그림을 더 선명하게 잘못 그리게 된다. 이 분기를 넣은 뒤 앞서 통과하지 못하던 네 종이 모두 두 번째 시도에서 통과했다.
+
+첫 갈래의 마지막 문장에도 대가를 치른 이유가 있다. 처음에는 "속을 비워라" 라고만 썼는데, 그러자 채운 실루엣이 아니라 윤곽선 그림이 나왔다. 무게는 줄었지만 세트의 나머지가 전부 채운 실루엣이라 시각 언어가 섞였고, 무엇보다 `qty_one` 이 채운 점이 아니라 **고리**가 되어 '1' 이 아니라 '0' 으로 읽혔다. 그래서 줄이는 방법을 "더 작게, 구멍을 뚫어서" 로 한정하고 "속이 빈 윤곽선으로 바꾸지 말 것" 을 명시했다.
+
+같은 결함이 뒤에 한 번 더 나왔다. `qty_four` 가 채운 점 넷이 아니라 **고리 넷**으로 남아 있었는데, 세는 그림에서 빈 고리는 0 으로 읽히고 같은 세트의 하나·둘·셋·다섯은 모두 채운 점이라 세트 안에서 혼자 규칙이 달랐다. 검사기가 이것을 통과시킨 이유는 분명하다 — **고리 넷도 "네 개" 로는 맞기 때문이다.** 개수를 세는 검사와 의미를 묻는 검사를 모두 통과하면서도 틀릴 수 있다는 뜻이며, 이것이 §5.4 에서 이 절차의 한계로 다시 다루는 지점이다.
+
+#### 78종 전체에 적용한 결과
 
 이 절차를 형태소 78종 전체에 적용한 결과는 다음과 같다.
 
