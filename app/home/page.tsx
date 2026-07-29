@@ -14,7 +14,7 @@ import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
 import { SuspectedTriggerCard } from './suspected';
 import { Today } from './today';
 import { TryIt } from './try-it';
-import { Hear, sayable, ask } from '@/components/sc/Say';
+import { Hear, sayable, ask, Speakable } from '@/components/sc/Say';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { spokenName } from '@/lib/tts/speakable';
 
@@ -140,10 +140,9 @@ export default function HomePage() {
           뭔가 놓친 것처럼 들린다.
         */}
         {scans.length > 0 && (
-          <p className="mt-8 text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-             {...sayable('Recent. What has been checked lately.')}>
-            RECENT
-          </p>
+          <Speakable text={'Recent. What has been checked lately.'} className="mt-8 text-xs font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">RECENT</span>
+        </Speakable>
         )}
         <div className="mt-2 flex flex-col gap-2">
           {scans.map((s) => {

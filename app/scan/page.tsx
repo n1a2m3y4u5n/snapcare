@@ -6,7 +6,7 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip, OneGlyph } from '@/components/sc/PictogramStrip';
 import { NutrientBars } from '@/components/sc/NutrientBars';
-import { Say } from '@/components/sc/Say';
+import { Say, Speakable } from '@/components/sc/Say';
 import { doseSentence, storageSentence } from '@/lib/snapcare/say';
 import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
@@ -205,7 +205,11 @@ function FoodResult({
               <OneGlyph line={`\\no{\\${alternative.glyph}}`} className="h-12 w-12 shrink-0" />
             )}
             <div>
-              <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-safe)' }}>TRY INSTEAD</p>
+              <Speakable text="Try instead."
+                         className="flex items-center gap-2 text-[11px] font-bold tracking-wide"
+                         style={{ color: 'var(--color-safe)' }}>
+                <span>TRY INSTEAD</span>
+              </Speakable>
               <p className="mt-0.5 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                 <Say>{alternative.text}</Say>
               </p>
@@ -281,7 +285,11 @@ function RxResult({
       {/* 복용 스케줄 */}
       {item.rx && (
         <div className="mt-5">
-          <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>INTAKE SCHEDULE</p>
+          <Speakable text="Intake schedule. When to take it."
+                     className="flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                     style={{ color: 'var(--color-sc-muted)' }}>
+            <span className="flex-1">INTAKE SCHEDULE</span>
+          </Speakable>
           <div className="mt-2 flex flex-col gap-2">
             {item.rx.schedule.map((s, i) => (
               <div key={i} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">

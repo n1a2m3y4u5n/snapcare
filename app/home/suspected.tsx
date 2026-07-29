@@ -69,9 +69,11 @@ export function SuspectedTriggerCard() {
       className="mt-6 block rounded-2xl bg-white p-4 shadow-sm"
       style={{ outline: '2px solid var(--color-caution)' }}
     >
-      <p className="text-xs font-bold tracking-wide" style={{ color: 'var(--color-caution)' }}>
-        SOMETHING KEEPS HAPPENING
-      </p>
+      <Speakable text="Something keeps happening. We noticed the same thing more than once."
+                 className="flex w-full items-center gap-2 text-xs font-bold tracking-wide"
+                 style={{ color: 'var(--color-caution)' }}>
+        <span className="flex-1">SOMETHING KEEPS HAPPENING</span>
+      </Speakable>
 
       <div className="mt-3 flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}

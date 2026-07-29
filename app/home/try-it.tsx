@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { FIRST_RUN_SAMPLES } from '@/lib/snapcare/samples';
-import { sayable } from '@/components/sc/Say';
+import { sayable, Speakable } from '@/components/sc/Say';
 
 /**
  * 아직 아무것도 찍지 않은 사람에게 내놓는 세 장.
@@ -22,10 +22,9 @@ export function TryIt() {
 
   return (
     <section className="mt-8">
-      <p className="text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-         {...sayable('Try it. Tap one of these pictures and SnapCare will read it, just like a photograph.')}>
-        TRY IT
-      </p>
+      <Speakable text={'Try it. Tap one of these pictures and SnapCare will read it, just like a photograph.'} className="text-xs font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">TRY IT</span>
+        </Speakable>
 
       <div className="mt-2 grid grid-cols-3 gap-2">
         {FIRST_RUN_SAMPLES.map((s) => (

@@ -3,7 +3,7 @@
 import { useProfile } from '@/stores/profile';
 import { useTracking } from '@/lib/condition/useTracking';
 import { trackingSentence } from '@/lib/condition/tracking';
-import { sayable } from '@/components/sc/Say';
+import { sayable, Speakable } from '@/components/sc/Say';
 import type { ScanRecord } from '@/lib/snapcare/types';
 
 /**
@@ -29,10 +29,9 @@ export function ConditionTracking({ scans }: { scans: ScanRecord[] }) {
 
   return (
     <section className="mt-6">
-      <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-         {...sayable(`Last ${tracking.span} days, for what you are managing.`)}>
-        LAST {tracking.span} DAYS
-      </p>
+      <Speakable text={`Last ${tracking.span} days, for what you are managing.`} className="text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">LAST {tracking.span} DAYS</span>
+        </Speakable>
 
       <div className="mt-2 flex flex-col gap-2">
         {tracking.series.map((s) => (

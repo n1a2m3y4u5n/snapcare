@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
-import { sayable, ask } from '@/components/sc/Say';
+import { sayable, ask, Speakable } from '@/components/sc/Say';
 import { useProfile } from '@/stores/profile';
 import { forget } from '@/lib/snapcare/sync';
 import {
@@ -165,10 +165,9 @@ export default function PeoplePage() {
 
         {adding && (
           <div className="mt-4">
-            <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-               {...sayable('Pick a picture for the new person.')}>
-              PICK A PICTURE
-            </p>
+            <Speakable text={'Pick a picture for the new person.'} className="text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">PICK A PICTURE</span>
+        </Speakable>
             <div className="mt-2 flex flex-wrap gap-2">
               {free.map((f) => (
                 <button

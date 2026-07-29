@@ -1,6 +1,6 @@
 'use client';
 
-import { sayable, ask } from '@/components/sc/Say';
+import { sayable, ask, Speakable } from '@/components/sc/Say';
 import { ReadScreen } from '@/components/sc/ReadScreen';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -107,10 +107,11 @@ export default function LoginPage() {
       <div className="relative w-full max-w-[440px] min-h-screen flex flex-col items-center px-6 pt-10">
         {people.length > 1 && (
           <>
-            <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-               {...sayable('Who are you? Tap your picture.')}>
-              WHO ARE YOU?
-            </p>
+            <Speakable text="Who are you? Tap your picture."
+                       className="flex items-center gap-2 text-[11px] font-bold tracking-wide"
+                       style={{ color: 'var(--color-sc-muted)' }}>
+              <span>WHO ARE YOU?</span>
+            </Speakable>
             <div className="mt-3 mb-6 flex flex-wrap justify-center gap-4">
               {people.map((p) => {
                 const on = p.id === meId;

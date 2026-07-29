@@ -44,10 +44,11 @@ export function Today({ scans }: { scans: ScanRecord[] }) {
 
   return (
     <section className="mt-8">
-      <p className="text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-         {...sayable(`Today so far, for ${member?.name ?? 'you'}.`)}>
-        TODAY
-      </p>
+      <Speakable text={`Today so far, for ${member?.name ?? 'you'}.`}
+                 className="flex w-full items-center gap-2 text-xs font-bold tracking-wide"
+                 style={{ color: 'var(--color-sc-muted)' }}>
+        <span className="flex-1">TODAY</span>
+      </Speakable>
 
       {/*
         먹은 개수와 열량은 늘 같은 자리에 둔다. 매일 다른 것이 뜨면 어디를 봐야
@@ -81,10 +82,9 @@ export function Today({ scans }: { scans: ScanRecord[] }) {
           ))}
         </div>
       ) : (
-        <p className="mt-2 px-1 text-xs" style={{ color: 'var(--color-sc-muted)' }}
-           {...sayable('Everything is well within the daily limits so far.')}>
-          All well within limits so far
-        </p>
+        <Speakable text={'Everything is well within the daily limits so far.'} className="mt-2 px-1 text-xs flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">All well within limits so far</span>
+        </Speakable>
       )}
     </section>
   );

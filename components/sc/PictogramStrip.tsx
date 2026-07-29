@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { splitDslLines, dslKey, cachedPictogramPath, type PictogramManifest } from '@/lib/snapcare/dsl';
+import { dslSentence } from '@/lib/snapcare/dslSpeech';
+import { Speakable } from './Say';
 
 /**
  * SIGIL 픽토그램 시퀀스.
@@ -22,7 +24,14 @@ export function PictogramStrip({ source }: { source: string }) {
     () => all.filter((l) => l.startsWith('\\?')).map((l) => l.slice(2)),
     [all],
   );
-  const [images, setImages] = useState<string[] | null>(null);
+  /*
+   * 그림과 **그 그림이 나온 줄**을 짝으로 들고 있는다.
+   *
+   * 그림 주소만 들고 있을 때는, 일부만 캐시에 있는 폴백 경로에서 짝이 어긋났다 —
+   * 빠진 것을 걸러내면서 순서만 남으니까 두 번째 그림이 세 번째 줄의 뜻을 말하게
+   * 된다. 그림은 멀쩡히 뜨고 소리만 틀리는 실패라 눈으로는 안 보인다.
+   */
+  const [tiles, setTiles] = useState<{ src: string; line: string }[] | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -36,7 +45,7 @@ export function PictogramStrip({ source }: { source: string }) {
         manifest && manifest[dslKey(l)] !== undefined ? cachedPictogramPath(l) : null,
       );
       if (fromCache.every((c): c is string => c !== null)) {
-        if (alive) setImages(fromCache);
+        if (alive) setTiles(fromCache.map((src, i) => ({ src, line: lines[i] })));
         return;
       }
 
@@ -49,14 +58,17 @@ export function PictogramStrip({ source }: { source: string }) {
         });
         if (!res.ok) throw new Error(String(res.status));
         const { images } = (await res.json()) as { images: string[] };
-        if (alive) setImages(images);
+        // 엔진은 우리가 보낸 소스를 같은 규칙으로 쪼개므로 순서가 줄과 같다.
+        if (alive) setTiles(images.map((src, i) => ({ src, line: lines[i] })));
       } catch (err) {
         // 픽토그램은 이 앱의 핵심 기여다. 조용히 사라지면 "원래 없는 기능" 처럼 보인다.
         console.error('[pictogram] 합성 실패:', err);
-        // 3) 부분 폴백 — 캐시에 있는 줄만
-        const partial = fromCache.filter((c): c is string => c !== null);
+        // 3) 부분 폴백 — 캐시에 있는 줄만. 짝을 지어 걸러야 소리가 안 밀린다.
+        const partial = fromCache
+          .map((src, i) => (src === null ? null : { src, line: lines[i] }))
+          .filter((t): t is { src: string; line: string } => t !== null);
         if (!alive) return;
-        if (partial.length > 0) setImages(partial);
+        if (partial.length > 0) setTiles(partial);
         else setFailed(true);
       }
     })();
@@ -71,28 +83,61 @@ export function PictogramStrip({ source }: { source: string }) {
 
   return (
     <div className="mt-1">
-      <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-        PICTOGRAM GUIDE
-      </p>
+      <Speakable text="Pictogram guide. Tap a picture to hear what it means."
+                 className="flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                 style={{ color: 'var(--color-sc-muted)' }}>
+        <span className="flex-1">PICTOGRAM GUIDE</span>
+      </Speakable>
       <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
         {missing.map((c) => (
           <MadeGlyph key={c} concept={c} />
         ))}
-        {images
-          ? images.map((src, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={i}
-                src={src}
-                alt={`pictogram ${i + 1}`}
-                className="h-24 w-24 shrink-0 rounded-2xl bg-white p-2 shadow-sm"
-              />
-            ))
+        {tiles
+          ? tiles.map((t, i) => <Tile key={i} src={t.src} line={t.line} />)
           : [0, 1, 2].map((i) => (
               <div key={i} className="h-24 w-24 shrink-0 animate-pulse rounded-2xl bg-white shadow-sm" />
             ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * 그림 한 장 — 누르면 무엇을 뜻하는지 말한다.
+ *
+ * 왜 그림에 소리를 붙이는가
+ * -------------------------
+ * 이 화면에서 그림만 조용했다. 판정도 제품명도 영양 수치도 누르면 읽히는데, 정작
+ * 이 앱의 핵심 기여가 말을 하지 않았다.
+ *
+ * 저문해 환자 대상 약품 픽토그램 연구(Merks 외, 2017)에서 열 개 중 셋에 **거짓
+ * 확신** — 못 알아봤는데 알아봤다고 믿는 것 — 이 나타났다. 그림이 없는 것보다 나쁜
+ * 실패다. 못 알아본 사람은 물어보기라도 하지만 잘못 알아본 사람은 그대로 행동한다.
+ * 같은 연구가 내놓은 처방은 **약사가 뜻을 함께 짚어 주는 것**이었다. 우리 사용자
+ * 곁에는 약사가 없으니 앱이 그 자리를 대신한다.
+ *
+ * 뜻을 모르는 줄은 누를 수 없게 둔다. 아무 말도 안 하는 편이 틀린 말보다 낫다 —
+ * 틀린 설명은 바로 그 거짓 확신을 굳혀 준다.
+ */
+function Tile({ src, line }: { src: string; line?: string }) {
+  const say = line ? dslSentence(line) : null;
+  // eslint-disable-next-line @next/next/no-img-element
+  const img = <img src={src} alt={say ?? ''} className="h-24 w-24 rounded-2xl bg-white p-2 shadow-sm" />;
+  if (!say) return <div className="shrink-0">{img}</div>;
+  return (
+    <Speakable text={say} bare className="relative block shrink-0" label={`Read aloud: ${say}`}>
+      {img}
+      {/*
+        표시를 그림 위 모서리에 얹는다. 옆에 두면 그림 사이가 벌어져서, 한 줄로
+        늘어놓았을 때 어느 표시가 어느 그림 것인지가 흐려진다.
+      */}
+      <span aria-hidden
+            className="pointer-events-none absolute bottom-1 right-1 flex h-7 w-7 items-center
+                       justify-center rounded-full text-sm"
+            style={{ background: 'var(--color-sc-line)' }}>
+        🔊
+      </span>
+    </Speakable>
   );
 }
 

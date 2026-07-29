@@ -151,6 +151,32 @@ export function Say({ children, as, className = '', style, bare = false }: SayPr
 }
 
 /**
+ * 묶음 머리글 — `TODAY` · `RECENT` 처럼 아래 내용을 소개하는 한 줄.
+ *
+ * 처음에는 표시를 안 달았다. 아래 카드가 이미 자기 소리를 갖고 있으니 두 번 되는
+ * 자리라고 봤는데, 그것은 화면을 **위에서 아래로 읽는 사람**의 셈법이다. 소리로
+ * 화면을 아는 사람은 지금 듣고 있는 것이 어느 묶음에 속하는지를 알아야 하고, 그
+ * 정보는 머리글에만 있다. 어떤 줄은 되고 어떤 줄은 안 되면 "눌러도 되는 곳" 이라는
+ * 규칙 자체가 무너진다 — 규칙이 있어야 시험 삼아 눌러 볼 수 있다.
+ */
+export function SectionLabel({ children, say, className = '' }: {
+  children: React.ReactNode;
+  /** 화면 글자보다 길게 읽어야 할 때 (머리글은 대개 두 단어라 그것만으로는 부족하다). */
+  say: string;
+  className?: string;
+}) {
+  return (
+    <Speakable
+      text={say}
+      className={`flex w-full items-center gap-2 text-[11px] font-bold tracking-wide ${className}`}
+      style={{ color: 'var(--color-sc-muted)' }}
+    >
+      <span className="flex-1">{children}</span>
+    </Speakable>
+  );
+}
+
+/**
  * 행 옆에 붙는 듣기 버튼.
  *
  * 행 자체가 버튼인 자리에서 쓴다 — 버튼 안에 버튼을 넣으면 키보드 탐색이 깨지므로
