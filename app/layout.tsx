@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { RegisterSW } from './register-sw';
 import { SyncProvider } from "./sync-provider";
-import { TapToHear } from "@/components/sc/TapToHear";
+import { SweepToHear } from "@/components/sc/SweepToHear";
 
 export const metadata: Metadata = {
   title: "SnapCare — one photo, instant verdict",
@@ -33,9 +33,10 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body className="min-h-full bg-white">
         <SyncProvider />
-        {/* 어느 화면이든 글 근처를 꾹 누르면 읽어준다. 화면마다 붙일 것이 아니라
-            앱 전체에 한 번 건다 — 빠뜨린 화면이 생기면 그 화면만 조용해진다. */}
-        <TapToHear />
+        {/* 어느 화면이든 글 근처를 꾹 누르면 읽어주고, 누른 채 미끄러뜨리면 지나가는
+            것을 차례로 읽는다. 화면마다 붙일 것이 아니라 앱 전체에 한 번 건다 —
+            빠뜨린 화면이 생기면 그 화면만 조용해진다. */}
+        <SweepToHear />
         <RegisterSW />
         {children}
       </body>

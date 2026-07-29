@@ -36,7 +36,7 @@ const SLIDES: { art: ArtKind; title: string }[] = [
     그리고 이 제목 자체를 꾹 눌러보면 그림이 방금 보여준 것이 그대로 일어난다.
     가르친 손짓을 같은 화면에서 시험해 볼 수 있다는 것이 이 장의 자리를 정했다.
   */
-  { art: 'hold', title: 'Hold any words to hear them' },
+  { art: 'hold', title: 'Hold, then slide, to hear' },
   { art: 'remind', title: 'Camera and reminders' },
 ];
 

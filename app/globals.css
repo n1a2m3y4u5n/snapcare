@@ -98,6 +98,29 @@ body {
   background: color-mix(in srgb, var(--color-sc-primary) 10%, transparent);
 }
 
+/*
+ * 스피커 표시는 읽고 있는 동안에만 나타난다.
+ *
+ * 자리마다 원을 하나씩 그렸더니 화면 하나에 여덟, 열 개가 격자로 깔렸다. 보기
+ * 불편할 뿐 아니라, 그 원들은 아무 일도 하지 않는다 — 누르는 것은 줄 전체이고
+ * 원은 "여기 소리가 있다" 는 광고다. 훑어 듣기가 들어오면서 그 광고가 필요 없어졌다.
+ *
+ * 자리를 남기지 않고 접는다(visibility 가 아니라 display). 안 보이는 원이 자리만
+ * 차지하면 줄 오른쪽에 설명할 수 없는 여백이 남는다.
+ *
+ * !important 인 이유: Tailwind 의 `flex` 와 같은 특이도라 순서에 따라 뒤집힌다.
+ * 표시가 사라지는 것은 화면의 인상을 바꾸는 일이라 순서에 맡길 수 없다.
+ */
+.sc-mark { display: none !important; }
+html[data-hearing] .sc-mark { display: flex !important; }
+
+/* 훑는 중에는 글자 선택과 길게 누르기 메뉴가 손짓을 가로챈다. */
+html[data-hearing] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-reading] { transition: none; }
 }

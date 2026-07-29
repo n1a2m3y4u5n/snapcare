@@ -49,7 +49,16 @@ export function ReadScreen({ variant = 'float' }: { variant?: ReadScreenVariant 
     cancelled.current = true;
     stopSpeaking();
     document.querySelectorAll('[data-reading]').forEach((el) => el.removeAttribute('data-reading'));
+    document.documentElement.removeAttribute('data-hearing');
   }, []);
+
+  // 손가락으로 훑기 시작하면 낭독은 비켜 준다 (components/sc/SweepToHear).
+  // 둘이 동시에 말하면 아무것도 안 들리고, 어느 쪽을 끄는지도 알 수 없다.
+  useEffect(() => {
+    const onSweep = () => { stop(); setPlaying(false); };
+    window.addEventListener('sc:sweep', onSweep);
+    return () => window.removeEventListener('sc:sweep', onSweep);
+  }, [stop]);
 
   // 화면을 옮기면 읽던 것을 멈춘다.
   // 판정을 읽는 도중에 이동하면 새 화면 위로 이전 화면이 계속 들렸다 — 소리로만
@@ -93,6 +102,9 @@ export function ReadScreen({ variant = 'float' }: { variant?: ReadScreenVariant 
 
     cancelled.current = false;
     setPlaying(true);
+    // 읽는 동안에는 소리를 가진 자리를 전부 드러낸다. 지금 어디를 읽는지(data-reading)
+    // 만으로는 "다음에 어디를 짚으면 되는지" 를 알 수 없다.
+    document.documentElement.setAttribute('data-hearing', '');
 
     try {
       for (const el of targets) {
@@ -109,6 +121,7 @@ export function ReadScreen({ variant = 'float' }: { variant?: ReadScreenVariant 
       }
     } finally {
       setPlaying(false);
+      document.documentElement.removeAttribute('data-hearing');
     }
   }
 

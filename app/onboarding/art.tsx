@@ -84,6 +84,55 @@ const CSS = `
   64%       { opacity: 0.85; }
   84%, 100% { transform: scale(1.5); opacity: 0; }
 }
+/*
+ * 꾹 누르고 **미끄러뜨리기**.
+ *
+ * 손가락이 내려앉고(누름), 고리가 차오르고(머무름), 소리가 나간 뒤 — 거기서 멈추지
+ * 않고 아래로 내려간다. 지나가는 줄이 차례로 켜지는 것이 이 장에서 새로 가르치는
+ * 전부다: 손을 뗄 필요가 없다.
+ *
+ * 이동은 감싸는 상자가 하고(sc-hold-travel) 손가락의 나타남/사라짐은 그 안에서
+ * 따로 돈다. 하나의 키프레임에 둘을 섞으면 멈춰 있는 구간의 투명도까지 이동에
+ * 끌려다닌다.
+ */
+@keyframes sc-hold-travel {
+  0%, 4%    { transform: translateY(-20px); }
+  16%, 30%  { transform: translateY(0); }     /* 첫 줄 — 여기서 머무른다 */
+  42%, 50%  { transform: translateY(28px); }
+  62%, 70%  { transform: translateY(56px); }
+  82%, 100% { transform: translateY(84px); }
+}
+@keyframes sc-hold-finger {
+  0%       { opacity: 0; }
+  8%, 88%  { opacity: 1; }
+  100%     { opacity: 0; }
+}
+/*
+ * 지나가는 줄이 켜졌다 꺼진다. 줄마다 지연을 달리해 손가락을 따라가게 한다.
+ * 지연은 위 travel 의 **도착 시각**에서 그대로 온다(HOLD_LIT_AT). 계산이 아니라 표로
+ * 두는 이유: 첫 줄에서만 머무르므로 간격이 고르지 않고, 공식으로 만들면 아래로 갈수록
+ * 밀린다. 손가락이 가리키는 줄과 켜지는 줄이 어긋나면 이 장은 아무것도 가르치지 못한다.
+ */
+@keyframes sc-hold-lit {
+  0%        { background: var(--color-sc-line); }
+  3%, 12%   { background: var(--color-sc-primary); }
+  /* 되돌아오는 지점을 적어 둔다. 없으면 12% 에서 100% 까지 CSS 가 천천히 보간해서,
+     줄이 깜빡이는 대신 주기 내내 파랗게 물들어 있다 — 네 줄이 다 켜진 것처럼 보인다. */
+  16%, 100% { background: var(--color-sc-line); }
+}
+/* 머무름을 보이는 고리 — 첫 줄에 머무르는 구간(16~30%)에 맞춰 차오른다. */
+@keyframes sc-hold-ring {
+  0%, 14%   { transform: scale(0.35); opacity: 0; }
+  18%       { opacity: 0.9; }
+  28%       { transform: scale(1); opacity: 0.9; }
+  34%, 100% { transform: scale(1); opacity: 0; }
+}
+/* 소리 — 머무름이 끝나는 순간 퍼진다. 그래야 '기다렸더니 소리가 났다' 가 된다. */
+@keyframes sc-hold-wave {
+  0%, 28%   { transform: scale(0.4); opacity: 0; }
+  34%       { opacity: 0.85; }
+  52%, 100% { transform: scale(1.5); opacity: 0; }
+}
 @keyframes sc-swing {
   0%, 10%          { transform: rotate(0deg); }
   20%, 40%, 60%    { transform: rotate(13deg); }
@@ -178,37 +227,54 @@ function Ages() {
 }
 
 /**
- * 이 앱 전체의 손짓 — 글 위에 손가락을 얹고 **머무르면** 읽어준다.
+ * 이 앱 전체의 손짓 — 글 위에 손가락을 얹고 **머무르면** 읽어주고, **누른 채
+ * 미끄러뜨리면** 지나가는 것을 차례로 읽는다.
  *
- * 세 가지가 순서대로 일어나야 뜻이 성립한다: 내려앉고, 고리가 차오르고(머무름),
- * 그다음 소리가 나간다. 하나라도 빠지면 "눌렀더니 소리가 났다" 가 되어 정작
- * 기다려야 한다는 것이 빠진다.
+ * 네 가지가 순서대로 일어나야 뜻이 성립한다: 내려앉고, 고리가 차오르고(머무름),
+ * 소리가 나가고, 그다음 **내려간다.** 앞의 셋 중 하나라도 빠지면 "눌렀더니 소리가
+ * 났다" 가 되어 기다려야 한다는 것이 빠지고, 마지막이 빠지면 자리마다 다시 눌러야
+ * 하는 줄 안다 — 화면에서 스피커 원을 걷어낼 수 있었던 것이 바로 이 마지막 때문이다.
+ *
+ * 줄 간격(28px)과 손가락의 이동 거리는 같은 숫자다. 그림이 가리키는 줄과 켜지는 줄이
+ * 어긋나면 이 장은 아무것도 가르치지 못한다.
  */
+const HOLD_LINES = [96, 74, 86, 60];
+const HOLD_GAP = 28;
+const HOLD_CYCLE = '5.6s';
+/** 손가락이 각 줄에 닿는 시각 — sc-hold-travel 의 도착 지점(16·42·62·82%)을 초로 옮긴 것. */
+const HOLD_LIT_AT = ['0.95s', '2.40s', '3.52s', '4.64s'];
+
 function Hold() {
   return (
-    <div className="relative flex h-36 w-40 flex-col justify-center gap-2.5 rounded-2xl bg-white px-4 shadow-sm">
-      {[92, 70].map((w, k) => (
-        <span key={k} className="h-2.5 rounded-full" style={{ width: `${w}%`, background: 'var(--color-sc-line)' }} />
-      ))}
-      {/* 읽히는 줄 */}
-      <span className="sc-anim h-2.5 w-4/5 rounded-full" style={anim('sc-lit', '4.5s')} />
-      {[64, 44].map((w, k) => (
-        <span key={k} className="h-2.5 rounded-full" style={{ width: `${w}%`, background: 'var(--color-sc-line)' }} />
-      ))}
-
-      {/* 소리 — 읽히는 줄에서 퍼져 나간다 */}
-      {[0, 1].map((k) => (
-        <span key={k} className="sc-anim pointer-events-none absolute left-6 top-1/2 h-12 w-12 -translate-y-1/2
-                                 rounded-full border-2"
-              style={{ borderColor: 'var(--color-sc-primary)', ...anim('sc-wave', '4.5s', `${k * 0.35}s`) }} />
+    <div className="relative h-40 w-36 rounded-2xl bg-white shadow-sm">
+      {HOLD_LINES.map((w, k) => (
+        <span key={k} className="sc-anim absolute left-5 h-2.5 rounded-full"
+              style={{
+                top: 34 + k * HOLD_GAP,
+                width: w,
+                background: 'var(--color-sc-line)',
+                // 손가락이 그 줄에 닿는 순간에 맞춰 켜진다.
+                ...anim('sc-hold-lit', HOLD_CYCLE, HOLD_LIT_AT[k]),
+              }} />
       ))}
 
-      {/* 머무름을 보이는 고리 */}
-      <span className="sc-anim pointer-events-none absolute left-8 top-1/2 h-10 w-10 -translate-y-1/2
-                       rounded-full border-4"
-            style={{ borderColor: 'var(--color-sc-primary)', ...anim('sc-ring', '4.5s') }} />
-
-      <span className="sc-anim absolute left-9 top-1/2 text-4xl" style={anim('sc-press', '4.5s')}>👆</span>
+      {/* 손가락과 그에 딸린 것들 — 함께 내려간다 */}
+      <span className="sc-anim pointer-events-none absolute left-0 top-0 h-10 w-14"
+            style={{ transform: 'translateY(-20px)', ...anim('sc-hold-travel', HOLD_CYCLE) }}>
+        {/* 머무름을 보이는 고리 */}
+        <span className="sc-anim absolute left-3 top-6 h-9 w-9 rounded-full border-4"
+              style={{ borderColor: 'var(--color-sc-primary)', ...anim('sc-hold-ring', HOLD_CYCLE) }} />
+        {/* 소리 — 머무름이 끝나는 자리에서 퍼져 나간다 */}
+        {[0, 1].map((k) => (
+          <span key={k} className="sc-anim absolute left-1 top-4 rounded-full border-2"
+                style={{
+                  height: 52, width: 52,
+                  borderColor: 'var(--color-sc-primary)',
+                  ...anim('sc-hold-wave', HOLD_CYCLE, `${k * 0.3}s`),
+                }} />
+        ))}
+        <span className="sc-anim absolute left-3 top-4 text-4xl" style={anim('sc-hold-finger', HOLD_CYCLE)}>👆</span>
+      </span>
     </div>
   );
 }

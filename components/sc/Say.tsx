@@ -48,21 +48,30 @@ export function ask(text: string) {
 }
 
 /**
- * 눌러서 듣는 자리라는 표시.
+ * 눌러서 듣는 자리라는 표시. **평소에는 숨어 있다.**
  *
  * 전에는 0.75em 에 투명도 40% 짜리 🔊 였다. 시력이 떨어지는 사람에게 그것은 없는
- * 것과 같고, 실제로 화면에 78곳이 소리를 갖고 있는데 눈에 보이는 표시는 아홉 곳
- * 뿐이었다. 눌러서 듣는 기능은 있는데 누를 곳이 안 보였던 것이다.
+ * 것과 같아서, 화면에 78곳이 소리를 갖고 있는데 눈에 보이는 표시는 아홉 곳뿐이었다.
+ * 그래서 크고 진하게 바꿨더니 이번에는 반대쪽으로 넘어갔다 — 화면 하나에 회색 원이
+ * 여덟, 열 개씩 격자로 깔렸다. 보기 불편하다는 말을 들었고, 그 말이 맞다.
+ *
+ * 문제는 크기가 아니라 **표시가 늘 켜져 있어야 한다는 전제**였다. 어디에 소리가
+ * 있는지 미리 알려 줘야 한다고 봤기 때문인데, 훑어 듣기(components/sc/SweepToHear)가
+ * 들어오면서 그 전제가 사라졌다. 손가락을 얹고 미끄러뜨리면 지나가는 것이 차례로
+ * 말하므로, 소리가 어디 있는지는 찾는 것이 아니라 지나가면서 알게 된다.
+ *
+ * 그래서 지금은 **읽고 있는 동안에만** 나타난다(`html[data-hearing]`). 훑는 중이거나
+ * 화면 낭독이 도는 중에는 소리를 가진 자리가 전부 드러나고, 그 밖에는 화면이 조용하다.
+ * 눌러서 듣는 것은 표시가 있든 없든 그대로 된다 — 없어진 것은 광고뿐이다.
  *
  * 누르는 것은 이 표시가 아니라 **줄 전체**다. 표시만 누르게 하면 떨리는 손으로
- * 작은 원을 정조준해야 한다. 표시는 "여기는 소리가 있다" 만 말하고 손가락은
- * 아무 데나 대면 된다.
+ * 작은 원을 정조준해야 한다.
  */
 function SpeakerMark({ speaking }: { speaking: boolean }) {
   return (
     <span
       aria-hidden
-      className="pointer-events-none flex h-8 w-8 shrink-0 select-none items-center justify-center
+      className="sc-mark pointer-events-none flex h-8 w-8 shrink-0 select-none items-center justify-center
                  rounded-full text-base"
       style={{
         background: speaking ? 'var(--color-sc-primary)' : 'var(--color-sc-line)',
