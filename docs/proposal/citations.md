@@ -9,7 +9,7 @@
 
 ## 진행
 
-37종 중 **8종 확인 · 3종에서 오류 발견 · 29종 미확인**.
+37종 중 **13종 확인 · 5종에서 오류 발견 · 24종 미확인**.
 
 ## 발견한 오류와 조치
 
@@ -18,9 +18,16 @@
 | 필리핀 연구 — ISO 67% 통과 45.8%, ANSI 85% 통과 8.3% | 108종 중 17종(15.74%)이 ANSI 85% 통과. **ISO 67% 기준은 논문에 없다.** 45.8%·8.3%·67% 어느 숫자도 본문에 없다 | 실제 값으로 교체, ISO 열 삭제 (본문 5곳) |
 | 성인 문해율 2014년 85% → 2024년 88% | 2015년 86% → 2024년 88% | 교체 |
 | 남아시아 비문해 성인 3억 3,700만 명 | 중앙·남아시아 3억 4,700만 명 | 교체 |
+| 심각 위해 가능 오류 중 용량 30.7% · 시각 17.1% · 중복 14.4% | 수집 메모의 출처가 "사건보고 분석" 뿐이고 원문을 찾지 못했다 | 표 2 와 도표에서 해당 열 삭제 |
+| Dowse 등 (2012) — 9종 중 3종 ISO 통과 | 2023년 논문이 이를 **미출판 학부 자료**라고 밝히고 있다. 인용할 수 없다 | 같은 연구진의 2023년 출판본(10종 중 8종)으로 교체 |
 
 45.8%·8.3% 가 다른 논문의 값인지는 아직 찾지 못했다. 찾으면 그 논문을 근거로 되살릴
 수 있으나, 그때까지는 본문에서 뺀다.
+
+없앤 값을 그냥 지우지 않고 다른 근거로 갈아 끼울 수 있었던 것이 둘 있다. 표 2 는
+분모를 "약사가 발견한 조제 오류 155건" 으로 명시해 남은 세 값만으로 세웠고, 표 4 는
+미출판 자료 대신 출판된 2023년 연구를 넣으면서 오히려 논지가 하나 늘었다 — 통과율이
+가장 높은 것은 **현지에서 만들어 현지 사람에게 시험한** 세트라는 것이다.
 
 ## 확인한 것
 
@@ -47,6 +54,21 @@ problematic·inadequate 네 수준으로 구분. **주의: 보고서는 자료 �
 Internal Medicine*, 155(2), 97–107. · 서지 확인. 본문이 인용한 배수(응급실 1.52,
 입원 1.5, 사망 1.53)는 원문 대조 미완.
 
+### 복약 오류
+
+**[E1]** Anacleto, T. A., Perini, E., Rosa, M. B., & César, C. C. (2007). Medication
+dispensing errors in a Brazilian hospital pharmacy. *Clinics*, 62(3), 243–250.
+· 직접 관찰법. 조제 카세트 734건에서 오류 179건(전체 단위용량 7,249건 대비 2.5%).
+약사가 발견한 155건 중 누락 51건(32.9%), 용량 44건(28.4%), 시각 36건(23.2%) 으로
+이 셋이 84.5%. **주의: 이 분포는 조제하는 쪽의 오류이지 환자 단계의 오류가 아니다.**
+
+### 전달 경로
+
+**[D1]** Pew Research Center (2025). *Mobile Fact Sheet / Demographics of Mobile Device
+Ownership and Adoption in the United States.* 조사 기간 2025-02-05 ~ 2025-06-18.
+· 50세 미만 97%, 50~64세 90%, 65세 이상 78%. 전체 성인 91% 로 2011년 첫 조사의 35%
+에서 상승. 65세 이상이 가장 낮은 집단.
+
 ### 픽토그램 이해도
 
 **[P1]** Gutierrez, M. M., Patikorn, C., & Anantachoti, P. (2022). Evaluation of
@@ -54,6 +76,13 @@ pharmaceutical pictogram comprehension among adults in the Philippines. *Journal
 Pharmaceutical Policy and Practice*, 15, 30. doi:10.1186/s40545-022-00426-y · USP 82종과
 FIP 26종을 합한 108종 중 ANSI 85% 기준을 통과한 것은 17종(15.74%), USP 16종·FIP 1종.
 단독 사용을 권고할 수 있는 것이 그 17종뿐이라는 것이 저자들의 결론이다.
+
+**[P1b]** Dowse, R., Okeyo, S., Sikhondze, S., & Khumalo, N. (2023). Pharmaceutical
+indication pictograms for low literacy viewers: Health literacy and comprehension.
+*Health SA Gesondheid*, 28, a2192. doi:10.4102/hsag.v28i0.2192 · 현지 제작 10종 중
+8종이 ISO 66.7% 기준을 통과(미달 2종은 전신 통증 51.1%, 어지러움 54.4%). 평균 이해도
+7.9 ± 1.8 / 10. **건강 문해력과 픽토그램 이해도 사이에 유의한 양의 상관 (p = 0.002)**
+이며 저문해 참여자에서 오독이 더 많았다.
 
 **[P2]** Dowse, R., & Ehlers, M. (2005). Medicine labels incorporating pictograms: do
 they influence understanding and adherence? *Patient Education and Counseling*, 58(1),
@@ -81,8 +110,8 @@ ISBN 978-92-4-006276-4. · 회원국의 18%만이 약물위해 감축 국가 목
 
 ## 아직 대조하지 않은 것
 
-국민건강영양조사(2023) 65세 이상 40.3% · 복약 오류 유형별 분포(32.9/28.4/23.2) ·
-Duke Health 비용과 사망 · IDF Diabetes Atlas 11판 · FARE(2024) · Pew(2024–2025) ·
-GSMA(2023) · WHO 고령화 · PMC8544505 한국 고령자 · PMC7532569 몰도바 · Houts 등(2006) ·
-Dowse(2023) · 거짓 확신 · 이란 연구 · Dowse 등(2012) · USP 81종과 라이선스 ·
-Medhi 등(2013) · WHO GLASS(2025) · 색각이상 유병률 · World Bank 몰도바 · Paivio.
+국민건강영양조사(2023) 65세 이상 40.3% · Duke Health 비용과 사망 · IDF Diabetes Atlas
+11판 · FARE(2024) · GSMA(2023) · WHO 고령화 · PMC8544505 한국 고령자 · PMC7532569
+몰도바 · Houts 등(2006) · 거짓 확신 · USP 81종과 라이선스 · Medhi 등(2013) ·
+WHO GLASS(2025) · 색각이상 유병률 · World Bank 몰도바 · Paivio · Berkman 의 배수 ·
+HLS19 의 46% · Dowse & Ehlers 의 20 대 11 의 연도와 분모.

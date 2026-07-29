@@ -99,26 +99,24 @@ def chart_health_literacy():
 
 # ── 복약 오류의 유형별 분포 (표 2) ─────────────────────────────────
 def chart_errors():
-    kinds = ['누락', '용량 오류', '시각 오류', '중복 처방']
-    disp = [32.9, 28.4, 23.2, None]
-    harm = [None, 30.7, 17.1, 14.4]
-    x = range(len(kinds))
-    fig, ax = plt.subplots(figsize=(4.8, 2.4))
-    w = 0.38
-    for i, (v, h) in enumerate(zip(disp, harm)):
-        if v is not None:
-            ax.bar(i - w / 2, v, w, color=GREY, zorder=2)
-            ax.text(i - w / 2, v + 0.8, f'{v}', ha='center', fontsize=7.6, color=INK)
-        if h is not None:
-            ax.bar(i + w / 2, h, w, color=BLUE, zorder=2)
-            ax.text(i + w / 2, h + 0.8, f'{h}', ha='center', fontsize=7.6, color=INK)
-    ax.set_xticks(list(x), kinds)
-    ax.set_ylabel('비율 (%)')
+    """두 번째 계열('심각 위해 가능 오류 중')을 뺐다.
+
+    그 수치(30.7·17.1·14.4)는 수집 메모에 출처가 "사건보고 분석" 이라고만 적혀
+    있었고 원문을 찾지 못했다. 표에서 빼면서 그래프에서도 뺀다.
+    """
+    kinds = ['누락', '용량 오류', '시각 오류', '나머지']
+    vals = [32.9, 28.4, 23.2, 15.5]
+    hits = [51, 44, 36, 24]
+    fig, ax = plt.subplots(figsize=(4.4, 2.3))
+    xs = range(len(kinds))
+    ax.bar(list(xs), vals, width=0.5,
+           color=[BLUE, BLUE, BLUE, GREY], zorder=2)
+    for x, v, n in zip(xs, vals, hits):
+        ax.text(x, v + 0.9, f'{v}%', ha='center', fontsize=8, color=INK)
+        ax.text(x, v / 2, f'n={n}', ha='center', fontsize=7.2, color='white')
+    ax.set_xticks(list(xs), kinds)
+    ax.set_ylabel('조제 오류 155건 중 비율 (%)')
     ax.set_ylim(0, 40)
-    ax.legend(handles=[plt.Rectangle((0, 0), 1, 1, color=GREY),
-                       plt.Rectangle((0, 0), 1, 1, color=BLUE)],
-              labels=['조제 단계 오류 중', '심각 위해 가능 오류 중'],
-              frameon=False, ncol=2, loc='upper right', bbox_to_anchor=(1.0, 1.16))
     frame(ax)
     save(fig, 'chart03_error_types')
 
@@ -126,7 +124,7 @@ def chart_errors():
 # ── 연령대별 스마트폰 보유율 (표 3) ────────────────────────────────
 def chart_smartphone():
     labels = ['50세 미만', '50~64세', '65세 이상']
-    vals = [97, 90, 77]
+    vals = [97, 90, 78]        # Pew 2025 조사 (2025-02-05~06-18)
     fig, ax = plt.subplots(figsize=(3.9, 2.2))
     ax.bar(labels, vals, width=0.5, color=[GREY, GREY, ORANGE], zorder=2)
     for x, v in zip(labels, vals):
@@ -141,12 +139,16 @@ def chart_smartphone():
 def chart_pictogram():
     """분자와 분모가 모두 확인된 연구만 넣는다.
 
-    Dowse & Ehlers 의 20 대 11 은 분모를 확인하지 못해 뺐고, 이란 연구의
-    0~68% 는 통과율이 아니라 문항별 정답률이라 같은 축에 놓을 수 없다.
+    Dowse & Ehlers 의 20 대 11 은 분모를 확인하지 못해 뺐다. 처음에는 Dowse 등
+    (2012) 의 "9종 중 3종" 을 썼는데, 2023년 논문이 그것을 미출판 학부 자료라고
+    밝히고 있어 인용할 수 없다. 같은 연구진의 2023년 출판본으로 갈아 끼웠다.
+
+    막대마다 적용된 기준이 다르므로 축 라벨에 기준을 함께 적는다. 적지 않으면
+    같은 자로 잰 값처럼 보인다.
     """
-    rows = [('Gutierrez 등 (2022)\nUSP+FIP 108종', 15.7, False),
-            ('Dowse 등 (2012)\n9종', 33.3, False),
-            ('본 연구 SIGIL\n78종 · 기계 판정', 69.2, True)]
+    rows = [('Gutierrez 등 (2022)\nUSP+FIP 108종\nANSI 85% 기준', 15.7, False),
+            ('Dowse 등 (2023)\n현지 제작 10종\nISO 66.7% 기준', 80.0, False),
+            ('본 연구 SIGIL\n78종 · 기계 판정\n의미 일치 여부', 69.2, True)]
     fig, ax = plt.subplots(figsize=(4.6, 2.6))
     xs = range(len(rows))
     ax.bar(list(xs), [r[1] for r in rows], width=0.5,
