@@ -9,7 +9,15 @@
 
 ## 진행
 
-37종 중 **17종 확인 · 8종에서 오류 발견 · 20종 미확인**.
+37종 중 **28종 확인 · 10종에서 오류 발견 · 9종 미확인**.
+
+확인한 것은 본문 괄호 안에 **전체 서지로 적었다.** 서식에 참고문헌 자리가 없으므로
+서지가 갈 곳이 본문밖에 없다. 같은 문헌이 다시 나올 때까지 전체를 반복하면 읽기가
+어려우므로 첫 등장만 전체로 하고 이후는 저자·연도로 둔다.
+
+**여기서 확인되지 않은 것은 본문 괄호에 전체 서지로 적지 않는다.** 서지를 다는
+목적이 심사자가 원문을 열어 보게 하는 것이므로, 확인하지 않은 값에 서지를 붙이면
+틀렸을 때 축약식보다 더 확실하게 드러난다.
 
 ## 발견한 오류와 조치
 
@@ -23,6 +31,8 @@
 | Berkman — 응급실 1.52배, 입원 1.5배, 전체 사망률 1.53배 | 초록에 **배수가 없다.** 연관을 서술로만 보고하며, 사망률은 "고령자에서" 로 한정한다 | 배수를 빼고 원문의 서술로 대체 |
 | IDF Diabetes Atlas 11판 (2024) | 11판은 **2025년** 판이다 | 연도 교체 |
 | 한국 19~64세 충분 65.9% | 확인되지 않는다. 확인되는 것은 전체 60.4%, 65세 이상 40.3%, 소득 하위 54.4%, 상위 66.3% | 확인된 값으로 표 재구성 |
+| 2030년 60세 이상의 80%가 저·중소득국 | WHO 팩트시트에 80% 는 없다. **2050년에 3분의 2** 다. 원문은 2050년 21억 명, 2015→2050년 비중 12%→22% 도 준다 | 연도와 값 교체 |
+| 항생제 내성 사망이 HIV·말라리아를 넘어섰다 (WHO GLASS, 2025) | 이 비교는 GLASS 가 아니라 GRAM 연구(Murray 등, *Lancet* 2022)의 결과다. 2019년 직접 기인 사망 127만 명 | 출처 교체 |
 
 45.8%·8.3% 가 다른 논문의 값인지는 아직 찾지 못했다. 찾으면 그 논문을 근거로 되살릴
 수 있으나, 그때까지는 본문에서 뺀다.
@@ -111,6 +121,48 @@ they influence understanding and adherence? *Patient Education and Counseling*, 
 **주의: 본문이 쓴 "현지 20종 vs USP 11종" 은 이 논문이 아니라 같은 저자들의 2001년
 연구일 가능성이 있다. 확인 전까지 연도를 단정하지 않는다.**
 
+### 저문해 사용자 인터페이스
+
+**[U1]** Medhi, I., Cutrell, E., & Toyama, K. (2010). It's not just illiteracy. *Proc.
+International Conference on Interaction Design & International Development.* · 인도·
+필리핀·남아공의 저문해·저소득 400명. 장벽이 문해력만이 아니라 인지적 어려움, 기술에
+대한 두려움과 불신, 무엇을 할 수 있는지에 대한 인식 부족까지 얽혀 있음을 보고.
+**주의: 본문이 한때 "INTERACT 2013" 으로 적었으나 이 논문은 2010년 ICIDID 발표다.**
+
+**[U2]** Medhi, I., Toyama, K., Joshi, A., Athavankar, U., & Cutrell, E. (2013). A
+Comparison of List vs. Hierarchical UIs on Mobile Phones for Non-literate Users.
+*INTERACT 2013*, LNCS 8118, 497–504. doi:10.1007/978-3-642-40480-1_33 · 방갈로르 빈민가
+비문해 성인 20명(목록 10, 계층 10), 40개 항목 중 5개 찾기. 목록형 평균 25초 대 계층형
+65.5초, *t*(18)=4.6, *p*<0.001. 정답률 100% 대 80%, *t*(18)=−3, *p*=0.0077.
+저자들은 원인을 중첩 개념의 이해와 되돌아오기의 어려움에서 찾는다.
+
+### 항생제 내성
+
+**[R1]** World Health Organization (2025). *Global antibiotic resistance surveillance
+report 2025 (GLASS).* · 104개국이 보고한 실험실 확인 감염 2,300만 건 이상. 2023년
+세균 감염 여섯 건 중 한 건이 항생제 내성. 8개 우선 병원체 × 22개 항생제. 2018~2023년
+감시 조합의 40% 이상에서 내성 상승, 연평균 5~15%. 동남아·동지중해 3건 중 1건,
+아프리카 5건 중 1건, 아메리카 7건 중 1건.
+
+**[R2]** Murray, C. J. L., et al. (Antimicrobial Resistance Collaborators) (2022). Global
+burden of bacterial antimicrobial resistance in 2019: a systematic analysis. *The Lancet*,
+399(10325), 629–655. · 2019년 세균 내성에 **직접 기인한 사망 127만 명**, 연관 사망
+495만 명. HIV/AIDS 나 말라리아보다 많다. 204개국.
+
+### 고령화·알레르기·보급
+
+**[A1]** World Health Organization. *Ageing and health* (fact sheet). · 60세 이상 2020년
+10억 명 → 2030년 14억 명, 2030년 여섯 명 중 한 명. 2050년 21억 명. **2050년 60세 이상의
+3분의 2가 저·중소득국 거주.** 2015~2050년 세계 인구 중 비중 12% → 22%.
+
+**[A2]** Food Allergy Research & Education (2024). *Food Allergy Facts and Statistics.*
+· 미국 전체 3,300만 명 이상. **성인 약 1,800만 명(100명 중 7명)**, 아동 약 400만 명
+(100명 중 5명). 아동 13명 중 1명이 진단.
+
+**[A3]** GSM Association (2023). *The Mobile Economy Sub-Saharan Africa 2023.*
+· 사하라이남 아프리카 모바일 인터넷 이용자 2022년 2억 8,700만 명 → 2030년 4억
+3,800만 명 전망.
+
 ### 표준
 
 **[S1]** ISO 9186-1:2014. *Graphical symbols — Test methods — Part 1: Method for testing
@@ -118,6 +170,17 @@ comprehensibility.* · 최소 67% 이해.
 
 **[S2]** ANSI Z535.3-2022. *Criteria for Safety Symbols.* · 최소 85% 정답, 치명적 혼동
 5% 이하. 두 기준값은 Dowse & Ehlers 논문에서도 교차 확인된다.
+
+**[S3]** U.S. Pharmacopeia. *USP Pictogram Library License Agreement.* · 픽토그램 81종.
+라이선스는 (가) 변형하거나 USP 가 만들지 않은 심볼과 함께 쓰는 것을 USP 의 허락 없이
+금지하고, (나) **픽토그램을 환자에게 정보를 전달하는 유일한 수단으로 쓰지 말 것**을
+요구한다. 후자는 그림 하나로 부족하다는 것을 표준을 만든 쪽이 명시한 것이다.
+
+### 색각
+
+**[C1]** Colour Blind Awareness; MedlinePlus Genetics. · 적록 색각이상은 북유럽계 남성의
+약 8%, 여성의 약 0.5%. 전 세계 약 3억 명. **인종에 따라 다르며 중국·일본계 남성에서는
+4~6.5%, 사하라이남 아프리카에서는 더 낮게 보고된다.**
 
 ### 환자안전
 
@@ -131,9 +194,10 @@ ISBN 978-92-4-006276-4. · 회원국의 18%만이 약물위해 감축 국가 목
 
 ## 아직 대조하지 않은 것
 
-FARE(2024) 미국 식품알레르기 · GSMA(2023) 사하라이남 모바일 · WHO 고령화(60세 이상
-10억→14억, 80% 저·중소득국) · PMC8544505 한국 고령자 79.4%/28.2% · PMC7532569 몰도바 ·
-Houts 등(2006) · 거짓 확신(Patient Educ Couns) · USP 81종과 라이선스 조항 ·
-Medhi 등(2013) INTERACT · WHO GLASS(2025) 항생제 내성 · 색각이상 유병률 8%/0.5% ·
-World Bank 몰도바 고령 인구 27% · Paivio 이중부호화 · NutritionVerse 14.43% ·
-Dowse & Ehlers 의 20 대 11 의 연도와 분모.
+PMC8544505 한국 고령자 79.4%/28.2% · PMC7532569 몰도바 건강문해력 · Houts 등(2006)의
+본문 내용(서지는 확인) · 거짓 확신(Patient Educ Couns) · World Bank 몰도바 고령 인구
+27% · Paivio 이중부호화 · NutritionVerse 평균 오차 14.43% · Medhi, Sagar & Toyama
+(2007) · HLS19 의 46% · Dowse & Ehlers 의 20 대 11 의 연도와 분모.
+
+이 아홉은 본문에서 저자·연도 형태로만 두고 전체 서지를 붙이지 않았다. 붙이는 것은
+대조한 뒤에 한다.
