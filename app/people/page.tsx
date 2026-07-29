@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
-import { sayable } from '@/components/sc/Say';
+import { sayable, ask } from '@/components/sc/Say';
 import { useProfile } from '@/stores/profile';
 import { forget } from '@/lib/snapcare/sync';
 import {
@@ -76,7 +76,7 @@ export default function PeoplePage() {
         </button>
 
         <h1 className="mt-3 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
-            {...sayable('Who uses this phone. Each person has their own picture key and their own history.')}>
+            {...ask('Who uses this phone. Each person has their own picture key and their own history.')}>
           Who uses this phone
         </h1>
         <p className="mt-1 text-xs" style={{ color: 'var(--color-sc-muted)' }}>

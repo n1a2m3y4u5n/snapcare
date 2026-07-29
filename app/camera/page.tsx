@@ -9,7 +9,7 @@ import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } f
 import { recognizeText } from '@/lib/ocr';
 import { estimateOnDevice, warmUp } from '@/lib/nutrition/estimateOnDevice';
 import { Hint } from '@/components/sc/Hint';
-import { sayable } from '@/components/sc/Say';
+import { sayable, ask } from '@/components/sc/Say';
 import { SAMPLE_LABELS, SAMPLE_RX, sampleBySlug } from '@/lib/snapcare/samples';
 import type { ScanItem } from '@/lib/snapcare/types';
 import type { NutrientProfile } from '@/lib/nutrition/types';
@@ -198,7 +198,7 @@ export default function CameraPage() {
         <div className="flex items-center justify-between px-5 pt-14 pb-3">
           <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none">×</button>
           <span className="text-sm font-semibold"
-                {...sayable('Point at something. Hold the camera over a prescription, a label, or your food.')}>
+                {...ask('Point at something. Hold the camera over a prescription, a label, or your food.')}>
             Point at something
           </span>
           <span className="w-6" />

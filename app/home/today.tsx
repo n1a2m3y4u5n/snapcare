@@ -3,7 +3,7 @@
 import { useProfile } from '@/stores/profile';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NutrientBar } from '@/components/sc/NutrientBar';
-import { sayable } from '@/components/sc/Say';
+import { Hear, sayable, Speakable } from '@/components/sc/Say';
 import type { ScanRecord } from '@/lib/snapcare/types';
 
 /**
@@ -53,12 +53,13 @@ export function Today({ scans }: { scans: ScanRecord[] }) {
         먹은 개수와 열량은 늘 같은 자리에 둔다. 매일 다른 것이 뜨면 어디를 봐야
         하는지 매번 다시 찾아야 하고, 글을 못 읽으면 그 탐색이 곧 포기가 된다.
       */}
-      <div className="mt-2 flex items-baseline gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm"
-           {...sayable(
-             energy
-               ? `${thingsPhrase}. About ${Math.round(energy.amount)} calories, ${Math.round(energy.pct)} percent of the day.`
-               : `${thingsPhrase}.`,
-           )}>
+      <Speakable
+        bare
+        className="mt-2 flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm"
+        text={energy
+          ? `${thingsPhrase}. About ${Math.round(energy.amount)} calories, ${Math.round(energy.pct)} percent of the day.`
+          : `${thingsPhrase}.`}
+      >
         <span className="text-base" aria-hidden>🍽️</span>
         <span className="flex-1 text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
           {thingsPhrase}
@@ -68,7 +69,10 @@ export function Today({ scans }: { scans: ScanRecord[] }) {
             {Math.round(energy.amount)} kcal
           </span>
         )}
-      </div>
+        <Hear text={energy
+          ? `${thingsPhrase}. About ${Math.round(energy.amount)} calories, ${Math.round(energy.pct)} percent of the day.`
+          : `${thingsPhrase}.`} />
+      </Speakable>
 
       {watch.length > 0 ? (
         <div className="mt-2 flex flex-col gap-2">

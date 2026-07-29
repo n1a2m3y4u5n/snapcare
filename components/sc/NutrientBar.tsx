@@ -1,7 +1,7 @@
 'use client';
 
 import { NUTRIENT_LABEL, NUTRIENT_UNIT, type NutrientAssessment, type NutrientKey } from '@/lib/nutrition/types';
-import { Speakable } from './Say';
+import { Hear, Speakable } from './Say';
 
 export const NUTRIENT_EMOJI: Record<NutrientKey, string> = {
   energy: '🔥',
@@ -33,8 +33,11 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
   const width = Math.max(3, Math.min(100, a.pct));
   const unit = NUTRIENT_UNIT[a.key] === 'kcal' ? ' kcal' : ' g';
 
+  // 듣기 표시를 Speakable 에 맡기지 않고 첫 줄에 직접 둔다. 맡기면 내용 끝 — 막대
+  // 아래 — 에 붙어서, 무엇에 대한 소리인지가 한 줄 떨어진다. 누르는 것은 여전히
+  // 카드 전체다.
   return (
-    <Speakable text={barSentence(a)} className="block rounded-2xl bg-white px-3 py-2 shadow-sm">
+    <Speakable text={barSentence(a)} bare className="block rounded-2xl bg-white px-3 py-2 shadow-sm">
       <div className="flex items-center gap-2">
         <span className="text-base">{NUTRIENT_EMOJI[a.key]}</span>
         <span className="flex-1 text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
@@ -46,6 +49,7 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
         <span className="w-11 text-right text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
           {Math.round(a.pct)}%
         </span>
+        <Hear text={barSentence(a)} />
       </div>
       <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full" style={{ background: 'var(--color-sc-bg)' }}>
         <div className="h-full rounded-full" style={{ width: `${width}%`, background: color }} />

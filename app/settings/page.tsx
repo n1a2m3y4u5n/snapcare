@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useProfile } from '@/stores/profile';
 import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
-import { sayable } from '@/components/sc/Say';
+import { sayable, ask } from '@/components/sc/Say';
 import { useMyColor } from '@/lib/hooks';
 import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
 
@@ -30,7 +30,7 @@ export default function SettingsPage() {
   return (
     <MobileScreen tab="settings">
       <div className="px-5 pt-14">
-        <h1 {...sayable('Settings.')} className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Settings</h1>
+        <h1 {...ask('Settings. Change who we check for, how the voice reads, and the pill device.')} className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Settings</h1>
 
         {/* 판정 기준이 되는 사람 */}
         <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }} {...sayable('Who we check for.')}>

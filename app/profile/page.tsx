@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useProfile } from '@/stores/profile';
 import { CONDITIONS } from '@/lib/snapcare/conditions';
-import { sayable } from '@/components/sc/Say';
+import { ask, sayable, Speakable } from '@/components/sc/Say';
 import { FACES, freeFaces } from '@/lib/snapcare/accounts';
 import { useMyColor } from '@/lib/hooks';
 import type { AgeBand } from '@/lib/snapcare/types';
@@ -42,11 +42,22 @@ const AGE_BANDS: { band: AgeBand; glyph: string; label: string; role: string }[]
   { band: 'senior', glyph: 'state_elderly', label: 'Older', role: 'Older adult' },
 ];
 
-/** 화면 묶음 — 진단서가 없어도 답할 수 있는 것부터 묻는다. */
-const GROUPS: { key: 'now' | 'experience' | 'diagnosis'; title: string; say: string }[] = [
-  { key: 'now', title: 'RIGHT NOW', say: 'Right now. Things that are true today.' },
-  { key: 'experience', title: 'MADE ME SICK BEFORE', say: 'Made me sick before.' },
-  { key: 'diagnosis', title: 'A DOCTOR TOLD ME', say: 'A doctor told me.' },
+/**
+ * 화면 묶음 — 진단서가 없어도 답할 수 있는 것부터 묻는다.
+ *
+ * 머리글에 그림을 붙인 이유: 이 세 줄은 화면에서 **유일하게 그림이 없는 글**이었다.
+ * 아래 칸들은 전부 그림 + 한 단어라 못 읽어도 짐작이 되는데, 정작 "이 칸들이 무엇을
+ * 묻는 것인가" 를 말하는 줄만 순수한 문장이었다. 묶음의 뜻을 모르면 칸 하나하나는
+ * 알아봐도 무엇을 고르라는 것인지 모른다.
+ *
+ * 그림은 답이 아니라 **질문의 종류**를 가리킨다 — 지금(시계), 먹고 탈 났다(메스꺼움),
+ * 의사가 말했다(의사). 셋 다 아래 칸의 어떤 답과도 겹치지 않으므로, 그림을 답으로
+ * 오해할 자리가 없다.
+ */
+const GROUPS: { key: 'now' | 'experience' | 'diagnosis'; title: string; emoji: string; say: string }[] = [
+  { key: 'now', title: 'RIGHT NOW', emoji: '🕐', say: 'Right now. Things that are true today.' },
+  { key: 'experience', title: 'MADE ME SICK BEFORE', emoji: '🤢', say: 'Made me sick before. Things that made you feel bad after eating them.' },
+  { key: 'diagnosis', title: 'A DOCTOR TOLD ME', emoji: '👩‍⚕️', say: 'A doctor told me.' },
 ];
 
 /**
@@ -99,7 +110,7 @@ function ProfileBody() {
         {setup ? (
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}
-                  {...sayable('Who are we checking for? Your age and conditions decide every verdict.')}>
+                  {...ask('Who are we checking for? Tap how old you are, and anything you must stay away from.')}>
               Who are we checking for?
             </span>
             {/* 건너뛰기를 남겨 둔다 — 첫 화면에서 막히면 앱을 아예 못 쓴다.
@@ -157,10 +168,16 @@ function ProfileBody() {
         )}
 
         {/* 나이대 = 기준치를 정하는 값 */}
-        <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-           {...sayable('How old. This decides how much is too much.')}>
-          HOW OLD
-        </p>
+        {/*
+          여기만 그림이 없다. 아래 네 칸이 곧 그 그림이기 때문이다 — 작은 사람에서
+          지팡이 짚은 사람까지 한 줄로 놓이면 무엇을 묻는지가 보인다. 머리글에 또
+          그림을 얹으면 답과 겹쳐서, 그중 하나를 고르라는 뜻으로 읽힐 수 있다.
+        */}
+        <Speakable text="How old. This decides how much is too much."
+                   className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                   style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">HOW OLD</span>
+        </Speakable>
         <div className="mt-2 grid grid-cols-4 gap-2">
           {AGE_BANDS.map((b) => {
             const on = currentBand === b.band;
@@ -190,10 +207,12 @@ function ProfileBody() {
           if (items.length === 0) return null;
           return (
             <div key={g.key}>
-              <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
-                 {...sayable(g.say)}>
-                {g.title}
-              </p>
+              <Speakable text={g.say}
+                         className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                         style={{ color: 'var(--color-sc-muted)' }}>
+                <span className="text-xl" aria-hidden>{g.emoji}</span>
+                <span className="flex-1">{g.title}</span>
+              </Speakable>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {items.map((c) => {
                   const on = profile.conditionIds.includes(c.id);

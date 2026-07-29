@@ -1,6 +1,6 @@
 'use client';
 
-import { sayable } from '@/components/sc/Say';
+import { sayable, ask } from '@/components/sc/Say';
 import { ReadScreen } from '@/components/sc/ReadScreen';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -140,7 +140,7 @@ export default function LoginPage() {
         )}
         <div className="flex h-12 w-12 items-center justify-center rounded-full text-2xl" style={{ background: 'color-mix(in srgb, var(--color-sc-primary) 12%, white)' }}>🔒</div>
         <h1 className="mt-4 text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}
-            {...sayable(setup ? 'Create your picture key.' : 'Enter your picture key.')}>
+            {...ask(setup ? 'Create your picture key. Tap four pictures in an order you will remember.' : 'Enter your picture key. Tap your four pictures, in the order you chose.')}>
           {setup ? 'Create your picture key' : 'Enter your picture key'}
         </h1>
         <p className="mt-1 text-xs" style={{ color: error ? 'var(--color-avoid)' : 'var(--color-sc-muted)' }}>

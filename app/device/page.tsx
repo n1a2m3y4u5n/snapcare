@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { Hint } from '@/components/sc/Hint';
-import { sayable } from '@/components/sc/Say';
+import { sayable, ask } from '@/components/sc/Say';
 import { useReminders } from '@/stores/reminders';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
@@ -184,7 +184,7 @@ export default function DevicePage() {
           ‹ Settings
         </button>
         <h1 className="mt-2 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
-            {...sayable('Pill device. Send your dose times to the box, or read what it shows.')}>Pill device</h1>
+            {...ask('Pill device. Send your dose times to the box, or read what it shows.')}>Pill device</h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}>
           <span {...sayable('The phone and the box are on the same Wi-Fi. Nothing else is needed.')}>Same Wi-Fi — nothing else needed.</span>
         </p>
