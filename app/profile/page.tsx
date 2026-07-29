@@ -96,6 +96,16 @@ function ProfileBody() {
           </button>
         )}
 
+        {/*
+          얼굴 고르기는 첫 실행에서 빼고 설정에서만 보여준다.
+          
+          판정에 아무 영향이 없는데(꾸밈이다) 첫 화면에서 가장 먼저 여덟 개를 고르라고
+          했다. 처음 여는 사람이 만나는 첫 요구가 아무 값도 없는 선택이면, 그다음의
+          진짜 질문 — 나이와 조건 — 까지 같은 무게로 보인다.
+          
+          기본 얼굴은 그대로 쓰이고, 바꾸고 싶은 사람은 설정에서 바꾼다.
+        */}
+        {!setup && (
         <div className="mt-4 flex items-center gap-3">
           <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl"
                 style={{ background: profile.color }}>
@@ -106,8 +116,10 @@ function ProfileBody() {
             TAP A PICTURE — NO TYPING
           </span>
         </div>
+        )}
 
         {/* 신원 = 그림 */}
+        {!setup && (
         <div className="mt-4 flex flex-wrap gap-2">
           {FACES.map((f) => (
             <button
@@ -122,6 +134,7 @@ function ProfileBody() {
             </button>
           ))}
         </div>
+        )}
 
         {/* 나이대 = 기준치를 정하는 값 */}
         <p className="mt-6 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
