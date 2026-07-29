@@ -415,6 +415,25 @@ export const CLOSE_CITE = {
 
 export const CLOSE: Item[] = [
   {
+    // 이해도 시험을 설문에서 뺀 자리를 이 문항이 대신한다. ISO 9186 과 ANSI
+    // Z535.3 의 이해도 시험은 실제 사용자를 대상으로 해야 한다. 전문가가 우리
+    // 그림을 읽어내는지는 글을 읽지 못하는 환자가 읽어내는지에 대해 거의 아무것도
+    // 말해 주지 않으므로, 전문가에게서 얻은 수치를 기준 통과로 쓸 수 없다.
+    // 그래서 묻는 것을 바꿨다 — 시험해 달라고 하는 대신 대상자에게 닿는 경로를 묻는다.
+    id: 'd1_recruit',
+    kind: 'longtext',
+    q: T(
+      '저문해 성인이나 고령 환자를 대상으로 픽토그램 이해도를 실제로 시험할 수 있는 경로를 알고 계십니까?',
+      'Do you know of a route by which we could test pictogram comprehension with actual low-literacy or older adult participants?',
+      'Cunoașteți o cale prin care am putea testa comprehensiunea pictogramelor cu participanți reali cu alfabetizare redusă sau vârstnici?',
+    ),
+    note: T(
+      '저희는 아직 사람을 대상으로 이해도를 시험한 적이 없습니다. 기관, 프로그램, 또는 소개해 주실 분이 있다면 그것이 이 설문에서 저희가 가장 필요한 답입니다.',
+      'We have not yet tested comprehension with people. If you know an institution, a programme, or someone who could introduce us, that is the single most useful answer we could receive.',
+      'Nu am testat încă comprehensiunea cu oameni. Dacă știți o instituție, un program sau pe cineva care ne-ar putea face legătura, acesta este cel mai util răspuns pe care l-am putea primi.',
+    ),
+  },
+  {
     id: 'd2_referral',
     kind: 'longtext',
     q: T(
@@ -447,9 +466,9 @@ export const UI = {
       'Este lucrarea comună Coreea–Moldova la a 16-a ediție e-ICON World Contest. Suntem o echipă de liceu, iar acest chestionar nu are scop comercial.',
   ),
   timeNote: T(
-    '공통 문항은 6~7분입니다. 픽토그램 이해도 시험에 참여하시면 8분 정도가 더 걸립니다. 답하고 싶은 것만 답하셔도 됩니다.',
-    'The common questions take 6–7 minutes. The pictogram comprehension test adds about 8 minutes. Answer only what you wish.',
-    'Întrebările comune durează 6–7 minute. Testul de comprehensiune a pictogramelor adaugă circa 8 minute. Răspundeți doar la ce doriți.',
+    '6~7분 걸립니다. 공통 문항 뒤에 선생님 분야에 해당하는 문항이 몇 개 붙습니다. 답하고 싶은 것만 답하셔도 됩니다.',
+    'It takes 6–7 minutes — the common questions, then a few questions for your own field. Answer only what you wish.',
+    'Durează 6–7 minute — întrebările comune, apoi câteva întrebări pentru domeniul dumneavoastră. Răspundeți doar la ce doriți.',
   ),
   start: T('시작', 'Start', 'Începeți'),
   next: T('다음', 'Next', 'Următorul'),
@@ -472,6 +491,11 @@ export const UI = {
   retry: T('다시 시도', 'Try again', 'Încercați din nou'),
   contact: T('문의', 'Contact', 'Contact'),
   optional: T('선택', 'optional', 'opțional'),
+  moreSections: T(
+    '다른 분야 문항도 보기',
+    'Show the other field sections',
+    'Afișați celelalte secțiuni',
+  ),
   branchPick: T(
     '분야별 문항입니다. 답하고 싶은 구획만 여시면 됩니다.',
     'These are the field-specific sections. Open only the ones you want to answer.',
