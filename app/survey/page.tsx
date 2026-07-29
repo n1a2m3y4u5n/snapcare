@@ -309,7 +309,7 @@ export default function SurveyPage() {
             {DEMO.map((d) => (
               <div
                 key={d.id}
-                className="mt-3 rounded-2xl border p-3"
+                className="mt-3 rounded-2xl border p-3 [&_.overflow-x-auto]:flex-wrap [&_.overflow-x-auto]:overflow-x-visible"
                 style={{ borderColor: 'var(--color-sc-line)', background: 'var(--color-sc-surface)' }}
               >
                 <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
@@ -331,8 +331,8 @@ export default function SurveyPage() {
               <div className="mt-2 grid grid-cols-6 gap-1 sm:grid-cols-10">
                 {GLYPH_NAMES.map((g) => (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img key={g} src={`/glyphs/${g}.png`} alt={g} loading="lazy"
-                       className="w-full rounded bg-white p-0.5" />
+                  <img key={g} src={`/glyphs/${g}.png`} alt={g} width={512} height={512}
+                       className="aspect-square w-full rounded bg-white object-contain p-0.5" />
                 ))}
               </div>
             </details>
