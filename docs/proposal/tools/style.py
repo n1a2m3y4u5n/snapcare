@@ -34,10 +34,13 @@ LIGHT  = '#D9D9D9'      # 비교 대상 막대
 INK, MUTED, GRIDC, SPINE = '#000000', '#595959', '#D9D9D9', '#BFBFBF'
 
 plt.rcParams.update({
-    'font.family': 'Pretendard',
+    # 참고 도판은 엑셀로 만들어졌고 한글이 맑은 고딕이다. 그 글꼴이 문서에서
+    # 익숙하게 읽히는 이유이기도 하다. Word 번들의 malgun.ttf 를 개인 글꼴로
+    # 복사해 쓴다 (굵기 400·700).
+    'font.family': 'Malgun Gothic',
     'axes.unicode_minus': False,
-    'font.size': 9.0, 'axes.labelsize': 9.4,
-    'xtick.labelsize': 8.8, 'ytick.labelsize': 8.8, 'legend.fontsize': 8.8,
+    'font.size': 10.0, 'axes.labelsize': 10.4,
+    'xtick.labelsize': 9.6, 'ytick.labelsize': 9.6, 'legend.fontsize': 9.6,
     'axes.edgecolor': SPINE, 'axes.linewidth': 0.9,
     'xtick.major.width': 0.9, 'ytick.major.width': 0.9,
     'xtick.major.size': 3.5, 'ytick.major.size': 3.5,
