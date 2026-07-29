@@ -717,7 +717,7 @@ TARGETS: list[Target] = [
         'qty_two', 'modifier', 'qty_two',
         'exactly two solid black circles side by side with a wide white gap between them, the same '
         'size, nothing else in the frame',
-        'one circle, three circles, a colon, an ellipsis',
+        'rings, donuts, hollow circles, outlined circles, one circle, three circles, a colon, an ellipsis',
         sparse=True, parts=2,
         means='two dots',
     ),
@@ -725,7 +725,7 @@ TARGETS: list[Target] = [
         'qty_three', 'modifier', 'qty_three',
         'exactly three solid black circles arranged in a triangle with wide white gaps between them, '
         'all the same size, nothing else in the frame',
-        'two circles, four circles, a cluster, a flower',
+        'rings, donuts, hollow circles, outlined circles, two circles, four circles, a cluster, a flower',
         sparse=True, parts=3,
         means='three dots',
     ),
@@ -733,7 +733,7 @@ TARGETS: list[Target] = [
         'qty_four', 'modifier', 'qty_four',
         'exactly four solid black circles arranged in a two by two square with wide white gaps '
         'between them, all the same size, nothing else in the frame',
-        'three circles, five circles, a die face, a window',
+        'rings, donuts, hollow circles, outlined circles, three circles, five circles, a die face, a window',
         sparse=True, parts=4,
         means='four dots',
     ),
@@ -741,7 +741,7 @@ TARGETS: list[Target] = [
         'qty_five', 'modifier', 'qty_five',
         'exactly five solid black circles arranged like the five face of a die, four at the corners '
         'and one in the middle, wide white gaps between them, nothing else in the frame',
-        'four circles, six circles, a flower, an X',
+        'rings, donuts, hollow circles, outlined circles, four circles, six circles, a flower, an X',
         sparse=True, parts=5,
         means='five dots',
     ),
