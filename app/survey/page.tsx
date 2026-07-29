@@ -47,7 +47,6 @@ export default function SurveyPage() {
   const [pinned, setPinned] = useState<string | null>(null);
   const [step, setStep] = useState<Step>({ k: 'intro' });
   const [consent, setConsent] = useState(false);
-  const [citeOk, setCiteOk] = useState(false);
   const [ans, setAns] = useState<Answers>({});
   const [cite, setCite] = useState('');
   const [openBranches, setOpenBranches] = useState<string[]>([]);
@@ -85,16 +84,15 @@ export default function SurveyPage() {
       if (d.ans) setAns(d.ans);
       if (d.cite) setCite(d.cite);
       if (d.consent) setConsent(true);
-      if (d.citeOk) setCiteOk(true);
     } catch { /* 초안이 깨졌으면 그냥 새로 시작한다 */ }
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORE_KEY, JSON.stringify({ ans, cite, consent, citeOk }));
+      localStorage.setItem(STORE_KEY, JSON.stringify({ ans, cite, consent }));
     } catch { /* 용량 초과 등은 무시한다 — 저장 실패가 응답을 막아서는 안 된다 */ }
-  }, [ans, cite, consent, citeOk]);
+  }, [ans, cite, consent]);
 
   const t = useCallback((r: Record<Lang, string>) => r[lang], [lang]);
   const set = (id: string, v: string) => setAns((a) => ({ ...a, [id]: v }));
@@ -144,7 +142,7 @@ export default function SurveyPage() {
     setFailed(false);
     const payload = {
       consent: true,
-      citeConsent: citeOk,
+      citeConsent: true,
       citeScope: cite,
       lang,
       pinnedSection: pinned,
@@ -227,7 +225,7 @@ export default function SurveyPage() {
           >
             <h2 className="mb-2 font-bold">{t(CONSENT.title)}</h2>
             <p className="mb-3">{t(CONSENT.body)}</p>
-            <label className="mb-2 flex items-start gap-2">
+            <label className="flex items-start gap-2">
               <input
                 type="checkbox"
                 checked={consent}
@@ -235,15 +233,6 @@ export default function SurveyPage() {
                 className="mt-1"
               />
               <span>{t(CONSENT.agree)}</span>
-            </label>
-            <label className="flex items-start gap-2">
-              <input
-                type="checkbox"
-                checked={citeOk}
-                onChange={(e) => setCiteOk(e.target.checked)}
-                className="mt-1"
-              />
-              <span>{t(CONSENT.cite)}</span>
             </label>
           </div>
           <button

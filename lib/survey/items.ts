@@ -41,7 +41,7 @@ export const CONSENT = {
   body: T(
     '이 설문은 제16회 e-ICON 세계대회 출품작 SnapCare 에 대한 전문가 의견을 모읍니다. ' +
       '수집 항목은 응답 내용과 (선택 입력 시) 소속·이메일입니다. 대회 종료 후 12개월간 보관하고 그 뒤 삭제합니다. ' +
-      '삭제나 열람을 원하시면 아래 연락처로 알려 주시면 됩니다. 이메일 입력은 선택이며, 익명으로도 답하실 수 있습니다.',
+      '삭제나 열람을 원하시면 아래 연락처로 알려 주시면 됩니다. 응답은 프로젝트 문서에 인용될 수 있으며, 실명·소속을 밝힐지 익명으로 할지는 마지막 문항에서 직접 고르실 수 있습니다. 인용을 원하지 않으신다는 선택도 있습니다.',
     'This survey collects expert feedback on SnapCare, an entry in the 16th e-ICON World Contest. ' +
       'We collect your answers and, if you choose to enter them, your affiliation and email. We keep responses for 12 months ' +
       'after the contest and then delete them. Write to the address below to access or delete yours. Email is optional — you may answer anonymously.',
@@ -52,12 +52,7 @@ export const CONSENT = {
   agree: T(
     '위 내용을 읽었고 참여에 동의합니다.',
     'I have read the above and agree to take part.',
-    'Am citit informațiile de mai sus și accept să participodat.',
-  ),
-  cite: T(
-    '응답을 프로젝트 문서에 인용하는 것에 동의합니다. (인용 범위는 마지막에 다시 고르실 수 있습니다)',
-    'I agree that my response may be quoted in the project documents. (You choose the scope at the end.)',
-    'Accept ca răspunsul meu să fie citat în documentele proiectului. (Alegeți limita la final.)',
+    'Am citit informațiile de mai sus și accept să participarea.',
   ),
 };
 
@@ -108,6 +103,7 @@ export const BACKGROUND: Item[] = [
   {
     id: 'b_country',
     kind: 'text',
+    required: true,
     q: T('주로 일하는 국가', 'Country where you mainly work', 'Țara în care lucrați în principal'),
   },
   {
@@ -116,16 +112,18 @@ export const BACKGROUND: Item[] = [
     // 익명을 허용하는 편이 낫다. 다만 익명 응답은 중복을 걸러낼 수 없다.
     id: 'b_name',
     kind: 'text',
+    required: true,
     q: T('성함', 'Your name', 'Numele dumneavoastră'),
     note: T(
-      '익명으로 답하셔도 됩니다. 이름을 남기시면 같은 분의 응답이 중복 집계되는 것을 막고, 인용을 허락하신 범위 안에서 출처를 밝힐 수 있습니다.',
-      'You may answer anonymously. Giving a name lets us avoid counting the same person twice and lets us attribute your view within the citation scope you choose.',
-      'Puteți răspunde anonim. Dacă vă dați numele, putem evita numărarea dublă și vă putem atribui opinia în limitele de citare pe care le alegeți.',
+      '응답이 명단의 어느 분에게서 왔는지 확인하고 중복 집계를 막기 위해 필요합니다. 이름을 적으시는 것과 문서에 실명이 실리는 것은 다릅니다 — 마지막 문항에서 익명 인용이나 인용 거부를 고르실 수 있습니다.',
+      'We need this to confirm the response came from someone on our list and to avoid counting anyone twice. Giving your name here is not the same as appearing by name in the documents — in the final question you may choose anonymous citation, or none at all.',
+      'Ne este necesar pentru a confirma că răspunsul provine de la o persoană din lista noastră și pentru a evita numărarea dublă. A vă da numele aici nu înseamnă că veți apărea cu numele în documente — în ultima întrebare puteți alege citarea anonimă sau deloc.',
     ),
   },
   {
     id: 'b_affil',
     kind: 'text',
+    required: true,
     q: T('소속', 'Affiliation', 'Afiliere'),
   },
 ];
