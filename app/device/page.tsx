@@ -199,7 +199,8 @@ export default function DevicePage() {
           <div className="mt-2 rounded-3xl bg-white px-4 py-4 shadow-sm">
             <div className="flex flex-col gap-1">
               {trayPlan.plan.map((t) => (
-                <div key={t.tray} className="flex items-center gap-2 py-1">
+                <Speakable key={t.tray} text={`Tray ${t.tray}. ${t.name}, at ${t.time}.`}
+                           className="flex items-center gap-2 py-1">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white"
                         style={{ background: 'var(--color-sc-primary)' }}>
                     {t.tray}
@@ -208,20 +209,29 @@ export default function DevicePage() {
                     {t.name}
                   </span>
                   <span className="text-xs" style={{ color: 'var(--color-sc-muted)' }}>{t.time}</span>
-                </div>
+                </Speakable>
               ))}
             </div>
 
             {/*
               트레이가 모자라 못 실은 복용이 있으면 반드시 말한다. 조용히 자르면
               기기에 없는 복용을 있다고 믿게 되는데, 그건 알람이 아예 없는 것보다 나쁘다.
+
+              그런데 "반드시 말한다" 고 적어 놓고 **글자로만** 냈다. 화면의 나머지가
+              전부 눌러서 들리는데 이 줄만 조용했고, 하필 이 줄이 "기기가 주지 않을
+              약" 을 알리는 자리다. 출품 기기는 트레이가 셋이라 이 경고는 드물게가
+              아니라 자주 뜬다.
             */}
             {trayPlan.dropped.length > 0 && (
-              <p className="mt-2 rounded-2xl px-3 py-2 text-xs font-semibold"
-                 style={{ background: 'var(--color-caution-bg)', color: 'var(--color-caution)' }}>
-                ⚠️ {trayPlan.dropped.length} dose{trayPlan.dropped.length > 1 ? 's' : ''} did not fit — this device has {trays} tray{trays > 1 ? 's' : ''}.
-                {' '}{trayPlan.dropped.map((r) => r.item.name).join(', ')} must still be taken by hand.
-              </p>
+              <Speakable
+                text={`Warning. ${trayPlan.dropped.length} dose${trayPlan.dropped.length > 1 ? 's' : ''} did not fit, because this device has only ${trays} tray${trays > 1 ? 's' : ''}. ${trayPlan.dropped.map((r) => r.item.name).join(', ')} must still be taken by hand. The device will not remind you of ${trayPlan.dropped.length > 1 ? 'those' : 'that'}.`}
+                className="mt-2 flex items-center gap-2 rounded-2xl px-3 py-2 text-xs font-semibold"
+                style={{ background: 'var(--color-caution-bg)', color: 'var(--color-caution)' }}>
+                <span className="flex-1">
+                  ⚠️ {trayPlan.dropped.length} dose{trayPlan.dropped.length > 1 ? 's' : ''} did not fit — this device has {trays} tray{trays > 1 ? 's' : ''}.
+                  {' '}{trayPlan.dropped.map((r) => r.item.name).join(', ')} must still be taken by hand.
+                </span>
+              </Speakable>
             )}
 
             {/*
