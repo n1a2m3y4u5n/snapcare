@@ -21,6 +21,7 @@ import { requestPermission, scheduleNotification } from '@/lib/notifications';
 import { computeVerdict, LEVEL_META } from '@/lib/snapcare/verdict';
 import { checkInteractions } from '@/lib/medication/interactions';
 import { itemToDsl } from '@/lib/snapcare/sigil';
+import { durationDays } from '@/lib/hardware/dispenser';
 import { itemVoiceScript } from '@/lib/snapcare/say';
 import { speak } from '@/lib/voice';
 import type { ItemFlag, Member, ScanItem, Verdict } from '@/lib/snapcare/types';
@@ -113,12 +114,17 @@ export default function ScanResultPage() {
     if (sched.length > 0) {
       // 알람은 먼저 만든다. OS 알림 권한은 부가 기능이라 이걸 기다리면 안 된다 —
       // 사용자가 권한 창을 닫거나 무시하면 await 가 풀리지 않아 버튼이 죽은 것처럼 보였다.
+      // 복약 기간을 함께 싣는다. 처방전에서 읽어 이미 갖고 있던 값인데(§durationText)
+      // 지금까지 기기로 보낼 때만 쓰고 앱 자신의 알람은 끝을 몰랐다 — 7일짜리
+      // 항생제 알람이 100일째에도 울렸다. 0 이면 무기한이다.
       addReminders(
         sched.map((s, i) => ({
           id: `rem_${cryptoId()}_${i}`,
           memberId: member.id,
           time: s.time,
           item: scanned!,
+          startedOn: todayKey(),
+          days: durationDays(scanned!.rx?.durationText),
         })),
       );
       // 권한이 있으면 데모용으로 첫 알림을 8초 뒤 실제로 띄운다 (없으면 앱 안에서만 동작)

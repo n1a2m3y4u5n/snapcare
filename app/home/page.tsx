@@ -1,11 +1,13 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
-import { useScans } from '@/stores/scans';
+import { useScans, todayKey } from '@/stores/scans';
 import { useProfile, PROFILE_ID } from '@/stores/profile';
 import { useAnalysis } from '@/stores/analysis';
 import { useReminders } from '@/stores/reminders';
+import { finished, nextDue, running } from '@/lib/snapcare/course';
 import { getItem } from '@/lib/snapcare/catalog';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
 import type { Reminder } from '@/stores/reminders';
@@ -15,8 +17,8 @@ import { SuspectedTriggerCard } from './suspected';
 import { Today } from './today';
 import { TryIt } from './try-it';
 import { Hear, sayable, ask, Speakable } from '@/components/sc/Say';
-import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { spokenName } from '@/lib/tts/speakable';
+import { TimeGlyph } from '@/components/sc/TimeGlyph';
 
 export default function HomePage() {
   const router = useRouter();
@@ -25,11 +27,36 @@ export default function HomePage() {
   const confirmed = useProfile((s) => s.confirmed);
   const setCurrent = useAnalysis((s) => s.setCurrent);
   const reminders = useReminders((s) => s.reminders);
+  const dropMedicine = useReminders((s) => s.dropMedicine);
 
   // 처방을 스캔해 알람을 만들었을 때만 뜬다.
   // 예전에는 존재하지도 않는 Metformin 알람이 항상 박혀 있었다 —
   // 눌러도 실제 알람과 무관했고, 데모에서 눌러보면 어긋나는 자리였다.
-  const nextDose: Reminder | undefined = reminders[0];
+  //
+  // 그리고 `reminders[0]` 을 쓰고 있었다. 그 배열은 **최근에 더한 순**이지 시각순이
+  // 아니라, 약을 셋 먹는 사람에게 홈은 아무거나 하나를 "다음 복용" 이라고 보여줬다.
+  //
+  // 날짜·시각은 그릴 때 읽으면 안 된다 — 서버가 그린 화면과 어긋난다. 붙은 뒤에 읽는다.
+  const [now, setNow] = useState<{ day: string; hm: string } | null>(null);
+  useEffect(() => {
+    const d = new Date();
+    setNow({ day: todayKey(), hm: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` });
+  }, []);
+
+  const live = now ? running(reminders, now.day) : [];
+  const nextDose: Reminder | undefined = now ? nextDue(live, now.hm) : undefined;
+
+  /*
+   * 복약이 끝난 약.
+   *
+   * 조용히 지우지 않는다. 끝났다는 것은 **사용자가 알아야 하는 사실**이고, 이 앱이
+   * 그것을 전할 유일한 자리가 여기다. 처방전에 "7일간" 이 적혀 있어도 그것을 읽을 수
+   * 없는 사람에게, 약이 끝났다고 말해 주는 것은 지금까지 아무도 하지 않던 일이다.
+   *
+   * 확인을 누르면 그때 알람을 걷는다. 확인 전까지는 남아 있지만 `running` 이 이미
+   * 걸러 내므로 울리지는 않는다.
+   */
+  const done: Reminder[] = now ? finished(reminders, now.day) : [];
 
   // 반응은 먹은 직후에 나오지 않으므로, 아직 답하지 않은 끼니 중 가장 오래된 것을 묻는다.
   const pending = pendingFeedback(scans, PROFILE_ID);
@@ -78,6 +105,38 @@ export default function HomePage() {
             <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
           </button>
         )}
+
+        {/*
+          다 먹었다.
+
+          그림을 함께 낸다 — `finish_course` 는 "끝까지 드세요" 를 뜻하는 형태소인데,
+          지금까지 그 그림이 화면에 나오는 자리가 처방 판정뿐이었다. 끝났다고 말할 때
+          같은 그림을 다시 쓰면, 처음 볼 때 못 알아봤어도 두 번째에 이어 붙는다.
+        */}
+        {done.map((r) => (
+          <div key={r.id} className="mt-4 flex items-center gap-3 rounded-2xl px-4 py-3"
+               style={{ background: 'var(--color-safe-bg)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/glyphs/finish_course.png" alt="" aria-hidden className="h-10 w-10 shrink-0" />
+            <span className="flex-1">
+              <Speakable
+                text={`You have finished ${spokenName(r.item.name, r.item.kind)}. All the days are done. Do not take any more of it. Tap to clear the reminder.`}
+                className="flex w-full items-center gap-2 text-sm font-semibold"
+                style={{ color: 'var(--color-sc-ink)' }}>
+                <span className="flex-1">{r.item.name} — all done</span>
+              </Speakable>
+              <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                The course is over — no more reminders
+              </span>
+            </span>
+            <button onClick={() => dropMedicine(r.item.name)}
+                    aria-label={`Clear the reminder for ${r.item.name}`}
+                    className="flex h-11 items-center rounded-xl px-4 text-sm font-bold text-white"
+                    style={{ background: 'var(--color-safe)' }}>
+              OK
+            </button>
+          </div>
+        ))}
 
         {/* 복약 리마인더 — 실제로 만든 알람이 있을 때만 */}
         {nextDose && (
