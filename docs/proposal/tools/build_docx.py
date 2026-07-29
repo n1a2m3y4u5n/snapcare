@@ -151,6 +151,9 @@ def blocks(md: str):
         ln = lines[i]
         if not ln.strip():
             i += 1
+        elif ln.startswith('#### '):
+            out.append(('h4', ln[5:].strip()))
+            i += 1
         elif ln.startswith('### '):
             out.append(('h', ln[4:].strip()))
             i += 1
@@ -196,6 +199,12 @@ def render(cell, md: str):
             p.paragraph_format.space_before = Pt(9)
             p.paragraph_format.space_after = Pt(2)
             write_inline(p, val, size=BODY_PT + 1.5, bold=True)
+        elif kind == 'h4':
+            # 절 안의 소제목. 위 단계보다 작게 잡아야 층이 구분된다.
+            p = para()
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after = Pt(1)
+            write_inline(p, val, size=BODY_PT + 0.5, bold=True)
 
         elif kind == 'p':
             p = para()
