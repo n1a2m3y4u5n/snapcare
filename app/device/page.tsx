@@ -12,7 +12,7 @@ import { useProfile } from '@/stores/profile';
 import { encodeSchedule, encodeWeekly, decodeEvent, messageKind, type SlotSchedule, type WeeklySlot } from '@/lib/hardware/protocol';
 import { toSchedule, type FormSheetValues } from '@/lib/hardware/formSheet';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
-import { DEFAULT_HOST, planTrays, saveUrl, looksLikeHost } from '@/lib/hardware/dispenser';
+import { DEFAULT_HOST, FITTED_TRAYS, MAX_TRAYS, planTrays, saveUrl, looksLikeHost, weeklyFrom } from '@/lib/hardware/dispenser';
 import { speak } from '@/lib/voice';
 
 /**
@@ -72,15 +72,25 @@ export default function DevicePage() {
    * 트레이 하나에 알람 시각은 하나뿐이라(하드웨어 사양) "하루 세 번" 은 트레이 세 개가
    * 된다. 그래서 배치 단위가 약이 아니라 복용 한 번이다 — 위의 slots 와 다른 이유다.
    */
-  const trayPlan = useMemo(() => planTrays(reminders), [reminders]);
+  // 달려 있는 트레이 수는 기기마다 다르다. 펌웨어는 8까지 다루지만 대회 출품 기기에는
+  // 3개만 달려 있고, 없는 칸을 지정하면 펌웨어가 요청을 거절한다. HTTPS 페이지에서
+  // 기기의 /api/status 를 물어볼 수는 없으므로(혼합 콘텐츠) 사람이 고른다.
+  const [trays, setTrays] = useState(FITTED_TRAYS);
+  const trayPlan = useMemo(() => planTrays(reminders, trays), [reminders, trays]);
 
   // 폼시트를 읽었으면 그것이 우선한다 — 의사가 직접 채워준 일정이기 때문이다.
   //
   // 시트에는 요일과 기간이 표시돼 있고 SC1*W* 가 그것을 실을 수 있다. SC1*S* 로 보내면
   // 월/수/금 30일이 '매일 무기한' 으로 도착한다 — 화면은 맞아 보이는데 기기가 나흘을
   // 더 연다. 앱 안에서 만든 알람에는 요일 개념이 없으므로 그쪽은 지금처럼 S 로 간다.
+  //
+  // 앱에서 만든 알람도 이제 W 로 보낸다. 요일은 여전히 매일이지만(앱이 묻지 않는다)
+  // **복용 기간**은 처방전에서 읽어 실을 수 있다 — S 로 보내면 30일 코스가 트레이가
+  // 빌 때까지 계속된다. 라즈베리파이 펌웨어에 카메라가 생겨서 이 QR 을 직접 읽는다.
+  const weekly = useMemo(() => weeklyFrom(reminders, trays), [reminders, trays]);
   const payload = sheet?.schedule.length
     ? encodeWeekly(sheet.schedule)
+    : weekly.slots.length > 0 ? encodeWeekly(weekly.slots)
     : slots.length > 0 ? encodeSchedule(slots) : null;
 
   /** 의사가 준 종이 폼시트를 찍어 일정을 받는다 (인터넷도 DB도 필요 없는 경로). */
@@ -204,9 +214,35 @@ export default function DevicePage() {
             {trayPlan.dropped.length > 0 && (
               <p className="mt-2 rounded-2xl px-3 py-2 text-xs font-semibold"
                  style={{ background: 'var(--color-caution-bg)', color: 'var(--color-caution)' }}>
-                ⚠️ {trayPlan.dropped.length} more dose{trayPlan.dropped.length > 1 ? 's' : ''} did not fit — the device holds {10} trays.
+                ⚠️ {trayPlan.dropped.length} dose{trayPlan.dropped.length > 1 ? 's' : ''} did not fit — this device has {trays} tray{trays > 1 ? 's' : ''}.
+                {' '}{trayPlan.dropped.map((r) => r.item.name).join(', ')} must still be taken by hand.
               </p>
             )}
+
+            {/*
+              달려 있는 트레이 수. 기기마다 다르고(출품 기기는 3개) 없는 칸을 지정하면
+              펌웨어가 요청을 거절한다. 숫자를 읽지 못해도 고를 수 있도록 칸을 그림처럼
+              늘어놓는다.
+            */}
+            <div className="mt-3">
+              <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
+                 {...sayable('How many trays does this device have?')}>
+                TRAYS ON THIS DEVICE
+              </p>
+              <div className="mt-2 flex gap-2">
+                {Array.from({ length: MAX_TRAYS }, (_, i) => i + 1).map((n) => (
+                  <button key={n} onClick={() => setTrays(n)}
+                    className="h-9 w-9 rounded-xl text-sm font-bold"
+                    style={{
+                      background: n <= trays ? 'var(--color-sc-primary)' : 'var(--color-sc-line)',
+                      color: n <= trays ? '#fff' : 'var(--color-sc-muted)',
+                    }}
+                    {...sayable(`${n} tray${n > 1 ? 's' : ''}`)}>
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* 주소는 이 앱에 남은 유일한 문자 입력이다. 기본값을 채워 두고 바꿀 수만 있게 한다. */}
             <label className="mt-3 flex items-center gap-2 rounded-2xl px-3 py-2"

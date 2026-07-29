@@ -108,7 +108,10 @@ test('구버전 앱이 W 코드를 만나도 죽지 않는다', () => {
 test('무엇을 읽었는지 먼저 가려낸다 (W 포함)', () => {
   assert.equal(messageKind('SC1*W*1:0800-127-030'), 'weekly');
   assert.equal(messageKind('SC1*S*1:0800'), 'schedule');
-  assert.equal(messageKind('SC1*C*202607251930*4'), null, '아직 모르는 종류는 null');
+  // 요일 자리가 5(토)다. 여러 문서에 4(금)로 적혀 있었는데 2026-07-25 는 토요일이다.
+  // 여기서는 종류만 보므로 값이 영향을 주지 않지만, 틀린 벡터를 베껴 쓰는 자리가 되면
+  // 안 된다 — 요일이 하루 밀리면 요일 마스크 전체가 어긋난다.
+  assert.equal(messageKind('SC1*C*202607251930*5'), null, '아직 모르는 종류는 null');
 });
 
 test('깨진 W 는 throw 하지 않고 null 을 준다', () => {
