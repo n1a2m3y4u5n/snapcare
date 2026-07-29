@@ -10,7 +10,7 @@ export const CATALOG: ScanItem[] = [
     // 실제 제품 — 바코드로 OpenFoodFacts 프로필을 받아 수치 판정까지 간다.
     // flags 는 초기값일 뿐이고, 영양 엔진이 구성원 기준치로 다시 계산해 덮어쓴다.
     id: 'energy_drink',
-    name: 'Red Bull',
+    name: 'Energy drink 250 mL',
     kind: 'drink',
     emoji: '🥤',
     detectedVia: 'barcode lookup',
@@ -20,13 +20,13 @@ export const CATALOG: ScanItem[] = [
   },
   {
     id: 'granola_bar',
-    name: 'Snickers',
+    name: 'Peanut chocolate bar',
     kind: 'food',
     emoji: '🍫',
     detectedVia: 'barcode lookup',
     barcode: '5000159461122',
     flags: [],
-    alt: { name: 'SunButter oat bar', note: 'peanut-free' },
+    alt: { name: 'Oat bar', note: 'peanut-free' },
   },
   {
     id: 'amoxicillin',

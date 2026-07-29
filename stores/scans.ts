@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Reaction, ScanRecord, Symptom } from '@/lib/snapcare/types';
-import { PROFILE_ID } from './profile';
+import { PROFILE_ID, seedDemoProfile } from './profile';
 import { prune } from '@/lib/snapcare/retention';
 import { isDemo } from '@/lib/snapcare/demo';
 
@@ -11,12 +11,32 @@ import { isDemo } from '@/lib/snapcare/demo';
  * 모듈 로드 시점에 new Date()를 읽으면 SSR과 클라이언트 렌더가 어긋난다.
  * barcode·grams 가 있는 기록은 하루 누적 분석에 실제 영양소로 합산된다.
  */
+/**
+ * 시연용 기록.
+ *
+ * 예전에는 Red Bull·Snickers 를 '안전' 으로 두었다. 두 가지가 나빴다 — 상표명을
+ * 그대로 쓴 것과, **앱이 아무것도 잡지 못하는 화면**이었다는 것. 기본 프로필에는
+ * 조건이 없어서 무엇을 스캔해도 초록이 뜨고, 그러면 심사위원이 보는 것은 "사진을
+ * 찍으면 초록불이 켜지는 앱" 이다.
+ *
+ * 그래서 잡아내는 장면을 만든다. 프로필은 당뇨 + 혈액희석제를 쓰는 어르신
+ * (실제로 흔히 겹치는 조합이고 우리 대상층이다), 기록은 그 조건에 걸리는 것들이다:
+ *
+ *   메트포르민   당뇨약을 제때 먹었다            → 안전
+ *   에너지음료   당뇨에 설탕 27 g                → 회피
+ *   이부프로펜   혈액희석제와 함께 쓰면 출혈 위험 → 회피  ← 우리가 만든 핵심 검사
+ *   초콜릿 바    설탕이 하루치를 밀어올린다      → 주의
+ *
+ * 세 번째가 이 앱의 요점이다. 포장에 '이부프로펜' 이라고 적혀 있어도, 자기가 먹는
+ * 약과 겹치는지는 글을 읽어도 알기 어렵다.
+ */
 const SEED_SCANS: ScanRecord[] = [
-  { id: 's1', itemId: 'energy_drink', name: 'Red Bull', kind: 'drink', emoji: '🥤', memberId: PROFILE_ID, level: 'safe', timeLabel: 'Today · 2:14 PM', dayKey: 'today', barcode: '9002490100070', grams: 250 },
-  { id: 's2', itemId: 'granola_bar', name: 'Snickers', kind: 'food', emoji: '🍫', memberId: PROFILE_ID, level: 'avoid', timeLabel: 'Today · 11:02 AM', dayKey: 'today', barcode: '5000159461122', grams: 50 },
-  { id: 's3', itemId: 'amoxicillin', name: 'Amoxicillin 500mg', kind: 'prescription', emoji: '💊', memberId: PROFILE_ID, level: 'safe', timeLabel: 'Today · 8:00 AM', dayKey: 'today' },
-  { id: 's4', itemId: 'ibuprofen', name: 'Ibuprofen 200mg', kind: 'medicine', emoji: '💊', memberId: PROFILE_ID, level: 'avoid', timeLabel: 'Yesterday · 6:40 PM', dayKey: 'yesterday' },
+  { id: 's1', itemId: 'metformin', name: 'Metformin 500mg', kind: 'prescription', emoji: '💊', memberId: PROFILE_ID, level: 'safe', timeLabel: 'Today · 8:00 AM', dayKey: 'today' },
+  { id: 's2', itemId: 'energy_drink', name: 'Energy drink 250 mL', kind: 'drink', emoji: '🥤', memberId: PROFILE_ID, level: 'avoid', timeLabel: 'Today · 11:20 AM', dayKey: 'today', barcode: '9002490100070', grams: 250 },
+  { id: 's3', itemId: 'ibuprofen', name: 'Ibuprofen 200mg', kind: 'medicine', emoji: '💊', memberId: PROFILE_ID, level: 'avoid', timeLabel: 'Today · 2:14 PM', dayKey: 'today' },
+  { id: 's4', itemId: 'granola_bar', name: 'Peanut chocolate bar', kind: 'food', emoji: '🍫', memberId: PROFILE_ID, level: 'caution', timeLabel: 'Yesterday · 6:40 PM', dayKey: 'yesterday', barcode: '5000159461122', grams: 50 },
 ];
+
 
 interface ScansState {
   scans: ScanRecord[];
@@ -123,4 +143,7 @@ export function seedDemoIfEmpty(): void {
   if (!isDemo()) return;
   if (useScans.getState().scans.length > 0) return;
   useScans.setState({ scans: SEED_SCANS });
+  // 기록만 넣으면 소용이 없다 — 판정은 프로필에서 나온다. 조건이 비어 있으면 위의
+  // 회피 두 건이 왜 회피인지 화면 어디에도 설명이 없다.
+  seedDemoProfile();
 }
