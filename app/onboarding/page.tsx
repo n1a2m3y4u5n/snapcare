@@ -13,6 +13,14 @@ const SLIDES = [
   // 가족 명단을 없앤 뒤에도 "Built for family" 가 남아 있었다. 첫 화면이 앱에 없는
   // 기능을 약속하는 자리라, 그대로 두면 처음 여는 사람이 가장 먼저 만나는 것이 거짓이다.
   { emoji: '⚖️', title: 'Judged for you', body: 'The same food can be fine for an adult and too much for a child — the limits come from your age.', tint: 'var(--color-caution)' },
+  /*
+    이 슬라이드가 앱 전체의 사용법을 가르친다.
+    
+    글자를 꾹 누르면 읽어주는데, 그것을 알려주는 자리가 없으면 아무도 모른다 —
+    기능이 있는 것과 닿는 것은 다르다. 여기서 한 번 말해두면 그 뒤의 모든 화면이
+    열린다. 그리고 이 문장 자체를 꾹 눌러보면 바로 확인된다.
+  */
+  { emoji: '👆', title: 'Hold to hear', body: 'Press and hold any words — anywhere in the app — and they will be read to you.', tint: 'var(--color-sc-primary)' },
   { emoji: '🔔', title: 'A few permissions', body: 'Camera to scan, and notifications for dose reminders.', tint: 'var(--color-avoid)' },
 ];
 
