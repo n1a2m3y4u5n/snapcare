@@ -42,12 +42,23 @@
 기록한다 — 보내고 기록에 실패하면 다시 보낼 위험이 있지만, 기록하고 보내기에 실패하면
 그 사람은 영영 못 받는다. 후자가 더 나쁘다고 판단했다.
 
-## 하루에 몇 통까지인가
+## 얼마나 빨리 보낼 수 있나
 
-네이버는 개인 계정의 하루 발송량을 제한하는데 공개된 숫자가 일정하지 않다. 그래서
-기본값을 낮게 잡았다 — 하루 300통, 통 사이 20초. 1103명이면 나흘이다. 한 번에 몰아
-보내면 계정이 잠기거나 받는 쪽에서 스팸으로 걸러질 수 있고, 스팸으로 걸러진 것은
-다시 보낼 수도 없다. 급해도 이 숫자를 크게 올리지 않는 편이 낫다.
+네이버는 개인 계정의 하루 발송 한도를 공개하지 않는다. 그래서 숫자를 짐작하지 않고,
+막혔을 때 죽지 않게 만들었다.
+
+연결이 끊기면 기다렸다 다시 연결해 이어 간다. 일시 거절(4xx)이면 기다렸다 같은 통을 다시
+보낸다. 기다리는 시간은 시도마다 늘어난다(--backoff, 기본 60초). 세 번 다 실패하면 계정이
+막힌 것으로 보고 멈춘다 — 그 상태에서 계속 밀어붙이면 계정이 잠긴다.
+
+그러므로 한 번에 1103통을 시도해도 된다. 최악의 경우는 중간에 멈추는 것이고, 보낸 사람은
+기록에 남아 있으므로 얼마 뒤 같은 명령을 다시 치면 이어진다.
+
+    python3 scripts/send_survey_mail.py --send --limit 1103 --gap 8
+
+간격을 4초로 줄이면 1시간 15분이지만, 빠를수록 스팸으로 걸러질 확률이 올라간다. 스팸함에
+들어간 메일은 다시 보낼 수도 없으므로 여기서 아끼는 시간은 값이 비싸다.
+
 """
 
 from __future__ import annotations
@@ -405,7 +416,9 @@ def main() -> int:
     ap.add_argument('--xlsx', type=Path, default=XLSX)
     ap.add_argument('--log', type=Path, default=LOG)
     ap.add_argument('--limit', type=int, default=300, help='이번에 보낼 최대 통수 (기본 300)')
-    ap.add_argument('--gap', type=float, default=20.0, help='통 사이 간격, 초 (기본 20)')
+    ap.add_argument('--gap', type=float, default=8.0, help='통 사이 간격, 초 (기본 8)')
+    ap.add_argument('--backoff', type=float, default=60.0,
+                    help='막혔을 때 기다리는 초. 시도마다 배로 늘어난다 (기본 60)')
     ap.add_argument('--only', choices=['ko', 'en', 'ro'], help='이 언어만 보낸다')
     ap.add_argument('--lang-ro', action='store_true',
                     help='.md/.ro 34명에게 루마니아어로 보낸다 (없으면 영어). 원어민 감수 후에 켜라')
@@ -479,40 +492,89 @@ def main() -> int:
         return 2
 
     ctx = ssl.create_default_context()
+    total = min(len(queue), args.limit)
     sent = failed = 0
-    try:
-        with smtplib.SMTP_SSL('smtp.naver.com', 465, context=ctx, timeout=30) as smtp:
-            try:
-                smtp.login(sender, pw)
-            except smtplib.SMTPAuthenticationError:
-                # 네이버는 아이디만으로 받는 경우가 있다. 비밀번호는 여기서도 찍지 않는다.
-                smtp.login(sender.split('@')[0], pw)
-            print(f'smtp.naver.com 로그인 성공 ({sender})\n')
 
-            for i, (r, lang) in enumerate(queue[: args.limit], 1):
-                to = (r.get(COL_EMAIL) or '').strip()
-                subj, body = compose(r, lang, sender, sender_name)
-                msg = build_message(to, subj, body, sender, sender_name)
+    def connect() -> smtplib.SMTP_SSL:
+        smtp = smtplib.SMTP_SSL('smtp.naver.com', 465, context=ctx, timeout=30)
+        try:
+            smtp.login(sender, pw)
+        except smtplib.SMTPAuthenticationError:
+            # 네이버는 아이디만으로 받는 경우가 있다. 비밀번호는 여기서도 찍지 않는다.
+            smtp.login(sender.split('@')[0], pw)
+        return smtp
+
+    smtp = connect()
+    print(f'smtp.naver.com 로그인 성공 ({sender})\n')
+    try:
+        i = 0
+        for r, lang in queue[: args.limit]:
+            i += 1
+            to = (r.get(COL_EMAIL) or '').strip()
+            subj, body = compose(r, lang, sender, sender_name)
+            msg = build_message(to, subj, body, sender, sender_name)
+
+            # 한 통에 대해 최대 세 번까지 버틴다.
+            #
+            # 오래 도는 발송에서 연결이 끊기는 것은 정상이다 — 서버가 일정 통수마다 끊거나,
+            # 속도가 빠르면 잠시 막는다. 전에는 그때 스크립트가 끝나 버렸고, 하루 한도에
+            # 닿지도 않았는데 남은 사람을 다음 날로 넘기고 있었다. 다시 연결하고 기다려
+            # 이어 가면 한 번에 끝낼 수 있다.
+            #
+            # 거부된 주소(5xx)는 다시 시도하지 않는다 — 없는 주소는 몇 번을 보내도 없다.
+            for attempt in range(3):
                 try:
                     smtp.send_message(msg)
+                    break
                 except (smtplib.SMTPRecipientsRefused, smtplib.SMTPDataError) as e:
+                    code = getattr(e, 'smtp_code', 0) or 0
+                    if 400 <= code < 500:            # 일시적 거절 — 기다렸다 다시
+                        wait = args.backoff * (attempt + 1)
+                        print(f'  [{i:4}/{total}] 일시 거절({code}) — {wait:.0f}초 뒤 다시')
+                        time.sleep(wait)
+                        continue
                     failed += 1
-                    print(f'  [{i:4}/{min(len(queue), args.limit)}] 거부 {to} — {e}')
+                    print(f'  [{i:4}/{total}] 거부 {to} — {e}')
+                    break
+                except (smtplib.SMTPServerDisconnected, smtplib.SMTPConnectError, OSError) as e:
+                    wait = args.backoff * (attempt + 1)
+                    print(f'  [{i:4}/{total}] 연결 끊김 ({e}) — {wait:.0f}초 뒤 다시 연결')
+                    time.sleep(wait)
+                    try:
+                        smtp.close()
+                    except Exception:                 # noqa: BLE001
+                        pass
+                    try:
+                        smtp = connect()
+                    except smtplib.SMTPException as e2:
+                        print(f'\n다시 연결하지 못했다: {e2}')
+                        print(f'{sent}통 보냈다. 같은 명령을 다시 치면 이어서 간다.')
+                        return 1
                     continue
                 except smtplib.SMTPException as e:
-                    # 연결이 끊긴 것이므로 여기서 멈춘다. 기록이 남아 있으니 다시 돌리면 이어진다.
-                    print(f'\n연결이 끊겼다: {e}')
+                    print(f'\n보낼 수 없다: {e}')
                     print(f'{sent}통 보냈다. 같은 명령을 다시 치면 이어서 간다.')
                     return 1
-                if not args.test_to:
-                    append_log(args.log, to, lang, (r.get(COL_TOKEN) or '').strip(), msg['Message-ID'])
-                sent += 1
-                print(f'  [{i:4}/{min(len(queue), args.limit)}] {lang}  {to}')
-                if i < min(len(queue), args.limit):
-                    time.sleep(args.gap)
+            else:
+                # 세 번 다 실패 — 계정이 막힌 것일 수 있으므로 더 밀어붙이지 않는다.
+                print(f'\n{to} 에 세 번 실패했다. 계정이 막혔을 수 있으니 멈춘다.')
+                print(f'{sent}통 보냈다. 얼마 뒤 같은 명령을 다시 치면 이어서 간다.')
+                return 1
+
+            if not args.test_to:
+                append_log(args.log, to, lang, (r.get(COL_TOKEN) or '').strip(), msg['Message-ID'])
+            sent += 1
+            print(f'  [{i:4}/{total}] {lang}  {to}')
+            if i < total:
+                time.sleep(args.gap)
     except KeyboardInterrupt:
         print(f'\n중단했다. {sent}통 보냈고 기록에 남았다. 다시 돌리면 이어서 간다.')
         return 1
+    finally:
+        try:
+            smtp.quit()
+        except Exception:                             # noqa: BLE001
+            pass
 
     print(f'\n{sent}통 보냈다. 거부된 주소 {failed}개.')
     if not args.test_to:
