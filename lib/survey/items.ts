@@ -277,31 +277,8 @@ export const CORE: Item[] = [
       'A single paper or a single case is enough. Counter-evidence is worth more to us than agreement — we would much rather hear it now than for the first time at the presentation.',
       'O singură lucrare sau un singur caz este suficient. Contraargumentele valorează mai mult decât acordul — preferăm să le aflăm acum decât pentru prima dată la prezentare.',
     ),
-  },
-  {
-    // 이 설문에서 가장 값어치 있는 문항이다. §5.2 는 이해도를 사람이 아니라 시각
-    // 언어 모델에게 물어 확인한 상태이고, 기관 하나가 그것을 실제 연구로 바꾼다.
-    // 선택으로 먼저 받아 분모를 만들고, 구체적인 것은 이어지는 서술에서 받는다.
-    id: 'c_recruit',
-    kind: 'single',
-    required: true,
-    q: T(
-      '저문해 성인이나 고령 환자를 대상으로 픽토그램 이해도를 실제로 시험할 수 있는 경로를 알고 계십니까?',
-      'Do you know of a route by which we could test pictogram comprehension with actual low-literacy or older adult participants?',
-      'Cunoașteți o cale prin care am putea testa comprehensiunea pictogramelor cu participanți reali cu alfabetizare redusă sau vârstnici?',
-    ),
-    note: T(
-      '저희는 아직 사람을 대상으로 이해도를 시험한 적이 없습니다. 기관, 프로그램, 또는 소개해 주실 분이 있다면 그것이 이 설문에서 저희가 가장 필요한 답입니다.',
-      'We have not yet tested comprehension with people. An institution, a programme, or someone who could introduce us — that is the single most useful answer we could receive.',
-      'Nu am testat încă comprehensiunea cu oameni. O instituție, un program sau cineva care ne-ar putea face legătura — acesta este cel mai util răspuns posibil.',
-    ),
-    options: [
-      T('예, 소개해 드릴 수 있습니다', 'Yes, I could introduce you', 'Da, v-aș putea face legătura'),
-      T('아마 가능할 것 같습니다', 'Possibly', 'Posibil'),
-      T('알지 못합니다', 'I do not know of one', 'Nu cunosc'),
-    ],
-    follow: T('어디인지 적어 주십시오.', 'Please say where.', 'Vă rugăm să precizați unde.'),
-  },
+  }
+
 ];
 
 
