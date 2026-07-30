@@ -6,7 +6,7 @@ import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { DEMO } from '@/lib/survey/demo';
 import { GLYPH_NAMES } from '@/lib/survey/glyphNames';
 import {
-  BACKGROUND, BRANCHES, CLOSE, CLOSE_CITE, CONSENT, CORE, LANGS, SERVICE, UI, fieldIdOf,
+  BACKGROUND, BRANCHES, CLOSE, CLOSE_CITE, CONSENT, CORE, FIELDS, LANGS, SERVICE, UI, fieldIdOf,
   type Branch, type Item, type Lang,
 } from '@/lib/survey/items';
 
@@ -80,7 +80,16 @@ export default function SurveyPage() {
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const s = p.get('s');
-    if (s) setPinned(s);   // 어떤 링크로 들어왔는지만 기록한다. 구획은 본인 선택으로 정해진다.
+    if (s) setPinned(s);
+    /*
+     * `?s=` 는 직군을 **미리 채우는** 데만 쓴다. 구획을 덮어쓰지 않는다.
+     *
+     * 메일에서 그 사람의 직군을 알고 보내므로 미리 채워 주면 한 번 덜 고르게 된다.
+     * 그러나 우리 짐작이 틀렸을 수 있으므로 첫 문항에 그대로 보이고, 응답자가 그
+     * 자리에서 바꿀 수 있다. 덮어쓰는 방식이면 틀린 배정을 응답자가 고칠 수 없다.
+     */
+    const f = FIELDS.find((x) => x.id === s);
+    if (f) setAns((a) => (a.b_field ? a : { ...a, b_field: f.label.en }));
     const r = p.get('r');
     if (r && /^[a-z0-9]{4,32}$/.test(r)) setRecipient(r);
     const l = p.get('lang');
