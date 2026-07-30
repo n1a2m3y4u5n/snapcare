@@ -49,6 +49,12 @@ HEADER = {                             # 표 0 위쪽 정보칸
     (2, 3): 'Cristian RUDICO · Natalia SCHIȚCO',
     (3, 1): '김도훈 (Dohun KIM)',
     (3, 3): 'Daniel STANCHEVICI',
+}
+
+# 영어판은 로마자를 앞에 둔다. 한글을 지우지는 않는다. 본인 이름이다.
+HEADER_EN = {
+    (2, 1): 'Yunsu NAM (남윤수)',
+    (3, 1): 'Dohun KIM (김도훈)',
     (4, 1): ('Target 3.4 Noncommunicable diseases · Target 3.8 Universal health coverage · '
              'Target 3.d Health risk management'),
     (5, 1): 'Github Repository: https://github.com/16th-eicon-contest/h1-SnapCare',
@@ -292,7 +298,8 @@ def main() -> None:
     d = docx.Document(str(TEMPLATE))
     body = sections(src.read_text())
 
-    for (ri, ci), text in HEADER.items():
+    header = {**HEADER, **(HEADER_EN if lang == 'EN' else {})}
+    for (ri, ci), text in header.items():
         write_inline(clear(d.tables[0].rows[ri].cells[ci]), text, size=BODY_PT)
 
     for key, (ti, ri) in SLOTS.items():

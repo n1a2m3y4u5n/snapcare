@@ -1,0 +1,1447 @@
+# FINAL PROJECT PROPOSAL
+## \<The 16th e-ICON World Contest\>
+
+| | |
+|---|---|
+| **[Team No.] Global Team Name** | [H1] SnapCare |
+| **Web App Name** | SnapCare |
+| **Name of Korean Students** | Yunsu NAM · Dohun KIM |
+| **Name of International Students** | Cristian RUDICO · Natalia SCHIȚCO · Daniel STANCHEVICI (Moldova) |
+| **Related SDGs** | Target 3.4 Noncommunicable diseases · Target 3.8 Universal health coverage · Target 3.d Health risk management |
+| **URL** | Github Repository: https://github.com/16th-eicon-contest/h1-SnapCare<br>Deployment URL: https://snapcare.fly.dev |
+
+---
+
+## □ Summary of Web App
+SnapCare is a web app that answers a single photograph of a prescription, a nutrition label, a medicine or a meal with a picture, a spoken sentence and one colour, so that adults with low literacy and older adults who cannot read, or read only with difficulty, can take their medicine and choose their food on their own. Worldwide 739 million adults lack basic literacy skills and even across 31 developed countries 18% of adults fall below the most elementary level, and these people are cut off from the content of a prescription from the moment they receive it, which exposes them to dosing errors, treatment failure and antibiotic resistance. The app never asks the user to read or type anywhere on screen, using two engines we built ourselves, SIGIL, which composes pictograms through a grammar of 78 morphemes, and VOCA, which reconstructs spoken instructions, and its verdicts are computed on the device from thresholds derived from the user's age and conditions, so the app works without an internet connection.
+
+---
+
+## □ Problem Statement and Background
+
+### 1.1 The size and trend of the non-literate population
+
+There are 739 million non-literate adults worldwide, and roughly two thirds of them, 466 million, are women (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). The adult literacy rate rose from 86% in 2015 to 88% in 2024, so on the numbers alone the situation is improving (UNESCO, 2025).
+
+There are regions, however, where the improvement in the rate has not kept pace with population growth. In sub-Saharan Africa the literacy rate rose from 65% to 69% over the same period, yet the absolute number of non-literate adults grew from 196 million to 225 million (UNESCO, 2025). Central and Southern Asia follows with 347 million, the second largest total after sub-Saharan Africa (UNESCO, 2025). More than half of all non-literate adults, 441 million people, are concentrated in ten countries (UNESCO, 2025).
+
+This is therefore not the kind of problem that time resolves on its own. While education expands, the number of people collecting medicine today does not fall.
+
+Averages hide the size of the problem. The fifteen countries with the lowest adult literacy rates fall between 29% and 60%, and Chad stands at 28% (UNESCO, 2025).
+
+The values below are not period averages. Each is **the value from the single most recent survey year available for that country within the 2015 to 2024 census round**, so the reference year differs from country to country. National literacy rates vary considerably with survey year and definition (the same country can differ by more than 10 percentage points across different compilations), so only values from within a single source are used here, which keeps them comparable with one another.
+
+[Table 1] Countries with low adult literacy rates (2015–2024 census round, UNESCO, 2025)
+
+| Country | Adult literacy | Country | Adult literacy |
+|---|---|---|---|
+| Chad | 28% | Guinea | 48% |
+| South Sudan | 35% | Liberia | 48% |
+| Burkina Faso | 37% | Ethiopia | 51.8% |
+| Afghanistan | 37% | Somalia | 54% |
+| Niger | 38% | Guinea-Bissau | 56% |
+| Central African Republic | 38% | Benin | 58% |
+| Mali | 44% | Pakistan | 58% |
+| | | Sierra Leone | 60% |
+
+In Chad seven adults in ten cannot read a prescription. In these countries a paper prescription is close to a literally blank sheet.
+
+The countries with the worst rates and the countries with the most people, however, largely do not overlap. More than half of all non-literate adults, 441 million, are concentrated in ten countries, and those ten are mostly populous ones.
+
+[Table 2] The ten countries with the most non-literate adults (UNESCO, 2025)
+
+| Country | Non-literate adults | Country | Non-literate adults |
+|---|---|---|---|
+| India | 191 million | Ethiopia | 30 million |
+| Pakistan | 59 million | Bangladesh | 25 million |
+| Nigeria | 43 million | Egypt | 19 million |
+| China | 38 million | Afghanistan | 14 million |
+| | | Brazil | 11 million |
+| | | DR Congo | 11 million |
+
+**Ten countries total 441 million (60% of the worldwide 739 million)**
+
+Placing the two tables side by side shows what kind of problem this is. Only three countries appear in both Table 1 and Table 2: Pakistan, Ethiopia and Afghanistan. The rest are either countries with the world's worst rates whose small populations keep them out of the totals (Chad, South Sudan, Guinea-Bissau) or countries whose rates are near the world average but whose populations make the head count overwhelming (India, China, Brazil).
+
+This distinction affects the design. Where the rate is high the app is dealing with the condition of the majority, and where the head count is high it is dealing with a minority that is nonetheless very large in absolute terms. India's literacy rate is 81%, close to the world average, but that remaining 19% is 191 million people. Either way the problem at the moment one person collects their medicine is the same, and it is the head count rather than the rate that sets the size of what this app has to reach.
+
+The distribution is also uneven within a single country. In some sub-Saharan African countries **the literacy rate among older women is 31% against 55% among older men**, while among men in parts of Europe and North America it is 99% (UNESCO, 2025).
+
+What this distribution indicates is not that the target should be narrowed but where the need is greatest. SnapCare does not require reading, so people who can read are free to use it as well, and missing a prescription instruction in fact happens independently of literacy (§1.3). If one asks where the same app makes the largest difference, though, it is where gaps like these exist, and that is why field evaluation is part of the plan (§5.9).
+
+![Figure 1](fig/chart09_country_literacy.png)
+
+**[Figure 1]** The fifteen countries with the lowest adult literacy rates (UNESCO, 2025). The distance from the world average of 88% is the point of this figure. In these countries the people who cannot read a prescription are the majority.
+
+![Figure 2](fig/chart01_literacy.png)
+
+**[Figure 2]** Literacy rate and number of non-literate adults in sub-Saharan Africa (UNESCO, 2025). Bars are absolute numbers, the line is the rate. The two axes moving in opposite directions is the point of this section. The rate rose 4 percentage points while the head count grew by 29 million. By the rate this is improvement, by the head count it is deterioration. This is the evidence that the problem is not one that time will resolve.
+
+
+### 1.2 The distribution of health literacy
+
+Being able to read letters and being able to understand health information are different things. The HLS19 survey, which interviewed 42,445 people across 17 European countries, measured general health literacy on four levels (excellent, sufficient, problematic, inadequate) and reported that a substantial share of low health literacy remained in every participating country (HLS19 Consortium of the WHO Action Network M-POHL, *International Report on the Methodology, Results, and Recommendations of the European Health Literacy Population Survey 2019–2021*, Austrian National Public Health Institute, Vienna, 2021). That report states explicitly, however, that collection period and method differed by country and that cross-country comparison should be made with caution, and it does not put forward a single pooled figure for the 17 countries. Korean data are therefore used here in place of a pooled percentage.
+
+[Table 3] Health literacy among Korean adults (Korea National Health and Nutrition Examination Survey, 2023)
+
+| Group | Sufficient level | Complement | Source |
+|---|---|---|---|
+| Korea, aged 65+ | 40.3% | **59.7%** | KNHANES (2023) |
+| Korea, all adults | 60.4% | 39.6% | KNHANES (2023) |
+| Korea, lower income | 54.4% | 45.6% | KNHANES (2023) |
+| Korea, upper income | 66.3% | 33.7% | KNHANES (2023) |
+
+An "adequate level" of health literacy means a score of 30 or above out of 40 (Korea Disease Control and Prevention Agency, *Korea National Health and Nutrition Examination Survey, 9th cycle, year 2*, 2023).
+
+What Table 3 shows is that this problem divides more sharply within a country than between countries. Among Korean adults overall, 60.4% have sufficient health literacy, but among those aged 65 and over the figure falls to 40.3%. Taking the complements, that is 59.7% against 39.6%, a gap of 20.1 percentage points. Splitting by income gives the same direction, 54.4% in the lower group against 33.7% in the upper. This is therefore not a problem belonging to "countries where people cannot read" but one that appears in any country. That is why SnapCare is not an app for one particular region. There are people who miss prescription instructions in a country with 88% literacy, and there are simply more of them in a country at 40%. The team is Korean and Moldovan not because those are the two target populations but because the same app can be tested in two different environments.
+
+![Figure 3](fig/chart02_health_literacy.png)
+
+**[Figure 3]** Share of Korean adults without sufficient health literacy (Korea Disease Control and Prevention Agency, 2023). Against 39.6% overall, the figure for those aged 65 and over is 59.7%, higher by 20.1 percentage points. Splitting by income gives a difference of 11.9 percentage points. That this problem divides more sharply within a country than between countries is the point of this figure.
+
+
+Measuring literacy directly rather than by self-report makes the picture worse. In the Programme for the International Assessment of Adult Competencies (PIAAC), covering 31 developed countries, **18% of adults did not reach the most elementary level in literacy, numeracy and adaptive problem solving**, and adult literacy in these countries has stagnated or declined since 2012 (UNESCO, 2025, citing PIAAC). The distance between the self-report "I can read" and the ability "I can follow the instruction on a medicine packet" appears here.
+
+This gap carries through to clinical outcomes. A systematic review synthesising 96 studies reported that low health literacy is consistently associated with increased hospitalisation, greater use of emergency care, lower uptake of mammography and influenza vaccination, poorer ability to demonstrate taking medications appropriately, and poorer ability to interpret labels and health messages (Berkman, N. D., Sheridan, S. L., Donahue, K. E., Halpern, D. J. & Crotty, K., "Low health literacy and health outcomes: an updated systematic review," *Annals of Internal Medicine*, 155(2):97–107, 2011). For mortality, the association was confirmed among older adults.
+
+The two items in that list that overlap directly with our problem are the last two, the ability to demonstrate taking medications appropriately and the ability to interpret labels and health messages. If the earlier items are problems of access to care, these two are problems at the point where information is transferred, and they occur outside the consulting room. The policy blind spot taken up in §1.4 is exactly here.
+
+### 1.3 The types of medication error and what they cost
+
+Looking at which types medication errors cluster into narrows down what has to be fixed. In a study that observed the dispensing stage by direct observation, of 155 dispensing errors found by pharmacists 51 (32.9%) were omissions, 44 (28.4%) were dose errors and 36 (23.2%) were timing errors. These three alone account for 84.5% of the total (Anacleto, T. A., Perini, E., Rosa, M. B. & César, C. C., "Medication dispensing errors in a Brazilian hospital pharmacy," *Clinics*, 62(3):243–250, 2007).
+
+[Table 4] Distribution of medication errors by type and the corresponding SnapCare pictogram morphemes
+
+| Error type | Count | Share | Morpheme carrying that instruction |
+|---|---|---|---|
+| Omission | 51 | 32.9% | `finish_course` |
+| Dose error | 44 | 28.4% | `qty_one` – `qty_five` |
+| Timing error | 36 | 23.2% | `time_morning` – `time_night` |
+| Other | 24 | 15.5% | — |
+
+Based on 155 dispensing errors found by pharmacists (Anacleto et al., 2007).
+
+Table 4 shows that most errors cluster into three things: what, how much and when. All three are information that can be carried in a picture, and SnapCare's morpheme design follows exactly this distribution.
+
+One qualification is needed here. This distribution covers errors made on the dispensing side, not errors patients make at home, and the two stages cannot be treated as the same. The reason for grounding the design in these figures anyway is that if these three go wrong often at the dispensing stage, then these three are the information most easily lost in transfer. If trained pharmacists miss them in a controlled environment, there is no reason to expect a patient handed the same information in text alone to keep hold of it. We did not find data measuring the distribution at the patient stage directly, and this is recorded among the unverified items in §5.8.
+
+![Figure 4](fig/chart03_error_types.png)
+
+**[Figure 4]** Distribution by type of 155 dispensing errors found by pharmacists (Anacleto et al., 2007). Omission, dose and timing account for 84.5%. That all three are information which can be carried in a picture is the starting point of the SIGIL morpheme design, and `finish_course`, `qty_*` and `time_*` correspond to them respectively.
+
+
+#### Misreading measured on the patient side
+
+The distribution above is a record from the dispensing side. What happens on the patient side has been measured separately.
+
+In a study at three primary care clinics in the United States in which 395 adults were shown five actual pill bottle labels and asked whether they understood the instruction, correct understanding ranged from **67.1% to 91.1%** depending on the label. The sharpest result of that study lies elsewhere. Among low-literacy patients, **70.7% correctly restated the instruction "take two tablets twice daily" in words, but only 34.7% could actually demonstrate how many tablets to take in a day** (Davis, T. C. et al., "Literacy and misunderstanding prescription drug labels," *Annals of Internal Medicine*, 145(12):887–894, 2006).
+
+Restating an instruction and acting on it are separate abilities, and reading the text aloud does not by itself close that gap. This is why SnapCare delivers not only speech but pictures that depict the action.
+
+With liquid medicines the error appears as a visible quantity. In a randomised trial of caregivers giving liquid medicine to young children, **47.8% of the control group, who received standard counselling only, administered a dose more than 20% away from the one prescribed** (40.0% for as-needed medicines). Twenty percent is not a small number. For a medicine taken three times a day, three days is enough to be off by a full day's dose.
+
+The worldwide annual cost associated with medication errors is about 42 billion US dollars, roughly 1% of total global health expenditure (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017). In the United States the cost of medication non-adherence is estimated at 100 billion dollars a year in direct costs and as much as 300 billion including indirect costs, with roughly 125,000 deaths a year and at least 10% of hospitalisations cited as associated with non-adherence (Duke Health, "Medication Nonadherence Increases Health Costs, Hospital Readmissions").
+
+Where the harm occurs is what fixes the place of this work. The World Health Organization reports that more than half of the harm arising in the course of care (one patient in twenty) is preventable, and that half of that preventable harm is medication related. Medication-related harm affects one patient in thirty, and more than a quarter of it is severe or life threatening. This harm is also more common outside hospital than inside it. **In primary and ambulatory care up to four patients in ten experience harm, and up to 80% of that harm (23.6% to 85%) is avoidable** (World Health Organization, *Patient safety* fact sheet).
+
+What these figures point to together is that medication-related harm occurs outside the consulting room and in an avoidable form. That is the part SnapCare sets out to address. In low- and middle-income countries, deaths from unsafe care reach 4 in every 100 (WHO, *Patient safety*).
+
+The cost estimates span a wide range, and the basis of the 300 billion dollar upper figure is disputed. Our purpose in citing these numbers is to give a sense of scale rather than to argue for any particular value, and the indicator on which this work claims improvement is not cost but the delivery success rate in §5.1.
+
+### 1.4 International policy and its blind spot
+
+In 2017 the World Health Organization declared Medication Without Harm as its third Global Patient Safety Challenge, setting a goal of reducing severe avoidable medication-related harm by 50% within five years (WHO, 2017). It identified three priority areas: high-risk situations, polypharmacy and transitions of care (WHO, 2017).
+
+Seven years after that declaration, however, as of 2024 only **18% of WHO member states** have established national targets for reducing medication-related harm (World Health Organization, *Medication without harm: policy brief*, ISBN 978-92-4-006276-4, 2024).
+
+A gap remains even after the instruction has been delivered. Adherence among patients with chronic disease averages 50% in developed countries and is lower in developing ones (World Health Organization, *Adherence to long-term therapies: evidence for action*, 2003). That figure was measured over populations including people who can read and who have been diagnosed, which also means this is not a problem that literacy alone accounts for.
+
+This work does not claim to address that whole half. Many factors depress adherence, and several of them, such as the price of medicines and side effects, are beyond anything an app can touch. Among those factors, though, "could not read the instruction" is the kind an app can touch, and for someone who cannot read it is the first factor in the sequence. It has to be resolved before the remaining factors can even be weighed.
+
+This gap does not exist because the problem has gone unrecognised. National policy and health systems reach as far as the clinic and the pharmacy, and the moment a patient opens the medicine packet at home lies outside that reach. The point at which SnapCare intervenes is exactly that last step.
+
+The size of that last step has been measured. In a study following ambulatory patients aged 65 and over for 30,397 person-years, 1,523 adverse drug events occurred, of which 27.6% were preventable. Looking at which stage the 421 preventable errors arose in, prescribing accounts for 58.4% and monitoring for 60.8%, alongside **21.1% at the patient adherence stage** (Gurwitz, J. H. et al., "Incidence and preventability of adverse drug events among older persons in the ambulatory setting," *JAMA*, 289(9):1107–1116, 2003).
+
+The first two occur where clinicians are present, so there is room to fix them through systems. One of the remaining five occurs at the moment the patient takes out their medicine at home, and there is no one there to put the mistake right. Read alongside the finding in the same study that 42.2% of the 578 events classified as serious, life threatening or fatal were preventable, it is also clear that what is missed at this stage is not of a trivial kind.
+
+Where that reach ends also shows up in staffing. Physician density is 2.9 per 10,000 population in sub-Saharan Africa against 38.3 in Central and Eastern Europe and Central Asia, a gap of more than thirteenfold (GBD 2019 Human Resources for Health Collaborators, "Measuring the availability of human resources for health," *The Lancet*, 399(10341):2129–2154, 2022). When consultation time shortens, the first thing cut is the explanation of how to take the medicine, and the share thus cut has to be made up by the patient reading the paper alone. That the regions with the lowest literacy and the regions with the least health workforce coincide is the structure of this problem.
+
+### 1.5 The undiagnosed population as a precondition
+
+Existing personalised health apps assume the user knows their own condition. That assumption does not hold.
+
+Diabetes prevalence among adults aged 20 to 79 is 11.1%, reaching 589 million people, and of these **252 million, about 43%, do not know they have diabetes** (International Diabetes Federation, *IDF Diabetes Atlas*, 11th ed., 2025). Three in four adults with diabetes live in low- and middle-income countries. The figure is projected to reach 853 million (13%) by 2050, and in 2024 alone diabetes caused 3.4 million deaths, one every nine seconds (IDF, 2025).
+
+The number that matters to us here is not the prevalence but the **43%**. These people have never been to a hospital and received the name, so they answer no to the question "do you have diabetes." The app that receives that answer then gives them a verdict computed without regard to diabetes.
+
+The same value appears again in hypertension. As of 2024, 1.4 billion adults aged 30 to 79 have hypertension (33% of that age range), and 600 million of them, 44%, are unaware that they have the condition. Those both diagnosed and treated number 630 million (44%), and only 320 million (23%) have their blood pressure actually under control (World Health Organization, *Hypertension* fact sheet, 2024 estimates).
+
+That both conditions land on 43% and 44% is no coincidence. A diagnosis is a name attached only to people who can reach testing, and the conditions that keep people from testing largely overlap with the conditions of low literacy. A screen that asks about conditions by diagnostic name misses both of these groups in the same way.
+
+Food allergy shows the same structure. Self-reported prevalence is consistently higher than clinically confirmed prevalence, which suggests a substantial number of people without access to diagnostic means. In the United States about 18 million adults, 7 in every 100, have a food allergy (Food Allergy Research & Education, *Food Allergy Facts and Statistics*, 2024).
+
+The question "what are you allergic to" is therefore a question only someone who has been tested can answer. Leaving that assumption in place filters out, at the very first screen, the people who most need the help.
+
+There is one further assumption. Even someone who can read has no guarantee that the text in front of them is in their own language. Forty percent of the world's population does not have access to education in a language they understand, and most literacy surveys themselves measure in a single language (UNESCO, 2025). Prescriptions and nutrition labels are printed in a country's official language or in English, so among those counted as "able to read" in literacy statistics there are people who cannot read the paper in front of them. Pictures and speech step over both layers at once.
+
+### 1.6 How widely the delivery medium has spread
+
+The medium for solving the problem has already spread. In a 2025 survey, smartphone ownership among United States adults aged 65 and over was 78%. In the same survey it was 97% for those under 50 and 90% for those aged 50 to 64, with 91% across all adults, up from 35% in the first survey in 2011 (Pew Research Center, *Mobile Fact Sheet: Demographics of Mobile Device Ownership and Adoption in the United States*, fieldwork 5 February to 18 June 2025, 2025). Mobile internet users in sub-Saharan Africa are projected to grow from about 287 million in 2022 to 438 million in 2030, with smartphone adoption rising from 51% to 88% (GSM Association, *The Mobile Economy Sub-Saharan Africa 2023*, GSMA Intelligence, 2023).
+
+[Table 5] Smartphone ownership by age group (United States, 2025)
+
+| Age group | Ownership |
+|---|---|
+| Under 50 | 97% |
+| 50–64 | 90% |
+| 65 and over | 78% |
+
+What Table 5 says is that people are not failing to use these tools for want of a device. Three in four older adults already own a smartphone. What blocks access is that the screen demands reading.
+
+![Figure 5](fig/chart04_smartphone.png)
+
+**[Figure 5]** Smartphone ownership by age group (United States, 2025). The gap between those 65 and over and those under 50 is 19 percentage points, already too narrow for "device availability" to explain the problem. The remaining gap lies on the side of the screen.
+
+Having a device and reaching the internet are different things, however. As of 2024, 5.5 billion people use the internet (68% of the world population), while 2.6 billion still do not. That is 32% of the world population, one person in three (International Telecommunication Union, *Measuring digital development: Facts and Figures 2024*, 2024).
+
+Those 2.6 billion split SnapCare's design at one point. The verdict has to be produced on the device in the user's hand, because a structure that yields an answer only by asking a server is, for these people, the same as no app at all. The offline operation described in §4.5 and §5.6 is therefore not a convenience but a premise. Regions with low literacy and regions where people do not use the internet are largely the same places, so this app has to work where the two conditions overlap.
+
+
+### 1.7 The scale of population ageing and its geographic shift
+
+The population aged 60 and over will grow from 1 billion in 2020 to 1.4 billion in 2030, at which point one person in six worldwide will be 60 or older. By 2050 it doubles again to 2.1 billion, and its share of the world population rises from 12% in 2015 to 22% in 2050. More important is the distribution. **By 2050 two thirds of the population aged 60 and over will live in low- and middle-income countries** (World Health Organization, *Ageing and health* fact sheet).
+
+Ageing is commonly perceived as a problem of wealthy countries, but it is in fact moving in the opposite direction. And older adults in low- and middle-income countries are a group in which three conditions overlap: a higher likelihood of low literacy, taking several medicines at once, and difficulty accessing care.
+
+Korean data show this overlap concretely. In a study surveying 131 people aged 65 and over, **79.4% took their medicines themselves** while only **28.2%** had received medication safety education (Lee, M., Kim, K., Rhew, K. & Choi, K.-H., "A knowledge, attitude, and practice survey on medication safety in Korean older adults," *Healthcare*, 9(10):1365, 2021, doi:10.3390/healthcare9101365). And the share of that age group with adequate health literacy is 40.3% (Korea Disease Control and Prevention Agency, 2023). Most of them have to manage on their own, while only a minority are equipped to read what they are given.
+
+The sample of 131 is small and the survey was conducted in 2017, which should be stated. Using this value as an estimate for Korean older adults as a whole would be a stretch, and what is used here is the direction of the ratio: that those managing on their own far outnumber those who have been taught how.
+
+The same structure is observed in Moldova. Between 2015 and 2060 the population is projected to fall by 31% and the median age to rise from 38 to 47, while **the share of older people more than doubles to 27%.** The disease burden is overwhelmingly concentrated in noncommunicable diseases, and between 2008 and 2015 diabetes prevalence rose by 75% and circulatory disease by 41% (Voncina, L., Dozol, A., Volovei, I. & Cetinkaya, V., *Human Development Assessment for Moldova: Background Paper on Health*, World Bank, 2022).
+
+There is also research addressing the relationship between health literacy and primary care use directly in a Moldovan population. The subjects of that study, however, are not residents of Moldova but **170 Moldovan migrant women living in Padua, Italy**, and it reports higher smoking rates (33.3% against 14.3%) and fewer visits to a general practitioner among those with lower literacy (Vianello, F. A. et al., "Health status of female Moldovan migrants to Italy by health literacy level and age group," *BMC Public Health*, 20:1502, 2020, doi:10.1186/s12889-020-09582-9). Being a migrant sample, it cannot be transferred directly to the population inside Moldova. What we take from this study is not the figures but **the relationship, that health literacy is in fact linked to primary care use**, and confirming that relationship in Moldova itself belongs to the field evaluation in §5.8.
+
+### 1.8 The effect and the limits of visual delivery
+
+That pictures are remembered better than text is a repeatedly verified finding in cognitive psychology. The picture superiority effect refers to pictures being recalled at higher rates than words and persisting longer, and dual coding theory explains this by holding that visual information is encoded along both a visual and a verbal route, giving two paths to recall, whereas text is not readily encoded visually (Paivio, A., *Imagery and Verbal Processes*, Holt, Rinehart & Winston, 1971; *Mental Representations: A Dual Coding Approach*, Oxford University Press, 1986). In health communication as well, pictures closely tied to text markedly increase attention and recall relative to text alone (Houts, P. S., Doak, C. C., Doak, L. G. & Loscalzo, M. J., "The role of pictures in improving health communication," *Patient Education and Counseling*, 61(2):173–190, 2006).
+
+Two distinctions have to be drawn here, however.
+
+First, the result of Houts et al. holds for pictures closely combined with text or with speech. The original writes "written or spoken text." This distinction bears directly on the present design. SnapCare pairs pictures with speech rather than with text, so it corresponds to the latter of the two conditions Houts et al. covered. We were unable to confirm whether the studies included in that review addressed the spoken condition as extensively as the written one, and the effect on a screen with text removed entirely still needs separate verification.
+
+Second, drawing a picture and having it read correctly are different things. ISO 9186-1, the international standard for graphical symbols, requires that at least 67% of users understand a symbol correctly (ISO 9186-1:2014, *Graphical symbols — Test methods — Part 1: Method for testing comprehensibility*), while ANSI Z535.3, the United States safety sign standard, requires both a correct-response rate of 85% or higher in a sample of at least 50 people and **critical confusion of 5% or less** (ANSI Z535.3-2022, *Criteria for Safety Symbols*).
+
+How far the pharmaceutical pictograms actually produced pass these criteria is the crux of the problem.
+
+[Table 6] Pass rates of pharmaceutical pictograms against comprehension criteria
+
+| Study | Subjects | Criterion | Result |
+|---|---|---|---|
+| Gutierrez et al. (2022) | Filipino adults · 82 USP + 26 FIP symbols | ANSI 85% | Passed **17 of 108 (15.7%)** |
+| Dowse et al. (2023) | Low-literate South African adults · 10 locally made | ISO 66.7% | Passed **8 of 10 (80%)** · mean comprehension 7.9 ± 1.8 / 10 |
+| Dowse & Ehlers (2001) | 46 South African Xhosa speakers (≤7 years schooling) · 23 symbols each | ANSI 85% | Locally made **20 of 23 (87%)** vs. USP-DI **11 of 23 (48%)** |
+
+What Table 6 shows is that making a pictogram does not mean it will be read. When 108 internationally used USP and FIP pictograms were tested on Filipino adults, 17 passed the ANSI 85% criterion, roughly one in six (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022, doi:10.1186/s40545-022-00426-y).
+
+Placing the three studies side by side shows what separates the pass rates. The highest belongs to the set made locally and tested on local people (Dowse et al., 2023: 8 of 10). The most direct evidence is the controlled comparison by Dowse & Ehlers. When the same 46 people were shown two sets carrying the same instructions, 20 of the 23 locally made symbols (87%) passed the ANSI 85% criterion while only 11 of the 23 USP-DI symbols (48%) did (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). The same people were asked about the same meanings, and the answers split almost twofold according to where the pictures came from.
+
+That taking something built as an international standard directly into another culture lowers the pass rate is what this field has observed repeatedly. This is why field evaluation in Moldova is part of our plan (§5.8), and at the same time why the machine-scored results for our own set must be read as values from before cultural adaptation.
+
+Beyond that, a statistically significant positive correlation between health literacy and pictogram comprehension has been confirmed (Dowse et al., 2023: *p* = 0.002), with more misreading among low-literacy participants. This means pictures work least well for the people who need them most, which leads to the design in §2.1, where delivery is not entrusted to a picture alone but layered with speech and colour. There is one further report in the same direction. In a study testing 10 pictograms on 197 pharmacy visitors in the Netherlands, half exceeded the 67% comprehension criterion (individual range 31.0% to 98.5%), but **in the low-literacy group only 2 of the 10 exceeded it.** In 3 symbols a risk of false confidence, believing one understands while not recognising the symbol, was observed (van Beusekom, M. M. et al., "Pharmaceutical pictograms for low-literate patients: Understanding, risk of false confidence, and evidence-based design strategies," *Patient Education and Counseling*, 100(5):966–973, 2017).
+
+One line from that paper's conclusion matches our own judgement. **For safety-related information, 67% comprehension may not be enough.** Passing a criterion and being safe to rely on are different things, which is why SnapCare keeps speech and colour alongside a picture even when the picture passes.
+
+Evidence in the opposite direction is equally clear at the same spot, however. The liquid-medicine trial cited earlier (§1.3) was a randomised controlled trial, and what separated it from the control arm was instructions containing pictograms. Among caregivers who received pictograms, dosing errors greater than 20% fell from 47.8% to **5.4%** (absolute risk reduction 42.4 percentage points), and non-adherence fell from 38.0% to 9.3% (Yin, H. S. et al., "Randomized controlled trial of a pictogram-based intervention to reduce liquid medication dosing errors and improve adherence among caregivers of young children," *Archives of Pediatrics & Adolescent Medicine*, 162(9):814–822, 2008).
+
+In a South African trial dividing 60 low-literate adults with seven years of schooling or less into control and experimental groups, **significantly more participants exceeded 80% comprehension on both the medicine label and the patient information leaflet** in the group that also received pictures (Mansoor, L. E. & Dowse, R., "Effect of pictograms on readability of patient information materials," *Annals of Pharmacotherapy*, 37:1003–1009, 2003).
+
+To summarise, this field has observed two things together. Well-made pictures do in fact reduce errors (Yin et al., 2008: 47.8% to 5.4%). And making them does not mean making them well (Gutierrez et al., 2022: 17 of 108). The first is the reason to take this approach, and the second is the reason to measure afterwards.
+
+This is why the present work does not stop at making pictograms but designs a procedure for measuring their comprehensibility alongside.
+
+![Figure 6](fig/chart05_pictogram_pass.png)
+
+**[Figure 6]** Share of pharmaceutical pictograms passing comprehension criteria. The criterion applied differs by bar and is noted underneath each. Sharing an axis does not make these values competitors. The middle two bars are the control and experimental arms of the same study, **the result of showing two sets carrying the same instructions to the same 46 people**. Where the pictures came from splits the pass rate almost twofold. Our own value (69.2%) is the machine-scored result from §5.2 and was not obtained by asking people, so it is not directly comparable with the rest. It is placed on the same panel not to claim superiority but to show that our value falls within the range this field has observed.
+
+
+### 1.9 Structural constraints of the existing pictogram standard
+
+The most widely used pharmaceutical pictogram standard at present is the 81-symbol set from the United States Pharmacopeia (USP). Work began in 1987 and the current set was completed in 1997, organised into three categories: mandatory (square), prohibition (circle with slash) and warning (inverted triangle) (U.S. Pharmacopeia).
+
+The limitation of this standard lies in its expressive power. A single prescription instruction such as **"three times a day, 30 minutes after meals, keep refrigerated, contraindicated in pregnancy"** cannot be expressed by any one USP pictogram and can only be conveyed by listing five or six symbols.
+
+This is an explicit constraint rather than a design shortcoming. The USP licence prohibits altering the pictograms or using them together with symbols not created by USP without USP's permission (U.S. Pharmacopeia, *USP Pictogram Library License Agreement*). Combination will therefore remain impossible for as long as the standard is observed.
+
+The same licence carries a further clause: do not use the pictograms as the sole means of conveying information to patients. The body that created the standard has written down that a picture alone is not enough, and this is the same judgement as the design in §2.1, where SnapCare layers picture, speech and colour. We agree with the clause and differ only in making the supporting means something other than text.
+
+The difference between a fixed list and a grammar is a difference of kind rather than of count. Expanding 81 symbols to 810 does not help, because the combinations of prescription instructions grow faster still, and sooner or later an instruction appears that is not on the list. A grammar moves the other way. SIGIL consists of 78 morphemes and five operators, and adding one more morpheme also creates the positions where it can combine with every existing operator and modifier. What grows is a layer of combinations rather than a single entry.
+
+Where this difference actually shows is in the part that records concepts the app could not build (step 4 in §5.9). With a fixed list, meeting a picture that does not exist is the end of it, whereas with a grammar what was missing remains at the level of the morpheme, which settles what to add next.
+
+That comprehension varies by culture and that culturally adapted versions are needed is already shown in Table 6.
+
+### 1.10 Prior work on interfaces for low-literate users
+
+Research on interfaces for low-literate users shows that removing text is a necessary condition rather than a sufficient one.
+
+Medhi et al. built a text-free interface through ethnographic design with non-literate domestic workers in a Bangalore slum, with the criterion that it be "usable without anyone's intervention" (Medhi, I., Sagar, A. & Toyama, K., "Text-Free User Interfaces for Illiterate and Semi-Literate Users," *Information Technologies and International Development*, 4(1):37–50, 2007). That criterion means creating no step that requires explanation.
+
+Follow-up work surveying 400 low-literate, low-income people in India, the Philippines and South Africa confirmed that the barriers involve not only literacy but cognitive difficulty, cultural etiquette, prior exposure, intimidation, mediation, motivation, cost, power relations and social standing (Medhi, I., Cutrell, E. & Toyama, K., "It's not just illiteracy," *Proc. International Conference on Interaction Design & International Development*, 2010).
+
+A structural problem was confirmed as well. In an experiment asking 20 non-literate adults in a Bangalore slum to find 5 items out of 40 on a touchscreen phone, a multi-page list spread over 7 pages took 25 seconds on average while a hierarchy 4 levels deep took 65.5 seconds (*t*(18) = 4.6, *p* < 0.001). Accuracy also split, at 100% for the list against 80% for the hierarchy (*t*(18) = −3, *p* = 0.0077) (Medhi, I., Toyama, K., Joshi, A., Athavankar, U. & Cutrell, E., "A Comparison of List vs. Hierarchical UIs on Mobile Phones for Non-literate Users," *INTERACT 2013*, LNCS 8118:497–504, doi:10.1007/978-3-642-40480-1_33).
+
+The authors locate the cause in the understanding of nesting itself. Some participants did not grasp that a higher-level picture in the hierarchy stood for a bundle of items beneath it, and some could not remember how to return upward after entering the wrong branch. Turning pages was not itself the problem. The problem is having to hold in mind how far down one has gone.
+
+### 1.11 The problem in summary
+
+The discussion so far comes to five points.
+
+First, scale. There are 739 million non-literate adults, and in some regions the absolute number is rising (UNESCO, 2025). Applying a health literacy criterion widens the target further. Health literacy is not sufficient for 39.6% of Korean adults and 59.7% of those aged 65 and over (Korea Disease Control and Prevention Agency, 2023).
+
+Second, cost. Medication errors generate 42 billion dollars a year in costs (WHO, 2017), and in 2019 deaths directly attributable to bacterial antimicrobial resistance numbered 1.27 million, more than HIV/AIDS or malaria (Murray, C. J. L. et al. (Antimicrobial Resistance Collaborators), "Global burden of bacterial antimicrobial resistance in 2019: a systematic analysis," *The Lancet*, 399(10325):629–655, 2022). In 2023 data, one in six laboratory-confirmed bacterial infections showed resistance to antibiotics (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025).
+
+Third, the effect and the limits of visual methods. Pictures are remembered better than text (Houts et al., 2006), yet of 108 pharmaceutical pictograms actually produced only 17 passed the ANSI criterion (Gutierrez et al., 2022).
+
+Fourth, the structural constraint of the standard. The 81 USP symbols are prohibited from being combined, so a compound instruction cannot be made into a single picture (USP Pictogram Library License Agreement).
+
+Fifth, an open delivery channel. Seventy-eight percent of United States adults aged 65 and over already own a smartphone (Pew Research Center, 2025).
+
+These five point to one conclusion. What is needed is an integrated pipeline that runs automatically from a prescription through to pictograms and speech, that measures whether the result is actually read, and that never requires text.
+
+Within the range we searched, no system had all three. Pictogram sets exist but do not combine (§1.9), work addressing combination does not measure comprehension before release, and the studies that did measure comprehension (Table 4) assembled people and measured after the fact once the set was built. This is an observation from the range we looked over while preparing this work rather than the result of a systematic review, so it should be read as "we did not find one" rather than "there is none." This is SnapCare's starting point.
+
+---
+
+## □ Solution and Main Functions
+
+### 2.1 Design principle
+
+SnapCare has one design principle. At no point on the path by which a user arrives at a judgement are they required to read or type.
+
+The principle follows from two facts established in the previous section. First, removing text is a necessary condition. For someone who cannot read a prescription, a text interface is no different from the paper one. Second, removing text is not sufficient. Pictures too can fail to be read (Gutierrez et al., 2022), and a hierarchy is itself a barrier (Medhi et al., 2013).
+
+SnapCare therefore answers in three layers. What to do is carried by a picture, what that picture means is carried by speech, and whether this is safe or dangerous right now is carried by a single colour. The three layers overlap rather than substitute for one another. Someone who does not recognise the picture still has the speech, and where the speech cannot be heard the colour remains.
+
+The reason the three layers were not collapsed into one is as follows. One could argue that speech alone is enough, and spoken guidance is indeed the most common approach in this field. Speech cannot be held in place, though. Once it has passed it has to be replayed, and the act of replaying is exactly the barrier the interactive voice response research cited in §1.10 identified. A picture stays on the screen and can be looked at again any number of times, and a colour has already been delivered the moment the eye meets the screen. The three layers put out the same meaning on three timescales: colour immediately, the picture for as long as it stays, speech once through and again if needed.
+
+The only action the user performs is taking a photograph.
+
+![Figure 7](fig/fig01_home.png)
+
+**[Figure 7]** Home screen, cropped to exactly what is visible without scrolling. This is the screen actually met on opening the app. The largest element on it is a single capture button, and there is no menu and no search box. Having only one choice is the response to the hierarchy barrier established in §1.10.
+
+### 2.2 SIGIL, the pictogram composition engine
+
+SIGIL (Symbol Intuitive Glyph Image Lab) is a pictogram composition engine the team designed and implemented itself. Where existing pictogram sets are lists of pictures, SIGIL is built from morphemes and a grammar.
+
+It currently has 78 morphemes, divided into 57 heads and 21 modifiers. A head is an object that can stand on its own (pill bottle, dropper bottle, inhaler, peanut, milk carton), while a modifier cannot stand alone and goes into a slot inside a head (morning, midday, evening, count, refrigerate, eye, mouth).
+
+There are five operators on top of this. `no{}` applies prohibition, `half{}` applies a half portion, and `twice_daily{}`, `three_times_daily{}` and `four_times_daily{}` apply a daily frequency.
+
+[Table 7] The composition of SIGIL
+
+| Category | Count | Examples |
+|---|---|---|
+| Head | 57 | `pill_bottle`, `dropper_bottle`, `allergen_peanut`, `symptom_gut` |
+| Modifier | 21 | `time_morning`, `qty_two`, `storage_fridge`, `body_eye` |
+| Operator | 5 | `no{}`, `half{}`, `twice_daily{}` and 2 more |
+
+How the 78 were chosen says what kind of set this is. They were not drawn in bulk with combination considered afterwards; they were **derived backwards from the error distribution in §1.3.**
+
+[Table 8] The 78 morphemes by category
+
+| Category | Count | What it says |
+|---|---|---|
+| Form, device, action | 26 | What. Tablet, syrup, eye drops, inhaler, syringe, blood pressure monitor |
+| Food | 10 | What. Rice, bread, oil, sugar, vegetables |
+| Allergen | 9 | What to avoid. Peanut, tree nut, milk, egg, shellfish |
+| Symptom | 8 | What was experienced. Fever, cough, vomiting, abdominal pain |
+| State | 7 | Who. Child, teenager, adult, older adult, pregnant, breastfeeding |
+| Body site | 6 | Where. Eye, mouth, nose, skin, stomach |
+| **Count** | **5** | **How much**, from one to five |
+| **Time of day** | **4** | **When**, morning, midday, evening, night |
+| Storage | 3 | How. Refrigerate, keep dry, keep out of light |
+
+The two categories in bold correspond directly to the top two errors in Table 4 (dose 28.4%, timing 23.2%). Count stopping at five and time of day having only four is not economy aimed at shrinking the set but a reflection of prescriptions not in fact requiring more. Dosing more than five times a day is rare, and anything more frequent is expressed as "every so many hours" rather than as a time of day.
+
+The thickest category, conversely, is dosage form. The reason is in §2.3. Once the form is settled the verb and the body site are settled with it, so adding one form adds a whole instruction. The nine allergens follow the list of major allergens whose declaration is mandatory internationally.
+
+It should be noted here that the set is not closed. Prescriptions keep producing things these 78 cannot draw, and what the app does at that moment is covered by the `\?concept` marker in §2.3 and the expansion path in §5.9.
+
+Why this structure is needed becomes clear in contrast with the USP standard from the previous section. A single instruction reading "three times a day, after meals, keep refrigerated, contraindicated in pregnancy" can only be conveyed in USP by listing five or six symbols, and will remain so because the licence prohibits combination (USP Pictogram Library License Agreement). In SIGIL it is expressed as follows.
+
+```
+\three_times_daily{ \capsule_strip{\food_bowl} }
+\capsule_strip{\storage_fridge}
+\no{\state_pregnant}
+```
+
+Each line is composed into one picture, with slots opened inside the head for modifiers to be drawn into. Adding a morpheme requires one drawing, and the grammar produces the remaining combinations.
+
+The grammar is not merely a set of rules; the parser enforces it. The core of the recursive descent parser is as follows.
+
+```python
+def _pictogram(self, in_slot: bool = False) -> Node:
+    if self._peek() != "\\":
+        raise ParseError(f"expected '\\' at position {self.i}")
+    self.i += 1
+    name = self._name()
+
+    if self.m.is_operator(name):                     # \no{...} — exactly one child
+        if self._peek() != "{":
+            raise ParseError(f"\\{name} requires a child: \\{name}{{...}}")
+        ...
+        return Node(name=name, kind=NodeKind.OPERATOR, children=[child])
+
+    if self.m.is_head(name):                         # head — slots take modifiers only
+        children = self._slots()
+        for c in children:
+            if c.kind != NodeKind.MODIFIER:
+                raise ParseError(f"\\{name} slots only accept modifiers; got \\{c.name}")
+        return Node(name=name, kind=NodeKind.HEAD, children=children)
+
+    if self.m.is_modifier(name):                     # modifier — cannot stand alone
+        if not in_slot:
+            raise ParseError(f"\\{name} is a modifier; must appear inside a head's slot")
+        return Node(name=name, kind=NodeKind.MODIFIER)
+
+    raise ParseError(f"unknown macro \\{name}")
+```
+
+Design intent. Each of the three branches is one clause of the grammar. A modifier outside a slot fails to parse, a head placed in another head's slot fails as well, and a name absent from the dictionary becomes an error rather than a picture. This matters because the DSL is not written by hand but produced by a language model reading a prescription. If the model invents a plausible name, that has to become a parse error rather than a plausible picture on screen. Putting a deterministic verification layer over probabilistic output on a safety-critical screen is what this parser is for, and the same structure is used for the nutrition verdict in §4.2.
+
+
+![Figure 8](fig/fig02_sigil_sheet.png)
+
+**[Figure 8]** All 78 SIGIL morphemes (57 heads and 21 modifiers). The small image beneath each morpheme is the same glyph reduced to 34 pixels. The reductions are included because these pictures are in practice used on a palm-sized screen, sometimes as a single cell in a list. A picture that is only distinguishable when drawn large cannot be used in this app.
+
+![Figure 9](fig/fig03_dsl.png)
+
+**[Figure 9]** How one line of DSL becomes one picture. All four examples are outputs from the actual engine and were not redrawn for the diagram. Because modifiers go into slots opened in the head, the combinations arising from 78 morphemes are determined by the grammar rather than by a list.
+
+### 2.3 VOCA, the spoken instruction engine
+
+VOCA (Voice-Output Composition Architecture) does not convert the string read by OCR straight into speech. A prescription contains a great deal the patient does not need to know, and what they do need is scattered.
+
+VOCA extracts only what is needed, reassembles it and turns it into sentences. The basis for this design lies in research on interactive voice response. Usability ratings among older users are consistently lower than among younger users and they complete fewer tasks, with most of the difficulty arising from ambiguous options, speech rate and the length of options (Miller, D. I., Bruce, H., Gagnon, M., Talbot, V. & Messier, C., "Improving Older Adults' Experience with Interactive Voice Response Systems," *Telemedicine and e-Health*, 17(6):452–455, 2011, doi:10.1089/tmj.2010.0204). Younger users voiced the same complaints but mostly worked past them, whereas older users often did not. Playing speech is therefore not enough on its own, and what not to say becomes the core of the design.
+
+That study contains one result that appears at first to run against our design: both age groups were more efficient when more options were presented. This concerns the number of options held in a single step, however, and doing so reduces the depth of the menu. It runs in the same direction as the finding in §1.10 that deep hierarchies are particularly unfavourable for non-literate users, and what the two studies point to together is "reduce the steps" rather than "reduce the options." What SnapCare has taken is the extreme of that. There is not a single step on the path to a verdict.
+
+The verb also changes with the dosage form. A tablet is "take," but eye drops are "put in," an ointment is "apply" and an inhaler is "breathe in." The single word "administer" points to completely different physical actions.
+
+It is not only the verb that changes but the body site. That eye drops go into the eye is half the instruction, and if the picture has only the bottle and no eye, that half disappears. The body site is therefore derived from the dosage form.
+
+```ts
+/**
+ * Dosage form → where on the body it is used.
+ *
+ * That eye drops go 'into the eye' is half the instruction, yet the picture had
+ * only the bottle and no eye. The moment OCR identifies the form the site is
+ * settled too, so there is no need to ask separately.
+ */
+const FORM_SITE: Record<string, string> = {
+  eyedrop: 'body_eye',
+  cream:   'body_skin',
+  inhaler: 'body_mouth',
+  syrup:   'body_mouth',
+};
+```
+
+Design intent. The body site is not asked of the user. Asking means options have to be read, and making people read hierarchies and options is, as established in §1.10, exactly what this app sets out to remove. By the time OCR has read "ophthalmic solution" the site is already determined, so it is something to derive rather than to ask.
+
+There is judgement in how an unknown dosage form is handled as well. Previously a form absent from the table fell silently to a generic pill bottle picture. Inhaler or nebuliser, a pill bottle appeared on screen, and no record was left of how often that happened. Now a `\?form` marker is put in front. It means "we have no picture for this concept," and the online build composes a picture on the spot while the on-device build reports the absence rather than substituting a similar picture. For someone who cannot read, a wrong picture is worse than no picture. Absence falls through to speech, whereas a wrong picture is confidently wrong and the user has no way of knowing it is wrong.
+
+We accept that this is only a partial solution. A head is also the vessel that carries time of day, count and storage, so when the form is unknown those lines are still drawn on top of a generic bottle. Fixing it properly requires the concept to become a formal morpheme, which is why `/api/glyph` writes the list of concepts it could not build to a file. That list is the basis for deciding which morpheme to add next. It accumulates in the order users actually encountered them.
+
+### 2.4 Deriving a per-person verdict threshold
+
+SnapCare is not a tool that reads labels aloud but one that reaches a verdict. And that verdict differs from user to user.
+
+Most World Health Organization nutrition recommendations are stated as a share of total energy. Free sugars are less than 10% of total energy (equivalent to 50 g, with possible additional benefit from reducing further to 5% or below), saturated fat less than 10%, and trans fat less than 1%. Only salt is given as an absolute amount, less than 5 g a day for adults (2 g sodium), with children needing less in proportion to their energy intake (World Health Organization, *Healthy diet* fact sheet).
+
+This manner of statement matters. Because the recommendations themselves are written as proportions, the correct implementation of the guidance is to derive from that person's energy requirement rather than to hold a fixed table of gram figures. The result is that the same can of drink becomes a warning for a seven-year-old and harmless for an adult.
+
+The derivation is six lines in total.
+
+```ts
+/** Age band → representative age. The value picked as a picture in the profile
+ *  takes precedence over string parsing. */
+const BAND_AGE = { child: 7, teen: 15, adult: 35, senior: 70 };
+
+export function referenceFor(member: Member): DailyReference {
+  const age = member.ageBand ? BAND_AGE[member.ageBand] : ageFromRole(member.role);
+  const { energyKcal, weightKg } = bandFor(age);
+
+  // Converting WHO percentage recommendations to grams — this derivation is the
+  // core of the engine.
+  const sugarsLimit = (energyKcal * 0.10) / KCAL_PER_G.carb;   // free sugars <10 %E
+  const satFatLimit = (energyKcal * 0.10) / KCAL_PER_G.fat;    // saturated fat <10 %E
+
+  // Salt and fibre are absolute recommendations → scale down for children by
+  // the ratio of energy requirement
+  const energyRatio = energyKcal / ADULT_ENERGY_KCAL;
+  const saltLimit   = ADULT_SALT_LIMIT_G * Math.min(1, energyRatio);
+  ...
+}
+```
+
+Design intent. Age is folded into four representative values. The user picks one of four pictures rather than entering a number (§3.2), so all the app knows is the band. Computing with the band left as a band would mean hand-building a table of thresholds per band, and then the table would have to be rebuilt whenever WHO guidance changed, with no one able to check where it came from. Folding to a single representative age makes the computation follow the wording of the recommendation directly.
+
+There is judgement in `Math.min(1, energyRatio)` as well. Salt and fibre are recommended as absolute amounts and cannot be converted proportionally. Children are scaled down in proportion to energy requirement (the very recommendation underlying §2.4 says children should have less according to their energy intake), but someone who eats more than an adult does not get a raised salt limit. The recommendation is a ceiling.
+
+Returning the `basis` string alongside is also deliberate. "1,800 kcal at age 70, free sugars under 10%" appears on screen exactly as written (Figure 10(b)). If the user cannot see where a verdict came from, there is no way for them to examine it.
+
+The user's conditions are then added. Diabetes narrows the sugar threshold, taking a blood thinner makes ibuprofen-class drugs something to avoid, and pregnancy or breastfeeding changes the contraindication list.
+
+### 2.5 Collecting conditions and inferring allergies
+
+As established in the previous section, about 43% of adults with diabetes do not know they have it (IDF, 2025), and for allergies there is a large gap between self-report and confirmed diagnosis.
+
+The question "what are you allergic to" can therefore only be answered by someone who has been tested. SnapCare splits this question three ways.
+
+[Table 9] How conditions are asked
+
+| Branch | Form of the question | Example |
+|---|---|---|
+| What you know now | Current state | Pregnant, breastfeeding |
+| What you have experienced | Experience | Ever felt unwell after eating something |
+| What you have been told | Diagnosis | Diabetes, hypertension |
+
+The app also infers allergies the user does not know about. It runs Fisher's exact test over the food diary to find ingredients recurring in meals after which the user felt unwell. A minimum evidence threshold and multiple-comparison correction (Bonferroni) are applied, and the result is presented as an observation rather than a diagnosis and is not written into the profile until the user confirms it.
+
+Whether this inference stays silent when it should has been pinned down with tests. In a feature that puts statistical inference on screen, the dangerous side is not missing something but declaring something that is not there. The tests confirm the following. It flags an ingredient when trouble recurs with that one ingredient, it does not flag on coincidental overlap alone, it says nothing when records are few no matter how high the proportion, and it does not allow the comparison at all when there are no meals without trouble to serve as a control. It also raises the bar as more ingredients are examined, does not count unanswered meals as data, and does not group peanuts together with tree nuts. Fisher's test itself is pinned against known values.
+
+The pattern of symptoms is considered too. Hives and swelling, which suggest allergy, are separated from bloating, which suggests intolerance, so that the same ingredient may be presented one way or the other. Being told it is an allergy and being told something is hard to digest lead the user to different actions.
+
+The conditions for staying silent are longer than the test itself.
+
+```ts
+export function findTriggers(log: MealFeedback[]): SuspectedTrigger[] {
+  // Only ingredients that actually appear in the log are tested. Testing an
+  // ingredient never eaten only inflates the Bonferroni denominator and kills
+  // the real signal.
+  const testable = [...flags].map(...).filter(...);
+  const threshold = ALPHA / testable.length;              // Bonferroni
+
+  for (const { flag, condition } of testable) {
+    const withIt  = log.filter((m) =>  flagsOf(m.tags).includes(flag));
+    const without = log.filter((m) => !flagsOf(m.tags).includes(flag));
+
+    const a = withIt.filter((m) => m.reaction === 'unwell').length;   // ate it, unwell
+    const b = withIt.length - a;                                     // ate it, fine
+    const c = without.filter((m) => m.reaction === 'unwell').length; // didn't, unwell
+    const d = without.length - c;                                    // didn't, fine
+
+    if (a < MIN_UNWELL || withIt.length < MIN_EATEN
+                       || without.length < MIN_CONTROL) continue;     // too little evidence
+    if (fisherRightTail(a, b, c, d) > threshold) continue;            // within chance
+    ...
+  }
+}
+```
+
+Design intent. The two `continue` lines are most of what this function does. The first looks at the amount of evidence: the number of times trouble occurred, the number of times the ingredient was eaten, and the number of meals without it. Without the last, the comparison does not hold, because an ingredient present in every meal was present on every occasion of trouble and would pass any test at all.
+
+The threshold on the second line is `ALPHA / number of ingredients tested`. Examining ten ingredients makes the threshold one tenth. Putting twenty ingredients each against a 5% threshold catches about one even when nothing is related, and putting that one on screen as "you may be allergic to this" is the worst thing this feature could do.
+
+Narrowing the tested set to ingredients that actually appear in the log follows the same reasoning. Including ingredients never eaten only enlarges the denominator and pushes the real signal below the threshold. A device for being conservative, carried too far, becomes a device for finding nothing.
+
+Fisher's exact test was used because the samples are small. Chi-square cannot be used when expected frequencies fall below 5, and food diary tables always look like that. It is rare for a person to record eating one ingredient twenty times and how often trouble followed.
+
+### 2.6 How this differs from existing approaches
+
+This section sets out how SnapCare differs from what already exists. Two comparators are taken. One is the general health and nutrition app, the other is the de facto standard for pharmaceutical pictograms, the United States Pharmacopeia set. The first says it addresses the same users but addresses them in text, and the second does not use text but cannot combine.
+
+[Table 10] Existing approaches compared with SnapCare
+
+| Item | General health app | USP pictogram standard | SnapCare |
+|---|---|---|---|
+| Input | Typing and search | (not applicable) | One photograph |
+| Output | Mostly text | 81 static pictures | Composed pictogram + speech + colour |
+| Combination | — | **Prohibited by licence** | Combined by grammar |
+| Verdict threshold | Fixed table or none | (not applicable) | Derived from personal energy requirement |
+| Assumption | User knows their diagnosis | — | No diagnosis assumed |
+| Comprehension check | None | Only post hoc studies | Measured automatically before release |
+| Network | Required | — | Verdict computed on device |
+
+The rows of the table are not independent of one another. Fixing the input as a single photograph in the first row means the user does not say what they photographed, so the app has to determine it itself (§3.3), and deciding in the fifth row not to assume a diagnosis changes how conditions are asked altogether (§2.5). Settling one brings the rest with it, and the starting point is the first constraint in §2.1.
+
+The last two rows are where we consider this work to have put something new. We did not find, within the range we looked over, a procedure that measures pictogram comprehension automatically before release (the same qualification as in §1.11), and §5.2 sets out both the procedure and its results. The remaining rows are design choices rather than distinct contributions, and the grounds for each are given in §2.1 through §2.5.
+
+### 2.7 The three core functions
+
+**Function 1. Prescriptions as picture and speech (Prescription Comprehension)**
+
+When the user photographs a prescription, OCR (Tesseract.js) extracts the text inside the browser and SIGIL and VOCA process it in parallel. Six pieces of information are extracted from a prescription: which medicine, how many times a day, when, under what conditions, how to store it, and who must not take it.
+
+![Figure 10](fig/panelA_flow.png)
+
+**[Figure 10]** From capture to verdict. (a) Capture screen. The user does not choose what is being photographed. (b) Recognition in progress. Not hiding this stage is deliberate. A screen that has stopped with no indication reads as a fault. (c) Prescription verdict. From top to bottom: what it is, whether it is safe, what to do, what that means, and when. The previews in (a) and (b) are empty because the browser automating the capture has no camera; on a real device the screen is filled.
+
+**Function 2. Verdicts on food and nutrition labels (Personalized Verdict)**
+
+When a nutrition label is photographed, OCR reads the figures inside the browser and, if a barcode is present, product information is looked up. When a meal is photographed, a nutrition estimation model on the device (EfficientNet-B0, 224px, trained on Nutrition5k) regresses five values: energy, mass, fat, carbohydrate and protein. The model is exported to ONNX and runs in the browser, and at 16 MB it is cached by the service worker (§4.5). Its measured accuracy is in §5.5.
+
+Whichever path a value arrives by, it has to pass the same physical checks before it is used in a verdict: value ranges, subset relations (saturated fat ≤ total fat), mass balance, and the Atwater identity (4·carbohydrate + 4·protein + 9·fat ≈ energy). Why these checks are necessary is set out with actual cases in §5.
+
+![Figure 11](fig/panelB_nutrition.png)
+
+**[Figure 11]** After the verdict. (a) Nutrition label verdict. The figures are not transcribed but converted into the share they occupy of this person's daily reference. (b) Today's running total. Not a single verdict but the day's sum. The source attribution at the bottom has never been removed from the screen. (c) Device link. The result of placing the schedule the app produced into the dispenser trays; because of the constraint in §4.3 this button acts as top-level navigation.
+
+**Function 3. Automatic pill dispenser link (Device Link)**
+
+The dosing schedule produced by the app is sent to the device. The device is based on a Raspberry Pi 3B with three trays, an LED ring, a buzzer, a confirmation button and a real-time clock (DS3231).
+
+The design of the transmission path is the result of several constraints applying at once. This is detailed in §4.
+
+![Figure 12](fig/fig10_dispenser.png)
+
+**[Figure 12]** The dispenser's wiring and the device's own console. On the left is the wiring drawn from the pin map, on the right the same firmware running on a laptop with only the servo driver swapped for a recording stub. The API, the scheduler and the storage are the same code that runs on the device. These two are shown instead of a photograph because what gets decided here is not visible in a photograph. Splitting the power rails in two is an example. One SG90 under load draws about 700 mA, and pulling that from the same rail as the Pi causes a brownout, and the file in use at that instant happens to be the one recording whether this dose has already been dispensed. The two missed doses in the dose log at the lower right matter for the same reason. If a dose that was not dispensed is not recorded as not dispensed, every subsequent dose number is off by one.
+
+---
+
+## □ User Flow of the Web App
+
+### 3.1 The overall flow
+
+SnapCare's user flow is built on the principle of running from a single photograph to a verdict without branching. As cited in the previous section, a deep hierarchy takes non-literate users 65.5 seconds on average against 25 seconds for a flat list (Medhi et al., 2013). Choices on the path to a verdict were therefore minimised.
+
+![Figure 13](fig/fig11_userflow.png)
+
+**[Figure 13]** The overall user flow. Beneath each step is the reason that step is shaped as it is. What to look for in the diagram is that there is no point anywhere requiring reading.
+
+The whole flow is the following five steps.
+
+[Table 11] The steps of the user flow and what each requires
+
+| Step | Screen | What the user does | Text to read |
+|---|---|---|---|
+| 1 | First-run guide | Press next (skippable) | None (picture + speech) |
+| 2 | Profile setup | Choose age and conditions | None (picture selection) |
+| 3 | Home | Press the capture button | None |
+| 4 | Capture | Point and shoot | None |
+| 5 | Verdict | Look and listen | None |
+
+The last column of Table 11 is the point of this design. At no step is the user required to read or type.
+
+There is one more thing absent from the table. There is no step for going back. If the photograph was wrong, take another; if the verdict is unwelcome, close it. Intermediate steps such as cancel, edit and confirm were left out because each of them requires reading "what is being asked right now." Of the five steps, 1 and 2 are passed through only once, so from the second use the real path is three steps: press on the home screen, shoot, look.
+
+One thing should be noted, though. The shortness of this flow is a constraint as much as a result of the design. Removing choices also removed what the user can tell the app. Because the user does not choose what they photographed, there is nothing on screen to correct a misclassification, and taking another photograph is the only recourse. This is recorded as an unverified item in §5.8.
+
+### 3.2 First run and profile setup
+
+Opening the app for the first time leads through five guide cards to profile setup. This step is needed because of the verdict method described in §2.4. Since thresholds are derived from the user's energy requirement, no verdict is possible without knowing the age band.
+
+Age is not entered as a number. Four bands (child, teenager, adult, older adult) are chosen through our own morphemes (`state_child`, `state_teen`, `state_adult`, `state_elderly`). There is a reason emoji were not used. Emoji are drawn differently on every device, and the emoji that might stand for a teenager (🧑‍🎓) actually means "graduate," which means nothing at all to a child who does not attend school. The four morphemes are drawn as one family, so placed side by side the difference in age is visible as form. Conditions are likewise offered as picture cards along the three branches of §2.5 (what you know now, what you have experienced, what you have been told).
+
+Originally this screen asked the user to choose a face first. It was a step of picking one of eight person pictures, and after testing it was removed from the first run. A face is only a marker with no bearing on the verdict (it indicates who someone is), yet it was the first thing demanded on screen, which made the first demand met by a new user a choice with no value attached. That in turn makes the real questions that follow, age and conditions, read with the same weight. The face was moved to the settings screen.
+
+The step can be skipped, but if it is, the home screen keeps displaying "showing adult thresholds." This is to prevent a default from being applied silently. The reason for this indicator connects directly to the claim in §2.4 that the verdict differs per person. A verdict produced without knowing the age still appears in the same greens and reds on screen, and if the screen does not say whom the verdict was computed for, the user reads it as an answer computed for them.
+
+The lock is a picture key rather than a text password. Four pictograms chosen in advance from twelve are pressed in order. The number of combinations is comparable to a four-digit PIN while what has to be remembered is pictures rather than digits, so users who cannot handle letters and numbers can use it. Only a hash of the sequence is stored (§4.6).
+
+The list of household members sits on this same lock screen (§3.6). It has the same structure as an operating system lock screen, and because choosing a face and unlocking finish on one screen there is no need to build a separate way back after choosing wrongly. Someone using the phone alone never sees the list. Asking a single person to choose is asking them to make a choice that does not exist.
+
+![Figure 14](fig/panelC_onboarding.png)
+
+**[Figure 14]** First run. (a) Five guide cards. Each is a picture and one sentence, and on arrival the screen reads that sentence aloud by itself. (b) Profile setup. The age band is chosen through our morphemes and conditions through picture cards, with no input field on either. This step is needed because of the verdict method in §2.4. Since thresholds are derived from the user's energy requirement, no verdict is possible without knowing the age band.
+
+### 3.3 From capture to verdict
+
+#### Getting to the shutter
+
+Pressing the blue circle on the home screen moves to the capture screen. At the very top is one line, "Point at something," and the screen reads that sentence aloud the moment it arrives. Nothing has to be pressed in order to learn what to do.
+
+In the middle is a preview area, and below it a single 64-pixel white circle. That circle is the shutter. It is the only pressable thing on the screen, and there is no step for choosing what is being photographed. Prescription mode, label mode and food mode were not created because that choice would itself reintroduce the cost of hierarchy cited in §1.10. The user is already holding whatever they are photographing, so there is no reason to make them tell the app a second time.
+
+Pressing the shutter opens the device's own camera, and the photograph comes straight back to the app. No separate capture screen was built inside the app because the device camera already handles focus, exposure and stabilisation, and reimplementing that could only make it worse.
+
+#### The order in which what was photographed is decided
+
+The returned photograph is classified into one of four categories: food, drink, medicine or prescription. This determination is not made at once but split across two layers.
+
+The first layer runs on the device. Text is read from the photograph first (Tesseract.js, running inside the browser), and the text is examined for markers. If markers such as `nutrition`, `per 100`, `영양성분` (nutrition facts) or `1회 제공량` (serving size) are present together with two or more nutrient names, it is treated as a nutrition label. If two or more of dose notations such as `500 mg`, dosage forms such as `tablet` or `capsule`, and dosing instructions such as `twice daily` or `after meals` appear, it is treated as a prescription. Once it settles into one of the two, the dedicated parser runs on the spot and no server is called.
+
+The second layer is invoked only when the first has failed. If the text read from the photograph is shorter than four characters (which is usually the case for food photographs) or the markers match neither pattern, the photograph is sent to the vision model on the server.
+
+There is a reason for this order. Finishing anything with text on the device and sending out only what needs a connection means prescriptions and nutrition labels are read without an internet connection. These two are the most urgent things in this app (§4.5).
+
+#### What is shown while waiting
+
+While recognition runs, the preview area displays what is happening in text, and the same sentence goes out as speech. The four sentences actually displayed are as follows.
+
+[Table 12] The stages shown during recognition
+
+| Display | When it appears | Duration |
+|---|---|---|
+| `Reading text… 43%` | While text is read on the device, the percentage rising in real time | Usually 2–6 s |
+| `Checking the label…` | Read as a label but the values failed the checks, so the server is being asked again | 1–3 s |
+| `Estimating…` | The on-device nutrition model is running and server classification is awaited | 2–5 s |
+| `Loading sample…` | A sample image was chosen | Under 1 s |
+
+Showing the percentage rather than hiding it is deliberate. One of the barriers identified in research on low-literate users is intimidation (Medhi, Cutrell & Toyama, 2010), and a screen that has stopped with no indication reads as a fault. Simply watching the number climb conveys "it is running," and that is conveyed without reading. For the same reason the shutter and every button below it are locked against presses while recognition runs. Pressing twice must not run it twice.
+
+#### The vertical order of the verdict screen
+
+The verdict screen splits into two versions depending on what was photographed. The criterion for the ordering is the same: scanning top to bottom without reading, what is needed has to come first.
+
+[Table 13] Composition of the verdict screen (food and drink / prescription and medicine)
+
+| Order | Food and drink | Prescription and medicine |
+|---|---|---|
+| 1 | 112px round picture with verdict sentence | 96px round picture |
+| 2 | Summary bar carrying colour and symbol | Drug name and dose per administration |
+| 3 | Pictogram sequence | Safety bar carrying colour and symbol |
+| 4 | Nutrient bars (up to 3) | Pictogram sequence |
+| 5 | Alternative suggestion card | Dose card and storage card |
+| 6 | Confirm button | Dosing schedule |
+
+The difference between the two versions is at positions 4 and 3. For prescriptions the pictograms were moved above the text cards. They were below at first, and a user who cannot read scanning from the top had to pass three empty cards before reaching a picture. Changing the order alone removes those three.
+
+Cutting the nutrient bars to three follows the same criterion. Items below 5% of the daily reference and items already sufficient are dropped, and only the top three of what remains are shown. Showing all ten lines buries which one is the problem.
+
+#### What determines the verdict
+
+Colour has three levels and is derived from the user's conditions. Where several grounds apply, the worst wins.
+
+[Table 14] Grounds that raise the verdict level
+
+| Ground | How it applies | Result |
+|---|---|---|
+| Conflict between a user condition and an ingredient | The trigger ingredient of a condition the user selected is present in this item | Varies by condition. Peanut allergy gives avoid, diabetes gives caution |
+| Not confident what it is | Vision model confidence below 0.4, or all nutrient values returned as zero | Fixed at caution |
+| A whole day's allowance at once | 100% or more of this person's daily limit | Caution |
+| Interaction with a medicine being taken | Conflict with an already registered medicine | Fixed at avoid |
+
+The third row is why this app's verdict differs from person to person. Because the daily limit is derived from the user's age band rather than taken from a table (§2.4), the same snack can come out as caution for a 65-year-old and safe for an adult.
+
+The second row was added later. The vision model tends to return all values as zero when it is not confident, and zero passes every one of the physical checks in §4.2. It catches on no check at all and is displayed as a green "safe." A separate judgement, that all zeros means the item was not recognised, was therefore added apart from the physical checks.
+
+The screen during recognition and the resulting verdict screen are in Figure 10(b) and (c).
+
+### 3.4 The path when recognition fails
+
+There are cases where what was photographed cannot be read. What is shown at that moment determines the next action.
+
+The failure sentence is spoken aloud at the same time as it appears on screen. There is a reason this behaviour was added later. Every other screen in the app speaks through pictures and speech, yet on failure alone a single line of text sat there silently. For a user who cannot read, that screen is the same as nothing having happened. The one moment that most needed help was the only one demanding text.
+
+Alongside the sentence come one picture and a two-word instruction.
+
+[Table 15] Failure guidance
+
+| Situation | Picture | Instruction | What it asks for |
+|---|---|---|---|
+| Table read but values unstable | 🔍 | Move closer | Fill the frame from closer and retry |
+| Paper folded or skewed | 📄 | Lay it flat | Flatten it out and retry |
+| Camera shake | 📱 | Hold steady | Steady the hand and retry |
+| Could not reach the server | 📡 | No connection | Retrying will not help. Photograph a label or pick a sample |
+| Not recognised | 🔄 | Try again | Taking another photograph will do |
+
+What matters in this table is that the fourth and fifth rows are separated. Server responses are handled separately as 501 (no means available) and 422 (not recognised). If it was not recognised, taking another photograph is the answer, but if there is no connection a hundred more photographs give the same result. Showing the same sentence in both cases leaves the user retaking photographs until it works.
+
+On failure, a list of samples unfolds at the bottom of the screen. It stays collapsed normally and appears only at the moment of failure. There is no reason for someone whose scans are working to see it, and someone who is stuck needs to see that another route exists.
+
+No separate "retry" button was added. The shutter is still in place and returns to a pressable state, so adding another button would put two things doing the same job on the screen.
+
+### 3.5 Routes to the audio
+
+Speech plays once automatically on arriving at the verdict screen. The listener cannot rewind it, however. Every sentence on the screen is therefore something that can be pressed to hear again.
+
+This design responds to the IVR research in §1.10. What that study identified as the main difficulties for older users were speech rate and the length of options. Even if it is not all taken in at once, the part that is needed can be heard again.
+
+#### Signalling that something can be pressed
+
+This design had a defect that surfaced during development. **There were 78 pressable places and only nine visible indicators**, and those nine were emoji at 0.75 times body size with 40% opacity. The capability existed but where to press was invisible, and for a user with reduced vision that is the same as its not being there.
+
+Drawing the indicator larger is only half of it. Pressing is a tool for someone who already knows there is audio, and to someone opening the app for the first time a speaker glyph is just another picture. Three things were therefore put in place together.
+
+[Table 16] Three routes to the audio
+
+| Route | What it does | Why it is needed |
+|---|---|---|
+| Speaks on arrival | One line per screen, "what this screen is asking" | There is nothing to look for. Nothing has to be pressed |
+| Listen marker on each line | The pressable target is the whole line, the marker only signals that audio exists there | It does not ask a trembling hand to aim at a small circle |
+| Read the whole screen | One cell in the bottom tab bar | Hear it again from start to finish |
+
+The arrival announcement reads one line per screen. Reading everything would pour a paragraph out on every screen change, and then the user turns the speech off. That is the worst outcome in this app. Once it is off, nothing is heard at all.
+
+The listen button is 44 pixels. That is roughly the area a fingertip covers on the screen, and anything smaller starts to demand aim.
+
+#### Speaking the pictograms
+
+The last thing discovered was that only the pictograms did not speak. The verdict, the product name and the nutrient figures could all be pressed and heard, while the pictures, the core contribution of this work, were silent.
+
+The observation of van Beusekom et al. (2017) cited in §1.8 applies here directly. Three of ten symbols produced false confidence, believing one understands while not recognising the symbol, and that is a worse failure than having no picture. Someone who does not recognise a picture may at least ask, whereas someone who recognises it wrongly acts on it. The remedy the same paper offered was that comprehension rises when a pharmacist points out what the picture means. Pictures work better used alongside words than in place of them.
+
+Our users have no pharmacist beside them. The app therefore takes that place. Pressing a picture makes it say what it means. What is read out is not the appearance of the picture but the action it prescribes.
+
+```
+\three_times_daily{\tablet_blister{\food_bowl}}
+    → "A tablet, with food, three times a day."
+
+\no{\allergen_peanut}
+    → "Do not eat this. It has peanuts."
+```
+
+Saying "a tablet and a bowl" only repeats what is already being seen, while what is actually unknown, namely what one is being told to do, remains untouched.
+
+Lines whose meaning is unknown are made unpressable altogether. An invented explanation would harden exactly that false confidence.
+
+### 3.6 Sharing a device and separating household members
+
+In the target regions a smartphone is not a personal possession but the one device in the house (§1.6). If the app handles only one person, then when a grandmother and a grandchild share the same phone what the grandchild scans is added to the grandmother's daily total, and the blood thinner the grandmother takes fires on the grandchild's verdict. It is not merely that records mix; the verdict is wrong.
+
+At the start, therefore, a face is chosen and the user enters their own space. Each space has its own picture key, and profile, history and reminders all accumulate separately. The screen has the same structure as an operating system lock screen. The member list and the lock share one screen, so there is no need to build a separate way back after choosing wrongly.
+
+Someone using the phone alone never sees this screen. Asking a single person to choose is asking them to make a choice that does not exist.
+
+The dividing point is a single storage key. The first person's data stays at `snapcare-profile`, and from the second person on it goes to `snapcare-profile#<id>`. Because this rule sits in the one layer that reads and writes data, the verdict, aggregation and inference code has no need to know how many people it is handling. The same rule covers the five things that must be separated: profile, history, reminders, session and suggestions. No suffix is attached to the first person's key so that data belonging to someone who was already using the app alone is not moved.
+
+Names are still not asked for. Identity is one of eight faces (🧑 🧒 👶 🧓 👩 👨 👦 👧), and faces already taken drop out of the list so that two people cannot choose the same one. A colour is attached as well for cases where the face alone is confusing.
+
+Switching between people does not merely swap the screen but reopens the app from the start. Re-reading the data in place can leave a part of the app still holding the previous person's allergy information, and nothing on screen would show that it is still there. A verdict produced in that state looks exactly like a correct one. The one second it costs to reopen is cheaper than that risk.
+
+On the member list screen only the current person's conditions are shown and the others read simply as "another person." This is not concealment but a genuine inability to read them. Another person's data sits behind a key this session does not open.
+
+Deleting takes two presses. One press raises a red outline, and a second deletes. No "are you sure?" dialogue is raised, because that sentence is not readable by this app's users. An unreadable confirmation dialogue is not a confirmation but merely one more press, so the procedure itself was made two-stage. The current person and the last remaining person cannot be deleted.
+
+### 3.7 Channels other than colour
+
+Verdicts are displayed in three colours: green, amber and red. Red-green colour vision deficiency, however, affects about 8% of men and about 0.5% of women of northern European descent, and is estimated at around 300 million people worldwide (Colour Blind Awareness; MedlinePlus Genetics).
+
+One thing should be added. This proportion varies by ancestry, reported at 4% to 6.5% among men of Chinese and Japanese descent and lower in sub-Saharan Africa. The risk therefore varies by region and, depending on where the user is, may be smaller than in northern Europe. The reason for not entrusting the verdict to colour alone even so is the asymmetry of the cost rather than the prevalence. Giving only colour to someone who cannot see colour means the verdict is not delivered at all, whereas the cost of also carrying a symbol and a sentence is one line of screen.
+
+WCAG 1.4.1 requires that colour not be the sole means of conveying meaning, and it has repeatedly been pointed out that contrast alone is not sufficient. Even with high luminance contrast, hue may not be distinguishable to someone with red-green deficiency (W3C WCAG 2.x).
+
+The same verdict therefore goes out through five channels at once.
+
+[Table 17] The five channels one verdict travels through
+
+| Channel | Safe | Caution | Avoid |
+|---|---|---|---|
+| Colour | Green `#15A34A` | Amber `#DE8500` | Red `#DC2626` |
+| Symbol | ✅ | ⚠️ | ⛔ |
+| Word | Safe | Caution | Avoid |
+| Sentence | "Safe to eat." | "Caution for 〈name〉" | "Do not eat." |
+| Picture | Morpheme as drawn | As drawn plus a warning morpheme | Morpheme wrapped in the negation operator |
+
+The last row is SIGIL's part. An avoid verdict does not paint the picture red but wraps the picture itself in `\no{...}` and draws a slash across it (§2.2). Someone who sees no colour at all still sees the slash.
+
+The same principle repeats in the nutrient bars. One fact is expressed five times over: as bar length, as colour, as a number, as a per-nutrient picture (🔥 🍬 🧂 🧈 🫒 💪 🌾 🍚), and as a spoken sentence. The speech does not read the value alone but appends a judging word, as in "That is high." Hearing a number and deciding for oneself whether it is large requires knowing the reference, and knowing the reference is precisely the ability this app has decided not to assume.
+
+The line currently being read gains an outline. Where the audio has reached has to be visible as well as audible, so that someone who lost the thread can press that spot again.
+
+---
+
+## □ Development and Implementation
+
+### 4.1 Overview of the stack
+
+This section first sets out what was built with which tools, and the sections that follow take up one by one the points where a judgement had to be made. The content of this section is why those choices were made rather than the stack itself.
+
+[Table 18] Technical stack
+
+| Layer | Technology | Note |
+|---|---|---|
+| Web app | Next.js 16 (App Router) · React 19 · TypeScript · Tailwind | Static build maintained |
+| Pictogram engine | SIGIL — own DSL · recursive descent parser · Python/Pillow composition | 78 morphemes |
+| Speech engine | VOCA — own composition logic · Web Speech API | Device built-in voices |
+| OCR | Tesseract.js | Runs in the browser |
+| Nutrition estimation | EfficientNet-B0 224px (trained on Nutrition5k) · onnxruntime-web | On-device inference |
+| Product data | OpenFoodFacts API | Via server |
+| Image recognition | Claude Vision | Via server |
+| Hardware | Raspberry Pi 3B · 3 servos · WS2812 · DS3231 | 3 trays |
+| Deployment | fly.io (Tokyo) · 1 GB persistent volume | |
+
+Reading the last column on its own shows how this stack is put together. The heavy things are on the device and the light things are on the server. A 16 MB nutrition estimation model runs in the browser, while recognising what a photograph shows goes out to the server. This is the reverse of an ordinary web app. Sending heavy computation to the server is the conventional choice, and it lets the device be old and makes the model easy to swap.
+
+There is one reason for inverting that convention. Anything on the server becomes nothing when the internet drops. Only the things "without which the verdict does not hold at all" were therefore moved onto the device.
+
+[Table 19] What runs where
+
+| Task | Runs on | If the internet drops |
+|---|---|---|
+| Reading text from a photograph | Device | Works as normal |
+| Label parsing and physical checks | Device | Works as normal |
+| Prescription parsing | Device | Works as normal |
+| Nutrition estimation (photo) | Device | Works as normal |
+| Verdict and daily reference calculation | Device | Works as normal |
+| Recognising what was photographed | Server | Treated as unrecognised, shown as caution |
+| Product data lookup | Server | Proceeds without the lookup |
+| Composing a new pictogram | Server | Only pre-built ones appear |
+
+What separates the top five rows from the bottom three is urgency. Reading a prescription is not the kind of thing that can be postponed for want of a connection, whereas a verdict still comes out without a product lookup. Whether this boundary actually behaves as stated was checked in §5.6 with the connection cut.
+
+One cost should be recorded. Running the model on the device means 16 MB is downloaded again whenever the model changes. Kept on the server, it could have been swapped without the user noticing. Between working without an internet connection and being fixable quietly, the former was chosen, and once the target users were settled this left no room for deliberation.
+
+### 4.2 Physical checks in the verdict engine
+
+Nutrition information arrives by three routes: OCR of a nutrition label, a product database lookup, and estimation from a food photograph. The three differ in reliability, and photograph estimation is the least reliable. The most recent models in this field give a mean absolute error of **253.7 kcal** for energy, 98.4 g for mass, 24.2 g for carbohydrate, 22.1 g for protein and 14.3 g for fat (Chen, T. et al., "NutritionVerse-Direct: Exploring Deep Neural Networks for Multitask Nutrition Prediction from Food Images," arXiv:2405.07814, 2024).
+
+How large an energy error of 253.7 kcal is becomes clear against the thresholds in §2.4. Against a daily 1,800 kcal at age 70 it is **14%**, and taken against a 700 kcal meal it is more than a third. That is not accuracy sufficient to judge "may I eat this" from a single photograph. This route was kept anyway because local food in the target regions is in no product database, and for that reason values from this route reach the screen only after passing exactly the same physical checks as the other two.
+
+SnapCare therefore applies the same checks regardless of which route a value came in by.
+
+[Table 20] Checks a value must pass before it is accepted
+
+| Check | Content |
+|---|---|
+| Range | Is each nutrient within a physically possible range |
+| Subset | Saturated fat ≤ total fat, sugars ≤ carbohydrates |
+| Mass balance | Does the sum of nutrients exceed the total mass |
+| Atwater identity | 4·carbohydrate + 4·protein + 9·fat ≈ energy |
+
+The Atwater identity is particularly useful. It is a relation that must hold for values from any source, so the consistency of the values themselves can be checked without having to trust the source.
+
+There was a case where this check was genuinely needed. During development the label parser was found reading the fat value at ten times its actual figure while discarding correctly read carbohydrate and protein values. The Atwater check does not let that combination through.
+
+The checks are gathered into a single function in front of the verdict engine. All three routes pass through this function before anything becomes a value.
+
+```ts
+export function validateDensity(per100: NutrientAmounts): ValidationResult {
+  const problems: string[] = [];
+
+  for (const [k, v] of Object.entries(per100) as [NutrientKey, number][]) {
+    const b = BOUNDS[k];                                   // ① physical range
+    if (b && (v < b[0] || v > b[1])) problems.push(`${k}=${v} out of range ${b[0]}–${b[1]}`);
+  }
+
+  if (gt(per100.sugars, per100.carbohydrates)) problems.push('sugars > carbohydrates');
+  if (gt(per100.saturatedFat, per100.fat)) problems.push('saturatedFat > fat');   // ② subset
+
+  const mass = (['carbohydrates', 'fat', 'protein', 'fiber', 'salt'] as NutrientKey[])
+    .reduce((s, k) => s + (per100[k] ?? 0), 0);
+  if (mass > MASS_LIMIT) problems.push(`mass ${mass.toFixed(1)} g per 100 g`);     // ③ mass balance
+  ...
+}
+```
+
+Design intent. The checks were gathered in one place rather than placed on each route. Placing them per route means reattaching them every time a route is added, and a route where someone forgot to attach them immediately becomes an unverified channel. The third route (photograph estimation) did in fact arrive later in this app, and no additional verification code was written for it. It was simply made to pass through the gate that already existed.
+
+Returning `problems` as an array of strings rather than a boolean is also deliberate. When a value is rejected the screen has to be able to say what went wrong rather than "could not read it," and during development those strings become the log directly. It was these strings that surfaced the case of the fat value read at ten times its figure.
+
+
+### 4.3 Choosing the hardware link
+
+Connecting the phone to the dispenser was a problem with several constraints applying at once.
+
+[Table 21] Connection methods considered and why each was excluded
+
+| Method | Reason for exclusion | Nature |
+|---|---|---|
+| Web Bluetooth | iOS forces WebKit on all browsers, so `navigator.bluetooth` does not exist | Platform constraint |
+| Direct `fetch` from an HTTPS page to the device | Mixed content blocking. The request never leaves the browser | Platform constraint |
+| Cloud broker (MQTT over wss) | Solves all three problems but **requires internet on both sides** | Conflicts with the target environment |
+| Dropping iOS support | Android share is 86.6% in Africa, 90.9% in Latin America and about 95% in India, so there is a basis, but **it contradicts the product's claim of working for anyone** | Our own principle |
+
+The first two are set by the platforms and cannot be worked around, the third is unacceptable as long as low-infrastructure regions are the target, and the fourth we ruled out ourselves. The last row of Table 21 is different in nature from the rest, which should be stated. Technology did not block it; we narrowed the options to keep the product's claim.
+
+The remaining route is top-level navigation. An HTTPS page cannot `fetch` an HTTP device, but navigating to that address is not blocked. The app therefore builds a link to the device's save address, and one press from the user has the device store the schedule and show a confirmation page. No broker and no cloud are required, and the whole thing completes inside the home.
+
+#### Adding a relay path
+
+The reason for excluding the cloud broker in the third row of Table 21 was that it "requires internet on both sides." That sentence is true when relying on that route alone. Since the LAN route above is already complete, adding an internet route on top of it does not increase the requirements.
+
+That judgement was reached because a problem remained that the LAN route does not solve. The person managing the prescription is usually not in the house. The carer is at work and the dosing time changes on a Tuesday afternoon. And the two constraints excluded earlier in §4.3 remain in force on the LAN route. Mixed content means the app cannot call the device's API, so all a link can carry is the fields the legacy compatibility URL accepts. There is no field there for days of the week and none for duration. A Monday-Wednesday-Friday prescription goes out all seven days, and a 30-day prescription goes out until the tray is empty.
+
+The dispenser was therefore made to hold open one outbound connection to a relay. The direction is outbound because home routers do not open a port to the dispenser, and asking them to is not something to ask for. The relay being HTTPS removes the mixed content problem, and days of the week and duration ride along.
+
+The relay cannot read what it carries. Everything passing through is AES-256-GCM, and the key that opens it is derived independently on both sides from ten characters printed on the device. Neither side ever sends that key. The relay is given a different branch of the same derivation, a value sufficient to distinguish mailboxes and useless for opening them.
+
+```
+printed code ──HKDF──► device id      the relay's address    (relay sees it)
+             ──HKDF──► access token   rights to that mailbox (relay sees it)
+             ──HKDF──► box key        opens the schedule     (relay never sees it)
+```
+
+This is one more channel rather than a dependency. The schedule is already on the device's SD card and the time is known to the DS3231. Whether the relay is down, unreachable or never configured at all, nobody's dose is missed. The judgement in Table 21 stands. We still do not require a cloud.
+
+### 4.4 Reading the paper form
+
+The original open-source design for the dispenser performs all configuration through a 2.8-inch touchscreen. This collides head-on with SnapCare's premise. A screen with a text menu that has to be read is the very thing we are removing.
+
+The screen was therefore removed and replaced with a paper form. A doctor or pharmacist marks the form, and the patient only has to photograph it. Reading is performed by an OpenCV parser the team built.
+
+Reading has four stages. ArUco markers at the four corners of the form are located and the perspective corrected (flattened to 1000×1000), adaptive thresholding is applied, the fill ratio of each bubble is measured at coordinates given in a configuration file, and what has been marked is decided from those ratios. If the markers are not found, no value is invented and an error meaning "the whole sheet is not in frame" is returned.
+
+There is one judgement embedded in the rule for deciding values. Items where only one option may be chosen (tray number, duration, time of day) are handled differently from items where several may be (days of the week). The former picks the single darkest cell but only if the gap from the runner-up is sufficient, and otherwise yields no value and reports a problem. Picking plausibly among ambiguous marks is the worst failure on this route. A misread dosing time is more dangerous than no value read at all.
+
+```python
+if group["mode"] == "one":
+    ranked = sorted(s.items(), key=lambda kv: -kv[1])
+    best, second = ranked[0], ranked[1]
+
+    if best[1] < abs_min:                      # ① nothing filled in
+        values[name] = None
+        problems.append(f"{name}: nothing filled")
+
+    elif second[1] >= abs_min:                 # ② both properly filled in
+        # Looking only at the gap between the two would quietly pick whichever
+        # the pen covered more on a sheet where someone changed their mind and
+        # did not erase the first mark. The paper is saying two different
+        # things, and only the person who wrote it knows which one it was.
+        values[name] = None
+        problems.append(f"{name}: two boxes filled ... erase one and retake")
+
+    elif best[1] - second[1] < margin:         # ③ does not separate
+        values[name] = None
+        problems.append(f"{name}: ambiguous ...")
+
+    else:
+        values[name] = best[0]
+else:                                          # multi-select items (days of week)
+    picked  = [k for k in group["bubbles"] if s[k] >= abs_min]
+    unclear = [k for k in group["bubbles"] if abs_min - margin <= s[k] < abs_min]
+```
+
+Design intent. That branches ①, ② and ③ all end by yielding no value is the character of this function. Branch ② especially. When two cells are both properly filled in, picking the darker is technically easy, but it manufactures something the paper did not say.
+
+A named problem (`problems`) sends the user back to the paper and is recoverable. A confident misreading is not. This is why the reader has to be able to say "I do not know," and it is the same principle as the parser in §2.2 turning an invented name into an error rather than a picture, and the checker in §5.2 not lowering the pass criterion to fit the results.
+
+For multi-select items such as days of the week, the `unclear` marks, those too ambiguous to call either empty or filled, are collected separately and reported alongside. Yielding a value while also saying what is doubtful is better than dropping something silently.
+
+#### Measuring where degradation breaks it
+
+We wanted how rough a photograph the parser can still read to be recorded as a measurement rather than an opinion. Testing an optical mark reader normally means printing the form, filling it by hand and photographing it under various lighting, and repeating all of that whenever the code changes. Then nobody runs it, and behaviour under poor conditions stays a guess.
+
+Photographs are therefore generated. Starting from a real form image, bubbles are filled the way a person fills them (off centre, underfilled, sometimes spilling past the outline), and that sheet is put through what a phone camera does to it: perspective from holding it at an angle, a lighting gradient from standing with a window behind, defocus, sensor noise, JPEG compression. The result is an image the parser has never seen and whose correct answer is known exactly.
+
+With this generator each degradation was pushed until reading broke. A point counts as passing only if every trial at that point was read correctly.
+
+[Table 22] The last point at which reading stayed at 100% (16 images per point)
+
+| Degradation | Last value read entirely correctly | At the next value |
+|---|---|---|
+| Defocus | 2.0 px | Collapses at 2.5 px |
+| Perspective skew | 0.18 | Collapses at 0.22 |
+| Sensor noise | σ = 32 | 81.2% at σ = 48 |
+| Mark fill level | 0.4 | 50.0% at 0.3 |
+| Shadow | 0.9 | **Did not break within the range tested** |
+| Brightness | 0.25× | **Did not break within the range tested** |
+| JPEG quality | 8 | **Did not break within the range tested** |
+
+The bottom three rows are lower bounds rather than limits. They mean 100% was maintained to the harshest value tested, and where they break beyond that is unknown. Reading them as limits would record the parser as worse than it is, so they are marked separately.
+
+What has to be read here is not the left of Table 22 but what the right two rows mean. Robustness to shadow and brightness comes from adaptive thresholding setting its threshold locally, and surviving JPEG quality 8 comes from what is being read being a filled area rather than a fine pattern. The two that collapse are different in nature. Defocus and mark fill erase the boundary of the bubble itself. Half being wrong at fill 0.3 is because at that lightness the difference between filled and unfilled becomes smaller than the paper's own blotching.
+
+Two practical instructions come out of this. Fill more than half the box when marking, and focus when taking the photograph. Nothing else needs worrying about. Dark, shadowed or poor quality makes no difference. That is also why the guidance printed alongside the paper form says only these two things.
+
+![Figure 15](fig/fig14_formsheet.png)
+
+**[Figure 15]** The paper form and what was read from it. On the left is the photograph actually fed to the parser, having been through perspective, a lighting gradient, defocus and sensor noise. On the right are the values read from that photograph and the fill score of each cell. The gap between the chosen cells and the rest (0.67–0.71 against 0.00–0.04) shows the reading was not a near miss at the boundary. The values match exactly the answers set when the image was generated.
+
+### 4.5 Offline operation
+
+The app is built as a PWA, with a service worker caching screens, assets and the model. The strategy differs by the nature of the resource. Navigation is handled network-first so that the latest is always fetched when connected, while static assets and pictograms are handled cache-first. The verdict API is not intercepted, because failing is better than serving a stale answer.
+
+The branching of the strategy is visible directly in the service worker's `fetch` handling.
+
+```js
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // The verdict API is not intercepted. Failing is better than giving a stale
+  // answer, and the app code (cached profile and pictograms) already covers
+  // being offline.
+  if (url.pathname.startsWith('/api/')) return;
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(networkFirst(event.request));   // navigation: latest first
+    return;
+  }
+
+  if (url.pathname.startsWith('/_next/static/') ||
+      url.pathname.startsWith('/pictograms/') ||
+      url.pathname.startsWith('/models/') ||          // 16 MB nutrition model
+      url.pathname.startsWith('/ocr/')) {             // OCR worker, core, language data
+    event.respondWith(cacheFirst(event.request));
+  }
+});
+```
+
+Design intent. The three branches are three different judgements.
+
+The verdict API is not intercepted because what this app handles is medicine. Returning a cached verdict leaves the user with no way of knowing whether it is today's answer or yesterday's. A failure is noticed by the user; a stale success is not.
+
+Putting the model and OCR assets under cache-first was the fix for a defect found during development. The whole point of the app is that it computes verdicts on the device without an internet connection, yet the 16 MB estimation model was missing from the cache list. The computation ran on the device while the model to perform it could not be fetched, so the offline claim was only half true.
+
+These assets are nonetheless not prefetched. They are fetched on first use. Demanding 16 MB at the first screen makes the app look as though it has not opened at all where the network is slow, and that is precisely where our users are. One feature arriving late is better than the app not opening.
+
+Cache names carry an asset fingerprint. A pictogram's address is derived from its DSL string, so replacing a picture does not change the address, and without a fingerprint anyone who visited even once would keep being served the old picture. When `qty_four` was fixed and re-rendered (§5.2), the fingerprint changed and all 113 cached pictograms were re-rendered as a set. Without the fingerprint those users would have gone on seeing the four rings from before the fix.
+
+### 4.6 Privacy
+
+Because health information is involved, measures were needed on both storage and transmission.
+
+[Table 23] Privacy-related design
+
+| Item | Content |
+|---|---|
+| Photographs | **Not stored.** Only the verdict is kept and the image is discarded |
+| Verdict history | Automatically deleted after 90 days |
+| Server backup | Encrypted on the device before transmission. The server cannot decrypt it |
+| Identity | Requests signed with an ECDSA private key generated on the device. The key is `extractable: false` and cannot leave the browser |
+| Access control | The storage location is derived from the public key. There is no way to request another person's data |
+| Transmission | Signatures travel in a request header. They do not appear in the address bar or in access logs |
+
+The last three of these are fixes for problems found during development. The initial implementation passed a random string as a query parameter, which meant the key granting access to health information accumulated in server logs, and anyone who observed the value once could reproduce it.
+
+The fix was to use a key pair instead of a string.
+
+```ts
+// extractable: false — this one word is the point. With true, anyone who read
+// the storage takes the key with them, and then it is no different from using
+// a string.
+const pair = await crypto.subtle.generateKey(ALG, false, ['sign', 'verify']);
+
+export async function sign(method: string, body: string, ts: number): Promise<string> {
+  const { privateKey } = await keyPair();
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(body));
+  const payload = `${ts}.${method}.${b64(digest)}`;
+  return b64(await crypto.subtle.sign(SIGN, privateKey, new TextEncoder().encode(payload)));
+}
+```
+
+Design intent. The second argument to `generateKey` being `false` means not even our own code can read the private key. All we can do is ask the browser to sign with it. Taking the device's entire storage therefore yields nothing worth taking. It becomes something usable only by holding that device rather than a value that can be observed and imitated.
+
+What is signed is composed for reasons of its own. The timestamp (`ts`) is included so that anyone intercepting a signature cannot replay it later. Because the time is inside the signature the server can reject stale ones, and in practice requests older than five minutes are refused. The body hash is included so that a signature cannot be detached and attached to different content. Missing either one makes the signature worthless.
+
+Deriving the household ID as the SHA-256 hash of the public key follows the same reasoning. It removes the registration step, and requesting someone else's data would require their private key, which cannot leave their device. Access control becomes structural rather than a rule.
+
+
+### 4.7 The repository and how the team worked
+
+The web app, the hardware firmware and the training code are managed in a single repository. It will be transferred to the contest organisation's GitHub organisation for final submission.
+
+[Table 24] Composition of the repository (as of 29 July 2026)
+
+| Area | Files | Lines | Responsibility |
+|---|---|---|---|
+| `app` · `components` | 41 | 5,439 | Screens and flow |
+| `lib` | 68 | 7,143 | Verdict, nutrition, inference, sync |
+| `engine` | 107 | 13,934 | SIGIL morphemes and composition |
+| `pill_dispenser` | 109 | 22,032 | Firmware and paper form reading |
+| `nutrition_manager` | 61 | 59,083 | Nutrition model training and evaluation |
+| `docs` | 43 | 43,700 | Proposal and figure generation |
+
+There is a reason the repository was not split. What breaks most often in this project is not the individual parts but the agreements between them. The cause of 0 passes out of 28 in the formative evaluation in §5.1 was a missing connection rather than a defect in any single feature. With the repository split, that connection cannot be tested in one go, and there is no way to tell which side changed first.
+
+In practice three kinds of test in this repository each require something different.
+
+[Table 25] Three kinds of test
+
+| Kind | Count | What it needs |
+|---|---|---|
+| Web app (`node --test`) | 174 | Node only |
+| Paper form and scheduling (`pytest`) | 105 | OpenCV |
+| Firmware protocol and scheduler | Host build | A C++ compiler only |
+
+All three run without the hardware. No servo, no Raspberry Pi and no network is needed. Making code that runs on a device you cannot attach a debugger to verifiable by anyone in a few seconds is the purpose of this arrangement, and bringing the whole firmware up on a laptop with `make run` (Figure 11, right) comes from the same principle.
+
+Roles were divided as follows. Yunsu Nam took the web app and the SIGIL and VOCA engines, Dohun Kim took the hardware firmware, the paper form reading and the nutrition estimation model, and the Moldovan team took 3D printing, mechanical design and screen design. Over 11 days 194 commits accumulated.
+
+There is a condition attached here as well. This project used AI coding tools throughout development, and we do not hide it. Nowhere was what a tool produced left as it stood. The defects recorded in this document, such as 12 of 37 citations differing from their sources (§5.8) or the morpheme checker passing four rings as "four" (§5.2), were all found by a person checking again. What this repository sets out to show is not that tools were used but how the results were verified.
+
+---
+
+## □ Results and Expected Impact (SDG 3 Contribution)
+
+### 5.1 Formative evaluation: whether the information arrives
+
+The first thing to ask once the app was built was whether the necessary information actually reaches the screen.
+
+To measure this reproducibly, 28 runs were constructed from four sample prescriptions crossed with seven user conditions, and the output of each run was scored on six items. Scoring is done by matching rules against the strings and speech targets actually present on the screen rather than by human judgement. It is therefore reproducible, and if a scoring rule is wrong the rule can be corrected and the whole thing rerun.
+
+The record left by one run looks like this.
+
+```json
+{
+  "stimulus": "antibiotic",   "kind": "rx",   "member": "none",
+  "glyphs": 9,                "reached": true,
+  "scores": {
+    "D1 item identified": true,  "D2 dose per intake": true,  "D3 times per day": true,
+    "D4 timing and context": true,  "D5 storage": true,  "D6 contraindication": true
+  },
+  "all6": true
+}
+```
+
+Design intent. The scoring result is not reduced to a single true or false but kept per item. Keeping only the figure "27/28" leaves no way of knowing what failed and why, and no way of knowing what to fix next. Which item the single failure reported in §5.1 was (`D5`) and under which condition (`member: none`) were read directly from this record.
+
+Counting `glyphs` alongside has a reason too. All six items can be true while not a single picture appears. That is the state where delivery happens only through sentences and speech and the pictogram route is dead. Eight of the 28 runs before the fix were exactly that, and had we been watching only the item scores those eight would have passed as "partially successful."
+
+[Table 26] Scoring items in the formative evaluation
+
+| Item | What it confirms |
+|---|---|
+| D1 item identified | Is what was photographed conveyed |
+| D2 dose per intake | Is the number of tablets or millilitres present somewhere |
+| D3 times per day | Is how many times a day stated |
+| D4 timing and context | Does the number of listed times match the frequency, and is the mealtime context conveyed |
+| D5 storage | When refrigeration is needed, is that conveyed |
+| D6 contraindication | Does it appear when something must be avoided, and stay absent when it need not |
+
+In the initial measurement, **0 of 28 runs satisfied all six items**. The cause was a missing connection rather than a defect in any individual feature. Dose and storage information reached the pictograms from OCR but not the speech and the sentences, pregnancy contraindications were not passed to the verdict engine, and with the pictogram cache empty not a single picture appeared on the verdict screen.
+
+After fixing this and rerunning the same 28, **27 satisfied all six items.**
+
+We state what the one that did not was. In the run where a user with no registered conditions photographed a cereal, D5 (alternative suggestion) did not appear. It appeared in all three remaining runs where the same cereal was photographed by users with peanut, gluten and blood thinner conditions.
+
+This was not fixed as a defect. The alternative suggestion is derived from the reason for avoidance, as described in §2.7, and for a user with no reason to avoid anything there is nothing to derive from. Telling someone with no conditions to "choose that instead of this" would require inventing the grounds, and that is something this app has decided not to do. This one case is therefore the result of applying the scoring items uniformly across all runs rather than a feature failing to work. Splitting the scoresheet by condition would make it 28/28, but under the principle of not adjusting scoring criteria to fit results it is left as it is.
+
+[Table 27] Formative evaluation results
+
+| | Before fix | After fix |
+|---|---|---|
+| All six items satisfied | 0 / 28 | **27 / 28** |
+| Runs ending with zero pictograms | 8 / 28 | 0 / 28 |
+
+It should be made clear that what this evaluation measured is the arrival of information rather than human understanding. The latter has to be asked of people and lies outside the scope of this evaluation.
+
+![Figure 16](fig/chart06_formative.png)
+
+**[Figure 16]** Formative evaluation before and after the fix (n = 28). The left pair is the number of runs satisfying all six items, the right pair the number of runs ending without a single pictogram appearing. More than 0 becoming 27, **the move from 8 to 0 on zero pictograms** is what this evaluation yielded. Those eight arose from an empty cache rather than a missing feature, and without measuring we would have discovered them first during the demonstration.
+
+
+### 5.2 A procedure for verifying pictogram comprehension
+
+As established in §1.8, making a pictogram does not mean it will be read. Of 108 international standard pictograms, only 17 passed the ANSI 85% criterion (Gutierrez et al., 2022).
+
+Comprehension testing requires assembling people, however, so it is expensive and hard to repeat. As a result most pictogram sets are evaluated after they are built, and by the time a problem is found they have already been released.
+
+This work designed a procedure that inverts that order. Two gates are placed on each pictogram.
+
+[Table 28] The two gates of pictogram verification
+
+| Gate | What it judges | Method |
+|---|---|---|
+| 1. Mechanical check | Does the form survive being shrunk | Ink ratio, survival of interior holes at 32px, number of separate blobs |
+| 2. Semantic check | Is it read as intended | The picture is shown and **"what does this look like"** asked as an open question |
+
+The form of the question at the second gate matters. Asking "is this a peanut" mostly gets a yes. No options are therefore given and a description is requested, and whether the answer matches the intent is judged separately. This is the same reason the ISO 9186 comprehension test presents no options.
+
+The 512px original and the 32px reduction are also shown together, with the answer given against the reduction, because the reduction is the size actually seen in a list.
+
+
+#### The retry strategy
+
+Placing gates is only half of it. Pictures that fail have to be remade, and the retries have to converge.
+
+At first a fixed ladder of instructions was climbed according to the attempt count: fail the first attempt and instruction 1 is added, fail the second and instruction 2 is added. The second rung of that ladder was "draw the form heavier," and giving that instruction to a picture that failed for being too clotted pushes it further in the direction that failed. That is why the ink ratio of `food_bread` spun through 0.52, 0.47 and 0.51 across three attempts. The retries oscillated instead of converging.
+
+The checker already knows why something failed. Counting attempts without using that reason is the same as rolling the same die again, and each roll costs money. Instructions were therefore hooked to the reason.
+
+```python
+def escalate(c: 'Check | None') -> str:
+    """Retry **according to the reason** for the previous failure."""
+    r = ' · '.join(c.reasons)
+
+    if 'clotted' in r:
+        return (' The shape came out far too heavy. Draw it noticeably smaller inside the frame '
+                'with wide empty white space around it, and punch two or three much larger white '
+                'holes through it. Keep it a solid filled black silhouette — do not turn it into '
+                'a hollow outline drawing with an empty white interior.')
+    if 'too thin' in r:
+        return (' The shape came out too thin and sparse. Make every black part much thicker and '
+                'heavier, and let it fill more of the frame.')
+    if 'count' in r:
+        return (' The number of separate shapes was wrong. Draw exactly the number stated, each '
+                'one fully detached from the others with wide white space between them.')
+    if 'misread' in r:
+        return (f' The previous attempt was misread: it {r.split("—")[-1].strip()}. '
+                'Redraw it so the object is unmistakable at a glance: change the shape and the '
+                'outline, not the weight.')
+```
+
+Design intent. The four branches push in four different directions. The last one matters especially. A meaning that came out wrong is a problem of form rather than of weight, so telling the model to adjust thickness makes it draw the wrong picture more sharply wrong. After this branch was added, all four symbols that had previously failed passed on the second attempt.
+
+The last sentence of the first branch was paid for as well. It originally said only "hollow it out," and what came back was an outline drawing rather than a filled silhouette. The weight dropped, but the rest of the set is all filled silhouettes so the visual language became mixed, and above all `qty_one` became a ring rather than a filled dot and read as "0" rather than "1." The method of reduction was therefore restricted to "smaller, with holes punched through" and "do not turn it into a hollow outline" was stated explicitly.
+
+The same defect appeared once more later. `qty_four` had remained as four rings rather than four filled dots, and in a counting picture an empty ring reads as zero, while one, two, three and five in the same set are all filled dots, so it alone followed a different rule within the set. Why the checker passed it is clear: four rings is still correctly "four." This means something can pass both the counting check and the meaning check and still be wrong, and this is the point taken up again as a limitation of the procedure in §5.4.
+
+#### Results across all 78 morphemes
+
+Applying this procedure to all 78 morphemes gave the following.
+
+[Table 29] Semantic check results for the 78 morphemes
+
+| Category | Count |
+|---|---|
+| Read as intended | 54 |
+| Read differently | **24** |
+
+Of the 24 read differently, 7 are actually exposed on screen, while the remaining 17 exist only in the dictionary and are never called by the app. The 7 that are exposed were reworked with the misreading fed back into the prompt, with the improvements shown below.
+
+![Figure 17](fig/chart07_glyph_check.png)
+
+**[Figure 17]** First-pass semantic check results for the 78 morphemes and the breakdown of the 24 misread. The misreadings are split rather than pooled because the two are different in nature. The 7 exposed on screen are actually seen by users and have to be fixed, while the 17 that exist only in the dictionary are not yet seen by anyone. Fixing the former first is a matter of allocating effort and does not mean the latter are acceptable.
+
+
+[Table 30] Morphemes improved by rework
+
+| Morpheme | Previously read as | After |
+|---|---|---|
+| `tree_nut` | cracked egg | walnut |
+| `inhaler` | letter l | inhaler spraying |
+| `symptom_gut` | lightning bolt icon | stomach with lightning bolt |
+| `glucometer` | key fob | glucose meter |
+| `sugar` | three hexagons / three dice | spoon with powder |
+| `tablet_blister` | die showing four | pill blister pack |
+| `food_bowl` | circle with line | bowl of hot food |
+
+The improvement to `tree_nut` matters particularly. Its being read as "cracked egg" is not simply a misreading, because a different allergen, `egg`, exists in the same set. Two different allergy warnings were being read as the same picture.
+
+### 5.3 Morphemes judged unimprovable
+
+Five symbols were reworked without improving. These differ in nature from the seven above.
+
+[Table 31] Morphemes not improved and why
+
+| Morpheme | Problem | Judgement |
+|---|---|---|
+| `suppository` | Identical in form to a bullet. Adding packaging made it read as "bomb" or "rocket" | Form alone does not separate them |
+| `body_skin` | Drawn as texture it becomes waves, as an arm it clots, as a finger it becomes a footprint | "Skin" is not an object that can stand alone |
+| `time_evening` | The sun rising and the sun setting differ **only by direction** | A still picture has no direction |
+| `sesame` | Seeds in a pod worked better than scattered seeds, but `soy` is already a bean pod | **Collides within the set** |
+| `sachet` | The tear serration of a medicine sachet and the crimp of a sweet wrapper are the same shape in silhouette | Form alone does not separate them |
+
+These five are set out because they show where the limits of the pictogram as a medium lie. All seven that could be improved were resolved by choosing a better object, whereas for these five the concept itself does not hold as a standalone silhouette.
+
+The rework log for `sachet` is worth keeping. Two directions were tried and both failed.
+
+First, the side serration was removed and the powder drawn as small white dots. It was still a "candy wrapper." The diagnosis that the cause was the serration rather than the notch was not itself wrong; what remained after removing the serration was still a sweet wrapper. The worse part is the "small white dots." Those dots **disappeared entirely at 32 pixels (21 to 0).** The very failure the mechanical check in §5.2 exists to catch was produced by the instruction meant to avoid it.
+
+Second, the subject was changed to the moment of tipping the sachet to pour. It was read as "ice cream cone" and "cocktail shaker pouring." A widening wedge becomes a cone. A third attempt was refused by the image generation API; a request to draw "pouring powder" was classified as drug misuse.
+
+The failed pictures were not installed. The assets remain as they were and the prompt was reverted. What was kept is only the record of the attempts. The checker's expected value was, however, changed from a concept name to a sentence. Matching on the name alone is loose enough that the next person running the same check might see this failure as a pass.
+
+For four of these five, speech fills the place on screen. As described in §3.5, pressing a picture makes it say what it means, so `sachet` can be heard as "The powder sachet." even when it is not recognised. Having one more layer where the picture failed is what the three-layer design in §2.1 actually does.
+
+### 5.4 Limits of the measurement
+
+The figures from the previous two sections share a characteristic. Both come from a machine scoring a machine rather than from asking people. This section sets out what those figures say and what they do not.
+
+The results in this section carry three limitations, which are stated alongside them.
+
+First, no people were asked. The semantic check above put the question to a vision language model rather than to people. It therefore cannot be compared directly with the prior figures in Table 6 (17 of 108 passing ANSI). The value of this procedure lies not in replacing testing with people but in filtering obvious misreadings beforehand and saving the cost of one round of testing.
+
+Second, the judgement wavers at the boundary. There were cases where the same picture passed on one run and failed on another (`symptom_cough` being read as "person breathing out"). This check is therefore a gate rather than a verdict, and it was made a principle not to adjust the pass criterion until every item passes.
+
+Third, the scorer and the scored may share the same kind of failure. A vision language model is built by learning the world's pictures, so the more conventional and widespread a representation is, the better it recognises it. Yet it is exactly that convention which varies by culture (Table 6), and that is what concerns us. This check is therefore strong at measuring "did it follow common convention" and weak at measuring "does it work for someone who does not know this convention." No guarantee that the 54 symbols which passed will work as they are for older Moldovan users comes out of this.
+
+Putting the three together makes clear what the procedure in §5.2 is. It is a sieve for filtering obvious misreadings before asking people, not a substitute for asking them. The 24 it filtered out are ones that would have consumed testing time and returned the same answer had they been shown to people.
+
+### 5.5 Measured performance of the nutrition estimation model
+
+The model used on the meal photograph route was scored against the official RGB test split of Nutrition5k. The deployed file itself (`web.onnx`) was run with the same preprocessing as the browser: short side resized to 258, 224 centre crop, divided by 255.
+
+[Table 32] Per-item error of the nutrition estimation model (n = 507)
+
+| Item | MAE | MAE% | Test set mean |
+|---|---|---|---|
+| Energy | 58.12 kcal | 22.75% | 255.5 kcal |
+| Mass | 32.97 g | 16.61% | 198.5 g |
+| Fat | 4.21 g | 32.82% | 12.8 g |
+| Carbohydrate | 6.02 g | 30.60% | 19.7 g |
+| Protein | 5.41 g | 30.96% | 17.5 g |
+| **Mean** | (| **26.75%** |) |
+
+MAE% follows the official definition: the mean absolute error divided by the mean of the ground truth, not the mean of per-dish ratios. The 507 scored are all the dishes in the 709-item test split for which an overhead frame exists. The official protocol uses overhead frames only, and mixing in side frames produces different numbers and quietly manufactures a value that cannot be compared.
+
+The same figures were recorded in the exported model's metadata, but rather than transcribing them we obtained the data and measured again. All five items matched to two decimal places. If checking citations against their sources has established anything in this document, it is that a value written down somewhere and the value its source actually states are frequently different.
+
+**These figures must not be placed alongside the citation in §4.2.** The 253.7 kcal energy error from NutritionVerse-Direct was measured on a different dataset, NutritionVerse-Real, while our 58.12 kcal was measured on Nutrition5k. Different data means different difficulty, so comparing the magnitudes of the two is meaningless. The two are presented together not to rank them but to show that this field as a whole still cannot determine nutrition from a single photograph.
+
+Our own values show that directly. Mass is comparatively better at 16.61%, but fat, carbohydrate and protein all exceed 30%. Fat at 4.21 g looks small in absolute terms, but the test set mean for fat is 12.8 g, which means **roughly one dish in three is wrong on fat by a third**. Energy at 58.12 kcal is 3.2% of the daily 1,800 kcal at age 70 in §2.4 and is tolerable on a daily basis, but taken against a 700 kcal meal it is 8%.
+
+Values from this route are therefore not trusted on the grounds of accuracy. What justifies putting this route on screen is that it passed the physical checks in §4.2 and that the verdict is presented not as this single value but as a share of the user's own reference. For products carrying a nutrition label this route is not used.
+
+![Figure 18](fig/chart08_model_mae.png)
+
+**[Figure 18]** Per-item MAE% of the nutrition estimation model (n = 507). The dashed line is the mean across the five items (26.75%). Mass and energy are relatively better and the trace items get worse, because a photograph of a plate shows volume but not composition. The same volume of rice and the same volume of fried food have similar mass and completely different fat.
+
+#### Quantisation not applied
+
+An int8 quantised build reducing the model to 4.86 MB was also exported but not deployed.
+
+[Table 33] float32 compared with int8
+
+| | Size | Mean MAE% | Energy MAE |
+|---|---|---|---|
+| float32 (deployed) | 16.04 MB | **26.75%** | 58.12 kcal |
+| int8 | 4.86 MB | 52.51% | 106.21 kcal |
+
+The size falls to a third while the error roughly doubles. For an app targeting places with slow networks, saving 11 MB is no small temptation, but energy error growing from 58 kcal to 106 kcal widens the band in which the verdict flips. **Deciding in §4.5 not to prefetch this model but to fetch it on first use is the counterpart to this choice.** Instead of trading accuracy for size, the size was kept and the moment of fetching deferred.
+
+### 5.6 Measured offline operation
+
+The claim that verdicts are computed on the device without an internet connection was verified. After building for deployment, the following were confirmed with the server shut down.
+
+[Table 34] Offline operation check
+
+| Item checked | Result |
+|---|---|
+| Does the app open | Normal |
+| Does the nutrition model (16 MB) respond | 200 from cache |
+| Does navigation work | Normal |
+
+In the course of this the model file was found to be missing from the service worker's cache list and was fixed. Before the fix, the computation ran on the device while the model to perform it could not be downloaded. Having a registered service worker and the app running end to end with the connection cut are different facts, and this defect would not have surfaced had only the former been checked.
+
+What survives when the connection drops and what does not divides as follows. With the connection cut, prescriptions and nutrition labels are still read, because text recognition and form parsing run entirely on the device (§3.3). Food photograph estimation half survives. The on-device nutrition model runs from cache, but the vision model that identifies what the food is sits on the server, so values are produced while the item is treated as unrecognised and displayed as caution. Pictograms in the static list appear and ones that would have to be newly composed do not.
+
+This division matches the boundary described in §4.5. The most urgent things were placed on the device, so what dies first when the connection drops is the least urgent route. This check was made by cutting the connection in developer tools, however, rather than measured in an actual low-bandwidth environment. Having no connection and having a slow one fail differently, and the latter has not yet been measured (§5.8).
+
+### 5.7 Contribution to SDG 3
+
+The point at which SnapCare intervenes is the last step described in §1.4. The health system takes care of consultation and dispensing, but from the moment the patient opens the medicine packet at home it is left to their own ability to read.
+
+[Table 35] Correspondence with SDG 3 targets
+
+| Target | SnapCare's contribution |
+|---|---|
+| **3.4** Prevention and treatment of noncommunicable diseases | WHO nutrition recommendations are derived from the individual's energy requirement to produce a verdict. Diabetes and hypertension conditions narrow the thresholds |
+| **3.8** Universal health coverage | Reduces the literacy-driven gap at the self-management stage after care |
+| **3.d** Health risk management | Conveys completion of an antibiotic course in pictures, intervening in the human factor behind resistance |
+
+The link to 3.4 runs through the undiagnosed population described in §1.5. Of 589 million adults with diabetes worldwide, 43% do not know they have it, and they select "no" on the screen that asks about conditions. SnapCare asking about conditions along three branches (§2.5) is the response to this. Someone who does not know the diagnostic name can still answer what they have experienced, and the thresholds are narrowed from that answer. Given that the management of noncommunicable diseases happens over daily meals rather than in the consulting room, not requiring a diagnostic name is itself a way of widening who can be reached.
+
+The link to 3.8 comes from the workforce gap. As cited in §1.4, physician density varies more than thirteenfold by region, and when consultation time shortens the first thing cut is the explanation of how to take the medicine. Universal health coverage is generally measured by whether care and medicines are within reach, but if the instructions cannot be read once the medicine is in hand, coverage stops there. The 50% adherence figure cited in §1.4 is the size of that stopping point. Half disappears after the medicine has been prescribed, dispensed and handed over, so however much is invested in the earlier stages, leaving this one untouched lets that much leak away. What SnapCare sets out to reduce is this gap remaining after care, and it is a gap that divides along literacy.
+
+The link to 3.d is the most direct. An analysis of more than 23 million laboratory-confirmed infections reported from 104 countries found that in 2023 one in six bacterial infections showed resistance to antibiotics. Between 2018 and 2023 resistance rose in more than 40% of the monitored pathogen and antibiotic combinations, at an annual rate of 5% to 15% (WHO GLASS, 2025). In 2019, deaths directly attributable to bacterial resistance numbered 1.27 million, more than HIV/AIDS or malaria (Murray et al., 2022). Stopping an antibiotic once symptoms subside is the principal human route to resistance. And it is not the behaviour of a minority. A survey of 9,772 people across 12 countries found **32% believed it was acceptable to stop antibiotics once they felt better**, and 64% believed antibiotics work on colds and flu (World Health Organization, *WHO multi-country survey reveals widespread public misunderstanding about antibiotic resistance*, 2015).
+
+If one person in three believes that, the course length written on the prescription is not unread but read and not followed. On top of this come the people who cannot read it. If a duration written in text is never delivered in the first place, that instruction may as well not exist, and this is the point SnapCare's `finish_course` morpheme is aimed at. A picture alone does not change a belief, however, and what this morpheme does extends only as far as making the duration arrive.
+
+### 5.8 Unverified items
+
+We state what this proposal does not claim.
+
+First, no comprehension testing with people was carried out. The measurement in §5.2 concerns a machine, and whether the 67% criterion required by ISO 9186 is met has to be confirmed with people. Further, because misreading a dosing instruction leads directly to harm, we judge it appropriate to also apply the **critical confusion of 5% or less** required by ANSI Z535.3. The field evaluation plans to tally wrong answers separately as ordinary errors and as opposite-meaning errors.
+
+Second, cultural adaptation has not been verified. In the controlled comparison showing two sets to the same 46 people, 20 of 23 locally made pictograms passed the ANSI criterion while USP-DI managed 11 of 23 (Dowse & Ehlers, 2001). Pictogram comprehension therefore varies by culture. This set was designed in Korea and needs verification with Moldovan users.
+
+Third, no claim is made about clinical outcomes. This work measured the arrival of information and did not measure improvement in adherence or health outcomes.
+
+Fourth, the recovery path after a misclassification was not measured. Because the design does not have the user choose what they photographed (§3.3), if the app mistakes food for medicine there is nothing on screen for the user to correct it with and taking another photograph is the only option. This design made the user bear misclassification in exchange for removing the selection step, and how often that misclassification actually occurs was not measured. Nor was it confirmed whether users can notice that something has been read wrongly.
+
+Fifth, behaviour on a slow connection was not measured. The check in §5.6 was made with the connection cut entirely. Having no connection and having a slow one fail differently, and in the latter the request does not fail but hangs for a long time. `Estimating…` stays on screen throughout, and how long to wait before giving up and offering another route has not been settled. Given the connectivity of the target regions, this is likely a more common condition than a complete outage.
+
+### 5.9 Future plans
+
+[Table 36] Plans after the contest
+
+| Stage | Content | Rationale |
+|---|---|---|
+| 1 | Write service documentation and request expert review | Experts use the service and read the documentation before giving their opinion |
+| 2 | In-person evaluation with older Moldovan users | Addresses the first and second limitations in §5.8 |
+| 3 | Redesign morphemes confirmed as misread | The four in §5.3 need the concept itself reconsidered |
+| 4 | Formalise morphemes generated at runtime | Expand the set on the basis of the gap log the app leaves |
+
+Stage 2 matters most. Every measurement in this work confirmed whether information reaches the screen, and whether it is read by a person can only be learned by asking people.
+
+How that evaluation will be run is already settled. The method follows ISO 9186-1. One picture is shown with no options given, the person says what it looks like, and whether the answer matches the intent is judged separately. That this is the same form of question as the mechanical check in §5.2 is not a coincidence. The mechanical check was built in that form precisely in order to measure the same thing a test with people measures.
+
+The tally is split two ways. Ordinary wrong answers and opposite-meaning wrong answers are counted separately. ANSI Z535.3 requiring critical confusion of 5% or less alongside an 85% correct-response rate comes from the same judgement. For dosing instructions the latter matters more. Reading a picture wrapped in `no{}` as "take this" is worse than having no picture.
+
+The sample will be older Moldovan users, with the aim, as Table 6 showed, of measuring before and after cultural adaptation separately. The way Dowse & Ehlers showed two sets to the same 46 people is exactly the design we need. Testing the current set as it stands, redrawing locally the morphemes confirmed as misread, and asking the same people again would give us a figure for our own set corresponding to their 87% against 48%.
+
+It should also be recorded that we may not obtain it. That the pass rates in Table 6 spread from 15.7% to 87% means the comprehensibility of any one set is not predictable in advance in this field. What this work offers is not a claim to have a good set but a procedure for measuring a set before release, and whatever that procedure says about our set is the result.
