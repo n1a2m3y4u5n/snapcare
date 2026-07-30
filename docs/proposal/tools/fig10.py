@@ -9,10 +9,11 @@
 도판 안에 제목을 넣지 않는다(캡션은 문서 쪽).
 """
 from pathlib import Path
+from i18n import T, LANG, FIG as FIG_OUT, FIG_SRC
 
 HERE = Path(__file__).resolve().parent
-FIG = HERE.parent / 'fig'          # docs/proposal/fig
-PARTS = FIG / 'parts'              # 도판 조립에 쓰는 중간 재료
+FIG = FIG_OUT          # docs/proposal/fig
+PARTS = FIG_SRC / 'parts'              # 도판 조립에 쓰는 중간 재료
 ROOT = HERE.parents[2]             # 레포 루트
 
 from PIL import Image, ImageDraw, ImageFont
@@ -57,13 +58,13 @@ def pin(x, y, text, color=SUB):
 
 # ── 왼쪽: 결선 구조 ────────────────────────────────────────────────
 PX, PY, PW, PH = 152, 232, 128, 96
-box(PX, PY, PW, PH, 'Raspberry Pi 3B', '40핀 헤더 · BCM 번호', color=BLUE, fill=(220, 230, 245))
+box(PX, PY, PW, PH, 'Raspberry Pi 3B', T('40핀 헤더 · BCM 번호'), color=BLUE, fill=(220, 230, 245))
 
 PERIPH = [
-    (24, 40, 'DS3231 RTC', 'GPIO 2/3 (I²C) · 3.3 V', '전원이 끊겨도 시각을 안다'),
-    (24, 108, 'WS2812 링 12px', 'GPIO 18 · 330 Ω', '초록/파랑/호박/보라'),
-    (24, 352, '피에조 버저', 'GPIO 23 · 100 Ω', '2.7 kHz — 난청이 덜 미치는 대역'),
-    (24, 420, '확인 버튼', 'GPIO 24 → GND', '20 ms 글리치 필터'),
+    (24, 40, 'DS3231 RTC', 'GPIO 2/3 (I²C) · 3.3 V', T('전원이 끊겨도 시각을 안다')),
+    (24, 108, T('WS2812 링 12px'), 'GPIO 18 · 330 Ω', T('초록/파랑/호박/보라')),
+    (24, 352, T('피에조 버저'), 'GPIO 23 · 100 Ω', T('2.7 kHz — 난청이 덜 미치는 대역')),
+    (24, 420, T('확인 버튼'), 'GPIO 24 → GND', T('20 ms 글리치 필터')),
 ]
 for x, y, name, gp, note in PERIPH:
     box(x, y, 116, 46, name, gp)
@@ -73,21 +74,22 @@ for x, y, name, gp, note in PERIPH:
 # 서보 3개
 for i, (tray, gpio) in enumerate([(1, 17), (2, 27), (3, 22)]):
     sy = 196 + i * 58
-    box(322, sy, 106, 44, f'SG90 트레이 {tray}', f'GPIO {gpio} · 신호만')
+    box(322, sy, 106, 44, T('SG90 트레이 {tray}').format(tray=tray),
+        T('GPIO {gpio} · 신호만').format(gpio=gpio))
     wire(PX + PW, PY + 20 + i * 28, 322, sy + 22)
-d.text((322 * S, (196 + 3 * 58 + 4) * S), '트레이 4–8은 핀만 예약되어 있다', font=F(7), fill=MUTE)
+d.text((322 * S, (196 + 3 * 58 + 4) * S), T('트레이 4–8은 핀만 예약되어 있다'), font=F(7), fill=MUTE)
 
 # 전원 두 갈래 — 이 도판에서 가장 중요한 부분
-box(152, 400, 276, 86, '전원 레일이 둘인 이유', None, color=ORANGE, fill=(251, 229, 210))
-d.text((161 * S, 424 * S), 'Pi 전용 5 V 2.5 A  ·  서보·링 전용 5 V 2 A+', font=F(9), fill=INK)
+box(152, 400, 276, 86, T('전원 레일이 둘인 이유'), None, color=ORANGE, fill=(251, 229, 210))
+d.text((161 * S, 424 * S), T('Pi 전용 5 V 2.5 A  ·  서보·링 전용 5 V 2 A+'), font=F(9), fill=INK)
 d.text((161 * S, 440 * S),
-       'SG90 한 개가 걸리면 약 700 mA 를 끈다. 같은 레일에서 뽑으면 Pi 가',
+       T('SG90 한 개가 걸리면 약 700 mA 를 끈다. 같은 레일에서 뽑으면 Pi 가'),
        font=F(8), fill=SUB)
 d.text((161 * S, 453 * S),
-       '브라운아웃으로 내려앉고, 그 순간 쓰이던 파일이 "이 복용을 이미 줬는가"',
+       T('브라운아웃으로 내려앉고, 그 순간 쓰이던 파일이 "이 복용을 이미 줬는가"'),
        font=F(8), fill=SUB)
 d.text((161 * S, 466 * S),
-       '를 적는 파일이다. 접지는 공통으로 묶는다.', font=F(8), fill=SUB)
+       T('를 적는 파일이다. 접지는 공통으로 묶는다.'), font=F(8), fill=SUB)
 
 # ── 오른쪽: 기기 자신의 콘솔 ───────────────────────────────────────
 RX = 470
@@ -97,13 +99,13 @@ for name, y, h in [('_c_status.png', 40, 210), ('_c_log.png', 286, 140)]:
     im = im.resize((w * S, h * S), Image.LANCZOS)
     img.paste(im, (RX * S, y * S))
 
-d.text((RX * S, 262 * S), '기기 상태 — 시각·서보 백엔드·트레이별 GPIO·다음 복용', font=F(8), fill=MUTE)
-d.text((RX * S, 434 * S), '복용 기록 — 손으로 내린 것 한 건과 놓친 복용 두 건', font=F(8), fill=MUTE)
+d.text((RX * S, 262 * S), T('기기 상태 — 시각·서보 백엔드·트레이별 GPIO·다음 복용'), font=F(8), fill=MUTE)
+d.text((RX * S, 434 * S), T('복용 기록 — 손으로 내린 것 한 건과 놓친 복용 두 건'), font=F(8), fill=MUTE)
 d.text((RX * S, 466 * S),
-       '노트북에서 같은 펌웨어를 그대로 띄운 것이다. 서보 드라이버만 기록용으로',
+       T('노트북에서 같은 펌웨어를 그대로 띄운 것이다. 서보 드라이버만 기록용으로'),
        font=F(8), fill=SUB)
 d.text((RX * S, 479 * S),
-       '바꿨고 API·스케줄러·저장은 기기에서 도는 것과 같은 코드다.',
+       T('바꿨고 API·스케줄러·저장은 기기에서 도는 것과 같은 코드다.'),
        font=F(8), fill=SUB)
 
 img.resize((W, H), Image.LANCZOS).save(FIG / 'fig10_dispenser.png')

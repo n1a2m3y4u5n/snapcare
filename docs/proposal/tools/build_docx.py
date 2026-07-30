@@ -26,6 +26,7 @@ from docx.shared import Inches, Pt, RGBColor
 
 HERE = Path(__file__).resolve().parent
 DOC = HERE.parent                      # docs/proposal
+LANG = 'KO'                            # main() 에서 원본 파일 이름으로 정한다
 ROOT = HERE.parents[2]                 # 레포 루트
 
 # 공식 서식은 레포에 함께 둔다. 이것이 없으면 다른 사람이 문서를 다시 만들 수 없고,
@@ -49,16 +50,16 @@ HEADER = {                             # 표 0 위쪽 정보칸
     (2, 3): 'Cristian RUDICO · Natalia SCHIȚCO',
     (3, 1): '김도훈 (Dohun KIM)',
     (3, 3): 'Daniel STANCHEVICI',
-}
-
-# 영어판은 로마자를 앞에 둔다. 한글을 지우지는 않는다. 본인 이름이다.
-HEADER_EN = {
-    (2, 1): 'Yunsu NAM (남윤수)',
-    (3, 1): 'Dohun KIM (김도훈)',
     (4, 1): ('Target 3.4 Noncommunicable diseases · Target 3.8 Universal health coverage · '
              'Target 3.d Health risk management'),
     (5, 1): 'Github Repository: https://github.com/16th-eicon-contest/h1-SnapCare',
     (6, 1): 'Deployment URL: https://snapcare.fly.dev',
+}
+
+# 영어판만 덮어쓰는 칸. 로마자를 앞에 둔다. 한글을 지우지는 않는다. 본인 이름이다.
+HEADER_EN = {
+    (2, 1): 'Yunsu NAM (남윤수)',
+    (3, 1): 'Dohun KIM (김도훈)',
 }
 
 BODY_PT = 10        # 세리프는 같은 pt 에서 작아 보인다
@@ -218,7 +219,7 @@ def render(cell, md: str):
             p.paragraph_format.line_spacing = LINE
             p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
             # 그림 설명은 가운데로, 조금 작게.
-            if val.startswith('**[그림'):
+            if val.startswith('**[그림') or val.startswith('**[Figure'):
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 p.paragraph_format.space_after = Pt(10)
                 write_inline(p, val, size=BODY_PT - 1)
@@ -235,7 +236,14 @@ def render(cell, md: str):
             r.font.size = Pt(BODY_PT - 1)
 
         elif kind == 'img':
+            # 영어 빌드는 fig_en/ 을 먼저 본다. 화면 캡처나 형태소 시트처럼
+            # 글자가 없는 도판은 거기 없으므로 fig/ 로 떨어진다. 언어와 무관한
+            # 그림을 두 벌 두지 않으려는 것이다.
             path = (DOC / val).resolve()
+            if LANG == 'EN':
+                alt = DOC / 'fig_en' / path.name
+                if alt.exists():
+                    path = alt.resolve()
             p = para()
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p.paragraph_format.space_before = Pt(8)
@@ -288,9 +296,10 @@ def main() -> None:
     ap.add_argument('--out', default=None)
     args = ap.parse_args()
     src = DOC / args.src
+    global LANG
+    LANG = 'EN' if src.stem.endswith('_en') else 'KO'
     if args.out is None:
-        lang = 'EN' if src.stem.endswith('_en') else 'KO'
-        args.out = str(DOC / f'SnapCare_H1_Final_Proposal_{lang}.docx')
+        args.out = str(DOC / f'SnapCare_H1_Final_Proposal_{LANG}.docx')
 
     if not TEMPLATE.exists():
         raise SystemExit(f'템플릿을 찾지 못했다: {TEMPLATE}')
@@ -298,7 +307,7 @@ def main() -> None:
     d = docx.Document(str(TEMPLATE))
     body = sections(src.read_text())
 
-    header = {**HEADER, **(HEADER_EN if lang == 'EN' else {})}
+    header = {**HEADER, **(HEADER_EN if LANG == 'EN' else {})}
     for (ri, ci), text in header.items():
         write_inline(clear(d.tables[0].rows[ri].cells[ci]), text, size=BODY_PT)
 

@@ -19,7 +19,11 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-FIG = Path(__file__).resolve().parent.parent / 'fig'
+from i18n import FIG, LANG    # 언어에 따라 fig/ 또는 fig_en/
+
+# 영어 눈금 라벨은 한국어보다 길다. 캔버스를 고정해 두었으므로
+# 여백을 넓히지 않으면 왼쪽에서 잘린다.
+LEFT = 0.17 if LANG == 'en' else 0.13
 
 # Office 기본 테마 색 — 참고 도판에서 추출
 BLUE   = '#4472C4'
@@ -74,7 +78,7 @@ def title(fig, text, note=None):
     h = fig.get_figheight()
     fig.suptitle(text, fontsize=11.5, fontweight='bold', color=INK, y=1 - 0.06 / h)
     bottom = 0.86 / h if note else 0.52 / h
-    fig.subplots_adjust(top=1 - 0.46 / h, bottom=bottom, left=0.13, right=0.97)
+    fig.subplots_adjust(top=1 - 0.46 / h, bottom=bottom, left=LEFT, right=0.97)
     if note:
         fig.text(0.97, 0.055 / h, note, ha='right', fontsize=8.2, color=MUTED)
 
