@@ -82,7 +82,6 @@ import sys
 import time
 import unicodedata
 import zipfile
-from email.header import Header
 from email.message import EmailMessage
 from email.utils import formataddr, formatdate, make_msgid
 from pathlib import Path
@@ -450,9 +449,15 @@ class AuthFailed(Exception):
 
 def build_message(to: str, subject: str, body: str, sender: str, sender_name: str) -> EmailMessage:
     m = EmailMessage()
-    m['From'] = formataddr((str(Header(sender_name, 'utf-8')), sender)) if sender_name else sender
+    # 머리글에 email.header.Header 를 넣지 않는다.
+    #
+    # EmailMessage 는 새 정책(policy.default)을 쓰고, 그 정책은 머리글 값을 문자열로 받아
+    # 한글이 있으면 알아서 RFC 2047 로 인코딩한다. 거기에 옛 방식의 Header 객체를 넣으면
+    # 파싱 단계에서 value[0] 을 집다가 터진다 — 실제로 첫 시험 발송이 그렇게 죽었다.
+    # 문자열을 그대로 주면 된다.
+    m['From'] = formataddr((sender_name, sender)) if sender_name else sender
     m['To'] = to
-    m['Subject'] = Header(subject, 'utf-8')
+    m['Subject'] = subject
     m['Date'] = formatdate(localtime=True)
     m['Message-ID'] = make_msgid(domain='snapcare.fly.dev')
     m['Reply-To'] = sender
