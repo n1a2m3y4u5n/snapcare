@@ -161,48 +161,25 @@ export const BACKGROUND: Item[] = [
 
 /* ──────────────────── A. 공통 코어 (필수) ──────────────────── */
 
-export const CORE: Item[] = [
-  {
-    id: 'a7_framing',
-    kind: 'single',
-    required: true,
-    q: T(
-      '선생님 현장에서, 글을 읽지 못하는 분들이 복약 정보를 제대로 받지 못하고 있다고 보십니까?',
-      'In your own setting, would you say that people who cannot read are not getting medication information properly?',
-      'În propriul dumneavoastră context, ați spune că persoanele care nu pot citi nu primesc corect informațiile despre medicamente?',
-    ),
-    note: T(
-      '저희 프로젝트 전체가 이 전제 위에 서 있는데, 저희는 당사자를 직접 만난 적이 없습니다. 선생님 경험과 어긋난다면 그것이 저희가 가장 먼저 알아야 할 것입니다.',
-      'Our entire project rests on this premise and we have never met the people concerned. If it does not match what you see, that is the first thing we need to know.',
-      'Întregul nostru proiect se bazează pe această premisă și nu am întâlnit niciodată persoanele în cauză. Dacă nu corespunde cu ce observați, acesta este primul lucru pe care trebuie să îl aflăm.',
-    ),
-    options: [
-      T('맞다', 'Yes', 'Da'),
-      T('부분적으로', 'Partly', 'Parțial'),
-      T('아니다', 'No', 'Nu'),
-      T('제 분야가 아니어서 판단할 근거가 없다', 'Not my field — I have no basis to judge', 'Nu este domeniul meu — nu am o bază pentru a judeca'),
-    ],
-    follow: T('덧붙일 말이 있으면 적어 주십시오.', 'Anything to add?', 'Aveți ceva de adăugat?'),
-  },
-  {
-    // 직군을 가리지 않는 문항이다. 법제 응답자는 개인정보 쪽 반론을, 약사는 임상
-    // 쪽 반론을 댈 수 있다. 논문 하나만 대 주어도 우리는 발표에서 당하지 않는다.
-    id: 'c_counter',
-    kind: 'longtext',
-    q: T(
-      '이 주제로 저희가 반드시 읽어야 할 연구나 사례가 있습니까?',
-      'Is there a study or a case that we really ought to have read on this subject?',
-      'Există un studiu sau un caz pe care ar trebui neapărat să îl fi citit pe această temă?',
-    ),
-    note: T(
-      '제목이나 저자 이름만 적어 주셔도 찾아 읽겠습니다. 저희 접근을 반박하는 것이라면 더욱 알고 싶습니다 — 발표 자리에서 처음 듣는 것보다 지금 아는 편이 낫습니다.',
-      'A title or an author name is enough and we will find it. If it argues against our approach, we want it all the more — we would much rather hear it now than for the first time at the presentation.',
-      'Este suficient un titlu sau un nume de autor și îl vom găsi. Dacă infirmă abordarea noastră, cu atât mai mult dorim să îl aflăm — preferăm să îl aflăm acum decât pentru prima dată la prezentare.',
-    ),
-  }
-
-];
-
+/**
+ * 공통 실질 문항은 두지 않는다.
+ *
+ * 한때 다섯 개가 있었다. 문자를 없앤 접근이 어떤지, 그림과 음성 둘만으로
+ * 충분한지, 무엇이 확인되면 납득하는지, 우리 전제가 경험과 맞는지, 반대 근거를
+ * 아는지. 전부 뺐다 — **전원에게 성립하는 질문이 아니었다.**
+ *
+ * 컴퓨터공학 교수에게 "현장에서 글 못 읽는 분을 보십니까" 는 답할 근거가 없고,
+ * 표준 기관 담당자에게 "읽어야 할 연구가 있습니까" 도 그렇다. 받는 사람이 "왜
+ * 나한테 이걸 묻는가" 라고 생각하면 그 문항은 답을 얻지 못하고 설문 전체의 신뢰만
+ * 깎는다.
+ *
+ * 전원에게 성립하는 것은 하나뿐이다 — **눈앞의 데모를 보고 판단하는 것**(SERVICE).
+ * 그것이 유일한 공통 문항이고 제안서에 쓸 대표 숫자가 된다.
+ *
+ * 분모도 이 편이 낫다. 서로 다른 여덟 분야를 섞은 "전체 43명 중 20명" 보다
+ * "약사 18명 중 14명" 이 훨씬 강한 문장이다.
+ */
+export const CORE: Item[] = [];
 
 /* ──────────── S. 서비스 피드백 — 동작하는 데모를 보고 답한다 ──────────── */
 
@@ -295,23 +272,6 @@ export const BRANCHES: Branch[] = [
       'Farmacie și consiliere medicamentoasă',
     ),
     items: [
-      {
-        id: 'ph1_missing',
-        kind: 'single',
-        q: T(
-          '실제 복약지도에서 말로 전하시는 것 중, 이 앱이 가장 놓칠 만한 것은 무엇입니까?',
-          'Of the things you say aloud when counselling a patient, which would this app most likely miss?',
-          'Dintre lucrurile pe care le spuneți în consiliere, ce ar rata cel mai probabil aplicația?',
-        ),
-        options: [
-          T('환자가 이해했는지 되묻는 확인', 'Checking back whether the patient understood', 'Verificarea faptului că pacientul a înțeles'),
-          T('그 환자에게만 해당하는 예외 설명', 'Exceptions that apply only to that patient', 'Excepții care se aplică doar acelui pacient'),
-          T('부작용이 생기면 어떻게 하라는 지시', 'What to do if a side effect appears', 'Ce să facă dacă apare o reacție adversă'),
-          T('다른 약이나 음식과의 상호작용', 'Interactions with other medicines or foods', 'Interacțiuni cu alte medicamente sau alimente'),
-          T('안심시키는 말', 'Reassurance', 'Liniștirea pacientului'),
-        ],
-        follow: T('덧붙일 말이 있으면 적어 주십시오.', 'Anything to add?', 'Aveți ceva de adăugat?'),
-      },
       {
         id: 'ph2_review',
         kind: 'single',
@@ -408,6 +368,20 @@ export const BRANCHES: Branch[] = [
           'Ce se întâmplă acum ne spune ce am înlocui și ce ar trebui să sprijinim. Nu am văzut niciodată acest moment.',
         ),
       },
+      {
+        id: 'ph7_ref',
+        kind: 'longtext' as const,
+        q: T(
+          '이 주제로 저희가 반드시 읽어야 할 약학 쪽 연구나 지침이 있습니까?',
+          'Is there pharmacy research or guidance we really ought to have read on this?',
+          'Există cercetări sau ghiduri din farmacie pe care ar trebui neapărat să le fi citit?',
+        ),
+        note: T(
+          '제목이나 저자 이름만 적어 주셔도 찾아 읽겠습니다. 저희 접근을 반박하는 것이라면 더욱 알고 싶습니다.',
+          'A title or an author name is enough and we will find it. If it argues against our approach, we want it all the more.',
+          'Este suficient un titlu sau un nume de autor. Dacă infirmă abordarea noastră, cu atât mai mult dorim să îl aflăm.',
+        ),
+      },
     ],
   },
   {
@@ -460,6 +434,41 @@ export const BRANCHES: Branch[] = [
           '이 가설이 제안서 §1.3 의 근거입니다. 반박하는 자료라면 더욱 알고 싶습니다.',
           'This hypothesis is the basis of §1.3 in our proposal. If the data refutes it, we want to know that even more.',
           'Această ipoteză este baza §1.3 din propunerea noastră. Dacă datele o infirmă, dorim să știm cu atât mai mult.',
+        ),
+      },
+      {
+        id: 'nu4_seen',
+        kind: 'single' as const,
+        q: T(
+          '선생님 현장에서, 글을 읽지 못하는 분들이 복약 정보를 제대로 받지 못하고 있다고 보십니까?',
+          'In your own setting, would you say people who cannot read are not getting medication information properly?',
+          'În contextul dumneavoastră, ați spune că persoanele care nu pot citi nu primesc corect informațiile despre medicamente?',
+        ),
+        note: T(
+          '저희 프로젝트 전체가 이 전제 위에 서 있는데, 저희는 당사자를 직접 만난 적이 없습니다. 어긋난다면 그것이 가장 먼저 알아야 할 것입니다.',
+          'Our entire project rests on this premise and we have never met the people concerned. If it does not match what you see, that is the first thing we need to know.',
+          'Întregul proiect se bazează pe această premisă și nu am întâlnit niciodată persoanele în cauză. Dacă nu corespunde, acesta este primul lucru pe care trebuie să îl aflăm.',
+        ),
+        options: [
+          T('맞다', 'Yes', 'Da'),
+          T('부분적으로', 'Partly', 'Parțial'),
+          T('아니다', 'No', 'Nu'),
+          T('그런 분을 만날 자리가 아니다', 'I am not in a position to meet such people', 'Nu sunt în poziția de a întâlni astfel de persoane'),
+        ],
+        follow: T('덧붙일 말이 있으면 적어 주십시오.', 'Anything to add?', 'Aveți ceva de adăugat?'),
+      },
+      {
+        id: 'nu5_ref',
+        kind: 'longtext' as const,
+        q: T(
+          '이 주제로 저희가 반드시 읽어야 할 간호·보건 쪽 연구가 있습니까?',
+          'Is there a study in nursing or public health that we really ought to have read on this?',
+          'Există un studiu din nursing sau sănătate publică pe care ar trebui neapărat să îl fi citit?',
+        ),
+        note: T(
+          '제목이나 저자 이름만 적어 주셔도 찾아 읽겠습니다. 저희 접근을 반박하는 것이라면 더욱 알고 싶습니다.',
+          'A title or an author name is enough and we will find it. If it argues against our approach, we want it all the more.',
+          'Este suficient un titlu sau un nume de autor. Dacă infirmă abordarea noastră, cu atât mai mult dorim să îl aflăm.',
         ),
       },
     ],
@@ -523,6 +532,36 @@ export const BRANCHES: Branch[] = [
         ],
         follow: T('설계할 때 주의할 점을 적어 주십시오.', 'What should we watch for in the design?', 'La ce ar trebui să fim atenți în proiectare?'),
       },
+      {
+        id: 'aa4_seen',
+        kind: 'single' as const,
+        q: T(
+          '선생님이 만나시는 분들 중, 글을 읽지 못해 복약 정보를 제대로 받지 못하는 경우가 있습니까?',
+          'Among the people you work with, are there those who miss medication information because they cannot read?',
+          'Printre persoanele cu care lucrați, există cele care pierd informațiile despre medicamente pentru că nu pot citi?',
+        ),
+        options: [
+          T('맞다', 'Yes', 'Da'),
+          T('부분적으로', 'Partly', 'Parțial'),
+          T('아니다', 'No', 'Nu'),
+          T('그런 분을 만날 자리가 아니다', 'I am not in a position to meet such people', 'Nu sunt în poziția de a întâlni astfel de persoane'),
+        ],
+        follow: T('어떤 상황인지 적어 주십시오.', 'Please describe the situation.', 'Vă rugăm să descrieți situația.'),
+      },
+      {
+        id: 'aa5_ref',
+        kind: 'longtext' as const,
+        q: T(
+          '기존 상징 체계 가운데 저희가 반드시 봐야 할 사례나 연구가 있습니까?',
+          'Among existing symbol systems, is there a case or study we really ought to look at?',
+          'Dintre sistemele de simboluri existente, există un caz sau un studiu la care ar trebui neapărat să ne uităm?',
+        ),
+        note: T(
+          'ARASAAC·Blissymbolics·PCS·Widgit 같은 세트나, 그 세트의 이해도를 시험한 연구를 알려 주시면 됩니다.',
+          'A set such as ARASAAC, Blissymbolics, PCS or Widgit, or a study that tested comprehension of one of them.',
+          'Un set precum ARASAAC, Blissymbolics, PCS sau Widgit, ori un studiu care a testat comprehensiunea unuia dintre ele.',
+        ),
+      },
     ],
   },
   {
@@ -566,6 +605,20 @@ export const BRANCHES: Branch[] = [
           '문해교육 현장에서 그림으로 전달할 때, 효과가 있었던 것과 없었던 것은 무엇입니까?',
           'In literacy education, what has worked and what has not when conveying meaning by picture?',
           'În educația alfabetizării, ce a funcționat și ce nu, atunci când sensul a fost transmis prin imagini?',
+        ),
+      },
+      {
+        id: 'li4_ref',
+        kind: 'longtext' as const,
+        q: T(
+          '성인문해교육 쪽에서 저희가 반드시 봐야 할 자료나 연구가 있습니까?',
+          'In adult literacy education, is there material or research we really ought to look at?',
+          'În educația alfabetizării adulților, există materiale sau cercetări la care ar trebui neapărat să ne uităm?',
+        ),
+        note: T(
+          '교재, 조사 보고서, 논문 무엇이든 좋습니다. 제목만 적어 주셔도 찾아 읽겠습니다.',
+          'A textbook, a survey report, a paper — anything. A title alone is enough and we will find it.',
+          'Un manual, un raport, o lucrare — orice. Este suficient un titlu și îl vom găsi.',
         ),
       },
     ],
@@ -627,6 +680,20 @@ export const BRANCHES: Branch[] = [
         ],
         follow: T('덧붙일 말이 있으면 적어 주십시오.', 'Anything to add?', 'Aveți ceva de adăugat?'),
       },
+      {
+        id: 'hc4_ref',
+        kind: 'longtext' as const,
+        q: T(
+          '저문해 사용자용 인터페이스 연구 가운데 저희가 반드시 읽어야 할 것이 있습니까?',
+          'In the literature on interfaces for low-literacy users, is there work we really ought to have read?',
+          'În literatura despre interfețe pentru utilizatori cu alfabetizare redusă, există lucrări pe care ar trebui neapărat să le fi citit?',
+        ),
+        note: T(
+          '저희는 text-free UI 계열(Medhi Thies 등)과 ICTD 쪽을 근거로 삼고 있습니다. 그 밖에 놓친 계보가 있으면 알려 주십시오.',
+          'We build on the text-free UI line of work (Medhi Thies and others) and on ICTD. Tell us if there is a lineage we have missed.',
+          'Ne bazăm pe linia de lucru text-free UI (Medhi Thies și alții) și pe ICTD. Spuneți-ne dacă am ratat o direcție.',
+        ),
+      },
     ],
   },
   {
@@ -679,6 +746,20 @@ export const BRANCHES: Branch[] = [
           'Problema este obținerea consimțământului de la cineva care nu poate citi formularul. Nu avem un răspuns aici.',
         ),
       },
+      {
+        id: 'la4_ref',
+        kind: 'longtext' as const,
+        q: T(
+          '이 설계를 판단할 때 저희가 반드시 봐야 할 조항·해석·판례가 있습니까?',
+          'Is there a provision, guidance note or ruling we really ought to look at when judging this design?',
+          'Există o prevedere, un ghid sau o hotărâre la care ar trebui neapărat să ne uităm?',
+        ),
+        note: T(
+          '조항 번호나 사건명만 적어 주셔도 찾아 읽겠습니다. 국외 사례도 좋습니다.',
+          'An article number or a case name is enough and we will find it. Cases from other jurisdictions are welcome.',
+          'Este suficient un număr de articol sau un nume de caz. Cazurile din alte jurisdicții sunt binevenite.',
+        ),
+      },
     ],
   },
   {
@@ -724,6 +805,20 @@ export const BRANCHES: Branch[] = [
           '귀국의 제도에서는 그림과 음성만으로 하는 복약 안내가 허용됩니까? 저가 자동 알약 디스펜서는 어떻게 분류됩니까?',
           'In your country, is medication guidance given only by picture and speech permitted? How would a low-cost automatic pill dispenser be classified?',
           'În țara dumneavoastră, este permis ghidajul medicamentos doar prin imagine și voce? Cum ar fi clasificat un dozator automat ieftin?',
+        ),
+      },
+      {
+        id: 'st4_ref',
+        kind: 'longtext' as const,
+        q: T(
+          '저희가 반드시 확인해야 할 표준이나 선례가 있습니까?',
+          'Is there a standard or a precedent we really ought to check?',
+          'Există un standard sau un precedent pe care ar trebui neapărat să îl verificăm?',
+        ),
+        note: T(
+          '저희가 지금 보고 있는 것은 ISO 9186, ANSI Z535.3, KS S ISO 7001, WCAG 입니다. 이 밖에 봐야 할 것이 있으면 알려 주십시오.',
+          'We are currently looking at ISO 9186, ANSI Z535.3, KS S ISO 7001 and WCAG. Tell us what else we should be looking at.',
+          'Ne uităm în prezent la ISO 9186, ANSI Z535.3, KS S ISO 7001 și WCAG. Spuneți-ne la ce altceva ar trebui să ne uităm.',
         ),
       },
     ],
@@ -774,6 +869,20 @@ export const BRANCHES: Branch[] = [
           '같은 문제를 다시 푼다면 무엇을 다르게 하시겠습니까?',
           'If you were solving the same problem, what would you do differently?',
           'Dacă ați rezolva aceeași problemă, ce ați face diferit?',
+        ),
+      },
+      {
+        id: 'in4_ref',
+        kind: 'longtext' as const,
+        q: T(
+          '비슷한 문제를 다룬 제품이나 사례 가운데 저희가 반드시 봐야 할 것이 있습니까?',
+          'Among products or cases that tackled a similar problem, is there one we really ought to look at?',
+          'Dintre produsele sau cazurile care au abordat o problemă similară, există vreunul la care ar trebui neapărat să ne uităm?',
+        ),
+        note: T(
+          '성공한 것보다 접힌 것이 더 값어치 있을 수 있습니다. 왜 접혔는지 아시면 함께 적어 주십시오.',
+          'Something that folded may be worth more to us than something that succeeded. If you know why it folded, please say.',
+          'Ceva ce a eșuat poate valora mai mult decât ceva ce a reușit. Dacă știți de ce a eșuat, vă rugăm să spuneți.',
         ),
       },
     ],
