@@ -145,10 +145,22 @@ def looks_like_person(name: str) -> bool:
 
 # ────────────────────────── 메일 본문 ──────────────────────────
 
+# 제목.
+#
+# 받은편지함에서 보이는 것은 앞부분뿐이다 — 한국어는 20자 남짓, 영어는 45자 남짓.
+# 그 앞부분이 "누가 왜 보냈나" 에 답해야 열린다.
+#
+# 한때 'SnapCare' 로 시작했다. 그것이 잘못이었다 — 받는 분에게 그 이름은 아무 뜻이 없고,
+# 모르는 이름으로 시작하는 제목은 광고로 읽힌다. 이름은 본문에서 밝히면 된다.
+#
+# 한국어는 대괄호로 기관을 앞세운다. 국내 수신자는 부처와 대회 이름을 알아보고, 그 형식
+# 자체가 광고가 아니라는 신호가 된다. 영어는 교육부를 앞에 두지 않는다 — 해외 연구자에게
+# 한국 부처 이름은 신뢰 근거가 되지 않으므로, 무엇을 부탁하는지를 앞세우고 기관은 본문에서
+# 밝힌다.
 SUBJECT = {
-    'ko': 'SnapCare — 글을 읽지 못하는 사람의 복약 안내에 대한 전문가 의견을 부탁드립니다',
-    'en': 'Request for expert feedback — SnapCare, medication guidance for people who cannot read',
-    'ro': 'Solicitare de opinie de specialitate — SnapCare, ghidarea medicației pentru cei care nu pot citi',
+    'ko': '[교육부 주최 e-ICON 세계대회] 고등학생 팀의 복약 안내 앱 — 전문가 의견을 부탁드립니다',
+    'en': 'Request for expert feedback — prescription instructions for people who cannot read',
+    'ro': 'Solicitare de opinie — instrucțiuni de medicație pentru cei care nu pot citi',
 }
 
 GREET = {
