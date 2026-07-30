@@ -450,6 +450,42 @@ class AuthFailed(Exception):
         super().__init__(str(cause))
 
 
+def html_version(body: str) -> str:
+    """같은 본문의 HTML 판. 링크를 눌리게 하려고 만든다.
+
+    글자만 있는 메일에서는 주소가 그냥 글자다. 네이버 앱에서 눌리지 않는 것을 확인했고,
+    누르지 못하면 주소를 손으로 옮겨 적어야 하므로 거기서 그만두는 사람이 생긴다. 1103명에게
+    보내 놓고 그 단계에서 잃는 것이라 값이 비싸다.
+
+    글자 판을 버리지 않고 둘 다 보낸다(multipart/alternative). HTML 을 못 보는 환경에서는
+    글자 판이 그대로 보이고, 볼 수 있는 환경에서는 링크가 눌린다.
+
+    그림도 추적 픽셀도 넣지 않는다 — 바깥에서 받아오는 것이 하나라도 있으면 스팸으로
+    걸릴 확률이 올라가고, 우리는 누가 열었는지 알 필요가 없다.
+    """
+    import html as _html
+
+    def line_to_html(text: str) -> str:
+        out, last = [], 0
+        for m in re.finditer(r'https?://\S+', text):
+            out.append(_html.escape(text[last:m.start()]))
+            url = m.group(0)
+            out.append(f'<a href="{_html.escape(url, quote=True)}">{_html.escape(url)}</a>')
+            last = m.end()
+        out.append(_html.escape(text[last:]))
+        return ''.join(out)
+
+    blocks = []
+    for b in body.strip().split('\n\n'):
+        inner = '<br>'.join(line_to_html(l) for l in b.split('\n'))
+        blocks.append(f'<p style="margin:0 0 1em 0">{inner}</p>')
+    return (
+        '<div style="font-family:-apple-system,BlinkMacSystemFont,\'Apple SD Gothic Neo\','
+        'sans-serif;font-size:15px;line-height:1.7;color:#222;max-width:34em">'
+        + ''.join(blocks) + '</div>'
+    )
+
+
 def build_message(to: str, subject: str, body: str, sender: str, sender_name: str) -> EmailMessage:
     m = EmailMessage()
     # 머리글에 email.header.Header 를 넣지 않는다.
@@ -468,6 +504,7 @@ def build_message(to: str, subject: str, body: str, sender: str, sender_name: st
     m['Auto-Submitted'] = 'auto-generated'
     m['X-Auto-Response-Suppress'] = 'All'
     m.set_content(body, subtype='plain', charset='utf-8')
+    m.add_alternative(html_version(body), subtype='html', charset='utf-8')
     return m
 
 
