@@ -336,12 +336,14 @@ def wrap_paragraph(text: str, width: int = 74) -> str:
 
 
 def wrap_body(text: str, width: int = 74) -> str:
-    """본문 전체를 접는다.
+    """**화면에 보여줄 때만** 접는다. 실제로 보내는 본문은 접지 않는다.
 
-    두 가지는 건드리지 않는다. 링크가 든 덩어리는 접으면 링크가 깨진다. 그리고 **이미
-    줄이 나뉘어 있는 덩어리** 는 그렇게 쓴 이유가 있는 것이므로 그대로 둔다 — 서명이
-    그렇다. 한때 '<' 가 들어 있는지로 서명을 알아봤는데, 서명에서 꺾쇠를 빼자마자
-    세 줄이 한 줄로 뭉쳐졌다. 모양이 아니라 성질로 판단해야 한다.
+    한때 보내는 본문을 74칸에서 끊었다. 그것이 잘못이었다 — 받는 쪽 메일 앱이 자기 창
+    너비로 다시 접으므로, 두 번 접힌 자리가 엇갈려 들쭉날쭉해진다. 폭이 좁은 휴대폰에서
+    특히 심하다. 문단을 한 줄로 보내면 각 앱이 자기 너비에 맞춰 한 번만 접는다.
+
+    미리보기는 터미널에서 사람이 읽는 것이므로 여기서 접어 준다. 링크가 든 덩어리와 이미
+    줄이 나뉜 덩어리(서명)는 그대로 둔다.
     """
     done = []
     for b in text.split('\n\n'):
@@ -350,6 +352,7 @@ def wrap_body(text: str, width: int = 74) -> str:
         else:
             done.append(wrap_paragraph(' '.join(b.split()), width))
     return '\n\n'.join(done)
+
 
 
 def compose(row: dict, lang: str, sender: str, sender_name: str) -> tuple[str, str]:
@@ -373,7 +376,7 @@ def compose(row: dict, lang: str, sender: str, sender_name: str) -> tuple[str, s
         link=link,
         signature=SIGNATURE[lang].format(email=sender, name_en=name_en),
     )
-    return SUBJECT[lang], wrap_body(body)
+    return SUBJECT[lang], body
 
 
 # ────────────────────────── 보낸 기록 ──────────────────────────
@@ -544,7 +547,8 @@ def main() -> int:
         print(f'첫 통 미리보기 → {r.get(COL_EMAIL)}  [{lang}]')
         print(f'제목: {subj}')
         print('─' * 68)
-        print(body)
+        # 실제로 보내는 본문은 접지 않는다. 터미널에서 읽기 좋으라고 여기서만 접는다.
+        print(wrap_body(body))
         print('─' * 68)
 
     if not args.send and not args.check_login:
