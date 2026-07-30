@@ -434,6 +434,40 @@ export const BRANCHES: Branch[] = [
         ),
       },
       {
+        // 우리 78개에 대응하는 형태소가 아예 없는 의학 개념이 셋 있다 — 병용금기와
+        // 상호작용, 복용 누락 대처, 용량 조절. 그림으로 만들 수 없어서 없는 것인지
+        // 우리가 놓친 것인지 우리는 모른다. 그 경계를 정하는 것이 이 문항이다.
+        //
+        // 앞 문항(ph4_medical)이 "무엇을 틀리면 안 되는가" 를 묻는다면, 이 문항은
+        // "무엇을 애초에 그림으로 다루면 안 되는가" 를 묻는다. 전자는 정확도의
+        // 문제이고 후자는 범위의 문제다. §5.3 에 적을 한계선이 여기서 나온다.
+        id: 'ph5_boundary',
+        kind: 'single' as const,
+        q: T(
+          '복약 지시 중에서, 그림과 음성만으로는 애초에 전달하면 안 된다고 보시는 것이 있습니까?',
+          'Is there any part of a dosing instruction that you believe should never be delivered by picture and speech alone?',
+          'Există vreo parte a unei instrucțiuni de dozare care, în opinia dumneavoastră, nu ar trebui transmisă niciodată doar prin imagine și voce?',
+        ),
+        note: T(
+          '저희 형태소 78개에는 병용금기·상호작용, 복용을 잊었을 때의 대처, 용량 조절에 해당하는 그림이 아예 없습니다. 만들 수 없다고 보아 넣지 않은 것인지 저희가 놓친 것인지 판단이 서지 않습니다. 이 문항의 답은 저희가 문서에 적을 한계선이 됩니다.',
+          'Our 78 morphemes contain nothing for contraindications and interactions, what to do after a missed or doubled dose, or dose adjustment. We cannot tell whether those are genuinely impossible to draw or simply things we overlooked. Your answer becomes the limit we state in our documents.',
+          'Cele 78 de morfeme ale noastre nu conțin nimic pentru contraindicații și interacțiuni, ce să faci după o doză omisă sau dublată, ori ajustarea dozei. Nu putem spune dacă acestea sunt imposibil de desenat sau doar lucruri pe care le-am omis. Răspunsul dumneavoastră devine limita pe care o vom declara în documente.',
+        ),
+        options: [
+          T('없다 — 원칙적으로 모두 그림과 음성으로 다룰 수 있다', 'No — in principle all of it can be carried by picture and speech', 'Nu — în principiu totul poate fi transmis prin imagine și voce'),
+          T('있다 — 병용금기와 상호작용', 'Yes — contraindications and interactions', 'Da — contraindicații și interacțiuni'),
+          T('있다 — 복용을 잊었거나 두 번 먹었을 때의 대처', 'Yes — what to do after a missed or doubled dose', 'Da — ce să faci după o doză omisă sau dublată'),
+          T('있다 — 부작용이 나타났을 때의 판단', 'Yes — judging what to do when a side effect appears', 'Da — ce să faci când apare o reacție adversă'),
+          T('있다 — 용량 조절이 필요한 경우', 'Yes — cases needing dose adjustment', 'Da — cazuri care necesită ajustarea dozei'),
+          T('있다 — 그 밖', 'Yes — something else', 'Da — altceva'),
+        ],
+        follow: T(
+          '그렇게 보시는 이유와, 그 경우 그림·음성 대신 무엇이 있어야 하는지 적어 주십시오.',
+          'Please say why, and what should be in place instead of picture and speech in that case.',
+          'Vă rugăm să explicați de ce și ce ar trebui să existe în locul imaginii și vocii în acel caz.',
+        ),
+      },
+      {
         id: 'ph3_current',
         kind: 'longtext',
         q: T(
