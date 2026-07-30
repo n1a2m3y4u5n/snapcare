@@ -20,7 +20,22 @@ somebody who has used one device understands the other:
     amber           the dose went untaken, or its window closed
     violet          a new schedule was accepted
 
-Everything above this module calls the five methods on `Indicator`. What they do
+One colour is new in this build, and it is deliberately outside that vocabulary:
+
+    cyan            the device is waiting to be put on a WiFi network
+
+It is a light and **never** a sound. A chirp has meant "there are pills in the
+cup" since the Arduino build, and spending it on a network problem would teach
+the one person the whole project is built around to walk over and find nothing
+there. Cyan is also the reason the device is findable at all when setup has not
+happened yet: without it, a dispenser sitting on its own hotspot waiting to be
+configured is indistinguishable from a dispenser that is switched off, and the
+only cue anybody gets is the app staying empty.
+
+A standing dose alert always wins the ring. Medication is the job; the network
+is how the schedule got here.
+
+Everything above this module calls the methods on `Indicator`. What they do
 depends on which class is installed, so a device built without a ring still
 works — it just relies on the phone for notification, and says so on its status
 page rather than pretending a light is blinking.
@@ -39,6 +54,7 @@ GREEN = (0, 200, 60)
 BLUE = (0, 90, 255)
 AMBER = (255, 130, 0)
 VIOLET = (150, 0, 255)
+CYAN = (0, 170, 190)
 OFF = (0, 0, 0)
 
 
@@ -52,6 +68,8 @@ class Indicator:
     def dose_taken(self, tray: int) -> None: ...
     def dose_missed(self, tray: int) -> None: ...
     def schedule_accepted(self) -> None: ...
+    def network_needs_setup(self) -> None: ...
+    def network_online(self) -> None: ...
     def clear(self) -> None: ...
     def close(self) -> None: ...
 
@@ -77,6 +95,12 @@ class LogIndicator(Indicator):
 
     def schedule_accepted(self) -> None:
         log.info("indicator: violet — new schedule accepted")
+
+    def network_needs_setup(self) -> None:
+        log.info("indicator: cyan — waiting to be put on a network")
+
+    def network_online(self) -> None:
+        log.info("indicator: cyan off — on a network")
 
     def clear(self) -> None:
         log.debug("indicator: off")
@@ -188,6 +212,15 @@ class FittedIndicator(Indicator):
         self._alerting = threading.Event()
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
+        #: Standing "put me on a network" request, so that a dose can borrow the
+        #: ring and hand it back rather than cancelling the hint outright.
+        self._needs_network = False
+        self._showing = OFF
+        # The scheduler tick, the button, and now the network worker all paint
+        # this ring. Filling it is twelve writes and a latch, and two threads
+        # interleaving there is one frame of wrong colours on a device whose
+        # colours are the entire user interface.
+        self._paint = threading.Lock()
         if buzzer:
             self._thread = threading.Thread(target=self._chirp_loop,
                                             name="buzzer", daemon=True)
@@ -207,13 +240,15 @@ class FittedIndicator(Indicator):
                 self._stop.wait(config.BUZZER_REPEAT_S)
 
     def _show(self, colour: tuple[int, int, int]) -> None:
-        if not self.ring:
-            return
-        try:
-            self.ring.fill(colour)
-        except Exception:  # noqa: BLE001
-            log.exception("the LED ring failed; carrying on without it")
-            self.ring = None
+        with self._paint:
+            self._showing = colour
+            if not self.ring:
+                return
+            try:
+                self.ring.fill(colour)
+            except Exception:  # noqa: BLE001
+                log.exception("the LED ring failed; carrying on without it")
+                self.ring = None
 
     def dose_ready(self, tray: int) -> None:
         log.info("indicator: green + chirp — tray %d is ready", tray)
@@ -234,9 +269,31 @@ class FittedIndicator(Indicator):
         log.info("indicator: violet — new schedule accepted")
         self._show(VIOLET)
 
+    def network_needs_setup(self) -> None:
+        log.info("indicator: cyan — waiting to be put on a network")
+        self._needs_network = True
+        # No buzzer, ever, and never over a dose that is still waiting to be
+        # taken. Both rules are in the module docstring, and both are about not
+        # spending the alert vocabulary on something that is not medication.
+        if not self._alerting.is_set():
+            self._show(CYAN)
+
+    def network_online(self) -> None:
+        if not self._needs_network:
+            return
+        log.info("indicator: cyan off — on a network")
+        self._needs_network = False
+        # Only if cyan is what is actually lit. Anything else on the ring is a
+        # dose being reported, and that outranks this.
+        if self._showing == CYAN:
+            self._show(OFF)
+
     def clear(self) -> None:
         self._alerting.clear()
-        self._show(OFF)
+        # Back to cyan rather than dark if the network is still not set up: the
+        # hint has to outlive the dose that borrowed the ring, or a device that
+        # was never configured goes quietly dark after its first dose.
+        self._show(CYAN if self._needs_network else OFF)
 
     def close(self) -> None:
         self._stop.set()

@@ -15,7 +15,8 @@ from snapcare_dispenser import config, indicators, rtc
 from snapcare_dispenser.button import ConfirmButton
 from snapcare_dispenser.clock import Clock
 from snapcare_dispenser.indicators import (
-    AMBER, BLUE, GREEN, OFF, VIOLET, FittedIndicator, LogIndicator, make_indicator,
+    AMBER, BLUE, CYAN, GREEN, OFF, VIOLET, FittedIndicator, LogIndicator,
+    make_indicator,
 )
 
 
@@ -59,6 +60,79 @@ def test_each_event_shows_its_colour():
     indicator.clear()
 
     assert ring.colours == [GREEN, BLUE, AMBER, VIOLET, OFF]
+
+
+# ── the network hint ────────────────────────────────────────────────────────
+
+def test_a_device_waiting_to_be_set_up_says_so_in_the_room():
+    """Otherwise a dispenser sitting on its own hotspot waiting to be configured
+    is indistinguishable from a dispenser that is switched off, and the only cue
+    anybody gets is the app staying empty."""
+    ring = FakeRing()
+    indicator = FittedIndicator(ring=ring, buzzer=None)
+
+    indicator.network_needs_setup()
+    assert ring.colours == [CYAN]
+
+    indicator.network_online()
+    assert ring.colours == [CYAN, OFF]
+
+
+def test_the_network_hint_never_sounds(monkeypatch):
+    """A chirp has meant "there are pills in the cup" since the Arduino build.
+    Spending it on a network problem teaches the one person this project is built
+    around to walk over and find nothing there."""
+    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    buzzer = FakeBuzzer()
+    indicator = FittedIndicator(ring=None, buzzer=buzzer)
+    try:
+        indicator.network_needs_setup()
+        _sleep(0.08)
+        assert buzzer.beeps == 0
+    finally:
+        indicator.close()
+
+
+def test_a_waiting_dose_outranks_the_network_hint():
+    """Medication is the job; the network is only how the schedule got here."""
+    ring = FakeRing()
+    indicator = FittedIndicator(ring=ring, buzzer=None)
+
+    indicator.dose_ready(1)
+    indicator.network_needs_setup()
+    assert ring.colours == [GREEN], "the green light must not be painted over"
+
+    indicator.network_online()
+    assert ring.colours == [GREEN], "and nor must it be cleared"
+
+
+def test_the_hint_comes_back_after_the_dose_that_borrowed_the_ring():
+    """A device that was never configured must not go quietly dark after its
+    first dose."""
+    ring = FakeRing()
+    indicator = FittedIndicator(ring=ring, buzzer=None)
+
+    indicator.network_needs_setup()
+    indicator.dose_ready(1)
+    indicator.dose_taken(1)
+    indicator.clear()
+    assert ring.colours == [CYAN, GREEN, BLUE, CYAN]
+
+
+def test_the_ring_goes_dark_when_there_is_nothing_to_say():
+    ring = FakeRing()
+    indicator = FittedIndicator(ring=ring, buzzer=None)
+    indicator.dose_ready(1)
+    indicator.clear()
+    assert ring.colours == [GREEN, OFF]
+
+
+def test_every_indicator_answers_the_network_methods():
+    """`network.py` calls these on whatever is installed, including the no-op
+    base — a build with no ring is a valid build."""
+    for indicator in (indicators.Indicator(), LogIndicator()):
+        indicator.network_needs_setup()
+        indicator.network_online()
 
 
 def test_the_ring_reports_itself_as_fitted():

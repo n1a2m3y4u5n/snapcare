@@ -27,9 +27,22 @@ Captive portal
 When the setup hotspot is up, the probe URLs every mobile OS fetches to test
 for internet are answered with a redirect. That is what makes the setup page
 appear by itself instead of the person having to know an address.
+
+Who is allowed to change things
+-------------------------------
+Reads are open: anything on the LAN can already reach this device, and the
+captive probes arrive addressed to `connectivitycheck.gstatic.com` and friends,
+so a name check on a GET would break the one flow that has to work.
+
+Writes are not. A request that opens a tray or replaces the schedule is refused
+unless it was addressed to a name this device answers to. Without that, any web
+page open on a phone on the same WiFi can point a hostname it controls at the
+dispenser's address and drive it — no CORS involved, because it never needs to
+read the reply. See `_is_ours`.
 """
 from __future__ import annotations
 
+import ipaddress
 import json
 import logging
 import re
@@ -41,6 +54,7 @@ from urllib.parse import parse_qs, urlparse
 
 from . import config, envelope, provisioning, qr, sc1, wifi
 from .device import Dispenser
+from .network import Supervisor
 
 log = logging.getLogger(__name__)
 
@@ -61,15 +75,25 @@ CAPTIVE_PROBES = {
 #: from dispensing with a single request.
 MAX_BODY = 64 * 1024
 
+#: GET requests that change something. They exist because the web app navigates
+#: to them as links — see the module docstring — and they are checked for a
+#: plausible Host for the same reason the POSTs are.
+MUTATING_GETS = {"/save", "/dropout", "/dismiss"}
+
 
 class Router:
     """Everything the handler needs, so the handler stays a thin adapter."""
 
     def __init__(self, dispenser: Dispenser, identity: provisioning.Identity | None = None,
-                 cloud=None):
+                 cloud=None, network: Supervisor | None = None):
         self.dispenser = dispenser
         self.identity = identity or provisioning.load_identity(dispenser.store)
         self.cloud = cloud
+        #: The radio-mode policy. A server built without one — the tests, and
+        #: `make run` on a laptop — gets a supervisor that manages nothing, so
+        #: that every endpoint has something coherent to answer with instead of
+        #: each one growing its own `if network is None` branch.
+        self.network = network or Supervisor(self.identity, manage=False, announce=False)
         self._pages: dict[str, str] = {}
 
     def cloud_status(self) -> dict:
@@ -156,6 +180,50 @@ class Handler(BaseHTTPRequestHandler):
                    HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
         return True
 
+    def _misdirected(self, path: str) -> bool:
+        """Refuse a mutating request that arrived under somebody else's name.
+
+        The attack this closes needs nothing but a domain and a page: point
+        `dispenser.example.com` at the device's address, and any browser on the
+        same WiFi that loads that page will happily POST a new schedule or a
+        `/api/drop` to it. The reply is unreadable to the attacker, which stops
+        nothing — dropping eight trays into a cup does not require reading the
+        answer.
+
+        The Host header is the one thing the attacker cannot forge, because it
+        is the name their own page was fetched under.
+        """
+        host = _host_name(self.headers.get("Host"))
+        if _is_ours(host):
+            return False
+        log.warning("refused %s %s addressed to %r — this device answers to %s, "
+                    "%s.local, or its IP address", self.command, path, host,
+                    config.MDNS_HOSTNAME, config.MDNS_HOSTNAME)
+        # The body is being refused unread, and on a keep-alive connection an
+        # unread body is parsed as the start of the next request. Same reasoning
+        # as `_too_large`.
+        self.close_connection = True
+        self._json({"ok": False,
+                    "error": f"this device does not answer to the name {host!r}"},
+                   HTTPStatus.MISDIRECTED_REQUEST)
+        return True
+
+    def _note_activity(self, path: str) -> None:
+        """Count this request as somebody actively using the setup page.
+
+        It is what stops the unattended retry in `network.py` from taking the
+        hotspot down mid-password.
+
+        The captive probes are deliberately excluded. A phone that stays joined
+        to the setup network re-fetches one every half minute for as long as it
+        is connected, so counting those would mean a device whose hotspot
+        somebody once joined and then forgot about never tries the house network
+        again — which is the exact stranding this all exists to fix.
+        """
+        if path in CAPTIVE_PROBES:
+            return
+        self.router.network.note_portal_activity()
+
     def _body(self) -> dict:
         """Parse a request body as JSON, or as a form. {} if there is neither."""
         try:
@@ -186,8 +254,12 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         url = urlparse(self.path)
         query = {k: v[0] for k, v in parse_qs(url.query).items()}
+        path = url.path.rstrip("/") or "/"
         try:
-            self._route_get(url.path.rstrip("/") or "/", query, url.query)
+            self._note_activity(path)
+            if path in MUTATING_GETS and self._misdirected(path):
+                return
+            self._route_get(path, query, url.query)
         except Exception:  # noqa: BLE001
             log.exception("GET %s failed", self.path)
             self._json({"ok": False, "error": "internal error"},
@@ -195,10 +267,14 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         url = urlparse(self.path)
+        path = url.path.rstrip("/") or "/"
         try:
+            self._note_activity(path)
             if self._too_large():
                 return
-            self._route_post(url.path.rstrip("/") or "/", self._body())
+            if self._misdirected(path):
+                return
+            self._route_post(path, self._body())
         except Exception:  # noqa: BLE001
             log.exception("POST %s failed", self.path)
             self._json({"ok": False, "error": "internal error"},
@@ -214,7 +290,15 @@ class Handler(BaseHTTPRequestHandler):
         # anything else and must not fall through to a 404, which some phones
         # read as "this network works" and never show the portal for.
         if path in CAPTIVE_PROBES:
-            self._redirect("/setup")
+            host = _host_name(self.headers.get("Host"))
+            # A probe is fetched under the *probe's* hostname —
+            # `connectivitycheck.gstatic.com` — and a relative redirect leaves the
+            # portal sheet sitting on that origin. Every POST the page then makes
+            # arrives under a name `_is_ours` refuses, so the Join button would
+            # simply stop working in the one flow that matters most. Sending it to
+            # the device's own address pins the portal to an origin that works.
+            self._redirect("/setup" if _is_ours(host)
+                           else provisioning.setup_url() + "setup")
             return
 
         if path == "/":
@@ -249,6 +333,9 @@ class Handler(BaseHTTPRequestHandler):
                 current=_escape(state.ssid or ""),
                 device_url=provisioning.device_url(),
                 setup_url=provisioning.setup_url(),
+                # Both addresses, because the page has to probe both to find
+                # out how the join went — see the comment on `readAttempt`.
+                ap_address=config.AP_ADDRESS,
                 claim=_escape(router.identity.claim),
                 cloud_state=_escape(cloud.get("state", "off")),
                 relay_url=_escape(cloud.get("relayUrl", "")),
@@ -302,6 +389,7 @@ class Handler(BaseHTTPRequestHandler):
                 "ok": True,
                 "device": device.status(),
                 "wifi": state.to_json(),
+                "attempt": router.network.snapshot(),
                 "cloud": router.cloud_status(),
                 "identity": {"ssid": router.identity.ssid, "source": router.identity.source},
                 "urls": {"device": provisioning.device_url(),
@@ -352,6 +440,19 @@ class Handler(BaseHTTPRequestHandler):
 
         if path == "/api/wifi/status":
             self._json({"ok": True, "wifi": wifi.status().to_json()})
+            return
+
+        if path == "/api/wifi/attempt":
+            # How the setup page follows a join it can no longer get an answer
+            # to any other way: the request that started it was answered while
+            # the radio was still an access point, and everything after that is
+            # watched from here. Reachable over both addresses — the hotspot's
+            # and the one the device gets on the house network — because which
+            # of the two the phone can see *is* the outcome.
+            self._json({"ok": True,
+                        "attempt": router.network.snapshot(),
+                        "wifi": wifi.status().to_json(),
+                        "deviceUrl": provisioning.device_url()})
             return
 
         if path == "/api/wifi/scan":
@@ -451,22 +552,34 @@ class Handler(BaseHTTPRequestHandler):
                            HTTPStatus.BAD_REQUEST)
                 return
             password = str(body.get("password", ""))
+            # Set by the "my network is not listed" path. A hidden SSID does not
+            # appear in a scan, and without this nmcli reports that no such
+            # network exists — which is true of the scan and not of the house.
+            hidden = _truthy(body.get("hidden"))
 
-            # This request usually dies before its answer arrives, and that is
-            # success, not failure: joining the home network tears down the
-            # hotspot the phone is talking over. The reply is attempted anyway
-            # because it does get through when the join *fails* — which is the
-            # case where the person needs to be told something. `setup.html`
-            # treats a dropped connection as the good outcome.
-            ok, message = wifi.connect(ssid, password or None)
-            self._json({"ok": ok, "message": message,
-                        "deviceUrl": provisioning.device_url()},
-                       HTTPStatus.OK if ok else HTTPStatus.BAD_REQUEST)
+            # Answered *now*, while the radio is still the access point this
+            # request arrived over. Joining the house network takes the hotspot
+            # down and with it the socket this reply would have travelled on, so
+            # the work happens on a worker thread and the outcome is read back
+            # from /api/wifi/attempt. Before this, a mistyped password was
+            # indistinguishable from a successful setup.
+            accepted, message = self.router.network.begin_join(
+                ssid, password or None, hidden=hidden)
+            self._json({"ok": accepted, "message": message,
+                        "attempt": self.router.network.snapshot(),
+                        "deviceUrl": provisioning.device_url(),
+                        "setupUrl": provisioning.setup_url()},
+                       HTTPStatus.ACCEPTED if accepted else HTTPStatus.CONFLICT)
             return
 
         if path == "/api/wifi/hotspot":
-            ok, message = wifi.start_hotspot(self.router.identity)
-            self._json({"ok": ok, "message": message})
+            # The way back in when the network the device is on is one nobody
+            # controls any more — a changed password, a moved house.
+            ok, message = self.router.network.raise_hotspot()
+            self._json({"ok": ok, "message": message,
+                        "ssid": self.router.identity.ssid,
+                        "setupUrl": provisioning.setup_url()},
+                       HTTPStatus.OK if ok else HTTPStatus.CONFLICT)
             return
 
         if path == "/api/cloud":
@@ -626,10 +739,71 @@ def _limit(query: dict, default: int) -> int:
         return default
 
 
+def _truthy(value) -> bool:
+    """A checkbox, whether it arrived as JSON or as a form field.
+
+    `"false"` and `"0"` are strings, and a string is true. A form-encoded body
+    can only send strings, so without this a hidden-network checkbox is on the
+    moment the field exists.
+    """
+    if isinstance(value, str):
+        return value.strip().lower() in ("1", "true", "yes", "on")
+    return bool(value)
+
+
+# ── which names this device answers to ──────────────────────────────────────
+
+def _host_name(header: str | None) -> str:
+    """The host out of a Host header: lowercased, no port, no brackets."""
+    host = (header or "").strip().lower()
+    if host.startswith("["):                      # [::1]:80
+        return host.partition("]")[0][1:]
+    # Only strip a port when there is exactly one colon; a bare IPv6 literal has
+    # several and none of them is a port.
+    return host.rpartition(":")[0] if host.count(":") == 1 else host
+
+
+def _is_ours(host: str) -> bool:
+    """Is this a name the dispenser is actually reached by?
+
+    Allowed:
+
+    * any bare IP address — DNS rebinding needs a *name*, so there is nothing to
+      rebind here, and the setup hotspot is reached at 10.42.0.1 by number;
+    * `localhost`;
+    * `pilldispenser` and `pilldispenser.local`, which is what the web app uses;
+    * two-label names starting with the device hostname, so that a router which
+      publishes its DHCP clients under a local domain — `pilldispenser.lan`,
+      `pilldispenser.home` — keeps working. Two labels is the limit because
+      `pilldispenser.evil.com` has three, and getting under that bar would mean
+      the attacker owning a top-level domain;
+    * anything in `SNAPCARE_EXTRA_HOSTS`, for the routers that use a longer
+      domain of their own.
+
+    An absent Host is allowed. HTTP/1.1 requires one and every browser sends
+    one, so a request without it is a hand-written client or a probe — and a
+    request with no name in it is not the request this check is about.
+    """
+    if not host:
+        return True
+    hostname = config.MDNS_HOSTNAME.lower()
+    if host in ("localhost", hostname, f"{hostname}.local"):
+        return True
+    if host in config.EXTRA_HTTP_HOSTS:
+        return True
+    try:
+        ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        pass
+    labels = host.split(".")
+    return len(labels) == 2 and labels[0] == hostname
+
+
 def make_server(dispenser: Dispenser, port: int | None = None,
                 identity: provisioning.Identity | None = None,
-                cloud=None) -> ThreadingHTTPServer:
-    router = Router(dispenser, identity, cloud)
+                cloud=None, network: Supervisor | None = None) -> ThreadingHTTPServer:
+    router = Router(dispenser, identity, cloud, network)
 
     handler = type("BoundHandler", (Handler,), {"router": router})
     # 0.0.0.0 because the device is reached from the home network and from the
@@ -643,9 +817,9 @@ def make_server(dispenser: Dispenser, port: int | None = None,
 
 def serve_forever(dispenser: Dispenser, port: int | None = None,
                   identity: provisioning.Identity | None = None,
-                  cloud=None) -> ThreadingHTTPServer:
+                  cloud=None, network: Supervisor | None = None) -> ThreadingHTTPServer:
     """Start the server on a background thread and return it."""
-    server = make_server(dispenser, port, identity, cloud)
+    server = make_server(dispenser, port, identity, cloud, network)
     thread = threading.Thread(target=server.serve_forever, name="http", daemon=True)
     thread.start()
     log.info("web server listening on port %d", server.server_address[1])

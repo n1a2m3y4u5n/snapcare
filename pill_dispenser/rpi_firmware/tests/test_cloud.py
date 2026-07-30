@@ -292,6 +292,85 @@ def test_the_relay_is_told_nothing_it_could_read(link, session, identity):
     assert identity.access_token in wire         # the bearer token, as intended
 
 
+def test_the_report_says_where_the_device_can_be_reached(link, session, identity):
+    """So the app can offer the LAN as a shortcut. Somebody standing in the room
+    next to the dispenser should not be talking to a data centre to open a tray.
+
+    Inside the sealed envelope, which is the reason it is allowed to name the
+    house WiFi at all: only whoever holds the pairing code can read it."""
+    link.network_changed(_Status(ssid="Home", address="192.168.1.42"))
+    session.queue("PUT", "/reported", 200, {"ok": True, "rev": 1})
+    link._publish_once()
+
+    sealed = session.last["body"]["envelope"]
+    report = envelope.unseal(identity.box_key, identity.device_id, "reported", sealed)
+    assert report["network"]["ssid"] == "Home"
+    assert report["network"]["address"] == "192.168.1.42"
+    assert report["network"]["deviceUrl"].endswith("pilldispenser.local/")
+    assert "Home" not in json.dumps(session.last["url"])
+
+
+class _Status:
+    """The two fields of `wifi.Status` the link keeps."""
+
+    def __init__(self, ssid, address):
+        self.ssid = ssid
+        self.address = address
+
+
+# ── coming back after an outage ─────────────────────────────────────────────
+
+def test_the_backoff_is_not_waited_out_once_the_wifi_returns(link):
+    """Both loops climb to five minutes, and after a WiFi outage every failure
+    that got them there had the same single cause — which has just gone away. A
+    device that is back must look back: 'offline' is the one word in that app a
+    carer acts on."""
+    started = time.monotonic()
+    waiter = threading.Thread(target=lambda: link._wait_to_poll(30), daemon=True)
+    waiter.start()
+    time.sleep(0.2)
+
+    link.network_changed()
+    waiter.join(timeout=2)
+    assert not waiter.is_alive(), "the poll wait ignored the network coming back"
+    assert time.monotonic() - started < 2
+
+
+def test_both_loops_see_the_network_come_back(link):
+    """One shared flag would be cleared by whichever thread noticed first, and
+    the other would sit out its backoff. A counter each loop remembers cannot be
+    consumed by its neighbour."""
+    before = link._network_epoch
+    link.network_changed()
+    assert link._network_epoch == before + 1
+    assert link._wake_poller.is_set()
+    assert link._wake_publisher.is_set()
+
+
+def test_a_poll_backoff_climbs_again_when_the_network_did_not_change(link, session,
+                                                                    monkeypatch):
+    """The reset is for an outage that ended, not for a relay that is simply
+    down — every dispenser in the field retrying a broken relay every five
+    seconds is what keeps it broken."""
+    monkeypatch.setattr(config, "CLOUD_BACKOFF_MIN_S", 0.01)
+    monkeypatch.setattr(config, "CLOUD_BACKOFF_MAX_S", 0.05)
+    monkeypatch.setattr(cloud, "_jittered", lambda seconds: seconds)
+    waits = []
+    monkeypatch.setattr(link, "_wait_to_poll", waits.append)
+    session.fail_with = OSError("the relay is down")
+
+    thread = threading.Thread(target=link._poll_loop, daemon=True)
+    thread.start()
+    deadline = time.monotonic() + 2
+    while len(waits) < 4 and time.monotonic() < deadline:
+        time.sleep(0.005)
+    link.stop()
+    thread.join(timeout=2)
+
+    assert len(waits) >= 4
+    assert waits[1] > waits[0], "the backoff must still grow when nothing changed"
+
+
 def test_an_unchanged_report_is_not_republished(link, session):
     """A revision, an fsync on the relay and a wake-up for every app watching,
     for a device saying exactly what it said a moment ago."""

@@ -157,6 +157,31 @@ th { color: var(--muted); font-weight: 600; font-size: .8rem; }
 .qr { background: #fff; padding: .6rem; border-radius: 8px; display: inline-block; line-height: 0; }
 .qr svg { width: 100%; height: auto; max-width: 15rem; }
 
+/* The named steps of a WiFi join.
+ *
+ * Named rather than a spinner on purpose. The middle step is the device taking
+ * the phone's network away, and a person watching an unlabelled spinner at that
+ * moment concludes the thing has crashed — which is exactly when they unplug it.
+ * A list that says "it leaves its own setup network" makes the pause the
+ * expected event it is.
+ *
+ * The markers are text, not icons: no icon font can be loaded here, and an SVG
+ * per state is more machinery than three characters deserve. */
+ol.steps { list-style: none; margin: 0 0 .9rem; padding: 0; }
+ol.steps li {
+  position: relative; padding: .3rem 0 .3rem 1.75rem;
+  color: var(--muted); font-size: .92rem;
+}
+ol.steps li::before {
+  content: "○"; position: absolute; left: 0; top: .3rem; font-size: .95rem;
+}
+ol.steps li.doing { color: var(--ink); }
+ol.steps li.doing::before { content: "◍"; color: var(--accent); }
+ol.steps li.done { color: var(--ink); }
+ol.steps li.done::before { content: "●"; color: var(--ok); }
+ol.steps li.failed { color: var(--bad); }
+ol.steps li.failed::before { content: "✕"; color: var(--bad); }
+
 .toast {
   margin-top: .8rem; padding: .7rem .9rem; border-radius: 8px;
   border: 1px solid var(--line); font-size: .9rem;

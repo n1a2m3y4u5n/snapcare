@@ -9,9 +9,11 @@ Order of business at boot
    previously-working WiFi connection, over anything. A firmware that only
    becomes reachable after its network setup succeeds is unreachable exactly
    when you need it.
-3. Give any known network some seconds to come up. If none does, raise the
-   setup hotspot, which is the same SSID and passphrase as the printed label,
-   every time.
+3. Ask the network supervisor to get onto something, and do not wait for it.
+   Joining a network takes tens of seconds and nothing about dispensing needs
+   one: on a morning where the power came back at 07:58, waiting here is a dose
+   held up by a router. `network.py` owns everything about which mode the radio
+   is in, and does it on its own thread.
 4. Open the cloud link, if one is configured, on its own threads. It is not
    waited for and its failure is not this function's problem — a dispenser with
    an unreachable relay is a dispenser, and the schedule it is running is
@@ -28,6 +30,10 @@ the loop. A servo that jams, a full SD card, a store that cannot be written —
 all of those are logged and retried on the next tick. The alternative is a
 process that exits, and a dispenser that has silently stopped dispensing is the
 failure this whole project is written against.
+
+Which is also why `Supervisor.tick` only ever *decides*, and hands anything that
+touches the radio to a worker. A network call on this thread is a dose that
+waits for nmcli.
 """
 from __future__ import annotations
 
@@ -36,14 +42,14 @@ import logging
 import signal
 import sys
 import threading
-import time
 
-from . import config, provisioning, qr, wifi
+from . import config, provisioning, qr
 from .button import ConfirmButton
 from .clock import Clock
 from .cloud import CloudLink
 from .device import Dispenser
 from .indicators import LogIndicator, make_indicator
+from .network import Supervisor
 from .server import serve_forever
 from .servo import TrayServos, make_backend
 from .store import Store
@@ -75,8 +81,18 @@ class Daemon:
         # Every recorded dose goes up promptly, whichever of the five things
         # that can cause one caused it. See `Dispenser.on_event`.
         self.dispenser.on_event = lambda _record: self.cloud.nudge()
+        # Which mode the radio is in, and the whole of the join flow. Given the
+        # indicator so that the room can say "I am not on a network yet", and
+        # given the cloud link so that coming back onto the WiFi collapses a
+        # retry backoff that can otherwise be minutes long — a device that is
+        # back but still missing from the app looks exactly like one that is not.
+        self.network = Supervisor(
+            self.identity,
+            indicator=self.dispenser.indicator,
+            manage=manage_wifi,
+            on_online=self.cloud.network_changed,
+        )
         self.port = port
-        self.manage_wifi = manage_wifi
         self._stop = threading.Event()
         self._server = None
         self._ntp_trusted = False
@@ -93,82 +109,17 @@ class Daemon:
         else:
             log.debug("button pressed with no dose waiting")
 
-    # ── network ─────────────────────────────────────────────────────────────
-
-    def bring_up_network(self) -> None:
-        if not self.manage_wifi:
-            log.info("WiFi management disabled; leaving the network alone")
-            return
-        if not wifi.available():
-            log.warning("NetworkManager is not available — not managing WiFi")
-            return
-
-        if wifi.status().mode == "connected":
-            log.info("already on %s", wifi.status().ssid)
-            return
-
-        if wifi.has_known_network():
-            log.info("waiting up to %ds for a known network", config.WIFI_JOIN_TIMEOUT_S)
-            deadline = time.monotonic() + config.WIFI_JOIN_TIMEOUT_S
-            while time.monotonic() < deadline and not self._stop.is_set():
-                if wifi.status().mode == "connected":
-                    log.info("joined %s", wifi.status().ssid)
-                    return
-                self._stop.wait(2)
-
-        log.info("no network — raising the setup hotspot %s", self.identity.ssid)
-        ok, message = wifi.start_hotspot(self.identity)
-        if ok:
-            self.announce_setup()
-        else:
-            # Worth shouting about: the device is now unreachable by the
-            # intended route, and the only remaining way in is a cable.
-            log.error("could not raise the setup hotspot: %s", message)
-
-    def announce_setup(self) -> None:
-        """Print the join details, so an SSH session is enough to set up a board."""
-        log.info("setup network: %s   password: %s",
-                 self.identity.ssid, self.identity.passphrase)
-        log.info("setup page:    %s", provisioning.setup_url())
-        try:
-            print("\n" + qr.to_text(self.identity.wifi_qr) + "\n", file=sys.stderr)
-        except qr.QREncoderUnavailable:
-            log.info("(install segno to print the join code here: pip install segno)")
-
-    def watch_wifi(self) -> None:
-        """Fall back to the hotspot if the network disappears for good.
-
-        A router rebooting is not this. NetworkManager reconnects on its own
-        within seconds, and raising a hotspot every time the WiFi blinks would
-        take the device off the network far more often than it rescued it. This
-        only fires after a sustained outage — a house that changed its WiFi
-        password, or a device carried to a different building.
-        """
-        if not self.manage_wifi or not wifi.available():
-            return
-        state = wifi.status()
-        if state.mode in ("connected", "hotspot", "unavailable"):
-            return
-
-        log.warning("off the network for %d minutes — raising the setup hotspot",
-                    _OFFLINE_GRACE_S // 60)
-        ok, message = wifi.start_hotspot(self.identity)
-        if ok:
-            self.announce_setup()
-        else:
-            log.error("could not raise the setup hotspot: %s", message)
-
     # ── the loop ────────────────────────────────────────────────────────────
 
     def run(self) -> int:
         self._server = serve_forever(self.dispenser, self.port, self.identity,
-                                     cloud=self.cloud)
-        self.bring_up_network()
+                                     cloud=self.cloud, network=self.network)
+        self.network.start()
 
-        # After the network, because there is no point dialling a relay over an
-        # interface that is not up yet — and *not* conditional on it having
-        # worked, because the link's own retry loop is better at waiting than
-        # anything this function could do, and the WiFi may arrive later.
+        # Not conditional on the network being up, and no longer even ordered
+        # after it: the link's own retry loop is better at waiting than anything
+        # this function could do, and `Supervisor.on_online` pokes it the moment
+        # the WiFi actually arrives.
         self.cloud.start()
 
         if not self.dispenser.clock.trusted:
@@ -177,7 +128,6 @@ class Daemon:
                 "It will start once NTP synchronises, or when a phone sets it."
             )
 
-        offline_since: float | None = None
         last_seen_trusted = False
 
         while not self._stop.is_set():
@@ -199,15 +149,9 @@ class Daemon:
                              "dispensed" if event["taken"] else "MISSED",
                              event["time"], event["sc1"])
 
-                if self.manage_wifi and wifi.available():
-                    state = wifi.status()
-                    if state.mode == "disconnected":
-                        offline_since = offline_since or time.monotonic()
-                        if time.monotonic() - offline_since > _OFFLINE_GRACE_S:
-                            self.watch_wifi()
-                            offline_since = None
-                    else:
-                        offline_since = None
+                # Second, and cheap: it decides and dispatches, never waits.
+                # Doses come first in this loop because they are the job.
+                self.network.tick()
 
             except Exception:  # noqa: BLE001
                 # See the module docstring: the loop outlives its failures.
@@ -220,25 +164,23 @@ class Daemon:
     def stop(self, *_args) -> None:
         log.info("shutting down")
         self._stop.set()
-        # Asked to stop here rather than in `close`, so its threads have the
+        # Asked to stop here rather than in `close`, so their threads have the
         # whole of the shutdown to notice. They are daemon threads and cannot
         # hold the process open either way; this just keeps a poll that is
-        # mid-flight from logging a failure on the way out.
+        # mid-flight, or a join waiting on a router, from logging a failure on
+        # the way out.
         self.cloud.stop()
+        self.network.stop()
 
     def close(self) -> None:
         self.cloud.stop()
+        self.network.close()
         if self.button:
             self.button.close()
         if self._server:
             self._server.shutdown()
             self._server.server_close()
         self.dispenser.close()
-
-
-#: How long the device has to be off the network before it gives up and raises
-#: its own. Long enough that a router reboot does not trigger it.
-_OFFLINE_GRACE_S = 10 * 60
 
 
 def main(argv: list[str] | None = None) -> int:

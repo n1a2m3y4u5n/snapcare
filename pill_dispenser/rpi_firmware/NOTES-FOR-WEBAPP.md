@@ -16,6 +16,13 @@ what you *gain* if you want it.
 > and it is the one to read if you are choosing where to put new work. Sections
 > 1 to 6 describe the LAN path, which is unchanged and still the fallback when
 > there is no internet.
+>
+> **Two things changed on 2026-07-30 that touch code you may already have
+> written.** Mutating requests are now name-checked and answer **421** if the
+> `Host` is not one the device goes by — [§3](#one-header-your-requests-must-get-right);
+> and `POST /api/wifi/connect` now answers **202** and is followed through
+> `GET /api/wifi/attempt` rather than answering the outcome
+> — [§5](#if-you-drive-the-join-yourself). Neither affects `dispenser.ts`.
 
 ---
 
@@ -110,7 +117,10 @@ next dose, and whether a dose is currently waiting to be confirmed.
 | `POST /api/confirm` · `/api/dismiss` | taken / silence |
 | `POST /api/clock` | `{"iso": "..."}` or `{"payload": "SC1*C*..."}` |
 | `GET /api/events?limit=n` | the dose log, newest first |
-| `GET /api/wifi/scan` · `POST /api/wifi/connect` | provisioning |
+| `GET /api/wifi/scan` · `GET /api/wifi/status` | what is nearby, and where we are |
+| `POST /api/wifi/connect` | `{"ssid","password","hidden"}` → **202**, see §5 |
+| `GET /api/wifi/attempt` | how that join is going — the state machine |
+| `POST /api/wifi/hotspot` | raise the setup network now |
 | `GET /api/identity` | SSID and the QR payloads, for a setup screen |
 
 Errors are `{"ok": false, "error": "..."}` with a 4xx. Nothing throws; a
@@ -119,6 +129,26 @@ malformed payload is a 400, never a 500.
 `Access-Control-Allow-Origin: *` is set on `/api/*`, so you can develop against
 a real device from `http://localhost:3000`. It does not widen access — anything
 on the LAN could already reach it — it only lets a browser page read the answer.
+
+### One header your requests must get right
+
+Since 2026-07-30 a request that **changes** something is refused with **421
+Misdirected Request** unless its `Host` is a name the device answers to:
+`pilldispenser`, `pilldispenser.local`, a two-label name starting with the
+hostname (`pilldispenser.lan`), or any bare IP address. That covers `POST
+/api/*` and the three mutating GETs `/save`, `/dropout` and `/dismiss`.
+
+This costs a normal caller nothing — the browser sets `Host` from the URL you
+fetched, and `http://pilldispenser.local/...` is exactly what `dispenser.ts`
+builds. It exists because without it any page open on a phone on the same WiFi
+can point a hostname *it* owns at the dispenser's address and drive it. CORS does
+not help there: dropping eight trays into a cup does not require reading the
+answer.
+
+Reads are deliberately exempt, so nothing about §1–§3 changes and the captive
+portal — whose probes arrive addressed to `connectivitycheck.gstatic.com` — keeps
+working. If a router publishes DHCP clients under a domain of its own,
+`SNAPCARE_EXTRA_HOSTS=pilldispenser.fritz.box` on the device allows it.
 
 ### Mixed content still applies
 
@@ -194,6 +224,54 @@ changes, so you can cache it against a device forever.
 same network as the device*, so it is for a re-setup or a diagnostics screen,
 not for first contact.)
 
+### If you drive the join yourself
+
+A Pi 3B has one radio. It can be the setup hotspot or it can be on the house
+network, never both — so **joining is also the act of hanging up on whoever asked
+for it.** That shapes the API, and it will shape your UI the same way it shaped
+the device's own setup page.
+
+`POST /api/wifi/connect` answers **202 Accepted** while the radio is still an
+access point. It is not telling you the join worked; it is telling you the join
+has started. Then poll:
+
+```
+GET /api/wifi/attempt
+  → { "ok": true,
+      "attempt": { "state": "joining",     // idle | joining | joined | failed | recovering
+                   "ssid": "Home",
+                   "detail": "The password was not accepted.",
+                   "address": "192.168.1.42",
+                   "hotspotBack": true,
+                   "secondsAgo": 4, "busy": false, "managed": true },
+      "wifi": { "mode": "hotspot", "ssid": "SnapCare-V5XH", "address": "10.42.0.1" },
+      "deviceUrl": "http://pilldispenser.local/" }
+```
+
+Four things about that poll, each of which is a bug if you skip it:
+
+1. **Expect a stretch where nothing is reachable at all.** Between the hotspot
+   going down and the phone falling back to the house WiFi, neither address
+   answers. That is normal and lasts 10–20 s. Say so on screen — an unlabelled
+   spinner at that exact moment is when people unplug the device.
+2. **Probe both `10.42.0.1` and `pilldispenser.local`,** and decide from
+   `wifi.mode` in the body, not from which address answered. While the hotspot is
+   up its own DNS resolves *every* name to the device, so a successful
+   `pilldispenser.local` probe there proves nothing.
+3. **`hotspotBack` is the field to branch on** when `state` is `failed`. `true`
+   means "the setup network is back — try a different password right here".
+   `false` means the rollback failed too and the device needs a power cycle.
+   Getting this wrong is the difference between finishing setup and giving up.
+4. **`state: "recovering"`** is the device retrying a network it already knows,
+   unprompted, because it was sitting on its own hotspot. Nobody asked for it —
+   do not show it as a failure if it comes to nothing.
+
+`{"hidden": true}` on the connect call is for a network that does not broadcast
+its name; without it NetworkManager scans, does not find the name, and reports
+that no such network exists. `POST /api/wifi/hotspot` raises the setup network on
+demand, which is the only way back into a device whose network nobody controls any
+more.
+
 ---
 
 ## 6. The LAN API has no authentication
@@ -205,6 +283,11 @@ so it was the wrong call to make unilaterally.
 
 It is a real gap for a device that dispenses medication, and it is worth a
 decision rather than a default.
+
+The `Host` check in §3 narrows it but does not close it: it stops a *remote* page
+from reaching in through a name it controls, which was the worse half of the
+problem. It does nothing about something already on the WiFi that addresses the
+device by its real name — which is the half that needs the token below.
 
 Note that this now also means **`GET /api/identity` serves the cloud pairing
 code to anything on the LAN**, and that code is enough to pair with the device
@@ -300,6 +383,26 @@ events, and when it last said anything. **Use that timestamp rather than the
 word "connected"**: a dispenser whose power has been pulled sends nothing and
 otherwise looks identical to a healthy one, and "the dispenser has been
 unplugged since Tuesday" is the single most useful thing a carer can be told.
+
+The report also carries where the device is, inside the same sealed envelope —
+which is the only reason it is allowed to name somebody's WiFi at all:
+
+```json
+"network": { "ssid": "Home", "address": "192.168.1.42",
+             "deviceUrl": "http://pilldispenser.local/" }
+```
+
+Worth using as a shortcut. Somebody standing in the room next to the dispenser
+should not be round-tripping through a data centre to open a tray, and this is
+how the app knows the LAN is an option without scanning for it. Mixed content
+still applies to reaching it — §3 — so it is a link, not a `fetch`.
+
+**Do not treat a gap in the reports as an offline device without checking the
+clock.** After a WiFi outage the device resets its retry backoff the instant the
+network returns and republishes immediately, so a recovered dispenser reappears
+within a second or two rather than at the end of a five-minute retry interval. If
+it is genuinely quiet for longer than `CLOUD_HEARTBEAT_S` plus a margin, it is
+actually down.
 
 The `wait=50` is a long poll, which is what makes an edit arrive in about a
 second. Treat a dropped connection as normal and reconnect with backoff — it

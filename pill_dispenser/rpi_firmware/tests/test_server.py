@@ -8,6 +8,7 @@ lands on is actually a page.
 from __future__ import annotations
 
 import json
+import re
 import threading
 import urllib.error
 import urllib.parse
@@ -16,7 +17,7 @@ from datetime import datetime
 
 import pytest
 
-from snapcare_dispenser import provisioning, server, wifi
+from snapcare_dispenser import network, provisioning, server, wifi
 from snapcare_dispenser.server import make_server
 
 
@@ -32,10 +33,47 @@ def offline_wifi(monkeypatch):
     ])
 
 
+class FakeSupervisor:
+    """Stands in for the radio policy: records what was asked, moves no radio."""
+
+    def __init__(self, accept=True, attempt=None):
+        self.accept = accept
+        self.joins: list[tuple] = []
+        self.hotspots = 0
+        self.portal_seen = 0
+        self._attempt = attempt or {
+            "state": "idle", "ssid": "", "detail": "", "address": "",
+            "hotspotBack": False, "secondsAgo": None, "busy": False, "managed": True,
+        }
+
+    def snapshot(self):
+        return dict(self._attempt)
+
+    def note_portal_activity(self):
+        self.portal_seen += 1
+
+    def begin_join(self, ssid, password, hidden=False):
+        self.joins.append((ssid, password, hidden))
+        if not self.accept:
+            return False, "already joining; give it a few seconds"
+        self._attempt = dict(self._attempt, state="joining", ssid=ssid,
+                             detail=f"Joining {ssid}…", busy=True)
+        return True, f"Joining {ssid}."
+
+    def raise_hotspot(self):
+        self.hotspots += 1
+        return True, "SnapCare-V5XH"
+
+
 @pytest.fixture
-def http(dispenser, offline_wifi):
+def supervisor():
+    return FakeSupervisor()
+
+
+@pytest.fixture
+def http(dispenser, offline_wifi, supervisor):
     identity = provisioning.derive_identity("a1b2c3d4")
-    httpd = make_server(dispenser, port=0, identity=identity)
+    httpd = make_server(dispenser, port=0, identity=identity, network=supervisor)
     # A short poll interval: the default 0.5 s is paid on every teardown,
     # and this fixture is built once per test.
     thread = threading.Thread(target=httpd.serve_forever,
@@ -46,23 +84,29 @@ def http(dispenser, offline_wifi):
     class Client:
         base_url = base
         device = dispenser
+        network = supervisor
 
-        def get(self, path):
+        def get(self, path, host=None):
+            request = urllib.request.Request(base + path)
+            if host:
+                request.add_header("Host", host)
             try:
-                with urllib.request.urlopen(base + path, timeout=10) as response:
+                with urllib.request.urlopen(request, timeout=10) as response:
                     return response.status, response.headers, response.read().decode()
             except urllib.error.HTTPError as error:
                 return error.code, error.headers, error.read().decode()
 
-        def get_json(self, path):
-            status, _, body = self.get(path)
+        def get_json(self, path, host=None):
+            status, _, body = self.get(path, host=host)
             return status, json.loads(body)
 
-        def post_json(self, path, payload):
+        def post_json(self, path, payload, host=None):
+            headers = {"Content-Type": "application/json"}
+            if host:
+                headers["Host"] = host
             request = urllib.request.Request(
                 base + path, method="POST",
-                data=json.dumps(payload).encode(),
-                headers={"Content-Type": "application/json"})
+                data=json.dumps(payload).encode(), headers=headers)
             try:
                 with urllib.request.urlopen(request, timeout=10) as response:
                     return response.status, json.loads(response.read().decode())
@@ -99,6 +143,45 @@ def test_the_setup_page_is_served_when_it_is_not(http, monkeypatch):
     status, _, body = http.get("/")
     assert status == 200
     assert "Set up the pill dispenser" in body
+
+
+def test_the_setup_page_only_reaches_for_elements_that_exist(http):
+    """No JS engine here, so this checks the one thing a reading cannot.
+
+    Every control on that page is wired by id. A rename leaves
+    `getElementById` returning null and the next line throwing, which in a
+    browser is silent — the button simply stops working. The last version of this
+    page shipped with `password.parentElement.hidden = net.open`, where the
+    parent was the whole `<form>`: choosing an open network hid the Join button
+    along with the password field, and an open network could not be joined at all.
+    """
+    _, _, body = http.get("/setup")
+    wanted = set(re.findall(r"getElementById\('([^']+)'\)", body))
+    # The step list is addressed by a built id — `step('leave', 'done')` — so it
+    # is invisible to the pattern above and has to be collected separately.
+    wanted |= {"step-" + name for name in re.findall(r"\bstep\('(\w+)'", body)}
+    assert len(wanted) > 20, "the setup page has stopped wiring anything up"
+    for element_id in sorted(wanted):
+        assert f'id="{element_id}"' in body, element_id
+
+
+def test_the_setup_page_calls_endpoints_this_firmware_serves(http):
+    """The page and the router are edited in different files, and a path that
+    404s shows up as a setup that hangs rather than as an error."""
+    _, _, body = http.get("/setup")
+    for path in sorted(set(re.findall(r"fetch\((?:[A-Z_]+ \+ )?'(/[\w/]+)'", body))):
+        status, data = http.get_json(path) if "connect" not in path else (200, {"ok": True})
+        assert status == 200 and data["ok"], path
+
+
+def test_the_setup_page_knows_both_addresses_to_look_for(http):
+    """While the hotspot is up its DNS resolves every name to the device, so the
+    page has to ask both and read the answer out of the body — the address a
+    probe succeeded on proves nothing."""
+    _, _, body = http.get("/setup")
+    assert "http://10.42.0.1" in body
+    assert "pilldispenser.local" in body
+    assert "/api/wifi/attempt" in body
 
 
 def test_the_pages_load_their_stylesheet_and_nothing_else(http):
@@ -138,6 +221,23 @@ def test_an_unknown_endpoint_is_a_404(http):
 
 # ── the captive portal ──────────────────────────────────────────────────────
 
+def fetch_without_redirects(url, host=None):
+    """(status, Location). A phone's probe looks at the answer; it does not follow it."""
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs):
+            return None
+
+    request = urllib.request.Request(url)
+    if host:
+        request.add_header("Host", host)
+    opener = urllib.request.build_opener(NoRedirect)
+    try:
+        with opener.open(request, timeout=10) as response:
+            return response.status, response.headers.get("Location")
+    except urllib.error.HTTPError as error:
+        return error.code, error.headers.get("Location")
+
+
 @pytest.mark.parametrize("probe", sorted(server.CAPTIVE_PROBES))
 def test_every_captive_probe_redirects_to_setup(http, probe):
     """This redirect is the entire reason the setup page opens by itself.
@@ -147,21 +247,21 @@ def test_every_captive_probe_redirects_to_setup(http, probe):
     the page. A 404 is read by some phones as "the network works", and then
     nothing ever appears.
     """
-    request = urllib.request.Request(http.base_url + probe)
-
-    class NoRedirect(urllib.request.HTTPRedirectHandler):
-        def redirect_request(self, *args, **kwargs):
-            return None
-
-    opener = urllib.request.build_opener(NoRedirect)
-    try:
-        with opener.open(request, timeout=10) as response:
-            status, location = response.status, response.headers.get("Location")
-    except urllib.error.HTTPError as error:
-        status, location = error.code, error.headers.get("Location")
-
+    status, location = fetch_without_redirects(http.base_url + probe)
     assert status == 302
     assert location == "/setup"
+
+
+def test_a_probe_under_its_own_hostname_is_sent_to_the_devices_address(http):
+    """A phone fetches `connectivitycheck.gstatic.com/generate_204`, and some then
+    open the portal sheet at *that* origin. A relative redirect would leave the
+    setup page there, and every POST it makes would arrive under a name the
+    write check refuses — the Join button dead in the one flow that matters
+    most."""
+    status, location = fetch_without_redirects(http.base_url + "/generate_204",
+                                               host="connectivitycheck.gstatic.com")
+    assert status == 302
+    assert location == "http://10.42.0.1/setup"
 
 
 # ── the native schedule API ─────────────────────────────────────────────────
@@ -280,6 +380,172 @@ def test_scanning_lists_networks(http):
 def test_connecting_without_a_network_named_is_refused(http):
     status, data = http.post_json("/api/wifi/connect", {"password": "x"})
     assert status == 400 and not data["ok"]
+
+
+def test_a_join_is_accepted_rather_than_waited_for(http):
+    """202, not 200. The device is still an access point when this answer is
+    written — joining the house network is what takes the hotspot, and the phone's
+    only route to the device, down. Answering afterwards means never answering,
+    and that is how a mistyped password used to look like a finished setup."""
+    status, data = http.post_json("/api/wifi/connect",
+                                  {"ssid": "Home", "password": "hunter2"})
+    assert status == 202
+    assert data["ok"] and data["attempt"]["state"] == "joining"
+    assert http.network.joins == [("Home", "hunter2", False)]
+    assert data["deviceUrl"].endswith("pilldispenser.local/")
+
+
+def test_an_open_network_is_joined_with_no_password(http):
+    """The page sends an empty string for a network that needs none; it has to
+    reach the mechanism as "no password", not as a password of ''."""
+    http.post_json("/api/wifi/connect", {"ssid": "CafeWiFi", "password": ""})
+    assert http.network.joins == [("CafeWiFi", None, False)]
+
+
+def test_a_hidden_network_is_passed_through(http):
+    http.post_json("/api/wifi/connect",
+                   {"ssid": "Unlisted", "password": "x", "hidden": True})
+    assert http.network.joins == [("Unlisted", "x", True)]
+
+
+def test_a_hidden_flag_sent_as_a_form_field_is_read_as_a_checkbox(http):
+    """A form-encoded body can only send strings, and every non-empty string is
+    truthy — so `hidden=false` would turn the flag on."""
+    http.post_json("/api/wifi/connect",
+                   {"ssid": "Home", "password": "x", "hidden": "false"})
+    assert http.network.joins == [("Home", "x", False)]
+
+
+def test_a_second_join_while_one_is_running_is_a_conflict(http, supervisor):
+    supervisor.accept = False
+    status, data = http.post_json("/api/wifi/connect", {"ssid": "Home", "password": "x"})
+    assert status == 409 and not data["ok"]
+    assert "already" in data["message"]
+
+
+def test_the_attempt_endpoint_is_how_the_page_follows_a_join(http, supervisor):
+    """The request that started the join cannot be answered twice, and the page
+    that sent it may not exist by the time there is anything to say."""
+    supervisor._attempt = {
+        "state": "failed", "ssid": "Home",
+        "detail": "The password was not accepted.", "address": "",
+        "hotspotBack": True, "secondsAgo": 4, "busy": False, "managed": True,
+    }
+    status, data = http.get_json("/api/wifi/attempt")
+    assert status == 200
+    assert data["attempt"]["state"] == "failed"
+    assert data["attempt"]["detail"] == "The password was not accepted."
+    assert data["attempt"]["hotspotBack"] is True
+    # And the same record on the general status endpoint, so the app sees it too.
+    assert http.get_json("/api/status")[1]["attempt"]["state"] == "failed"
+
+
+def test_the_hotspot_can_be_asked_for_by_hand(http):
+    """The way back in when the network the device is on is one nobody controls
+    any more — a changed password, a moved house."""
+    status, data = http.post_json("/api/wifi/hotspot", {})
+    assert status == 200 and data["ok"]
+    assert data["ssid"] == "SnapCare-V5XH"
+    assert http.network.hotspots == 1
+
+
+def test_a_server_built_without_a_supervisor_refuses_honestly(dispenser, offline_wifi):
+    """`make run` on a laptop, and anything constructing a server directly. A
+    stand-in that manages nothing beats every endpoint growing its own branch."""
+    router = server.Router(dispenser, provisioning.derive_identity("a1b2c3d4"))
+    accepted, message = router.network.begin_join("Home", "x")
+    assert accepted is False and "off" in message
+    assert router.network.snapshot()["managed"] is False
+
+
+# ── who is allowed to change things ─────────────────────────────────────────
+
+def test_a_page_on_a_name_we_do_not_answer_to_cannot_drive_the_device(http):
+    """DNS rebinding. Point a hostname you own at the dispenser's address and any
+    browser on that WiFi will POST to it for you — no CORS involved, because
+    dropping eight trays into a cup does not require reading the answer."""
+    status, data = http.post_json("/api/drop", {"tray": 1}, host="dispenser.example.com")
+    assert status == 421 and not data["ok"]
+    assert http.device.store.read_events() == [], "nothing may have been dropped"
+
+
+def test_the_mutating_links_the_app_builds_are_checked_too(http):
+    """`/dropout?tray=3` opens a tray on a GET. An image tag is enough to fire
+    it, so the same rule applies."""
+    status, _, _ = http.get("/dropout?tray=3", host="dispenser.example.com")
+    assert status == 421
+    assert http.device.store.read_events() == []
+
+
+@pytest.mark.parametrize("host", [
+    "pilldispenser.local", "pilldispenser", "pilldispenser.lan", "localhost",
+    "10.42.0.1", "192.168.1.42", "127.0.0.1:8080", "[::1]:80",
+])
+def test_the_names_the_device_is_actually_reached_by_are_allowed(http, host):
+    status, data = http.post_json("/api/dismiss", {}, host=host)
+    assert status == 200 and data["ok"], host
+
+
+@pytest.mark.parametrize("host", [
+    "evil.example.com", "pilldispenser.evil.com", "pilldispenser.local.evil.com",
+])
+def test_a_name_that_only_starts_with_ours_is_still_refused(http, host):
+    status, _ = http.post_json("/api/dismiss", {}, host=host)
+    assert status == 421, host
+
+
+def test_a_router_domain_can_be_allowed_by_configuration(dispenser, offline_wifi,
+                                                         monkeypatch):
+    """Some home routers publish DHCP clients under a domain of their own —
+    `pilldispenser.fritz.box`. The rule cannot know those, so there is a knob."""
+    from snapcare_dispenser import config
+    assert not server._is_ours("pilldispenser.fritz.box")
+    monkeypatch.setattr(config, "EXTRA_HTTP_HOSTS", frozenset({"pilldispenser.fritz.box"}))
+    assert server._is_ours("pilldispenser.fritz.box")
+
+
+def test_reads_are_not_name_checked(http):
+    """The captive probes arrive addressed to `connectivitycheck.gstatic.com`,
+    and a name check on a GET would break the one flow that has to work."""
+    status, _ = fetch_without_redirects(http.base_url + "/generate_204",
+                                        host="connectivitycheck.gstatic.com")
+    assert status == 302
+    status, data = http.get_json("/api/status", host="anything.example.com")
+    assert status == 200 and data["ok"]
+
+
+def test_a_refused_name_does_not_poison_the_connection(http):
+    """The body is refused unread, and on a keep-alive connection an unread body
+    is parsed as the start of the next request."""
+    http.post_json("/api/schedule", {"payload": "SC1*W*1:0800-127-000"},
+                   host="evil.example.com")
+    assert http.get_json("/api/status")[1]["ok"]
+    assert http.get_json("/api/schedule")[1]["payload"] == ""
+
+
+# ── keeping the setup page alive ────────────────────────────────────────────
+
+def test_using_the_setup_page_holds_off_the_unattended_retry(http):
+    """Otherwise the device is free to take its own hotspot down in the middle of
+    somebody typing their WiFi password."""
+    before = http.network.portal_seen
+    http.get("/setup")
+    http.get_json("/api/wifi/scan")
+    assert http.network.portal_seen == before + 2
+
+
+def test_a_captive_probe_is_not_somebody_using_the_page(http):
+    """A phone that stays joined to the setup network re-fetches one of these
+    every half minute for as long as it is connected. Counting them would mean a
+    device whose hotspot somebody once joined never retries the house network
+    again — the exact stranding this all exists to fix."""
+    before = http.network.portal_seen
+    for probe in ("/generate_204", "/hotspot-detect.html"):
+        # Without following the redirect, which is what the phone's probe does:
+        # it looks at the answer, concludes there is a portal, and shows a sheet.
+        # Loading the page in that sheet is a person, and *is* counted.
+        fetch_without_redirects(http.base_url + probe)
+    assert http.network.portal_seen == before
 
 
 def test_the_identity_endpoint_gives_the_label_values(http):

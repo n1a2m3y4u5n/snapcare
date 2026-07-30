@@ -94,6 +94,70 @@ phone concludes it is behind a captive portal. Without it the phone joins,
 reports "no internet", and gives the person no sign of what to do next — which
 is why the label carries the setup URL as a second QR.
 
+The redirect is **absolute** — `http://10.42.0.1/setup`, not `/setup` — whenever
+the probe arrived under its own hostname. Some phones open the portal sheet at
+the probe's origin, and a relative redirect would leave the setup page sitting on
+`connectivitycheck.gstatic.com`. Every write it then made would be refused by the
+`Host` check below, which is the Join button dead in the flow that matters most.
+
+**What happens after they tap Join.** This is the part a single radio makes
+awkward, and it is where the flow used to lose people. A Pi 3B can be the setup
+hotspot or it can be on the house network, never both — so *joining is also the
+act of hanging up on the phone that asked for it.*
+
+```
+  phone ──► POST /api/wifi/connect          hotspot still up
+        ◄── 202 Accepted, "Joining Home."   answered first, on purpose
+                                    │
+        the radio leaves the hotspot ▼      the phone drops off; 10-20 s
+                                    │
+        ┌───────────────────────────┴───────────────────────────┐
+     joined                                                  failed
+        │                                                       │
+  it is on Home with a lease              the profile is deleted, the setup
+  the ring stops saying "cyan"            hotspot is back within seconds, and
+  the cloud link is poked                 the reason is recorded against it
+        │                                                       │
+  phone falls back to home WiFi           phone rejoins SnapCare-V5XH
+  → pilldispenser.local                   → the page it re-opens says
+                                            "The password was not accepted."
+```
+
+Three things fall out of that, and together they are
+[`network.py`](snapcare_dispenser/network.py):
+
+- **The answer is sent before the radio moves.** Answering afterwards means
+  never answering. The old firmware sent the reply after `nmcli` returned, so it
+  never arrived — and the page treated the dropped connection as success. A
+  mistyped password was indistinguishable from a finished setup, and the device
+  then had no access point for ten minutes.
+- **A failed join restores the hotspot immediately,** deletes the poisoned
+  profile that would otherwise autoconnect forever with a password already known
+  to be wrong, and records why. The page follows the outcome through
+  `GET /api/wifi/attempt`, probing both `10.42.0.1` and `pilldispenser.local` and
+  reading `wifi.mode` out of the body — while the hotspot is up its own DNS
+  resolves *every* name to the device, so the address a probe succeeds on proves
+  nothing.
+- **"Joined" means a DHCP lease, not an association.** `nmcli` exits 0 for a
+  profile with `ipv4.may-fail`, and for a router that completes the handshake and
+  then never answers DHCP. A device with no address is not on the network in any
+  sense the app can use.
+
+**Nothing gets stranded.** Once the hotspot is up, the device retries the network
+it already knows every `HOTSPOT_RETRY_S` — dropping the AP, standing back while
+NetworkManager autoconnects, and putting the AP back if that fails. Without it, a
+router that took longer to come back after a power cut than the device was
+willing to wait left the dispenser on its own hotspot permanently, and a
+dispenser in a spare room can sit like that for weeks with nobody noticing that
+the app has stopped hearing from it. The retry holds off for `PORTAL_QUIET_S`
+after any request to the setup page, so it cannot pull the network out from under
+somebody who is halfway through typing a password — and captive-portal probes
+deliberately do not count as activity, or a phone that stays joined to the
+hotspot would suppress the retry forever.
+
+If a network is one nobody controls any more — a changed password, a moved
+house — `POST /api/wifi/hotspot` raises the setup network on demand.
+
 Print it from `http://<device>/label`, or:
 
 ```bash
@@ -284,12 +348,22 @@ device understands the other:
 | **blue ring** | button pressed, recorded as taken |
 | **amber ring** | the dose went untaken, or its window closed |
 | **violet ring** | a new schedule was accepted |
+| **cyan ring, silent** | waiting to be put on a WiFi network |
 
 The chirp repeats every `BUZZER_REPEAT_S` (20 s) until the button is pressed or
 the alert is dismissed. That pairing is the point rather than redundancy: a ring
 alone only works if somebody is looking at it, and without a sound the confirm
 button is close to useless — nobody acknowledges what they never noticed, and
 the log fills with doses marked dispensed-but-unconfirmed.
+
+Cyan is the one colour that is new in this build, and it is deliberately outside
+that vocabulary and deliberately silent. A chirp has meant "there are pills in
+the cup" since the Arduino build; spending it on a network problem teaches the
+one person this project is built around to walk over and find nothing there. It
+earns its place because without it a dispenser sitting on its own hotspot waiting
+to be configured is indistinguishable from one that is switched off, and the only
+cue anybody gets is the app staying empty. A waiting dose always wins the ring
+and hands it back afterwards — medication is the job.
 
 Any of these three parts can be absent. A missing one is logged at startup and
 skipped; the status page reports what is actually fitted rather than pretending.
@@ -439,9 +513,23 @@ curl -X POST http://pilldispenser.local/api/clock -d '{"iso":"2026-07-29T09:15:0
 | `POST /api/confirm` · `/api/dismiss` | the person took it / silence the alert |
 | `POST /api/clock` | `{"payload": "SC1*C*..."}` or `{"iso": "..."}` |
 | `GET /api/events` | the dose log, each line carrying its `SC1*E*` form |
-| `GET /api/wifi/scan` · `POST /api/wifi/connect` | provisioning |
+| `GET /api/wifi/scan` · `GET /api/wifi/status` | what is nearby, and where we are |
+| `POST /api/wifi/connect` | `{"ssid","password","hidden"}` → **202**, then watch below |
+| `GET /api/wifi/attempt` | how that join is going: `idle`/`joining`/`joined`/`failed` |
+| `POST /api/wifi/hotspot` | raise the setup network now, whatever the radio is doing |
 | `GET /api/identity` | SSID, passphrase, pairing code, the QR payloads |
 | `GET`/`POST /api/cloud` | the relay link: state, revisions, last contact |
+
+**Reads are open; writes are checked.** A request that opens a tray or replaces
+the schedule is refused with **421** unless its `Host` is a name this device
+answers to — `pilldispenser`, `pilldispenser.local`, a two-label name starting
+with the hostname, or any bare IP. Otherwise a web page open on a phone on the
+same WiFi can point a hostname it owns at the dispenser and drive it; no CORS is
+involved, because dropping eight trays into a cup does not require reading the
+answer. GETs are deliberately exempt: the captive probes arrive addressed to
+`connectivitycheck.gstatic.com` and friends, and a name check there would break
+the one flow that has to work. If a router publishes its DHCP clients under a
+domain of its own, `SNAPCARE_EXTRA_HOSTS=pilldispenser.fritz.box` allows it.
 
 ### App-compatible — `/save`, `/dropout`, `/dismiss`
 
@@ -468,7 +556,7 @@ one screen that matters.
 ## Testing it without a Pi
 
 ```bash
-make            # 359 tests, no board, no servos, no network
+make            # 434 tests, no board, no servos, no network
 make run        # the whole firmware on a laptop, mock servos, port 8099
 make label      # this machine's setup QR and pairing code, in the terminal
 make cloud      # the same, wired to a relay on this machine — see ../cloud_relay
@@ -559,7 +647,8 @@ rpi_firmware/
     servo.py          pigpio / RPi.GPIO / mock
     store.py          what survives a power cut, and how
     clock.py          whether the time can be believed at all
-    wifi.py           nmcli
+    wifi.py           nmcli — the mechanism, one function per call
+    network.py        one radio: when to be an access point, and the rollback
     provisioning.py   the identity behind the permanent QR, and the three keys
     cloud.py          the connection held open to the relay, and its retries
     envelope.py       what crosses it, sealed so the relay cannot read it
@@ -571,7 +660,7 @@ rpi_firmware/
     rtc.py            the DS3231, and the one bit that says whether to believe it
     web/              four pages, no build step, nothing external
   service/            systemd unit + install.sh
-  tests/              359 tests; only the end-to-end one opens a socket
+  tests/              434 tests; only the end-to-end one opens a socket
 ```
 
 `NOTES-FOR-WEBAPP.md` is for whoever is building the production web app.

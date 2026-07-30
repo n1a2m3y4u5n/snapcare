@@ -109,6 +109,7 @@ class CloudLink:
 
         self._stop = threading.Event()
         self._wake_publisher = threading.Event()
+        self._wake_poller = threading.Event()
         self._threads: list[threading.Thread] = []
         self._lock = threading.RLock()
 
@@ -116,6 +117,14 @@ class CloudLink:
         self._last_error = ""
         self._attempts = 0
         self._last_published = ""
+        #: Bumped every time the device comes back onto a network. Each loop
+        #: remembers the value it last saw, which is how a backoff gets reset
+        #: without two threads racing to clear one flag — see `network_changed`.
+        self._network_epoch = 0
+        #: Where the device can be reached, as last reported by the supervisor.
+        #: Cached rather than asked for, because `_report` runs on the publish
+        #: path and `wifi.status()` is three subprocesses.
+        self._network = {"ssid": "", "address": ""}
 
     # ── what the rest of the firmware sees ──────────────────────────────────
 
@@ -195,6 +204,7 @@ class CloudLink:
     def stop(self) -> None:
         self._stop.set()
         self._wake_publisher.set()
+        self._wake_poller.set()
 
     def reconfigure(self, relay_url: str | None = None,
                     enabled: bool | None = None) -> dict:
@@ -218,6 +228,7 @@ class CloudLink:
         self._threads = []
         self._stop = threading.Event()
         self._wake_publisher = threading.Event()
+        self._wake_poller = threading.Event()
 
         with self._lock:
             if relay_url is not None:
@@ -245,10 +256,32 @@ class CloudLink:
         """Something happened worth telling the app about, now rather than later."""
         self._wake_publisher.set()
 
+    def network_changed(self, state=None) -> None:
+        """The device is back on a network. Stop waiting out the backoff.
+
+        Both loops back off exponentially to `CLOUD_BACKOFF_MAX_S` — five
+        minutes — and after a WiFi outage every one of those failures had the
+        same single cause, which has just gone away. Sitting out the rest of the
+        wait means the app goes on showing a dispenser as offline for minutes
+        after it came back, and "offline" is the one word in that app a carer
+        acts on. A device that is back must look back.
+
+        `Supervisor.on_online` calls this, and passes where the device now is so
+        that the next report carries an address the app can actually open.
+        """
+        with self._lock:
+            self._network_epoch += 1
+            if state is not None:
+                self._network = {"ssid": state.ssid or "",
+                                 "address": state.address or ""}
+        self._wake_poller.set()
+        self._wake_publisher.set()
+
     # ── receiving: the long poll ────────────────────────────────────────────
 
     def _poll_loop(self) -> None:
         backoff = config.CLOUD_BACKOFF_MIN_S
+        epoch = self._network_epoch
         while not self._stop.is_set():
             try:
                 started = time.monotonic()
@@ -260,20 +293,33 @@ class CloudLink:
                     if config.CLOUD_IDLE_POLL_S > 0:
                         # The cheap mode. See CLOUD_IDLE_POLL_S — the relay
                         # gets to be idle, and an edit can wait that long.
-                        self._stop.wait(config.CLOUD_IDLE_POLL_S)
+                        self._wait_to_poll(config.CLOUD_IDLE_POLL_S)
                     else:
                         # See `_MIN_CYCLE_S`. A poll the relay actually held is
                         # already well past this and waits for nothing.
                         remaining = _MIN_CYCLE_S - (time.monotonic() - started)
                         if remaining > 0:
-                            self._stop.wait(remaining)
+                            self._wait_to_poll(remaining)
             except Exception as exc:  # noqa: BLE001
                 # Everything. A dispenser is not allowed to stop dispensing
                 # because a name did not resolve.
                 self._note_failure(exc)
-                self._stop.wait(_jittered(backoff))
-                backoff = min(backoff * config.CLOUD_BACKOFF_FACTOR,
-                              config.CLOUD_BACKOFF_MAX_S)
+                self._wait_to_poll(_jittered(backoff))
+                if self._network_epoch != epoch:
+                    # The WiFi came back underneath us. Every failure counted
+                    # into that backoff was this, so start the climb again from
+                    # the bottom rather than punishing the device for an outage
+                    # that is over. See `network_changed`.
+                    epoch = self._network_epoch
+                    backoff = config.CLOUD_BACKOFF_MIN_S
+                else:
+                    backoff = min(backoff * config.CLOUD_BACKOFF_FACTOR,
+                                  config.CLOUD_BACKOFF_MAX_S)
+
+    def _wait_to_poll(self, seconds: float) -> None:
+        """Sleep between polls, unless the network comes back first."""
+        self._wake_poller.wait(seconds)
+        self._wake_poller.clear()
 
     def _poll_once(self) -> bool:
         """One long poll. True if a schedule arrived and was applied."""
@@ -341,6 +387,7 @@ class CloudLink:
 
     def _publish_loop(self) -> None:
         backoff = config.CLOUD_BACKOFF_MIN_S
+        epoch = self._network_epoch
         while not self._stop.is_set():
             try:
                 self._publish_once()
@@ -357,8 +404,12 @@ class CloudLink:
                 # long. After an outage that is precisely when there is
                 # something worth sending: the doses given while it was down.
                 self._wait_to_publish(_jittered(backoff))
-                backoff = min(backoff * config.CLOUD_BACKOFF_FACTOR,
-                              config.CLOUD_BACKOFF_MAX_S)
+                if self._network_epoch != epoch:
+                    epoch = self._network_epoch
+                    backoff = config.CLOUD_BACKOFF_MIN_S
+                else:
+                    backoff = min(backoff * config.CLOUD_BACKOFF_FACTOR,
+                                  config.CLOUD_BACKOFF_MAX_S)
 
     def _wait_to_publish(self, seconds: float) -> None:
         """Sleep, unless something asks to be published sooner."""
@@ -396,11 +447,20 @@ class CloudLink:
 
     def _report(self) -> dict:
         status = self.dispenser.status()
+        with self._lock:
+            network = dict(self._network)
+        # Where the device is, so the app can offer the LAN as a shortcut.
+        # Relay round-trips are quick but not instant, and somebody standing in
+        # the room next to the dispenser should not be talking to a data centre
+        # to open a tray. This is inside the sealed envelope: only whoever holds
+        # the pairing code can read which WiFi the device is on.
+        network["deviceUrl"] = provisioning.device_url()
         return {
             "at": datetime.now().isoformat(timespec="seconds"),
             "firmware": _firmware_version(),
             "desiredRev": self._desired_rev,
             "lastError": self._last_error,
+            "network": network,
             "status": status,
             "events": self.dispenser.events(limit=REPORT_EVENTS),
         }

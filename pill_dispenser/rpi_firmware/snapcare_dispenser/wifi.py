@@ -17,11 +17,16 @@ reasons that all became visible while building this:
 Every call has a timeout and every failure is a return value. There is no path
 here that raises into the scheduler: the dispenser must keep dropping pills
 through a WiFi outage, because the medication does not care about the network.
+
+This module is the *mechanism* — one function per nmcli call, no memory of what
+it did last. Deciding when to be an access point and when to be a client is
+[`network.py`](network.py), which is where the sequencing and the rollback live.
 """
 from __future__ import annotations
 
 import logging
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -73,6 +78,25 @@ class Status:
 
 # ── running nmcli ───────────────────────────────────────────────────────────
 
+#: Arguments whose *value* is a secret. nmcli takes both as `key value` pairs,
+#: so the thing to hide is always the word after one of these.
+_SECRET_ARGS = frozenset({"password", "wifi-sec.psk", "802-11-wireless-security.psk"})
+
+
+def _redacted(args) -> str:
+    """An nmcli command line safe to write to the journal.
+
+    Every join carries the house WiFi password as a positional argument, and the
+    journal on this device is read over somebody's shoulder, pasted into a bug
+    report and copied off the SD card. A log line is not a place for it.
+    """
+    out, hide = [], False
+    for arg in args:
+        out.append("<hidden>" if hide else arg)
+        hide = arg in _SECRET_ARGS
+    return " ".join(out)
+
+
 def _nmcli(*args: str, timeout: int = 30) -> subprocess.CompletedProcess | None:
     """Run nmcli. None means it is not installed or did not answer in time."""
     try:
@@ -83,7 +107,7 @@ def _nmcli(*args: str, timeout: int = 30) -> subprocess.CompletedProcess | None:
     except FileNotFoundError:
         return None
     except (OSError, subprocess.SubprocessError) as exc:
-        log.warning("nmcli %s failed: %s", " ".join(args), exc)
+        log.warning("nmcli %s failed: %s", _redacted(args), exc)
         return None
 
 
@@ -218,13 +242,23 @@ def _address() -> str | None:
 
 # ── joining a network ───────────────────────────────────────────────────────
 
-def connect(ssid: str, password: str | None, timeout: int = 45) -> tuple[bool, str]:
+def connect(ssid: str, password: str | None, timeout: int = 45,
+            hidden: bool = False) -> tuple[bool, str]:
     """Join a network. Returns (ok, a sentence to show the person).
 
     The hotspot is taken down first. One radio cannot be an access point and a
     client on two different channels at once; leaving the AP up makes the join
     fail in a way whose error message is about the driver rather than about
-    anything the person did.
+    anything the person did. It is done here rather than left to the caller
+    because forgetting it produces exactly that error, and the error does not
+    look like its cause.
+
+    "Joined" means an address as well as an association. nmcli normally waits
+    for the whole activation, but a profile with `ipv4.may-fail` set, or a
+    router that answers the handshake and then never answers DHCP, both come
+    back as success with no lease — and a device with no address is not on the
+    network in any sense the app can use. Checking is one call and turns a
+    silent half-join into a named failure.
     """
     if not available():
         return False, "NetworkManager is not available on this device"
@@ -234,12 +268,22 @@ def connect(ssid: str, password: str | None, timeout: int = 45) -> tuple[bool, s
     args = ["device", "wifi", "connect", ssid, "ifname", config.WIFI_INTERFACE]
     if password:
         args += ["password", password]
+    if hidden:
+        # Without this nmcli scans, does not see the name, and reports that no
+        # such network exists — which is true of the scan and not of the house.
+        args += ["hidden", "yes"]
 
     result = _nmcli(*args, timeout=timeout)
     if result is None:
         return False, "the network manager did not respond"
+
     if result.returncode == 0:
-        log.info("joined %s", ssid)
+        address = _address()
+        if not address:
+            log.warning("associated with %s but no address was issued", ssid)
+            return False, ("Joined the network but it did not hand out an address. "
+                           "That is usually a router that needs restarting.")
+        log.info("joined %s as %s", ssid, address)
         return True, f"Connected to {ssid}."
 
     message = (result.stderr or result.stdout).strip().splitlines()
@@ -250,8 +294,14 @@ def connect(ssid: str, password: str | None, timeout: int = 45) -> tuple[bool, s
     # this wrong means telling somebody their router is broken when they have
     # simply mistyped a password, which is the single most likely thing to go
     # wrong in this entire flow.
-    if "secrets were required" in detail.lower() or "802-1x" in detail.lower():
+    lowered = detail.lower()
+    if "secrets were required" in lowered or "802-1x" in lowered:
         detail = "The password was not accepted."
+    elif "no network with ssid" in lowered or "not found" in lowered:
+        detail = (f"No network called {ssid} answered. If its name is hidden, "
+                  f"add it by hand instead of tapping it in the list.")
+    elif "timeout" in lowered or "timed out" in lowered:
+        detail = "The network did not answer in time."
 
     log.warning("could not join %s: %s", ssid, detail)
     return False, detail
@@ -262,9 +312,67 @@ def forget(ssid: str) -> bool:
     return result is not None and result.returncode == 0
 
 
+def forget_profiles_for(ssid: str) -> int:
+    """Delete the profiles `nmcli device wifi connect` just created for `ssid`.
+
+    A join with the wrong password can leave a profile behind, and that profile
+    autoconnects. The device then spends the rest of its life trying a password
+    it has already been told is wrong, which both fights the setup hotspot and
+    makes `has_known_network()` answer yes for a network it can never reach.
+
+    Matched on the profile's own SSID rather than its name, because nmcli names
+    the second profile for a network `Home 1`, and a `connection delete Home`
+    leaves that one running. Callers must only use this for a network that was
+    *not* already saved before the attempt — otherwise a mistyped password
+    would destroy the working profile the device came in on.
+    """
+    result = _nmcli("-t", "-f", "NAME,TYPE", "connection", "show")
+    if result is None or result.returncode != 0:
+        return 0
+
+    deleted = 0
+    for line in result.stdout.splitlines():
+        parts = _split_terse(line)
+        if len(parts) < 2 or parts[1] != "802-11-wireless" or parts[0] == AP_CONNECTION:
+            continue
+        if _profile_ssid(parts[0]) != ssid:
+            continue
+        if forget(parts[0]):
+            log.info("removed the profile %r left by a failed join", parts[0])
+            deleted += 1
+    return deleted
+
+
+def _profile_ssid(name: str) -> str | None:
+    result = _nmcli("-t", "-f", "802-11-wireless.ssid", "connection", "show", name)
+    if result is None or result.returncode != 0:
+        return None
+    parts = _split_terse(result.stdout.strip())
+    return parts[1] if len(parts) >= 2 else None
+
+
 def has_known_network() -> bool:
     """Is there anything saved to come back up on, other than our own hotspot?"""
     return bool(saved_ssids())
+
+
+def wait_until_connected(seconds: float, poll: float = 2.0,
+                         should_stop=None) -> Status:
+    """Give NetworkManager its own time to join something it already knows.
+
+    Used after taking the hotspot down: every saved profile autoconnects, so the
+    right thing to do is stand back for a few seconds rather than to pick a
+    network and drive it. Returns whatever the interface is doing when the time
+    is up.
+    """
+    deadline = time.monotonic() + seconds
+    while True:
+        state = status()
+        if state.mode == "connected":
+            return state
+        if time.monotonic() >= deadline or (should_stop and should_stop()):
+            return state
+        time.sleep(min(poll, max(0.0, deadline - time.monotonic())))
 
 
 # ── being an access point ───────────────────────────────────────────────────

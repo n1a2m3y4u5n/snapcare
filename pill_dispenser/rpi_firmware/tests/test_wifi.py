@@ -23,6 +23,24 @@ def stub_nmcli(monkeypatch, handler):
     monkeypatch.setattr(wifi, "_nmcli", fake)
 
 
+def working_nmcli(calls=None, address="192.168.1.42"):
+    """A handler for an nmcli where everything succeeds and DHCP answers.
+
+    The address matters: `connect` treats an association with no lease as a
+    failure, so a stub that answers nothing to `IP4.ADDRESS` is a stub of a
+    router that never handed one out.
+    """
+    def handler(args):
+        if calls is not None:
+            calls.append(args)
+        if args[:2] == ["--version"]:
+            return 0, "nmcli tool, version 1.42\n", ""
+        if "IP4.ADDRESS" in args:
+            return 0, f"IP4.ADDRESS[1]:{address}/24\n", ""
+        return 0, "", ""
+    return handler
+
+
 # ── the terse splitter ──────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("line,fields", [
@@ -149,14 +167,7 @@ def test_joining_takes_the_hotspot_down_first(monkeypatch):
     once, and leaving the AP up makes the join fail with a driver-level error
     that says nothing about what the person did."""
     calls = []
-
-    def handler(args):
-        calls.append(args)
-        if args[:2] == ["--version"]:
-            return 0, "nmcli tool, version 1.42\n", ""
-        return 0, "", ""
-
-    stub_nmcli(monkeypatch, handler)
+    stub_nmcli(monkeypatch, working_nmcli(calls))
     ok, _ = wifi.connect("Home", "correct")
     assert ok
 
@@ -165,23 +176,165 @@ def test_joining_takes_the_hotspot_down_first(monkeypatch):
     assert down < connect
 
 
-def test_an_open_network_is_joined_without_a_password(monkeypatch):
-    seen = []
-
+def test_an_association_with_no_address_is_not_a_join(monkeypatch):
+    """nmcli returns 0 for an association it never got a lease for — a profile
+    with `ipv4.may-fail`, or a router that answers the handshake and then never
+    answers DHCP. A device with no address is not on the network in any sense the
+    app can use, and reporting success there is how setup 'worked' and the
+    dispenser was never seen again."""
     def handler(args):
-        seen.append(args)
-        return (0, "nmcli tool, version 1.42\n", "") if args[:2] == ["--version"] else (0, "", "")
+        if args[:2] == ["--version"]:
+            return 0, "nmcli tool, version 1.42\n", ""
+        return 0, "", ""      # nothing ever answers IP4.ADDRESS
 
     stub_nmcli(monkeypatch, handler)
-    wifi.connect("CafeWiFi", None)
+    ok, message = wifi.connect("Home", "correct")
+    assert not ok
+    assert "did not hand out an address" in message
+
+
+def test_an_open_network_is_joined_without_a_password(monkeypatch):
+    seen = []
+    stub_nmcli(monkeypatch, working_nmcli(seen))
+    ok, _ = wifi.connect("CafeWiFi", None)
+    assert ok
     joining = next(a for a in seen if "connect" in a and "device" in a)
     assert "password" not in joining
+
+
+def test_a_hidden_network_is_joined_by_name(monkeypatch):
+    """Without `hidden yes` nmcli scans, does not see the name, and reports that
+    no such network exists — which is true of the scan and not of the house."""
+    seen = []
+    stub_nmcli(monkeypatch, working_nmcli(seen))
+    ok, _ = wifi.connect("Unlisted", "secret", hidden=True)
+    assert ok
+    joining = next(a for a in seen if "connect" in a and "device" in a)
+    assert joining[joining.index("hidden") + 1] == "yes"
+
+
+def test_a_missing_network_suggests_the_hidden_path(monkeypatch):
+    def handler(args):
+        if args[:2] == ["--version"]:
+            return 0, "nmcli tool, version 1.42\n", ""
+        if "connect" in args:
+            return 10, "", "Error: No network with SSID 'Upstairs' found.\n"
+        return 0, "", ""
+
+    stub_nmcli(monkeypatch, handler)
+    ok, message = wifi.connect("Upstairs", "x")
+    assert not ok
+    assert "hidden" in message
 
 
 def test_connect_refuses_when_network_manager_is_missing(monkeypatch):
     monkeypatch.setattr(wifi, "_nmcli", lambda *a, **k: None)
     ok, message = wifi.connect("Home", "x")
     assert not ok and "not available" in message
+
+
+# ── the passphrase must not reach the journal ───────────────────────────────
+
+def test_the_wifi_password_is_never_written_to_the_log(caplog):
+    """The journal on this device is read over somebody's shoulder, pasted into
+    a bug report and copied off the SD card. Every join carries the house WiFi
+    password as a positional argument, so any log line naming the command line
+    is a log line naming the password."""
+    line = wifi._redacted(["device", "wifi", "connect", "Home",
+                           "password", "hunter2", "ifname", "wlan0"])
+    assert "hunter2" not in line
+    assert "<hidden>" in line
+    assert "Home" in line, "the network name is not the secret and is worth logging"
+
+
+def test_a_failing_subprocess_does_not_log_the_password(monkeypatch, caplog):
+    def explode(*args, **kwargs):
+        raise OSError("nmcli fell over")
+
+    monkeypatch.setattr(wifi.subprocess, "run", explode)
+    with caplog.at_level("WARNING"):
+        assert wifi._nmcli("device", "wifi", "connect", "Home",
+                           "password", "hunter2") is None
+    assert "hunter2" not in caplog.text
+    assert "<hidden>" in caplog.text
+
+
+# ── cleaning up after a failed join ─────────────────────────────────────────
+
+def test_a_failed_join_profile_is_matched_by_ssid_not_by_name(monkeypatch):
+    """nmcli calls the second profile for a network `Home 1`. A
+    `connection delete Home` leaves that one behind, autoconnecting forever with
+    a password the device has already been told is wrong."""
+    deleted = []
+
+    def handler(args):
+        if args[:2] == ["--version"]:
+            return 0, "nmcli tool, version 1.42\n", ""
+        if args[:3] == ["-t", "-f", "NAME,TYPE"]:
+            return 0, ("Home:802-11-wireless\n"
+                       "Home 1:802-11-wireless\n"
+                       "Office:802-11-wireless\n"
+                       f"{wifi.AP_CONNECTION}:802-11-wireless\n"), ""
+        if "802-11-wireless.ssid" in args:
+            name = args[-1]
+            ssid = "Home" if name in ("Home", "Home 1") else name
+            return 0, f"802-11-wireless.ssid:{ssid}\n", ""
+        if args[:2] == ["connection", "delete"]:
+            deleted.append(args[2])
+            return 0, "", ""
+        return 0, "", ""
+
+    stub_nmcli(monkeypatch, handler)
+    assert wifi.forget_profiles_for("Home") == 2
+    assert deleted == ["Home", "Home 1"]
+
+
+def test_our_own_hotspot_survives_a_cleanup(monkeypatch):
+    """Deleting it would leave the device with no way back in at all."""
+    deleted = []
+
+    def handler(args):
+        if args[:3] == ["-t", "-f", "NAME,TYPE"]:
+            return 0, f"{wifi.AP_CONNECTION}:802-11-wireless\n", ""
+        if args[:2] == ["connection", "delete"]:
+            deleted.append(args[2])
+        return 0, "", ""
+
+    stub_nmcli(monkeypatch, handler)
+    assert wifi.forget_profiles_for("SnapCare-V5XH") == 0
+    assert deleted == []
+
+
+# ── standing back while NetworkManager autoconnects ─────────────────────────
+
+def test_waiting_returns_as_soon_as_a_network_is_joined(monkeypatch):
+    answers = iter([
+        wifi.Status(mode="disconnected"),
+        wifi.Status(mode="disconnected"),
+        wifi.Status(mode="connected", ssid="Home", address="192.168.1.42"),
+    ])
+    monkeypatch.setattr(wifi, "status", lambda: next(answers))
+    monkeypatch.setattr(wifi.time, "sleep", lambda _s: None)
+
+    state = wifi.wait_until_connected(30, poll=0.01)
+    assert state.mode == "connected" and state.ssid == "Home"
+
+
+def test_waiting_gives_up_and_says_what_it_saw(monkeypatch):
+    monkeypatch.setattr(wifi, "status", lambda: wifi.Status(mode="disconnected",
+                                                            detail="unavailable"))
+    monkeypatch.setattr(wifi.time, "sleep", lambda _s: None)
+    state = wifi.wait_until_connected(0, poll=0.01)
+    assert state.mode == "disconnected" and state.detail == "unavailable"
+
+
+def test_waiting_stops_when_the_firmware_is_shutting_down(monkeypatch):
+    """A join can be half a minute long, and a device being asked to stop must
+    not spend that time waiting for a router."""
+    monkeypatch.setattr(wifi, "status", lambda: wifi.Status(mode="disconnected"))
+    monkeypatch.setattr(wifi.time, "sleep", lambda _s: None)
+    state = wifi.wait_until_connected(600, poll=0.01, should_stop=lambda: True)
+    assert state.mode == "disconnected"
 
 
 # ── the hotspot ─────────────────────────────────────────────────────────────

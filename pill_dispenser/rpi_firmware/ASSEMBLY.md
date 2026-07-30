@@ -528,6 +528,17 @@ curl -s http://localhost/api/status
 - [ ] Pull the power mid-schedule, restore it: no second dose, and the log survives
 - [ ] Unplug the Pi's network, reboot: the DS3231 still vouches for the time
 - [ ] The printed label's QR joins the hotspot and opens the setup page
+- [ ] **Type the WiFi password wrong on purpose.** The setup network comes back
+      within a few seconds and the page you re-open says the password was not
+      accepted. This is the single most likely thing to happen in a real setup,
+      and it is the one failure that used to look exactly like success
+- [ ] Type it right: the ring stops being cyan and the device answers at
+      `pilldispenser.local` from a phone back on the house WiFi
+- [ ] Change the router's password, reboot the device, wait: the setup hotspot
+      appears on its own rather than the device sitting there unreachable
+- [ ] Power the router and the device off together and bring only the device
+      back for a few minutes first. It raises its hotspot, and then finds the
+      router by itself once that returns — no hands
 
 And if you did Stage 9:
 
@@ -572,6 +583,11 @@ it were new.
 | Tray stays shut, nothing dispenses | The clock is not trusted. `sudo hwclock -r`, check the coin cell, then `POST /api/clock` |
 | Clock right at shutdown, wrong at boot | `fake-hwclock` is back, overwriting the RTC. The installer disables it |
 | `pilldispenser.local` does not resolve | avahi, and the hostname. The web app's `DEFAULT_HOST` is that exact string |
+| Ring is cyan and stays cyan | The device is on its own setup hotspot waiting to be put on a network. Join `SnapCare-…` and the page opens itself |
+| Setup page says "did not hand out an address" | The password was right and DHCP was not. Usually a router that needs restarting, or a MAC filter |
+| The setup hotspot keeps disappearing for half a minute | That is the unattended retry finding a saved network worth trying. It stops once one works; raise `HOTSPOT_RETRY_S` if it is in the way of a bench session |
+| A schedule POST answers 421 | The `Host` header is not a name this device answers to. Use `pilldispenser.local` or the IP; `SNAPCARE_EXTRA_HOSTS` adds a router's own domain |
+| Setup page never leaves "waiting…" | The phone has not gone back to the house WiFi. Switch it over; the page follows. If the device's own network reappeared, the password was refused |
 | A schedule is refused by tray number | That tray is not fitted. `INSTALLED_TRAYS`, or `SNAPCARE_TRAYS=8` |
 | Cloud `state: unsupported` | `sudo apt install python3-cryptography`. Everything else still works meanwhile |
 | Cloud `state: retrying`, DNS in `lastError` | The Pi has no working resolver. It joined the WiFi but got no DNS, or the router blocks it |

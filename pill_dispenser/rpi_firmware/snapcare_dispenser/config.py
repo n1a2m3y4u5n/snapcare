@@ -254,6 +254,25 @@ CLOCK_SANITY_EPOCH = "2026-01-01T00:00:00"
 #: app too.
 MDNS_HOSTNAME = os.environ.get("SNAPCARE_MDNS_HOSTNAME", "pilldispenser")
 
+#: Extra host names the device will accept a *mutating* request under.
+#:
+#: The web server refuses anything that changes the schedule, or opens a tray,
+#: if it arrives addressed to a name this device does not answer to. That is
+#: what stops a web page you are reading from quietly driving the dispenser on
+#: your own network — see `_is_ours` in server.py.
+#:
+#: It knows about `pilldispenser`, `pilldispenser.local`, `localhost` and any
+#: plain IP address. What it cannot know is that some home routers publish a
+#: DHCP hostname under a domain of their own — `pilldispenser.fritz.box`,
+#: `pilldispenser.home.arpa`. If yours does, name it here:
+#:
+#:     SNAPCARE_EXTRA_HOSTS=pilldispenser.fritz.box
+EXTRA_HTTP_HOSTS = frozenset(
+    host.strip().lower()
+    for host in os.environ.get("SNAPCARE_EXTRA_HOSTS", "").split(",")
+    if host.strip()
+)
+
 #: Port the device's own web server listens on. 80 needs root or a capability;
 #: the systemd unit grants CAP_NET_BIND_SERVICE rather than running as root.
 HTTP_PORT = int(os.environ.get("SNAPCARE_HTTP_PORT", "80"))
@@ -276,6 +295,51 @@ WIFI_INTERFACE = os.environ.get("SNAPCARE_WIFI_IFACE", "wlan0")
 #: covers a router that is itself still booting after a power cut, which is the
 #: common case, since the two are usually on the same failed socket.
 WIFI_JOIN_TIMEOUT_S = 45
+
+#: How stale an answer about the radio the scheduler tick will accept.
+#:
+#: Asking NetworkManager where we are costs up to three `nmcli` processes, and
+#: the tick loop runs every `TICK_SECONDS` for reasons that have nothing to do
+#: with WiFi. Nothing in the network policy reacts faster than tens of seconds,
+#: so a cached answer this old is as good as a fresh one — and the API asks for
+#: a fresh one anyway, because somebody is looking at that.
+NET_POLL_S = 20
+
+#: How long the device may be off the network before it raises the setup
+#: hotspot on its own.
+#:
+#: The delay is the point. A router rebooting takes the WiFi away for thirty
+#: seconds and NetworkManager rejoins by itself; a device that answered every
+#: such blink by becoming an access point would take itself off the network far
+#: more often than it ever rescued itself. Ten minutes means the hotspot appears
+#: for the cases it can actually fix — a changed password, a replaced router —
+#: and not for the ones that fix themselves.
+OFFLINE_GRACE_S = 10 * 60
+
+#: How long the setup page has to have been quiet before the device is allowed
+#: to take its own hotspot down to retry the house network.
+#:
+#: Without this the unattended retry is free to fire while somebody is halfway
+#: through typing their WiFi password, which looks exactly like the device
+#: crashing. Two minutes is longer than any gap in a setup somebody is actually
+#: doing, and short enough that walking away ends it.
+PORTAL_QUIET_S = 120
+
+#: How often the device retries a network it already knows while sitting on its
+#: own hotspot.
+#:
+#: This is the difference between a dispenser that recovers from a slow router
+#: and one that has to be unplugged. If the power comes back and the router
+#: takes four minutes to serve DHCP, the device will have given up and raised
+#: its hotspot — and before this timer existed, nothing ever tried the house
+#: network again. A dispenser in a spare room can sit like that for weeks with
+#: nobody noticing that the app has stopped hearing from it.
+#:
+#: Five minutes: long enough that a genuinely dead network is not being retried
+#: constantly (each attempt costs the hotspot for as long as the join takes),
+#: short enough that a router which comes back at 08:03 is found before the
+#: 08:00 dose has finished waiting to be confirmed.
+HOTSPOT_RETRY_S = 5 * 60
 
 
 # ═══════════════════════════════════════════════════════════════════════════
