@@ -6,7 +6,14 @@ primary_region = "nrt"
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 0
+  # 발송 기간에는 한 대를 계속 켜 둔다.
+  #
+  # 0 이면 요청이 없을 때 기계가 멈추고, 다시 깨어나는 데 6.7초가 걸린다(실측). 모르는
+  # 사람이 보낸 메일의 링크를 눌렀는데 7초 동안 흰 화면이면 상당수가 그대로 닫는다.
+  # 1103통을 보내 놓고 그 자리에서 잃는 것이므로, 기계 한 대 값이 훨씬 싸다.
+  #
+  # 조사가 끝나면 0 으로 되돌린다.
+  min_machines_running = 1
 
   [http_service.concurrency]
     type = "connections"
