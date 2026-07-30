@@ -473,7 +473,15 @@ def main() -> int:
 
     # ── 미리보기 ──
     if args.test_to:
-        queue = [(dict(rows[0], **{COL_EMAIL: args.test_to}), args.only or 'ko')]
+        # 실제로 나갈 것과 같은 모양을 보여준다.
+        #
+        # 전에는 언어를 ko 로 고정하면서 명단 첫 줄을 그대로 썼다. 첫 줄이 해외 수신자여서
+        # 한국어 본문에 "Rakhat Zholdoshalieva 님께" 가 붙었다 — 시험 발송이 실제와 다른
+        # 모양이면 시험한 뜻이 없다. 보려는 언어에 맞는 첫 사람을 골라 그 사람의 인사말과
+        # 토큰을 쓴다.
+        want = args.only or 'ko'
+        base = next((r for r in rows if language_of(r, args.lang_ro) == want), rows[0])
+        queue = [(dict(base, **{COL_EMAIL: args.test_to}), want)]
     else:
         queue = []
         for r in rows:
