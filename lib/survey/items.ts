@@ -1070,6 +1070,87 @@ export const UI = {
   retry: T('다시 시도', 'Try again', 'Încercați din nou'),
   contact: T('문의', 'Contact', 'Contact'),
   optional: T('선택', 'optional', 'opțional'),
+  /* ── 소개: 아이디어 · 동작 원리 · SDG ── */
+  ideaTitle: T('저희 아이디어', 'Our idea', 'Ideea noastră'),
+  ideaBody: T(
+    '처방전을 사진 한 장으로 찍으면, 글자를 하나도 읽지 못하는 사람에게도 복약 지시가 전해지게 하는 것입니다. 글을 읽지 못하는 분에게 남는 길은 그림과 소리뿐입니다. 그래서 저희는 두 길을 서로 기대지 않게 따로 깔았습니다 — 그림만 보아도, 소리만 들어도 같은 지시에 닿습니다. 화면에는 글자도 함께 있지만, 글자가 없어도 지시가 온전하도록 만드는 것이 목표입니다.',
+    'You photograph a prescription, and the dosing instructions reach someone who cannot read a single character. For someone who cannot read, only pictures and sound remain. So we built those two paths so that neither leans on the other — the pictures alone, or the sound alone, get you to the same instruction. The screen also carries text, but the aim is that the instruction survives without it.',
+    'Fotografiați o rețetă, iar instrucțiunile de administrare ajung la cineva care nu poate citi niciun caracter. Pentru cineva care nu poate citi, rămân doar imaginile și sunetul. Așa că am construit aceste două căi astfel încât niciuna să nu depindă de cealaltă — doar imaginile, sau doar sunetul, duc la aceeași instrucțiune. Ecranul conține și text, dar scopul este ca instrucțiunea să rămână întreagă și fără el.',
+  ),
+  howTitle: T('어떻게 굴러갑니까', 'How it works', 'Cum funcționează'),
+  how1: T(
+    '① 촬영 — 처방전을 사진으로 찍습니다.',
+    '① Photograph — you take a picture of the prescription.',
+    '① Fotografiere — faceți o poză rețetei.',
+  ),
+  how1b: T(
+    '아래 두 사례는 카메라 대신 표본 처방전을 넣은 것이며, 사진과 같은 경로로 들어갑니다.',
+    'The two cases below use sample prescriptions instead of the camera; they go through the same path as a photograph.',
+    'Cele două cazuri de mai jos folosesc rețete de probă în locul camerei; parcurg același drum ca o fotografie.',
+  ),
+  how2: T(
+    '② 읽기 — 브라우저 안에서 글자를 읽고, 환자에게 필요한 것만 추립니다.',
+    '② Read — the text is read inside your browser, and only what the patient needs is kept.',
+    '② Citire — textul este citit în browser, iar se păstrează doar ce are nevoie pacientul.',
+  ),
+  how2b: T(
+    '약 이름·제형·1회 복용량·하루 횟수·시점·복용 기간·보관 조건·금기를 뽑아냅니다. 처방전 사진은 서버로 올라가지 않고 기기 안에서 처리됩니다. 환자 이름과 주민등록번호처럼 복용에 필요하지 않은 것은 애초에 쓰지 않습니다.',
+    'It extracts the drug name, dosage form, amount per dose, times per day, timing, duration, storage and contraindications. The photograph does not leave the device. Things not needed for taking the medicine — the patient name, the ID number — are never used.',
+    'Extrage numele medicamentului, forma farmaceutică, doza, frecvența zilnică, momentul, durata, condițiile de păstrare și contraindicațiile. Fotografia nu părăsește dispozitivul. Ce nu este necesar pentru administrare — numele pacientului, numărul de identificare — nu este folosit niciodată.',
+  ),
+  how3: T(
+    '③ 그림 합성 — SIGIL 이 형태소를 문법으로 조합해 그 자리에서 그림을 만듭니다.',
+    '③ Compose the pictures — SIGIL combines morphemes by a grammar and builds the picture on the spot.',
+    '③ Compunerea imaginilor — SIGIL combină morfeme printr-o gramatică și construiește imaginea pe loc.',
+  ),
+  how3b: T(
+    '그려 둔 그림 목록에서 골라 오는 방식이 아닙니다. 머리 57개와 수식어 21개, 연산자 5개를 결합합니다 — 예를 들어 캡슐이라는 머리 안쪽에 아침이라는 수식어를 넣으면 "아침에 캡슐" 한 장이 됩니다. 새 지시가 필요할 때 그림을 새로 그리지 않아도 되는 것이 이 구조의 이유입니다.',
+    'It does not pick from a list of drawings. It combines 57 heads, 21 modifiers and 5 operators — put the modifier "morning" inside the head "capsule" and you get one frame meaning "a capsule in the morning". The point of this structure is that a new instruction does not require a new drawing.',
+    'Nu alege dintr-o listă de desene. Combină 57 de capete, 21 de modificatori și 5 operatori — puneți modificatorul „dimineața" în capul „capsulă" și obțineți un cadru care înseamnă „o capsulă dimineața". Rostul acestei structuri este că o instrucțiune nouă nu cere un desen nou.',
+  ),
+  how4: T(
+    '④ 문장 재구성 — VOCA 가 읽어 낸 문자열을 그대로 읽지 않고, 문장을 다시 씁니다.',
+    '④ Rebuild the sentence — VOCA does not read the extracted string aloud; it rewrites it.',
+    '④ Reconstruirea propoziției — VOCA nu citește șirul extras așa cum este; îl rescrie.',
+  ),
+  how4b: T(
+    '처방전을 그대로 읽으면 환자가 알 필요 없는 것까지 읽히고, 필요한 것은 흩어져 있습니다. 그리고 제형에 따라 동사가 갈립니다 — 알약은 "드세요" 이지만 안약은 "넣으세요", 연고는 "바르세요" 입니다. 제형이 정해지면 몸의 어디에 쓰는지도 정해지므로, 안약에는 눈을 함께 넣습니다.',
+    'Reading the prescription verbatim reads out things the patient does not need, while what they do need is scattered. And the verb depends on the dosage form — a tablet is "take", eye drops are "put in", an ointment is "apply". Once the form is known so is the part of the body, so the eye goes in with the drops.',
+    'Citirea rețetei cuvânt cu cuvânt transmite lucruri de care pacientul nu are nevoie, în timp ce ce îi trebuie este împrăștiat. Iar verbul depinde de forma farmaceutică — o tabletă se „ia", picăturile se „instilează", o alifie se „aplică". Odată ce forma este cunoscută, se știe și partea corpului, așa că ochiul apare împreună cu picăturile.',
+  ),
+  sdgTitle: T(
+    '목표로 하는 지속가능발전목표',
+    'The Sustainable Development Goals we aim at',
+    'Obiectivele de dezvoltare durabilă vizate',
+  ),
+  sdg34: T(
+    'Target 3.4 비감염성 질환의 예방과 치료 — 당뇨·고혈압 같은 조건이 있는 분에게는 판정 기준이 달라집니다. 관리가 진료실이 아니라 매일의 복용과 식사에서 이루어지기 때문입니다.',
+    'Target 3.4 Prevention and treatment of non-communicable disease — for someone with diabetes or hypertension the thresholds change, because management happens in daily doses and meals rather than in the clinic.',
+    'Ținta 3.4 Prevenirea și tratarea bolilor netransmisibile — pentru cineva cu diabet sau hipertensiune, pragurile se schimbă, deoarece gestionarea are loc în dozele și mesele zilnice, nu în cabinet.',
+  ),
+  sdg38: T(
+    'Target 3.8 보편적 건강보장 — 보장은 대체로 진료와 약값에 닿을 수 있는가로 측정됩니다. 그런데 약을 손에 넣고도 그 지시를 읽지 못하면 보장은 거기서 끊깁니다. 저희가 줄이려는 것은 진료 이후에 남는 그 격차입니다.',
+    'Target 3.8 Universal health coverage — coverage is usually measured by whether care and medicines are within reach. But if you hold the medicine and cannot read the instruction, coverage ends there. The gap we are trying to close is the one that remains after the consultation.',
+    'Ținta 3.8 Acoperire universală de sănătate — acoperirea se măsoară de obicei prin accesul la îngrijire și medicamente. Dar dacă țineți medicamentul și nu puteți citi instrucțiunea, acoperirea se oprește acolo. Decalajul pe care încercăm să îl reducem este cel care rămâne după consultație.',
+  ),
+  sdg3d: T(
+    'Target 3.d 보건 위기 관리 — 증상이 가시면 항생제를 끊는 것이 내성의 주요 인적 경로입니다. 복용 기간을 그림으로 전달하는 형태소가 이 지점을 겨냥합니다.',
+    'Target 3.d Health risk management — stopping antibiotics once symptoms fade is a main human route to resistance. The morpheme that carries the course length as a picture aims at that point.',
+    'Ținta 3.d Gestionarea riscurilor de sănătate — oprirea antibioticelor odată ce simptomele dispar este o cale umană principală către rezistență. Morfemul care transmite durata tratamentului ca imagine vizează acest punct.',
+  ),
+  sdgNote: T(
+    '저희가 아직 주장하지 않는 것도 적어 둡니다. 사람을 대상으로 한 이해도 시험을 아직 하지 못했습니다. 그림이 실제로 얼마나 읽히는지는 저희가 측정한 것이 아니라 앞으로 확인해야 할 것입니다.',
+    'We also state what we are not claiming yet. No comprehension test with people has been carried out. How well the pictures are actually read is not something we have measured; it remains to be confirmed.',
+    'Precizăm și ce nu susținem încă. Nu s-a efectuat niciun test de înțelegere cu persoane. Cât de bine sunt citite efectiv imaginile nu este ceva ce am măsurat; rămâne de confirmat.',
+  ),
+  beforeLabel: T('처방전 원본', 'The prescription as it comes', 'Rețeta așa cum vine'),
+  afterLabel: T('저희 엔진을 통과한 결과', 'What comes out of our engine', 'Ce iese din motorul nostru'),
+  rxSpoken: T(
+    '위 처방전에 적힌 지시',
+    'What the prescription says',
+    'Ce spune rețeta',
+  ),
+  showsLabel: T('이 사례가 보여주는 것', 'What this case shows', 'Ce arată acest caz'),
   demoReopen: T(
     '화면 다시 보기',
     'Show the screen again',
@@ -1081,9 +1162,9 @@ export const UI = {
     'Aceasta este versiunea funcțională, nu o captură de ecran',
   ),
   demoNote: T(
-    '처방 문구를 넣으면 아래처럼 픽토그램이 나옵니다. 스피커 표시를 누르면 저희 음성 엔진이 그 줄을 읽어 줍니다 — 그림과 음성만으로 충분한지는 들어 보셔야 판단하실 수 있습니다. 소리가 나지 않으면 브라우저에 해당 언어 음성이 없는 경우이니 그대로 넘어가 주십시오.',
-    'Enter a prescription and the pictograms below are what comes out. Press a speaker mark and our voice engine reads that line aloud — whether the pictograms and the speech are enough on their own is something you have to hear to judge. If nothing plays, your browser has no voice for that language; please move on.',
-    'Introduceți o prescripție și pictogramele de mai jos sunt rezultatul. Apăsați un simbol de difuzor și motorul nostru vocal citește rândul — dacă pictogramele și vocea sunt suficiente este ceva ce trebuie auzit. Dacă nu se aude nimic, browserul nu are voce pentru acea limbă; vă rugăm să continuați.',
+    '처방전을 넣으면 아래처럼 나옵니다. 스피커 표시를 누르면 저희 음성 엔진이 그 줄을 읽어 줍니다 — 그림과 음성만으로 충분한지는 들어 보셔야 판단하실 수 있습니다. 음성과 그림 설명은 지금 영어로만 나옵니다 — 문장을 만드는 쪽이 아직 영어뿐이고, 한국어와 루마니아어는 다음 단계입니다. 소리가 아예 나지 않으면 브라우저에 음성이 없는 경우이니 그대로 넘어가 주십시오.',
+    'Put a prescription in and this is what comes out. Press a speaker mark and our voice engine reads that line aloud — whether the pictograms and the speech are enough on their own is something you have to hear to judge. The speech and the picture descriptions are English only for now — the sentence builder is English so far, and Korean and Romanian come next. If nothing plays at all, your browser has no voice installed; please move on.',
+    'Introduceți o rețetă și acesta este rezultatul. Apăsați un simbol de difuzor și motorul nostru vocal citește rândul — dacă pictogramele și vocea sunt suficiente este ceva ce trebuie auzit. Vocea și descrierile imaginilor sunt momentan doar în engleză — generatorul de propoziții este deocamdată doar în engleză, iar româna și coreeana urmează. Dacă nu se aude deloc, browserul nu are nicio voce instalată; vă rugăm să continuați.',
   ),
   rxLabel: T('처방 문구', 'The prescription', 'Prescripția'),
   glyphsToggle: T(
@@ -1110,11 +1191,6 @@ export const UI = {
     '실제로 열어 보기 (새 창)',
     'Open the actual app (new tab)',
     'Deschideți aplicația reală (filă nouă)',
-  ),
-  moreSections: T(
-    '다른 분야 문항도 보기',
-    'Show the other field sections',
-    'Afișați celelalte secțiuni',
   ),
   branchPick: T(
     '분야별 문항입니다. 답하고 싶은 구획만 여시면 됩니다.',

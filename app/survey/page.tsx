@@ -65,7 +65,6 @@ export default function SurveyPage() {
   const [consent, setConsent] = useState(false);
   const [ans, setAns] = useState<Answers>({});
   const [cite, setCite] = useState('');
-  const [openBranches, setOpenBranches] = useState<string[]>([]);
   const [err, setErr] = useState('');
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -130,10 +129,6 @@ export default function SurveyPage() {
     () => (mine ? BRANCHES.filter((b) => b.id === mine) : BRANCHES),
     [mine],
   );
-  const otherBranches: Branch[] = useMemo(
-    () => (mine ? BRANCHES.filter((b) => b.id !== mine) : []),
-    [mine],
-  );
 
   /** 필수 문항이 비었으면 그 id 를 돌려준다. */
   function firstMissing(items: Item[]): string | null {
@@ -175,7 +170,6 @@ export default function SurveyPage() {
       citeScope: cite,
       lang,
       answers: ans,
-      openedBranches: openBranches,
       recipient,
       startedAt: meta.startedAt,
       clientTime: new Date().toISOString(),
@@ -355,33 +349,6 @@ export default function SurveyPage() {
             </fieldset>
           ))}
 
-          {otherBranches.length > 0 && (
-            <details className="rounded-2xl border p-4" style={{ borderColor: 'var(--color-sc-line)' }}>
-              <summary className="cursor-pointer text-sm font-bold">{t(UI.moreSections)}</summary>
-              <div className="mt-4 space-y-5">
-                {otherBranches.map((b) => (
-                  <details
-                    key={b.id}
-                    onToggle={(e) =>
-                      setOpenBranches((o) =>
-                        (e.currentTarget as HTMLDetailsElement).open ? [...new Set([...o, b.id])] : o.filter((x) => x !== b.id),
-                      )
-                    }
-                  >
-                    <summary className="cursor-pointer text-sm">{t(b.title)}</summary>
-                    <div className="mt-3 space-y-5">
-                      {b.items.map((it) => (
-                        <Field key={it.id} item={it} value={ans[it.id] ?? ''} onChange={(v) => set(it.id, v)}
-                          followValue={ans[`${it.id}__why`] ?? ''} onFollowChange={(v) => set(`${it.id}__why`, v)}
-                          t={t} />
-                      ))}
-                    </div>
-                  </details>
-                ))}
-              </div>
-            </details>
-          )}
-
           <div className="flex gap-2">
             <button
               type="button"
@@ -494,6 +461,21 @@ export default function SurveyPage() {
  * "소리를 들어 보셨습니까" 를 문항으로 물었는데, 우리가 기록으로 알 수 있는 것을
  * 사람에게 묻는 것은 칸을 낭비하는 일이다.
  */
+/**
+ * 저희가 만든 것을 소개하는 화면.
+ *
+ * 두 곳에서 쓴다 — 보여주는 단계와, 그것을 판단하는 문항이 있는 분야별 단계. 같은
+ * 것을 두 번 적어 두면 한쪽만 고치는 사고가 난다.
+ *
+ * 처음에는 처방 문구 한 줄과 픽토그램만 있었다. 그것으로는 우리가 무엇을 했는지
+ * 전해지지 않는다 — 받는 분은 그림 몇 장을 보고 이 프로젝트를 판단해야 했다. 아이디어,
+ * 어떻게 굴러가는지, 무엇을 목표로 하는지를 먼저 적고, 처방전 원본과 결과를 위아래로
+ * 붙여 무엇이 무엇으로 바뀌는지 보이게 한다.
+ *
+ * `onTouch` 는 응답자가 이 안의 버튼(스피커)을 실제로 눌렀는지를 알린다. 한때
+ * "소리를 들어 보셨습니까" 를 문항으로 물었는데, 우리가 기록으로 알 수 있는 것을
+ * 사람에게 묻는 것은 칸을 낭비하는 일이다.
+ */
 function DemoBlock({
   t, lang, onTouch,
 }: {
@@ -501,6 +483,8 @@ function DemoBlock({
   lang: Lang;
   onTouch: () => void;
 }) {
+  const card = { borderColor: 'var(--color-sc-line)', background: 'var(--color-sc-surface)' };
+  const muted = { color: 'var(--color-sc-muted)' };
   return (
     <section
       className="mb-7"
@@ -508,51 +492,93 @@ function DemoBlock({
         if ((e.target as HTMLElement).closest('button')) onTouch();
       }}
     >
+      {/* 1. 아이디어 */}
+      <h2 className="text-sm font-bold">{t(UI.ideaTitle)}</h2>
+      <p className="mt-1 text-sm leading-relaxed">{t(UI.ideaBody)}</p>
 
-            <h2 className="text-sm font-bold">{t(UI.demoTitle)}</h2>
-            <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
-              {t(UI.demoNote)}
-            </p>
-            {DEMO.map((d) => (
-              <div
-                key={d.id}
-                className="mt-3 rounded-2xl border p-3 [&_.overflow-x-auto]:flex-wrap [&_.overflow-x-auto]:overflow-x-visible"
-                style={{ borderColor: 'var(--color-sc-line)', background: 'var(--color-sc-surface)' }}
-              >
-                <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-                  {t(UI.rxLabel)}
-                </p>
-                <p className="mt-1 text-sm">{d.rx[lang]}</p>
-                <PictogramStrip source={d.dsl} />
-              </div>
-            ))}
-            {/*
-              형태소 전체를 접어 둔다. AAC·HCI·디자인 문항은 이 세트를 봐야 답이
-              달라지지만, 78장을 펼쳐 두면 다른 응답자에게는 화면만 길어진다.
-            */}
-            <details className="mt-3 rounded-2xl border p-3" style={{ borderColor: 'var(--color-sc-line)' }}>
-              <summary className="cursor-pointer text-xs font-bold">{t(UI.glyphsToggle)}</summary>
-              <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
-                {t(UI.glyphsNote)}
-              </p>
-              <div className="mt-2 grid grid-cols-6 gap-1 sm:grid-cols-10">
-                {GLYPH_NAMES.map((g) => (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img key={g} src={`/glyphs/${g}.png`} alt={g} width={512} height={512}
-                       className="aspect-square w-full rounded bg-white object-contain p-0.5" />
-                ))}
-              </div>
-            </details>
-            <a
-              href="/"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 inline-block text-xs underline"
-              style={{ color: 'var(--color-sc-primary)' }}
-            >
-              {t(UI.tryIt)}
-            </a>
-          </section>
+      {/* 2. 동작 원리 — 네 단계. 각 단계는 한 줄 요약과 그 아래 설명으로 나눈다. */}
+      <h2 className="mt-6 text-sm font-bold">{t(UI.howTitle)}</h2>
+      <ol className="mt-2 space-y-3">
+        {([
+          [UI.how1, UI.how1b],
+          [UI.how2, UI.how2b],
+          [UI.how3, UI.how3b],
+          [UI.how4, UI.how4b],
+        ] as const).map(([head, body], i) => (
+          <li key={i} className="rounded-2xl border p-3" style={card}>
+            <p className="text-sm font-bold">{t(head)}</p>
+            <p className="mt-1 text-xs leading-relaxed" style={muted}>{t(body)}</p>
+          </li>
+        ))}
+      </ol>
+
+      {/* 3. SDG */}
+      <h2 className="mt-6 text-sm font-bold">{t(UI.sdgTitle)}</h2>
+      <ul className="mt-2 space-y-2">
+        {[UI.sdg34, UI.sdg38, UI.sdg3d].map((g, i) => (
+          <li key={i} className="rounded-2xl border p-3 text-xs leading-relaxed" style={card}>
+            {t(g)}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs leading-relaxed" style={muted}>{t(UI.sdgNote)}</p>
+
+      {/* 4. 처방전 원본 → 결과 */}
+      <h2 className="mt-6 text-sm font-bold">{t(UI.demoTitle)}</h2>
+      <p className="mt-1 text-xs leading-relaxed" style={muted}>{t(UI.demoNote)}</p>
+      {DEMO.map((d) => (
+        <div key={d.id} className="mt-3 rounded-2xl border p-3" style={card}>
+          <p className="text-[11px] font-bold tracking-wide" style={muted}>{t(UI.beforeLabel)}</p>
+          {/*
+            처방전 원본. width/height 를 적는다 — 크기를 비워 두면 clientHeight 가 0 이
+            되고, loading="lazy" 가 화면 밖으로 판단해 영원히 받아오지 않는다. 형태소
+            78장에서 이미 겪은 일이다.
+          */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={d.image}
+            alt={d.rx[lang]}
+            width={620}
+            height={470}
+            className="mt-1 w-full rounded-xl border bg-white"
+            style={{ borderColor: 'var(--color-sc-line)' }}
+          />
+          <p className="mt-2 text-[11px] font-bold tracking-wide" style={muted}>{t(UI.rxSpoken)}</p>
+          <p className="mt-1 text-sm leading-relaxed">{d.rx[lang]}</p>
+
+          <p className="mt-4 text-[11px] font-bold tracking-wide" style={muted}>{t(UI.afterLabel)}</p>
+          {/*
+            픽토그램이 다섯 장을 넘으면 가로로 밀려 잘린다. 앱 컴포넌트를 고치는 대신
+            이 자리에서만 줄바꿈하게 덮어쓴다 — 앱의 좁은 화면에서는 가로 스크롤이 맞다.
+          */}
+          <div className="[&_.overflow-x-auto]:flex-wrap [&_.overflow-x-auto]:overflow-x-visible">
+            <PictogramStrip source={d.dsl} />
+          </div>
+          <p className="mt-2 text-[11px] font-bold tracking-wide" style={muted}>{t(UI.showsLabel)}</p>
+          <p className="mt-1 text-xs leading-relaxed" style={muted}>{d.shows[lang]}</p>
+        </div>
+      ))}
+
+      {/*
+        형태소 전체를 접어 둔다. AAC·HCI·디자인 문항은 이 세트를 봐야 답이 달라지지만,
+        78장을 펼쳐 두면 다른 응답자에게는 화면만 길어진다.
+      */}
+      <details className="mt-3 rounded-2xl border p-3" style={{ borderColor: 'var(--color-sc-line)' }}>
+        <summary className="cursor-pointer text-xs font-bold">{t(UI.glyphsToggle)}</summary>
+        <p className="mt-2 text-xs leading-relaxed" style={muted}>{t(UI.glyphsNote)}</p>
+        <div className="mt-2 grid grid-cols-6 gap-1 sm:grid-cols-10">
+          {GLYPH_NAMES.map((g) => (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img key={g} src={`/glyphs/${g}.png`} alt={g} width={512} height={512}
+                 className="aspect-square w-full rounded bg-white object-contain p-0.5" />
+          ))}
+        </div>
+      </details>
+      <a href="/" target="_blank" rel="noreferrer" className="mt-3 inline-block text-xs underline"
+         style={{ color: 'var(--color-sc-primary)' }}>
+        {t(UI.tryIt)}
+      </a>
+    </section>
   );
 }
 
