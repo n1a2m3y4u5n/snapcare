@@ -41,6 +41,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 GLYPHS_TS = ROOT / 'lib' / 'survey' / 'glyphs.ts'
 
 VERDICTS = ['통과', '부분', '실패', '치명적 혼동']
+ROSTER: dict[str, tuple[str, str]] = {}
 
 HDR = Font(bold=True, color='FFFFFF', size=11)
 HDR_FILL = PatternFill('solid', fgColor='2F5597')
@@ -75,6 +76,40 @@ def load(dirpath: pathlib.Path) -> list[dict]:
     return out
 
 
+def minutes(r) -> str:
+    """시작한 때와 낸 때의 차이. 문항이 너무 길었는지 판단하는 근거가 된다."""
+    a, b = r.get('startedAt'), r.get('clientTime')
+    if not (a and b):
+        return ''
+    try:
+        from datetime import datetime
+        f = lambda x: datetime.fromisoformat(x.replace('Z', '+00:00'))
+        return round((f(b) - f(a)).total_seconds() / 60, 1)
+    except Exception:                                # noqa: BLE001
+        return ''
+
+
+def roster() -> dict[str, tuple[str, str]]:
+    """수신자 토큰 → (이름, 소속). 명단 엑셀에서 읽는다.
+
+    서버는 토큰만 알고 있고 사람은 모른다. 여기서만 이어 붙인다 — 그래서
+    이 스크립트를 우리 손에서 돌려야 응답자가 누구인지 나온다.
+    """
+    try:
+        from openpyxl import load_workbook
+        wb = load_workbook(ROOT / 'scratchpad' / 'contacts' / 'SnapCare_전문가_명단.xlsx',
+                           read_only=True, data_only=True)
+        ws = wb['발송대상']
+        out = {}
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if row[8]:
+                out[str(row[8])] = (str(row[4] or ''), str(row[5] or ''))
+        return out
+    except Exception as e:                           # noqa: BLE001
+        print(f'  명단을 읽지 못해 이름 조인을 건너뛴다: {e}', file=sys.stderr)
+        return {}
+
+
 def head(ws, cols, widths):
     ws.append(cols)
     for c in ws[1]:
@@ -99,6 +134,9 @@ def main() -> None:
     print(f'응답 {len(rows)}건 읽음')
 
     INTENDED = intended_meanings()
+    global ROSTER
+    ROSTER = roster()
+    print(f'명단 {len(ROSTER)}명과 토큰으로 이어 붙인다')
     wb = Workbook()
 
     # ── 1) 응답 ─────────────────────────────────────────────
@@ -110,18 +148,22 @@ def main() -> None:
     ws = wb.active
     ws.title = '응답'
     head(ws,
-         ['응답ID', '접수시각', '언어', '지목 구획', '인용 허락', '인용 범위', '이해도 시험'] + keys,
-         [26, 18, 6, 8, 9, 16, 10] + [30] * len(keys))
+         ['수신자 토큰', '명단의 이름', '명단의 소속', '응답ID', '접수시각', '소요(분)',
+          '언어', '지목 구획', '인용 범위', '표준시간대', '화면', '링크 경유'] + keys,
+         [13, 24, 30, 26, 18, 9, 6, 8, 16, 22, 9, 9] + [30] * len(keys))
     for r in rows:
         a = r.get('answers') or {}
+        env = r.get('env') or {}
+        tok = r.get('recipient') or ''
+        who = ROSTER.get(tok, ('', ''))
         ws.append([
-            r.get('id', ''), r.get('receivedAt', ''), r.get('lang', ''),
-            r.get('pinnedSection') or '', 'Y' if r.get('citeConsent') else 'N',
-            r.get('citeScope') or '', '참여' if r.get('glyphTest') else '건너뜀',
+            tok, who[0], who[1], r.get('id', ''), r.get('receivedAt', ''), minutes(r),
+            r.get('lang', ''), r.get('pinnedSection') or '', r.get('citeScope') or '',
+            env.get('tz') or '', env.get('screen') or '', 'Y' if env.get('fromLink') else 'N',
         ] + [a.get(k, '') for k in keys])
         for c in ws[ws.max_row]:
             c.alignment, c.border = TOP, BOX
-    ws.auto_filter.ref = f'A1:{get_column_letter(7 + len(keys))}{ws.max_row}'
+    ws.auto_filter.ref = f'A1:{get_column_letter(12 + len(keys))}{ws.max_row}'
 
     # ── 2) 픽토그램 — 판정을 여기서 채운다 ──────────────────
     wp = wb.create_sheet('픽토그램')
