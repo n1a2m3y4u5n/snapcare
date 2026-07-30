@@ -163,96 +163,18 @@ export const BACKGROUND: Item[] = [
 
 export const CORE: Item[] = [
   {
-    // 이 문항은 처음에 "판단 경로에서 문자를 완전히 없앴습니다" 로 되어 있었다.
-    // 사실이 아니다. 코드를 확인하니 판정 화면에는 약 이름·복용법·판정 배지·조언
-    // 줄·복용 시각이 모두 보이는 글자로 있고, 글자가 없는 것은 픽토그램 줄 하나뿐이다
-    // (거기서만 문장이 alt·aria-label 과 음성으로만 들어간다).
-    //
-    // 실제 설계 의도는 app/scan/page.tsx 의 주석에 적혀 있다 — 글을 읽는 사람에게는
-    // 글자가 쓸모 있으므로 남겨 두고, 읽지 못하는 사람을 위해 그림과 음성으로 **독립된
-    // 경로**를 따로 깐 것이다. 문자를 없앤 것이 아니라 문자 없이도 성립하게 만든 것이다.
-    //
-    // 데모를 화면에 놓은 뒤로는 응답자가 글자를 직접 보게 되므로, 틀린 서술을 두면
-    // 문항 자체를 믿지 않는다.
-    id: 'a1_notext',
-    kind: 'single',
-    required: true,
-    q: T(
-      'SnapCare 는 화면의 글자를 없애지 않았습니다. 대신 글을 읽지 못하는 사람이 글자를 하나도 읽지 않고도 복약 지시를 온전히 받을 수 있도록, 픽토그램과 음성으로 독립된 경로를 깔았습니다. 이 접근은 어떻습니까?',
-      'SnapCare does not remove the text from the screen. Instead it lays down an independent path — pictograms and speech — so that someone who cannot read any of the text still receives the full dosing instruction. What do you make of that approach?',
-      'SnapCare nu elimină textul din ecran. În schimb, creează o cale independentă — pictograme și voce — astfel încât cineva care nu poate citi niciun text să primească totuși instrucțiunea completă de dozare. Ce părere aveți despre această abordare?',
-    ),
-    options: [
-      T('옳은 접근이다', 'The right approach', 'Abordarea corectă'),
-      T('도움은 되나 불충분하다', 'Helpful but insufficient', 'Utilă, dar insuficientă'),
-      T('중립', 'Neutral', 'Neutră'),
-      T('위험하다', 'Risky', 'Riscantă'),
-      T('유해하다', 'Harmful', 'Dăunătoare'),
-    ],
-    follow: T('한 문장으로 이유를 적어 주십시오.', 'Give your reason in one sentence.', 'Motivați într-o singură frază.'),
-  },
-  {
-    // 이 문항도 사실과 달랐다. "문서 설명은 넣지 않습니다" 로 되어 있었는데, 화면에는
-    // 글자가 남아 있다. 우리가 한 것은 문서를 뺀 것이 아니라, 글자를 읽지 못해도
-    // 성립하도록 그림과 음성 경로를 따로 완성한 것이다.
-    //
-    // 그러면 Gutierrez 권고에 대한 우리 위치도 달라진다. 그 논문은 픽토그램 단독 대신
-    // 구두 **와** 문서 병행을 권고했는데, 우리는 셋 다 갖고 있다. 다만 읽지 못하는
-    // 사람에게는 그중 둘만 남으므로, 물어야 할 것은 "문서를 빼도 되는가" 가 아니라
-    // "둘만으로 충분한가" 다.
-    id: 'a3_voice',
-    kind: 'single',
-    required: true,
-    q: T(
-      '이 앱은 그림·음성·글자 세 경로를 함께 제시합니다. 글을 읽지 못하는 사람에게는 그림과 음성 둘만 남습니다. 그 두 경로만으로 충분합니까?',
-      'The app presents three channels at once — pictograms, speech, and text. For someone who cannot read, only the pictograms and the speech remain. Are those two channels enough on their own?',
-      'Aplicația prezintă trei canale simultan — pictograme, voce și text. Pentru cineva care nu poate citi, rămân doar pictogramele și vocea. Sunt suficiente aceste două canale?',
-    ),
-    note: T(
-      '선행 연구(Gutierrez et al., 2022)는 픽토그램 단독 대신 구두와 문서 설명을 함께 쓰라고 권고했고, USP 픽토그램 라이선스도 픽토그램을 정보 전달의 유일한 수단으로 쓰지 말라고 정합니다. 저희는 세 경로를 다 두었으나, 글을 읽지 못하는 분에게는 문서 경로가 사실상 없는 것과 같습니다. 위 데모에서 스피커 표시를 눌러 음성을 들어 보신 뒤 답해 주시면 좋겠습니다.',
-      'Prior work (Gutierrez et al., 2022) recommends complementing pictograms with verbal *and* written instructions, and the USP pictogram licence states pictograms should not be the sole means of conveying information. We kept all three channels, but for someone who cannot read, the written one is effectively absent. Please press a speaker mark in the demo above and listen before answering.',
-      'Studiile anterioare (Gutierrez et al., 2022) recomandă completarea pictogramelor cu instrucțiuni verbale *și* scrise, iar licența pictogramelor USP prevede că pictogramele nu trebuie să fie singurul mijloc de transmitere a informației. Am păstrat toate trei canalele, dar pentru cineva care nu poate citi, cel scris este practic absent. Vă rugăm să apăsați un simbol de difuzor în demonstrația de mai sus și să ascultați înainte de a răspunde.',
-    ),
-    options: [
-      T('예, 충분하다', 'Yes, enough', 'Da, suficiente'),
-      T('부분적으로', 'Partly', 'Parțial'),
-      T('아니오', 'No', 'Nu'),
-    ],
-    follow: T('왜 그렇습니까?', 'Why?', 'De ce?'),
-  },
-  {
-    // a2(해칠 경로)·a4(하나만 고치라면)·a5(권하지 않을 사유)는 "무엇이 잘못됐나" 를
-    // 세 번 다르게 물은 것이었다. 서술 세 칸을 받아 가면서 얻는 것은 거의 같으므로
-    // 가장 구체적인 a2 만 남기고 둘을 지웠다.
-    //
-    // a6 은 서술이었는데 선택으로 바꿨다. 서술만 받으면 답이 제각각이라 셀 수 없다.
-    // 후보를 주고 고르게 하면 분모가 생기고, §5 에서 우리가 무엇을 재야 하는지가
-    // 표로 나온다. 어떻게 재야 하는지는 이어지는 서술에서 받는다.
-    id: 'a6_evidence',
-    kind: 'single',
-    required: true,
-    q: T(
-      '이것이 효과가 있다고 납득하시려면 무엇이 확인되어야 합니까? 가장 중요한 하나를 골라 주십시오.',
-      'What would have to be shown before you accepted that this works? Pick the single most important one.',
-      'Ce ar trebui demonstrat pentru a accepta că funcționează? Alegeți cel mai important element.',
-    ),
-    options: [
-      T('실제 환자가 픽토그램을 의도대로 읽어낸다', 'Real patients read the pictograms as intended', 'Pacienții reali citesc pictogramele conform intenției'),
-      T('복약 오류가 실제로 줄어든다', 'Dosing errors actually go down', 'Erorile de dozare scad efectiv'),
-      T('약사의 복약지도와 어긋나지 않는다', 'It does not diverge from what a pharmacist would say', 'Nu se abate de la ce ar spune un farmacist'),
-      T('도움 없이 혼자서 끝까지 쓸 수 있다', 'People can complete it without help', 'Oamenii îl pot folosi fără ajutor'),
-      T('오래 써도 계속 쓴다', 'People keep using it over time', 'Oamenii continuă să îl folosească în timp'),
-    ],
-    follow: T('그것을 어떻게 재야 한다고 보십니까?', 'How should that be measured?', 'Cum ar trebui măsurat?'),
-  },
-  {
     id: 'a7_framing',
     kind: 'single',
     required: true,
     q: T(
-      '문제 설정 — 저문해 성인이 복약 정보에서 소외되어 있다 — 이 진술은 당신의 경험과 맞습니까?',
-      'Our problem framing — that adults with low literacy are underserved by medication instructions — does it match your experience?',
-      'Formularea problemei noastre — că adulții cu alfabetizare redusă sunt deserviți insuficient de instrucțiunile pentru medicamente — corespunde experienței dumneavoastră?',
+      '선생님 현장에서, 글을 읽지 못하는 분들이 복약 정보를 제대로 받지 못하고 있다고 보십니까?',
+      'In your own setting, would you say that people who cannot read are not getting medication information properly?',
+      'În propriul dumneavoastră context, ați spune că persoanele care nu pot citi nu primesc corect informațiile despre medicamente?',
+    ),
+    note: T(
+      '저희 프로젝트 전체가 이 전제 위에 서 있는데, 저희는 당사자를 직접 만난 적이 없습니다. 선생님 경험과 어긋난다면 그것이 저희가 가장 먼저 알아야 할 것입니다.',
+      'Our entire project rests on this premise and we have never met the people concerned. If it does not match what you see, that is the first thing we need to know.',
+      'Întregul nostru proiect se bazează pe această premisă și nu am întâlnit niciodată persoanele în cauză. Dacă nu corespunde cu ce observați, acesta este primul lucru pe care trebuie să îl aflăm.',
     ),
     options: [
       T('맞다', 'Yes', 'Da'),
@@ -268,14 +190,14 @@ export const CORE: Item[] = [
     id: 'c_counter',
     kind: 'longtext',
     q: T(
-      '이 접근에 반대되는 근거나 사례를 아십니까?',
-      'Do you know of evidence or a case that argues against this approach?',
-      'Cunoașteți dovezi sau un caz care contrazice această abordare?',
+      '이 주제로 저희가 반드시 읽어야 할 연구나 사례가 있습니까?',
+      'Is there a study or a case that we really ought to have read on this subject?',
+      'Există un studiu sau un caz pe care ar trebui neapărat să îl fi citit pe această temă?',
     ),
     note: T(
-      '논문 하나, 사례 하나만 대 주셔도 충분합니다. 저희에게는 찬성보다 반대 근거가 값어치 있습니다 — 발표 자리에서 처음 듣는 것보다 지금 아는 편이 낫습니다.',
-      'A single paper or a single case is enough. Counter-evidence is worth more to us than agreement — we would much rather hear it now than for the first time at the presentation.',
-      'O singură lucrare sau un singur caz este suficient. Contraargumentele valorează mai mult decât acordul — preferăm să le aflăm acum decât pentru prima dată la prezentare.',
+      '제목이나 저자 이름만 적어 주셔도 찾아 읽겠습니다. 저희 접근을 반박하는 것이라면 더욱 알고 싶습니다 — 발표 자리에서 처음 듣는 것보다 지금 아는 편이 낫습니다.',
+      'A title or an author name is enough and we will find it. If it argues against our approach, we want it all the more — we would much rather hear it now than for the first time at the presentation.',
+      'Este suficient un titlu sau un nume de autor și îl vom găsi. Dacă infirmă abordarea noastră, cu atât mai mult dorim să îl aflăm — preferăm să îl aflăm acum decât pentru prima dată la prezentare.',
     ),
   }
 
@@ -302,6 +224,11 @@ export const SERVICE: Item[] = [
       '위 데모만 보고, 글을 읽지 못하는 환자가 혼자서 약을 제대로 복용할 수 있을 것 같습니까?',
       'Looking only at the demo above, could a patient who cannot read take the medicine correctly on their own?',
       'Privind doar demonstrația de mai sus, ar putea un pacient care nu poate citi să ia corect medicamentul singur?',
+    ),
+    note: T(
+      '화면에는 글자도 있지만, 글을 읽지 못하는 분에게 남는 것은 그림과 음성 둘뿐입니다. 그 둘만으로 충분한지가 이 프로젝트의 핵심 질문입니다 — 선행 연구(Gutierrez et al., 2022)는 픽토그램에 구두와 문서 설명을 함께 붙이라고 권고했고, USP 픽토그램 라이선스도 픽토그램을 정보 전달의 유일한 수단으로 쓰지 말라고 정합니다. 스피커 표시를 눌러 음성을 들어 보신 뒤 답해 주시면 좋겠습니다.',
+      'The screen also carries text, but for someone who cannot read, only the pictograms and the speech remain. Whether those two are enough is the central question of this project — prior work (Gutierrez et al., 2022) recommends pairing pictograms with verbal *and* written instructions, and the USP pictogram licence states pictograms should not be the sole means of conveying information. Please press a speaker mark and listen before answering.',
+      'Ecranul conține și text, dar pentru cineva care nu poate citi rămân doar pictogramele și vocea. Dacă acestea două sunt suficiente este întrebarea centrală a proiectului — studiile anterioare (Gutierrez et al., 2022) recomandă asocierea pictogramelor cu instrucțiuni verbale *și* scrise, iar licența pictogramelor USP prevede că pictogramele nu trebuie să fie singurul mijloc de transmitere a informației. Vă rugăm să apăsați un simbol de difuzor și să ascultați înainte de a răspunde.',
     ),
     options: [
       T('예, 가능할 것 같다', 'Yes, probably', 'Da, probabil'),
