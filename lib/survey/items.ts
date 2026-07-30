@@ -43,24 +43,26 @@ export const CONSENT = {
       '수집 항목은 응답 내용, 성함·소속·국가, 그리고 기술 정보입니다. 기술 정보란 메일에 담긴 수신자 식별 문자열, ' +
       '설문을 시작하고 제출한 시각, 표준시간대와 언어 설정, 화면이 모바일인지 데스크톱인지입니다. 브라우저 식별 정보는 수집하지 않습니다. ' +
       '대회 종료 후 12개월간 보관하고 그 뒤 삭제하며, 삭제나 열람을 원하시면 아래 연락처로 알려 주시면 됩니다. ' +
-      '응답은 프로젝트 문서에 인용될 수 있으며, 실명·소속을 밝힐지 익명으로 할지는 아래에서 직접 고르실 수 있으며, 인용을 원하지 않으신다는 선택도 있습니다.',
+      '응답은 대회 제출 문서와 최종 보고서에 인용될 수 있고, 그때 성함과 소속이 함께 적힙니다. 전문가의 의견임을 밝히지 않으면 그 의견이 근거로 서지 못하기 때문입니다. 실명으로 인용되는 것을 원하지 않으시면 답하지 않으시는 편이 낫습니다 — 저희가 나중에 익명으로 바꿔 드릴 수 없습니다.',
     'This survey collects expert feedback on SnapCare, an entry in the 16th e-ICON World Contest. ' +
       'We collect your answers, your name, affiliation and country, and some technical information: the recipient identifier carried ' +
       'in the invitation link, the times you started and submitted, your time zone and language setting, and whether you answered on a ' +
       'mobile or desktop screen. We do not collect browser fingerprinting data. We keep responses for 12 months after the contest and ' +
-      'then delete them; write to the address below to access or delete yours. Your response may be quoted in the project documents, and ' +
-      'just below you choose whether that is with your name, with your affiliation only, or anonymously — one option is not to be quoted at all.',
+      'then delete them; write to the address below to access or delete yours. Your response may be quoted in the contest submission and the ' +
+      'final report, and your name and affiliation will appear with it — an opinion carries weight only if it is clear whose expert opinion ' +
+      'it is. If you would rather not be quoted by name, it is better not to answer; we cannot anonymise it for you afterwards.',
     'Acest chestionar colectează opinii de specialitate despre SnapCare, o lucrare înscrisă la a 16-a ediție e-ICON World Contest. ' +
       'Colectăm răspunsurile, numele, afilierea și țara dumneavoastră, precum și unele informații tehnice: identificatorul destinatarului ' +
       'din linkul de invitație, momentele în care ați început și ați trimis, fusul orar și setarea de limbă, și dacă ați răspuns pe un ecran ' +
       'mobil sau desktop. Nu colectăm date de amprentare a browserului. Păstrăm răspunsurile 12 luni după concurs, apoi le ștergem; ' +
-      'scrieți la adresa de mai jos pentru acces sau ștergere. Răspunsul poate fi citat în documentele proiectului, iar ' +
-      'chiar mai jos alegeți dacă acest lucru se face cu numele, doar cu afilierea sau anonim — una dintre opțiuni este să nu fiți citat deloc.',
+      'scrieți la adresa de mai jos pentru acces sau ștergere. Răspunsul poate fi citat în lucrarea înscrisă la concurs și în raportul final, ' +
+      'iar numele și afilierea dumneavoastră vor apărea alături — o opinie are greutate doar dacă se știe al cui aviz de specialitate este. ' +
+      'Dacă preferați să nu fiți citat cu numele, este mai bine să nu răspundeți; nu putem anonimiza ulterior.',
   ),
   agree: T(
-    '위 내용을 읽었고 참여에 동의합니다.',
-    'I have read the above and agree to take part.',
-    'Am citit informațiile de mai sus și accept să participarea.',
+    '위 내용을 읽었고, 참여와 실명 인용에 동의합니다.',
+    'I have read the above and agree to take part and to be quoted by name.',
+    'Am citit informațiile de mai sus, accept să particip și să fiu citat cu numele și afilierea.',
   ),
 };
 
@@ -135,9 +137,9 @@ export const BACKGROUND: Item[] = [
     required: true,
     q: T('성함', 'Your name', 'Numele dumneavoastră'),
     note: T(
-      '응답이 명단의 어느 분에게서 왔는지 확인하고 중복 집계를 막기 위해 필요합니다. 이름을 적으시는 것과 문서에 실명이 실리는 것은 다릅니다 — 첫 화면에서 익명 인용이나 인용 거부를 고르셨을 것입니다.',
-      'We need this to confirm the response came from someone on our list and to avoid counting anyone twice. Giving your name here is not the same as appearing by name in the documents — you chose anonymous citation or none at all on the first screen.',
-      'Ne este necesar pentru a confirma că răspunsul provine de la o persoană din lista noastră și pentru a evita numărarea dublă. A vă da numele aici nu înseamnă că veți apărea cu numele în documente — pe primul ecran ați ales citarea anonimă sau deloc.',
+      '응답이 명단의 어느 분에게서 왔는지 확인하고 중복 집계를 막기 위해 필요합니다. 첫 화면에서 동의하신 대로, 인용할 때 이 성함과 소속을 함께 적습니다.',
+      'We need this to confirm the response came from someone on our list and to avoid counting anyone twice. As you agreed on the first screen, this name and affiliation will appear where we quote you.',
+      'Ne este necesar pentru a confirma că răspunsul provine de la o persoană din lista noastră și pentru a evita numărarea dublă. Așa cum ați acceptat pe primul ecran, acest nume și această afiliere vor apărea acolo unde vă cităm.',
     ),
   },
   {
@@ -997,19 +999,6 @@ export const BRANCHES: Branch[] = [
 
 /* ──────────────────── D. 마무리 (필수) ──────────────────── */
 
-export const CLOSE_CITE = {
-  q: T(
-    '응답을 프로젝트 문서에 인용하는 범위를 골라 주십시오.',
-    'Choose how we may cite your response in the project documents.',
-    'Alegeți cum putem cita răspunsul dumneavoastră în documentele proiectului.',
-  ),
-  options: [
-    T('익명으로만', 'Anonymously only', 'Doar anonim'),
-    T('소속까지', 'With my affiliation', 'Cu afilierea mea'),
-    T('이름과 소속까지', 'With my name and affiliation', 'Cu numele și afilierea mea'),
-    T('인용하지 말 것', 'Do not cite me', 'Nu mă citați'),
-  ],
-};
 
 /**
  * 마지막에 남기는 한 칸.
@@ -1065,9 +1054,9 @@ export const UI = {
   progress: T('진행', 'Progress', 'Progres'),
   thanksTitle: T('보내 주셔서 감사합니다', 'Thank you', 'Vă mulțumim'),
   thanksBody: T(
-    '응답이 저장되었습니다. 결과는 대회 최종 보고서에 반영하고, 인용을 허락해 주신 범위 안에서만 씁니다.',
-    'Your response has been saved. We will use it in the final contest report, and only within the citation scope you chose.',
-    'Răspunsul dumneavoastră a fost salvat. Îl vom folosi în raportul final al concursului, doar în limitele de citare pe care le-ați alegeți.',
+    '응답이 저장되었습니다. 대회 제출 문서와 최종 보고서에 반영하며, 인용할 때에는 성함과 소속을 함께 적습니다. 뒤늦게 인용을 원하지 않게 되시면 아래 연락처로 알려 주시면 빼겠습니다.',
+    'Your response has been saved. We will use it in the contest submission and the final report, and where we quote you your name and affiliation will appear with it. If you later decide you would rather not be quoted, write to the address below and we will take it out.',
+    'Răspunsul dumneavoastră a fost salvat. Îl vom folosi în lucrarea înscrisă la concurs și în raportul final, iar acolo unde vă cităm vor apărea numele și afilierea dumneavoastră. Dacă ulterior decideți că preferați să nu fiți citat, scrieți la adresa de mai jos și îl vom elimina.',
   ),
   saveFail: T(
     '저장에 실패했습니다. 아래 버튼으로 다시 시도해 주십시오. 입력하신 내용은 이 브라우저에 남아 있습니다.',

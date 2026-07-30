@@ -6,7 +6,7 @@ import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { DEMO } from '@/lib/survey/demo';
 import { GLYPH_NAMES } from '@/lib/survey/glyphNames';
 import {
-  BACKGROUND, BRANCHES, CLOSE, CLOSE_CITE, CONSENT, CORE, LANGS, UI, fieldIdOf,
+  BACKGROUND, BRANCHES, CLOSE, CONSENT, CORE, LANGS, UI, fieldIdOf,
   type Branch, type Item, type Lang,
 } from '@/lib/survey/items';
 
@@ -63,7 +63,6 @@ export default function SurveyPage() {
   const [step, setStep] = useState<Step>({ k: 'intro' });
   const [consent, setConsent] = useState(false);
   const [ans, setAns] = useState<Answers>({});
-  const [cite, setCite] = useState('');
   const [err, setErr] = useState('');
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -101,7 +100,6 @@ export default function SurveyPage() {
       if (!raw) return;
       const d = JSON.parse(raw);
       if (d.ans) setAns(d.ans);
-      if (d.cite) setCite(d.cite);
       if (d.consent) setConsent(true);
     } catch { /* 초안이 깨졌으면 그냥 새로 시작한다 */ }
   }, []);
@@ -109,9 +107,9 @@ export default function SurveyPage() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORE_KEY, JSON.stringify({ ans, cite, consent }));
+      localStorage.setItem(STORE_KEY, JSON.stringify({ ans, consent }));
     } catch { /* 용량 초과 등은 무시한다 — 저장 실패가 응답을 막아서는 안 된다 */ }
-  }, [ans, cite, consent]);
+  }, [ans, consent]);
 
   const t = useCallback((r: Record<Lang, string>) => r[lang], [lang]);
   const set = (id: string, v: string) => setAns((a) => ({ ...a, [id]: v }));
@@ -166,7 +164,12 @@ export default function SurveyPage() {
     const payload = {
       consent: true,
       citeConsent: true,
-      citeScope: cite,
+      /*
+       * 인용 범위를 고르게 하던 것을 없앴다. 동의 한 번으로 실명·소속 인용까지 함께
+       * 받는다. 그러므로 이 값은 응답자가 고른 것이 아니라 동의문에 적힌 것이며,
+       * 리포트의 "인용 범위" 열이 비지 않도록 여기서 채워 둔다.
+       */
+      citeScope: 'name_and_affiliation',
       lang,
       answers: ans,
       recipient,
@@ -268,38 +271,9 @@ export default function SurveyPage() {
               <span>{t(CONSENT.agree)}</span>
             </label>
           </div>
-          {/*
-            인용 범위를 동의와 같은 화면에 둔다.
-            전에는 마지막 화면에서 물었다. 그러면 응답자가 다 답한 뒤에야 인용 여부를
-            정하게 되고, 우리는 그 사람이 무엇에 동의한 것인지 모르는 채로 열아홉
-            문항을 받는다. 동의와 인용은 한 덩어리이므로 같은 자리에서 함께 받는다.
-          */}
-          <fieldset
-            className="rounded-2xl border p-4"
-            style={{ borderColor: 'var(--color-sc-line)', background: 'var(--color-sc-surface)' }}
-          >
-            <legend id="cite-legend" className="px-1 text-sm font-bold">
-              {t(CLOSE_CITE.q)}
-              <span aria-hidden> *</span>
-            </legend>
-            <div className="mt-2 space-y-2">
-              {CLOSE_CITE.options.map((o) => (
-                <label key={o.en} className="flex items-start gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name="cite"
-                    checked={cite === o.en}
-                    onChange={() => setCite(o.en)}
-                    className="mt-1"
-                  />
-                  <span>{t(o)}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
           <button
             type="button"
-            disabled={!consent || !cite}
+            disabled={!consent}
             onClick={() => advance({ k: 'background' })}
             className="w-full rounded-2xl px-4 py-3 font-bold disabled:opacity-40"
             style={{ background: 'var(--color-sc-primary)', color: '#fff' }}
