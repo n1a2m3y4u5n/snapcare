@@ -75,7 +75,8 @@ BASE = 'https://snapcare.fly.dev/survey'
 NS = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
 
 # 명단 엑셀의 열. 위치가 바뀌면 여기만 고친다.
-COL_NAME, COL_AFFIL, COL_EMAIL, COL_TOKEN, COL_REGION, COL_WHY = 'E', 'F', 'H', 'I', 'L', 'K'
+COL_GRADE, COL_NAME, COL_AFFIL, COL_EMAIL, COL_TOKEN, COL_REGION, COL_WHY = \
+    'C', 'E', 'F', 'H', 'I', 'L', 'K'
 
 
 # ────────────────────────── 명단 읽기 ──────────────────────────
@@ -354,6 +355,8 @@ def main() -> int:
     ap.add_argument('--lang-ro', action='store_true',
                     help='.md/.ro 34명에게 루마니아어로 보낸다 (없으면 영어). 원어민 감수 후에 켜라')
     ap.add_argument('--test-to', help='명단을 무시하고 이 주소로 한 통만 보낸다')
+    ap.add_argument('--no-priority', action='store_true',
+                    help='등급 A 를 먼저 보내지 않고 명단 순서대로 보낸다')
     ap.add_argument('--send', action='store_true', help='실제로 보낸다. 없으면 미리보기만')
     args = ap.parse_args()
 
@@ -376,6 +379,13 @@ def main() -> int:
             if (r.get(COL_EMAIL) or '').strip().lower() in done:
                 continue
             queue.append((r, lang))
+        # 등급 A 를 먼저 보낸다.
+        #
+        # 명단은 등급 순이 아니다 — 손으로 고른 41명이 1103명에 흩어져 있다. 하루 300통씩
+        # 나눠 보내면 가장 근거가 뚜렷한 사람들이 나흘에 걸쳐 나가고, 중간에 계정이 잠기거나
+        # 대회 일정이 당겨지면 그 41명 중 일부가 못 받는다. 순서만 바꿔도 그 위험이 없어진다.
+        if not args.no_priority:
+            queue.sort(key=lambda x: 0 if (x[0].get(COL_GRADE) or '').strip().upper() == 'A' else 1)
 
     counts: dict[str, int] = {}
     for _, lang in queue:
@@ -383,7 +393,11 @@ def main() -> int:
 
     print(f'명단 {len(rows)}명 · 이미 보낸 사람 {len(done)}명 · 남은 사람 {len(queue)}명')
     print('  언어별 남은 수: ' + (', '.join(f'{k} {v}' for k, v in sorted(counts.items())) or '없음'))
-    print(f'  이번에 보낼 수: {min(len(queue), args.limit)}통 (간격 {args.gap}초)')
+    batch = queue[: args.limit]
+    a_total = sum(1 for r, _ in queue if (r.get(COL_GRADE) or '').strip().upper() == 'A')
+    a_batch = sum(1 for r, _ in batch if (r.get(COL_GRADE) or '').strip().upper() == 'A')
+    print(f'  이번에 보낼 수: {len(batch)}통 (간격 {args.gap}초, 약 {len(batch) * args.gap / 60:.0f}분)')
+    print(f'  등급 A: 남은 {a_total}명 중 이번에 {a_batch}명' + ('  ← 먼저 보낸다' if not args.no_priority else ''))
     if not args.lang_ro and not args.test_to:
         print('  루마니아어 34명은 영어로 나간다 (--lang-ro 로 바꿀 수 있다)')
     print()
