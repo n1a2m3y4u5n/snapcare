@@ -6,7 +6,7 @@ import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { DEMO } from '@/lib/survey/demo';
 import { GLYPH_NAMES } from '@/lib/survey/glyphNames';
 import {
-  BACKGROUND, BRANCHES, CLOSE, CLOSE_CITE, CONSENT, CORE, FIELDS, LANGS, SERVICE, UI, fieldIdOf,
+  BACKGROUND, BRANCHES, CLOSE, CLOSE_CITE, CONSENT, CORE, LANGS, SERVICE, UI, fieldIdOf,
   type Branch, type Item, type Lang,
 } from '@/lib/survey/items';
 
@@ -47,7 +47,6 @@ type Step =
 
 export default function SurveyPage() {
   const [lang, setLang] = useState<Lang>('ko');
-  const [pinned, setPinned] = useState<string | null>(null);
   /**
    * 수신자 토큰과 접속 맥락.
    *
@@ -79,17 +78,14 @@ export default function SurveyPage() {
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
-    const s = p.get('s');
-    if (s) setPinned(s);
     /*
-     * `?s=` 는 직군을 **미리 채우는** 데만 쓴다. 구획을 덮어쓰지 않는다.
+     * 링크는 수신자 토큰과 언어만 담는다.
      *
-     * 메일에서 그 사람의 직군을 알고 보내므로 미리 채워 주면 한 번 덜 고르게 된다.
-     * 그러나 우리 짐작이 틀렸을 수 있으므로 첫 문항에 그대로 보이고, 응답자가 그
-     * 자리에서 바꿀 수 있다. 덮어쓰는 방식이면 틀린 배정을 응답자가 고칠 수 없다.
+     * 한때 `?s=` 로 직군을 지목하거나 미리 채웠다. 둘 다 뺐다 — 1103명의 직군을
+     * 우리가 짐작해 링크에 박으려면 전문분야 문자열을 키워드로 훑어야 하는데, 그
+     * 방식은 이 프로젝트에서 이미 두 번 사고를 냈다. 응답자가 첫 문항에서 직접
+     * 고르면 틀릴 여지가 없다.
      */
-    const f = FIELDS.find((x) => x.id === s);
-    if (f) setAns((a) => (a.b_field ? a : { ...a, b_field: f.label.en }));
     const r = p.get('r');
     if (r && /^[a-z0-9]{4,32}$/.test(r)) setRecipient(r);
     const l = p.get('lang');
@@ -176,7 +172,6 @@ export default function SurveyPage() {
       citeConsent: true,
       citeScope: cite,
       lang,
-      pinnedSection: pinned,
       answers: ans,
       openedBranches: openBranches,
       recipient,
@@ -454,7 +449,10 @@ export default function SurveyPage() {
       {step.k === 'close' && (
         <section className="space-y-5">
           <fieldset>
-            <legend className="mb-2 text-sm font-bold">{t(CLOSE_CITE.q)}</legend>
+            <legend id="cite-legend" className="mb-2 text-sm font-bold">
+              {t(CLOSE_CITE.q)}
+              <span aria-hidden> *</span>
+            </legend>
             <div className="space-y-2">
               {CLOSE_CITE.options.map((o) => (
                 <label key={o.en} className="flex items-start gap-2 text-sm">
@@ -497,7 +495,16 @@ export default function SurveyPage() {
             </button>
             <button
               type="button"
-              onClick={submit}
+              onClick={() => {
+                // 동의문에서 "마지막 문항에서 직접 고르실 수 있습니다" 라고 약속했다.
+                // 비운 채 제출되면 인용해도 되는지 우리가 알 수 없다.
+                if (!cite) {
+                  announce(t(UI.required));
+                  document.getElementById('cite-legend')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                  return;
+                }
+                submit();
+              }}
               disabled={sending}
               className="flex-1 rounded-2xl px-4 py-3 font-bold disabled:opacity-50"
               style={{ background: 'var(--color-sc-primary)', color: '#fff' }}
