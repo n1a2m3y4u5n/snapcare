@@ -275,6 +275,24 @@ export const BRANCHES: Branch[] = [
       'Farmacie și consiliere medicamentoasă',
     ),
     items: [
+      {
+        id: 'ph0_whole',
+        kind: 'single' as const,
+        required: true,
+        q: T(
+          '약사의 자리에서 이 프로젝트를 전체로 보실 때, 이것이 복약지도의 어느 자리에 놓여야 한다고 보십니까?',
+          'Looking at this project as a whole from a pharmacist\u2019s position, where should it sit in medication counselling?',
+          'Privind acest proiect în ansamblu din poziția unui farmacist, unde ar trebui să se situeze în consilierea privind medicația?',
+        ),
+        options: [
+          T('약사의 설명을 보조하는 도구', 'A tool that supports the pharmacist\u2019s own explanation', 'Un instrument care sprijină explicația farmacistului'),
+          T('약사가 닿지 못하는 환자를 위한 대체 경로', 'An alternative route for patients the pharmacist cannot reach', 'O cale alternativă pentru pacienții la care farmacistul nu ajunge'),
+          T('환자가 집에서 혼자 확인하는 수단', 'Something the patient checks alone at home', 'Ceva ce pacientul verifică singur acasă'),
+          T('약국이 아닌 다른 곳에 놓여야 한다', 'It belongs somewhere other than the pharmacy', 'Aparține altundeva, nu farmaciei'),
+          T('놓을 자리가 없다', 'There is no place for it', 'Nu are niciun loc'),
+        ],
+        follow: T('그렇게 보시는 이유와, 저희가 방향을 어디로 틀어야 하는지 적어 주십시오.', 'Please say why, and where we should turn.', 'Vă rugăm să explicați de ce și încotro ar trebui să ne îndreptăm.'),
+      },
       ...DEMO_JUDGE,
       {
         id: 'ph2_review',
@@ -409,6 +427,24 @@ export const BRANCHES: Branch[] = [
     id: 'nursing',
     title: T('간호·보건', 'Nursing and public health', 'Nursing și sănătate publică'),
     items: [
+      {
+        id: 'nu0_whole',
+        kind: 'single' as const,
+        required: true,
+        q: T(
+          '간호·보건의 자리에서 보실 때, 이 프로젝트가 실제 건강 결과를 바꿀 수 있다고 보십니까?',
+          'From a nursing and public health position, could this project actually change health outcomes?',
+          'Din poziția asistenței medicale și a sănătății publice, ar putea acest proiect schimba efectiv rezultatele de sănătate?',
+        ),
+        options: [
+          T('바꿀 수 있다', 'It could', 'Ar putea'),
+          T('조건이 갖춰지면 바꿀 수 있다', 'It could, if certain conditions are met', 'Ar putea, dacă se îndeplinesc anumite condiții'),
+          T('복용 행동은 바뀌겠지만 건강 결과까지는 아니다', 'Taking behaviour might change, but not outcomes', 'Comportamentul de administrare s-ar schimba, dar nu rezultatele'),
+          T('바꾸지 못한다', 'It could not', 'Nu ar putea'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T('무엇이 갖춰져야 합니까? 저희가 놓치고 있는 것을 적어 주십시오.', 'What would have to be in place? Please tell us what we are missing.', 'Ce ar trebui să existe? Vă rugăm să ne spuneți ce ne lipsește.'),
+      },
       ...DEMO_JUDGE,
       {
         id: 'nu1_measure',
@@ -516,6 +552,23 @@ export const BRANCHES: Branch[] = [
     id: 'aac',
     title: T('AAC·특수교육', 'AAC and special education', 'CAA și educație specială'),
     items: [
+      {
+        id: 'aa0_whole',
+        kind: 'single' as const,
+        required: true,
+        q: T(
+          'AAC·특수교육의 자리에서 보실 때, 저희 접근이 그 분야에 쌓인 지식과 맞습니까?',
+          'From an AAC and special education position, does our approach fit what the field already knows?',
+          'Din poziția CAA și a educației speciale, se potrivește abordarea noastră cu ceea ce domeniul știe deja?',
+        ),
+        options: [
+          T('맞다', 'It fits', 'Se potrivește'),
+          T('대체로 맞지만 어긋나는 곳이 있다', 'Mostly, but parts of it do not', 'În mare parte, dar unele părți nu'),
+          T('근본적으로 어긋난다', 'It is fundamentally at odds', 'Este fundamental în contradicție'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T('어긋나는 곳과, 그 분야가 이미 알고 있는 것 중 저희가 모르는 것을 적어 주십시오.', 'Please tell us where it diverges, and what the field already knows that we do not.', 'Vă rugăm să ne spuneți unde diverge și ce știe deja domeniul, dar noi nu.'),
+      },
       ...DEMO_JUDGE,
       {
         id: 'aa1_grammar',
@@ -624,6 +677,24 @@ export const BRANCHES: Branch[] = [
     id: 'literacy',
     title: T('성인문해교육', 'Adult literacy education', 'Educația alfabetizării adulților'),
     items: [
+      {
+        id: 'li0_whole',
+        kind: 'single' as const,
+        required: true,
+        q: T(
+          '성인문해교육의 자리에서 보실 때, 이런 도구가 문해교육 현장에 놓일 자리가 있습니까?',
+          'From an adult literacy education position, is there a place for a tool like this in the field?',
+          'Din poziția educației pentru alfabetizarea adulților, există un loc pentru un astfel de instrument în domeniu?',
+        ),
+        options: [
+          T('있다 — 수업의 보조 자료로', 'Yes — as material alongside teaching', 'Da — ca material alături de predare'),
+          T('있다 — 수업 밖 생활 지원으로', 'Yes — as support in daily life outside class', 'Da — ca sprijin în viața de zi cu zi, în afara clasei'),
+          T('있다 — 다만 형태를 바꿔야 한다', 'Yes — but the form would have to change', 'Da — dar forma ar trebui schimbată'),
+          T('없다', 'No', 'Nu'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T('그 자리에 놓으려면 무엇을 바꿔야 합니까?', 'What would have to change for it to sit there?', 'Ce ar trebui schimbat pentru a se potrivi acolo?'),
+      },
       ...DEMO_JUDGE,
       {
         id: 'li1_now',
@@ -705,6 +776,24 @@ export const BRANCHES: Branch[] = [
     id: 'hci',
     title: T('HCI·디자인', 'HCI and design', 'HCI și design'),
     items: [
+      {
+        id: 'hc0_whole',
+        kind: 'single' as const,
+        required: true,
+        q: T(
+          'HCI·디자인의 자리에서 이 프로젝트를 전체로 보실 때, 가장 큰 문제는 무엇입니까?',
+          'Looking at this project as a whole from an HCI and design position, what is the biggest problem with it?',
+          'Privind acest proiect în ansamblu din poziția HCI și design, care este cea mai mare problemă?',
+        ),
+        options: [
+          T('문제 설정 자체', 'The framing of the problem', 'Formularea problemei'),
+          T('해결 방식의 선택', 'The choice of solution', 'Alegerea soluției'),
+          T('만들어진 결과물의 완성도', 'The state of what has been built', 'Calitatea a ceea ce a fost construit'),
+          T('사용자를 대상으로 한 검증이 없다는 것', 'That there is no validation with users', 'Că nu există validare cu utilizatori'),
+          T('큰 문제가 없다', 'No major problem', 'Nicio problemă majoră'),
+        ],
+        follow: T('그것을 어떻게 고쳐야 합니까?', 'How should we fix it?', 'Cum ar trebui să o remediem?'),
+      },
       ...DEMO_JUDGE,
       {
         id: 'hc1_smalln',
@@ -797,6 +886,24 @@ export const BRANCHES: Branch[] = [
     title: T('법·개인정보', 'Law and data protection', 'Drept și protecția datelor'),
     items: [
       {
+        id: 'la0_whole',
+        kind: 'single' as const,
+        required: true,
+        q: T(
+          '법·개인정보의 자리에서 이 프로젝트를 전체로 보실 때, 지금 상태로 사람에게 쓰이기 시작해도 된다고 보십니까?',
+          'Looking at the project as a whole from a legal and data protection position, is it fit to start being used by people as it stands?',
+          'Privind proiectul în ansamblu din poziția juridică și a protecției datelor, este potrivit să înceapă să fie folosit de oameni așa cum este?',
+        ),
+        options: [
+          T('된다', 'Yes', 'Da'),
+          T('몇 가지를 갖추면 된다', 'Yes, once a few things are in place', 'Da, odată ce câteva lucruri sunt rezolvate'),
+          T('아직 안 된다', 'Not yet', 'Încă nu'),
+          T('이 형태로는 안 된다', 'Not in this form', 'Nu în această formă'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T('무엇을 먼저 갖춰야 합니까?', 'What has to come first?', 'Ce trebuie făcut mai întâi?'),
+      },
+      {
         id: 'la1_standing',
         kind: 'single',
         q: T(
@@ -864,6 +971,25 @@ export const BRANCHES: Branch[] = [
     id: 'standards',
     title: T('표준·규제', 'Standards and regulation', 'Standardizare și reglementare'),
     items: [
+      {
+        id: 'st0_whole',
+        kind: 'single' as const,
+        required: true,
+        q: T(
+          '표준·규제의 자리에서 보실 때, 저희가 가장 먼저 밟아야 할 절차는 무엇입니까?',
+          'From a standards and regulatory position, which procedure should we go through first?',
+          'Din poziția standardelor și reglementării, prin ce procedură ar trebui să trecem întâi?',
+        ),
+        options: [
+          T('사람을 대상으로 한 이해도 시험 (ISO 9186 등)', 'A comprehension test with people (ISO 9186 and similar)', 'Un test de înțelegere cu persoane (ISO 9186 și similare)'),
+          T('위해성 평가', 'A risk assessment', 'O evaluare a riscului'),
+          T('의료기기 해당 여부 확인', 'Determining whether it is a medical device', 'Stabilirea dacă este dispozitiv medical'),
+          T('접근성 적합성 평가', 'An accessibility conformance assessment', 'O evaluare a conformității de accesibilitate'),
+          T('절차를 밟지 않고 시작해도 된다', 'It may start without any of these', 'Poate începe fără niciuna dintre acestea'),
+          T('그 밖', 'Something else', 'Altceva'),
+        ],
+        follow: T('그 절차를 어디서 어떻게 밟습니까?', 'Where and how do we go through it?', 'Unde și cum trecem prin ea?'),
+      },
       {
         id: 'st1_coexist',
         kind: 'single',
@@ -936,6 +1062,25 @@ export const BRANCHES: Branch[] = [
       'Practică industrială — dezvoltare și operare',
     ),
     items: [
+      {
+        id: 'in0_whole',
+        kind: 'single' as const,
+        required: true,
+        q: T(
+          '제품을 만들고 운영해 오신 자리에서 보실 때, 이것이 실제로 사람에게 닿으려면 무엇이 가장 부족합니까?',
+          'From the position of someone who has built and run products, what is most lacking for this to actually reach people?',
+          'Din poziția cuiva care a construit și operat produse, ce lipsește cel mai mult pentru ca acesta să ajungă efectiv la oameni?',
+        ),
+        options: [
+          T('문제 정의', 'The definition of the problem', 'Definirea problemei'),
+          T('만든 것의 완성도', 'The state of what is built', 'Calitatea a ceea ce este construit'),
+          T('사용자에게 닿는 경로', 'A route to the people who would use it', 'O cale către oamenii care l-ar folosi'),
+          T('운영을 이어갈 체계', 'A structure to keep it running', 'O structură pentru a-l menține în funcțiune'),
+          T('돈', 'Money', 'Bani'),
+          T('그 밖', 'Something else', 'Altceva'),
+        ],
+        follow: T('저희가 지금 무엇을 해야 합니까?', 'What should we do now?', 'Ce ar trebui să facem acum?'),
+      },
       {
         id: 'in1_breaks',
         kind: 'single',
@@ -1041,9 +1186,9 @@ export const UI = {
       'Este lucrarea comună Coreea–Moldova la a 16-a ediție e-ICON World Contest. Suntem o echipă de liceu, iar acest chestionar nu are scop comercial.',
   ),
   timeNote: T(
-    '6~7분 걸립니다. 저희가 만든 화면을 보시고, 이어서 선생님 분야에 해당하는 문항에 답하시게 됩니다. 답하고 싶은 것만 답하셔도 됩니다.',
-    'It takes 6–7 minutes — you look at what we built, then answer a few questions for your own field. Answer only what you wish.',
-    'Durează 6–7 minute — priviți ce am construit, apoi răspundeți la câteva întrebări pentru domeniul dumneavoastră. Răspundeți doar la ce doriți.',
+    '8~10분 걸립니다. 저희가 만든 화면을 보시고, 이어서 선생님 분야에 해당하는 문항에 답하시게 됩니다. 답하고 싶은 것만 답하셔도 됩니다.',
+    'It takes 8–10 minutes — you look at what we built, then answer a few questions for your own field. Answer only what you wish.',
+    'Durează 8–10 minute — priviți ce am construit, apoi răspundeți la câteva întrebări pentru domeniul dumneavoastră. Răspundeți doar la ce doriți.',
   ),
   start: T('시작', 'Start', 'Începeți'),
   next: T('다음', 'Next', 'Următorul'),
