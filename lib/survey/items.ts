@@ -402,6 +402,38 @@ export const BRANCHES: Branch[] = [
         follow: T('왜 그렇습니까?', 'Why?', 'De ce?'),
       },
       {
+        // 약사에게만 물을 수 있는 것이다. 우리는 그림을 만들 줄은 알지만 무엇이
+        // 의학적으로 치명적인지는 모른다. 선택지로 우선순위를 받고, 우리가 놓친
+        // 것은 서술로 받는다. 안내에 우리가 이미 다루는 것을 적어 두는 것이
+        // 요점이다 — 없으면 이미 있는 것을 다시 적어 준다.
+        id: 'ph4_medical',
+        kind: 'single' as const,
+        q: T(
+          '이 엔진이 복약 지시를 그림으로 바꿀 때, 의학적으로 가장 틀리면 안 되는 것은 무엇입니까?',
+          'When this engine turns a dosing instruction into pictures, what is the most dangerous thing to get wrong medically?',
+          'Când acest motor transformă o instrucțiune de dozare în imagini, ce este cel mai periculos să greșească din punct de vedere medical?',
+        ),
+        note: T(
+          '저희 세트가 이미 다루는 것은 이렇습니다 — 복용량(1~5), 시점(아침·정오·저녁·취침), 식전·식후·공복, 보관(냉장·건조·차광), 알레르기 9종, 특수 상태(임신·수유·소아·영아·고령), 출혈 경고, 운전, 항생제 완주, 분할 금지, 금주. 이 목록에 없는 것을 짚어 주시면 특히 값어치 있습니다.',
+          'Our set already covers: quantity (1–5), time of day (morning, midday, evening, night), before or after food and empty stomach, storage (fridge, dry, dark), nine allergens, special states (pregnancy, breastfeeding, child, infant, older adult), bleeding warning, driving, finishing an antibiotic course, do-not-split, and no alcohol. Pointing at something absent from that list is especially valuable.',
+          'Setul nostru acoperă deja: cantitatea (1–5), momentul zilei (dimineață, amiază, seară, noapte), înainte sau după masă și pe stomacul gol, păstrarea (frigider, uscat, ferit de lumină), nouă alergeni, stări speciale (sarcină, alăptare, copil, sugar, vârstnic), avertisment de sângerare, condusul, finalizarea tratamentului cu antibiotic, interdicția de divizare și interzicerea alcoolului. Este deosebit de valoros să indicați ceva ce lipsește din această listă.',
+        ),
+        options: [
+          T('복용량과 횟수', 'Dose and frequency', 'Doza și frecvența'),
+          T('투여 경로 — 경구·좌약·외용·흡입 등', 'Route of administration — oral, rectal, topical, inhaled', 'Calea de administrare — orală, rectală, topică, inhalatorie'),
+          T('병용금기와 상호작용', 'Contraindications and interactions', 'Contraindicații și interacțiuni'),
+          T('복용 시점 조건 — 식전·식후·공복·취침 전', 'Timing conditions — before or after food, empty stomach, at bedtime', 'Condiții de moment — înainte sau după masă, pe stomacul gol, la culcare'),
+          T('특수 인구 — 임신·수유·소아·고령·신기능 저하', 'Special populations — pregnancy, breastfeeding, children, older adults, renal impairment', 'Populații speciale — sarcină, alăptare, copii, vârstnici, insuficiență renală'),
+          T('임의 중단 금지 — 항생제 완주 등', 'Do not stop early — finishing an antibiotic course', 'Nu întrerupeți devreme — finalizarea tratamentului cu antibiotic'),
+          T('제형 조작 금지 — 분할·분쇄 금지', 'Do not alter the dose form — no splitting or crushing', 'Nu modificați forma — fără divizare sau sfărâmare'),
+        ],
+        follow: T(
+          '위 목록에 없는 의학적 고려사항이나, 그림으로는 전달할 수 없다고 보시는 것이 있으면 적어 주십시오.',
+          'Please tell us any medical consideration missing from that list, or anything you believe a picture simply cannot convey.',
+          'Vă rugăm să ne spuneți orice considerație medicală care lipsește din listă sau orice credeți că o imagine pur și simplu nu poate transmite.',
+        ),
+      },
+      {
         id: 'ph3_current',
         kind: 'longtext',
         q: T(
