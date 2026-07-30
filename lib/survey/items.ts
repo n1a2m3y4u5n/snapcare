@@ -43,19 +43,19 @@ export const CONSENT = {
       '수집 항목은 응답 내용, 성함·소속·국가, 그리고 기술 정보입니다. 기술 정보란 메일에 담긴 수신자 식별 문자열, ' +
       '설문을 시작하고 제출한 시각, 표준시간대와 언어 설정, 화면이 모바일인지 데스크톱인지입니다. 브라우저 식별 정보는 수집하지 않습니다. ' +
       '대회 종료 후 12개월간 보관하고 그 뒤 삭제하며, 삭제나 열람을 원하시면 아래 연락처로 알려 주시면 됩니다. ' +
-      '응답은 프로젝트 문서에 인용될 수 있으며, 실명·소속을 밝힐지 익명으로 할지는 마지막 문항에서 직접 고르실 수 있습니다. 인용을 원하지 않으신다는 선택도 있습니다.',
+      '응답은 프로젝트 문서에 인용될 수 있으며, 실명·소속을 밝힐지 익명으로 할지는 아래에서 직접 고르실 수 있으며, 인용을 원하지 않으신다는 선택도 있습니다.',
     'This survey collects expert feedback on SnapCare, an entry in the 16th e-ICON World Contest. ' +
       'We collect your answers, your name, affiliation and country, and some technical information: the recipient identifier carried ' +
       'in the invitation link, the times you started and submitted, your time zone and language setting, and whether you answered on a ' +
       'mobile or desktop screen. We do not collect browser fingerprinting data. We keep responses for 12 months after the contest and ' +
       'then delete them; write to the address below to access or delete yours. Your response may be quoted in the project documents, and ' +
-      'in the final question you choose whether that is with your name, with your affiliation only, or anonymously — one option is not to be quoted at all.',
+      'just below you choose whether that is with your name, with your affiliation only, or anonymously — one option is not to be quoted at all.',
     'Acest chestionar colectează opinii de specialitate despre SnapCare, o lucrare înscrisă la a 16-a ediție e-ICON World Contest. ' +
       'Colectăm răspunsurile, numele, afilierea și țara dumneavoastră, precum și unele informații tehnice: identificatorul destinatarului ' +
       'din linkul de invitație, momentele în care ați început și ați trimis, fusul orar și setarea de limbă, și dacă ați răspuns pe un ecran ' +
       'mobil sau desktop. Nu colectăm date de amprentare a browserului. Păstrăm răspunsurile 12 luni după concurs, apoi le ștergem; ' +
-      'scrieți la adresa de mai jos pentru acces sau ștergere. Răspunsul poate fi citat în documentele proiectului, iar în ultima întrebare ' +
-      'alegeți dacă acest lucru se face cu numele, doar cu afilierea sau anonim — una dintre opțiuni este să nu fiți citat deloc.',
+      'scrieți la adresa de mai jos pentru acces sau ștergere. Răspunsul poate fi citat în documentele proiectului, iar ' +
+      'chiar mai jos alegeți dacă acest lucru se face cu numele, doar cu afilierea sau anonim — una dintre opțiuni este să nu fiți citat deloc.',
   ),
   agree: T(
     '위 내용을 읽었고 참여에 동의합니다.',
@@ -135,9 +135,9 @@ export const BACKGROUND: Item[] = [
     required: true,
     q: T('성함', 'Your name', 'Numele dumneavoastră'),
     note: T(
-      '응답이 명단의 어느 분에게서 왔는지 확인하고 중복 집계를 막기 위해 필요합니다. 이름을 적으시는 것과 문서에 실명이 실리는 것은 다릅니다 — 마지막 문항에서 익명 인용이나 인용 거부를 고르실 수 있습니다.',
-      'We need this to confirm the response came from someone on our list and to avoid counting anyone twice. Giving your name here is not the same as appearing by name in the documents — in the final question you may choose anonymous citation, or none at all.',
-      'Ne este necesar pentru a confirma că răspunsul provine de la o persoană din lista noastră și pentru a evita numărarea dublă. A vă da numele aici nu înseamnă că veți apărea cu numele în documente — în ultima întrebare puteți alege citarea anonimă sau deloc.',
+      '응답이 명단의 어느 분에게서 왔는지 확인하고 중복 집계를 막기 위해 필요합니다. 이름을 적으시는 것과 문서에 실명이 실리는 것은 다릅니다 — 첫 화면에서 익명 인용이나 인용 거부를 고르셨을 것입니다.',
+      'We need this to confirm the response came from someone on our list and to avoid counting anyone twice. Giving your name here is not the same as appearing by name in the documents — you chose anonymous citation or none at all on the first screen.',
+      'Ne este necesar pentru a confirma că răspunsul provine de la o persoană din lista noastră și pentru a evita numărarea dublă. A vă da numele aici nu înseamnă că veți apărea cu numele în documente — pe primul ecran ați ales citarea anonimă sau deloc.',
     ),
   },
   {
@@ -1011,23 +1011,30 @@ export const CLOSE_CITE = {
   ],
 };
 
+/**
+ * 마지막에 남기는 한 칸.
+ *
+ * 전에는 마무리가 따로 한 화면이었고 거기서 다른 분 추천과 이메일을 받았다. 둘 다
+ * 뺐다 — 추천을 받으면 그 사람의 주소를 우리가 알게 되고 그것은 이 설문에 답한
+ * 사람이 동의한 범위가 아니다. 이메일도 이미 우리가 보낸 주소를 알고 있으므로 다시
+ * 받을 이유가 없다.
+ *
+ * 남은 것은 이 한 칸이다. 우리가 물을 것을 다 물었다고 볼 수 없으므로, 우리가 묻지
+ * 않은 것을 적을 자리는 있어야 한다. 화면을 새로 만들지 않고 분야별 문항 끝에 붙인다.
+ */
 export const CLOSE: Item[] = [
   {
-    id: 'd2_referral',
+    id: 'd1_more',
     kind: 'longtext',
     q: T(
-      '이 주제로 물어볼 만한 다른 분을 알려 주십시오.',
-      'Is there someone else we should ask about this?',
-      'Există altcineva pe care ar trebui să întrebăm despre acest lucru?',
+      '저희가 묻지 않았지만 덧붙이고 싶은 것이 있으면 적어 주십시오.',
+      'If there is anything we did not ask about but you would like to add, please write it here.',
+      'Dacă există ceva despre care nu am întrebat, dar doriți să adăugați, vă rugăm să scrieți aici.',
     ),
-  },
-  {
-    id: 'd3_email',
-    kind: 'text',
-    q: T(
-      '후속 질문으로 다시 연락드려도 되면 이메일을 남겨 주십시오.',
-      'If we may follow up, please leave an email.',
-      'Dacă putem reveni cu întrebări, vă rugăm să lăsați un e-mail.',
+    note: T(
+      '한 줄이어도 됩니다. 비워 두고 제출하셔도 됩니다.',
+      'One line is fine. You may also leave it empty and submit.',
+      'Un singur rând este suficient. Puteți lăsa necompletat și trimite.',
     ),
   },
 ];

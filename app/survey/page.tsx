@@ -42,7 +42,6 @@ type Step =
   | { k: 'background' }
   | { k: 'core' }
   | { k: 'branch' }
-  | { k: 'close' }
   | { k: 'done' };
 
 export default function SurveyPage() {
@@ -269,9 +268,38 @@ export default function SurveyPage() {
               <span>{t(CONSENT.agree)}</span>
             </label>
           </div>
+          {/*
+            인용 범위를 동의와 같은 화면에 둔다.
+            전에는 마지막 화면에서 물었다. 그러면 응답자가 다 답한 뒤에야 인용 여부를
+            정하게 되고, 우리는 그 사람이 무엇에 동의한 것인지 모르는 채로 열아홉
+            문항을 받는다. 동의와 인용은 한 덩어리이므로 같은 자리에서 함께 받는다.
+          */}
+          <fieldset
+            className="rounded-2xl border p-4"
+            style={{ borderColor: 'var(--color-sc-line)', background: 'var(--color-sc-surface)' }}
+          >
+            <legend id="cite-legend" className="px-1 text-sm font-bold">
+              {t(CLOSE_CITE.q)}
+              <span aria-hidden> *</span>
+            </legend>
+            <div className="mt-2 space-y-2">
+              {CLOSE_CITE.options.map((o) => (
+                <label key={o.en} className="flex items-start gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="cite"
+                    checked={cite === o.en}
+                    onChange={() => setCite(o.en)}
+                    className="mt-1"
+                  />
+                  <span>{t(o)}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <button
             type="button"
-            disabled={!consent}
+            disabled={!consent || !cite}
             onClick={() => advance({ k: 'background' })}
             className="w-full rounded-2xl px-4 py-3 font-bold disabled:opacity-40"
             style={{ background: 'var(--color-sc-primary)', color: '#fff' }}
@@ -349,54 +377,14 @@ export default function SurveyPage() {
             </fieldset>
           ))}
 
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setStep({ k: 'core' })}
-              className="rounded-2xl border px-4 py-3"
-              style={{ borderColor: 'var(--color-sc-line)' }}
-            >
-              {t(UI.back)}
-            </button>
-            <button
-              type="button"
-              onClick={() => advance({ k: 'close' }, branchesToShow.flatMap((b) => b.items))}
-              className="flex-1 rounded-2xl px-4 py-3 font-bold"
-              style={{ background: 'var(--color-sc-primary)', color: '#fff' }}
-            >
-              {t(UI.next)}
-            </button>
-          </div>
-        </section>
-      )}
-
-      {step.k === 'close' && (
-        <section className="space-y-5">
-          <fieldset>
-            <legend id="cite-legend" className="mb-2 text-sm font-bold">
-              {t(CLOSE_CITE.q)}
-              <span aria-hidden> *</span>
-            </legend>
-            <div className="space-y-2">
-              {CLOSE_CITE.options.map((o) => (
-                <label key={o.en} className="flex items-start gap-2 text-sm">
-                  <input
-                    type="radio"
-                    name="cite"
-                    checked={cite === o.en}
-                    onChange={() => setCite(o.en)}
-                    className="mt-1"
-                  />
-                  <span>{t(o)}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
+          {/*
+            우리가 묻지 않은 것을 적을 한 칸. 이것 때문에 화면을 하나 더 만들 이유는
+            없으므로 분야별 문항 끝에 붙인다.
+          */}
           {CLOSE.map((it) => (
             <Field key={it.id} item={it} value={ans[it.id] ?? ''} onChange={(v) => set(it.id, v)}
-                          followValue={ans[`${it.id}__why`] ?? ''} onFollowChange={(v) => set(`${it.id}__why`, v)}
-                          t={t} />
+                   followValue={ans[`${it.id}__why`] ?? ''} onFollowChange={(v) => set(`${it.id}__why`, v)}
+                   t={t} />
           ))}
 
           {failed && (
@@ -411,7 +399,7 @@ export default function SurveyPage() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setStep({ k: 'branch' })}
+              onClick={() => setStep({ k: 'core' })}
               className="rounded-2xl border px-4 py-3"
               style={{ borderColor: 'var(--color-sc-line)' }}
             >
@@ -420,11 +408,11 @@ export default function SurveyPage() {
             <button
               type="button"
               onClick={() => {
-                // 동의문에서 "마지막 문항에서 직접 고르실 수 있습니다" 라고 약속했다.
-                // 비운 채 제출되면 인용해도 되는지 우리가 알 수 없다.
-                if (!cite) {
+                const miss = firstMissing(branchesToShow.flatMap((b) => b.items));
+                if (miss) {
                   announce(t(UI.required));
-                  document.getElementById('cite-legend')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                  document.getElementById(miss)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                  document.getElementById(miss)?.focus();
                   return;
                 }
                 submit();
@@ -588,7 +576,6 @@ function stepLabel(k: Step['k'], lang: Lang): string {
     background: { ko: '응답자 배경', en: 'About you', ro: 'Despre dumneavoastră' },
     core: { ko: '저희가 만든 것', en: 'What we built', ro: 'Ce am construit' },
     branch: { ko: '분야별 문항', en: 'Field questions', ro: 'Întrebări pe domeniu' },
-    close: { ko: '마무리', en: 'Finish', ro: 'Finalizare' },
   };
   return m[k]?.[lang] ?? '';
 }
