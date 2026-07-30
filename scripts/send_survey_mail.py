@@ -160,7 +160,7 @@ GREET = {
 BODY = {
     'ko': """{greeting}
 
-저희는 한국과 몰도바 학생으로 이루어진 팀이고, 제16회 e-ICON 세계대회에 SnapCare 를 출품했습니다. 글을 읽지 못하는 사람이 처방전을 사진으로 찍으면 복약 지시가 그림과 음성으로 전달되게 하는 웹앱입니다. 픽토그램을 그때그때 합성하는 엔진과 음성 문장을 다시 쓰는 엔진을 직접 만들었습니다.
+저는 충남삼성고등학교 남윤수입니다. 교육부가 주최하고 한국교육정보진흥협회가 주관하는 제16회 e-ICON 세계대회에 SnapCare 를 출품했습니다. 글을 읽지 못하는 사람이 처방전을 사진으로 찍으면 복약 지시가 그림과 음성으로 전달되게 하는 웹앱입니다. 픽토그램을 그때그때 합성하는 엔진과 음성 문장을 다시 쓰는 엔진을 직접 만들었습니다.
 
 만들어 놓고 보니 저희가 판단할 수 없는 것이 남았습니다. 이 방향이 맞는지, 어디서 무너지는지, 저희가 무엇을 모르고 있는지입니다. 그래서 {field} 쪽에서 일해 오신 분들께 여쭙고 있습니다.
 
@@ -178,7 +178,7 @@ BODY = {
 """,
     'en': """{greeting}
 
-We are a student team from Korea and Moldova, and SnapCare is our entry to the 16th e-ICON World Contest. It is a web app that takes a photograph of a prescription and delivers the dosing instructions as pictograms and speech, for someone who cannot read the text. We built both the engine that composes the pictograms and the one that rewrites the spoken sentences ourselves.
+I am a high school student at ChungNam Samsung Academy in the Republic of Korea, and SnapCare is my team\u2019s entry to the 16th e-ICON World Contest, hosted by the Korean Ministry of Education. It is a web app that takes a photograph of a prescription and delivers the dosing instructions as pictograms and speech, for someone who cannot read the text. We built both the engine that composes the pictograms and the one that rewrites the spoken sentences ourselves.
 
 Having built it, we are left with the questions we cannot answer ourselves: whether this direction is right, where it breaks, and what we do not know that we should. That is why we are writing to people who have worked in {field}.
 
@@ -196,7 +196,7 @@ Thank you for reading.
 """,
     'ro': """{greeting}
 
-Suntem o echipă de elevi din Coreea și Republica Moldova, iar SnapCare este lucrarea noastră înscrisă la a 16-a ediție a e-ICON World Contest. Este o aplicație web care fotografiază o rețetă și transmite instrucțiunile de administrare prin pictograme și voce, pentru cineva care nu poate citi textul. Am construit noi înșine atât motorul care compune pictogramele, cât și pe cel care rescrie propozițiile rostite.
+Sunt elev la ChungNam Samsung Academy din Republica Coreea, iar SnapCare este lucrarea echipei mele înscrisă la a 16-a ediție a e-ICON World Contest, organizat de Ministerul Educației din Coreea. Este o aplicație web care fotografiază o rețetă și transmite instrucțiunile de administrare prin pictograme și voce, pentru cineva care nu poate citi textul. Am construit noi înșine atât motorul care compune pictogramele, cât și pe cel care rescrie propozițiile rostite.
 
 După ce am construit-o, ne-au rămas întrebările la care nu putem răspunde singuri: dacă această direcție este corectă, unde cedează și ce nu știm, dar ar trebui să știm. De aceea scriem persoanelor care au experiență în {field}.
 
@@ -222,9 +222,9 @@ FIELD = {
 }
 
 SIGNATURE = {
-    'ko': 'SnapCare 팀 (한국·몰도바 합동) — 제16회 e-ICON 세계대회\n{sender}',
-    'en': 'The SnapCare team (Korea and Moldova) — 16th e-ICON World Contest\n{sender}',
-    'ro': 'Echipa SnapCare (Coreea și Republica Moldova) — a 16-a ediție e-ICON World Contest\n{sender}',
+    'ko': '충남삼성고등학교 남윤수\n제16회 e-ICON 세계대회 (교육부 주최 · 한국교육정보진흥협회 주관) 출품작 SnapCare\n{email}',
+    'en': '{name_en}\nChungNam Samsung Academy, Republic of Korea\nSnapCare — 16th e-ICON World Contest, hosted by the Korean Ministry of Education\n{email}',
+    'ro': '{name_en}\nChungNam Samsung Academy, Republica Coreea\nSnapCare — a 16-a ediție e-ICON World Contest, organizat de Ministerul Educației din Coreea\n{email}',
 }
 
 
@@ -256,11 +256,16 @@ def wrap_paragraph(text: str, width: int = 74) -> str:
 
 
 def wrap_body(text: str, width: int = 74) -> str:
-    """본문 전체. 링크가 있는 줄은 접지 않는다 — 접으면 링크가 깨진다."""
-    blocks = text.split('\n\n')
+    """본문 전체를 접는다.
+
+    두 가지는 건드리지 않는다. 링크가 든 덩어리는 접으면 링크가 깨진다. 그리고 **이미
+    줄이 나뉘어 있는 덩어리** 는 그렇게 쓴 이유가 있는 것이므로 그대로 둔다 — 서명이
+    그렇다. 한때 '<' 가 들어 있는지로 서명을 알아봤는데, 서명에서 꺾쇠를 빼자마자
+    세 줄이 한 줄로 뭉쳐졌다. 모양이 아니라 성질로 판단해야 한다.
+    """
     done = []
-    for b in blocks:
-        if 'http' in b or '<' in b:
+    for b in text.split('\n\n'):
+        if 'http' in b or '\n' in b.strip():
             done.append(b)
         else:
             done.append(wrap_paragraph(' '.join(b.split()), width))
@@ -273,11 +278,13 @@ def compose(row: dict, lang: str, sender: str, sender_name: str) -> tuple[str, s
     greeting = (person if looks_like_person(name) else org).format(name=name or '—')
     token = (row.get(COL_TOKEN) or '').strip()
     link = f'{BASE}?lang={lang}&r={token}'
+    # 로마자 표기는 본인이 정해야 한다. 776통에 잘못된 표기가 나가면 되돌릴 수 없다.
+    name_en = os.environ.get('SNAPCARE_SENDER_EN', '').strip() or 'Namyunsu Nam'
     body = BODY[lang].format(
         greeting=greeting,
         field=FIELD[lang],
         link=link,
-        signature=SIGNATURE[lang].format(sender=f'{sender_name} <{sender}>' if sender_name else sender),
+        signature=SIGNATURE[lang].format(email=sender, name_en=name_en),
     )
     return SUBJECT[lang], wrap_body(body)
 
