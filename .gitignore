@@ -93,3 +93,6 @@ public/glyphs-gen/
 # OCR 자산 — scripts/copy-ocr.mjs 가 node_modules 와 CDN 에서 채운다 (14MB)
 public/ocr/
 .venv-doc/
+
+# 발송 기록 — 1103명의 주소가 한 줄씩 들어간다. 저장소에 올리지 않는다.
+scratchpad/contacts/sent.jsonl
