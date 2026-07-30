@@ -126,9 +126,57 @@ def language_of(row: dict, allow_ro: bool) -> str:
     return 'en'
 
 
-ORG_WORDS = ('대학', '재단', '학회', '협회', '연구소', '연구원', '센터', '사무소', '보건부', '부처',
-             '청', '공식 창구', 'Membership', 'Foundation', 'Association', 'Institute', 'Office',
-             'Society', 'Federation', 'Ministry', 'University', 'Fundația', 'Team', '팀')
+ORG_WORDS = (
+    # 한국어
+    '대학', '학교', '대학교', '재단', '학회', '협회', '연구소', '연구원', '연구센터', '센터',
+    '사무소', '사무국', '보건부', '부처', '청', '공단', '진흥원', '위원회', '본부', '지부',
+    '사업단', '단체', '병원', '의원', '약국', '팀', '공식 창구', '(주)', '㈜', '주식회사',
+    # 영어·기타
+    'Membership', 'Foundation', 'Association', 'Institute', 'Institution', 'Office',
+    'Society', 'Federation', 'Ministry', 'University', 'College', 'Academy', 'School',
+    'Hospital', 'Clinic', 'Center', 'Centre', 'Council', 'Committee', 'Network',
+    'Programme', 'Program', 'Bureau', 'Agency', 'Department', 'Division', 'Laboratory',
+    'Group', 'Partners', 'Inc', 'Inc.', 'Ltd', 'Ltd.', 'LLC', 'GmbH', 'Corp', 'Co.',
+    'Team', 'Fundația', 'Universitatea', 'Ministerul', 'Asociația',
+)
+
+
+HANGUL = re.compile(r'[\uac00-\ud7a3\u3131-\u318e]+')
+
+
+def latin_only(name: str) -> str:
+    """이름에서 한글을 걷어낸다.
+
+    명단의 이름 칸은 우리가 알아보기 위해 적은 것이라 한글 설명이 섞여 있다 —
+    "UNESCO 나이로비 동아프리카 지역사무소", "National Literacy Trust 미디어" 처럼.
+    그대로 인사말에 넣으면 케냐 사무소가 "Dear UNESCO 나이로비 동아프리카 지역사무소,"
+    를 받는다. 63명이 그런 상태였다.
+
+    한글을 지운 뒤 빈 괄호와 남은 구두점을 정리한다. 남는 것이 없으면 빈 문자열을
+    돌려주고, 부르는 쪽에서 이름 없는 인사말로 넘어간다 — 잘못된 이름으로 부르는 것보다
+    이름을 부르지 않는 편이 낫다.
+    """
+    t = HANGUL.sub(' ', name or '')
+    t = re.sub(r'\(\s*\)', ' ', t)          # 속이 빈 괄호
+    t = re.sub(r'[\s·,/]+', ' ', t).strip()
+    t = t.strip(' -·,/')
+    return t if len(t) >= 2 else ''
+
+
+def korean_greeting(name: str) -> str:
+    """한국어 인사말. 기관이면 담당자를 부른다.
+
+    이름 칸이 이미 직함이나 "담당" 으로 끝나는 경우가 있어서 그대로 붙이면 "공공디자인
+    실태조사·연구 담당 담당자분께" 가 된다. 끝을 보고 정리한다.
+    """
+    n = (name or '').strip()
+    if looks_like_person(n):
+        return f'{n} 님께'
+    if n.endswith('담당'):
+        return f'{n}자분께'
+    if n.endswith(('과장', '팀장', '부장', '실장', '센터장', '원장', '회장', '국장', '위원장')):
+        return f'{n}님께'
+    return f'{n} 담당자분께'
 
 
 def looks_like_person(name: str) -> bool:
@@ -142,6 +190,10 @@ def looks_like_person(name: str) -> bool:
     if not n:
         return False
     return not any(w in n for w in ORG_WORDS)
+
+
+# 판정이 갈리는 것은 한국어 인사말뿐이다. 영어는 두 형태가 같으므로 어느 쪽으로 판정해도
+# 같은 문장이 나간다.
 
 
 # ────────────────────────── 메일 본문 ──────────────────────────
@@ -162,9 +214,20 @@ SUBJECT = {
     'ro': 'Un elev de liceu cere un sfat — o aplicație de ghidare a medicației pentru cei care nu pot citi',
 }
 
+# 인사말. (사람일 때, 기관일 때) 짝이다.
+#
+# 영어는 둘을 같게 둔다. "Dear ARASAAC," 도 "Dear Dr Phillips," 도 자연스럽고, 그래서
+# **사람인지 기관인지 가릴 필요가 없다.** 가리려 하면 반드시 틀린다 — 낱말 목록을 늘려도
+# ARASAAC, Blissymbolics, Tobii Dynavox 는 사람으로 잡혔다. 이 프로젝트에서 낱말 매칭으로
+# 두 번 사고가 났고, 여기서도 같은 방식이었다. 틀려도 표가 나지 않는 형태를 고르는 것이
+# 분류를 잘하려 애쓰는 것보다 낫다.
+#
+# 한국어는 그럴 수 없다. "님께" 와 "담당자분께" 가 다르고, 사람에게 "담당자분께" 를
+# 붙이는 것이 더 실례이므로 애매하면 사람 쪽으로 둔다 — 기관이 "님께" 를 받는 것은
+# 어색한 정도에서 끝난다.
 GREET = {
     'ko': ('{name} 님께', '{name} 담당자분께'),
-    'en': ('Dear {name},', 'Dear colleagues at {name},'),
+    'en': ('Dear {name},', 'Dear {name},'),
     'ro': ('Stimate/Stimată {name},', 'Stimați colegi de la {name},'),
 }
 
@@ -173,9 +236,9 @@ BODY = {
 
 안녕하세요. 충남삼성고등학교에서 IT 디플로마 과정을 이수하고 있는 3학년 남윤수입니다. 교육부가 주최하고 한국교육정보진흥협회가 주관하는 제16회 e-ICON 세계대회에서 본선에 진출해, SnapCare 라는 프로젝트를 진행하고 있습니다. 글을 읽지 못하는 사람이 처방전을 사진으로 찍으면 복약 지시가 그림과 음성으로 전달되게 하는 웹앱입니다. 픽토그램을 그때그때 합성하는 엔진과 음성 문장을 다시 쓰는 엔진을 직접 만들었습니다.
 
-다만 저희는 학생이어서, 이것이 실제 현장에서 어떻게 받아들여질지 판단하기가 어렵습니다. {field} 쪽에서 오래 일해 오신 선생님의 의견을 들을 수 있다면 저희에게 큰 도움이 될 것 같습니다.
+다만 저희는 학생이어서, 이것이 실제 현장에서 어떻게 받아들여질지 판단하기가 어렵습니다. 공개된 연구와 활동을 보고 연락드렸습니다. 선생님께서 보시기에 무엇이 문제인지 알려 주신다면 저희에게 큰 도움이 될 것 같습니다.
 
-혹시 시간이 되신다면, 아래 설문에 한 번만 답해 주실 수 있을까요. 8~10분 정도 걸리며, 저희가 만든 화면을 먼저 보여드리고 선생님 분야에 해당하는 문항만 여쭙습니다.
+혹시 시간이 되신다면, 아래 설문에 한 번만 답해 주실 수 있을까요.
 
 {link}
 
@@ -189,9 +252,9 @@ BODY = {
 
 I am a third-year student on the IT diploma programme at ChungNam Samsung Academy in the Republic of Korea. My team reached the final round of the 16th e-ICON World Contest, hosted by the Korean Ministry of Education, and we are working on a project called SnapCare. It is a web app that takes a photograph of a prescription and delivers the dosing instructions as pictograms and speech, for someone who cannot read the text. We built both the engine that composes the pictograms and the one that rewrites the spoken sentences ourselves.
 
-We are students, though, and we cannot really judge how this would be received in practice. It would help us a great deal to hear from someone who has worked in {field} for a long time.
+We are students, though, and we cannot really judge how this would be received in practice. We came across your published work and public activity, and it would help us a great deal if you could tell us what you see wrong with it.
 
-If you can spare the time, might we ask you to fill in the short survey below? It takes 8-10 minutes. We show you what we built first, and then ask only the questions that belong to your own field.
+If you can spare the time, might we ask you to fill in the short survey below?
 
 {link}
 
@@ -205,9 +268,9 @@ Thank you for reading.
 
 Sunt elev în anul al treilea la programul de diplomă în IT al ChungNam Samsung Academy din Republica Coreea. Echipa mea a ajuns în runda finală a celei de-a 16-a ediții a e-ICON World Contest, organizat de Ministerul Educației din Coreea, și lucrăm la un proiect numit SnapCare. Este o aplicație web care fotografiază o rețetă și transmite instrucțiunile de administrare prin pictograme și voce, pentru cineva care nu poate citi textul. Am construit noi înșine atât motorul care compune pictogramele, cât și pe cel care rescrie propozițiile rostite.
 
-Suntem însă elevi și nu putem aprecia cu adevărat cum ar fi primit acest lucru în practică. Ne-ar ajuta foarte mult să auzim părerea cuiva care lucrează de mult timp în {field}.
+Suntem însă elevi și nu putem aprecia cu adevărat cum ar fi primit acest lucru în practică. Am aflat despre lucrările și activitatea dumneavoastră publică, și ne-ar ajuta foarte mult dacă ne-ați spune ce vedeți greșit în el.
 
-Dacă aveți timp, v-am putea ruga să completați scurtul chestionar de mai jos? Durează 8-10 minute. Vă arătăm întâi ce am construit, iar apoi vă punem doar întrebările care aparțin domeniului dumneavoastră.
+Dacă aveți timp, v-am putea ruga să completați scurtul chestionar de mai jos?
 
 {link}
 
@@ -217,13 +280,6 @@ Vă mulțumim pentru lectură.
 
 {signature}
 """,
-}
-
-# 어느 분야에 여쭙는지. 한 줄이지만 이것이 있어야 "왜 나한테" 라는 물음에 답이 된다.
-FIELD = {
-    'ko': '복약 안내와 저문해 사용자',
-    'en': 'medication guidance and with low-literacy users',
-    'ro': 'ghidarea medicației și lucrul cu utilizatori cu alfabetizare redusă',
 }
 
 SIGNATURE = {
@@ -279,15 +335,22 @@ def wrap_body(text: str, width: int = 74) -> str:
 
 def compose(row: dict, lang: str, sender: str, sender_name: str) -> tuple[str, str]:
     name = (row.get(COL_NAME) or '').strip()
-    person, org = GREET[lang]
-    greeting = (person if looks_like_person(name) else org).format(name=name or '—')
+    if lang == 'ko':
+        greeting = korean_greeting(name)
+    else:
+        # 한글을 걷어낸 이름으로 부른다. 남는 것이 없으면 이름 없이 부른다.
+        shown = latin_only(name)
+        person, org = GREET[lang]
+        if shown:
+            greeting = (person if looks_like_person(shown) else org).format(name=shown)
+        else:
+            greeting = {'en': 'Dear colleagues,', 'ro': 'Stimați colegi,'}[lang]
     token = (row.get(COL_TOKEN) or '').strip()
     link = f'{BASE}?lang={lang}&r={token}'
     # 로마자 표기는 본인이 정해야 한다. 776통에 잘못된 표기가 나가면 되돌릴 수 없다.
     name_en = os.environ.get('SNAPCARE_SENDER_EN', '').strip() or 'Namyunsu Nam'
     body = BODY[lang].format(
         greeting=greeting,
-        field=FIELD[lang],
         link=link,
         signature=SIGNATURE[lang].format(email=sender, name_en=name_en),
     )
