@@ -192,20 +192,35 @@ export const CORE: Item[] = [];
  *
  * S2·S3 은 선택입력이다. 서술을 강제하면 응답을 잃는다.
  */
-export const SERVICE: Item[] = [
+/**
+ * 데모를 보고 판단하는 문항.
+ *
+ * 한때 모든 응답자에게 공통으로 물었다. 그것이 잘못이었다 — 글을 읽지 못하는 환자가
+ * 혼자 복용할 수 있겠는지는 **판단할 자격이 있는 사람에게만** 물어야 한다. 법학
+ * 교수나 표준 담당자에게 환자의 이해를 판정해 달라고 하면, 그 사람은 답할 근거가
+ * 없고 우리는 근거 없는 숫자를 얻는다.
+ *
+ * 그래서 아래 다섯 직군의 구획에만 붙인다 — 약국·간호·AAC·성인문해·HCI. 법·표준·
+ * 산업 구획에는 붙이지 않는다. 그 직군은 자기 자리에서 판단할 것을 이미 묻고 있다.
+ *
+ * 다섯 구획에 같은 항목을 그대로 넣으므로 id 가 같고, 집계할 때 "환자의 이해를
+ * 판단할 수 있는 직군 N명 중 M명" 이라는 하나의 분모로 묶인다. 직군별로 쪼개
+ * 보려면 b_field 로 나누면 된다.
+ */
+export const DEMO_JUDGE: Item[] = [
   {
     id: 's1_alone',
     kind: 'single',
     required: true,
     q: T(
-      '위 데모만 보고, 글을 읽지 못하는 환자가 혼자서 약을 제대로 복용할 수 있을 것 같습니까?',
-      'Looking only at the demo above, could a patient who cannot read take the medicine correctly on their own?',
-      'Privind doar demonstrația de mai sus, ar putea un pacient care nu poate citi să ia corect medicamentul singur?',
+      '앞서 보신 화면을 기준으로, 글을 읽지 못하는 환자가 혼자서 약을 제대로 복용할 수 있을 것 같습니까?',
+      'Based on the screen you have just seen, could a patient who cannot read take the medicine correctly on their own?',
+      'Pe baza ecranului pe care l-ați văzut, ar putea un pacient care nu poate citi să ia corect medicamentul singur?',
     ),
     note: T(
-      '화면에는 글자도 있지만, 글을 읽지 못하는 분에게 남는 것은 그림과 음성 둘뿐입니다. 그 둘만으로 충분한지가 이 프로젝트의 핵심 질문입니다 — 선행 연구(Gutierrez et al., 2022)는 픽토그램에 구두와 문서 설명을 함께 붙이라고 권고했고, USP 픽토그램 라이선스도 픽토그램을 정보 전달의 유일한 수단으로 쓰지 말라고 정합니다. 스피커 표시를 눌러 음성을 들어 보신 뒤 답해 주시면 좋겠습니다.',
-      'The screen also carries text, but for someone who cannot read, only the pictograms and the speech remain. Whether those two are enough is the central question of this project — prior work (Gutierrez et al., 2022) recommends pairing pictograms with verbal *and* written instructions, and the USP pictogram licence states pictograms should not be the sole means of conveying information. Please press a speaker mark and listen before answering.',
-      'Ecranul conține și text, dar pentru cineva care nu poate citi rămân doar pictogramele și vocea. Dacă acestea două sunt suficiente este întrebarea centrală a proiectului — studiile anterioare (Gutierrez et al., 2022) recomandă asocierea pictogramelor cu instrucțiuni verbale *și* scrise, iar licența pictogramelor USP prevede că pictogramele nu trebuie să fie singurul mijloc de transmitere a informației. Vă rugăm să apăsați un simbol de difuzor și să ascultați înainte de a răspunde.',
+      '화면에는 글자도 있지만, 글을 읽지 못하는 분에게 남는 것은 그림과 음성 둘뿐입니다. 그 둘만으로 충분한지가 이 프로젝트의 핵심 질문입니다 — 선행 연구(Gutierrez et al., 2022)는 픽토그램에 구두와 문서 설명을 함께 붙이라고 권고했고, USP 픽토그램 라이선스도 픽토그램을 정보 전달의 유일한 수단으로 쓰지 말라고 정합니다. 화면을 다시 펼쳐 스피커 표시를 눌러 보실 수 있습니다.',
+      'The screen also carries text, but for someone who cannot read, only the pictograms and the speech remain. Whether those two are enough is the central question of this project — prior work (Gutierrez et al., 2022) recommends pairing pictograms with verbal *and* written instructions, and the USP pictogram licence states pictograms should not be the sole means of conveying information. You can reopen the screen and press a speaker mark to listen.',
+      'Ecranul conține și text, dar pentru cineva care nu poate citi rămân doar pictogramele și vocea. Dacă acestea două sunt suficiente este întrebarea centrală a proiectului — studiile anterioare (Gutierrez et al., 2022) recomandă asocierea pictogramelor cu instrucțiuni verbale *și* scrise, iar licența pictogramelor USP prevede că pictogramele nu trebuie să fie singurul mijloc de transmitere a informației. Puteți redeschide ecranul și apăsa un simbol de difuzor pentru a ascultа.',
     ),
     options: [
       T('예, 가능할 것 같다', 'Yes, probably', 'Da, probabil'),
@@ -219,28 +234,14 @@ export const SERVICE: Item[] = [
     id: 's2_misread',
     kind: 'longtext',
     q: T(
-      '위 데모에서 잘못 읽힐 곳이 있으면 짚어 주십시오.',
-      'If anything in the demo above would be misread, please point to it.',
-      'Dacă ceva din demonstrația de mai sus ar fi citit greșit, vă rugăm să indicați.',
+      '앞서 보신 화면에서 잘못 읽힐 곳이 있으면 짚어 주십시오.',
+      'If anything on that screen would be misread, please point to it.',
+      'Dacă ceva de pe acel ecran ar fi citit greșit, vă rugăm să indicați.',
     ),
     note: T(
       '그림 하나, 문장 하나만 지적해 주셔도 됩니다. 어느 것인지 적어 주시면 그대로 고칩니다. 칭찬보다 이 답이 훨씬 쓸모 있습니다.',
       'Pointing at a single pictogram or a single line is enough. Tell us which one and we will change it. This is far more useful to us than praise.',
       'Este suficient să indicați o singură pictogramă sau un singur rând. Spuneți-ne care și o vom schimba. Acest lucru ne este mult mai util decât laudele.',
-    ),
-  },
-  {
-    id: 's3_tried',
-    kind: 'longtext',
-    q: T(
-      '앱을 직접 열어 보셨다면, 무엇이 예상과 달랐습니까?',
-      'If you opened the actual app, what differed from what you expected?',
-      'Dacă ați deschis aplicația reală, ce a fost diferit de ceea ce vă așteptați?',
-    ),
-    note: T(
-      '열어 보지 않으셨다면 비워 두셔도 됩니다.',
-      'Leave this blank if you did not open it.',
-      'Lăsați necompletat dacă nu ați deschis-o.',
     ),
   },
 ];
@@ -272,6 +273,7 @@ export const BRANCHES: Branch[] = [
       'Farmacie și consiliere medicamentoasă',
     ),
     items: [
+      ...DEMO_JUDGE,
       {
         id: 'ph2_review',
         kind: 'single',
@@ -405,6 +407,7 @@ export const BRANCHES: Branch[] = [
     id: 'nursing',
     title: T('간호·보건', 'Nursing and public health', 'Nursing și sănătate publică'),
     items: [
+      ...DEMO_JUDGE,
       {
         id: 'nu1_measure',
         kind: 'single',
@@ -511,6 +514,7 @@ export const BRANCHES: Branch[] = [
     id: 'aac',
     title: T('AAC·특수교육', 'AAC and special education', 'CAA și educație specială'),
     items: [
+      ...DEMO_JUDGE,
       {
         id: 'aa1_grammar',
         kind: 'single',
@@ -618,6 +622,7 @@ export const BRANCHES: Branch[] = [
     id: 'literacy',
     title: T('성인문해교육', 'Adult literacy education', 'Educația alfabetizării adulților'),
     items: [
+      ...DEMO_JUDGE,
       {
         id: 'li1_now',
         kind: 'longtext',
@@ -698,6 +703,7 @@ export const BRANCHES: Branch[] = [
     id: 'hci',
     title: T('HCI·디자인', 'HCI and design', 'HCI și design'),
     items: [
+      ...DEMO_JUDGE,
       {
         id: 'hc1_smalln',
         kind: 'single',
@@ -1064,6 +1070,11 @@ export const UI = {
   retry: T('다시 시도', 'Try again', 'Încercați din nou'),
   contact: T('문의', 'Contact', 'Contact'),
   optional: T('선택', 'optional', 'opțional'),
+  demoReopen: T(
+    '화면 다시 보기',
+    'Show the screen again',
+    'Afișați din nou ecranul',
+  ),
   demoTitle: T(
     '실제로 동작하는 데모입니다',
     'This is the working thing, not a screenshot',

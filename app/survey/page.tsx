@@ -6,7 +6,7 @@ import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { DEMO } from '@/lib/survey/demo';
 import { GLYPH_NAMES } from '@/lib/survey/glyphNames';
 import {
-  BACKGROUND, BRANCHES, CLOSE, CLOSE_CITE, CONSENT, CORE, LANGS, SERVICE, UI, fieldIdOf,
+  BACKGROUND, BRANCHES, CLOSE, CLOSE_CITE, CONSENT, CORE, LANGS, UI, fieldIdOf,
   type Branch, type Item, type Lang,
 } from '@/lib/survey/items';
 
@@ -47,6 +47,8 @@ type Step =
 
 export default function SurveyPage() {
   const [lang, setLang] = useState<Lang>('ko');
+  /* 데모 안의 스피커를 눌렀는지. 문항으로 묻지 않고 기록한다. */
+  const [demoTouched, setDemoTouched] = useState(false);
   /**
    * 수신자 토큰과 접속 맥락.
    *
@@ -183,6 +185,7 @@ export default function SurveyPage() {
       env: {
         tz: (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { return null; } })(),
         locale: navigator.language || null,
+        demoTouched,
         screen: window.innerWidth < 700 ? 'mobile' : window.innerWidth < 1100 ? 'tablet' : 'desktop',
         fromLink: recipient !== null,
       },
@@ -305,71 +308,12 @@ export default function SurveyPage() {
             그리고 모두가 같은 것을 본다. 어떤 사람은 앱을 열어 보고 어떤 사람은
             그림만 봤다면 답을 나란히 놓을 수 없다.
           */}
-          <section className="mb-7">
-            <h2 className="text-sm font-bold">{t(UI.demoTitle)}</h2>
-            <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
-              {t(UI.demoNote)}
-            </p>
-            {DEMO.map((d) => (
-              <div
-                key={d.id}
-                className="mt-3 rounded-2xl border p-3 [&_.overflow-x-auto]:flex-wrap [&_.overflow-x-auto]:overflow-x-visible"
-                style={{ borderColor: 'var(--color-sc-line)', background: 'var(--color-sc-surface)' }}
-              >
-                <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-                  {t(UI.rxLabel)}
-                </p>
-                <p className="mt-1 text-sm">{d.rx[lang]}</p>
-                <PictogramStrip source={d.dsl} />
-              </div>
-            ))}
-            {/*
-              형태소 전체를 접어 둔다. AAC·HCI·디자인 문항은 이 세트를 봐야 답이
-              달라지지만, 78장을 펼쳐 두면 다른 응답자에게는 화면만 길어진다.
-            */}
-            <details className="mt-3 rounded-2xl border p-3" style={{ borderColor: 'var(--color-sc-line)' }}>
-              <summary className="cursor-pointer text-xs font-bold">{t(UI.glyphsToggle)}</summary>
-              <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
-                {t(UI.glyphsNote)}
-              </p>
-              <div className="mt-2 grid grid-cols-6 gap-1 sm:grid-cols-10">
-                {GLYPH_NAMES.map((g) => (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img key={g} src={`/glyphs/${g}.png`} alt={g} width={512} height={512}
-                       className="aspect-square w-full rounded bg-white object-contain p-0.5" />
-                ))}
-              </div>
-            </details>
-            <a
-              href="/"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 inline-block text-xs underline"
-              style={{ color: 'var(--color-sc-primary)' }}
-            >
-              {t(UI.tryIt)}
-            </a>
-          </section>
-
-          {/* 데모를 보고 답하는 문항. 위에 있는 것에 대해서만 묻는다. */}
-          <section className="mb-7 space-y-6">
-            {SERVICE.map((it) => (
-              <Field
-                key={it.id}
-                item={it}
-                value={ans[it.id] ?? ''}
-                onChange={(v) => set(it.id, v)}
-                followValue={ans[`${it.id}__why`] ?? ''}
-                onFollowChange={(v) => set(`${it.id}__why`, v)}
-                t={t}
-              />
-            ))}
-          </section>
+          <DemoBlock t={t} lang={lang} onTouch={() => setDemoTouched(true)} />
 
         <Questions
           items={CORE}
           {...{ ans, set, t }}
-          onNext={() => advance({ k: 'branch' }, [...SERVICE, ...CORE])}
+          onNext={() => advance({ k: 'branch' }, CORE)}
           onBack={() => setStep({ k: 'background' })}
           nextLabel={t(UI.next)}
           backLabel={t(UI.back)}
@@ -385,6 +329,19 @@ export default function SurveyPage() {
           <p className="text-sm" style={{ color: 'var(--color-sc-muted)' }}>
             {t(UI.branchPick)}
           </p>
+
+          {/*
+            판단 문항이 이 화면으로 내려왔으므로 화면을 여기서도 볼 수 있어야 한다.
+            "앞서 보신 화면을 기준으로" 라고 물으면서 그 화면을 치워 두면, 기억으로
+            답하라는 말이 된다. 접어 두는 것은 이미 본 사람에게 두 번 보여주지 않기
+            위해서다.
+          */}
+          <details className="rounded-2xl border p-3" style={{ borderColor: 'var(--color-sc-line)' }}>
+            <summary className="cursor-pointer text-sm font-bold">{t(UI.demoReopen)}</summary>
+            <div className="mt-3">
+              <DemoBlock t={t} lang={lang} onTouch={() => setDemoTouched(true)} />
+            </div>
+          </details>
           {branchesToShow.map((b) => (
             <fieldset key={b.id} className="rounded-2xl border p-4" style={{ borderColor: 'var(--color-sc-line)' }}>
               <legend className="px-1 text-sm font-bold">{t(b.title)}</legend>
@@ -436,7 +393,7 @@ export default function SurveyPage() {
             </button>
             <button
               type="button"
-              onClick={() => advance({ k: 'close' })}
+              onClick={() => advance({ k: 'close' }, branchesToShow.flatMap((b) => b.items))}
               className="flex-1 rounded-2xl px-4 py-3 font-bold"
               style={{ background: 'var(--color-sc-primary)', color: '#fff' }}
             >
@@ -527,10 +484,83 @@ export default function SurveyPage() {
 
 /* ─────────────────────────── 부품 ─────────────────────────── */
 
+/**
+ * 저희가 만든 화면.
+ *
+ * 두 곳에서 쓴다 — 보여주는 단계와, 그것을 판단하는 문항이 있는 분야별 단계. 같은
+ * 것을 두 번 적어 두면 한쪽만 고치는 사고가 난다.
+ *
+ * `onTouch` 는 응답자가 이 안의 버튼(스피커)을 실제로 눌렀는지를 알린다. 한때
+ * "소리를 들어 보셨습니까" 를 문항으로 물었는데, 우리가 기록으로 알 수 있는 것을
+ * 사람에게 묻는 것은 칸을 낭비하는 일이다.
+ */
+function DemoBlock({
+  t, lang, onTouch,
+}: {
+  t: (r: Record<Lang, string>) => string;
+  lang: Lang;
+  onTouch: () => void;
+}) {
+  return (
+    <section
+      className="mb-7"
+      onClickCapture={(e) => {
+        if ((e.target as HTMLElement).closest('button')) onTouch();
+      }}
+    >
+
+            <h2 className="text-sm font-bold">{t(UI.demoTitle)}</h2>
+            <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
+              {t(UI.demoNote)}
+            </p>
+            {DEMO.map((d) => (
+              <div
+                key={d.id}
+                className="mt-3 rounded-2xl border p-3 [&_.overflow-x-auto]:flex-wrap [&_.overflow-x-auto]:overflow-x-visible"
+                style={{ borderColor: 'var(--color-sc-line)', background: 'var(--color-sc-surface)' }}
+              >
+                <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+                  {t(UI.rxLabel)}
+                </p>
+                <p className="mt-1 text-sm">{d.rx[lang]}</p>
+                <PictogramStrip source={d.dsl} />
+              </div>
+            ))}
+            {/*
+              형태소 전체를 접어 둔다. AAC·HCI·디자인 문항은 이 세트를 봐야 답이
+              달라지지만, 78장을 펼쳐 두면 다른 응답자에게는 화면만 길어진다.
+            */}
+            <details className="mt-3 rounded-2xl border p-3" style={{ borderColor: 'var(--color-sc-line)' }}>
+              <summary className="cursor-pointer text-xs font-bold">{t(UI.glyphsToggle)}</summary>
+              <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
+                {t(UI.glyphsNote)}
+              </p>
+              <div className="mt-2 grid grid-cols-6 gap-1 sm:grid-cols-10">
+                {GLYPH_NAMES.map((g) => (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img key={g} src={`/glyphs/${g}.png`} alt={g} width={512} height={512}
+                       className="aspect-square w-full rounded bg-white object-contain p-0.5" />
+                ))}
+              </div>
+            </details>
+            <a
+              href="/"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-block text-xs underline"
+              style={{ color: 'var(--color-sc-primary)' }}
+            >
+              {t(UI.tryIt)}
+            </a>
+          </section>
+  );
+}
+
+
 function stepLabel(k: Step['k'], lang: Lang): string {
   const m: Record<string, Record<Lang, string>> = {
     background: { ko: '응답자 배경', en: 'About you', ro: 'Despre dumneavoastră' },
-    core: { ko: '화면 보고 판단', en: 'The screen', ro: 'Ecranul' },
+    core: { ko: '저희가 만든 것', en: 'What we built', ro: 'Ce am construit' },
     branch: { ko: '분야별 문항', en: 'Field questions', ro: 'Întrebări pe domeniu' },
     close: { ko: '마무리', en: 'Finish', ro: 'Finalizare' },
   };
