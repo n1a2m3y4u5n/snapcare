@@ -228,12 +228,13 @@ def looks_like_person(name: str) -> bool:
 # 기관이 보낸 공문처럼 읽혔다. 지금은 대괄호와 "주최" 를 떼고 대회 이름만 앞에 둔다 —
 # 국내 수신자에게 이것은 광고가 아니라는 신호이면서, 공문 행세는 하지 않는다.
 #
-# 영어와 루마니아어에는 교육부를 넣지 않는다. 해외 연구자에게 한국 부처 이름은 신뢰
-# 근거가 되지 않으므로 무엇을 부탁하는지를 앞세우고, 대회와 주최는 본문에서 밝힌다.
+# 세 언어 모두 같은 모양으로 맞춘다 — 대회와 주최를 앞에, 부탁을 뒤에. 해외 연구자에게
+# 한국 교육부가 익숙하지 않은 것은 사실이나, 국가 기관이 여는 대회라는 것 자체가 학생
+# 혼자 보낸 메일과는 다르게 읽힌다.
 SUBJECT = {
     'ko': '교육부 e-ICON 대회 - 고등학생 프로젝트에 조언 부탁드립니다',
-    'en': 'A high-school student asking for advice — a medication-guidance app for people who cannot read',
-    'ro': 'Un elev de liceu cere un sfat — o aplicație de ghidare a medicației pentru cei care nu pot citi',
+    'en': 'Korean Ministry of Education e-ICON Contest - a high-school student asking for advice',
+    'ro': 'Concursul e-ICON al Ministerului Educației din Coreea - un elev de liceu cere un sfat',
 }
 
 # 인사말. (사람일 때, 기관일 때) 짝이다.
