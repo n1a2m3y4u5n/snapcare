@@ -1039,9 +1039,9 @@ export const UI = {
       'Este lucrarea comună Coreea–Moldova la a 16-a ediție e-ICON World Contest. Suntem o echipă de liceu, iar acest chestionar nu are scop comercial.',
   ),
   timeNote: T(
-    '6~7분 걸립니다. 공통 문항 뒤에 선생님 분야에 해당하는 문항이 몇 개 붙습니다. 답하고 싶은 것만 답하셔도 됩니다.',
-    'It takes 6–7 minutes — the common questions, then a few questions for your own field. Answer only what you wish.',
-    'Durează 6–7 minute — întrebările comune, apoi câteva întrebări pentru domeniul dumneavoastră. Răspundeți doar la ce doriți.',
+    '6~7분 걸립니다. 저희가 만든 화면을 보시고, 이어서 선생님 분야에 해당하는 문항에 답하시게 됩니다. 답하고 싶은 것만 답하셔도 됩니다.',
+    'It takes 6–7 minutes — you look at what we built, then answer a few questions for your own field. Answer only what you wish.',
+    'Durează 6–7 minute — priviți ce am construit, apoi răspundeți la câteva întrebări pentru domeniul dumneavoastră. Răspundeți doar la ce doriți.',
   ),
   start: T('시작', 'Start', 'Începeți'),
   next: T('다음', 'Next', 'Următorul'),

@@ -530,7 +530,7 @@ export default function SurveyPage() {
 function stepLabel(k: Step['k'], lang: Lang): string {
   const m: Record<string, Record<Lang, string>> = {
     background: { ko: '응답자 배경', en: 'About you', ro: 'Despre dumneavoastră' },
-    core: { ko: '공통 문항', en: 'Common questions', ro: 'Întrebări comune' },
+    core: { ko: '화면 보고 판단', en: 'The screen', ro: 'Ecranul' },
     branch: { ko: '분야별 문항', en: 'Field questions', ro: 'Întrebări pe domeniu' },
     close: { ko: '마무리', en: 'Finish', ro: 'Finalizare' },
   };
