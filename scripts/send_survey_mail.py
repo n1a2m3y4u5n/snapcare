@@ -151,17 +151,15 @@ def looks_like_person(name: str) -> bool:
 # 받은편지함에서 보이는 것은 앞부분뿐이다 — 한국어는 20자 남짓, 영어는 45자 남짓.
 # 그 앞부분이 "누가 왜 보냈나" 에 답해야 열린다.
 #
-# 한때 'SnapCare' 로 시작했다. 그것이 잘못이었다 — 받는 분에게 그 이름은 아무 뜻이 없고,
-# 모르는 이름으로 시작하는 제목은 광고로 읽힌다. 이름은 본문에서 밝히면 된다.
-#
-# 한국어는 대괄호로 기관을 앞세운다. 국내 수신자는 부처와 대회 이름을 알아보고, 그 형식
-# 자체가 광고가 아니라는 신호가 된다. 영어는 교육부를 앞에 두지 않는다 — 해외 연구자에게
-# 한국 부처 이름은 신뢰 근거가 되지 않으므로, 무엇을 부탁하는지를 앞세우고 기관은 본문에서
-# 밝힌다.
+# 두 번 고쳤다. 처음에는 'SnapCare' 로 시작했다 — 받는 분에게 그 이름은 아무 뜻이 없고,
+# 모르는 이름으로 시작하는 제목은 광고로 읽힌다. 그 다음에는 "[교육부 주최 e-ICON
+# 세계대회]" 로 시작했는데, 그것은 더 나빴다. 부처 이름을 대괄호로 앞세우면 학생이
+# 조언을 구하는 메일이 아니라 기관이 보낸 공문처럼 읽히고, 실제로 그런 권위를 빌리는
+# 인상을 준다. 우리는 부탁하는 쪽이므로 제목도 부탁으로 읽혀야 한다.
 SUBJECT = {
-    'ko': '[교육부 주최 e-ICON 세계대회] 고등학생 팀의 복약 안내 앱 — 전문가 의견을 부탁드립니다',
-    'en': 'Request for expert feedback — prescription instructions for people who cannot read',
-    'ro': 'Solicitare de opinie — instrucțiuni de medicație pentru cei care nu pot citi',
+    'ko': '고등학생 프로젝트에 조언을 부탁드립니다 — 글을 읽지 못하는 분을 위한 복약 안내 앱',
+    'en': 'A high-school student asking for advice — a medication-guidance app for people who cannot read',
+    'ro': 'Un elev de liceu cere un sfat — o aplicație de ghidare a medicației pentru cei care nu pot citi',
 }
 
 GREET = {
@@ -173,17 +171,15 @@ GREET = {
 BODY = {
     'ko': """{greeting}
 
-저는 충남삼성고등학교 남윤수입니다. 교육부가 주최하고 한국교육정보진흥협회가 주관하는 제16회 e-ICON 세계대회에 SnapCare 를 출품했습니다. 글을 읽지 못하는 사람이 처방전을 사진으로 찍으면 복약 지시가 그림과 음성으로 전달되게 하는 웹앱입니다. 픽토그램을 그때그때 합성하는 엔진과 음성 문장을 다시 쓰는 엔진을 직접 만들었습니다.
+안녕하세요. 충남삼성고등학교에서 IT 디플로마 과정을 이수하고 있는 3학년 남윤수입니다. 교육부가 주최하고 한국교육정보진흥협회가 주관하는 제16회 e-ICON 세계대회에서 본선에 진출해, SnapCare 라는 프로젝트를 진행하고 있습니다. 글을 읽지 못하는 사람이 처방전을 사진으로 찍으면 복약 지시가 그림과 음성으로 전달되게 하는 웹앱입니다. 픽토그램을 그때그때 합성하는 엔진과 음성 문장을 다시 쓰는 엔진을 직접 만들었습니다.
 
-만들어 놓고 보니 저희가 판단할 수 없는 것이 남았습니다. 이 방향이 맞는지, 어디서 무너지는지, 저희가 무엇을 모르고 있는지입니다. 그래서 {field} 쪽에서 일해 오신 분들께 여쭙고 있습니다.
+다만 저희는 학생이어서, 이것이 실제 현장에서 어떻게 받아들여질지 판단하기가 어렵습니다. {field} 쪽에서 오래 일해 오신 선생님의 의견을 들을 수 있다면 저희에게 큰 도움이 될 것 같습니다.
 
-아래 링크에서 저희가 만든 화면을 직접 보시고, 선생님 분야에 해당하는 문항에만 답해 주시면 됩니다. 8~10분 걸립니다.
+혹시 시간이 되신다면, 아래 설문에 한 번만 답해 주실 수 있을까요. 8~10분 정도 걸리며, 저희가 만든 화면을 먼저 보여드리고 선생님 분야에 해당하는 문항만 여쭙습니다.
 
 {link}
 
-저희에게 가장 값어치 있는 답은 칭찬이 아니라 "이건 이래서 안 된다" 는 쪽입니다. 불리한 답도 선택지에 그대로 넣어 두었습니다.
-
-성함과 소속은 저희 문서에 인용할 때 함께 적으며, 첫 화면에 그 내용을 적어 두었습니다. 답하지 않으셔도 되고, 이 메일을 더 받지 않으시려면 회신해 주시면 다시 보내지 않습니다.
+부족한 점을 짚어 주시는 답이 저희에게 가장 도움이 됩니다. 잘 만들었다는 말보다 어디가 잘못되었는지를 알고 싶습니다.
 
 읽어 주셔서 감사합니다.
 
@@ -191,17 +187,15 @@ BODY = {
 """,
     'en': """{greeting}
 
-I am a high school student at ChungNam Samsung Academy in the Republic of Korea, and SnapCare is my team\u2019s entry to the 16th e-ICON World Contest, hosted by the Korean Ministry of Education. It is a web app that takes a photograph of a prescription and delivers the dosing instructions as pictograms and speech, for someone who cannot read the text. We built both the engine that composes the pictograms and the one that rewrites the spoken sentences ourselves.
+I am a third-year student on the IT diploma programme at ChungNam Samsung Academy in the Republic of Korea. My team reached the final round of the 16th e-ICON World Contest, hosted by the Korean Ministry of Education, and we are working on a project called SnapCare. It is a web app that takes a photograph of a prescription and delivers the dosing instructions as pictograms and speech, for someone who cannot read the text. We built both the engine that composes the pictograms and the one that rewrites the spoken sentences ourselves.
 
-Having built it, we are left with the questions we cannot answer ourselves: whether this direction is right, where it breaks, and what we do not know that we should. That is why we are writing to people who have worked in {field}.
+We are students, though, and we cannot really judge how this would be received in practice. It would help us a great deal to hear from someone who has worked in {field} for a long time.
 
-The link below shows you what we built, and then asks only the questions that belong to your own field. It takes 8-10 minutes.
+If you can spare the time, might we ask you to fill in the short survey below? It takes 8-10 minutes. We show you what we built first, and then ask only the questions that belong to your own field.
 
 {link}
 
-The most useful answer to us is not praise but "this will not work, and here is why". We left the unfavourable options in.
-
-Your name and affiliation will appear where we quote you; the first screen sets that out. You are under no obligation to answer, and if you would rather not hear from us again, a reply saying so is enough.
+The answers that help us most are the ones that point out what is wrong. We would rather learn where this fails than be told that it is good.
 
 Thank you for reading.
 
@@ -209,17 +203,15 @@ Thank you for reading.
 """,
     'ro': """{greeting}
 
-Sunt elev la ChungNam Samsung Academy din Republica Coreea, iar SnapCare este lucrarea echipei mele înscrisă la a 16-a ediție a e-ICON World Contest, organizat de Ministerul Educației din Coreea. Este o aplicație web care fotografiază o rețetă și transmite instrucțiunile de administrare prin pictograme și voce, pentru cineva care nu poate citi textul. Am construit noi înșine atât motorul care compune pictogramele, cât și pe cel care rescrie propozițiile rostite.
+Sunt elev în anul al treilea la programul de diplomă în IT al ChungNam Samsung Academy din Republica Coreea. Echipa mea a ajuns în runda finală a celei de-a 16-a ediții a e-ICON World Contest, organizat de Ministerul Educației din Coreea, și lucrăm la un proiect numit SnapCare. Este o aplicație web care fotografiază o rețetă și transmite instrucțiunile de administrare prin pictograme și voce, pentru cineva care nu poate citi textul. Am construit noi înșine atât motorul care compune pictogramele, cât și pe cel care rescrie propozițiile rostite.
 
-După ce am construit-o, ne-au rămas întrebările la care nu putem răspunde singuri: dacă această direcție este corectă, unde cedează și ce nu știm, dar ar trebui să știm. De aceea scriem persoanelor care au experiență în {field}.
+Suntem însă elevi și nu putem aprecia cu adevărat cum ar fi primit acest lucru în practică. Ne-ar ajuta foarte mult să auzim părerea cuiva care lucrează de mult timp în {field}.
 
-Linkul de mai jos vă arată ce am construit, apoi vă pune doar întrebările care aparțin domeniului dumneavoastră. Durează 8-10 minute.
+Dacă aveți timp, v-am putea ruga să completați scurtul chestionar de mai jos? Durează 8-10 minute. Vă arătăm întâi ce am construit, iar apoi vă punem doar întrebările care aparțin domeniului dumneavoastră.
 
 {link}
 
-Cel mai util răspuns pentru noi nu este lauda, ci „asta nu va funcționa, și iată de ce". Am păstrat și variantele nefavorabile.
-
-Numele și afilierea dumneavoastră vor apărea acolo unde vă cităm; primul ecran explică acest lucru. Nu aveți nicio obligație să răspundeți, iar dacă preferați să nu mai primiți mesaje de la noi, un răspuns în acest sens este suficient.
+Răspunsurile care ne ajută cel mai mult sunt cele care arată ce este greșit. Am prefera să aflăm unde dă greș decât să ni se spună că este bun.
 
 Vă mulțumim pentru lectură.
 
@@ -230,14 +222,14 @@ Vă mulțumim pentru lectură.
 # 어느 분야에 여쭙는지. 한 줄이지만 이것이 있어야 "왜 나한테" 라는 물음에 답이 된다.
 FIELD = {
     'ko': '복약 안내와 저문해 사용자',
-    'en': 'medication guidance and low-literacy users',
+    'en': 'medication guidance and with low-literacy users',
     'ro': 'ghidarea medicației și lucrul cu utilizatori cu alfabetizare redusă',
 }
 
 SIGNATURE = {
-    'ko': '충남삼성고등학교 남윤수\n제16회 e-ICON 세계대회 (교육부 주최 · 한국교육정보진흥협회 주관) 출품작 SnapCare\n{email}',
-    'en': '{name_en}\nChungNam Samsung Academy, Republic of Korea\nSnapCare — 16th e-ICON World Contest, hosted by the Korean Ministry of Education\n{email}',
-    'ro': '{name_en}\nChungNam Samsung Academy, Republica Coreea\nSnapCare — a 16-a ediție e-ICON World Contest, organizat de Ministerul Educației din Coreea\n{email}',
+    'ko': '충남삼성고등학교 3학년 남윤수\n제16회 e-ICON 세계대회 본선 진출 · SnapCare\n{email}',
+    'en': '{name_en}\nChungNam Samsung Academy, Republic of Korea\nSnapCare — finalist, 16th e-ICON World Contest\n{email}',
+    'ro': '{name_en}\nChungNam Samsung Academy, Republica Coreea\nSnapCare — finalist, a 16-a ediție e-ICON World Contest\n{email}',
 }
 
 
