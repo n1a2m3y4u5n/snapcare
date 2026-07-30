@@ -3,9 +3,10 @@ __pycache__/
 checkpoints/
 data/labels.csv
 dataset_processed/
-predictions.csv
-groundtruth_test.csv
-eval_stats.json
+# eval.py names non-benchmark runs after the model and split that produced them.
+predictions*.csv
+groundtruth_test*.csv
+eval_stats*.json
 nutrition5k_dataset/
 
 # Run logs; history.jsonl and the scripts are kept.

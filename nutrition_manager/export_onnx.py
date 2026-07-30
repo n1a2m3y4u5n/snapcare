@@ -222,74 +222,27 @@ def quantize(src: Path, dst: Path, cfg=None, ckpt=None) -> str:
 
 def _load_pixels(path, img_size: int):
     """Decode and preprocess one image exactly as the browser will."""
-    import numpy as np
-    from PIL import Image
+    from eval import browser_pixels
 
-    resize_to = int(round(img_size * 1.15))
-    img = Image.open(path).convert("RGB")
-    w, h = img.size
-    scale = resize_to / min(w, h)
-    img = img.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.BILINEAR)
-    w, h = img.size
-    left, top = int(round((w - img_size) / 2.0)), int(round((h - img_size) / 2.0))
-    img = img.crop((left, top, left + img_size, top + img_size))
-    return np.asarray(img, dtype=np.float32).transpose(2, 0, 1) / 255.0
+    return browser_pixels(path, img_size)
 
 
 def score_onnx(onnx_path: Path, ckpt: dict, cfg: dict) -> tuple:
     """Run the exported graph over the official test split.
 
-    Deliberately does not reuse the torch DataLoader path: this feeds the model
-    the way the browser will — decode, resize, crop, scale to [0, 1] — so what
-    is measured is the thing that ships.
+    Both the preprocessing and the scoring loop live in eval.py, so the
+    exporter's number and `eval.py --onnx` cannot disagree. That matters more
+    than it sounds: this path deliberately does not reuse the torch DataLoader,
+    because it has to feed the model the way the browser will, and a second
+    hand-written copy of "resize, centre crop, divide by 255" is precisely the
+    kind of thing that drifts by half a pixel and is never noticed.
     """
-    import onnxruntime as ort
-    import pandas as pd
-    from PIL import Image
-
-    from eval import load_test_frame
+    from eval import OFFICIAL, load_test_frame, require_images, score_onnx_frames
 
     df = load_test_frame(cfg)
-    img_size = ckpt["img_size"]
-    resize_to = int(round(img_size * 1.15))
-    session = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
-
-    preds, gts = [], []
-    batch, batch_gt = [], []
-
-    def flush():
-        if not batch:
-            return
-        x = np.stack(batch).astype(np.float32)
-        preds.append(session.run(["nutrition"], {"pixels": x})[0])
-        gts.append(np.array(batch_gt, dtype=np.float64))
-        batch.clear()
-        batch_gt.clear()
-
-    for _, row in df.iterrows():
-        img = Image.open(resolve(row["image_path"])).convert("RGB")
-        # Shorter side to resize_to, then centre crop — matching build_transforms.
-        # The rounding matters and is easy to get subtly wrong: torchvision's
-        # center_crop computes its offset with int(round(...)), not floor, and
-        # so does the TypeScript. Flooring here would shift the crop by up to
-        # half a pixel of the resized image — a few source pixels on a phone
-        # photograph — and this function exists precisely to detect that kind of
-        # drift between the three implementations, so it must not introduce any.
-        w, h = img.size
-        scale = resize_to / min(w, h)
-        img = img.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.BILINEAR)
-        w, h = img.size
-        left, top = int(round((w - img_size) / 2.0)), int(round((h - img_size) / 2.0))
-        img = img.crop((left, top, left + img_size, top + img_size))
-
-        arr = np.asarray(img, dtype=np.float32).transpose(2, 0, 1) / 255.0
-        batch.append(arr)
-        batch_gt.append([float(row[t]) for t in ckpt["targets"]])
-        if len(batch) == 32:
-            flush()
-    flush()
-
-    return metrics.per_field(np.concatenate(preds), np.concatenate(gts))
+    require_images(df, *OFFICIAL)
+    *_, mae, mae_pct = score_onnx_frames(onnx_path, df, ckpt["targets"], ckpt["img_size"])
+    return mae, mae_pct
 
 
 # How much accuracy a 4x smaller download is worth. Below this the quantized

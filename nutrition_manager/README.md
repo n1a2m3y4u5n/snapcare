@@ -237,6 +237,29 @@ python eval.py                 # -> predictions.csv, eval_stats.json
 python predict.py meal.jpg
 ```
 
+`eval.py` with no arguments is the published protocol — overhead test frames,
+comparable with other people's Nutrition5k numbers, and comparable with nothing
+else. To score the artifact the app actually downloads, on the view a hand-held
+phone actually produces:
+
+```bash
+python eval.py --onnx web/model/web.onnx --split val --view side
+make eval-shipped              # the same thing
+```
+
+That runs the exported graph through onnxruntime with the browser's own
+preprocessing and a single forward pass, on held-out dishes. It is the honest
+figure to quote about the product, and the stats file records `_split`,
+`_view`, `_runtime` and `_comparable_to_published` so the two can never be
+mistaken for one another.
+
+Two caveats belong with that number wherever it is quoted. The held-out dishes
+are the same ones that chose the checkpoint, so it is mildly optimistic; and
+because the side frames are drawn from the train split, it is not the test set.
+The benchmark run needs `nutrition5k_dataset/` present — if that download has
+been deleted, `eval.py` says so and stops, because the official test dishes
+have no side-angle frames to fall back on.
+
 Any config key can be overridden without editing the file, so an ablation never
 needs a second copy of `config.yaml`:
 

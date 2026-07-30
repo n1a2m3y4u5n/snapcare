@@ -2,6 +2,7 @@
 #
 #     make test        the unit tests (fast, no GPU, no dataset)
 #     make eval        score checkpoints/best.pt on the official test split
+#     make eval-shipped  score the graph the app downloads, on off-axis frames
 #     make compare     score every checkpoint and rank them
 #     make export      -> export/*.onnx for the browser, verified and measured
 #     make promote     which model should ship (and `promote-install` to install it)
@@ -16,13 +17,22 @@
 PYTHON ?= python
 CKPT   ?= checkpoints/best.pt
 
-.PHONY: test eval compare export promote promote-install results data clean
+.PHONY: test eval eval-shipped compare export promote promote-install results data clean
 
 test:
 	@$(PYTHON) -m pytest tests -q
 
 eval:
 	@$(PYTHON) eval.py --checkpoint $(CKPT)
+
+# The benchmark above answers "how does our recipe compare to published work".
+# This answers "how wrong is the app": the exported graph the browser
+# downloads, run the way the browser runs it, on the off-axis frames a
+# hand-held phone produces. Neither number substitutes for the other.
+GRAPH ?= web/model/web.onnx
+
+eval-shipped:
+	@$(PYTHON) eval.py --onnx $(GRAPH) --split val --view side
 
 compare:
 	@$(PYTHON) eval.py --compare checkpoints/*.pt
