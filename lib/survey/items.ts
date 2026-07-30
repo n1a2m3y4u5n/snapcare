@@ -746,20 +746,6 @@ export const BRANCHES: Branch[] = [
           'Problema este obținerea consimțământului de la cineva care nu poate citi formularul. Nu avem un răspuns aici.',
         ),
       },
-      {
-        id: 'la4_ref',
-        kind: 'longtext' as const,
-        q: T(
-          '이 설계를 판단할 때 저희가 반드시 봐야 할 조항·해석·판례가 있습니까?',
-          'Is there a provision, guidance note or ruling we really ought to look at when judging this design?',
-          'Există o prevedere, un ghid sau o hotărâre la care ar trebui neapărat să ne uităm?',
-        ),
-        note: T(
-          '조항 번호나 사건명만 적어 주셔도 찾아 읽겠습니다. 국외 사례도 좋습니다.',
-          'An article number or a case name is enough and we will find it. Cases from other jurisdictions are welcome.',
-          'Este suficient un număr de articol sau un nume de caz. Cazurile din alte jurisdicții sunt binevenite.',
-        ),
-      },
     ],
   },
   {
@@ -805,20 +791,6 @@ export const BRANCHES: Branch[] = [
           '귀국의 제도에서는 그림과 음성만으로 하는 복약 안내가 허용됩니까? 저가 자동 알약 디스펜서는 어떻게 분류됩니까?',
           'In your country, is medication guidance given only by picture and speech permitted? How would a low-cost automatic pill dispenser be classified?',
           'În țara dumneavoastră, este permis ghidajul medicamentos doar prin imagine și voce? Cum ar fi clasificat un dozator automat ieftin?',
-        ),
-      },
-      {
-        id: 'st4_ref',
-        kind: 'longtext' as const,
-        q: T(
-          '저희가 반드시 확인해야 할 표준이나 선례가 있습니까?',
-          'Is there a standard or a precedent we really ought to check?',
-          'Există un standard sau un precedent pe care ar trebui neapărat să îl verificăm?',
-        ),
-        note: T(
-          '저희가 지금 보고 있는 것은 ISO 9186, ANSI Z535.3, KS S ISO 7001, WCAG 입니다. 이 밖에 봐야 할 것이 있으면 알려 주십시오.',
-          'We are currently looking at ISO 9186, ANSI Z535.3, KS S ISO 7001 and WCAG. Tell us what else we should be looking at.',
-          'Ne uităm în prezent la ISO 9186, ANSI Z535.3, KS S ISO 7001 și WCAG. Spuneți-ne la ce altceva ar trebui să ne uităm.',
         ),
       },
     ],
@@ -869,20 +841,6 @@ export const BRANCHES: Branch[] = [
           '같은 문제를 다시 푼다면 무엇을 다르게 하시겠습니까?',
           'If you were solving the same problem, what would you do differently?',
           'Dacă ați rezolva aceeași problemă, ce ați face diferit?',
-        ),
-      },
-      {
-        id: 'in4_ref',
-        kind: 'longtext' as const,
-        q: T(
-          '비슷한 문제를 다룬 제품이나 사례 가운데 저희가 반드시 봐야 할 것이 있습니까?',
-          'Among products or cases that tackled a similar problem, is there one we really ought to look at?',
-          'Dintre produsele sau cazurile care au abordat o problemă similară, există vreunul la care ar trebui neapărat să ne uităm?',
-        ),
-        note: T(
-          '성공한 것보다 접힌 것이 더 값어치 있을 수 있습니다. 왜 접혔는지 아시면 함께 적어 주십시오.',
-          'Something that folded may be worth more to us than something that succeeded. If you know why it folded, please say.',
-          'Ceva ce a eșuat poate valora mai mult decât ceva ce a reușit. Dacă știți de ce a eșuat, vă rugăm să spuneți.',
         ),
       },
     ],
