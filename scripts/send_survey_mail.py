@@ -26,13 +26,22 @@
 2. 2단계 인증을 쓰고 있으면 계정 비밀번호가 아니라 **애플리케이션 비밀번호** 가 필요하다.
    네이버 → 내정보 → 보안설정 → 2단계 인증 → 애플리케이션 비밀번호에서 발급한다.
 
-3. 비밀번호를 환경변수에 넣는다. 이 파일에도, 이 저장소 어디에도 적지 않는다.
+3. 아이디를 환경변수에 넣는다.
 
      export NAVER_ID='내아이디@naver.com'
-     export NAVER_APP_PW='발급받은_비밀번호'
 
-   `~/.zshenv` 에 적어 두면 매번 치지 않아도 된다. 스크립트는 이 값을 읽어 SMTP 에
-   넘기기만 하고, 화면에 찍거나 로그에 남기지 않는다.
+4. 앱 비밀번호를 넣는다. 이 파일에도, 이 저장소 어디에도 적지 않는다.
+
+   (권장) 맥 키체인. 잠긴 저장소에 들어가고 이 스크립트가 꺼내 쓸 때만 나온다.
+
+     security add-generic-password -s snapcare-naver -a 내아이디@naver.com -w
+
+   `-w` 뒤에 값을 적지 않으면 화면에 물어보므로 셸 기록에도 남지 않는다.
+
+   (간단) `~/.zshenv` 를 편집기로 열어 `export NAVER_APP_PW='...'` 를 적는다. echo 로
+   넣지 마라 — 셸 기록에 그대로 남는다. 그리고 이 파일은 평문이라 아무 프로그램이나 읽는다.
+
+   어느 쪽이든 스크립트는 이 값을 SMTP 에만 넘기고 화면이나 로그에 찍지 않는다.
 
 ## 중간에 끊겨도 된다
 
@@ -396,6 +405,33 @@ def append_log(path: Path, email: str, lang: str, token: str, msgid: str) -> Non
 
 # ────────────────────────── 발송 ──────────────────────────
 
+KEYCHAIN_SERVICE = 'snapcare-naver'
+
+
+def app_password(account: str) -> str:
+    """앱 비밀번호를 가져온다. 환경변수가 없으면 맥 키체인에서 찾는다.
+
+    환경변수(NAVER_APP_PW)는 편하지만 ~/.zshenv 에 평문으로 남고, 그 파일은 아무 프로그램이나
+    읽을 수 있다. 키체인에 넣으면 잠긴 저장소에 들어가고 이 스크립트가 꺼내 쓸 때만 나온다.
+
+        security add-generic-password -s snapcare-naver -a 내아이디@naver.com -w
+
+    -w 뒤에 값을 적지 않으면 화면에 물어보므로 셸 기록에도 남지 않는다.
+
+    어느 쪽이든 이 함수가 돌려준 값은 SMTP 로만 넘어간다. 화면에도 로그에도 찍지 않는다.
+    """
+    env = os.environ.get('NAVER_APP_PW', '')
+    if env:
+        return env
+    if sys.platform != 'darwin' or not account:
+        return ''
+    import subprocess
+    r = subprocess.run(
+        ['security', 'find-generic-password', '-s', KEYCHAIN_SERVICE, '-a', account, '-w'],
+        capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else ''
+
+
 def build_message(to: str, subject: str, body: str, sender: str, sender_name: str) -> EmailMessage:
     m = EmailMessage()
     m['From'] = formataddr((str(Header(sender_name, 'utf-8')), sender)) if sender_name else sender
@@ -430,7 +466,7 @@ def main() -> int:
 
     sender = os.environ.get('NAVER_ID', '').strip()
     sender_name = os.environ.get('SNAPCARE_SENDER_NAME', '').strip()
-    pw = os.environ.get('NAVER_APP_PW', '')
+    pw = app_password(sender)
 
     rows = [r for r in read_roster(args.xlsx) if (r.get(COL_EMAIL) or '').strip()]
     done = load_log(args.log)
@@ -485,10 +521,17 @@ def main() -> int:
         return 0
 
     # ── 실제 발송 ──
-    if not sender or not pw:
-        print('\nNAVER_ID 와 NAVER_APP_PW 환경변수가 필요하다. 이 스크립트는 값을 화면에 찍지 않는다.\n')
+    if not sender:
+        print("\nNAVER_ID 가 필요하다.\n")
         print("  export NAVER_ID='내아이디@naver.com'")
-        print("  export NAVER_APP_PW='애플리케이션_비밀번호'")
+        return 2
+    if not pw:
+        print('\n앱 비밀번호를 찾지 못했다. 둘 중 하나로 넣어라 — 어느 쪽이든 이 스크립트는')
+        print('값을 화면이나 로그에 찍지 않는다.\n')
+        print('  (권장) 맥 키체인에 넣는다. -w 뒤를 비우면 화면에 물어보므로 셸 기록에 남지 않는다.')
+        print(f'    security add-generic-password -s {KEYCHAIN_SERVICE} -a {sender} -w\n')
+        print('  (간단) ~/.zshenv 를 편집기로 열어 한 줄 적는다. echo 로 넣지 마라 — 기록에 남는다.')
+        print("    export NAVER_APP_PW='애플리케이션_비밀번호'")
         return 2
 
     ctx = ssl.create_default_context()
