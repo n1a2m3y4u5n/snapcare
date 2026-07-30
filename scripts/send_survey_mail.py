@@ -420,7 +420,10 @@ def app_password(account: str) -> str:
 
     어느 쪽이든 이 함수가 돌려준 값은 SMTP 로만 넘어간다. 화면에도 로그에도 찍지 않는다.
     """
-    env = os.environ.get('NAVER_APP_PW', '')
+    # 공백을 걷어낸다. 발급 화면에서 복사하면 앞뒤에 줄바꿈이나 칸이 붙는 일이 흔하고,
+    # 그 한 칸 때문에 535 가 난다. 네이버 앱 비밀번호에는 공백이 들어가지 않는다.
+    clean = lambda v: ''.join((v or '').split())
+    env = clean(os.environ.get('NAVER_APP_PW', ''))
     if env:
         return env
     if sys.platform != 'darwin' or not account:
@@ -429,7 +432,20 @@ def app_password(account: str) -> str:
     r = subprocess.run(
         ['security', 'find-generic-password', '-s', KEYCHAIN_SERVICE, '-a', account, '-w'],
         capture_output=True, text=True)
-    return r.stdout.strip() if r.returncode == 0 else ''
+    return clean(r.stdout) if r.returncode == 0 else ''
+
+
+class AuthFailed(Exception):
+    """로그인 거절. 트레이스백 대신 무엇을 확인해야 하는지 알린다.
+
+    535 는 세 가지 원인에서 똑같이 난다 — 네이버에서 IMAP/SMTP 를 켜지 않았거나, 저장된
+    비밀번호가 틀렸거나, 아이디가 그 계정의 아이디가 아니거나. 파이썬 트레이스백은 그
+    셋을 구별해 주지 않으므로 목록으로 적어 준다.
+    """
+
+    def __init__(self, sender: str, cause: Exception | None) -> None:
+        self.sender, self.cause = sender, cause
+        super().__init__(str(cause))
 
 
 def build_message(to: str, subject: str, body: str, sender: str, sender_name: str) -> EmailMessage:
@@ -461,6 +477,8 @@ def main() -> int:
     ap.add_argument('--test-to', help='명단을 무시하고 이 주소로 한 통만 보낸다')
     ap.add_argument('--no-priority', action='store_true',
                     help='등급 A 를 먼저 보내지 않고 명단 순서대로 보낸다')
+    ap.add_argument('--check-login', action='store_true',
+                    help='로그인만 해 보고 끝낸다. 아무것도 보내지 않는다')
     ap.add_argument('--send', action='store_true', help='실제로 보낸다. 없으면 미리보기만')
     args = ap.parse_args()
 
@@ -524,7 +542,7 @@ def main() -> int:
         print(body)
         print('─' * 68)
 
-    if not args.send:
+    if not args.send and not args.check_login:
         print('\n미리보기만 돌았다. 실제로 보내려면 --send 를 붙여라.')
         return 0
 
@@ -548,15 +566,41 @@ def main() -> int:
 
     def connect() -> smtplib.SMTP_SSL:
         smtp = smtplib.SMTP_SSL('smtp.naver.com', 465, context=ctx, timeout=30)
-        try:
-            smtp.login(sender, pw)
-        except smtplib.SMTPAuthenticationError:
-            # 네이버는 아이디만으로 받는 경우가 있다. 비밀번호는 여기서도 찍지 않는다.
-            smtp.login(sender.split('@')[0], pw)
-        return smtp
-
-    smtp = connect()
+        # 전체 주소와 아이디만, 두 가지로 시도한다. 어느 쪽으로 받는지는 계정에 따라 다르다.
+        last = None
+        for user in (sender, sender.split('@')[0]):
+            try:
+                smtp.login(user, pw)
+                return smtp
+            except smtplib.SMTPAuthenticationError as e:
+                last = e
+        raise AuthFailed(sender, last)
+    try:
+        smtp = connect()
+    except AuthFailed as e:
+        acct = e.sender.split('@')[0]
+        print(f'\n네이버가 로그인을 거절했다 (535). 아래 세 가지 중 하나다.\n')
+        print(f'  1. 네이버 메일에서 IMAP/SMTP 를 켜지 않았다  ← 가장 흔하다')
+        print(f'     네이버 메일 → 환경설정 → POP3/IMAP 설정 → IMAP/SMTP 사용: 사용함 → 저장')
+        print(f'     이걸 안 켜면 비밀번호가 맞아도 똑같이 535 가 난다.\n')
+        print(f'  2. 저장된 비밀번호가 틀렸다')
+        print(f'     2단계 인증을 쓰면 계정 비밀번호가 아니라 애플리케이션 비밀번호여야 한다.')
+        print(f'     지우고 다시 넣기:')
+        print(f'       security delete-generic-password -s {KEYCHAIN_SERVICE} -a {e.sender}')
+        print(f'       security add-generic-password -s {KEYCHAIN_SERVICE} -a {e.sender} -w\n')
+        print(f'  3. NAVER_ID 가 그 계정의 아이디가 아니다')
+        print(f'     지금 "{e.sender}" 로 시도했고 "{acct}" 로도 시도했다. 둘 다 거절됐다.')
+        print(f'     네이버에 로그인할 때 쓰는 아이디가 "{acct}" 가 맞는지 확인해라.\n')
+        print(f'  네이버가 보낸 원문: {e.cause}')
+        return 2
     print(f'smtp.naver.com 로그인 성공 ({sender})\n')
+    if args.check_login:
+        print('로그인만 확인했다. 아무것도 보내지 않았다.')
+        try:
+            smtp.quit()
+        except Exception:                             # noqa: BLE001
+            pass
+        return 0
     try:
         i = 0
         for r, lang in queue[: args.limit]:
