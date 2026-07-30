@@ -12,6 +12,8 @@ import { useProfile } from '@/stores/profile';
 import { encodeSchedule, encodeWeekly, decodeEvent, messageKind, type SlotSchedule, type WeeklySlot } from '@/lib/hardware/protocol';
 import { toSchedule, type FormSheetValues } from '@/lib/hardware/formSheet';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
+import { decodeToGray, RETRY_WORK_DIM } from '@/lib/formsheet/decode';
+import { parseFormSheet } from '@/lib/formsheet/sheet';
 import { DEFAULT_HOST, FITTED_TRAYS, MAX_TRAYS, planTrays, saveUrl, looksLikeHost } from '@/lib/hardware/dispenser';
 import { speak } from '@/lib/voice';
 
@@ -96,29 +98,64 @@ export default function DevicePage() {
     ? encodeWeekly(sheet.schedule)
     : slots.length > 0 ? encodeSchedule(slots) : null;
 
-  /** 의사가 준 종이 폼시트를 찍어 일정을 받는다 (인터넷도 DB도 필요 없는 경로). */
+  /**
+   * 의사가 준 종이 폼시트를 찍어 일정을 받는다.
+   *
+   * 판독은 **브라우저 안에서** 한다 (`lib/formsheet`). 예전에는 이 한 경로만 서버의
+   * 파이썬+OpenCV 를 필요로 했다 — OCR 도 식사 모델도 판정 엔진도 픽토그램도 전부
+   * 기기 안에 있는데, 정작 인터넷이 없는 진료소에서 가장 쓰고 싶은 기능이 인터넷을
+   * 요구하고 있었다.
+   *
+   * 못 찾으면 원본 해상도로 한 번 더 본다. 평소에는 긴 변 2000px 로 줄여서 읽는데
+   * (윤곽선 추적이 화소 수에 비례한다), 멀리서 찍어 마커가 작게 잡힌 장은 줄이는
+   * 순간 무늬가 뭉개진다. 그럴 때 서버를 부르는 것보다 **화소를 더 주는 쪽**이 낫다 —
+   * 같은 알고리즘이고, 망이 없어도 된다.
+   *
+   * 판독기는 일부러 정적 import 다. 동적으로 불러오면 그 조각은 *시트를 실제로 읽는
+   * 순간*에야 내려오고, 서비스워커는 내려온 것만 캐시한다 — 연결된 상태에서 한 번
+   * 읽어 본 적이 없으면 오프라인에서 못 쓴다. 오프라인이 이 기능의 요점인데.
+   */
   async function readFormSheet(file: File) {
     setReading(true);
     setResult(null);
     try {
-      const dataUrl = await toDataUrl(file);
-      const res = await fetch('/api/form-sheet', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ image: dataUrl }),
-      });
-      if (res.status === 501) {
-        setResult('Form sheet reading is not available on this server.');
-        return;
+      let values: FormSheetValues;
+      let problems: string[];
+      try {
+        let sheetRead = parseFormSheet(await decodeToGray(file));
+        if (!sheetRead.foundPage) sheetRead = parseFormSheet(await decodeToGray(file, RETRY_WORK_DIM));
+        values = sheetRead.values;
+        problems = sheetRead.problems;
+      } catch (err) {
+        // 캔버스나 createImageBitmap 이 없는 아주 오래된 브라우저 — 서버가 대신 읽는다.
+        //
+        // 이 대체 경로도 실패할 수 있다는 것을 잊고 있었다. 망이 끊기면 fetch 는 값을
+        // 돌려주는 게 아니라 던지고, 그 예외는 아래 finally 를 지나 밖으로 새어 나갔다 —
+        // 물레방아가 멈추고 **화면에는 아무 말도 뜨지 않는다.** 사용자는 앱이 멎은
+        // 것인지 자기가 잘못 찍은 것인지 알 방법이 없다. 실패해도 말은 해야 한다.
+        console.error('[form-sheet] 기기에서 읽지 못했다:', err);
+        try {
+          const res = await fetch('/api/form-sheet', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ image: await toDataUrl(file) }),
+          });
+          if (!res.ok) throw new Error(String(res.status));
+          ({ values, problems = [] } = (await res.json()) as { values: FormSheetValues; problems?: string[] });
+        } catch (err2) {
+          console.error('[form-sheet] 서버도 읽지 못했다:', err2);
+          setResult('Could not read the sheet — lay it flat so all four corner marks are in frame.');
+          return;
+        }
       }
-      if (!res.ok) {
-        setResult('Could not read the sheet — lay it flat so all four corner marks are in frame.');
-        return;
-      }
-      const { values } = (await res.json()) as { values: FormSheetValues };
+
       const reading = toSchedule(values);
       if (reading.schedule.length === 0) {
-        setResult(`Could not read: ${reading.missing.join(', ')} not marked.`);
+        // 종이를 아예 못 찾은 것과 칸을 안 채운 것은 사용자가 할 일이 다르다.
+        const lost = problems.some((p) => p.startsWith('could not locate'));
+        setResult(lost
+          ? 'Could not find the sheet — lay it flat so all four corner marks are in frame.'
+          : `Could not read: ${reading.missing.join(', ')} not marked.`);
         return;
       }
       setSheet({ schedule: reading.schedule, summary: reading.summary });
@@ -199,7 +236,8 @@ export default function DevicePage() {
           <div className="mt-2 rounded-3xl bg-white px-4 py-4 shadow-sm">
             <div className="flex flex-col gap-1">
               {trayPlan.plan.map((t) => (
-                <div key={t.tray} className="flex items-center gap-2 py-1">
+                <Speakable key={t.tray} text={`Tray ${t.tray}. ${t.name}, at ${t.time}.`}
+                           className="flex items-center gap-2 py-1">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white"
                         style={{ background: 'var(--color-sc-primary)' }}>
                     {t.tray}
@@ -208,20 +246,29 @@ export default function DevicePage() {
                     {t.name}
                   </span>
                   <span className="text-xs" style={{ color: 'var(--color-sc-muted)' }}>{t.time}</span>
-                </div>
+                </Speakable>
               ))}
             </div>
 
             {/*
               트레이가 모자라 못 실은 복용이 있으면 반드시 말한다. 조용히 자르면
               기기에 없는 복용을 있다고 믿게 되는데, 그건 알람이 아예 없는 것보다 나쁘다.
+
+              그런데 "반드시 말한다" 고 적어 놓고 **글자로만** 냈다. 화면의 나머지가
+              전부 눌러서 들리는데 이 줄만 조용했고, 하필 이 줄이 "기기가 주지 않을
+              약" 을 알리는 자리다. 출품 기기는 트레이가 셋이라 이 경고는 드물게가
+              아니라 자주 뜬다.
             */}
             {trayPlan.dropped.length > 0 && (
-              <p className="mt-2 rounded-2xl px-3 py-2 text-xs font-semibold"
-                 style={{ background: 'var(--color-caution-bg)', color: 'var(--color-caution)' }}>
-                ⚠️ {trayPlan.dropped.length} dose{trayPlan.dropped.length > 1 ? 's' : ''} did not fit — this device has {trays} tray{trays > 1 ? 's' : ''}.
-                {' '}{trayPlan.dropped.map((r) => r.item.name).join(', ')} must still be taken by hand.
-              </p>
+              <Speakable
+                text={`Warning. ${trayPlan.dropped.length} dose${trayPlan.dropped.length > 1 ? 's' : ''} did not fit, because this device has only ${trays} tray${trays > 1 ? 's' : ''}. ${trayPlan.dropped.map((r) => r.item.name).join(', ')} must still be taken by hand. The device will not remind you of ${trayPlan.dropped.length > 1 ? 'those' : 'that'}.`}
+                className="mt-2 flex items-center gap-2 rounded-2xl px-3 py-2 text-xs font-semibold"
+                style={{ background: 'var(--color-caution-bg)', color: 'var(--color-caution)' }}>
+                <span className="flex-1">
+                  ⚠️ {trayPlan.dropped.length} dose{trayPlan.dropped.length > 1 ? 's' : ''} did not fit — this device has {trays} tray{trays > 1 ? 's' : ''}.
+                  {' '}{trayPlan.dropped.map((r) => r.item.name).join(', ')} must still be taken by hand.
+                </span>
+              </Speakable>
             )}
 
             {/*

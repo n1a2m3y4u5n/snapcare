@@ -13,9 +13,10 @@
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
+from i18n import T, LANG, FIG as FIG_OUT, FIG_SRC
 
 HERE = Path(__file__).resolve().parent
-FIG = HERE.parent / 'fig'
+FIG = FIG_OUT
 
 S = 2                      # 2배 렌더 후 축소
 COL_W = 250                # 한 칸의 폭
@@ -35,7 +36,7 @@ def panel(name, items, height=430):
     """items: [(파일명, '(a) 설명'), ...] — 모두 같은 높이로 맞춰 가로로 늘어놓는다."""
     shots = []
     for fn, _ in items:
-        im = Image.open(FIG / f'{fn}.png').convert('RGB')
+        im = Image.open(FIG_SRC / f'{fn}.png').convert('RGB')
         w = round(im.width * height / im.height)
         shots.append(im.resize((w * S, height * S), Image.LANCZOS))
 
@@ -63,20 +64,20 @@ def panel(name, items, height=430):
 if __name__ == '__main__':
     # 촬영에서 판정까지 — 한 흐름이므로 한 판에 둔다.
     panel('panelA_flow', [
-        ('fig04_camera', '(a) 촬영'),
-        ('fig05_processing', '(b) 인식 진행'),
-        ('fig06_verdict_rx', '(c) 처방 판정'),
+        ('fig04_camera', T('(a) 촬영')),
+        ('fig05_processing', T('(b) 인식 진행')),
+        ('fig06_verdict_rx', T('(c) 처방 판정')),
     ])
 
     # 판정 이후 — 한 번의 판정과 하루의 합.
     panel('panelB_nutrition', [
-        ('fig07_verdict_label', '(a) 영양성분표 판정'),
-        ('fig08_today', '(b) 오늘 누적'),
-        ('fig09_device', '(c) 기기 연동'),
+        ('fig07_verdict_label', T('(a) 영양성분표 판정')),
+        ('fig08_today', T('(b) 오늘 누적')),
+        ('fig09_device', T('(c) 기기 연동')),
     ])
 
     # 첫 실행 — 안내에서 프로필까지. 홈 화면은 §2.1 에서 따로 쓰므로 여기 넣지 않는다.
     panel('panelC_onboarding', [
-        ('fig12_onboarding', '(a) 첫 실행 안내'),
-        ('fig13_profile', '(b) 프로필 설정'),
+        ('fig12_onboarding', T('(a) 첫 실행 안내')),
+        ('fig13_profile', T('(b) 프로필 설정')),
     ])

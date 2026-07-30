@@ -346,11 +346,38 @@ TARGETS: list[Target] = [
         # 잉크 0.49 로 뭉쳤다 — "large solid black rectangle" 이라고 내가 시켰다.
         # 뭉침을 고치려다 속 빈 사각형이 됐다 — 봉지가 아니라 종이로 보인다. 몸통은 채우고
         # 무게는 구멍으로 던다.
+        #
+        # 그렇게 통과한 그림이 **"사탕 껍질"** 로 읽혔다. 원인은 내가 시킨 두 가지가
+        # 겹친 것이다 — 위쪽의 톱니와 옆구리의 홈. 둘이 함께 있으면 양끝을 비틀어
+        # 묶은 모양이 되고, 그것이 사탕 껍질의 형태 그 자체다. 홈을 뺀다.
+        #
+        #
+        # 이 그림은 기계 검사를 통과하고도 **"candy wrapper"** 로 읽힌다. 고쳐 보려고
+        # 두 방향을 시도했고 둘 다 실패했다. 남겨 두는 이유는 다음 사람이 같은 길을
+        # 다시 걷지 않게 하기 위해서다.
+        #
+        #  1) 옆구리 홈을 빼고 가루를 작은 흰 점으로 그리게 했다.
+        #     - 여전히 "candy wrapper" 였다. 원인은 홈이 아니라 **톱니**다. 실제 약
+        #       봉지의 뜯는 자리와 사탕 껍질의 주름은 실루엣에서 같은 모양이다.
+        #     - 그리고 "작은 흰 점" 은 32px 에서 통째로 사라졌다(21개 → 0개). 이 검사가
+        #       잡으라고 있는 바로 그 실패를 내 지시가 만들었다. 작게 그리라고 하면 안 된다.
+        #
+        #  2) 대상을 바꿔 봉지를 기울여 붓는 순간으로 그리게 했다.
+        #     - "ice cream cone", "cocktail shaker pouring" 으로 읽혔다. 넓어지는 쐐기가
+        #       콘이 된다.
+        #     - 세 번째 시도는 이미지 API 가 거절했다 (safety_violations=[self-harm]).
+        #       "가루를 붓는" 그림을 요청하는 것이 약물 오남용으로 읽힌 것이다.
+        #
+        # 형태만으로는 갈라지지 않는다고 본다 — §5.3 의 suppository·sesame 과 같은
+        # 부류다. 봉지와 사탕 껍질을 가르는 것은 실루엣이 아니라 맥락이고, 정지한
+        # 그림에는 맥락이 없다. 화면에서는 옆의 문장과 음성이 그것을 메운다
+        # (그림을 누르면 "The powder sachet." 라고 말한다).
         'a powder sachet seen straight on: a solid filled black rectangular pouch whose top edge is '
         'a clear zigzag saw tooth line where it tears open, with two very wide white bands punched '
         'straight across the body and one wide notch cut into the side near the top. Draw it as one solid filled black shape — not a hollow outline drawing, not an empty white interior with a black border.',
-        'a bread slice, an envelope, a flag, a crown',
+        'a candy wrapper, a sweet with twisted ends, a bread slice, an envelope, a flag, a crown',
         slot=True,
+        means='a sachet of medicine powder',
     ),
     Target(
         'capsule_strip', 'head', 'capsule_strip',

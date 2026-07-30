@@ -112,5 +112,9 @@
   "a6d9615c": "\\food_oil",
   "afbd8f37": "\\no{\\food_oil}",
   "cb8461a1": "\\no{\\contact_lens}",
-  "__assets": "14fec7778c364db1"
+  "__assets": "14fec7778c364db1",
+  "a6af924d": "\\four_times_daily{\\liquid_bottle{\\body_mouth}}",
+  "080b438c": "\\state_breastfeeding",
+  "d98407b9": "\\three_times_daily{\\capsule_strip{\\food_bowl}}",
+  "7ae9598c": "\\state_pregnant"
 }

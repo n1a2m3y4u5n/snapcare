@@ -1,0 +1,18 @@
+{
+ "n": 507,
+ "mae": {
+  "calories": 58.118,
+  "mass": 32.973,
+  "fat": 4.211,
+  "carb": 6.023,
+  "protein": 5.411
+ },
+ "mae_pct": {
+  "calories": 22.75,
+  "mass": 16.611,
+  "fat": 32.822,
+  "carb": 30.597,
+  "protein": 30.96
+ },
+ "mean_mae_pct": 26.748
+}

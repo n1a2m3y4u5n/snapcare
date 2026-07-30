@@ -8,6 +8,8 @@ import { CONDITIONS } from '@/lib/snapcare/conditions';
 import { ask, sayable, Speakable } from '@/components/sc/Say';
 import { FACES, freeFaces } from '@/lib/snapcare/accounts';
 import { useMyColor } from '@/lib/hooks';
+import { usePreferences } from '@/stores/preferences';
+import { speak } from '@/lib/voice';
 import type { AgeBand } from '@/lib/snapcare/types';
 
 /**
@@ -82,6 +84,24 @@ function ProfileBody() {
   const setup = useSearchParams().get('setup') === '1';
   const { profile, toggleCondition, setFace, setAgeBand, confirm } = useProfile();
   const myColor = useMyColor(profile.color);
+  const autoTts = usePreferences((s) => s.autoTts);
+
+  /*
+   * 고른 순간 무엇을 골랐는지 말한다.
+   *
+   * 지금 이 화면이 고른 것을 알리는 방법은 테두리 색 하나뿐이다. 그것은 화면을 볼 수
+   * 있는 사람의 신호이고, 이 앱이 대상으로 삼은 사람에게는 아무 일도 일어나지 않은
+   * 것과 같다. 무엇보다 이 칸들은 **판정을 바꾸는 입력**이라, 잘못 눌렀다는 것을
+   * 그 자리에서 알아야 한다 — 다음에 알 방법은 틀린 판정을 받는 것뿐이다.
+   *
+   * 미리 듣는 것과 다른 일이다. 미리 듣기는 머리글(묶음 전체)과 꾹 누르기(칸 하나)가
+   * 하고, 이것은 누른 뒤의 확인이다.
+   *
+   * 음성을 끈 사람에게는 말하지 않는다. 끈 것은 뜻이 있는 선택이다.
+   */
+  function say(text: string) {
+    if (autoTts) void speak(text);
+  }
 
   /*
    * 남이 쓰는 얼굴은 안 보인다.
@@ -173,9 +193,10 @@ function ProfileBody() {
           지팡이 짚은 사람까지 한 줄로 놓이면 무엇을 묻는지가 보인다. 머리글에 또
           그림을 얹으면 답과 겹쳐서, 그중 하나를 고르라는 뜻으로 읽힐 수 있다.
         */}
-        <Speakable text="How old. This decides how much is too much."
-                   className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
-                   style={{ color: 'var(--color-sc-muted)' }}>
+        <Speakable
+          text={`How old. This decides how much is too much. ${AGE_BANDS.map((b) => b.label).join(', ')}.`}
+          className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+          style={{ color: 'var(--color-sc-muted)' }}>
           <span className="flex-1">HOW OLD</span>
         </Speakable>
         <div className="mt-2 grid grid-cols-4 gap-2">
@@ -184,11 +205,12 @@ function ProfileBody() {
             return (
               <button
                 key={b.band}
-                onClick={() => setAgeBand(b.band, b.role)}
+                onClick={() => { setAgeBand(b.band, b.role); say(`${b.label}. Selected.`); }}
                 className="flex flex-col items-center gap-1 rounded-2xl bg-white py-3 shadow-sm"
                 style={{ outline: on ? '2px solid var(--color-sc-primary)' : '2px solid transparent' }}
                 aria-pressed={on}
                 aria-label={b.label}
+                {...sayable(`${b.label}.${on ? ' Selected.' : ''}`)}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/glyphs/${b.glyph}.png`} alt="" aria-hidden className="h-8 w-8" />
@@ -207,7 +229,13 @@ function ProfileBody() {
           if (items.length === 0) return null;
           return (
             <div key={g.key}>
-              <Speakable text={g.say}
+              {/*
+                머리글이 **고를 것들까지 읽는다.**
+                묶음의 뜻만 들려주면 "뭘 고르라는 건지" 는 알아도 "무엇 중에" 는 모른다.
+                🩸 이 당뇨이고 🌾 가 글루텐이라는 것은 그림만으로는 알 수 없어서,
+                이 목록이 없으면 진단 묶음은 통째로 닿지 않는다.
+              */}
+              <Speakable text={`${g.say} ${items.map((c) => c.label).join(', ')}.`}
                          className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
                          style={{ color: 'var(--color-sc-muted)' }}>
                 <span className="text-xl" aria-hidden>{g.emoji}</span>
@@ -219,7 +247,7 @@ function ProfileBody() {
                   return (
                     <button
                       key={c.id}
-                      onClick={() => toggleCondition(c.id)}
+                      onClick={() => { toggleCondition(c.id); say(`${c.label}. ${on ? 'Off.' : 'On.'}`); }}
                       className="flex flex-col items-center gap-1.5 rounded-2xl bg-white px-2 py-4 shadow-sm"
                       style={{ outline: on ? '2px solid var(--color-caution)' : '2px solid transparent' }}
                       aria-pressed={on}

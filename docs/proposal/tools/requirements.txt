@@ -1,0 +1,18 @@
+# 제안서 문서·도판 생성 도구가 쓰는 것.
+#
+#   python3 -m venv .venv-doc
+#   .venv-doc/bin/pip install -r docs/proposal/tools/requirements.txt
+#   .venv-doc/bin/python docs/proposal/tools/build_docx.py
+#
+# 가상환경 자체는 올리지 않는다. bin/ 안의 경로가 만든 사람의
+# 홈 디렉터리로 박히므로 다른 기계에서 실행되지 않는다.
+
+python-docx==1.2.0      # build_docx.py  — 템플릿 채우기
+openpyxl==3.1.5         # build_xlsx.py  — 도표 원자료 워크북
+matplotlib==3.11.1      # charts.py, diagrams.py, panels.py
+pillow==12.3.0          # fig10.py       — 디스펜서 도판 합성
+numpy==2.5.1            # matplotlib 이 쓰고, score_model.py 도 쓴다
+
+# score_model.py 로 모델을 다시 채점할 때만 추가로 필요하다.
+# Nutrition5k 테스트 세트를 따로 내려받아야 하므로 기본에서 뺀다.
+#   onnxruntime

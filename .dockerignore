@@ -13,3 +13,10 @@ Dockerfile
 # 서버가 만든 것은 볼륨에 남는다.
 public/glyphs-gen
 .data
+
+# 작업 문서 — 앱이 쓰지 않는다. 특히 scratchpad/contacts 에는 연구자 1103명의
+# 실명과 이메일이 들어 있어서 컨테이너 이미지에 실리면 안 된다. 앱이 서비스하지
+# 않더라도 이미지 안에 남고, 이미지에 닿는 사람은 꺼내 볼 수 있다.
+scratchpad
+docs
+*.xlsx

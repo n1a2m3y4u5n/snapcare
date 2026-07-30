@@ -92,3 +92,4 @@ public/glyphs-gen/
 
 # OCR 자산 — scripts/copy-ocr.mjs 가 node_modules 와 CDN 에서 채운다 (14MB)
 public/ocr/
+.venv-doc/

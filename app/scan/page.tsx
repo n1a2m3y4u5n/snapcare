@@ -6,7 +6,7 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip, OneGlyph } from '@/components/sc/PictogramStrip';
 import { NutrientBars } from '@/components/sc/NutrientBars';
-import { Say, Speakable } from '@/components/sc/Say';
+import { Hear, Say, Speakable } from '@/components/sc/Say';
 import { doseSentence, storageSentence } from '@/lib/snapcare/say';
 import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
@@ -21,6 +21,7 @@ import { requestPermission, scheduleNotification } from '@/lib/notifications';
 import { computeVerdict, LEVEL_META } from '@/lib/snapcare/verdict';
 import { checkInteractions } from '@/lib/medication/interactions';
 import { itemToDsl } from '@/lib/snapcare/sigil';
+import { durationDays } from '@/lib/hardware/dispenser';
 import { itemVoiceScript } from '@/lib/snapcare/say';
 import { speak } from '@/lib/voice';
 import type { ItemFlag, Member, ScanItem, Verdict } from '@/lib/snapcare/types';
@@ -113,12 +114,17 @@ export default function ScanResultPage() {
     if (sched.length > 0) {
       // 알람은 먼저 만든다. OS 알림 권한은 부가 기능이라 이걸 기다리면 안 된다 —
       // 사용자가 권한 창을 닫거나 무시하면 await 가 풀리지 않아 버튼이 죽은 것처럼 보였다.
+      // 복약 기간을 함께 싣는다. 처방전에서 읽어 이미 갖고 있던 값인데(§durationText)
+      // 지금까지 기기로 보낼 때만 쓰고 앱 자신의 알람은 끝을 몰랐다 — 7일짜리
+      // 항생제 알람이 100일째에도 울렸다. 0 이면 무기한이다.
       addReminders(
         sched.map((s, i) => ({
           id: `rem_${cryptoId()}_${i}`,
           memberId: member.id,
           time: s.time,
           item: scanned!,
+          startedOn: todayKey(),
+          days: durationDays(scanned!.rx?.durationText),
         })),
       );
       // 권한이 있으면 데모용으로 첫 알림을 8초 뒤 실제로 띄운다 (없으면 앱 안에서만 동작)
@@ -145,7 +151,9 @@ export default function ScanResultPage() {
       <div className="flex items-center justify-between px-5 pt-14 pb-1">
         <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none" style={{ color: 'var(--color-sc-muted)' }}>×</button>
         <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>{header}</span>
-        <button onClick={() => speak(itemVoiceScript(scanned, verdict, member), 'en-US')} aria-label="Replay voice" className="text-xl leading-none">🔊</button>
+        {/* 20px 이모지였다. 이 화면에서 판정 전체를 다시 듣는 유일한 버튼인데 손끝보다
+            작았다. 다른 화면과 같은 44 짜리로 맞춘다. */}
+        <Hear text={itemVoiceScript(scanned, verdict, member)} />
       </div>
 
       {isRx ? (
@@ -245,7 +253,10 @@ function FoodResult({
       </div>
 
       <div className="mt-auto px-5 pb-8 pt-4">
-        <PrimaryButton onClick={onDone} level={verdict.level}>Done</PrimaryButton>
+        <PrimaryButton onClick={onDone} level={verdict.level}
+                       say="Done. This is saved to your history, and you go back to the start.">
+          Done
+        </PrimaryButton>
       </div>
     </div>
   );
@@ -344,7 +355,10 @@ function RxResult({
       )}
 
       <div className="mt-auto pb-8 pt-6">
-        <PrimaryButton onClick={onDone} level="safe">Create reminders</PrimaryButton>
+        <PrimaryButton onClick={onDone} level="safe"
+                       say="Create reminders. The phone will tell you at each time on the list above.">
+          Create reminders
+        </PrimaryButton>
       </div>
     </div>
   );
@@ -374,12 +388,36 @@ function SwapSide({ mark, color, say, children }: {
   );
 }
 
-function PrimaryButton({ children, onClick, level }: { children: React.ReactNode; onClick: () => void; level: 'safe' | 'caution' | 'avoid' }) {
+/**
+ * 화면을 끝내는 버튼 — 옆에 듣기 버튼을 하나 둔다.
+ *
+ * 이 화면에서 소리가 없는 마지막 요소였다. 그런데 여기가 **누르면 되돌릴 수 없는
+ * 자리**다. 판정을 기록으로 남기고, 처방이면 알람까지 만든다. 무슨 일이 일어나는지
+ * 모르고 누르는 버튼이 하필 그것이면 안 된다.
+ *
+ * 버튼 글자가 아니라 **누르면 무엇이 되는지**를 말한다. "Done" 을 읽어 주는 것은
+ * 이미 보이는 것을 되풀이하는 것이고, 정작 모르는 것 — 그래서 어떻게 되는가 — 은
+ * 그대로 남는다.
+ */
+function PrimaryButton({ children, onClick, level, say }: {
+  children: React.ReactNode;
+  onClick: () => void;
+  level: 'safe' | 'caution' | 'avoid';
+  say: string;
+}) {
   const bg = level === 'avoid' ? 'var(--color-avoid)' : level === 'caution' ? 'var(--color-caution)' : 'var(--color-sc-primary)';
   return (
-    <button onClick={onClick} className="w-full rounded-2xl py-4 text-center text-base font-bold text-white active:scale-[0.98] transition-transform" style={{ background: bg }}>
-      {children}
-    </button>
+    <div className="flex items-stretch gap-2">
+      <button onClick={onClick}
+              className="flex-1 rounded-2xl py-4 text-center text-base font-bold text-white
+                         active:scale-[0.98] transition-transform"
+              style={{ background: bg }}>
+        {children}
+      </button>
+      {/* 듣기 버튼은 흰 바탕에 둔다 — 같은 색으로 붙이면 버튼 하나가 두 칸으로
+          쪼개진 것처럼 보여서, 오른쪽을 눌러도 끝나는 줄 안다. */}
+      <Hear text={say} className="h-auto w-14 shadow-sm" />
+    </div>
   );
 }
 

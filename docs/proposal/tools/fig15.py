@@ -1,8 +1,9 @@
+from i18n import T, LANG, FIG as FIG_OUT, FIG_SRC
 """
 [그림 15] 종이 서식과 판독 결과.
 
 왼쪽은 실제로 파서에 넣은 사진, 오른쪽은 그 사진에서 읽어낸 값이다. 두 장을 나란히
-두는 것이 요점이다 — 서식만 보이면 "읽을 수 있다" 는 주장이 그림 밖에 남는다.
+두는 것이 요점이다 — 서식만 보이면 T("읽을 수 있다") 는 주장이 그림 밖에 남는다.
 
 각 항목 옆의 막대는 채움 점수다. 고른 칸과 나머지 칸의 간격이 보여야 판독이
 아슬아슬하게 맞은 것이 아니라는 것이 드러난다.
@@ -15,8 +16,8 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = Path(__file__).resolve().parent
-FIG = HERE.parent / 'fig'
-PARTS = FIG / 'parts'
+FIG = FIG_OUT
+PARTS = FIG_SRC / 'parts'
 REPO = HERE.parents[2]
 S = 3
 
@@ -41,17 +42,17 @@ out = subprocess.run(
     capture_output=True, text=True, check=True)
 r = json.loads(out.stdout)
 if not r['ok']:
-    sys.exit(f'파서가 읽지 못했다: {r}')
+    sys.exit(T('파서가 읽지 못했다: {r}').format(r=r))
 
 vals, scores = r['values'], r['scores']
 
 # ── 표시할 네 항목. 라벨은 사람이 읽는 말로 바꾼다. ──────────────────
 ROWS = [
-    ('약을 담은 칸', 'layer', lambda v: f'{v}번 칸'),
-    ('복용 요일', 'days', lambda v: ' · '.join(v)),
-    ('복용 기간', 'duration', lambda v: {'7d': '7일', '14d': '14일', '30d': '30일',
-                                        '90d': '90일', 'ongoing': '계속'}.get(v, v)),
-    ('복용 시각', 'hour', lambda v: f'{int(v):02d}:00'),
+    (T('약을 담은 칸'), 'layer', lambda v: T('{v}번 칸').format(v=v)),
+    (T('복용 요일'), 'days', lambda v: ' · '.join(v)),
+    (T('복용 기간'), 'duration', lambda v: {'7d': T('7일'), '14d': T('14일'), '30d': T('30일'),
+                                        '90d': T('90일'), 'ongoing': T('계속')}.get(v, v)),
+    (T('복용 시각'), 'hour', lambda v: f'{int(v):02d}:00'),
 ]
 
 W, H = 980, 560
@@ -66,7 +67,7 @@ photo = photo.resize((pw * S, ph * S), Image.LANCZOS)
 py = (H - ph) // 2
 img.paste(photo, (24 * S, py * S))
 d.rectangle([24 * S, py * S, (24 + pw) * S, (py + ph) * S], outline=LINE, width=S)
-d.text((24 * S, (py + ph + 8) * S), '파서에 입력한 사진 (원근·조명·초점 열화 포함)',
+d.text((24 * S, (py + ph + 8) * S), T('파서에 입력한 사진 (원근·조명·초점 열화 포함)'),
        font=F(10), fill=MUTE)
 
 # 가운데 화살표 — 사진에서 값으로 간다는 것만 표시한다
@@ -77,7 +78,7 @@ d.polygon([((ax + 34) * S, (H // 2 - 6) * S), ((ax + 46) * S, (H // 2) * S),
 
 # ── 오른쪽: 읽어낸 값 ────────────────────────────────────────
 x = ax + 62
-d.text((x * S, 46 * S), '읽어낸 값', font=F(13, True), fill=INK)
+d.text((x * S, 46 * S), T('읽어낸 값'), font=F(13, True), fill=INK)
 
 y = 84
 for label, key, fmt in ROWS:
@@ -100,18 +101,18 @@ for label, key, fmt in ROWS:
             d.rectangle([left * S, (top + 26 - h) * S, (left + each) * S, (top + 26) * S],
                         fill=(GREEN if k in picked else (188, 194, 204)))
     other = max([v for k, v in g.items() if k not in picked], default=0)
-    d.text((bx * S, (top + 31) * S), '고른 칸', font=F(8), fill=MUTE)
+    d.text((bx * S, (top + 31) * S), T('고른 칸'), font=F(8), fill=MUTE)
     d.text(((bx + 26) * S, (top + 31) * S), f'{min(g[k] for k in picked):.2f}',
            font=MONO(8), fill=GREEN)
-    d.text(((bx + 52) * S, (top + 31) * S), '· 나머지 최대', font=F(8), fill=MUTE)
+    d.text(((bx + 52) * S, (top + 31) * S), T('· 나머지 최대'), font=F(8), fill=MUTE)
     d.text(((bx + 100) * S, (top + 31) * S), f'{other:.2f}', font=MONO(8), fill=MUTE)
     y += 108
 
 d.text((x * S, (H - 40) * S),
-       '네 귀퉁이 ArUco 마커로 원근을 보정한 뒤 정해진 좌표의 채움 비율을 읽는다.',
+       T('네 귀퉁이 ArUco 마커로 원근을 보정한 뒤 정해진 좌표의 채움 비율을 읽는다.'),
        font=F(9), fill=SUB)
 d.text((x * S, (H - 26) * S),
-       '값은 합성 시 정한 정답(3번 칸 · 월수금 · 30일 · 08시)과 일치한다.',
+       T('값은 합성 시 정한 정답(3번 칸 · 월수금 · 30일 · 08시)과 일치한다.'),
        font=F(9), fill=SUB)
 
 img.resize((W, H), Image.LANCZOS).save(FIG / 'fig14_formsheet.png')

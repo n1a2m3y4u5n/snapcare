@@ -10,14 +10,19 @@ const execFileAsync = promisify(execFile);
 const SCRIPT = join(process.cwd(), 'pill_dispenser', 'form_sheet_parser', 'parse_cli.py');
 
 /**
- * 종이 폼시트 사진 → 복약 일정.
+ * 종이 폼시트 사진 → 복약 일정. **이제는 대체 경로다.**
  *
  * 의사가 칸마다 약을 채우고 버블시트를 표시해 환자에게 준다. 환자는 그걸 찍기만 하면
- * 되므로, 글을 못 읽어도 일정이 기기로 넘어간다. 이 경로는 인터넷도 제품 DB도 필요 없다.
+ * 되므로, 글을 못 읽어도 일정이 기기로 넘어간다.
  *
- * 판독은 팀에서 만든 OpenCV 파서(pill_dispenser/form_sheet_parser)가 한다 — 네 귀퉁이 ArUco
- * 마커로 원근을 보정하고, 정해진 좌표의 버블 채움 비율을 읽는다. 여기서는 파이썬을
- * 실행하고 결과를 넘기는 일만 한다 (SIGIL 픽토그램 라우트와 같은 방식).
+ * 앱은 이 판독을 `lib/formsheet` 로 **브라우저 안에서** 한다. 파이썬 파서를 그대로
+ * 옮긴 것이고, 합성 사진 40장에서 두 구현이 같은 답을 낸다(tools/formsheet_check.ts).
+ * 옮긴 이유는 이 한 경로만 서버를 필요로 했기 때문이다 — 인터넷이 없는 진료소에서
+ * 가장 쓰고 싶은 기능이 인터넷을 요구하고 있었다.
+ *
+ * 이 라우트를 남겨 두는 이유는 둘이다. 캔버스나 createImageBitmap 이 없는 아주 오래된
+ * 브라우저, 그리고 앱이 아닌 다른 클라이언트. 판독은 그대로 팀의 OpenCV 파서
+ * (pill_dispenser/form_sheet_parser)가 하고 여기서는 파이썬을 실행해 결과를 넘긴다.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const body = (await req.json().catch(() => ({}))) as { image?: string };
