@@ -468,6 +468,34 @@ export const BRANCHES: Branch[] = [
         ),
       },
       {
+        // 우리 엔진의 핵심 주장은 형태소를 겹쳐 새 지시를 만든다는 것이다. AAC 구획은
+        // 그것을 상징 체계로 묻고 HCI 구획은 시각적으로 묻는데, **임상적으로** 안전한지는
+        // 약사만 답할 수 있다.
+        //
+        // 넷째 선택지가 이 문항을 넣은 이유다. 금지 표시를 다른 그림 위에 얹으면 금지를
+        // 놓치고 밑그림만 읽어 정반대로 이해할 수 있다 — 픽토그램 연구에서 알려진
+        // 실패 방식이고, 우리 데모의 '땅콩 금지' 가 정확히 그 구조다.
+        id: 'ph6_stacking',
+        kind: 'single' as const,
+        q: T(
+          '저희는 한 그림에 두 가지를 겹칩니다. 위 데모의 땅콩 그림은 금지 표시를 알레르기 그림 위에 얹은 것입니다. 임상적으로 이 방식은 어떻습니까?',
+          'We stack two things into one picture. In the demo above, the peanut image is a prohibition mark laid over an allergen symbol. Clinically, what do you make of that?',
+          'Suprapunem două elemente într-o singură imagine. În demonstrația de mai sus, imaginea cu arahide este un semn de interdicție suprapus pe un simbol de alergen. Din punct de vedere clinic, ce părere aveți?',
+        ),
+        options: [
+          T('문제없다', 'No problem', 'Nicio problemă'),
+          T('경고는 겹치지 말고 따로 떼어 크게 보여야 한다', 'Warnings should be separated out and shown large, not stacked', 'Avertismentele ar trebui separate și afișate mari, nu suprapuse'),
+          T('겹치면 주의가 분산되어 금지를 놓친다', 'Stacking splits attention and the prohibition gets missed', 'Suprapunerea împarte atenția și interdicția este ratată'),
+          T('금지 표시를 못 보고 밑그림만 읽어 정반대로 이해할 위험이 있다', 'There is a risk of missing the prohibition mark, reading only the base symbol, and understanding the opposite', 'Există riscul de a rata semnul de interdicție, de a citi doar simbolul de bază și de a înțelege exact opusul'),
+          T('판단하기 어렵다', 'Hard to say', 'Greu de spus'),
+        ],
+        follow: T(
+          '경고를 어떻게 제시해야 한다고 보십니까?',
+          'How do you think a warning should be presented instead?',
+          'Cum credeți că ar trebui prezentat un avertisment?',
+        ),
+      },
+      {
         id: 'ph3_current',
         kind: 'longtext',
         q: T(
