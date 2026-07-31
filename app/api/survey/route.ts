@@ -4,6 +4,8 @@ import { join } from 'node:path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { notify } from '@/lib/notify';
+
 /**
  * 전문가 설문 응답 수집.
  *
@@ -89,7 +91,63 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'write_failed' }, { status: 500 });
   }
 
+  /*
+   * 응답이 들어왔다고 우리에게 알린다.
+   *
+   * await 하지 않는다. 네이버가 막히든 연결이 끊기든 이미 저장된 응답과 이 200 응답에
+   * 영향을 주면 안 된다 — 알림은 우리 편의이고 응답은 그분이 시간을 들여 준 것이다.
+   * notify 는 안에서 스스로 오류를 삼키므로 잡히지 않는 거절이 생기지 않는다.
+   */
+  void notify(summarize(out));
+
   return NextResponse.json({ ok: true, id });
+}
+
+/**
+ * 알림 메일에 담을 요약.
+ *
+ * 서버에는 명단이 없다 — 도커 이미지에서 scratchpad 를 뺐기 때문이다. 그래서 수신자
+ * 토큰만 적고, 누구인지는 응답자가 직접 적은 성함·소속으로 쓴다. 이름을 알아내려면
+ * 우리 손의 엑셀과 맞춰야 한다.
+ *
+ * 자유 서술은 앞부분만 싣는다. 전문을 메일로 옮기면 개인 의견이 우리 메일함과 네이버
+ * 서버에 한 벌 더 쌓인다. 무엇이 왔는지 알기에는 앞머리로 충분하다.
+ */
+function summarize(rec: Record<string, unknown>): { subject: string; body: string } {
+  const a = (rec.answers ?? {}) as Record<string, string>;
+  const env = (rec.env ?? {}) as Record<string, unknown>;
+  const field = a.b_field || '(분야 없음)';
+  const who = [a.b_name, a.b_affil, a.b_title].filter(Boolean).join(' · ') || '(이름 없음)';
+
+  const picked = Object.entries(a).filter(([k]) => !k.startsWith('b_') && !k.endsWith('__why'));
+  const lines = picked.map(([k, v]) => {
+    const why = a[`${k}__why`];
+    const head = `  ${k}: ${String(v).slice(0, 120)}`;
+    return why ? `${head}\n     이유: ${String(why).slice(0, 200)}` : head;
+  });
+
+  const mins = (() => {
+    const s = rec.startedAt as string | undefined;
+    const e = rec.clientTime as string | undefined;
+    if (!s || !e) return '';
+    const d = (Date.parse(e) - Date.parse(s)) / 60000;
+    return Number.isFinite(d) ? ` · ${d.toFixed(0)}분 걸림` : '';
+  })();
+
+  return {
+    subject: `[SnapCare 설문] ${field} — ${a.b_name || '익명'}`,
+    body: [
+      `${who}`,
+      `분야: ${field} · 국가: ${a.b_country || '?'} · 접촉 빈도: ${a.b_exposure || '?'}`,
+      `수신자 토큰: ${rec.recipient || '(링크 경유 아님)'}${mins}`,
+      `화면: ${env.screen || '?'} · 소리 눌러봄: ${env.demoTouched ? '예' : '아니오'}`,
+      '',
+      `답한 문항 ${picked.length}개`,
+      ...lines,
+      '',
+      `전체 내용은 볼륨에 있다. 응답 id: ${rec.id}`,
+    ].join('\n'),
+  };
 }
 
 /**
