@@ -17,6 +17,16 @@ def gpio_moves(dispenser, tray):
     return dispenser.servos.backend.angles(dispenser.servos.pins[tray])
 
 
+def drops(dispenser, tray):
+    """How many drops this tray has run.
+
+    Taken from the servo's own tally rather than counted out of the pulse
+    stream, so these tests say "one dose" and go on saying it if the shape of
+    the stroke changes — it now passes 180° twice per drop.
+    """
+    return dispenser.servos.drops.get(tray, 0)
+
+
 # ── accepting a plan ────────────────────────────────────────────────────────
 
 def test_a_weekly_payload_is_accepted_and_stored(dispenser):
@@ -67,7 +77,7 @@ def test_a_due_dose_sweeps_the_right_servo(dispenser, clock):
     assert len(events) == 1
     assert events[0]["tray"] == 3 and events[0]["taken"]
     assert events[0]["sc1"].startswith("SC1*E*3*0800*T*")
-    assert gpio_moves(dispenser, 3) == [2500, 500, 0]
+    assert gpio_moves(dispenser, 3) == [2500, 500, 2500, 500, 0]
     assert gpio_moves(dispenser, 1) == []
 
 
@@ -84,7 +94,7 @@ def test_a_dose_is_not_dispensed_twice_in_one_day(dispenser, clock):
     assert len(dispenser.tick()) == 1
     clock.advance(minutes=5)
     assert dispenser.tick() == []
-    assert gpio_moves(dispenser, 1).count(2500) == 1
+    assert drops(dispenser, 1) == 1
 
 
 def test_a_dose_past_its_window_is_logged_and_the_tray_stays_shut(dispenser, clock):
@@ -107,7 +117,7 @@ def test_a_day_of_outage_does_not_empty_three_trays_into_one_hand(dispenser, clo
     assert [(e["time"], e["taken"]) for e in events] == [
         ("0800", False), ("1300", False), ("2000", True),
     ]
-    assert gpio_moves(dispenser, 1).count(2500) == 1
+    assert drops(dispenser, 1) == 1
 
 
 def test_a_jammed_servo_leaves_the_dose_owed(store, clock):
@@ -180,7 +190,7 @@ def test_a_manual_drop_does_not_cancel_the_scheduled_dose(dispenser, clock):
 
     clock.set(datetime(2026, 7, 29, 8, 0))
     assert len(dispenser.tick()) == 1
-    assert gpio_moves(dispenser, 1).count(2500) == 2
+    assert drops(dispenser, 1) == 2
 
 
 def test_confirming_records_the_dose_as_taken(dispenser, clock):

@@ -60,7 +60,7 @@ pill_dispenser/
     snapcare_dispenser/      SC1, scheduler, servos, WiFi, cloud link, web server
     service/                 systemd unit + install.sh
     tests/                   `make` — 359 tests, no board
-    ASSEMBLY.md              building the machine, stage by stage
+    docs/assembly-guide.pdf  building the machine, stage by stage
   cloud_relay/             the mailbox between the app and the device
     snapcare_relay/          six endpoints, a long poll, and no ability to read
     snapcare_relay/web/      the demo app — pair, publish, watch, inject faults
@@ -97,8 +97,9 @@ schedule change reach a device nobody is standing next to. See
 and what it costs to run. The two-board build has no network and does not have
 this; its answer to the same problem is the paper form sheet.
 
-[`rpi_firmware/ASSEMBLY.md`](rpi_firmware/ASSEMBLY.md) builds that machine from a
-bare Pi, one subsystem per stage, with the command that proves each one.
+[`rpi_firmware/docs/assembly-guide.pdf`](rpi_firmware/docs/assembly-guide.pdf)
+builds that machine from a bare Pi, one subsystem per stage, with the command
+that proves each one.
 
 ### Trying the whole thing without hardware
 

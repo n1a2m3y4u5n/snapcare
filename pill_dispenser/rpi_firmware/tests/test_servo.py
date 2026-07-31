@@ -10,29 +10,37 @@ from snapcare_dispenser import config
 from snapcare_dispenser.servo import MockBackend, TrayServos, make_backend
 
 
-def test_a_drop_sweeps_to_the_far_end_and_back_then_stops():
-    """The motion the hardware spec describes: 0° -> 180° -> 0°, then silence.
+def test_a_drop_runs_two_round_trips_then_stops():
+    """The motion the hardware spec describes, from a tray resting at 0°:
 
-    The trailing zero is the part worth asserting. Without it the servo is
-    still being commanded to hold 0°, and it hums and draws current for the
-    twenty-three hours until the next dose, holding a position it is already
-    mechanically resting in.
+        180° -> 0° -> 180° -> 0°, then silence.
+
+    Two round trips, because one tip can leave a pill on the lip of the gate to
+    ride back with the horn. The trailing zero is the part worth asserting:
+    without it the servo is still being commanded to hold 0°, humming and
+    drawing current for the twenty-three hours until the next dose, holding a
+    position it is already mechanically resting in.
     """
+    lo, hi = config.SERVO_MIN_US, config.SERVO_MAX_US
     backend = MockBackend()
     trays = TrayServos(backend=backend, pins={1: 17}, sleep=lambda _s: None)
     trays.drop(1)
 
-    assert backend.angles(17) == [config.SERVO_MAX_US, config.SERVO_MIN_US, 0]
+    assert backend.angles(17) == [hi, lo, hi, lo, 0]
 
 
-def test_a_drop_takes_the_time_the_servo_needs():
-    """Open loop: nothing on an SG90 reports arrival, so the wait is the guarantee."""
+def test_every_command_in_the_stroke_gets_the_same_second():
+    """Open loop: nothing on an SG90 reports arrival, so the wait is the guarantee.
+
+    Including the last one. Cutting the signal the instant 0° is commanded
+    would release the pin with the tray still part-way open.
+    """
     waits = []
     trays = TrayServos(backend=MockBackend(), pins={1: 17}, sleep=waits.append)
     trays.drop(1)
 
-    assert waits == [config.SERVO_TRAVEL_S, config.SERVO_DWELL_S, config.SERVO_TRAVEL_S]
-    assert sum(waits) >= 2 * config.SERVO_TRAVEL_S
+    assert waits == [config.SERVO_STEP_S] * 4
+    assert config.SERVO_STEP_S >= config.SERVO_TRAVEL_S, "a step must cover a traverse"
 
 
 def test_only_one_servo_moves_at_a_time():
@@ -118,15 +126,25 @@ def test_per_tray_trim_is_applied(monkeypatch):
     backend = MockBackend()
     trays = TrayServos(backend=backend, pins={1: 17}, sleep=lambda _s: None)
     trays.drop(1)
-    assert backend.angles(17) == [2450, 520, 0]
+    assert backend.angles(17) == [2450, 520, 2450, 520, 0]
 
 
 # ── the pin map ─────────────────────────────────────────────────────────────
 
-def test_the_contest_build_has_three_trays():
-    """The map lists eight; three are fitted. Scaling up is one number."""
+def test_all_eight_trays_are_accepted_by_default():
+    """Plugging a servo into a reserved pin is the whole job — no config edit.
+
+    The cost is stated in `config.INSTALLED_TRAYS`: an SG90 reports nothing, so
+    a schedule for a tray that is not physically there is accepted and silently
+    never dispensed. `SNAPCARE_TRAYS` is how a build buys the refusal back.
+    """
+    assert sorted(config.tray_gpio()) == list(range(1, 9))
+    assert config.INSTALLED_TRAYS == config.MAX_TRAYS
+
+
+def test_a_build_can_still_declare_how_many_are_fitted(monkeypatch):
+    monkeypatch.setattr(config, "INSTALLED_TRAYS", 3)
     assert sorted(config.tray_gpio()) == [1, 2, 3]
-    assert config.INSTALLED_TRAYS == 3
 
 
 def test_the_full_map_is_eight_trays_on_distinct_pins():
@@ -157,7 +175,7 @@ def test_the_pins_avoid_the_ones_that_cost_hardware():
     assert not pins & {0, 1}, "GPIO 0/1 are the HAT ID EEPROM"
     # GPIO 2/3 have permanent pull-ups; a servo signal idling high before the
     # software starts slams the horn to one end at power-on. They are also
-    # where the DS3231 lives on this build.
+    # where the RTC lives on this build.
     assert not pins & {2, 3}, "GPIO 2/3 are I2C and are pulled up"
     assert not pins & {14, 15}, "GPIO 14/15 are the serial console"
 

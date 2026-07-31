@@ -64,9 +64,15 @@ fi
 
 say "Installing packages"
 apt-get update
-# python3-segno is not in every suite; the firmware works without it, so a
-# failure to find it must not abort an otherwise good install.
-apt-get install -y pigpio avahi-daemon python3 i2c-tools python3-smbus2
+# Only these are genuinely required. Everything below is optional: the firmware
+# reports at startup which of them it found, so a package that is not in this
+# suite must not abort an otherwise good install.
+apt-get install -y avahi-daemon python3 i2c-tools python3-smbus2
+# pigpio is not in every suite. Debian dropped it, and a Pi OS release that has
+# moved to lgpio for the Pi 5 will not carry it either. `servo.make_backend`
+# already falls back to RPi.GPIO by itself, so a missing package here must not
+# take the hostname, the captive-portal rule and the systemd unit down with it.
+apt-get install -y pigpio || echo "  (pigpio unavailable — servos will run on RPi.GPIO software PWM and hum audibly between doses)"
 apt-get install -y python3-segno || echo "  (segno unavailable — the label will show text instead of a QR)"
 apt-get install -y python3-rpi-ws281x || echo "  (rpi-ws281x unavailable — the LED ring will be skipped)"
 apt-get install -y python3-cryptography || echo "  (cryptography unavailable — cloud sync will be off; the device still dispenses)"
@@ -106,8 +112,15 @@ say "Creating $STATE_DIR"
 mkdir -p "$STATE_DIR"
 chmod 750 "$STATE_DIR"
 
-say "Enabling pigpiod (steady servo pulses)"
-systemctl enable --now pigpiod
+# Only if the package arrived. pigpio is a daemon, not a library: installing it
+# and not starting it is the failure people actually hit, so this stays here —
+# it just no longer assumes the package is present.
+if systemctl list-unit-files 2>/dev/null | grep -q '^pigpiod'; then
+  say "Enabling pigpiod (steady servo pulses)"
+  systemctl enable --now pigpiod
+else
+  say "pigpiod not installed — the firmware will use RPi.GPIO software PWM"
+fi
 
 current_hostname="$(hostname)"
 if [[ "$current_hostname" != "$HOSTNAME_WANTED" ]]; then

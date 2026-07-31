@@ -1,8 +1,10 @@
 """Driving the eight tray servos.
 
-One pill drop is one sweep: the servo rests at 0°, goes to 180°, and comes
-back. Nothing on an SG90 reports its position, so the move is open-loop — the
-firmware commands an angle and waits `SERVO_TRAVEL_S` for it to get there.
+The servo rests at 0°. One pill drop is two round trips from there — 180°, 0°,
+180°, 0° — because a single tip can leave a pill on the lip of the gate to ride
+back with the horn. Nothing on an SG90 reports its position, so the move is
+open-loop: the firmware commands an angle and waits `SERVO_STEP_S` for the horn
+to get there.
 
 Three things here are not obvious and all three cost hardware if they are got
 wrong.
@@ -229,26 +231,32 @@ class TrayServos:
         return self.pins[tray]
 
     def drop(self, tray: int) -> None:
-        """One pill drop: 0° -> 180° -> 0°, then the signal is cut.
+        """One pill drop: two round trips from the resting 0°, then silence.
 
-        Blocks for about `2 * SERVO_TRAVEL_S + SERVO_DWELL_S`, and blocks any
-        other tray for the same period. Callers that must stay responsive
-        should run this on a worker thread; the daemon does.
+            (resting at 0°) -> 180° -> 0° -> 180° -> 0°
+
+        Four commands, `SERVO_STEP_S` apart. The stroke runs twice because one
+        tip does not reliably clear the gate — a pill can sit on the lip and
+        ride back with the horn, which reads as a dose given and is not one.
+
+        Blocks for about `4 * SERVO_STEP_S` — four seconds at the default
+        figures — and blocks every other tray for the same period. Callers that
+        must stay responsive should run this on a worker thread; the daemon does.
         """
         gpio = self.gpio_for(tray)
         rest_us, far_us = config.servo_range(tray)
+        stroke = (far_us, rest_us, far_us, rest_us)
 
         with self._lock:
             log.info("tray %d: drop (GPIO %d)", tray, gpio)
             try:
-                self.backend.set_pulse(gpio, far_us)
-                self._sleep(config.SERVO_TRAVEL_S)
-
-                if config.SERVO_DWELL_S:
-                    self._sleep(config.SERVO_DWELL_S)
-
-                self.backend.set_pulse(gpio, rest_us)
-                self._sleep(config.SERVO_TRAVEL_S)
+                for pulse_us in stroke:
+                    self.backend.set_pulse(gpio, pulse_us)
+                    # Open loop: nothing reports arrival, so the wait is the
+                    # only thing that says the horn got there. The last one
+                    # matters as much as the rest — cutting the signal early
+                    # leaves the tray part-way open.
+                    self._sleep(config.SERVO_STEP_S)
             finally:
                 # Even if the sweep was interrupted, stop driving the pin. A
                 # servo left holding against a jam is a servo that cooks itself

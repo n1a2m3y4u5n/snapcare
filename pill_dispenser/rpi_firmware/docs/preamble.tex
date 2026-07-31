@@ -43,7 +43,8 @@
 \definecolor{ringc}{HTML}{9600FF}      % ws2812 data (violet, as the ring)
 \definecolor{buzzc}{HTML}{B26A00}      % buzzer
 \definecolor{btnc}{HTML}{00857A}       % button
-\definecolor{i2cc}{HTML}{005AFF}       % i2c
+\definecolor{rtcc}{HTML}{005AFF}       % rtc 3-wire (CE / I/O / SCLK)
+\definecolor{i2cc}{HTML}{005AFF}       % kept: reused by the cloud figure
 \definecolor{p33}{HTML}{D24B2E}        % 3V3 rail
 \definecolor{p5}{HTML}{B3001B}         % 5V rail
 \definecolor{gndc}{HTML}{2B2B2B}       % ground
@@ -220,11 +221,11 @@
 }}
 
 \newcommand{\iconrtc}{\iconbox{%
-  \draw[icn,fill=i2cc!8] (-0.5,-0.3) rectangle (0.5,0.3);
+  \draw[icn,fill=rtcc!8] (-0.5,-0.3) rectangle (0.5,0.3);
   \draw[icn,fill=ink15] (0.06,-0.02) circle (0.2);
   \node[color=ink40,font=\tiny\sffamily] at (0.06,-0.02) {\tiny +};
   \draw[icn,fill=ink40] (-0.42,-0.16) rectangle (-0.2,0.16);
-  \foreach \y in {-0.24,-0.12,0.0,0.12}{\fill[ink70] (0.44,\y) circle (0.025);}
+  \foreach \y in {-0.24,-0.12,0.0,0.12,0.24}{\fill[ink70] (0.44,\y) circle (0.025);}
 }}
 
 \newcommand{\iconcap}{\iconbox{%
@@ -270,7 +271,7 @@
   ppwr33/.style={padbase, fill=p33!18, text=p33!80!black, draw=p33!60},
   ppwr5/.style={padbase, fill=p5!14, text=p5!80!black, draw=p5!55},
   puse33/.style={padbase, fill=p33, text=white, draw=p33!70!black, line width=0.9pt},
-  pusei2c/.style={padbase, fill=i2cc, text=white, draw=i2cc!70!black, line width=0.9pt},
+  pusertc/.style={padbase, fill=rtcc, text=white, draw=rtcc!70!black, line width=0.9pt},
   puseservo/.style={padbase, fill=servo, text=white, draw=servo!70!black, line width=0.9pt},
   pusering/.style={padbase, fill=ringc, text=white, draw=ringc!70!black, line width=0.9pt},
   pusebuzz/.style={padbase, fill=buzzc, text=white, draw=buzzc!70!black, line width=0.9pt},
@@ -295,10 +296,10 @@
     {pin 1 is the corner nearest the microSD / power end};
   \foreach \r/\lb/\ls/\rb/\rs in {%
       1/{3V3}/{puse33}/{5V}/{ppwr5},
-      2/{GPIO2 SDA}/{pusei2c}/{5V}/{ppwr5},
-      3/{GPIO3 SCL}/{pusei2c}/{GND}/{pusegnd},
-      4/{GPIO4}/{pfree}/{GPIO14 TXD}/{pavoid},
-      5/{GND}/{pfree}/{GPIO15 RXD}/{pavoid},
+      2/{GPIO2 \textperiodcentered{} SCLK}/{pusertc}/{5V}/{ppwr5},
+      3/{GPIO3 \textperiodcentered{} I/O}/{pusertc}/{GND}/{pusegnd},
+      4/{GPIO4 \textperiodcentered{} CE}/{pusertc}/{GPIO14 TXD}/{pavoid},
+      5/{GND}/{pusegnd}/{GPIO15 RXD}/{pavoid},
       6/{GPIO17}/{puseservo}/{GPIO18}/{pusering},
       7/{GPIO27}/{puseservo}/{GND}/{pusegnd},
       8/{GPIO22}/{puseservo}/{GPIO23}/{pusebuzz},
@@ -334,7 +335,7 @@
     \sw{pusering}{2.9}{ring data}
     \sw{pusebuzz}{5.3}{buzzer}
     \sw{pusebtn}{7.3}{button}
-    \sw{pusei2c}{9.1}{\iic{} (RTC)}
+    \sw{pusertc}{9.1}{RTC 3-wire}
     \begin{scope}[yshift=-0.52cm]
       \sw{puse33}{0}{3V3 to RTC}
       \sw{pusegnd}{2.9}{ground, used}

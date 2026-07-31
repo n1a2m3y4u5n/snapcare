@@ -3,9 +3,9 @@
 %
 %  Build:  latexmk -pdf assembly-guide.tex     (or `make guide` one dir up)
 %
-%  The text follows ../ASSEMBLY.md and the pin map in
-%  ../snapcare_dispenser/config.py. If this and config.py ever disagree,
-%  config.py is right and this is stale.
+%  This file is the only source for the guide. The pin map it describes lives in
+%  ../snapcare_dispenser/config.py; if the two ever disagree, config.py is right
+%  and this is stale.
 % ===========================================================================
 \documentclass[11pt,a4paper]{article}
 \input{preamble}
@@ -55,7 +55,7 @@
 
   % --- peripherals: two columns, generous vertical spacing ---
   \node[modbox, minimum width=28mm, minimum height=11mm] (rtc) at (-5.0,2.15)
-       {\textbf{DS3231}\\[-0.3ex]{\scriptsize real-time clock}};
+       {\textbf{DS1302}\\[-0.3ex]{\scriptsize real-time clock}};
   \node[modbox, minimum width=28mm, minimum height=11mm] (srv) at (-5.0,-2.15)
        {\textbf{3\,$\times$ SG90}\\[-0.3ex]{\scriptsize one per tray}};
   \node[modbox, minimum width=28mm, minimum height=11mm] (ring) at (5.0,2.15)
@@ -66,8 +66,8 @@
        {\textbf{confirm button}\\[-0.3ex]{\scriptsize momentary}};
 
   % --- signal wires, orthogonal, labels on the vertical legs ---
-  \draw[wire, i2cc]  (pi.west|-0,0.55) -- (-2.9,0.55) -- (-2.9,2.15) -- (rtc.east);
-  \node[font=\sffamily\scriptsize, text=i2cc, anchor=west] at (-2.82,1.45) {GPIO 2/3};
+  \draw[wire, rtcc]  (pi.west|-0,0.55) -- (-2.9,0.55) -- (-2.9,2.15) -- (rtc.east);
+  \node[font=\sffamily\scriptsize, text=rtcc, anchor=west] at (-2.82,1.45) {GPIO 2/3/4};
 
   \draw[wire, servo] (pi.west|-0,-0.55) -- (-2.9,-0.55) -- (-2.9,-2.15) -- (srv.east);
   \node[font=\sffamily\scriptsize, text=servo, anchor=west] at (-2.82,-1.45) {GPIO 17/27/22};
@@ -139,11 +139,7 @@ there doing nothing.
 % ═══════════════════════════════════════════════════════════════════════════
 \section{The build at a glance}
 
-Stages 0 to 8 build the machine. Stage 9 is optional \textemdash{} it connects
-the finished machine to the app over the internet \textemdash{} and stage 10 is
-the label. If you only want a working dispenser, stop after stage 8 and print
-the label: nothing in stages 0 to 8 depends on there being a network beyond the
-house.
+Nothing in stages 0 to 8 depends on there being a network beyond the house.
 
 \vspace{2mm}
 \begin{center}
@@ -155,7 +151,7 @@ house.
    opt/.style={stg, fill=ink15!45, draw=ink40, dashed},
 ]
   \foreach \i/\lbl in {%
-      0/{the Pi}, 1/{DS3231}, 2/{button}, 3/{buzzer}, 4/{ring},
+      0/{the Pi}, 1/{DS1302}, 2/{button}, 3/{buzzer}, 4/{ring},
       5/{rail}, 6/{servo 1}, 7/{servos 2--3}, 8/{fitting}}{
     \node[done] (s\i) at ({\i*1.66},0) {\textbf{\i}\\[-0.4ex]\lbl};
   }
@@ -188,7 +184,7 @@ house.
 \toprule
 & \hdr{Subsystem} & \hdr{Where it lands} & \hdr{What it is for} \\
 \midrule
-\swatch{i2cc}  & DS3231         & GPIO 2/3 (\iic) $+$ 3.3\,V & knows the time after a power cut \\
+\swatch{rtcc}  & DS1302         & GPIO 2/3/4 $+$ 3.3\,V      & knows the time after a power cut \\
 \swatch{ringc} & WS2812 ring    & GPIO 18, through 330\ohm   & green / blue / amber / violet \\
 \swatch{buzzc} & piezo buzzer   & GPIO 23, through 100\ohm   & the sound that fetches a person from another room \\
 \swatch{btnc}  & confirm button & GPIO 24 to GND             & internal pull-up, 20\,ms glitch filter \\
@@ -211,7 +207,7 @@ house.
 \iconpi     & 1 & Raspberry Pi 3B & Any Pi with the 40-pin header works; the pin map assumes a 3B \\
 \iconsd     & 1 & microSD card, 8\,GB+ & Raspberry Pi OS \textbf{Bookworm or newer} \textemdash{} the firmware drives WiFi through NetworkManager \\
 \iconpsu    & 1 & Pi power supply, 5\,V 2.5\,A & The official one. Servos do \textbf{not} come off this \\
-\iconservo  & 3 & SG90 micro servo & One per fitted tray. The firmware handles eight \\
+\iconservo  & 3 & SG90 micro servo & One per fitted tray. The firmware accepts eight; add them whenever \\
 \iconpsu    & 1 & 5\,V supply, 2\,A or better & Separate, for the servos and the ring \\
 \iconcap    & 1 & 1000\uF{} electrolytic, 10\,V+ & Across the servo rail, physically close to the servos \\
 \iconring   & 1 & WS2812 / NeoPixel ring, 12\,px & 16 and 24 also work \textemdash{} set \code{RING\_PIXELS} \\
@@ -219,7 +215,7 @@ house.
 \iconbuzzer & 1 & Passive piezo buzzer & Passive, not an active beeper \textemdash{} see below \\
 \iconres    & 1 & 100\ohm{} resistor & In series with the buzzer \\
 \iconbutton & 1 & Momentary push button & Any normally-open button. No external resistor needed \\
-\iconrtc    & 1 & DS3231 RTC module & With a coin cell fitted. Read the ZS-042 warning below \\
+\iconrtc    & 1 & DS1302 RTC module & The 5-pin board with a coin-cell holder. Read the accuracy note below \\
 \iconwire   & \textemdash{} & Jumper wire, terminal blocks & Dupont leads are fine for the bench; solder or screw terminals for anything that gets carried \\
 \iconcloud  & \textemdash{} & a relay, if you want cloud sync & \emph{Not a part.} One container, deployed once for all your devices \textemdash{} see \code{../cloud\_relay/}. Skip it and the dispenser is LAN-only \\
 \bottomrule
@@ -233,8 +229,6 @@ The firmware makes the tone itself \textemdash{} pigpio drives the pin as a
 2.7\,kHz square wave (\code{indicators.Buzzer.beep}). An \emph{active} buzzer
 contains its own oscillator and sounds at its own frequency the moment it sees a
 voltage, so it will still make a noise here, just not the one that was chosen.
-2.7\,kHz is where a small piezo is loudest and where age-related hearing loss
-has bitten least, which is the whole reason the number is in \code{config.py}.
 
 \vspace{1.5ex}
 \begin{center}
@@ -265,15 +259,19 @@ has bitten least, which is the whole reason the number is in \code{config.py}.
 \end{warnbox}
 
 \begin{warnbox}
-\warntitle{The DS3231 module and its coin cell}
-The commonly sold ZS-042 board has a charging circuit intended for a
-rechargeable LIR2032. Fitted with an ordinary non-rechargeable CR2032
-\textemdash{} which is what most of them ship next to \textemdash{} it trickles
-current into a cell that cannot take it. The usual fix is to remove the series
-resistor in that charging path (marked \code{201} on most boards) or to use an
-LIR2032. Either way, \textbf{fit the cell before the first
-\code{hwclock -{}-systohc}}, because the whole point of the chip is what it
-remembers with the power off.
+\warntitle{The DS1302 keeps worse time than you would expect}
+Its 32.768\,kHz crystal is uncompensated, so a typical module drifts a few
+minutes a month, and more as the room warms and cools. That is good enough for
+the job it has here \textemdash{} carrying the time across a power cut until the
+Pi can reach an NTP server again \textemdash{} and it is \emph{not} good enough
+as the only time source on a device that never sees a network. Commission this
+build on a network and leave it able to re-sync.
+
+\vspace{1.5ex}
+\textbf{Fit the cell before you set the time}, because what the chip remembers
+with the power off is the whole point of it. Most modules ship with a holder
+marked LIR2032; an ordinary non-rechargeable CR2032 is the safer choice and
+works, because the DS1302's built-in trickle charger stays switched off here.
 \end{warnbox}
 
 \clearpage
@@ -307,7 +305,7 @@ pigpio and RPi.GPIO both use; the small number inside each pad is the
 \hdr{Pin} & \hdr{Why it is not used} \\
 \midrule
 GPIO 0, 1 & HAT ID EEPROM. Driving them is how a HAT you plug in later fails to be detected \\
-GPIO 2, 3 & Permanent 1.8\,k\textohm{} \iic{} pull-ups \textemdash{} a servo line idling high slams the horn at power-on. Now the DS3231 lives here \\
+GPIO 2, 3 & Permanent 1.8\,k\textohm{} pull-ups \textemdash{} a servo line idling high slams the horn at power-on. Harmless for the RTC's clock and data lines, which live here now \\
 GPIO 14, 15 & The serial console: the one way back into a Pi whose network setup you just broke \\
 GPIO 7--11 & SPI. Free today, gone the moment anyone adds an SPI display \\
 \bottomrule
@@ -320,11 +318,17 @@ GPIO 7--11 & SPI. Free today, gone the moment anyone adds an SPI display \\
 \vspace{1ex}
 \footnotesize
 GPIO 5, 6, 13, 19 and 26 are already checked for clashes and for the pins that
-cost hardware, so a fourth hopper is a plug and a number, not a re-derivation:
+cost hardware, and the firmware accepts all eight trays out of the box. A fourth
+hopper is therefore \textbf{a plug} \textemdash{} no config edit, no restart
+with a different number.
+
+\vspace{1ex}
+If you would rather the device \emph{refuse} a schedule for a tray that is not
+physically there, say how many are fitted:
 
 \vspace{1ex}
 \begin{shell}
-SNAPCARE_TRAYS=8 python3 -m snapcare_dispenser
+SNAPCARE_TRAYS=3 python3 -m snapcare_dispenser
 \end{shell}
 
 \code{tests/test\_servo.py} asserts all of this, and that no peripheral shares a
@@ -359,14 +363,15 @@ mistake costs a power-down.
 \begin{shell}
 git clone <this repo> && cd h1-SnapCare/pill_dispenser/rpi_firmware
 sudo ./service/install.sh
-sudo reboot            # the installer will tell you if the I2C overlay needs one
+sudo reboot
 \end{shell}
 
 The installer is safe to re-run. It installs pigpio and enables \code{pigpiod},
 sets the hostname to \code{pilldispenser} and publishes it over avahi, writes the
-captive-portal DNS rule, turns on \iic{} with the \code{i2c-rtc,ds3231} overlay,
-disables \code{fake-hwclock}, installs \code{python3-cryptography} for cloud
-sync, and installs the systemd unit.
+captive-portal DNS rule, disables \code{fake-hwclock}, installs
+\code{python3-cryptography} for cloud sync, and installs the systemd unit. The
+DS1302 needs no kernel overlay and no bus switched on: the firmware drives its
+three pins directly.
 
 \begin{provebox}
 \provetitle
@@ -381,7 +386,7 @@ has been named.
 \end{provebox}
 
 % ═══════════════════════════════════════════════════════════════════════════
-\section{Stage 1 \textemdash{} the DS3231}
+\section{Stage 1 \textemdash{} the DS1302}
 
 \begin{dangerbox}
 \dangertitle{Power off first \textemdash{} every time}
@@ -389,47 +394,54 @@ Not ``put it to sleep''. Unplug it. Every wiring stage in this guide starts that
 way, and this reminder is not repeated after this page.
 \end{dangerbox}
 
+Five wires, and they land on the first five pins of the header's odd-numbered
+row \textemdash{} pins 1, 3, 5, 7, 9, straight down the edge nearest the microSD
+end.
+
 \begin{center}
 \begin{tikzpicture}
   % --- the module ---
-  \node[modbox, minimum width=36mm, minimum height=30mm] (m) at (-3.7,-0.61) {};
-  \node[modtitle, anchor=west] at (-5.4,0.42) {DS3231};
+  \node[modbox, minimum width=36mm, minimum height=36mm] (m) at (-3.7,-0.92) {};
+  \node[modtitle, anchor=west] at (-5.4,0.42) {DS1302};
   \node[font=\sffamily\scriptsize, text=ink40, anchor=west] at (-5.4,0.14) {RTC module};
-  \draw[ink40, line width=0.6pt, fill=ink15] (-5.05,-1.42) circle (0.28);
-  \node[font=\sffamily\tiny, text=ink70] at (-5.05,-1.42) {cell};
-  \node[font=\sffamily\tiny, text=ink70, align=left, anchor=west] at (-4.68,-1.42)
-       {fit it \emph{before} the\\first \code{--systohc}};
+  \draw[ink40, line width=0.6pt, fill=ink15] (-5.0,-1.75) circle (0.28);
+  \node[font=\sffamily\tiny, text=ink70] at (-5.0,-1.75) {cell};
+  \node[font=\sffamily\tiny, text=ink70, align=left, anchor=west] at (-4.63,-1.75)
+       {fit it \emph{before}\\you set the time};
 
-  % terminals on the module's right edge
-  \foreach \i/\nm in {0/VCC, 1/GND, 2/SDA, 3/SCL}{
+  % terminals on the module's right edge, drawn in header order
+  \foreach \i/\nm in {0/VCC, 1/CLK, 2/DAT, 3/RST, 4/GND}{
     \pgfmathsetmacro{\ty}{0.32-\i*0.62}
     \node[term] (t\i) at (-1.9,\ty) {};
     \node[font=\sffamily\tiny, text=ink70, anchor=east] at (-2.07,\ty) {\nm};}
 
   % --- the header pads ---
-  \hframe{1.9}{0.32}{-1.54}{Pi header}
+  \hframe{1.9}{0.32}{-2.16}{Pi header}
   \hpin{1.9}{0.32}{1}{puse33}{3V3}
-  \hpin{1.9}{-0.30}{3}{pusei2c}{GPIO 2 \textperiodcentered{} SDA}
-  \hpin{1.9}{-0.92}{5}{pusei2c}{GPIO 3 \textperiodcentered{} SCL}
-  \hpin{1.9}{-1.54}{6}{pusegnd}{GND}
+  \hpin{1.9}{-0.30}{3}{pusertc}{GPIO 2 \textperiodcentered{} SCLK}
+  \hpin{1.9}{-0.92}{5}{pusertc}{GPIO 3 \textperiodcentered{} I/O}
+  \hpin{1.9}{-1.54}{7}{pusertc}{GPIO 4 \textperiodcentered{} CE}
+  \hpin{1.9}{-2.16}{9}{pusegnd}{GND}
 
-  % --- wires ---
+  % --- wires: one straight run each ---
   \draw[wire, p33]  (t0) -- (H1.west);
-  \draw[wire, gndc] (t1) -- (-1.2,-0.30) -- (-1.2,-1.54) -- (H6.west);
-  \draw[wire, i2cc] (t2) -- (-0.75,-0.92) -- (-0.75,-0.30) -- (H3.west);
-  \draw[wire, i2cc] (t3) -- (-1.45,-1.54) -- (-1.45,-0.92) -- (H5.west);
+  \draw[wire, rtcc] (t1) -- (H3.west);
+  \draw[wire, rtcc] (t2) -- (H5.west);
+  \draw[wire, rtcc] (t3) -- (H7.west);
+  \draw[wire, gndc] (t4) -- (H9.west);
 
-  % --- the 5 V trap ---
+  % --- the two things that bite ---
   \node[anchor=north west] at (4.7,0.62)
        {\begin{minipage}{46mm}\scriptsize\color{ink70}
-        \textbf{\color{dangerred}3.3\,V, not 5\,V.} The module runs happily at
-        either, but at 5\,V its pull-ups sit on the Pi's \iic{} lines at 5\,V,
-        and those pins are not 5\,V tolerant.\end{minipage}};
-  \node[anchor=north west] at (4.7,-1.05)
+        \textbf{\color{dangerred}3.3\,V, not 5\,V.} The chip runs at either, but
+        its \code{I/O} line \emph{actively drives} back at whatever it is
+        powered from, straight into a GPIO that is not 5\,V
+        tolerant.\end{minipage}};
+  \node[anchor=north west] at (4.7,-1.35)
        {\begin{minipage}{46mm}\scriptsize\color{ink70}
-        \textbf{\color{ink}No pull-up resistors.}
-        GPIO 2/3 carry permanent 1.8\,k\textohm{} pull-ups on the board, and the
-        module has its own.\end{minipage}};
+        \textbf{\color{ink}Go by the silkscreen.} The five terminals are in a
+        different order on almost every board sold. Match the names, not the
+        positions drawn here.\end{minipage}};
 \end{tikzpicture}
 \end{center}
 
@@ -440,35 +452,41 @@ the header map on page~\pageref{sec:header}.
 \end{center}
 
 \begin{notebox}
-That permanent pull-up is also exactly why GPIO 2 and 3 are kept out of the
-servo map: a servo signal line that idles high before the software starts slams
-the horn to one end at power-on, with a loaded tray on it.
+\textbf{\sffamily This is not a bus, and there is no kernel driver.} The DS1302
+is three plain GPIOs shifted by hand in software, so \code{i2cdetect},
+\code{/dev/rtc0} and \code{hwclock} have nothing to say about it \textemdash{}
+the firmware is the only thing that can read this chip, and \code{/api/status}
+is where you look.
+
+\vspace{1ex}
+GPIO 2 and 3 carry permanent 1.8\,k\textohm{} pull-ups. They are harmless on a
+clock and a data line, which is why the RTC gets them; \code{CE} is put on
+GPIO 4, which has none. That same pull-up is why GPIO 2 and 3 are kept out of
+the servo map: a servo line that idles high before the software starts slams the
+horn to one end at power-on, with a loaded tray on it.
 \end{notebox}
 
 \begin{provebox}
 \provetitle
 \begin{shell}
-sudo i2cdetect -y 1        # expect 68 (and often 57, the EEPROM beside it)
-ls -l /dev/rtc0            # the kernel overlay claimed it
-sudo hwclock -r            # what the chip believes
-sudo hwclock --systohc     # once the Pi's own time is right, write it in
-\end{shell}
-Then confirm the firmware agrees the clock can be \emph{believed}, which is a
-different question from whether the chip is there:
-\begin{shell}
 curl -s http://localhost/api/status     # the "clock" object: trusted, source, rtc
+curl -X POST http://localhost/api/clock -d '{"iso":"2026-07-29T09:15:00"}'
 \end{shell}
+Then prove the only thing the chip is there for. Unplug the Pi, leave it a
+minute, and bring it back with the network unplugged: \code{trusted} must still
+be true and \code{source} must read \code{rtc}. A module that reads back the
+time you just set, but loses it across a power cut, has a dead cell or a cell
+holder that is not making contact.
 \end{provebox}
 
 \begin{warnbox}
-\warntitle{A dead cell does not make the chip vanish from the bus}
-It makes it answer promptly with nonsense. The firmware reads the
-oscillator-stop flag (bit 7 of register \code{0x0F}) and only a clear flag
-counts. If it reads \code{untrusted} here with a good cell fitted, set the time
-once through the API and it will clear the flag in the right order:
-\begin{shell}
-curl -X POST http://localhost/api/clock -d '{"iso":"2026-07-29T09:15:00"}'
-\end{shell}
+\warntitle{The firmware's clock layer still speaks \iic}
+\code{snapcare\_dispenser/rtc.py} reads a DS3231 over \iic{} at address
+\code{0x68}, by way of the kernel's \code{i2c-rtc} overlay and \code{/dev/rtc0},
+and \code{service/install.sh} still enables that overlay. The DS1302 offers
+neither. Both need converting to the 3-wire driver before the checks above can
+pass; until then the clock reports \code{untrusted} and everything from Stage 2
+on is unaffected.
 \end{warnbox}
 
 % ═══════════════════════════════════════════════════════════════════════════
@@ -854,32 +872,57 @@ Do one, entirely, before the other two.
 sudo systemctl restart snapcare-dispenser
 curl -X POST http://localhost/api/drop -d '{"tray":1}'
 \end{shell}
-One sweep: rest at 0\dgr, out to 180\dgr, back to 0\dgr, about a second in
-total. Then the signal to that pin is \textbf{cut} rather than held \textemdash{}
-so the servo should go silent and cool between doses.
+The tray rests at 0\dgr. A drop is four commands from there \textemdash{}
+180\dgr, 0\dgr, 180\dgr, 0\dgr \textemdash{} one second apart, so about four
+seconds in total. Then the signal to that pin is \textbf{cut} rather than held
+\textemdash{} so the servo should go silent and cool between doses.
 \end{provebox}
+
+\vspace{1mm}
+\begin{notebox}
+\textbf{\sffamily Why the stroke runs twice.} One tip does not reliably clear
+the gate: a pill can sit on the lip and ride back with the horn, which reads as
+a dose given and is not one. The second round trip is what shakes it through.
+\end{notebox}
 
 \vspace{1mm}
 \begin{center}
 \begin{tikzpicture}[xscale=6.2, yscale=0.011]
   % axes
-  \draw[ink40, line width=0.5pt] (0,0) -- (1.24,0);
+  \draw[ink40, line width=0.5pt] (0,0) -- (1.30,0);
   \draw[ink40, line width=0.5pt] (0,0) -- (0,190);
   \node[font=\sffamily\tiny, text=ink40, anchor=east] at (-0.012,0) {0\dgr};
   \node[font=\sffamily\tiny, text=ink40, anchor=east] at (-0.012,180) {180\dgr};
-  % the sweep
+
+  % two round trips: the horn crosses in about half a second and waits out the
+  % rest of each second before the next command
   \draw[servo, line width=1.5pt]
-    (0,0) -- (0.08,0) -- (0.58,180) -- (0.73,180) -- (1.23,0);
-  \draw[ink15, line width=0.5pt, dashed] (0.58,0) -- (0.58,180);
-  \draw[ink15, line width=0.5pt, dashed] (0.73,0) -- (0.73,180);
-  % annotations
-  \node[font=\sffamily\tiny, text=ink70] at (0.33,196) {\code{SERVO\_TRAVEL\_S} 0.5\,s};
-  \node[font=\sffamily\tiny, text=ink70] at (0.655,196) {dwell 0.15};
-  \node[font=\sffamily\tiny, text=ink70] at (0.98,196) {back, 0.5\,s};
-  \draw[-{Stealth[length=1.6mm]}, okgreen, line width=0.8pt] (1.23,-42) -- (1.23,-8);
-  \node[font=\sffamily\tiny, text=okgreen, anchor=north] at (1.23,-46)
+    (0,0) -- (0.154,180) -- (0.308,180) -- (0.461,0) -- (0.615,0)
+        -- (0.769,180) -- (0.923,180) -- (1.076,0) -- (1.230,0);
+
+  % where each command is issued
+  \draw[ink15, line width=0.5pt, dashed] (0.308,0) -- (0.308,180);
+  \draw[ink15, line width=0.5pt, dashed] (0.615,0) -- (0.615,180);
+  \draw[ink15, line width=0.5pt, dashed] (0.923,0) -- (0.923,180);
+  \node[font=\sffamily\tiny, text=ink70] at (0,205) {180\dgr};
+  \node[font=\sffamily\tiny, text=ink70] at (0.308,205) {0\dgr};
+  \node[font=\sffamily\tiny, text=ink70] at (0.615,205) {180\dgr};
+  \node[font=\sffamily\tiny, text=ink70] at (0.923,205) {0\dgr};
+  \node[font=\sffamily\tiny, text=ink40, anchor=south] at (0.615,222)
+       {the four commands};
+
+  % the one-second intervals
+  \foreach \a/\b/\m in {0/0.308/0.154, 0.308/0.615/0.461,
+                        0.615/0.923/0.769, 0.923/1.230/1.076}{
+    \draw[{Stealth[length=1.2mm]}-{Stealth[length=1.2mm]}, ink40, line width=0.4pt]
+         (\a,-28) -- (\b,-28);
+    \node[font=\sffamily\tiny, text=ink70, anchor=north] at (\m,-32) {1\,s};}
+
+  \draw[-{Stealth[length=1.6mm]}, okgreen, line width=0.8pt] (1.230,-76) -- (1.230,-8);
+  \node[font=\sffamily\tiny, text=okgreen, anchor=north] at (1.230,-80)
        {signal released \textemdash{} silent and cool};
-  \node[font=\sffamily\tiny, text=ink40, anchor=north] at (0.62,-46) {about one second in total};
+  \node[font=\sffamily\tiny, text=ink40, anchor=north] at (0.40,-80)
+       {\code{SERVO\_STEP\_S}, four times \textemdash{} about four seconds};
 \end{tikzpicture}
 \end{center}
 
@@ -922,12 +965,31 @@ curl -s http://localhost/api/status | grep -i servo
 \end{minipage}\hfill
 \begin{minipage}{0.58\textwidth}
 \small
-\code{INSTALLED\_TRAYS = 3} in \code{config.py} is the only thing that says
-three. The map lists all eight, so scaling up is one number and some servos.
-Trays 4--8 are reserved at GPIO 5, 6, 13, 19 and 26 \textemdash{} already
-checked for clashes, so a fourth hopper is a plug and a number.
+The contest unit fits three, but nothing in the firmware says three: all eight
+trays are accepted by default. Trays 4--8 are reserved at GPIO 5, 6, 13, 19 and
+26 \textemdash{} already checked for clashes \textemdash{} so a fourth hopper is
+a plug and nothing else. The trade-off that buys is below.
 \end{minipage}
 \end{center}
+
+\vspace{2mm}
+\begin{warnbox}
+\warntitle{What ``all eight by default'' costs, and how to buy it back}
+An SG90 reports nothing, so there is no way for the firmware to tell a fitted
+hopper from an empty pin. Accepting all eight means a schedule naming a tray
+this machine does not physically have is \textbf{accepted} \textemdash{} and
+that dose is then never dispensed and reported by nothing. No jam, no error, a
+status page that looks perfectly healthy.
+
+\vspace{1ex}
+On a machine that will not grow, say how many are fitted and the firmware
+refuses such a schedule by name, while somebody is still looking at the screen
+that sent it:
+
+\begin{shell}
+SNAPCARE_TRAYS=3 python3 -m snapcare_dispenser     # or INSTALLED_TRAYS in config.py
+\end{shell}
+\end{warnbox}
 
 \vspace{2mm}
 \begin{provebox}
@@ -1033,23 +1095,25 @@ It is the servo fighting a mechanical stop it has already reached, and it is
 what burns one out over a few weeks.
 \end{warnbox}
 
-\noindent The other two knobs, if a full hopper is slower than an empty one:
+\noindent The other knob, if a full hopper is slower than an empty one:
 
 \begin{pycode}
-SERVO_TRAVEL_S = 0.5     # one traverse; open-loop, nothing reports arrival
-SERVO_DWELL_S  = 0.15    # pause at the far end before returning
+SERVO_STEP_S = 1.0     # seconds between one command in the stroke and the next
 \end{pycode}
 
-\noindent \code{SERVO\_TRAVEL\_S} must cover the \emph{slowest} case \textemdash{}
-a cold servo under the weight of a full tray \textemdash{} because nothing on an
-SG90 reports position and the firmware is simply waiting out the clock.
+\noindent This is the whole timing model. Nothing on an SG90 reports position,
+so the firmware is simply waiting out the clock, and the interval must cover the
+\emph{slowest} case \textemdash{} a cold servo under the weight of a full tray,
+about half a second \textemdash{} and still leave the hopper time to settle
+before the horn reverses. Raising it lengthens the drop by four times whatever
+you add.
 
 % ═══════════════════════════════════════════════════════════════════════════
 \section{Stage 9 \textemdash{} cloud sync, if you want it}
 
 Skip this stage entirely and everything still works: the schedule arrives from
 the app over the home WiFi or off a photographed paper sheet, and the device
-runs it from the SD card against the DS3231. That is the whole machine, and it
+runs it from the SD card against the DS1302. That is the whole machine, and it
 is a reasonable way to ship one.
 
 What this stage adds is that a schedule edited in the app reaches the device
@@ -1219,10 +1283,11 @@ app can read and a plain camera cannot.
 \swatch{ringc} & WS2812 ring data & 18 & 12 & through 330\ohm{} at the ring; must be 18/12/21/10 \\
 \swatch{buzzc} & Piezo buzzer & 23 & 16 & through 100\ohm \\
 \swatch{btnc}  & Confirm button & 24 & 18 & other leg to GND; internal pull-up \\
-\swatch{i2cc}  & DS3231 SDA & 2 & 3 & the module's own pull-ups are enough \\
-\swatch{i2cc}  & DS3231 SCL & 3 & 5 & \\
-\swatch{p33}   & DS3231 VCC & \textemdash{} & 1 (3.3\,V) & not 5\,V \\
-\swatch{gndc}  & Ground & \textemdash{} & 6, 9, 14, 20, 25, 30, 34, 39 & at least one to the servo supply GND \\
+\swatch{rtcc}  & DS1302 SCLK & 2 & 3 & bit-banged; no bus, no kernel driver \\
+\swatch{rtcc}  & DS1302 I/O & 3 & 5 & bidirectional \textemdash{} 3.3\,V only \\
+\swatch{rtcc}  & DS1302 CE & 4 & 7 & on a pin with no pull-up, deliberately \\
+\swatch{p33}   & DS1302 VCC & \textemdash{} & 1 (3.3\,V) & not 5\,V \\
+\swatch{gndc}  & Ground & \textemdash{} & 6, 9, 14, 20, 25, 30, 34, 39 & pin 9 to the RTC; at least one to the servo supply GND \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1277,7 +1342,7 @@ Servo supply & WS2812 ring, 12\,px at brightness 60 & $\sim$0.15\,A ($\approx$0.
 
 \noindent Figures for the servo and the ring are the ones the firmware was
 designed around; the Pi's are the usual published ranges. Meter your own rail if
-you change the ring size or fit more than three trays.
+you change the ring size or fit more trays than the three costed here.
 
 \clearpage
 
@@ -1297,11 +1362,11 @@ curl -s http://localhost/api/status
 \item Clock trusted, source \code{rtc} or \code{ntp}
 \item Ring \textbf{and} buzzer listed as fitted
 \item Button backend \code{pigpio}
-\item Three trays reported, matching the three that physically exist
+\item Every tray you fitted moves, and no schedule names one you did not
 \item Each \code{POST /api/drop} moves the hopper with the number you asked for
-\item Servos silent and cool 5\,s after a drop
+\item Servos silent and cool a few seconds after a drop ends
 \item Pull the power mid-schedule, restore it: no second dose, and the log survives
-\item Unplug the Pi's network, reboot: the DS3231 still vouches for the time
+\item Unplug the Pi's network, reboot: the DS1302 still vouches for the time
 \item The printed label's QR joins the hotspot and opens the setup page
 \item \textbf{Type the WiFi password wrong on purpose.} The setup network comes
       back within a few seconds and the page you re-open says the password was
@@ -1370,15 +1435,17 @@ First pixel is the wrong colour & 330\ohm{} missing, or at the Pi end instead of
 Ring flickers only when a servo moves & pigpio and the ring contending for PWM. Start pigpiod with \code{-t 0} to pin it to PCM \\
 Buzzer makes a tone but not \emph{this} tone & It is an active buzzer with its own oscillator. Use a passive element \\
 One press logs several doses & Debounce \textemdash{} check \code{journalctl} says the \code{pigpio} button backend, not \code{poll} \\
-Tray stays shut, nothing dispenses & The clock is not trusted. \code{sudo hwclock -r}, check the coin cell, then \code{POST /api/clock} \\
-Clock right at shutdown, wrong at boot & \code{fake-hwclock} is back, overwriting the RTC. The installer disables it \\
+Tray stays shut, nothing dispenses & The clock is not trusted. Check the coin cell and the three signal wires, then \code{POST /api/clock} \\
+Clock right at shutdown, wrong at boot & The cell is dead or not seated, or \code{fake-hwclock} is back and overwriting the RTC. The installer disables it \\
+Clock drifts a few minutes a month & Expected \textemdash{} the DS1302's crystal is uncompensated. Leave the device able to reach NTP \\
 \code{pilldispenser.local} does not resolve & avahi, and the hostname. The web app's \code{DEFAULT\_HOST} is that exact string \\
 Ring is cyan and stays cyan & The device is on its own setup hotspot waiting to be put on a network. Join \code{SnapCare-\ldots} and the page opens itself \\
 Setup page says ``did not hand out an address'' & The password was right and DHCP was not. Usually a router that needs restarting, or a MAC filter \\
 The setup hotspot keeps disappearing for half a minute & That is the unattended retry finding a saved network worth trying. It stops once one works; raise \code{HOTSPOT\_RETRY\_S} if it is in the way of a bench session \\
 A schedule POST answers 421 & The \code{Host} header is not a name this device answers to. Use \code{pilldispenser.local} or the IP; \code{SNAPCARE\_EXTRA\_HOSTS} adds a router's own domain \\
 Setup page never leaves ``waiting\ldots'' & The phone has not gone back to the house WiFi. Switch it over; the page follows. If the device's own network reappeared, the password was refused \\
-A schedule is refused by tray number & That tray is not fitted. \code{INSTALLED\_TRAYS}, or \code{SNAPCARE\_TRAYS=8} \\
+A schedule is refused by tray number & This build was told how many trays it has. Raise \code{SNAPCARE\_TRAYS}, or drop it to use all eight \\
+A dose for a tray that was never fitted never comes out, and nothing complains & All eight are accepted by default and an SG90 reports nothing. Set \code{SNAPCARE\_TRAYS} to the number really fitted \\
 Cloud \code{state: unsupported} & \code{sudo apt install python3-cryptography}. Everything else still works meanwhile \\
 Cloud \code{state: retrying}, DNS in \code{lastError} & The Pi has no working resolver. It joined the WiFi but got no DNS, or the router blocks it \\
 Cloud connects, but no schedule ever arrives & The app is paired to a different code. Compare \code{cloud.deviceId} here with the one the app shows \textemdash{} they must match exactly \\
@@ -1400,16 +1467,13 @@ make -C .. demo # the same, plus a relay and the demo app on localhost:8088
 \end{shell}
 
 \noindent \code{make run} is the real firmware with the servo driver swapped for
-one that records what it was told \textemdash{} the API, the scheduler, the web
-console and the persistence all work, and nothing moves. \code{make demo} adds
-the other end: a relay and a browser page that pairs with it, so the whole cloud
-path can be exercised, including the failure cases, without a Raspberry Pi
-anywhere.
+one that only records what it was told, and \code{make demo} adds a relay and a
+browser page that pairs with it \textemdash{} so the whole cloud path,
+including its failure cases, can be exercised without a Raspberry Pi anywhere.
 
 \vfill
 \begin{center}\footnotesize\color{ink40}\sffamily
-This guide is generated from \code{docs/assembly-guide.tex} and follows
-\code{ASSEMBLY.md}.\\
+This guide is generated from \code{docs/assembly-guide.tex} by \code{make guide}.\\
 The pin map it describes lives in \code{snapcare\_dispenser/config.py}, which is
 the source of truth.
 \end{center}

@@ -28,15 +28,15 @@ internet going away.
    └───────────────────────┬─────────────────────────────────┴──────┘
                            │                          confirm button 24
                            ▼
-                    three servos, one sweep each
+                 three servos, two round trips each
 ```
 
 The cloud link is an extra way *in*, never a dependency. The schedule is on the
 SD card and the DS3231 knows the time, so a relay that is down, unreachable or
 never configured costs nobody a dose.
 
-The contest unit is built with **three trays**; the firmware handles eight and
-the pin map already lists them.
+The contest unit is built with **three trays**; the firmware accepts eight by
+default and the pin map already lists them, so adding one is a plug.
 
 This replaces the two-board Arduino + ESP32-CAM build in [`../firmware/`](../firmware/).
 The protocol is unchanged — the same `SC1` grammar, the same test vectors — so a
@@ -167,8 +167,10 @@ sudo python3 -m snapcare_dispenser --show-label   # the same values as JSON
 
 ### 2. Manage the pill drop schedule
 
-Eight trays maximum, **three fitted on the contest unit** (`INSTALLED_TRAYS`).
-A schedule naming a tray that is not fitted is refused by name, while somebody
+Eight trays maximum, and **all eight are accepted by default** so that fitting a
+fourth hopper needs no config edit. Set `INSTALLED_TRAYS` (or `SNAPCARE_TRAYS`)
+to the number really fitted and a schedule naming a tray this machine does not
+have is instead refused by name, while somebody
 is still looking at the screen that sent it — accepting it would mean a dose
 that is scheduled, never dispensed, and reported by nothing, because an absent
 servo cannot jam and has no error to raise.
@@ -190,7 +192,7 @@ which is what a bench setup should do:
 
 ```bash
 SNAPCARE_TRAY_GPIO="3=21" python3 -m snapcare_dispenser   # move one servo
-SNAPCARE_TRAYS=8         python3 -m snapcare_dispenser   # fit the other five
+SNAPCARE_TRAYS=3         python3 -m snapcare_dispenser   # refuse trays 4-8
 ```
 
 Two trays on one pin, a tray outside 1–8, or a GPIO that does not exist on a 3B
@@ -198,18 +200,20 @@ are all refused at startup. Sharing a pin would dispense the right number of
 pills from the wrong compartment, and nobody notices that until the wrong
 medication has been taken for a week.
 
-**One drop** is the motion from the hardware spec: rest at 0°, sweep to 180°,
-sweep back to 0°, at 0.5 s per traverse.
+**One drop** is the motion from the hardware spec. The tray rests at 0°, and a
+drop is four commands from there — 180°, 0°, 180°, 0° — one second apart, about
+four seconds in total. It runs twice because one tip can leave a pill on the lip
+of the gate to ride back with the horn.
 
 ```python
 SERVO_MIN_US   = 500    # 0°, the resting position
 SERVO_MAX_US   = 2500   # 180°, the far end of the stroke
-SERVO_TRAVEL_S = 0.5    # one traverse
-SERVO_DWELL_S  = 0.15   # pause at the far end before returning
+SERVO_STEP_S   = 1.0    # between one command in the stroke and the next
+SERVO_TRAVEL_S = 0.5    # one traverse; the floor for SERVO_STEP_S
 SERVO_TRIM     = {}     # {3: (520, 2450)} to trim one tray
 ```
 
-After the sweep the signal to that pin is **cut**, not held at 0°. A servo still
+After the stroke the signal to that pin is **cut**, not held at 0°. A servo still
 being told to hold draws current, hums and fights a nudge for the twenty-three
 hours until the next dose, to hold a position it is already resting in
 mechanically.
@@ -291,10 +295,17 @@ The contest unit is **three trays**, an LED ring, a buzzer, a confirm button and
 a DS3231. `INSTALLED_TRAYS = 3` in `config.py` is the only thing that says
 three; the pin map lists all eight so scaling up is one number and some servos.
 
-To *build* one rather than look up a pin, [`ASSEMBLY.md`](ASSEMBLY.md) goes from
-a bare Pi to a commissioned machine one subsystem at a time, each stage ending
-with the command that proves it. The table below is the reference; that is the
-procedure.
+To *build* one rather than look up a pin,
+[`docs/assembly-guide.pdf`](docs/assembly-guide.pdf) goes from a bare Pi to a
+commissioned machine one subsystem at a time, each stage ending with the command
+that proves it. The table below is the reference; that is the procedure. Rebuild
+it with `make guide`.
+
+> **The guide now specifies a DS1302** on GPIO 2/3/4, replacing the DS3231
+> described in this section. The firmware's clock layer (`rtc.py`,
+> `config.py`, `service/install.sh`) has not been migrated yet and still speaks
+> I²C to a DS3231, so this table and the pin map below remain the DS3231 wiring
+> until it is.
 
 | Signal | Pin | Notes |
 |---|---|---|

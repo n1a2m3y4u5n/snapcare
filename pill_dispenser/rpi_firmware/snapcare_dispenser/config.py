@@ -63,44 +63,59 @@ TRAY_GPIO: dict[int, int] = {
 # parser refuse rather than ignore.
 MAX_TRAYS = 8
 
-#: How many hoppers are actually fitted to *this* machine.
+#: How many hoppers this machine will accept schedules for.
 #:
-#: The contest unit is built with three. The map above still lists all eight,
-#: because scaling up should be changing this number and plugging in servos —
-#: not rediscovering which pins were safe to use.
+#: Defaults to the full map, so plugging a fourth servo into the pin already
+#: reserved for it is the whole job — no config edit, no restart with a
+#: different number, nothing for the person adding a tray to know.
 #:
-#: This is not cosmetic. A tray that is planned for but not fitted is a dose
-#: that is scheduled, never dispensed, and reported by nothing: the servo is
-#: simply absent, so there is no jam to detect and no error to raise. Trimming
-#: the map here means such a schedule is refused when it arrives, by name, while
-#: somebody is still looking at the screen that sent it.
+#: **The trade-off, because it is a real one.** An SG90 reports nothing: there
+#: is no way to detect whether a hopper is fitted. Accepting all eight therefore
+#: means a schedule naming a tray that does not physically exist is *accepted*,
+#: and that dose is then never dispensed and reported by nothing — no jam, no
+#: error, a device that looks perfectly healthy. Setting this to the number
+#: actually fitted restores the refusal, by name, while somebody is still
+#: looking at the screen that sent the schedule:
 #:
-#:     SNAPCARE_TRAYS=8 python3 -m snapcare_dispenser
-INSTALLED_TRAYS = int(os.environ.get("SNAPCARE_TRAYS", "3"))
+#:     SNAPCARE_TRAYS=3 python3 -m snapcare_dispenser
+#:
+#: Pin clashes are still checked across the whole map either way.
+INSTALLED_TRAYS = int(os.environ.get("SNAPCARE_TRAYS", str(MAX_TRAYS)))
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  SERVO MOTION
 # ═══════════════════════════════════════════════════════════════════════════
 #
-# One pill drop is: rest at 0°, sweep to 180°, sweep back to 0°. The servo needs
-# 0.5 s to cross from one end to the other, so a drop takes about a second.
+# The tray sits at 0°. A pill drop is four commands from there — two round
+# trips — one second apart:
+#
+#     (resting at 0°)  ->  180°  ->  0°  ->  180°  ->  0°, then the signal is cut
+#
+# The stroke runs twice because one tip does not reliably clear the gate: a pill
+# can sit on the lip and ride back with the horn, which reads as a dose given
+# and is not one.
+#
+# A drop therefore takes about four seconds, and holds the servo lock for all of
+# it — no other tray moves meanwhile.
 
-#: Pulse width in microseconds at 0° — the resting position.
+#: Pulse width in microseconds at 0° — where the tray rests between doses.
 SERVO_MIN_US = 500
 #: Pulse width in microseconds at 180° — the far end of the drop stroke.
 SERVO_MAX_US = 2500
 
-#: Seconds to allow for one traverse. The servo is not told when it has
-#: arrived — nothing on an SG90 reports position — so this is an open-loop wait
-#: and must be generous enough for the *slowest* case: a cold servo under the
-#: weight of a full tray. 0.5 s is the figure from the hardware spec.
-SERVO_TRAVEL_S = 0.5
+#: Seconds between one command in the drop stroke and the next.
+#:
+#: This is the whole timing model: the servo is not told when it has arrived —
+#: nothing on an SG90 reports position — so the interval is an open-loop wait
+#: that has to cover the *slowest* traverse (a cold servo under the weight of a
+#: full tray, about 0.5 s) and leave the hopper time to settle before the horn
+#: reverses. One second is that, with room to spare.
+SERVO_STEP_S = 1.0
 
-#: Extra pause at the far end before coming back. A hopper that has just been
-#: tipped is still moving; returning the instant it arrives can catch a pill
-#: half-way through the gate. Zero is valid and makes the drop a clean sweep.
-SERVO_DWELL_S = 0.15
+#: Seconds to allow for a single traverse, used by `TrayServos.park` — which
+#: only has to reach 0° before releasing the pin. The floor for `SERVO_STEP_S`.
+SERVO_TRAVEL_S = 0.5
 
 #: Per-tray trim, for a servo whose mechanical zero is not the electrical one.
 #: `{3: (520, 2450)}` overrides only tray 3. Leave empty unless a tray is
