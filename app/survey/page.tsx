@@ -271,6 +271,12 @@ export default function SurveyPage() {
               <span>{t(CONSENT.agree)}</span>
             </label>
           </div>
+          <div className="rounded-2xl border p-3 text-xs leading-relaxed"
+               style={{ borderColor: 'var(--color-sc-line)' }}>
+            <span className="font-bold">{t(UI.contactLabel)}</span>
+            <br />
+            {t(UI.contactBody)}
+          </div>
           <button
             type="button"
             disabled={!consent}
@@ -405,6 +411,13 @@ export default function SurveyPage() {
         <section className="space-y-3">
           <h2 className="text-lg font-bold">{t(UI.thanksTitle)}</h2>
           <p className="text-sm leading-relaxed">{t(UI.thanksBody)}</p>
+          {/* 동의문이 "아래 연락처" 라고 약속한 그 연락처. 여기에도 둔다. */}
+          <div className="rounded-2xl border p-3 text-xs leading-relaxed"
+               style={{ borderColor: 'var(--color-sc-line)' }}>
+            <span className="font-bold">{t(UI.contactLabel)}</span>
+            <br />
+            {t(UI.contactBody)}
+          </div>
         </section>
       )}
     </main>
@@ -528,11 +541,23 @@ function DemoBlock({
       <details className="mt-3 rounded-2xl border p-3" style={{ borderColor: 'var(--color-sc-line)' }}>
         <summary className="cursor-pointer text-xs font-bold">{t(UI.glyphsToggle)}</summary>
         <p className="mt-2 text-xs leading-relaxed" style={muted}>{t(UI.glyphsNote)}</p>
-        <div className="mt-2 grid grid-cols-6 gap-1 sm:grid-cols-10">
+        <p className="mt-2 text-xs leading-relaxed" style={muted}>{t(UI.glyphNameNote)}</p>
+        {/*
+          이름을 함께 보여준다. 전에는 그림만 78장을 늘어놓았고, 받아 보신 분이 회신으로
+          "픽토그램 전부 — 설명 없이 — 를 나열" 이라고 짚어 주셨다. 이름은 뜻의 설명이
+          아니라 우리가 부르는 내부 이름이지만, 아무 단서도 없이 78장을 보는 것과는 다르다.
+        */}
+        <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
           {GLYPH_NAMES.map((g) => (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img key={g} src={`/glyphs/${g}.png`} alt={g} width={512} height={512}
-                 className="aspect-square w-full rounded bg-white object-contain p-0.5" />
+            <figure key={g} className="m-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/glyphs/${g}.png`} alt={g} width={512} height={512}
+                   className="aspect-square w-full rounded bg-white object-contain p-0.5" />
+              <figcaption className="mt-0.5 break-all text-center text-[10px] leading-tight"
+                          style={muted}>
+                {g}
+              </figcaption>
+            </figure>
           ))}
         </div>
       </details>

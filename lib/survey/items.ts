@@ -268,6 +268,83 @@ export type Branch = { id: string; title: Record<Lang, string>; items: Item[] };
  */
 export const BRANCHES: Branch[] = [
   {
+    /*
+     * '그 밖' 을 고른 분의 구획.
+     *
+     * 이 구획이 없었다. FIELDS 에는 아홉 갈래가 있는데 BRANCHES 는 여덟 개뿐이어서,
+     * '그 밖' 을 고르면 걸리는 구획이 없고 화면에 문항이 하나도 남지 않았다. 설명과
+     * 데모를 보고 나서 마지막 자유 서술 한 칸만 만나게 된다. 실제로 그렇게 답하신
+     * 분이 회신으로 알려 주셨다 — "문항별 질문이 없고 마지막에 의견 제시 문항이
+     * 전부입니다."
+     *
+     * 다른 구획과 달리 어느 분야인지 우리가 모르므로, 먼저 어디서 보셨는지 여쭙고
+     * 그 다음에 누구나 답할 수 있는 것만 묻는다. 데모 판단 문항(DEMO_JUDGE)은 넣지
+     * 않는다 — 환자의 이해를 판정할 자격이 있는 직군에만 묻기로 한 것이고, 여기서
+     * 받으면 그 분모가 흐려진다.
+     */
+    id: 'other',
+    title: T('그 밖', 'Another field', 'Alt domeniu'),
+    items: [
+      {
+        id: 'ot1_where',
+        kind: 'text' as const,
+        required: true,
+        q: T(
+          '어느 자리에서 이 프로젝트를 보셨는지 한 줄로 적어 주십시오.',
+          'In one line, from what vantage point are you looking at this project?',
+          'Într-un rând, din ce perspectivă priviți acest proiect?',
+        ),
+        note: T(
+          '앞의 여덟 갈래에 들어맞지 않는다고 하셨으므로, 답을 어떻게 읽어야 할지 저희가 알 수 없습니다. 전공이나 하시는 일을 짧게 적어 주시면 그에 맞게 읽겠습니다.',
+          'You told us none of the eight fields fit, so we do not know how to read your answers. A short note on your discipline or work is enough.',
+          'Ne-ați spus că niciunul dintre cele opt domenii nu se potrivește, deci nu știm cum să vă citim răspunsurile. O scurtă notă despre disciplina sau munca dumneavoastră este suficientă.',
+        ),
+      },
+      {
+        id: 'ot0_whole',
+        kind: 'single' as const,
+        required: true,
+        q: T(
+          '이 프로젝트를 전체로 보실 때, 저희가 가장 먼저 해결해야 할 것은 무엇입니까?',
+          'Looking at this project as a whole, what should we deal with first?',
+          'Privind acest proiect în ansamblu, ce ar trebui să rezolvăm întâi?',
+        ),
+        options: [
+          T('문제 설정 자체', 'The framing of the problem', 'Formularea problemei'),
+          T('해결 방식의 선택', 'The choice of solution', 'Alegerea soluției'),
+          T('만들어진 결과물의 완성도', 'The state of what has been built', 'Calitatea a ceea ce a fost construit'),
+          T('사람을 대상으로 한 검증이 없다는 것', 'That there is no validation with people', 'Că nu există validare cu oameni'),
+          T('실제 사용자에게 닿는 경로', 'A route to the people who would use it', 'O cale către oamenii care l-ar folosi'),
+          T('그 밖', 'Something else', 'Altceva'),
+        ],
+        follow: T('그렇게 보시는 이유를 적어 주십시오.', 'Please say why.', 'Vă rugăm să explicați de ce.'),
+      },
+      {
+        id: 'ot2_wrong',
+        kind: 'longtext' as const,
+        q: T(
+          '저희가 잘못 짚고 있다고 보시는 것이 있으면 적어 주십시오.',
+          'If we have got something wrong, please tell us what.',
+          'Dacă am greșit ceva, vă rugăm să ne spuneți ce anume.',
+        ),
+        note: T(
+          '한 줄이어도 됩니다. 칭찬보다 이 답이 훨씬 쓸모 있습니다.',
+          'One line is enough. This is far more useful to us than praise.',
+          'Un rând este suficient. Acest lucru ne este mult mai util decât laudele.',
+        ),
+      },
+      {
+        id: 'ot3_ref',
+        kind: 'longtext' as const,
+        q: T(
+          '저희가 읽어야 할 연구나 참고할 사례가 있으면 알려 주십시오.',
+          'Is there work we should read, or a case we should look at?',
+          'Există lucrări pe care ar trebui să le citim sau un caz la care să ne uităm?',
+        ),
+      },
+    ],
+  },
+  {
     id: 'pharmacy',
     title: T(
       '약국·복약지도 실무',
@@ -1292,6 +1369,24 @@ export const UI = {
     'Ce spune rețeta',
   ),
   showsLabel: T('이 사례가 보여주는 것', 'What this case shows', 'Ce arată acest caz'),
+  /*
+   * 연락처.
+   *
+   * 동의문과 제출 뒤 화면이 "아래 연락처로 알려 주시면" 이라고 두 번 약속하는데, 정작
+   * 주소가 어디에도 없었다. 회신으로 지적을 받았다 — "설문 종료 후 연락처에 대한 정보도
+   * 빠져있구요." 약속해 놓고 지키지 않은 것이므로 첫 화면과 마지막 화면 모두에 둔다.
+   */
+  contactLabel: T('문의 · 응답 삭제 요청', 'Questions or deletion requests', 'Întrebări sau cereri de ștergere'),
+  contactBody: T(
+    '충남삼성고등학교 남윤수 · namyunsu1001@naver.com',
+    'Namyunsu Nam, ChungNam Samsung Academy · namyunsu1001@naver.com',
+    'Namyunsu Nam, ChungNam Samsung Academy · namyunsu1001@naver.com',
+  ),
+  glyphNameNote: T(
+    '각 그림 아래는 저희가 그 형태소를 부르는 이름입니다. 뜻을 설명하는 말이 아니라 내부 이름이며, 그림만 보고 뜻이 짐작되는지가 저희가 알고 싶은 것입니다.',
+    'Under each picture is the name we use for that morpheme internally. It is not an explanation — whether the picture alone conveys the meaning is what we want to know.',
+    'Sub fiecare imagine este numele pe care îl folosim intern pentru acel morfem. Nu este o explicație — ceea ce vrem să aflăm este dacă imaginea singură transmite sensul.',
+  ),
   demoReopen: T(
     '화면 다시 보기',
     'Show the screen again',
