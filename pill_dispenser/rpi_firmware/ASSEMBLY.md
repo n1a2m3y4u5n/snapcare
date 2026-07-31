@@ -5,6 +5,11 @@ chirps about it. Everything here matches the pin map in
 [`config.py`](snapcare_dispenser/config.py); if the two ever disagree, that file
 is right and this one is stale.
 
+**To build one, print [`docs/assembly-guide.pdf`](docs/assembly-guide.pdf)** —
+the same procedure with a drawn wiring diagram per stage and a header map you can
+keep open on the bench. This file is the text it is generated from; the PDF is
+what you want in your hand next to the board. Rebuild it with `make guide`.
+
 ```
                      ┌── DS3231 ────────── GPIO 2/3 (I²C) + 3.3 V
                      │                     knows the time after a power cut

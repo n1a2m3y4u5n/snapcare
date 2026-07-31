@@ -12,3 +12,11 @@ cloud_relay/relay-data/
 # A working fly.toml, copied from fly.toml.example. It names one specific app
 # and region, which is a deployment's business rather than the repository's.
 cloud_relay/fly.toml
+
+# pdflatex leftovers from `make guide`. The PDF itself is committed, so that
+# nobody has to install TeX just to read the build procedure.
+rpi_firmware/docs/*.aux
+rpi_firmware/docs/*.log
+rpi_firmware/docs/*.out
+rpi_firmware/docs/*.toc
+rpi_firmware/docs/*.listing
