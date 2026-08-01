@@ -45,7 +45,7 @@ from __future__ import annotations
 import logging
 import threading
 
-from . import config
+from . import config, gpiochip
 
 log = logging.getLogger(__name__)
 
@@ -156,39 +156,100 @@ class Ring:
 # ── the buzzer ──────────────────────────────────────────────────────────────
 
 class Buzzer:
-    """A piezo element driven as a square wave by pigpio.
+    """A piezo element driven as a square wave.
 
-    Any GPIO will do — the tone is software-timed PWM from the same daemon that
-    drives the servos, so this does not compete for a hardware PWM channel with
-    the ring.
+    Any GPIO will do — the tone is software-timed PWM, so this does not compete
+    for a hardware PWM channel with the ring.
+
+    **This used to be pigpio and nothing else,** which was the single worst
+    consequence of pigpio leaving Raspberry Pi OS. There was no fallback: on a
+    Trixie card the buzzer simply did not exist, the failure was logged at INFO
+    once at startup, and `/api/status` said nothing about it at all as long as
+    the ring had come up. The device then dispensed in silence — and the module
+    docstring above is explicit about what that costs. Nobody presses a button
+    to acknowledge something they never noticed, so the dose log fills with
+    "dispensed, unconfirmed" and stops telling a carer anything.
+
+    So there are two drivers now, picked the same way the servos pick theirs,
+    and `fitted` on the indicator reports which parts are genuinely present.
     """
 
-    def __init__(self, gpio: int | None = None):
+    def __init__(self, gpio: int | None = None, backend: str = "auto"):
+        self.gpio = gpio if gpio is not None else config.BUZZER_GPIO
+        self.backend = "none"
+        self._pi = None
+        self._lgpio = None
+        self._handle = None
+
+        tried = []
+        for name in (("pigpio", "lgpio") if backend == "auto" else (backend,)):
+            try:
+                getattr(self, f"_start_{name}")()
+            except Exception as exc:  # noqa: BLE001 - try the next driver
+                tried.append(f"{name}: {exc}")
+                continue
+            self.backend = name
+            log.info("buzzer on GPIO %d (%s)", self.gpio, name)
+            self.off()
+            return
+
+        raise RuntimeError("; ".join(tried) or f"unknown buzzer backend {backend!r}")
+
+    def _start_pigpio(self) -> None:
         import pigpio  # noqa: PLC0415
 
-        self._pi = pigpio.pi()
-        if not self._pi.connected:
+        pi = pigpio.pi()
+        if not pi.connected:
+            # The import succeeding proves nothing: pigpio is a daemon, and the
+            # client library installs on machines where the daemon cannot.
+            pi.stop()
             raise RuntimeError("pigpiod is not running")
-        self.gpio = gpio if gpio is not None else config.BUZZER_GPIO
+        self._pi = pi
         self._pi.set_mode(self.gpio, pigpio.OUTPUT)
-        self.off()
+
+    def _start_lgpio(self) -> None:
+        import lgpio  # noqa: PLC0415
+
+        handle = gpiochip.open_chip()
+        if handle is None:
+            raise RuntimeError(gpiochip.unavailable_reason())
+        self._lgpio = lgpio
+        self._handle = handle
+        lgpio.gpio_claim_output(handle, self.gpio, 0)
 
     def beep(self, seconds: float | None = None) -> None:
         import time  # noqa: PLC0415
 
-        self._pi.set_PWM_frequency(self.gpio, config.BUZZER_HZ)
-        self._pi.set_PWM_dutycycle(self.gpio, 128)  # square wave, loudest
-        time.sleep(seconds if seconds is not None else config.BUZZER_BEEP_S)
+        duration = seconds if seconds is not None else config.BUZZER_BEEP_S
+        if self.backend == "pigpio":
+            self._pi.set_PWM_frequency(self.gpio, config.BUZZER_HZ)
+            self._pi.set_PWM_dutycycle(self.gpio, 128)  # square wave, loudest
+            time.sleep(duration)
+        else:
+            # lgpio's duty cycle is a percentage, not pigpio's 0-255. Passing
+            # 128 here would be clamped to 100% — a pin held high, which is a
+            # piezo making no sound at all while drawing current.
+            self._lgpio.tx_pwm(self._handle, self.gpio, config.BUZZER_HZ, 50)
+            time.sleep(duration)
         self.off()
 
     def off(self) -> None:
-        self._pi.set_PWM_dutycycle(self.gpio, 0)
+        if self.backend == "pigpio":
+            self._pi.set_PWM_dutycycle(self.gpio, 0)
+        elif self.backend == "lgpio":
+            # Both halves. Cancelling the transmission leaves the pin wherever
+            # the timing thread last wrote it, and a piezo left high sits under
+            # DC bias for as long as the device is powered.
+            gpiochip.stop_pin(self._handle, self.gpio)
 
     def close(self) -> None:
         try:
             self.off()
-            self._pi.stop()
-        except Exception:  # noqa: BLE001
+            if self.backend == "pigpio":
+                self._pi.stop()
+            elif self.backend == "lgpio":
+                self._lgpio.gpio_free(self._handle, self.gpio)
+        except Exception:  # noqa: BLE001 - shutdown must not raise
             pass
 
 
@@ -333,6 +394,19 @@ def make_indicator(want_ring: bool = True, want_buzzer: bool = True) -> Indicato
             "dispense silently and rely on the phone to notify anyone"
         )
         return LogIndicator()
+
+    if want_buzzer and not buzzer:
+        # At WARNING, not INFO, and said in terms of the consequence rather
+        # than the missing library. A ring with no chirp only works if somebody
+        # happens to be looking at it, and the confirm button beside it becomes
+        # decorative — which turns the dose log into a column of
+        # "dispensed, unconfirmed" that tells a carer nothing.
+        log.warning(
+            "NO BUZZER — the ring will light for a dose but nothing will sound. "
+            "Nobody presses a button to acknowledge a dose they never noticed, "
+            "so expect the log to fill with unconfirmed doses. "
+            "sudo apt install python3-lgpio"
+        )
 
     log.info("indicators fitted: %s", ", ".join(
         name for name, part in (("ring", ring), ("buzzer", buzzer)) if part))

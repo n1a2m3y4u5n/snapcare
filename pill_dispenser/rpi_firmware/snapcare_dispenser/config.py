@@ -233,25 +233,56 @@ CONFIRM_TIMEOUT_S = 15 * 60
 #: back on Tuesday believing it is Friday. A tray acting on that opens the
 #: Mon/Wed/Fri compartment on a Tuesday and looks perfectly healthy doing it.
 #:
-#: This build fits a **DS3231**, which fixes it properly: a battery-backed clock
-#: that keeps time through a power cut with no network at all. Three things can
-#: now vouch for the time — the RTC, NTP, or an `SC1*C*` code from the phone —
-#: and until one of them does, the tray stays shut. A tray that does not open is
-#: a problem someone notices.
+#: This build fits a battery-backed clock, which fixes it properly: it keeps
+#: time through a power cut with no network at all. Three things can vouch for
+#: the time — the RTC, NTP, or an `SC1*C*` code from the phone — and until one
+#: of them does, the tray stays shut. A tray that does not open is a problem
+#: someone notices.
 REQUIRE_TRUSTED_CLOCK = True
 
-#: Trust the system clock when a healthy DS3231 is present.
+#: Trust the system clock when a healthy RTC is present.
 #:
-#: "Healthy" is a real check, not a presence check. The DS3231 has an oscillator
-#: stop flag which latches if the chip ever lost both supply and battery — the
-#: exact case where its time is meaningless. A dead coin cell does not make the
-#: chip disappear; it makes it confidently wrong, which is the failure this
-#: whole section exists to refuse. See rtc.py.
+#: "Healthy" is a real check, not a presence check. A dead coin cell does not
+#: make a clock chip disappear from its bus; it makes the chip answer promptly
+#: and confidently with nonsense, which is the failure this whole section
+#: exists to refuse. What "healthy" *means* differs per chip — see rtc.py.
 USE_RTC = True
 
-#: I2C bus the DS3231 is on. Bus 1 is GPIO 2 (SDA) and GPIO 3 (SCL) — the
-#: header pins every Pi since the Model B rev 2 uses, and the reason those two
-#: are kept out of the servo map.
+#: Which chip is fitted.
+#:
+#:     ds1302   three bit-banged wires. No bus, no kernel driver, no /dev/rtc0
+#:     ds3231   I2C at 0x68, read by the kernel through the i2c-rtc overlay
+#:     none     no RTC — NTP or a phone has to vouch for the time
+#:     auto     try the DS1302, then the DS3231
+#:
+#: The two chips are not equivalent and the difference is not cosmetic. The
+#: DS3231 latches an oscillator-stop flag in hardware, which answers "did this
+#: chip lose time at some point?" directly. The DS1302 has no such bit — its
+#: clock-halt flag is a control with an explicitly undefined power-on state —
+#: so the firmware reconstructs the same fact from a token it keeps in the
+#: chip's battery-backed RAM. See ds1302.py, which is worth reading before
+#: trusting either.
+RTC_KIND = os.environ.get("SNAPCARE_RTC", "auto").lower()
+
+#: The DS1302's three wires. BCM numbering.
+#:
+#: **Deliberately not GPIO 2 and 3.** Those carry fixed 1.8 kΩ pull-ups to
+#: 3.3 V that cannot be switched off, and they are wrong here in two separate
+#: ways. On the bidirectional I/O line the pull-up sources current the chip has
+#: to sink to show a zero, and a *floating* line then reads as one — so a
+#: disconnected wire looks exactly like valid data. On the clock line it holds
+#: SCLK high before the pin is configured, breaking the chip's rule that SCLK
+#: must be low when CE rises.
+#:
+#: 16, 20 and 21 are physical pins 36, 38 and 40 — three in a row at the end of
+#: the header, with a ground at pin 39 right beside them.
+RTC_SCLK_GPIO = 16
+RTC_IO_GPIO = 20
+RTC_CE_GPIO = 21
+
+#: I2C bus and address, for a build fitted with a DS3231 instead. Bus 1 is
+#: GPIO 2 (SDA) and GPIO 3 (SCL) — which is why those two are kept out of the
+#: servo map either way.
 RTC_I2C_BUS = 1
 RTC_I2C_ADDRESS = 0x68
 

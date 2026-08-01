@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One screen, three states: not paired, paired and waiting, paired and
+  reporting. Everything below the pairing card is hidden until there is
+  something real to put in it.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <!--
+          The crypto self-check. Visible only when it FAILS, because a green
+          tick nobody needs is noise and a red one is the difference between
+          debugging for an hour and reading one line.
+        -->
+        <TextView
+            android:id="@+id/selfCheck"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:padding="12dp"
+            android:background="#33FF8200"
+            android:textColor="@color/snap_amber"
+            android:visibility="gone" />
+
+        <!-- ── pairing ─────────────────────────────────────────────────── -->
+
+        <LinearLayout
+            android:id="@+id/pairingCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Relay"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/relayUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="https://snapcare-relay.fly.dev"
+                android:importantForAutofill="no"
+                android:inputType="textUri"
+                android:singleLine="true" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Pairing code, off the label"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/claim"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="6V9F5-9QK67"
+                android:importantForAutofill="no"
+                android:inputType="textCapCharacters"
+                android:singleLine="true" />
+
+            <TextView
+                android:id="@+id/claimHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/snap_muted"
+                android:textSize="12sp"
+                android:text="Ten characters. There is no O, I, L, 0 or 1 in the alphabet." />
+
+            <Button
+                android:id="@+id/pair"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Pair" />
+        </LinearLayout>
+
+        <!-- ── the device ──────────────────────────────────────────────── -->
+
+        <TextView
+            android:id="@+id/state"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:padding="12dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/detail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="monospace"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/sendSchedule"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Send a schedule (tray 1, 08:00 and 20:00)" />
+
+            <Button
+                android:id="@+id/unpair"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Forget this device" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/events"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:textSize="14sp"
+            android:visibility="gone" />
+    </LinearLayout>
+</ScrollView>

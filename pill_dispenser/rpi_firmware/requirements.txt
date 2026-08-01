@@ -3,17 +3,46 @@
 #
 # On a Pi, prefer apt over pip — `service/install.sh` does this for you:
 #
-#     sudo apt install pigpio python3-segno avahi-daemon python3-cryptography \
-#                      python3-rpi-ws281x python3-smbus2 i2c-tools
+#     sudo apt install python3-lgpio python3-segno avahi-daemon \
+#                      python3-cryptography python3-rpi-ws281x \
+#                      python3-smbus2 i2c-tools
 #
-# pigpio also needs its daemon running, which is the part people miss:
+# Note that pip is not usable system-wide on Bookworm and later anyway: PEP 668
+# marks the system Python externally-managed, and `pip install` there fails.
+# This file is a description of what the firmware wants, not an install method.
+
+# The GPIO library, and the one genuine requirement in this file. Servos, the
+# buzzer and the confirm button all reach a pin through it. Without *some* GPIO
+# library the device cannot open a tray, and it will now say so and refuse to
+# dispense rather than logging doses that never left the hopper.
+#
+# Preinstalled on every Raspberry Pi OS Lite image since 2023, on Bookworm and
+# Trixie, on both architectures. It comes from the Raspberry Pi archive and is
+# not in Debian, so plain Debian on a Pi does not have it.
+lgpio>=0.2.2 ; platform_machine == "armv7l" or platform_machine == "aarch64"
+
+# Better than lgpio where it exists: pigpio times pulses with the DMA
+# controller, so a busy CPU cannot stretch one, where lgpio times them from an
+# ordinary thread.
+#
+# **It is gone from current Raspberry Pi OS.** It was preinstalled up to and
+# including Bookworm and disappeared at the Trixie rebase — Debian has never
+# packaged the daemon, only the client, and the 64-bit images bootstrap from
+# Debian. So: Bookworm has it, 32-bit Trixie has it via Raspbian, 64-bit Trixie
+# has no path to it at all. The firmware prefers it and does not need it.
+#
+# The client library installing proves nothing: `import pigpio` succeeds on
+# machines where `pigpiod` cannot exist, and `pigpio.pi().connected` is the
+# only real check.
 #
 #     sudo systemctl enable --now pigpiod
-
-# Steady, DMA-timed servo pulses. Without it the firmware falls back to
-# RPi.GPIO software PWM, which works but makes the servos twitch and hum
-# audibly between doses. Pi only — do not expect this to install on a laptop.
 pigpio>=1.78 ; platform_machine == "armv7l" or platform_machine == "aarch64"
+
+# Deliberately absent: RPi.GPIO. It is the last-resort backend and it must not
+# be installed by anything — Raspberry Pi OS now ships `python3-rpi-lgpio`, a
+# shim providing a module named RPi.GPIO over lgpio, and the real package
+# Conflicts with it. Installing it removes a working shim and replaces it with
+# the legacy sysfs implementation.
 
 # Draws the setup QR code. Pure Python, no dependencies of its own. Without it
 # the label page falls back to showing the network name and password as text,

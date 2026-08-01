@@ -1,8 +1,9 @@
 """Whether the device knows what time it is, and whether it should believe itself.
 
-A Raspberry Pi has **no real-time clock and no battery.** This is a real
-regression from the Arduino build, which had a DS3231 keeping time on a coin
-cell, and the difference has to be handled rather than hoped about.
+A Raspberry Pi has **no real-time clock of its own and no battery**, which was
+this build's worst regression from the Arduino board. A coin-cell clock chip is
+fitted to fix it — see `rtc.py` — but the rule around it matters more than the
+part, because the failure it guards against is not "no time".
 
 A Pi that boots with no network does not report *no* time. Raspberry Pi OS ships
 `fake-hwclock`, which writes the time to a file periodically and restores it at
@@ -12,18 +13,28 @@ the wrong day of the week. A tray acting on that opens the Monday/Wednesday/
 Friday compartment on a Tuesday and looks perfectly healthy doing it.
 
 So the same rule the AVR firmware used is kept, and matters more here: the
-device dispenses nothing until something vouches for the time. Two things can:
+device dispenses nothing until something vouches for the time. Three things
+can, in this order of authority:
 
   **NTP.** Once the WiFi is up, systemd-timesyncd corrects the clock from the
-  network and reports that it has. This is the normal path and needs nobody's
-  attention.
+  network and reports that it has. Continuously corrected, so it beats
+  everything, and it needs nobody's attention.
+
+  **The clock chip**, whether or not there is ever a network — but only when it
+  vouches for itself. `rtc.py` decides what that means, and it is a different
+  question per chip.
 
   **The phone.** `SC1*C*202607251930*4`, by QR, by API, or by the device's own
-  web page. This is the path for a dispenser on a network with no internet, and
-  it is why the message exists at all.
+  web page. Right once, at the moment somebody held up a code, and the path for
+  a dispenser on a network with no internet.
 
-`fake-hwclock`'s guess counts as neither. It is better than nothing for file
-timestamps and worse than nothing for medication.
+`fake-hwclock`'s guess counts as none of them. It is better than nothing for
+file timestamps and worse than nothing for medication.
+
+One asymmetry to know about: on a DS3231 build the kernel has already applied
+the chip's time before this process starts, and on a DS1302 build nothing has —
+so `adopt_rtc()` exists, and a build that skipped calling it would report a
+trusted clock while reading a stale one.
 
 A tray that stays shut is a problem someone notices within hours. A tray that
 opens at the wrong times is one that nobody notices at all.
@@ -129,13 +140,55 @@ class Clock:
         self._vouched_at = target
         log.info("clock set to %s by %s", target.isoformat(timespec="seconds"), source)
         if _try_set_system_clock(target) and config.USE_RTC:
-            # Push it into the DS3231 too, and only then clear the flag that
-            # says the chip lost time. Order matters: clearing it first would
-            # leave the hardware asserting, across every future boot, that a
-            # time nobody has corrected is trustworthy.
-            if _write_system_clock_to_rtc():
-                rtc.clear_oscillator_flag()
-            rtc.invalidate()
+            # Push it into the clock chip too, whichever one is fitted, or the
+            # correction lives in RAM alone and the next power cut takes it
+            # away — sending the device back to refusing to dispense.
+            #
+            # `rtc.vouch` is also what records that the chip's time can now be
+            # believed, and it does that *last*: on a DS3231 the OSF is cleared
+            # after the write, on a DS1302 the RAM token is written after the
+            # registers. Either one done first would leave the hardware
+            # asserting, across every future boot, that a time nobody corrected
+            # is trustworthy.
+            rtc.vouch(target)
+
+    def adopt_rtc(self) -> bool:
+        """Take the time from the clock chip, for a build the kernel cannot read.
+
+        **A DS3231 build does not need this and a DS1302 build cannot work
+        without it.** The difference is where the chip's time enters the
+        system: for the DS3231 the kernel applies it through the `i2c-rtc`
+        overlay before userspace starts, so by the time this process runs the
+        system clock already *is* the chip's. The DS1302 has no kernel driver
+        at all, so nothing has read it and the system clock is still whatever
+        `fake-hwclock` restored from the last shutdown.
+
+        Which is the trap this method exists to close. `source` reports `rtc`
+        as soon as the chip vouches, and `now()` reads the system clock — so
+        without this the device would report a trusted clock and act on a stale
+        one. That is exactly the Friday-evening failure the module docstring
+        opens with, arrived at through the fix for it.
+
+        Returns True if the time was taken from the chip.
+        """
+        if not config.USE_RTC:
+            return False
+        # NTP outranks the chip and has already corrected the system clock.
+        if ntp_synchronised():
+            return False
+
+        when = rtc.read_time()
+        if when is None:
+            return False
+
+        self._offset = when - self._source()
+        self._vouched_at = when
+        # Deliberately not setting `_vouched_by`: `source` already answers
+        # `rtc` from the chip's own state, and claiming it here would keep
+        # saying so after the cell died.
+        log.info("clock taken from the RTC: %s", when.isoformat(timespec="seconds"))
+        _try_set_system_clock(when)
+        return True
 
     def trust_ntp(self) -> bool:
         """Adopt the system clock because NTP says it is right.
@@ -218,24 +271,3 @@ def _try_set_system_clock(target: datetime) -> bool:
     return True
 
 
-def _write_system_clock_to_rtc() -> bool:
-    """`hwclock -w` — copy the freshly-set system time into the DS3231.
-
-    Without this the correction lives only in RAM: the next power cut restores
-    whatever the chip has been holding since its battery died, and the device
-    goes back to refusing to dispense.
-    """
-    if not rtc.kernel_rtc_present():
-        return False
-    try:
-        result = subprocess.run(["hwclock", "--systohc"], capture_output=True,
-                                text=True, timeout=15, check=False)
-    except (OSError, subprocess.SubprocessError) as exc:
-        log.info("could not write the time to the RTC (%s)", exc)
-        return False
-    if result.returncode != 0:
-        log.info("could not write the time to the RTC (%s)",
-                 result.stderr.strip() or f"exit {result.returncode}")
-        return False
-    log.info("system time written to the DS3231")
-    return True

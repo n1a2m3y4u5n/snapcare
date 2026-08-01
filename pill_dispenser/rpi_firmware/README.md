@@ -23,20 +23,21 @@ internet going away.
    │    cloud link ──── sealed; the relay cannot read it     │      │
    │    scheduler ───── SC1, day masks, course lengths       │      │
    │    store ───────── the schedule, cached on the card     │      │
-   │    DS3231 ──────── knows the time after a power cut     │      │
-   │    pigpio ──────── GPIO 17 27 22   ring 18   buzzer 23  │      │
+   │    DS1302 ──────── knows the time after a power cut     │      │
+   │    lgpio ───────── GPIO 17 27 22   ring 18   buzzer 23  │      │
    └───────────────────────┬─────────────────────────────────┴──────┘
                            │                          confirm button 24
                            ▼
-                 three servos, two round trips each
+            the fitted servos, two round trips each
 ```
 
 The cloud link is an extra way *in*, never a dependency. The schedule is on the
-SD card and the DS3231 knows the time, so a relay that is down, unreachable or
+SD card and the RTC knows the time, so a relay that is down, unreachable or
 never configured costs nobody a dose.
 
-The contest unit is built with **three trays**; the firmware accepts eight by
-default and the pin map already lists them, so adding one is a plug.
+The unit on the bench has **two trays**, but nothing in the firmware says two:
+all eight are accepted by default and the pin map already lists them, so adding
+a hopper is a plug.
 
 This replaces the two-board Arduino + ESP32-CAM build in [`../firmware/`](../firmware/).
 The protocol is unchanged — the same `SC1` grammar, the same test vectors — so a
@@ -256,7 +257,7 @@ survives a reimage.
 **Nothing about this is allowed to reach the trays.** The cloud link runs on its
 own threads, catches everything, and applies a schedule through the same method
 the LAN API calls. Pull the network out and the device keeps its schedule, keeps
-its clock, and keeps dispensing; that is what `store.py` and the DS3231 were for
+its clock, and keeps dispensing; that is what `store.py` and the RTC were for
 in the first place, and cloud sync is not permitted to quietly become the thing
 they were protecting against.
 
@@ -291,9 +292,11 @@ handled exactly like a missing LED ring.
 
 ## Wiring
 
-The contest unit is **three trays**, an LED ring, a buzzer, a confirm button and
-a DS3231. `INSTALLED_TRAYS = 3` in `config.py` is the only thing that says
-three; the pin map lists all eight so scaling up is one number and some servos.
+The unit on the bench is **two trays**, an LED ring, a buzzer, a confirm button
+and an RTC — but nothing in the firmware says two. All eight trays are accepted
+by default and the pin map lists all eight, so fitting another hopper is a plug
+and nothing else. `SNAPCARE_TRAYS` narrows it when you would rather a schedule
+for a tray this machine lacks be refused than silently never dispensed.
 
 To *build* one rather than look up a pin,
 [`docs/assembly-guide.pdf`](docs/assembly-guide.pdf) goes from a bare Pi to a
@@ -301,11 +304,6 @@ commissioned machine one subsystem at a time, each stage ending with the command
 that proves it. The table below is the reference; that is the procedure. Rebuild
 it with `make guide`.
 
-> **The guide now specifies a DS1302** on GPIO 2/3/4, replacing the DS3231
-> described in this section. The firmware's clock layer (`rtc.py`,
-> `config.py`, `service/install.sh`) has not been migrated yet and still speaks
-> I²C to a DS3231, so this table and the pin map below remain the DS3231 wiring
-> until it is.
 
 | Signal | Pin | Notes |
 |---|---|---|
@@ -317,15 +315,21 @@ it with `make guide`.
 | WS2812 5 V / GND | the servo supply | ~700 mA at full white; see brightness |
 | Piezo buzzer | GPIO **23** | through 100 Ω |
 | Confirm button | GPIO **24** | other side to GND; internal pull-up, no resistor |
-| DS3231 SDA / SCL | GPIO **2 / 3** | the module's own pull-ups are enough |
-| DS3231 VCC / GND | 3.3 V, GND | with its coin cell fitted |
+| DS1302 SCLK / I/O / CE | GPIO **16 / 20 / 21** | bit-banged; pins 36, 38, 40 |
+| DS1302 VCC / GND | 3.3 V (pin 17), GND (pin 39) | **not 5 V** — the I/O line drives back |
 
 The servo pins avoid every pin that costs hardware on a 3B: GPIO 0/1 are the HAT
 ID EEPROM, 2/3 have permanent I²C pull-ups (a servo signal idling high before
 the software starts slams the horn to one end at power-on, with a loaded tray on
-it) — and are where the DS3231 now lives — and 14/15 are the serial console, the
-one way back into a Pi whose network you have just broken. A test asserts all of
-that, and that no peripheral shares a pin with a servo.
+it), and 14/15 are the serial console — the one way back into a Pi whose network
+you have just broken. A test asserts all of that, and that no peripheral shares a
+pin with a servo.
+
+**The RTC is on 16/20/21 and deliberately not on 2/3.** Those two pull-ups are
+wrong for a bit-banged three-wire chip in both directions: on the bidirectional
+I/O line a floating wire reads as a 1, so a lead that has fallen off looks like
+valid data, and on the clock line the pull-up holds SCLK high before the pin is
+configured — which breaks the chip's requirement that SCLK be low when CE rises.
 
 ### The ring must be on GPIO 18, 12, 21 or 10
 
@@ -400,18 +404,35 @@ The common ground is what makes the signal mean anything; without it the servos
 twitch or ignore commands entirely. The bulk capacitor absorbs the current step
 when a servo starts, which is what otherwise dips the rail.
 
-### Why pigpio
+### Which GPIO library, and why pigpio is not the answer any more
 
-`pigpio` times pulses with the Pi's DMA controller, so a busy CPU cannot stretch
-one. The `RPi.GPIO` fallback times them from a Python thread, and every kernel
-preemption is a visible twitch and an audible buzz — which matters on a device
-that sits in a bedroom overnight. The firmware falls back automatically, logs a
-warning, and the status page says `jittery fallback` rather than pretending.
+There are three, and where the pulse timing comes from is the whole difference:
+
+| | timing | |
+|---|---|---|
+| `pigpio` | DMA | best — a busy CPU cannot stretch a pulse. **Gone from current Raspberry Pi OS** |
+| `lgpio` | a C thread | good, and what you will actually get |
+| `RPi.GPIO` | a *Python* thread | last resort; every preemption is a twitch and an audible buzz |
+
+**pigpio was preinstalled up to Bookworm and disappeared at the Trixie rebase.**
+Debian has never packaged the daemon — only the client, which installs happily
+and then cannot connect to anything — and the 64-bit Pi OS images bootstrap from
+Debian. So on a 64-bit Trixie card there is no `apt` path to it at all.
 
 ```bash
-sudo apt install pigpio
-sudo systemctl enable --now pigpiod     # it is a daemon, not just a library
+sudo apt install python3-lgpio    # preinstalled since 2023; this is normally a no-op
 ```
+
+Do **not** install `python3-rpi.gpio`. Raspberry Pi OS now ships
+`python3-rpi-lgpio`, a shim providing a module named `RPi.GPIO` over lgpio, and
+the real package conflicts with it — asking for it removes a working shim and
+replaces it with the legacy sysfs implementation.
+
+The firmware walks pigpio → lgpio → RPi.GPIO → mock, says which one it got at
+startup and in `gpio.servo.timing`, and **refuses to dispense if it landed on
+the mock while running on a Pi.** That last part is not cosmetic: without it a
+device with no GPIO library runs the scheduler, writes "dispensed" into the dose
+log and publishes it to the carer's phone, while every pill stays in the hopper.
 
 ---
 
@@ -437,8 +458,9 @@ journalctl -u snapcare-dispenser -f
 ## The clock, and why the tray stays shut
 
 A Raspberry Pi has no real-time clock of its own, which was this build's worst
-regression from the DS3231 on the Arduino board. **Fitting a DS3231 fixes it
-properly** — but only if the firmware asks the right question about it.
+regression from the DS3231 on the Arduino board. **Fitting a coin-cell clock
+chip fixes it** — but only if the firmware asks the right question about it, and
+the two chips answer very differently.
 
 A Pi that boots with no network does not report *no* time. `fake-hwclock`
 restores whatever was last written to disk, so a device unplugged on Friday
@@ -451,7 +473,7 @@ nothing but overwrite a good time with a stale one during boot.
 Three things can vouch for the time, in this order of authority:
 
 - **NTP**, once the WiFi is up. Continuously corrected, so it beats everything.
-- **The DS3231**, whether or not there is ever a network.
+- **The clock chip**, whether or not there is ever a network — but only when it vouches for itself.
 - **The phone**, by `SC1*C*` code or `POST /api/clock` — right once, at the
   moment somebody held up a code.
 
@@ -463,13 +485,30 @@ A dead coin cell does not make the chip disappear from the I²C bus. It makes th
 chip answer, promptly and confidently, with a time that is nonsense — which is
 precisely the failure this whole section exists to refuse.
 
-The right question is answered by one bit. The DS3231 latches an **oscillator
-stop flag** (bit 7 of the status register at `0x0F`) whenever its oscillator has
-stopped since it was last set — exactly "this chip lost both supply and battery
-at some point, and everything it has said since is invented". The firmware reads
-it, and only a clear flag counts as vouching. If the flag cannot be read at all,
-that is reported as *unknown* rather than as a failure, and unknown falls
-towards the tray staying shut.
+On a **DS3231** the right question is answered by one bit: an **oscillator stop
+flag** the hardware latches whenever the oscillator has stopped since it was last
+set — exactly "this chip lost both supply and battery at some point, and
+everything it has said since is invented". Only a clear flag counts as vouching,
+and a flag that cannot be read is reported as *unknown* rather than as a failure.
+Unknown falls towards the tray staying shut.
+
+**A DS1302 has no such bit, and this build fits a DS1302.** Its clock-halt flag
+is a control rather than a status — nothing in the hardware ever sets it, and its
+power-on state is documented as undefined — so a clear flag means only "running
+right now", which is equally true of a chip that sat unpowered for a month and
+resumed counting from whatever was in its registers.
+
+So the evidence is reconstructed. The DS1302 has 31 bytes of RAM in the *same
+battery-backed domain as the oscillator*: the coin cell holds both or neither.
+Setting the clock writes a token there, and on boot that token is present if and
+only if the cell has held continuously since. It is firmware convention rather
+than a hardware guarantee, and both of its failure modes fall towards not
+trusting the clock. `ds1302.py` is the whole argument.
+
+The DS1302 also has no kernel driver on a Pi, so there is no `/dev/rtc0` and
+`hwclock` does nothing: the firmware reads the chip and sets the system clock
+itself at startup. That is later than the kernel would have, and it is the cost
+of the part.
 
 The time itself reaches the system clock through the kernel, not through this
 firmware — `dtoverlay=i2c-rtc,ds3231`, applied by the installer. That happens
@@ -567,7 +606,7 @@ one screen that matters.
 ## Testing it without a Pi
 
 ```bash
-make            # 434 tests, no board, no servos, no network
+make            # 472 tests, no board, no servos, no network
 make run        # the whole firmware on a laptop, mock servos, port 8099
 make label      # this machine's setup QR and pairing code, in the terminal
 make cloud      # the same, wired to a relay on this machine — see ../cloud_relay
@@ -599,9 +638,15 @@ threads proving only one pin is ever driven at once.
 
 **The fitted hardware**: that the chirp repeats until confirmed and stops the
 instant it is, that a broken ring is dropped rather than retried forever, that a
-device with neither part still dispenses, and that a stopped DS3231 oscillator
-leaves the tray shut while an unreadable flag is reported as unknown rather than
-as failure.
+device with neither part still dispenses, and — the one worth the most lines —
+that a device with **no GPIO library at all** refuses to dispense rather than
+filling a carer's app with doses that never left the hopper.
+
+**The DS1302**, against a simulated chip that implements the actual wire
+protocol rather than a stub. A bit-banged driver's failures are an off-by-one in
+the bit order, a turnaround one edge too late, or a register map read in the
+DS3231's order — none of which raise anything. They produce a plausible time
+that is wrong, which is the single failure this firmware exists to refuse.
 
 **The identity** is pinned to an exact value, because a change to the salt or
 the alphabet would leave the derivation perfectly deterministic and perfectly
@@ -628,11 +673,11 @@ direction in the browser, at load, by opening an envelope Python sealed.
 | | Arduino + ESP32-CAM | Raspberry Pi 3B |
 |---|---|---|
 | Boards | two, plus a level shifter on A1 | one |
-| Trays | eight | **three fitted**, eight in the map |
+| Trays | eight | **two fitted**, eight accepted and in the map |
 | Phone → device | QR into a camera | HTTP over the home WiFi |
 | Device → phone | QR on a 128×64 OLED | JSON, and the `SC1*E*` string in it |
-| Clock | DS3231 on a coin cell | DS3231, NTP, or a phone |
-| Servo timing | hardware `Servo` library | pigpio DMA |
+| Clock | DS3231 on a coin cell | DS1302, NTP, or a phone |
+| Servo timing | hardware `Servo` library | pigpio DMA, or lgpio |
 | Schedule storage | EEPROM | JSON, atomically replaced |
 | Setup | flash it | scan a QR |
 
@@ -655,7 +700,9 @@ rpi_firmware/
     sc1.py            the wire format, shared with three other implementations
     scheduler.py      when a tray is due — pure logic, no I/O
     device.py         the only thing allowed to open a tray
-    servo.py          pigpio / RPi.GPIO / mock
+    gpiochip.py       the one lgpio handle, and which board this is
+    servo.py          pigpio / lgpio / RPi.GPIO / mock
+    selftest.py       commissioning an assembled machine
     store.py          what survives a power cut, and how
     clock.py          whether the time can be believed at all
     wifi.py           nmcli — the mechanism, one function per call
@@ -668,10 +715,11 @@ rpi_firmware/
     daemon.py         the process
     indicators.py     the LED ring and the buzzer
     button.py         the confirm button, debounced in the GPIO daemon
-    rtc.py            the DS3231, and the one bit that says whether to believe it
+    rtc.py            whether the clock chip can be believed, whichever is fitted
+    ds1302.py         three bit-banged wires, and the trust model they force
     web/              four pages, no build step, nothing external
   service/            systemd unit + install.sh
-  tests/              434 tests; only the end-to-end one opens a socket
+  tests/              472 tests; only the end-to-end one opens a socket
 ```
 
 `NOTES-FOR-WEBAPP.md` is for whoever is building the production web app.

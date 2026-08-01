@@ -1,10 +1,12 @@
 # Everything testable in the pill dispenser, in one command.
 #
-#     make            run all four suites
+#     make            run every suite that needs nothing installed
 #     make python     the sheet reader and the schedule builder (needs conda env snapcare)
 #     make firmware   the AVR/ESP protocol and scheduler (needs only a C++ compiler)
 #     make rpi        the Raspberry Pi firmware (needs only python)
 #     make relay      the cloud relay (needs only python)
+#     make vectors    regenerate the crypto vectors the other implementations pin to
+#     make apk        the demo app (needs the Android SDK)
 #     make demo       a relay and a dispenser on this machine, wired together
 #     make sweep      re-measure where the reader stops working
 #     make clean
@@ -17,9 +19,9 @@
 
 PYTHON ?= python
 
-.PHONY: all python firmware rpi relay demo sweep clean
+.PHONY: all python firmware rpi relay vectors apk demo sweep clean
 
-all: firmware rpi relay python
+all: firmware rpi relay python vectors
 	@echo
 	@echo "pill dispenser: all tests passed"
 
@@ -40,6 +42,21 @@ python:
 	@echo
 	@echo "── sheet reader + schedule builder ──"
 	@$(PYTHON) -m pytest form_sheet_parser/tests -q
+
+# The pairing crypto now has four implementations sharing no code — the
+# firmware, the relay's lab page, webapp_kit/ and android_demo/ — and this file
+# is the only thing keeping them speaking the same language. It is generated
+# from the firmware, so `--check` failing means somebody changed the derivation
+# and the other three are now wrong.
+vectors:
+	@echo
+	@echo "── crypto vectors (shared by four implementations) ──"
+	@$(MAKE) --no-print-directory -C webapp_kit check PYTHON=$(PYTHON)
+
+# Not part of `all`: it needs the Android SDK, which most people running the
+# tests will not have. Its own unit tests read the vectors above.
+apk:
+	@$(MAKE) --no-print-directory -C android_demo apk
 
 # The whole cloud path on one machine: a relay, a dispenser with mock servos
 # pointed at it, and the demo app at http://localhost:8088/lab.

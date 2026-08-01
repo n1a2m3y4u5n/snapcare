@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      The device's own colour vocabulary, so somebody who has used the
+      dispenser reads the same meanings on the phone. Carried over unchanged
+      from indicators.py.
+    -->
+    <color name="snap_green">#00C83C</color>   <!-- a dose is in the cup -->
+    <color name="snap_blue">#005AFF</color>    <!-- recorded as taken -->
+    <color name="snap_amber">#FF8200</color>   <!-- missed, or the window closed -->
+    <color name="snap_violet">#9600FF</color>  <!-- a new schedule was accepted -->
+    <color name="snap_cyan">#00AABE</color>    <!-- waiting for a network -->
+    <color name="snap_ink">#1A1C1E</color>
+    <color name="snap_muted">#5F6368</color>
+</resources>

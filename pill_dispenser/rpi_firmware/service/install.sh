@@ -10,8 +10,16 @@
 #
 # What it does, and why each one is needed:
 #
-#   pigpio           DMA-timed servo pulses. Without it the fallback is Python
-#                    software PWM, which makes the servos buzz audibly at rest.
+#   python3-lgpio    The GPIO library. Servos, the buzzer and the confirm
+#                    button all go through it. Preinstalled on every Raspberry
+#                    Pi OS Lite image since 2023, so this is normally a no-op —
+#                    but it is the one package the device genuinely needs, and
+#                    without it no tray can be opened at all.
+#   pigpio           Better still, where it exists: DMA-timed pulses that a busy
+#                    CPU cannot stretch. It was preinstalled up to Bookworm and
+#                    is GONE from Raspberry Pi OS Trixie — Debian has never
+#                    packaged the daemon, and the 64-bit images come from
+#                    Debian. Tried, not required.
 #   avahi-daemon     publishes pilldispenser.local, which is the exact name
 #                    lib/hardware/dispenser.ts in the web app looks for.
 #   python3-segno    draws the setup QR. Optional — everything works without it
@@ -68,11 +76,42 @@ apt-get update
 # reports at startup which of them it found, so a package that is not in this
 # suite must not abort an otherwise good install.
 apt-get install -y avahi-daemon python3 i2c-tools python3-smbus2
-# pigpio is not in every suite. Debian dropped it, and a Pi OS release that has
-# moved to lgpio for the Pi 5 will not carry it either. `servo.make_backend`
-# already falls back to RPi.GPIO by itself, so a missing package here must not
-# take the hostname, the captive-portal rule and the systemd unit down with it.
-apt-get install -y pigpio || echo "  (pigpio unavailable — servos will run on RPi.GPIO software PWM and hum audibly between doses)"
+
+# The GPIO library. This is the one that actually matters: without some way to
+# drive a pin, no tray can be opened, and the firmware will now refuse to
+# dispense rather than log doses that never left the hopper.
+#
+# It is preinstalled on every Raspberry Pi OS Lite image since 2023, on both
+# Bookworm and Trixie and both architectures, so this is usually a no-op. It is
+# still worth asserting, because the failure it prevents is silent.
+if ! apt-get install -y python3-lgpio; then
+  echo "  !! python3-lgpio could not be installed."
+  echo "  !! Without a GPIO library this device cannot open a tray, and it will"
+  echo "  !! say so on its status page rather than pretending. If this is plain"
+  echo "  !! Debian rather than Raspberry Pi OS, lgpio comes from the Raspberry"
+  echo "  !! Pi archive and is not in Debian at all."
+fi
+
+# pigpio is better where it exists — DMA-timed pulses a busy CPU cannot stretch
+# — and on a current card it does not exist. It was preinstalled up to and
+# including Bookworm and vanished at the Trixie rebase: Debian has never
+# packaged the daemon (only the client), and 64-bit Raspberry Pi OS bootstraps
+# from Debian. So on 64-bit Trixie there is no apt path to it at all, on 32-bit
+# Trixie it comes from Raspbian, and on Bookworm it is simply there.
+#
+# Which is why this is tried and not required. `servo.make_backend` walks
+# pigpio -> lgpio -> RPi.GPIO -> mock by itself.
+apt-get install -y pigpio 2>/dev/null \
+  || echo "  (no pigpio on this release — lgpio will drive the pins, which is expected on Trixie)"
+
+# Deliberately NOT installed: python3-rpi.gpio.
+#
+# Raspberry Pi OS now preinstalls `python3-rpi-lgpio`, a shim that provides a
+# module literally named RPi.GPIO on top of lgpio. The real python3-rpi.gpio
+# package Conflicts with it, so asking for it here would *remove* the working
+# shim and replace it with the legacy sysfs implementation — a downgrade on
+# this board and a hard break on a Pi 5. The RPi.GPIO path in the firmware is a
+# last resort for machines that already have it, not something to install.
 apt-get install -y python3-segno || echo "  (segno unavailable — the label will show text instead of a QR)"
 apt-get install -y python3-rpi-ws281x || echo "  (rpi-ws281x unavailable — the LED ring will be skipped)"
 apt-get install -y python3-cryptography || echo "  (cryptography unavailable — cloud sync will be off; the device still dispenses)"
@@ -116,10 +155,18 @@ chmod 750 "$STATE_DIR"
 # and not starting it is the failure people actually hit, so this stays here —
 # it just no longer assumes the package is present.
 if systemctl list-unit-files 2>/dev/null | grep -q '^pigpiod'; then
-  say "Enabling pigpiod (steady servo pulses)"
+  say "Enabling pigpiod (DMA-timed servo pulses)"
   systemctl enable --now pigpiod
+elif python3 -c 'import lgpio' 2>/dev/null; then
+  say "No pigpiod — lgpio will drive the pins"
+  echo "  Expected on Raspberry Pi OS Trixie. Pulses are timed by a thread"
+  echo "  rather than by DMA, so a heavily loaded Pi can make a horn fidget."
 else
-  say "pigpiod not installed — the firmware will use RPi.GPIO software PWM"
+  say "NO GPIO LIBRARY IS AVAILABLE"
+  echo "  This device cannot open a tray. It will report that on its status"
+  echo "  page and refuse to dispense, rather than logging doses that never"
+  echo "  came out. Fix it with:"
+  echo "      sudo apt install python3-lgpio"
 fi
 
 current_hostname="$(hostname)"

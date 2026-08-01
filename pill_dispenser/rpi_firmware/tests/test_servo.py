@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from snapcare_dispenser import config
+from snapcare_dispenser import config, servo
 from snapcare_dispenser.servo import MockBackend, TrayServos, make_backend
 
 
@@ -231,16 +231,46 @@ def test_the_mock_backend_can_be_asked_for_by_name():
 
 
 def test_auto_falls_back_to_the_mock_off_a_pi():
-    # No pigpiod and no RPi.GPIO on a development machine. The point is that it
-    # falls back rather than raising: the API and the scheduler have to be
-    # runnable end to end without hardware.
+    # No pigpiod, no lgpio chip and no RPi.GPIO on a development machine. The
+    # point is that it falls back rather than raising: the API and the
+    # scheduler have to be runnable end to end without hardware.
     backend = make_backend("auto")
-    assert backend.name in ("pigpio", "rpigpio", "mock")
+    assert backend.name in ("pigpio", "lgpio", "rpigpio", "mock")
 
 
 def test_an_unknown_backend_is_refused():
     with pytest.raises(ValueError):
         make_backend("magic")
+
+
+def test_a_named_backend_that_is_absent_raises_rather_than_substituting():
+    # `auto` walking past a missing library is the whole point of `auto`.
+    # Naming one is the opposite request: somebody at a bench wants to be told
+    # why lgpio is not there, not handed the mock and left to discover later
+    # that nothing has been moving.
+    with pytest.raises(Exception) as raised:
+        make_backend("lgpio")
+    assert not isinstance(raised.value, ValueError), "that would mean it was unrecognised"
+
+
+def test_only_the_mock_admits_to_moving_nothing():
+    # `moves_hardware` is what `device.py` refuses to dispense on. A backend
+    # added later that forgets to set it would silently reintroduce the worst
+    # bug this module has had — a device that logs doses it never gave.
+    assert make_backend("mock").moves_hardware is False
+    for backend in (servo.PigpioBackend, servo.LgpioBackend, servo.RpiGpioBackend):
+        assert backend.moves_hardware is True, backend.__name__
+
+
+def test_every_backend_declares_how_its_pulses_are_timed():
+    # `steady` is a boolean and there are three real answers, so it cannot tell
+    # lgpio's thread timing from RPi.GPIO's Python timing — and the difference
+    # between those two is a usable device versus one that hums in a bedroom
+    # all night.
+    assert servo.PigpioBackend.quality == "dma"
+    assert servo.LgpioBackend.quality == "threaded"
+    assert servo.RpiGpioBackend.quality == "python"
+    assert servo.MockBackend.quality == "none"
 
 
 def test_the_mock_backend_reports_itself_as_steady():

@@ -4,6 +4,36 @@ The hardware moved to a Raspberry Pi 3B. This is what that changes for the app,
 what it does not, and the handful of things worth knowing before you write
 against it.
 
+> ## Start here instead
+>
+> **Since 2026-08-01 there is a drop-in TypeScript module that does all of this:
+> [`pill_dispenser/webapp_kit/`](../webapp_kit/).** Zero dependencies, no
+> framework API, tests in this repo's own `node --test` style, and golden
+> vectors generated from the firmware so a change to the derivation on the
+> device fails a test rather than becoming a pairing that silently never works.
+>
+> Copy `webapp_kit/src/` into `lib/` and read
+> [`webapp_kit/INTEGRATION.md`](../webapp_kit/INTEGRATION.md). It covers the
+> flows, the UI states, and the three mistakes worth reading about before
+> writing the screen. There is also a React hook and an example panel in
+> `webapp_kit/examples/`, and a native reference implementation of the same
+> protocol in [`pill_dispenser/android_demo/`](../android_demo/).
+>
+> The document below is the underlying protocol reference and is still accurate.
+> Two things have changed in the firmware since it was written, both worth
+> knowing:
+>
+> - **`/api/status` gained a `gpio` object** — which servo, buzzer and button
+>   drivers actually came up, and a `missing` array of plain sentences about
+>   what is absent. `device.blockedReason` says, in words, why a device is not
+>   dispensing; `device.servoUsable` is false when no GPIO library is installed
+>   at all. A device in that state now **refuses to dispense** rather than
+>   logging doses that never left the hopper, so do not treat an empty event log
+>   as a healthy quiet device without checking that field.
+> - **The clock chip is a DS1302**, not a DS3231. `clock.rtc.kind` says which,
+>   and `clock.rtc.warnings` carries things worth surfacing that are not
+>   failures. The trust model differs per chip — see `ds1302.py`.
+
 **The short version: nothing in `lib/hardware/` has to change today.**
 `dispenser.ts` works against the new firmware as-is. Everything below is about
 what you *gain* if you want it.

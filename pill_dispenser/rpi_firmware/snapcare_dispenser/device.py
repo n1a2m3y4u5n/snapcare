@@ -30,7 +30,7 @@ import logging
 import threading
 from datetime import datetime
 
-from . import config, sc1
+from . import config, gpiochip, sc1
 from .clock import Clock
 from .indicators import Indicator, LogIndicator
 from .scheduler import Decision, Due, Scheduler
@@ -167,6 +167,39 @@ class Dispenser:
 
         return False, "that is not an SC1 code"
 
+    # ── whether this device can dispense at all ─────────────────────────────
+
+    @property
+    def servos_usable(self) -> bool:
+        """Can a command to a tray actually move a horn?
+
+        False in exactly one situation: a real Raspberry Pi that found no GPIO
+        library at all and fell back to the recorder. On a laptop the recorder
+        is the point — `make run` is the whole firmware with the horns swapped
+        out, and simulating doses there is what the dev harness is for.
+
+        The distinction has to exist because the two look identical from inside
+        the process and mean opposite things. See `gpiochip.on_raspberry_pi`.
+        """
+        if self.servos.backend.moves_hardware:
+            return True
+        return not gpiochip.on_raspberry_pi()
+
+    def blocked_reason(self) -> str:
+        """Why nothing is being dispensed, or `''` if something can be.
+
+        Two gates, in the order they are checked. Both fail towards the tray
+        staying shut, and both are reported rather than being silent: a device
+        that will not dispense is a problem somebody notices within hours, and
+        a device that logs doses it never gave is one nobody notices at all.
+        """
+        if not self.servos_usable:
+            return ("no GPIO library is installed, so no tray can be opened — "
+                    "sudo apt install python3-lgpio")
+        if not self.clock.trusted:
+            return "the clock has not been vouched for by NTP, the RTC or a phone"
+        return ""
+
     # ── dispensing ──────────────────────────────────────────────────────────
 
     def tick(self) -> list[dict]:
@@ -179,7 +212,12 @@ class Dispenser:
         owed at one instant.
         """
         with self._lock:
-            if not self.clock.trusted:
+            # Both gates, not just the clock. A device with no GPIO library
+            # would otherwise run the whole scheduler, record every dose as
+            # dispensed and publish it to the carer's phone, while the pills
+            # stayed in the hopper — the exact failure the clock gate above it
+            # exists to refuse, arrived at from the other direction.
+            if self.blocked_reason():
                 return []
 
             events = []
@@ -224,6 +262,17 @@ class Dispenser:
         with self._lock:
             if tray not in self.servos.pins:
                 raise KeyError(f"tray {tray} is not wired")
+            if not self.servos_usable:
+                # Deliberately not gated on the clock: a manual drop is
+                # somebody standing at the bench checking a hopper, and that is
+                # exactly what you want to be able to do before the clock has
+                # been set. But it must still refuse to *claim* a drop that
+                # nothing performed — this is the path the assembly guide uses
+                # to prove wiring, and a green tick there on a device that
+                # cannot move is the worst possible moment for one.
+                raise RuntimeError(
+                    "no GPIO library is installed, so nothing can move — "
+                    "sudo apt install python3-lgpio")
             self.servos.drop(tray)
             return self._record(tray, self.clock.minutes(), taken=True,
                                 reason="manual", confirmed=True)
@@ -329,8 +378,17 @@ class Dispenser:
                 "pins": {str(t): g for t, g in sorted(self.servos.pins.items())},
                 "servoBackend": self.servos.backend.name,
                 "servoSteady": self.servos.backend.steady,
+                #: `dma` / `threaded` / `python` / `none`. More useful than the
+                #: boolean above, which cannot tell lgpio apart from RPi.GPIO.
+                "servoTiming": self.servos.backend.quality,
+                #: False means a command to a tray moves nothing at all.
+                "servoUsable": self.servos_usable,
                 "clock": self.clock.status(),
-                "dispensing": self.clock.trusted,
+                "dispensing": not self.blocked_reason(),
+                #: Empty when doses are being given. Otherwise the sentence to
+                #: put on a screen — a device that will not dispense must say
+                #: which of the two reasons it is, or nobody can act on it.
+                "blockedReason": self.blocked_reason(),
                 "scheduleSource": self._source,
                 "payload": self._payload,
                 "slots": sc1.slots_to_json(slots),

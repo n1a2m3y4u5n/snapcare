@@ -112,8 +112,17 @@ class Daemon:
     # ── the loop ────────────────────────────────────────────────────────────
 
     def run(self) -> int:
+        # Before anything reads the clock. On a DS1302 build nothing else will
+        # have: there is no kernel driver, so the system clock is still
+        # whatever fake-hwclock restored from the last shutdown, and a device
+        # that started ticking on that would dispense against the wrong day
+        # while reporting a trusted clock. A no-op on a DS3231 build, where the
+        # kernel applied the chip's time before this process existed.
+        self.dispenser.clock.adopt_rtc()
+
         self._server = serve_forever(self.dispenser, self.port, self.identity,
-                                     cloud=self.cloud, network=self.network)
+                                     cloud=self.cloud, network=self.network,
+                                     button=self.button)
         self.network.start()
 
         # Not conditional on the network being up, and no longer even ordered
@@ -212,6 +221,13 @@ def main(argv: list[str] | None = None) -> int:
                         help="print the label values as JSON and exit")
     parser.add_argument("--drop", type=int, metavar="TRAY",
                         help="sweep one tray once and exit — for checking wiring")
+    parser.add_argument("--selftest", action="store_true",
+                        help="commission an assembled machine: check what can be "
+                             "checked, ask about what only eyes and ears can "
+                             "settle, and write a report")
+    parser.add_argument("--auto-only", action="store_true",
+                        help="with --selftest, run only the checks that need no "
+                             "person and open no tray")
     parser.add_argument("--verbose", "-v", action="store_true")
     args = parser.parse_args(argv)
 
@@ -242,6 +258,12 @@ def main(argv: list[str] | None = None) -> int:
         print("(for the app, once the device is on the home WiFi. "
               "It is derived from this board and never changes.)")
         return 0
+
+    if args.selftest:
+        from .selftest import run as run_selftest  # noqa: PLC0415
+
+        return run_selftest(interactive=not args.auto_only, fitted=args.trays,
+                            backend=args.servo_backend, state_dir=args.state_dir)
 
     if args.drop is not None:
         servos = TrayServos(backend=make_backend(args.servo_backend))

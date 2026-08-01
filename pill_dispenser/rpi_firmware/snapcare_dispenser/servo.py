@@ -24,11 +24,26 @@ failure mode is not a blown regulator — it is a brown-out that reboots the Pi
 even when the schedule owes three doses at the same minute and the web page is
 being poked at the same time.
 
-**Timing comes from the DMA controller, not from Python.** `pigpio` generates
-pulses with the Pi's DMA engine, so a busy CPU cannot lengthen one. RPi.GPIO's
-software PWM is timed by a Python thread, and every kernel preemption of that
-thread shows up as a twitch and an audible buzz. It is the fallback, not the
-choice, and the firmware says so at startup.
+**Where the timing comes from decides how good it is.** There are three answers
+and they are not close to each other:
+
+    pigpio    DMA-timed. A busy CPU cannot lengthen a pulse. Best, and gone
+              from Raspberry Pi OS as of the Trixie rebase — see gpiochip.py.
+    lgpio     timed by an ordinary thread calling clock_nanosleep, at normal
+              priority. Scheduler jitter reaches the servo. Good enough, and
+              in practice the only thing available on a current card.
+    RPi.GPIO  software PWM timed by a *Python* thread. Every preemption is a
+              twitch and an audible buzz. Last resort.
+
+The firmware says which one it got, at startup and in `/api/status`, and
+`--selftest` will not sign off a build that landed on the last one.
+
+**A backend that cannot move anything must not be quiet about it.** The mock
+records what it was told and moves nothing, which is exactly right on a laptop
+and catastrophic on a Pi: without `moves_hardware` below, a device with no GPIO
+library at all runs the scheduler, writes "dispensed" into the dose log, and
+publishes it to the carer's phone — a full record of medication that is still
+sitting in the hopper. `device.py` refuses to dispense in that state instead.
 """
 from __future__ import annotations
 
@@ -37,11 +52,12 @@ import threading
 import time
 from dataclasses import dataclass
 
-from . import config
+from . import config, gpiochip
 
 log = logging.getLogger(__name__)
 
-#: Servo control is a 50 Hz frame. Only the software-PWM fallback needs to know.
+#: Servo control is a 50 Hz frame. The software-PWM fallback needs it to work
+#: out a duty cycle, and lgpio takes it as an argument.
 SERVO_FRAME_HZ = 50
 
 
@@ -51,6 +67,13 @@ class ServoBackend:
     name = "none"
     #: Whether pulse timing is immune to CPU load. False means visible jitter.
     steady = False
+    #: How the pulses are timed, for a status page that can say something
+    #: useful rather than repeating a boolean.
+    quality = "none"
+    #: **Does a command to this backend move a physical horn?** False for the
+    #: mock, and the one flag that stands between a dead device and a dose log
+    #: full of medication nobody received.
+    moves_hardware = False
 
     def set_pulse(self, gpio: int, microseconds: int) -> None:
         raise NotImplementedError
@@ -68,6 +91,8 @@ class PigpioBackend(ServoBackend):
 
     name = "pigpio"
     steady = True
+    quality = "dma"
+    moves_hardware = True
 
     def __init__(self):
         import pigpio  # imported here so the module loads on a laptop
@@ -98,11 +123,82 @@ class PigpioBackend(ServoBackend):
         self._pi.stop()
 
 
+class LgpioBackend(ServoBackend):
+    """Thread-timed pulses through the gpiochip character device.
+
+    What replaced pigpio on Raspberry Pi OS, and on a Trixie card the only
+    thing there is. `python3-lgpio` is preinstalled on every Pi OS Lite image
+    since 2023 and needs no daemon.
+
+    Honestly: the pulses are timed by a normal-priority thread, so a loaded Pi
+    can stretch one and the horn fidgets. Better than Python-timed PWM by a
+    wide margin, worse than DMA, and the status page says which one this is.
+
+    Two lgpio specifics are load-bearing here:
+
+    - **`tx_servo` takes the handle first** and a frequency argument pigpio
+      does not have. Transposing them against pigpio's `set_servo_pulsewidth`
+      is a pulse width interpreted as a GPIO number.
+    - **Stopping does not drive the line low.** See `gpiochip.stop_pin`: a stop
+      that lands mid-pulse leaves the signal high, which is a pulse that never
+      ends. Every stop here goes through that helper.
+    """
+
+    name = "lgpio"
+    steady = False
+    quality = "threaded"
+    moves_hardware = True
+
+    def __init__(self):
+        import lgpio  # noqa: PLC0415 - imported here so the module loads on a laptop
+
+        self._lgpio = lgpio
+        handle = gpiochip.open_chip()
+        if handle is None:
+            raise RuntimeError(gpiochip.unavailable_reason())
+        self._handle = handle
+        self._claimed: set[int] = set()
+
+    def _claim(self, gpio: int) -> None:
+        if gpio in self._claimed:
+            return
+        # Claimed low. A servo line that idles high before the first command
+        # slams the horn to one end, which with a loaded tray on it is a
+        # mechanical stop taking the full torque.
+        self._lgpio.gpio_claim_output(self._handle, gpio, 0)
+        self._claimed.add(gpio)
+
+    def set_pulse(self, gpio: int, microseconds: int) -> None:
+        self._claim(gpio)
+        self._lgpio.tx_servo(self._handle, gpio, microseconds, SERVO_FRAME_HZ)
+
+    def stop(self, gpio: int) -> None:
+        try:
+            self._lgpio.tx_servo(self._handle, gpio, 0)
+        except Exception:  # noqa: BLE001 - nothing may be transmitting
+            pass
+        # Not optional, and not the same thing. See the module docstring in
+        # gpiochip.py: the line above stops the pulse train and leaves the pin
+        # wherever it was.
+        gpiochip.stop_pin(self._handle, gpio)
+
+    def close(self) -> None:
+        for gpio in list(self._claimed):
+            try:
+                self.stop(gpio)
+                self._lgpio.gpio_free(self._handle, gpio)
+            except Exception:  # noqa: BLE001 - shutdown must not raise
+                pass
+        self._claimed.clear()
+
+
 class RpiGpioBackend(ServoBackend):
     """Software PWM. Works with nothing installed but jitters under load."""
 
     name = "rpigpio"
     steady = False
+    quality = "python"
+    moves_hardware = True
 
     def __init__(self):
         import RPi.GPIO as GPIO
@@ -155,7 +251,12 @@ class MockBackend(ServoBackend):
     """
 
     name = "mock"
+    #: Nothing can jitter what nothing drives, so this is `True` in the only
+    #: sense the field has — and `moves_hardware` below is the field that
+    #: actually matters about this class.
     steady = True
+    quality = "none"
+    moves_hardware = False
 
     def __init__(self):
         self.moves: list[MockMove] = []
@@ -172,37 +273,60 @@ class MockBackend(ServoBackend):
         return [m.microseconds for m in self.moves if m.gpio == gpio]
 
 
+#: `auto` walks this in order, best first. Naming one explicitly skips the walk
+#: and lets the failure raise, which is what a bench session wants.
+_BACKENDS = {
+    "pigpio": PigpioBackend,
+    "lgpio": LgpioBackend,
+    "rpigpio": RpiGpioBackend,
+    "mock": MockBackend,
+}
+
+
 def make_backend(preference: str | None = None) -> ServoBackend:
-    """Pick a driver. `auto` tries pigpio, then RPi.GPIO, then the mock."""
+    """Pick a driver. `auto` tries pigpio, then lgpio, then RPi.GPIO, then the mock.
+
+    pigpio stays first because DMA timing is genuinely better, but it is no
+    longer the expected answer: it is absent from Raspberry Pi OS Trixie
+    entirely, so on a current card the walk lands on lgpio and that is fine.
+    """
     choice = (preference or config.SERVO_BACKEND or "auto").lower()
 
-    if choice == "mock":
-        return MockBackend()
-    if choice == "pigpio":
-        return PigpioBackend()
-    if choice == "rpigpio":
-        return RpiGpioBackend()
     if choice != "auto":
-        raise ValueError(f"unknown servo backend {choice!r}")
+        if choice not in _BACKENDS:
+            raise ValueError(f"unknown servo backend {choice!r}")
+        # Deliberately not caught. Somebody who asked for a named backend wants
+        # to be told why it is not there, not handed a different one.
+        return _BACKENDS[choice]()
 
-    try:
-        return PigpioBackend()
-    except Exception as exc:  # noqa: BLE001 - any failure means "try the next one"
-        log.info("pigpio unavailable (%s)", exc)
+    for name in ("pigpio", "lgpio", "rpigpio"):
+        try:
+            backend = _BACKENDS[name]()
+        except Exception as exc:  # noqa: BLE001 - any failure means "try the next one"
+            log.info("%s unavailable (%s)", name, exc)
+            continue
 
-    try:
-        backend = RpiGpioBackend()
-        log.warning(
-            "falling back to RPi.GPIO software PWM — servos will jitter and hum "
-            "audibly. Install pigpio and enable pigpiod for steady pulses."
-        )
+        if backend.quality == "python":
+            log.warning(
+                "falling back to RPi.GPIO software PWM — servos will jitter and "
+                "hum audibly. Install python3-lgpio for steadier pulses."
+            )
+        elif backend.quality == "threaded":
+            log.info(
+                "servo pulses are timed by lgpio's thread, not by DMA — a "
+                "loaded Pi can stretch one. This is the expected driver on "
+                "Raspberry Pi OS Trixie, where pigpio is no longer packaged."
+            )
         return backend
-    except Exception as exc:  # noqa: BLE001
-        log.info("RPi.GPIO unavailable (%s)", exc)
 
-    log.warning(
-        "no GPIO available — running with the mock servo backend. "
-        "Drops will be logged and nothing will physically move."
+    # Not `warning`. On a Raspberry Pi this is a device that cannot dispense,
+    # and `device.py` will refuse to pretend otherwise — so it is an error even
+    # though the process carries on running and serving its pages.
+    log.error(
+        "NO GPIO LIBRARY IS AVAILABLE — nothing can physically move. "
+        "Install one:  sudo apt install python3-lgpio. "
+        "Until then this device will refuse to dispense rather than log doses "
+        "that never left the hopper."
     )
     return MockBackend()
 

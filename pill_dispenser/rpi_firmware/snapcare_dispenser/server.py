@@ -52,7 +52,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from . import config, envelope, provisioning, qr, sc1, wifi
+from . import config, envelope, gpiochip, provisioning, qr, sc1, wifi
 from .device import Dispenser
 from .network import Supervisor
 
@@ -85,10 +85,14 @@ class Router:
     """Everything the handler needs, so the handler stays a thin adapter."""
 
     def __init__(self, dispenser: Dispenser, identity: provisioning.Identity | None = None,
-                 cloud=None, network: Supervisor | None = None):
+                 cloud=None, network: Supervisor | None = None, button=None):
         self.dispenser = dispenser
         self.identity = identity or provisioning.load_identity(dispenser.store)
         self.cloud = cloud
+        #: The confirm button, only so the status page can report which driver
+        #: it got and how many presses it has seen. Nothing here ever drives
+        #: it — the button calls the dispenser directly.
+        self.button = button
         #: The radio-mode policy. A server built without one — the tests, and
         #: `make run` on a laptop — gets a supervisor that manages nothing, so
         #: that every endpoint has something coherent to answer with instead of
@@ -107,6 +111,50 @@ class Router:
             return {"enabled": False, "configured": False, "state": "off",
                     "relayUrl": "", "deviceId": "", "supported": envelope.available()}
         return self.cloud.status()
+
+    def gpio_status(self) -> dict:
+        """Which GPIO drivers this build actually got, and what is missing.
+
+        This did not exist, and its absence was the real cost of pigpio leaving
+        Raspberry Pi OS. A device whose buzzer failed to come up said so in one
+        INFO line at startup and then nothing, anywhere, ever again — the ring
+        was fitted, so `indicators` was non-empty and the status page looked
+        healthy. A dispenser can sit in a bedroom like that for weeks, lighting
+        up for doses nobody is in the room to see.
+
+        `missing` is the part to put on a screen. Every entry is a sentence
+        about a consequence rather than a library.
+        """
+        indicator = self.dispenser.indicator
+        buzzer = getattr(indicator, "buzzer", None)
+        backend = self.dispenser.servos.backend
+
+        missing = []
+        if not self.dispenser.servos_usable:
+            missing.append("no GPIO library at all — no tray can be opened")
+        elif backend.quality == "python":
+            missing.append("servos are on Python-timed PWM and will hum between doses")
+        if not buzzer:
+            missing.append("no buzzer — a dose lights the ring but makes no sound")
+        if not getattr(indicator, "ring", None):
+            missing.append("no LED ring — the device dispenses in the dark")
+        if self.button is None or self.button.backend == "none":
+            missing.append("no confirm button — nobody can acknowledge a dose at the device")
+
+        return {
+            "board": gpiochip.board_model() or "not a Raspberry Pi",
+            "lgpioChip": gpiochip.chip_label(),
+            "servo": {"backend": backend.name, "timing": backend.quality,
+                      "movesHardware": backend.moves_hardware},
+            "buzzer": {"backend": buzzer.backend if buzzer else "none",
+                       "gpio": buzzer.gpio if buzzer else config.BUZZER_GPIO},
+            "button": {"backend": self.button.backend if self.button else "none",
+                       "gpio": self.button.gpio if self.button else config.BUTTON_GPIO,
+                       "presses": self.button.presses if self.button else 0},
+            "ring": {"fitted": bool(getattr(indicator, "ring", None)),
+                     "gpio": config.RING_GPIO},
+            "missing": missing,
+        }
 
     def page(self, name: str, **values: str) -> str:
         """Load a page from `web/`, substituting `{{name}}` placeholders."""
@@ -388,6 +436,12 @@ class Handler(BaseHTTPRequestHandler):
             self._json({
                 "ok": True,
                 "device": device.status(),
+                # What is actually fitted, and which drivers came up. The
+                # dispenser cannot answer this on its own: the confirm button
+                # belongs to the daemon and the buzzer to the indicator, so
+                # before this key existed a device with no chirp reported
+                # nothing wrong anywhere.
+                "gpio": router.gpio_status(),
                 "wifi": state.to_json(),
                 "attempt": router.network.snapshot(),
                 "cloud": router.cloud_status(),
@@ -802,8 +856,9 @@ def _is_ours(host: str) -> bool:
 
 def make_server(dispenser: Dispenser, port: int | None = None,
                 identity: provisioning.Identity | None = None,
-                cloud=None, network: Supervisor | None = None) -> ThreadingHTTPServer:
-    router = Router(dispenser, identity, cloud, network)
+                cloud=None, network: Supervisor | None = None,
+                button=None) -> ThreadingHTTPServer:
+    router = Router(dispenser, identity, cloud, network, button)
 
     handler = type("BoundHandler", (Handler,), {"router": router})
     # 0.0.0.0 because the device is reached from the home network and from the
@@ -817,9 +872,10 @@ def make_server(dispenser: Dispenser, port: int | None = None,
 
 def serve_forever(dispenser: Dispenser, port: int | None = None,
                   identity: provisioning.Identity | None = None,
-                  cloud=None, network: Supervisor | None = None) -> ThreadingHTTPServer:
+                  cloud=None, network: Supervisor | None = None,
+                  button=None) -> ThreadingHTTPServer:
     """Start the server on a background thread and return it."""
-    server = make_server(dispenser, port, identity, cloud, network)
+    server = make_server(dispenser, port, identity, cloud, network, button)
     thread = threading.Thread(target=server.serve_forever, name="http", daemon=True)
     thread.start()
     log.info("web server listening on port %d", server.server_address[1])

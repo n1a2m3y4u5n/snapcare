@@ -296,9 +296,9 @@
     {pin 1 is the corner nearest the microSD / power end};
   \foreach \r/\lb/\ls/\rb/\rs in {%
       1/{3V3}/{puse33}/{5V}/{ppwr5},
-      2/{GPIO2 \textperiodcentered{} SCLK}/{pusertc}/{5V}/{ppwr5},
-      3/{GPIO3 \textperiodcentered{} I/O}/{pusertc}/{GND}/{pusegnd},
-      4/{GPIO4 \textperiodcentered{} CE}/{pusertc}/{GPIO14 TXD}/{pavoid},
+      2/{GPIO2 \iic}/{pavoid}/{5V}/{ppwr5},
+      3/{GPIO3 \iic}/{pavoid}/{GND}/{pusegnd},
+      4/{GPIO4}/{pfree}/{GPIO14 TXD}/{pavoid},
       5/{GND}/{pusegnd}/{GPIO15 RXD}/{pavoid},
       6/{GPIO17}/{puseservo}/{GPIO18}/{pusering},
       7/{GPIO27}/{puseservo}/{GND}/{pusegnd},
@@ -309,12 +309,12 @@
       12/{GPIO11}/{pavoid}/{GPIO8}/{pavoid},
       13/{GND}/{pfree}/{GPIO7}/{pavoid},
       14/{GPIO0 ID}/{pavoid}/{GPIO1 ID}/{pavoid},
-      15/{GPIO5}/{presv}/{GND}/{pfree},
-      16/{GPIO6}/{presv}/{GPIO12}/{pfree},
-      17/{GPIO13}/{presv}/{GND}/{pfree},
-      18/{GPIO19}/{presv}/{GPIO16}/{pfree},
-      19/{GPIO26}/{presv}/{GPIO20}/{pfree},
-      20/{GND}/{pfree}/{GPIO21}/{pfree}%
+      15/{GPIO5}/{puseservo}/{GND}/{pfree},
+      16/{GPIO6}/{puseservo}/{GPIO12}/{pfree},
+      17/{GPIO13}/{puseservo}/{GND}/{pfree},
+      18/{GPIO19}/{puseservo}/{GPIO16 \textperiodcentered{} SCLK}/{pusertc},
+      19/{GPIO26}/{puseservo}/{GPIO20 \textperiodcentered{} I/O}/{pusertc},
+      20/{GND}/{pusegnd}/{GPIO21 \textperiodcentered{} CE}/{pusertc}%
     }{%
     \pgfmathtruncatemacro{\lp}{2*\r-1}%
     \pgfmathtruncatemacro{\rp}{2*\r}%
@@ -339,8 +339,7 @@
     \begin{scope}[yshift=-0.52cm]
       \sw{puse33}{0}{3V3 to RTC}
       \sw{pusegnd}{2.9}{ground, used}
-      \sw{presv}{5.3}{reserved, trays 4--8}
-      \sw{pavoid}{8.6}{deliberately avoided}
+      \sw{pavoid}{5.3}{deliberately avoided}
     \end{scope}
   \end{tikzpicture}%
 }

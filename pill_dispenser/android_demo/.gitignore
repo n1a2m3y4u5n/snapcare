@@ -1,0 +1,8 @@
+# Build outputs and local machine paths.
+local.properties
+.gradle/
+build/
+app/build/
+.kotlin/
+
+# dist/ is deliberately NOT ignored: the built APK is the deliverable.

@@ -400,3 +400,96 @@ def _wait_until(predicate, message, timeout=3.0):
             return
         time.sleep(0.005)
     raise AssertionError(message)
+
+
+# ── a device that cannot move anything ──────────────────────────────────────
+#
+# The mock servo backend means two opposite things depending on where it is
+# running, and telling them apart is the whole point of these tests.
+#
+# On a laptop it is the dev harness: `make run` is the real firmware with the
+# horns swapped for a recorder, and doses *should* be simulated end to end.
+#
+# On a Raspberry Pi it means every GPIO library is missing. Before this, the
+# scheduler ran anyway — it wrote "dispensed" into the dose log and the cloud
+# link published it, so a carer's phone showed a full day of medication that
+# was still sitting in the hopper, from a device whose status page said it was
+# healthy. That is strictly worse than a tray that never opens, because nobody
+# ever finds out.
+
+def _dispenser_on(tmp_path, *, on_a_pi: bool, monkeypatch):
+    from snapcare_dispenser import gpiochip, sc1
+    from snapcare_dispenser.device import Dispenser
+    from snapcare_dispenser.servo import MockBackend, TrayServos
+    from snapcare_dispenser.store import Store
+
+    monkeypatch.setattr(gpiochip, "on_raspberry_pi", lambda *a, **k: on_a_pi)
+
+    clock = Clock()
+    clock.accept(sc1.ClockSet.from_datetime(datetime(2026, 8, 1, 7, 59)), source="phone")
+    return Dispenser(store=Store(tmp_path), servos=TrayServos(backend=MockBackend()),
+                     clock=clock, indicator=LogIndicator())
+
+
+def test_a_pi_with_no_gpio_library_refuses_to_dispense(tmp_path, monkeypatch):
+    from snapcare_dispenser import sc1
+
+    device = _dispenser_on(tmp_path, on_a_pi=True, monkeypatch=monkeypatch)
+    device.set_schedule(sc1.decode_any_schedule("SC1*W*1:0800-127-000"))
+
+    assert device.servos_usable is False
+    assert "no GPIO library" in device.blocked_reason()
+
+    device.clock.accept(sc1.ClockSet.from_datetime(datetime(2026, 8, 1, 8, 1)),
+                        source="phone")
+    assert device.tick() == [], "a dose was recorded by a device that cannot move"
+    assert device.store.read_events() == [], "and it reached the log a carer reads"
+
+
+def test_the_same_backend_on_a_laptop_is_the_dev_harness_and_does_dispense(tmp_path, monkeypatch):
+    from snapcare_dispenser import sc1
+
+    device = _dispenser_on(tmp_path, on_a_pi=False, monkeypatch=monkeypatch)
+    device.set_schedule(sc1.decode_any_schedule("SC1*W*1:0800-127-000"))
+
+    assert device.servos_usable is True
+    assert device.blocked_reason() == ""
+
+    device.clock.accept(sc1.ClockSet.from_datetime(datetime(2026, 8, 1, 8, 1)),
+                        source="phone")
+    events = device.tick()
+    assert [e["tray"] for e in events] == [1]
+
+
+def test_a_manual_drop_on_a_dead_pi_raises_rather_than_claiming_success(tmp_path, monkeypatch):
+    # This is the path the assembly guide uses to prove wiring. A cheerful
+    # `{"ok": true}` there, on a device that cannot move, is the single worst
+    # moment to be told everything is fine.
+    device = _dispenser_on(tmp_path, on_a_pi=True, monkeypatch=monkeypatch)
+    with pytest.raises(RuntimeError, match="python3-lgpio"):
+        device.drop_now(1)
+    assert device.store.read_events() == []
+
+
+def test_the_status_page_says_which_of_the_two_reasons_it_is(tmp_path, monkeypatch):
+    from snapcare_dispenser import sc1
+
+    device = _dispenser_on(tmp_path, on_a_pi=True, monkeypatch=monkeypatch)
+    status = device.status()
+    assert status["dispensing"] is False
+    assert status["servoUsable"] is False
+    assert status["servoTiming"] == "none"
+    # The clock is fine here, so the reason must name the GPIO problem rather
+    # than sending somebody off to check a coin cell.
+    assert "GPIO" in status["blockedReason"]
+    assert "clock" not in status["blockedReason"]
+
+    # And with the servos fine, the other gate has to be the one named. The two
+    # reasons send somebody to opposite ends of the machine — an apt install
+    # versus a coin cell — so collapsing them into one "not dispensing" turns a
+    # fixable device into a puzzle.
+    working = _dispenser_on(tmp_path, on_a_pi=False, monkeypatch=monkeypatch)
+    monkeypatch.setattr(type(working.clock), "trusted", property(lambda _self: False))
+    assert working.status()["dispensing"] is False
+    assert "clock" in working.status()["blockedReason"]
+    assert "GPIO" not in working.status()["blockedReason"]
