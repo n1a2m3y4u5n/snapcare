@@ -1,10 +1,10 @@
 """Driving the eight tray servos.
 
-The servo rests at 0°. One pill drop is two round trips from there — 180°, 0°,
-180°, 0° — because a single tip can leave a pill on the lip of the gate to ride
-back with the horn. Nothing on an SG90 reports its position, so the move is
-open-loop: the firmware commands an angle and waits `SERVO_STEP_S` for the horn
-to get there.
+The servo rests at 0°. One pill drop is out and back — 180°, wait, 0° — with the
+gate held open for a full second in between, which is what gives a pill time to
+clear it under its own weight. Nothing on an SG90 reports its position, so the
+move is open-loop: the firmware commands an angle and waits `SERVO_STEP_S` for
+the horn to get there.
 
 Three things here are not obvious and all three cost hardware if they are got
 wrong.
@@ -365,21 +365,22 @@ class TrayServos:
         return self.pins[tray]
 
     def drop(self, tray: int) -> None:
-        """One pill drop: two round trips from the resting 0°, then silence.
+        """One pill drop: out, hold, back, then silence.
 
-            (resting at 0°) -> 180° -> 0° -> 180° -> 0°
+            (resting at 0°) -> 180° -> wait -> 0°
 
-        Four commands, `SERVO_STEP_S` apart. The stroke runs twice because one
-        tip does not reliably clear the gate — a pill can sit on the lip and
-        ride back with the horn, which reads as a dose given and is not one.
+        Two commands, `SERVO_STEP_S` apart. The hold at the far end is what
+        actually does the work: the gate is open for a full second, which is
+        long enough for a pill to clear it under its own weight rather than
+        being swept past.
 
-        Blocks for about `4 * SERVO_STEP_S` — four seconds at the default
-        figures — and blocks every other tray for the same period. Callers that
-        must stay responsive should run this on a worker thread; the daemon does.
+        Blocks for about `2 * SERVO_STEP_S` and holds the servo lock for the
+        same period, so no other tray moves meanwhile. Callers that must stay
+        responsive should run this on a worker thread; the daemon does.
         """
         gpio = self.gpio_for(tray)
         rest_us, far_us = config.servo_range(tray)
-        stroke = (far_us, rest_us, far_us, rest_us)
+        stroke = (far_us, rest_us)
 
         with self._lock:
             log.info("tray %d: drop (GPIO %d)", tray, gpio)

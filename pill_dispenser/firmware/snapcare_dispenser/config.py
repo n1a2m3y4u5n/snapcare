@@ -98,16 +98,16 @@ INSTALLED_TRAYS = int(os.environ.get("SNAPCARE_TRAYS", str(MAX_TRAYS)))
 #  SERVO MOTION
 # ═══════════════════════════════════════════════════════════════════════════
 #
-# The tray sits at 0°. A pill drop is four commands from there — two round
-# trips — one second apart:
+# The tray sits at 0°. A pill drop is two commands from there, a second apart:
 #
-#     (resting at 0°)  ->  180°  ->  0°  ->  180°  ->  0°, then the signal is cut
+#     (resting at 0°)  ->  180°  ->  0°, then the signal is cut
 #
-# The stroke runs twice because one tip does not reliably clear the gate: a pill
-# can sit on the lip and ride back with the horn, which reads as a dose given
-# and is not one.
+# The second between them is the part that does the work. The gate is open for
+# a full `SERVO_STEP_S`, which is long enough for a pill to fall through under
+# its own weight rather than being swept past the opening by a horn that is
+# already on its way back.
 #
-# A drop therefore takes about four seconds, and holds the servo lock for all of
+# A drop therefore takes about two seconds, and holds the servo lock for all of
 # it — no other tray moves meanwhile.
 
 #: Pulse width in microseconds at 0° — where the tray rests between doses.
@@ -120,8 +120,13 @@ SERVO_MAX_US = 2500
 #: This is the whole timing model: the servo is not told when it has arrived —
 #: nothing on an SG90 reports position — so the interval is an open-loop wait
 #: that has to cover the *slowest* traverse (a cold servo under the weight of a
-#: full tray, about 0.5 s) and leave the hopper time to settle before the horn
-#: reverses. One second is that, with room to spare.
+#: full tray, about 0.5 s) and then leave the gate open long enough for a pill
+#: to fall through it. One second is both, with room to spare.
+#:
+#: Raising it lengthens every drop by twice whatever is added, and a tray that
+#: is dropping nothing is the first thing to try it on: a sticky hopper or a
+#: large capsule may want longer at the far end than a cold servo needs to get
+#: there.
 SERVO_STEP_S = 1.0
 
 #: Seconds to allow for a single traverse, used by `TrayServos.park` — which

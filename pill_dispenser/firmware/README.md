@@ -33,7 +33,7 @@ window and the tray stays shut, recorded missed.
    │    lgpio ───────── GPIO 17 27 22   screen   buzzer 23   │      │
    └───────────────────────┬─────────────────────────────────┴──────┘
                            ▼
-            the fitted servos, two round trips each
+            the fitted servos, one stroke each
 ```
 
 The cloud link is an extra way *in*, never a dependency for the schedule: it is
@@ -213,10 +213,10 @@ are all refused at startup. Sharing a pin would dispense the right number of
 pills from the wrong compartment, and nobody notices that until the wrong
 medication has been taken for a week.
 
-**One drop** is the motion from the hardware spec. The tray rests at 0°, and a
-drop is four commands from there — 180°, 0°, 180°, 0° — one second apart, about
-four seconds in total. It runs twice because one tip can leave a pill on the lip
-of the gate to ride back with the horn.
+**One drop** is out and back. The tray rests at 0°, goes to 180°, waits a second
+with the gate open, and comes back — about two seconds in total. The wait is the
+part that matters: it gives a pill time to fall through under its own weight
+rather than being swept past the opening by a horn already on its way back.
 
 ```python
 SERVO_MIN_US   = 500    # 0°, the resting position

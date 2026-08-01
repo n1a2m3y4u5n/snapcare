@@ -10,36 +10,41 @@ from snapcare_dispenser import config, servo
 from snapcare_dispenser.servo import MockBackend, TrayServos, make_backend
 
 
-def test_a_drop_runs_two_round_trips_then_stops():
-    """The motion the hardware spec describes, from a tray resting at 0°:
+def test_a_drop_is_one_stroke_out_and_back_then_silence():
+    """The motion from a tray resting at 0°:
 
-        180° -> 0° -> 180° -> 0°, then silence.
+        180° -> wait -> 0°, then silence.
 
-    Two round trips, because one tip can leave a pill on the lip of the gate to
-    ride back with the horn. The trailing zero is the part worth asserting:
-    without it the servo is still being commanded to hold 0°, humming and
-    drawing current for the twenty-three hours until the next dose, holding a
-    position it is already mechanically resting in.
+    One stroke, with the gate held open in between. The hold is what does the
+    work: a pill falls through under its own weight rather than being swept past
+    the opening by a horn already on its way back.
+
+    The trailing zero is the part worth asserting. Without it the servo is still
+    being commanded to hold 0°, humming and drawing current for the twenty-three
+    hours until the next dose, holding a position it is already mechanically
+    resting in.
     """
     lo, hi = config.SERVO_MIN_US, config.SERVO_MAX_US
     backend = MockBackend()
     trays = TrayServos(backend=backend, pins={1: 17}, sleep=lambda _s: None)
     trays.drop(1)
 
-    assert backend.angles(17) == [hi, lo, hi, lo, 0]
+    assert backend.angles(17) == [hi, lo, 0]
 
 
-def test_every_command_in_the_stroke_gets_the_same_second():
-    """Open loop: nothing on an SG90 reports arrival, so the wait is the guarantee.
+def test_the_gate_is_held_open_before_the_horn_comes_back():
+    """Open loop: nothing on an SG90 reports arrival, so the wait is the whole
+    guarantee — and here it is two guarantees in one.
 
-    Including the last one. Cutting the signal the instant 0° is commanded
-    would release the pin with the tray still part-way open.
+    The first wait covers the traverse *and* holds the gate open. The second
+    covers the return; cutting the signal the instant 0° is commanded would
+    release the pin with the tray still part-way open.
     """
     waits = []
     trays = TrayServos(backend=MockBackend(), pins={1: 17}, sleep=waits.append)
     trays.drop(1)
 
-    assert waits == [config.SERVO_STEP_S] * 4
+    assert waits == [config.SERVO_STEP_S] * 2
     assert config.SERVO_STEP_S >= config.SERVO_TRAVEL_S, "a step must cover a traverse"
 
 
@@ -126,7 +131,7 @@ def test_per_tray_trim_is_applied(monkeypatch):
     backend = MockBackend()
     trays = TrayServos(backend=backend, pins={1: 17}, sleep=lambda _s: None)
     trays.drop(1)
-    assert backend.angles(17) == [2450, 520, 2450, 520, 0]
+    assert backend.angles(17) == [2450, 520, 0]
 
 
 # ── the pin map ─────────────────────────────────────────────────────────────

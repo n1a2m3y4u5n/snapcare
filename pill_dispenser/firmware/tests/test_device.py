@@ -91,7 +91,7 @@ def test_a_due_dose_is_offered_and_opens_nothing_until_it_is_released(dispenser,
     assert records[0]["tray"] == 3 and records[0]["taken"]
     assert records[0]["reason"] == "released" and records[0]["confirmed"]
     assert records[0]["sc1"].startswith("SC1*E*3*0800*T*")
-    assert gpio_moves(dispenser, 3) == [2500, 500, 2500, 500, 0]
+    assert gpio_moves(dispenser, 3) == [2500, 500, 0]
     assert gpio_moves(dispenser, 1) == []
     assert waiting(dispenser) == []
 

@@ -316,7 +316,7 @@ def test_dropping_a_tray(http):
     status, data = http.post_json("/api/drop", {"tray": 4})
     assert status == 200 and data["ok"]
     assert data["event"]["tray"] == 4 and data["event"]["reason"] == "manual"
-    assert http.device.servos.backend.angles(http.device.servos.pins[4]) == [2500, 500, 2500, 500, 0]
+    assert http.device.servos.backend.angles(http.device.servos.pins[4]) == [2500, 500, 0]
 
 
 @pytest.mark.parametrize("body", [{"tray": 0}, {"tray": 99}, {"tray": "x"}, {}])
@@ -752,7 +752,7 @@ def test_the_apps_dropout_link_drops_a_tray(http):
     assert status == 200
     assert headers["Content-Type"].startswith("text/html")
     assert "Tray 3 dropped" in body
-    assert http.device.servos.backend.angles(http.device.servos.pins[3]) == [2500, 500, 2500, 500, 0]
+    assert http.device.servos.backend.angles(http.device.servos.pins[3]) == [2500, 500, 0]
 
 
 @pytest.mark.parametrize("query", ["", "?tray=", "?tray=x", "?tray=99"])
