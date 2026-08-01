@@ -70,6 +70,8 @@ from datetime import datetime
 from . import config, gpiochip, provisioning
 from .display import make_display, screens
 from .display.canvas import Tone
+from .display.health import Health
+from .display.presence import Presence
 
 log = logging.getLogger(__name__)
 
@@ -94,6 +96,47 @@ def hhmm(when=None) -> str:
     return when
 
 
+class _Shifted:
+    """A canvas seen a pixel or two over. Everything else about it is the same.
+
+    This is what turns `Presence`'s burn-in drift from a number in a plan into
+    something that actually moves. An OLED left showing one static frame for
+    months keeps a permanent ghost of it, and the resting screen is on the glass
+    for twenty-three hours a day — so the whole layout steps slowly around a
+    handful of pixels, which is invisible to a person and is the difference
+    between an even panel and a shadow of a clock face burnt into it.
+
+    A proxy rather than an offset argument threaded through every screen: the
+    screens are the part of this package most likely to be edited by somebody
+    who has never heard of burn-in, and an offset they have to remember to
+    honour is one they will forget.
+    """
+
+    __slots__ = ("_canvas", "_dx", "_dy")
+
+    def __init__(self, canvas, dx: int, dy: int):
+        self._canvas = canvas
+        self._dx = dx
+        self._dy = dy
+
+    def __getattr__(self, name):
+        return getattr(self._canvas, name)
+
+    def pixel(self, x: int, y: int, value: int) -> None:
+        self._canvas.pixel(x + self._dx, y + self._dy, value)
+
+    def rect(self, x: int, y: int, w: int, h: int, value: int,
+             fill: bool = True) -> None:
+        # Forwarded rather than inherited, so the fast slice-assignment path in
+        # `Rgb565.rect` is not lost — a full-screen fill through `pixel` is
+        # about a second on a Pi 3B.
+        self._canvas.rect(x + self._dx, y + self._dy, w, h, value, fill)
+
+    def blit(self, x: int, y: int, rows, span: int, value: int,
+             scale: int = 1) -> None:
+        self._canvas.blit(x + self._dx, y + self._dy, rows, span, value, scale)
+
+
 class Indicator:
     """No-op base. Every method must be safe to call from any thread."""
 
@@ -107,6 +150,7 @@ class Indicator:
     def network_needs_setup(self, ssid: str = "") -> None: ...
     def network_online(self) -> None: ...
     def blocked(self, kind: str) -> None: ...
+    def boot(self) -> None: ...
     def silence(self) -> None: ...
     def clear(self, tray: int | None = None, at=None) -> None: ...
     def close(self) -> None: ...
@@ -142,6 +186,9 @@ class LogIndicator(Indicator):
 
     def blocked(self, kind: str) -> None:
         log.info("indicator: blocked — %s", kind)
+
+    def boot(self) -> None:
+        log.info("indicator: the machine is starting up")
 
     def silence(self) -> None:
         log.info("indicator: chirp silenced; the screen stands")
@@ -267,9 +314,30 @@ class FittedIndicator(Indicator):
     slow or make the interval depend on it.
     """
 
-    def __init__(self, display=None, buzzer: Buzzer | None = None):
+    def __init__(self, display=None, buzzer: Buzzer | None = None,
+                 presence: Presence | None = None):
         self.display = display
         self.buzzer = buzzer
+        #: Decides what belongs on the panel and how brightly, and it is the
+        #: only thing that decides. Every event here reports to it and then asks
+        #: what to draw, rather than drawing what it feels like — otherwise two
+        #: authorities disagree, and the one that loses is whichever fired last,
+        #: which is how a released screen ends up covering a dose still waiting.
+        self.presence = presence or Presence()
+        #: The last snapshot the daemon handed over. Events between ticks decide
+        #: against it, so it is at most one tick stale — fine for a screen, and
+        #: much better than making a dose wait fifteen seconds to be announced.
+        #:
+        #: **Optimistic until told otherwise**, which is the opposite of
+        #: `Health()`'s own default and deliberately so. `Health` defaults to
+        #: `dispensing=False` because a *failed snapshot* should read as a
+        #: fault; but before the first snapshot has been taken at all, nothing
+        #: has said this machine is blocked. Starting at the default put an
+        #: octagon on the panel for every event until the daemon's first tick —
+        #: the screen inventing a fault out of its own ignorance, which is the
+        #: one thing the severity vocabulary must never do.
+        self._health = Health(dispensing=True)
+        self._level = -1
         self._alerting = threading.Event()
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -356,7 +424,67 @@ class FittedIndicator(Indicator):
                 log.debug("could not resolve the setup SSID for the screen")
         return self._ssid_cache
 
-    def _paint(self, screen_fn, *args) -> None:
+    def refresh(self, health) -> None:
+        """The scheduler tick's one call. Ask the policy, paint if it changed.
+
+        This is what makes the panel show anything other than the last thing
+        that happened to it. Before it existed, a machine that had been sitting
+        quietly since breakfast was still showing breakfast — and the network,
+        the clock chip and the relay had no way onto the glass at all.
+
+        Cheap on purpose. `Presence.tick` returns None whenever the answer has
+        not changed, which on a resting machine is most ticks, and a needless
+        full repaint is 38 ms of SPI on the loop that also has to hit a
+        scheduled minute.
+        """
+        self._health = health
+        self._decide()
+
+    def _signal(self, kind: str, **detail) -> None:
+        """Tell the policy something happened, and act on it now.
+
+        Events do not wait for the next tick. Fifteen seconds is nothing for a
+        rotating status card and far too long for the screen that says a dose is
+        waiting — the chirp and the picture have to arrive together or the
+        person who comes to look finds the machine silent about why it called
+        them.
+        """
+        self.presence.event(kind, **detail)
+        self._decide()
+
+    def _decide(self) -> None:
+        plan = self.presence.tick(self._health)
+        if plan is None:
+            return
+        screen_fn = getattr(screens, plan.screen, None)
+        if screen_fn is None:
+            log.error("the display policy asked for a screen that does not "
+                      "exist: %r", plan.screen)
+            return
+        self._brightness(plan.brightness)
+        self._paint(screen_fn, *plan.args, offset=plan.offset)
+
+    def _brightness(self, level: int) -> None:
+        """Map the policy's 0..255 onto whatever this panel can actually do.
+
+        The OLED dims properly. The LCD's backlight is a bare GPIO on this
+        build, so it has two settings and the threshold is deliberately low: at
+        3 a.m. the question is whether somebody can see there is a dose waiting,
+        not whether the panel is comfortable to read a paragraph from.
+        """
+        panel = self.display
+        if not panel or level == self._level:
+            return
+        self._level = level
+        try:
+            if hasattr(panel, "contrast"):
+                panel.contrast(level)
+            elif hasattr(panel, "backlight"):
+                panel.backlight(level > 0)
+        except Exception:  # noqa: BLE001 - a dim panel is not worth a traceback
+            log.debug("could not set the panel brightness")
+
+    def _paint(self, screen_fn, *args, offset: tuple[int, int] = (0, 0)) -> None:
         """Draw one screen onto a fresh canvas and push it to the panel.
 
         Every state goes through here, and the whole frame is redrawn each time
@@ -378,7 +506,8 @@ class FittedIndicator(Indicator):
                 return
             try:
                 canvas = self.display.new_canvas()
-                screen_fn(canvas, *args)
+                screen_fn(_Shifted(canvas, *offset) if any(offset) else canvas,
+                          *args)
                 self.display.show(canvas)
             except Exception:  # noqa: BLE001
                 log.exception("the screen failed; carrying on without it")
@@ -389,14 +518,14 @@ class FittedIndicator(Indicator):
         # `when` is the minute the dose was scheduled for, which a caller that
         # has the dose in its hand should pass — in any shape `hhmm` knows.
         self._showing = Tone.DUE
-        self._paint(screens.due, tray, hhmm(when))
+        self._signal("due", tray=tray, at=hhmm(when))
         self._alerting.set()
 
     def dose_released(self, tray: int) -> None:
         log.info("indicator: blue — tray %d released", tray)
         self._alerting.clear()
         self._showing = Tone.RELEASED
-        self._paint(screens.released, tray)
+        self._signal("released", tray=tray)
 
     def dose_missed(self, tray: int, when=None) -> None:
         log.info("indicator: amber — tray %d was missed", tray)
@@ -405,7 +534,7 @@ class FittedIndicator(Indicator):
         # "you have just missed breakfast" from "you missed last night's and
         # nobody has been in since", and those want different responses.
         self._showing = Tone.MISSED
-        self._paint(screens.missed, tray, hhmm(when))
+        self._signal("missed", tray=tray, at=hhmm(when))
 
     def schedule_accepted(self, trays: int | None = None) -> None:
         log.info("indicator: violet — new schedule accepted")
@@ -416,8 +545,7 @@ class FittedIndicator(Indicator):
         # nowhere else in the room. A caller without the schedule to hand gets
         # the machine's own count, which is at least never a lie about the
         # machine.
-        self._paint(screens.schedule,
-                    trays if trays is not None else config.INSTALLED_TRAYS)
+        self._signal("schedule", count=trays if trays is not None else config.INSTALLED_TRAYS)
 
     def network_needs_setup(self, ssid: str = "") -> None:
         log.info("indicator: cyan — waiting to be put on a network")
@@ -427,7 +555,7 @@ class FittedIndicator(Indicator):
         # spending the alert vocabulary on something that is not medication.
         if not self._alerting.is_set():
             self._showing = Tone.NETWORK
-            self._paint(screens.network, ssid or self._ssid())
+            self._signal("network", ssid=ssid or self._ssid())
 
     def network_online(self) -> None:
         if not self._needs_network:
@@ -440,7 +568,11 @@ class FittedIndicator(Indicator):
         # `clear`, which would also stop a chirp this has no business stopping.
         if self._showing is Tone.NETWORK:
             self._showing = Tone.IDLE
-            self._paint(screens.idle, hhmm(), None, None)
+            # `settled`, not another `network`: the job that screen was asking
+            # for has just been done. Telling the policy the radio changed would
+            # put the setup card back up to celebrate the join, which is a
+            # machine sending somebody to do a task that has finished.
+            self._signal("settled")
 
     def blocked(self, kind: str) -> None:
         """Say in the room that this machine will not open a tray.
@@ -459,8 +591,19 @@ class FittedIndicator(Indicator):
         # machine that cannot dispense has more to say than a machine that has
         # just joined a WiFi network.
         self._showing = Tone.MISSED
-        self._paint(screens.blocked, kind)
+        self._signal("blocked")
 
+
+    def boot(self) -> None:
+        """The machine has just come up. Say so, before anything slow starts.
+
+        The three things that follow this in the daemon — the web server, the
+        radio, the cloud link — take tens of seconds between them, and a person
+        who has just plugged the device in and is looking at a black panel
+        concludes it is dead and pulls the plug out again.
+        """
+        log.info("indicator: starting up")
+        self._signal("boot")
     def silence(self) -> None:
         """Stop the chirp; leave the screen showing whatever it was showing.
 
@@ -487,10 +630,10 @@ class FittedIndicator(Indicator):
         # or a device that was never set up goes quiet after its first dose.
         if self._needs_network:
             self._showing = Tone.NETWORK
-            self._paint(screens.network, self._ssid())
+            self._signal("network", ssid=self._ssid())
             return
         self._showing = Tone.IDLE
-        self._paint(screens.idle, hhmm(), tray, hhmm(at) if at is not None else None)
+        self._signal("settled")
 
     def close(self) -> None:
         """Shut both parts down, independently.

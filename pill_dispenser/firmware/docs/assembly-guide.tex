@@ -448,6 +448,46 @@ LED   & 3.3\,V (pin 17)         &    & \\
 \end{tikzpicture}
 \end{center}
 
+\vspace{2mm}
+\noindent\textbf{\sffamily Colour is only half of it.} The OLED has one ink,
+and roughly one man in twelve cannot use the colour on the LCD either
+\textemdash{} so every screen also carries a \emph{shape}, and the shape means
+the same thing on both panels and to everybody:
+
+\vspace{2mm}
+\begin{center}
+\begin{tikzpicture}[every node/.style={font=\sffamily\scriptsize, text=ink}]
+  \draw[ink70, line width=1.1pt] (0,0) circle (0.42);
+  \node[anchor=west] at (0.75,0) {\textbf{circle} \textemdash{} nothing is wrong};
+
+  \begin{scope}[shift={(5.6,0)}]
+    \draw[ink70, line width=1.1pt] (90:0.46) -- (210:0.46) -- (330:0.46) -- cycle;
+    \node[anchor=west] at (0.75,0) {\textbf{triangle} \textemdash{} needs a person};
+  \end{scope}
+
+  \begin{scope}[shift={(0,-1.15)}]
+    \draw[ink70, line width=1.1pt]
+      (22.5:0.46) -- (67.5:0.46) -- (112.5:0.46) -- (157.5:0.46) --
+      (202.5:0.46) -- (247.5:0.46) -- (292.5:0.46) -- (337.5:0.46) -- cycle;
+    \node[anchor=west, align=left] at (0.75,0)
+         {\textbf{octagon} \textemdash{} it will not dispense\\until this is fixed};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+\vspace{1mm}
+\noindent The octagon is rare on purpose. A warning somebody sees three times a
+day is a warning they stop reading.
+
+\vspace{2mm}
+\noindent\textbf{\sffamily The screen says more than doses.} Left alone it
+cycles slowly through the time and the next dose, a whole-machine summary
+(radio, clock, relay), and \textemdash{} when the radio has something to say
+\textemdash{} the network and this device's IP address. No button, nothing to
+learn: it simply takes its turn. That address is worth knowing about, because
+Chrome on Android cannot resolve \code{pilldispenser.local} and the number on
+this screen is the way in.
+
 \begin{provebox}
 \provetitle
 For the OLED, first check it is answering at all:
@@ -455,8 +495,9 @@ For the OLED, first check it is answering at all:
 i2cdetect -y 1        # 3c, or 3d on a board with the address link moved
 \end{shell}
 Then, for either panel, \code{selftest}. It paints each state in turn and asks
-which one you are looking at \textemdash{} and on the LCD, what colour it is.
-That question is the whole test; answer it honestly.
+which one you are looking at, \textbf{what shape is on it}, and \textemdash{} on
+the LCD \textemdash{} what colour. Those questions are the whole test; answer
+them honestly.
 \end{provebox}
 
 \vspace{1mm}

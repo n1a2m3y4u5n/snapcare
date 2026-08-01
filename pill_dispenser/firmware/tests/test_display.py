@@ -24,6 +24,7 @@ from datetime import datetime
 import pytest
 
 from snapcare_dispenser.display import NoDisplay, make_display, screens
+from snapcare_dispenser.display.health import Health
 from snapcare_dispenser.display.canvas import Mono1, Rgb565, Tone
 from snapcare_dispenser.display import font, glyphs
 
@@ -117,6 +118,14 @@ def test_drawing_outside_the_canvas_is_ignored_rather_than_fatal():
 PANELS = [Mono1(128, 64), Mono1(128, 32), Mono1(72, 40), Rgb565(320, 240)]
 
 
+WELL = Health(dispensing=True, problem="", wifi="online", ssid="SNAPCARE-V5XH",
+              address="192.168.1.42", next_tray=3, next_at="20:00",
+              now="12:34", waiting=0)
+UNWELL = Health(dispensing=False, problem="clock", wifi="offline",
+                ssid="SNAPCARE-V5XH", address="", next_tray=3, next_at="20:00",
+                now="12:34", waiting=0)
+
+
 def render_all(canvas):
     """Every state, as the buffer each one produces."""
     when = "08:00"
@@ -126,7 +135,9 @@ def render_all(canvas):
         "missed": _frame(canvas, screens.missed, 3, when),
         "schedule": _frame(canvas, screens.schedule, 2),
         "network": _frame(canvas, screens.network, "SNAPCARE-V5XH"),
-        "idle": _frame(canvas, screens.idle, "12:00", 3, "20:00"),
+        "idle": _frame(canvas, screens.idle, WELL),
+        "status": _frame(canvas, screens.status, WELL),
+        "wifi": _frame(canvas, screens.wifi, WELL),
         "blocked": _frame(canvas, screens.blocked, "clock"),
     }
 
@@ -139,7 +150,7 @@ def _frame(canvas, fn, *args):
 @pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
 def test_every_state_renders_on_every_panel(canvas):
     frames = render_all(canvas)
-    assert len(frames) == 7
+    assert len(frames) == 9
 
 
 @pytest.mark.parametrize("canvas", PANELS[:3], ids=lambda c: f"{c.width}x{c.height}")

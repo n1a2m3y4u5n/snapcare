@@ -66,7 +66,9 @@ from pathlib import Path
 from . import config, envelope, gpiochip, indicators, provisioning, rtc
 from .button import TakeDoseButton
 from .clock import Clock
-from .display import screens
+from .display import WRITE_ONLY, Tone, probe_i2c, screens, shapes
+from .display.health import Health, shape_for
+from .display.shapes import Shape
 from .indicators import make_indicator
 from .servo import TrayServos, make_backend
 from .store import Store
@@ -336,43 +338,287 @@ def check_identity(report: Report, store: Store) -> str:
 
 # ── the half only a person can settle ───────────────────────────────────────
 
+#: What to call each shape when somebody is asked to name one. The three words
+#: are the road-sign grammar out of `shapes.py`, and they are offered in the
+#: prompt rather than left open because a commissioning question with an open
+#: answer is a question people skip.
+_SHAPE_NAMES: dict[Shape, str] = {
+    Shape.SAFE: "circle",
+    Shape.CAUTION: "triangle",
+    Shape.AVOID: "octagon",
+}
+
+#: What the shape promises the person in front of the machine. Quoted back in
+#: the failure so that "it drew a circle instead of an octagon" reads as what it
+#: actually is — a locked machine that looks like a working one.
+_SHAPE_MEANS: dict[Shape, str] = {
+    Shape.SAFE: "nothing is wrong",
+    Shape.CAUTION: "somebody is needed, but doses still happen",
+    Shape.AVOID: "the tray will not open until this is fixed",
+}
+
+
+def _shape_said(answer: str) -> Shape | None:
+    """Which of the three a person named, or None if it was not one of them.
+
+    Generous, deliberately. "eight-sided", "stop sign" and even "hexagon" are
+    all taken as the octagon: the question is which of three shapes is on the
+    glass, not how well somebody counts sides at arm's length, and a miscounted
+    answer graded FAIL would send an assembler hunting a fault in a panel that
+    is drawing exactly the right thing.
+    """
+    text = answer.strip().lower()
+    if not text:
+        return None
+    if text.startswith(("c", "round", "ring")):
+        return Shape.SAFE
+    if text.startswith(("t", "point", "wedge", "3", "three")):
+        return Shape.CAUTION
+    if text.startswith(("o", "stop", "eight", "8", "hex", "polygon")):
+        return Shape.AVOID
+    return None
+
+
+def _digits(text: str) -> str:
+    """A clock reading with the punctuation and the leading zero taken off, so
+    that "8:00", "0800" and "08 00" are one answer and not three."""
+    return "".join(ch for ch in text if ch.isdigit()).lstrip("0")
+
+
+def _tight(text: str) -> str:
+    """A network name with case, spaces and hyphens taken off.
+
+    Case is folded because it carries no information here and comparing it would
+    fail every device: `font.py` has no lower case in it, so the panel draws the
+    SSID in capitals whatever the identity says, and somebody typing back what
+    they see is typing back capitals. Punctuation goes for the ordinary reason —
+    nobody should fail commissioning over a dash.
+    """
+    return "".join(ch for ch in text.lower() if ch.isalnum())
+
+
+def _a(word: str) -> str:
+    """The right indefinite article, so a failure naming the octagon reads like
+    English rather than like a format string."""
+    return f"an {word}" if word[0] in "aeiou" else f"a {word}"
+
+
+def _blank(answer: str) -> bool:
+    return _tight(answer) in ("nothing", "none", "blank", "dark", "empty")
+
+
+def _health(**fields) -> Health:
+    """A `Health` to paint from, with every field named.
+
+    Built by hand rather than by `snapshot()`, and that is the point rather than
+    a shortcut: this check has to paint states the machine is *not* in — a
+    locked tray on a device whose clock is fine, a setup hotspot on a device
+    already online — and a snapshot can only ever show the one state it is
+    actually in. A commissioning run on a healthy bench would otherwise ask
+    about three screens that all looked identical.
+    """
+    fixture = {"dispensing": True, "problem": "", "wifi": "offline", "ssid": "",
+               "address": "", "next_tray": None, "next_at": "",
+               "now": indicators.hhmm(), "waiting": 0}
+    fixture.update(fields)
+    return Health(**fixture)
+
+
+def _show(report: Report, indicator, screen_fn, *args) -> bool:
+    """Paint one screen, and notice if the panel died while it was drawn.
+
+    `FittedIndicator._paint` swallows a panel that raises and drops it for the
+    rest of the run. That is right in the daemon, where a dark screen must never
+    stop a dose — and it is exactly the wrong thing to be quiet about here.
+    Without this, every remaining question would be asked about whichever frame
+    was last painted successfully, and a person looking at a frozen screen
+    answers all of them correctly.
+    """
+    indicator._paint(screen_fn, *args)  # noqa: SLF001 - the point is to paint it
+    if getattr(indicator, "display", None):
+        return True
+    report.add("the screen kept taking frames", FAIL,
+               "the panel stopped part-way through, while painting "
+               f"{getattr(screen_fn, '__name__', screen_fn)} — the exception is in "
+               "the log above",
+               "a panel that dies mid-test is usually a header working loose; "
+               "re-seat it and run this again")
+    return False
+
+
+def _ask_shape(report: Report, name: str, expected: Shape, lead: str) -> None:
+    """One shape question, graded against what the code says it drew.
+
+    `expected` comes from `shapes.FOR_TONE` or from `health.shape_for` at the
+    call site rather than being written down here, so that a change to the
+    severity table changes the question with it. A self-test that carries its
+    own copy of the mapping stops testing the firmware and starts testing
+    itself.
+    """
+    answer = _ask(f"{lead} What shape is on the screen?",
+                  "circle/triangle/octagon")
+    wanted = _SHAPE_NAMES[expected]
+    if not answer:
+        report.add(name, SKIP, "not answered")
+        return
+    if _blank(answer):
+        report.add(name, FAIL, "no shape at all",
+                   "the shape is the only severity channel the mono panel has, "
+                   "and it is half of what the colour panel says — a screen "
+                   "without one leaves a person guessing how bad this is")
+        return
+    said = _shape_said(answer)
+    if said is expected:
+        report.add(name, PASS, f"{wanted} — {_SHAPE_MEANS[expected]}")
+    elif said is None:
+        report.add(name, FAIL, f"it was described as {answer!r}",
+                   "a shape nobody can name is a shape nobody can act on. If it "
+                   "is a blob rather than a figure, the radius this screen asks "
+                   "for is too small for the panel — see `fill_hint` in "
+                   "display/shapes.py")
+    else:
+        report.add(name, FAIL,
+                   f"it drew {_a(_SHAPE_NAMES[said])} where {_a(wanted)} belongs, "
+                   f"so the screen says {_SHAPE_MEANS[said]!r} when it means "
+                   f"{_SHAPE_MEANS[expected]!r}",
+                   "check FOR_TONE in display/shapes.py against what this state "
+                   "paints — the shape and the state have come apart, and on the "
+                   "OLED that is the whole message")
+
+
+def _report_detection(report: Report, display, answered: int | None) -> None:
+    """Whether anything at all established that this panel is really there.
+
+    This is the finding the self-test used to have no way of stating, and it is
+    the reason the check was reported as "only testing the LCD". Four-line SPI
+    has no MISO: the ILI9341 driver opens `/dev/spidev0.0`, claims DC and RESET,
+    writes a full initialisation sequence and reports a healthy 320x240 panel
+    with nothing whatever on the end of the ribbon. The OLED cannot do that — it
+    has to acknowledge 0x3C or 0x3D before a byte moves — so on a build running
+    the write-only panel with nothing answering on I2C, **no evidence of a
+    screen exists anywhere in this program**, and every answer below is the only
+    evidence there will ever be.
+
+    Reported as a WARN rather than a FAIL because an LCD-only machine is a
+    perfectly good machine and this is its normal state. What must not happen
+    again is it going unsaid.
+    """
+    backend = getattr(display, "backend", "?")
+    name = "the panel that came up is really there"
+
+    if backend not in WRITE_ONLY:
+        where = (f"it acknowledged 0x{answered:02X} on /dev/i2c-{config.DISPLAY_I2C_BUS}"
+                 if answered is not None else
+                 "its driver bound an address before it would send a byte")
+        report.add(name, PASS,
+                   f"{backend}: {where}, which an absent panel cannot do")
+        return
+
+    if answered is None:
+        report.add(
+            name, WARN,
+            f"{backend} is write-only — four-line SPI has no MISO — so opening "
+            f"{config.DISPLAY_SPI_DEVICE} and writing its init sequence succeeds "
+            "whether or not a panel is attached. Nothing answered on I2C either, "
+            "so nothing here has established that a screen exists at all",
+            "if this machine has the OLED fitted, it is not answering: check SD "
+            f"to GPIO 2 (pin 3), CL to GPIO 3 (pin 5), V to 3V3, and run "
+            f"`i2cdetect -y {config.DISPLAY_I2C_BUS}`. If it has the LCD, the "
+            "questions below are the test — look at the glass while you answer")
+        return
+
+    report.add(
+        name, WARN,
+        f"the {backend} came up, but an OLED answered at 0x{answered:02X} on "
+        f"/dev/i2c-{config.DISPLAY_I2C_BUS}. Only one panel is driven, and the "
+        "one that can prove it is there is not the one being driven",
+        f"if the LCD is what is mounted, nothing needs doing. Otherwise set "
+        "SNAPCARE_DISPLAY=ssd1306 — `auto` only reaches the LCD when the I2C bus "
+        "is silent, so something has named it")
+
+
 def check_display(report: Report, indicator, interactive: bool) -> None:
-    """Paint each state and ask which one is on the screen.
+    """Paint every state on whichever panel is fitted, and ask what is on it.
 
-    Two questions, and which of them gets asked depends on the panel, because
-    the two panels do not carry the message the same way. Both are asked about
-    something this program has just painted — a screen the person is looking at
-    while they answer — rather than about a claim on paper.
+    The rule for this half of the self-test is *never ask about something this
+    program did not just make happen*, and every question below is asked while
+    the person is looking at a frame this function has painted a second earlier.
 
-    **Which tray** is the first question and it is asked on every build. It is
-    the one a panel mounted upside down fails and "is there something on the
-    screen" passes, and it is also the only proof that the font is landing
-    somewhere a person can read from where they will be standing.
+    **Is there a panel at all** comes first and needs nobody. See
+    `_report_detection`: one of these two screens can be detected and the other
+    cannot, and a run that does not say which one it got is a run that can pass
+    on a machine with no screen on it.
 
-    **What colour** is asked only of the LCD, where the colour *is* the message.
-    The failure it catches is the ILI9341's MADCTL BGR bit: get it wrong and the
-    panel is perfectly alive, perfectly sharp, and swaps red for blue — so
-    "released" and "missed" trade places, which is a device telling somebody
-    their pills are in the cup when the window has closed. The OLED has one ink
-    and cannot answer this, so it is asked the question it *can*: whether the
-    two states that must never be confused look different at a glance.
+    **Which tray** is asked on both panels. It is the question a panel mounted
+    upside down fails and "is there something on the screen" passes, and it is
+    the only proof that the font lands somewhere a person can read it from where
+    they will actually be standing.
+
+    **Which shape** is asked on both panels, three times, and it is the question
+    that was missing. Circle, triangle and octagon are the entire severity
+    vocabulary on a screen with one ink, and they are half of it on the colour
+    panel too — the roughly one man in twelve with deuteranopia gets the shape
+    and nothing else. Nothing else in this program looks at them.
+
+    **Which colour** is asked only where `canvas.colour` says there is a colour
+    to see. The failure it catches is the ILI9341's MADCTL BGR bit: get it wrong
+    and the panel is alive, sharp, and swapping red for blue — so "released" and
+    "missed" trade places, which is a machine telling somebody their pills are
+    in the cup when the window has closed.
+
+    **The idle, status and setup screens** are painted as well as the dose ones,
+    because they are what somebody actually looks at. A dose screen is up for a
+    few minutes a day; the idle screen is up for the other twenty-three hours,
+    and a build where it paints nothing is a device that looks dead between
+    doses and gets unplugged.
+
+    **The glance question** is asked of the mono panel alone, because it is the
+    one thing that panel can answer and the LCD cannot: whether "a dose is due"
+    and "a dose was missed" are unmistakably different from a doorway, with no
+    colour to tell them apart.
     """
     display = getattr(indicator, "display", None)
+    # Asked whether or not a panel came up, and asked here rather than inside
+    # the branches below, because "no panel came up" and "nothing is on the I2C
+    # bus" are the two halves of the same sentence when the LCD is the backend.
+    answered = probe_i2c()
+
+    if not display and answered is not None:
+        # The one case where a dead screen has a precise cause. Something
+        # acknowledged an OLED address, so the panel is there and powered and
+        # the bus works — and the driver still could not bring it up, which
+        # puts the fault in the initialisation and not in the wiring.
+        strap = "" if answered == config.DISPLAY_I2C_ADDRESS else (
+            f" It answered at {answered:#04x} while config.py names "
+            f"{config.DISPLAY_I2C_ADDRESS:#04x} — this module has the other "
+            "address strap fitted.")
+        report.add("the screen shows the right thing", FAIL,
+                   f"no panel came up, but something acknowledged "
+                   f"{answered:#04x} on /dev/i2c-{config.DISPLAY_I2C_BUS} — the "
+                   "OLED is there and answering, and it was still not opened",
+                   "the reason is in the log above, at WARNING: an address held "
+                   "by a kernel driver is not an OLED, and a panel that "
+                   "acknowledges but will not initialise is usually a lead long "
+                   "enough to lose the bus at speed." + strap)
+        return
+
     if not display:
         report.add("the screen shows the right thing", FAIL,
-                   "no panel came up",
-                   f"for the LCD: check {config.DISPLAY_SPI_DEVICE} exists "
-                   "(dtparam=spi=on in /boot/firmware/config.txt, then reboot), "
-                   f"and that DC is on GPIO {config.DISPLAY_DC_GPIO} and RESET "
-                   f"on GPIO {config.DISPLAY_RESET_GPIO}. For the OLED: "
+                   "no panel came up, and nothing answered on the I2C bus either",
+                   "for the OLED — the one that can be detected: "
                    f"`i2cdetect -y {config.DISPLAY_I2C_BUS}` must show "
-                   f"{config.DISPLAY_I2C_ADDRESS:#04x}")
+                   f"{config.DISPLAY_I2C_ADDRESS:#04x}. For the LCD, which cannot "
+                   f"be detected at all: check {config.DISPLAY_SPI_DEVICE} exists "
+                   "(dtparam=spi=on in /boot/firmware/config.txt, then reboot), "
+                   f"and that DC is on GPIO {config.DISPLAY_DC_GPIO} and RESET on "
+                   f"GPIO {config.DISPLAY_RESET_GPIO}")
         return
 
     width = getattr(display, "width", 0)
     height = getattr(display, "height", 0)
     report.add("the screen came up", PASS,
                f"{display.backend} backend, {width}x{height}")
+    _report_detection(report, display, answered)
 
     if not interactive:
         report.add("the screen shows the right thing", SKIP, "not asked")
@@ -399,14 +645,16 @@ def check_display(report: Report, indicator, interactive: bool) -> None:
     # rubbish while it does.
     due_at = indicators.hhmm(
         datetime.now().replace(hour=8, minute=0, second=0, microsecond=0))
-    indicator._paint(screens.due, 3, due_at)  # noqa: SLF001 - the point is to paint it
+
+    if not _show(report, indicator, screens.due, 3, due_at):
+        return
     answer = _ask("a dose for tray 3 is on the screen. Which tray number does "
                   "it show?", "number/nothing")
     if not answer:
         report.add("the screen names the tray", SKIP, "not answered")
     elif answer.isdigit() and int(answer) == 3:
         report.add("the screen names the tray", PASS)
-    elif answer.startswith("n"):
+    elif _blank(answer) or answer.startswith("n"):
         report.add("the screen names the tray", FAIL, "the screen is blank",
                    "the panel is being talked to but is showing nothing — check "
                    "the backlight lead on the LCD, and that DC is on GPIO "
@@ -419,24 +667,99 @@ def check_display(report: Report, indicator, interactive: bool) -> None:
                    f"DISPLAY_ROTATION ({config.DISPLAY_ROTATION}°) does not match "
                    "how the panel is mounted")
 
+    # No repaint: this is the frame that is already up, and asking about it
+    # twice costs a question rather than a second 38 ms transfer somebody has to
+    # sit through.
+    _ask_shape(report, "a due dose is drawn as a circle",
+               shapes.FOR_TONE[Tone.DUE],
+               "that same screen — a dose waiting to be taken.")
+
+    if not _show(report, indicator, screens.missed, 3, due_at):
+        return
+    _ask_shape(report, "a missed dose is drawn as a triangle",
+               shapes.FOR_TONE[Tone.MISSED],
+               "the same dose, now missed.")
+
+    # The one screen that says the machine will not open a tray at all. A clock
+    # nothing has vouched for is the realistic way to get here, and the octagon
+    # is the only level that means "this will not get better on its own" — so it
+    # is the one shape that must never be mistaken for the other two.
+    locked = _health(dispensing=False, problem="clock", wifi="online",
+                     address="192.168.1.50")
+    if not _show(report, indicator, screens.status, locked):
+        return
+    _ask_shape(report, "a machine that will not dispense is drawn as an octagon",
+               shape_for(locked),
+               "this machine's clock is not trusted, so no tray will open.")
+
+    # What the device shows for twenty-three hours a day. A blank idle screen is
+    # the failure nobody reports as a failure: the machine looks switched off,
+    # somebody unplugs it, and the dose it would have offered in the morning
+    # never happens.
+    resting = _health(wifi="online", address="192.168.1.50", next_tray=2,
+                      next_at="20:00")
+    if not _show(report, indicator, screens.idle, resting):
+        return
+    answer = _ask("nothing is due; this is the screen the machine sits on all "
+                  "day. What time does it show?", "time/nothing")
+    if not answer:
+        report.add("the idle screen shows the time", SKIP, "not answered")
+    elif _blank(answer):
+        report.add("the idle screen shows the time", FAIL,
+                   "the screen a person sees most of the time is blank",
+                   "a dark panel between doses reads as a machine that is off, "
+                   "and a machine that looks off gets unplugged")
+    elif _digits(answer) == _digits(resting.now):
+        report.add("the idle screen shows the time", PASS, resting.now)
+    else:
+        report.add("the idle screen shows the time", FAIL,
+                   f"it showed {answer!r} where {resting.now} was painted",
+                   "the clock on this screen comes from the same source the "
+                   "scheduler uses, so a wrong figure here is a device that will "
+                   "dispense at the wrong hour — check the RTC result above")
+
+    # The setup screen, and the only screen in the firmware with a word on it.
+    # Read back against the printed label while somebody is standing here, which
+    # is the only moment the two can be compared at all.
+    ssid = report.device or config.AP_SSID_PREFIX
+    joining = _health(wifi="hotspot", ssid=ssid, problem="wifi")
+    if not _show(report, indicator, screens.wifi, joining):
+        return
+    answer = _ask("this machine is waiting to be put on a network. Which network "
+                  "name is on the screen?", "name/nothing")
+    if not answer:
+        report.add("the setup screen shows the network name", SKIP, "not answered")
+    elif _blank(answer):
+        report.add("the setup screen shows the network name", FAIL,
+                   "no name on the setup screen",
+                   "this is the one word the whole design allows on a screen, and "
+                   "without it nobody can find the device's hotspot on a phone")
+    elif _tight(answer) == _tight(ssid):
+        report.add("the setup screen shows the network name", PASS, ssid)
+    else:
+        report.add("the setup screen shows the network name", FAIL,
+                   f"it was read back as {answer!r}; {ssid!r} was painted",
+                   "a truncated or wrapped SSID is a name somebody types into a "
+                   "phone and cannot find — check that the name fits this panel's "
+                   "width in screens.py")
+
     if colour:
         # Green first because it is the one that matters, and because it is the
         # one colour the BGR bit leaves alone — so a person who reads back
         # green, then red where amber should be, has named the fault exactly.
+        # Blue and amber are the pair the bit actually swaps, and they are the
+        # pair this device can least afford to confuse.
         for tone, name, paint in (
                 ("due", "green", (screens.due, 3, due_at)),
+                ("released", "blue", (screens.released, 3)),
                 ("missed", "amber", (screens.missed, 3, due_at)),
-                # The real setup network, not a placeholder: this is the one
-                # screen with a word on it, and a person can read it back
-                # against the printed label while they are here.
-                ("network", "cyan", (screens.network,
-                                     report.device or config.AP_SSID_PREFIX)),
-                ("schedule", "violet", (screens.schedule, 3))):
-            indicator._paint(*paint)  # noqa: SLF001
+                ("setup", "cyan", (screens.wifi, joining))):
+            if not _show(report, indicator, *paint):
+                return
             answer = _ask(f"the screen should be {name}. What colour is it?", "colour")
             if not answer:
                 report.add(f"the screen shows {tone} as {name}", SKIP, "not answered")
-            elif answer.startswith(name[:3]):
+            elif answer.strip().lower().startswith(name[:3]):
                 report.add(f"the screen shows {tone} as {name}", PASS)
             else:
                 report.add(f"the screen shows {tone} as {name}", FAIL,
@@ -450,11 +773,18 @@ def check_display(report: Report, indicator, interactive: bool) -> None:
         # `Mono1` inverts the whole panel for a due dose. That is the one pair
         # that must never be confused: a dose you can still take, and a dose that
         # has gone. If those two look alike here, every other state does too.
-        indicator._paint(screens.due, 3, due_at)  # noqa: SLF001
+        #
+        # This is the question the OLED can answer and the LCD cannot. On the
+        # colour panel it would be asking whether green looks like amber, which
+        # nobody has ever said no to.
+        if not _show(report, indicator, screens.due, 3, due_at):
+            return
         _ask("look at the screen — a dose is due. Press Enter", "")
-        indicator._paint(screens.missed, 3, due_at)  # noqa: SLF001
-        answer = _ask("that was the same dose, missed. Did the screen change in "
-                      "a way you would notice from a doorway?", "y/n")
+        if not _show(report, indicator, screens.missed, 3, due_at):
+            return
+        answer = _ask("that was the same dose, missed. Are those two "
+                      "unmistakable from a doorway — not 'different if you go "
+                      "and look'?", "y/n")
         if not answer:
             report.add("the mono panel tells a due dose from a missed one", SKIP,
                        "not answered")

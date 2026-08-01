@@ -529,6 +529,9 @@ class Reading:
 _chip: Ds1302 | None = None
 _chip_lock = threading.RLock()
 
+#: Whether the first failure to open the chip has already been reported in full.
+_open_failure_logged = False
+
 
 def shared_chip() -> Ds1302:
     """The process's one DS1302, opened on first use.
@@ -589,13 +592,21 @@ def _probe_locked(chip_in: Ds1302 | None) -> Reading:
     try:
         chip = chip_in if chip_in is not None else shared_chip()
     except Exception as exc:  # noqa: BLE001
-        # Logged with its traceback, not just folded into the reading.
+        # The traceback once, then quiet.
         #
         # Everything below reports a failure to open as "no chip", which is the
         # right answer for a loose wire and completely the wrong one for a bug
-        # in this file — and the two are indistinguishable on the status page.
-        # The journal is where the difference shows.
-        log.exception("the DS1302 could not be opened")
+        # in this file — and the two are indistinguishable on the status page,
+        # so the journal has to carry the difference. But this is reached from
+        # the status snapshot on every scheduler tick, and a machine with no
+        # GPIO library at all — a laptop running `make run` — would otherwise
+        # print a full traceback every few seconds for ever.
+        global _open_failure_logged
+        if not _open_failure_logged:
+            _open_failure_logged = True
+            log.exception("the DS1302 could not be opened")
+        else:
+            log.debug("the DS1302 still cannot be opened: %s", exc)
         return Reading(False, None, None, None, None, None,
                        f"the DS1302 could not be opened: {exc}")
 

@@ -33,6 +33,15 @@ there is no intermediate size — a panel that wants 40 px of glyph gets 32 — 
 that is the right way for the trade to cut, because a crisp small picture beats
 a soft large one at the distance this is read from.
 
+Two of these are not pictures
+-----------------------------
+`SLASH_MASK` and `SLASH` are a pair that is only ever drawn *over* another
+glyph, and together they are how this firmware negates a picture. That matters
+more than it sounds: the status screen has to distinguish "the clock is fine"
+from "nothing has vouched for the clock" on a panel with one ink and no room
+for a word, and a struck-through clock is the only way anybody has ever found
+to say that without writing it down.
+
 Why the ASCII art is here
 -------------------------
 The art above each tuple is the source. The numbers are the build. They are
@@ -265,6 +274,164 @@ CLOCK = (
     0x4002, 0x2004, 0x1818, 0x07E0,
 )
 
+# Trying to join a network. The same dot and the same innermost arc as `WIFI`,
+# with the two outer arcs gone and the whole thing lifted to sit centred in its
+# box — a signal meter showing one bar, which is the one thing every phone on
+# earth has already taught everybody.
+#
+# It is *not* drawn as WIFI-with-the-top-blanked, tempting as that is. That
+# leaves the picture hanging off the bottom of its box, and inside a circle or a
+# triangle a bottom-heavy glyph looks like a rendering fault rather than a weak
+# signal.
+#
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   ......####......   0x03C0
+#   .....##..##.....   0x0660
+#   ................   0x0000
+#   ......####......   0x03C0
+#   .....######.....   0x07E0
+#   .....######.....   0x07E0
+#   ......####......   0x03C0
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+WIFI_LOW = (
+    0x0000, 0x0000, 0x0000, 0x0000,
+    0x0000, 0x03C0, 0x0660, 0x0000,
+    0x03C0, 0x07E0, 0x07E0, 0x03C0,
+    0x0000, 0x0000, 0x0000, 0x0000,
+)
+
+# The relay — the server the pairing and the schedules come through, which is
+# somewhere else entirely. It has to be a *different silhouette* from the clock
+# and the wifi arcs, because on the status screen all three sit in a row and the
+# whole value of that row is telling at a glance which one is struck through. A
+# globe was the first attempt and it was wrong for exactly that reason: a circle
+# with lines in it next to a circle with hands in it is one picture.
+#
+# Filled rather than outlined, so the diagonal bar below reads across it.
+#
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   .........####...   0x0078
+#   ..###...######..   0x38FC
+#   .#####.########.   0x7DFE
+#   ################   0xFFFF
+#   ################   0xFFFF
+#   ################   0xFFFF
+#   ################   0xFFFF
+#   .##############.   0x7FFE
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+CLOUD = (
+    0x0000, 0x0000, 0x0000, 0x0000,
+    0x0078, 0x38FC, 0x7DFE, 0xFFFF,
+    0xFFFF, 0xFFFF, 0xFFFF, 0x7FFE,
+    0x0000, 0x0000, 0x0000, 0x0000,
+)
+
+# The backup cell in the RTC, drawn nearly flat on purpose — one bar left in a
+# case that holds four. A full battery would be the wrong picture whatever the
+# state, because this glyph is only ever shown when somebody needs to change it;
+# nothing in this firmware has a reason to say "the cell is fine".
+#
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   ##############..   0xFFFC
+#   ##############..   0xFFFC
+#   ##..........####   0xC00F
+#   ##.####.....####   0xDE0F
+#   ##.####.....####   0xDE0F
+#   ##..........####   0xC00F
+#   ##############..   0xFFFC
+#   ##############..   0xFFFC
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+BATTERY = (
+    0x0000, 0x0000, 0x0000, 0x0000,
+    0xFFFC, 0xFFFC, 0xC00F, 0xDE0F,
+    0xDE0F, 0xC00F, 0xFFFC, 0xFFFC,
+    0x0000, 0x0000, 0x0000, 0x0000,
+)
+
+
+# ── the bar that turns any picture into its own negation ────────────────────
+
+# `SLASH_MASK` and `SLASH` are one thing in two halves, and they are the reason
+# the status screen can say "the clock is not to be trusted" without a word of
+# text: draw the mask in the *background* colour over whatever picture is there,
+# then the bar in the foreground colour inside it.
+#
+# Drawing the bar alone does not work and it took a wasted evening to see why.
+# The bar is one ink and so is everything under it, so over a filled glyph —
+# CLOUD, BATTERY, PILL — it lands on pixels that are already lit and vanishes
+# completely. The screen then shows a perfectly clean picture that means the
+# opposite of what it says. The mask cuts a one-pixel gutter either side of the
+# bar first, so the bar reads on any glyph, on either polarity, on both panels.
+#
+# Upper left to lower right, per ISO 7010 and per `BARRED` above.
+#
+#   ###.............   0xE000
+#   ####............   0xF000
+#   #####...........   0xF800
+#   .#####..........   0x7C00
+#   ..#####.........   0x3E00
+#   ...#####........   0x1F00
+#   ....#####.......   0x0F80
+#   .....#####......   0x07C0
+#   ......#####.....   0x03E0
+#   .......#####....   0x01F0
+#   ........#####...   0x00F8
+#   .........#####..   0x007C
+#   ..........#####.   0x003E
+#   ...........#####   0x001F
+#   ............####   0x000F
+#   .............###   0x0007
+SLASH_MASK = (
+    0xE000, 0xF000, 0xF800, 0x7C00,
+    0x3E00, 0x1F00, 0x0F80, 0x07C0,
+    0x03E0, 0x01F0, 0x00F8, 0x007C,
+    0x003E, 0x001F, 0x000F, 0x0007,
+)
+
+# The bar itself, three columns inside the mask's five.
+#
+#   ##..............   0xC000
+#   ###.............   0xE000
+#   .###............   0x7000
+#   ..###...........   0x3800
+#   ...###..........   0x1C00
+#   ....###.........   0x0E00
+#   .....###........   0x0700
+#   ......###.......   0x0380
+#   .......###......   0x01C0
+#   ........###.....   0x00E0
+#   .........###....   0x0070
+#   ..........###...   0x0038
+#   ...........###..   0x001C
+#   ............###.   0x000E
+#   .............###   0x0007
+#   ..............##   0x0003
+SLASH = (
+    0xC000, 0xE000, 0x7000, 0x3800,
+    0x1C00, 0x0E00, 0x0700, 0x0380,
+    0x01C0, 0x00E0, 0x0070, 0x0038,
+    0x001C, 0x000E, 0x0007, 0x0003,
+)
+
 
 # ── the two that mean "go and fetch somebody" ───────────────────────────────
 
@@ -337,9 +504,14 @@ ALL: dict[str, tuple[int, ...]] = {
     "CROSS": CROSS,
     "TICK": TICK,
     "WIFI": WIFI,
+    "WIFI_LOW": WIFI_LOW,
+    "CLOUD": CLOUD,
+    "BATTERY": BATTERY,
     "CLOCK": CLOCK,
     "WARN": WARN,
     "BARRED": BARRED,
+    "SLASH_MASK": SLASH_MASK,
+    "SLASH": SLASH,
 }
 
 

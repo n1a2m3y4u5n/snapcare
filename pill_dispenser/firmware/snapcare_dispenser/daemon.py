@@ -49,6 +49,7 @@ from .button import TakeDoseButton
 from .clock import Clock
 from .cloud import CloudLink
 from .device import Dispenser
+from .display import health as display_health
 from .indicators import LogIndicator, make_indicator
 from .network import Supervisor
 from .server import serve_forever
@@ -149,6 +150,25 @@ class Daemon:
             log.info("button: tray %d released for the %s dose",
                      event["tray"], event["time"])
 
+    def _show(self) -> None:
+        """Hand the panel a fresh view of the whole machine.
+
+        Cheap enough for every tick — a snapshot is microseconds and the policy
+        answers "nothing changed" on most of them, which is what keeps a 38 ms
+        full-panel transfer off the loop that also has to hit a scheduled
+        minute.
+
+        Guarded, because this is cosmetic and the loop it runs on is not. A
+        screen that cannot be painted must never be the reason a tray does not
+        open.
+        """
+        try:
+            snapshot = display_health.snapshot(self.dispenser, self.network,
+                                               self.cloud)
+            self.dispenser.indicator.refresh(snapshot)
+        except Exception:  # noqa: BLE001
+            log.exception("could not refresh the screen; carrying on")
+
     # ── keeping the clock chip fed ──────────────────────────────────────────
 
     def _seed_rtc(self, why: str) -> None:
@@ -210,6 +230,11 @@ class Daemon:
         # kernel applied the chip's time before this process existed.
         self.dispenser.clock.adopt_rtc()
 
+        # Before the network, the cloud and the first tick. A person who has
+        # just plugged the machine in and sees a black panel concludes it is
+        # dead — and the three things below take tens of seconds between them.
+        self.dispenser.indicator.boot()
+
         self._server = serve_forever(self.dispenser, self.port, self.identity,
                                      cloud=self.cloud, network=self.network,
                                      button=self.button)
@@ -260,6 +285,13 @@ class Daemon:
                 # Second, and cheap: it decides and dispatches, never waits.
                 # Doses come first in this loop because they are the job.
                 self.network.tick()
+
+                # Last, because it reports on everything above it. This is the
+                # only thing that puts the radio, the clock chip, the relay and
+                # the next dose onto the panel — without it the screen shows the
+                # last thing that happened to it and nothing else, which on a
+                # machine that has been resting since breakfast is breakfast.
+                self._show()
 
             except Exception:  # noqa: BLE001
                 # See the module docstring: the loop outlives its failures.
