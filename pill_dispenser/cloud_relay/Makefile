@@ -41,11 +41,11 @@ demo:
 	 sleep 1; \
 	 echo; echo "pairing code:"; \
 	 SNAPCARE_STATE_DIR=$(STATE) $(PYTHON) -c \
-	   "import sys; sys.path.insert(0,'../rpi_firmware'); \
+	   "import sys; sys.path.insert(0,'../firmware'); \
 	    from snapcare_dispenser import provisioning as p, store as s; \
 	    print('   ', p.load_identity(s.Store('$(STATE)')).claim)"; \
 	 echo; echo "open http://localhost:$(PORT)/lab and pair with it"; echo; \
-	 cd ../rpi_firmware && SNAPCARE_STATE_DIR=$(STATE) $(PYTHON) -m snapcare_dispenser \
+	 cd ../firmware && SNAPCARE_STATE_DIR=$(STATE) $(PYTHON) -m snapcare_dispenser \
 	   --no-wifi --port 8099 --servo-backend mock \
 	   --relay-url http://localhost:$(PORT) --verbose
 

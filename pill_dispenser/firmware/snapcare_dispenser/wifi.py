@@ -1,0 +1,514 @@
+"""Talking to the WiFi, through NetworkManager.
+
+Everything here shells out to `nmcli`. That is a deliberate choice over editing
+`wpa_supplicant.conf` or driving `hostapd` and `dnsmasq` directly, for three
+reasons that all became visible while building this:
+
+  * Raspberry Pi OS has used NetworkManager by default since Bookworm, so
+    hand-written wpa_supplicant files are either ignored or fight with it.
+  * `ipv4.method shared` gives DHCP, DNS forwarding and NAT on the hotspot for
+    free, from NetworkManager's own dnsmasq. Doing it by hand is two more
+    packages, two more config files, two more services to sequence at boot, and
+    two more things to be wrong on a device with no screen.
+  * `nmcli` is a stable, documented, text interface. D-Bus would be tidier in
+    principle and is a much larger surface to get wrong in a firmware that has
+    to work unattended.
+
+Every call has a timeout and every failure is a return value. There is no path
+here that raises into the scheduler: the dispenser must keep dropping pills
+through a WiFi outage, because the medication does not care about the network.
+
+This module is the *mechanism* — one function per nmcli call, no memory of what
+it did last. Deciding when to be an access point and when to be a client is
+[`network.py`](network.py), which is where the sequencing and the rollback live.
+"""
+from __future__ import annotations
+
+import logging
+import subprocess
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+from . import config
+from .provisioning import Identity
+
+log = logging.getLogger(__name__)
+
+#: The AP profile's name in NetworkManager. Stable so it can be brought up and
+#: down repeatedly instead of accumulating a new profile on every boot.
+AP_CONNECTION = "snapcare-setup"
+
+#: Where NetworkManager reads extra options for the dnsmasq it runs on shared
+#: connections. Dropping a wildcard in here is what makes the captive portal
+#: pop up by itself.
+DNSMASQ_SHARED_DIR = Path("/etc/NetworkManager/dnsmasq-shared.d")
+PORTAL_DNS_CONF = DNSMASQ_SHARED_DIR / "snapcare-portal.conf"
+
+
+@dataclass
+class Network:
+    ssid: str
+    signal: int          # 0..100
+    security: str        # '' means open
+    saved: bool = False
+
+    def to_json(self) -> dict:
+        return {"ssid": self.ssid, "signal": self.signal,
+                "security": self.security, "open": not self.security,
+                "saved": self.saved}
+
+
+@dataclass
+class Status:
+    #: 'connected' | 'hotspot' | 'disconnected' | 'unavailable'
+    mode: str
+    ssid: str | None = None
+    address: str | None = None
+    detail: str = ""
+
+    @property
+    def online(self) -> bool:
+        return self.mode == "connected"
+
+    def to_json(self) -> dict:
+        return {"mode": self.mode, "ssid": self.ssid,
+                "address": self.address, "detail": self.detail}
+
+
+# ── running nmcli ───────────────────────────────────────────────────────────
+
+#: Arguments whose *value* is a secret. nmcli takes both as `key value` pairs,
+#: so the thing to hide is always the word after one of these.
+_SECRET_ARGS = frozenset({"password", "wifi-sec.psk", "802-11-wireless-security.psk"})
+
+
+def _redacted(args) -> str:
+    """An nmcli command line safe to write to the journal.
+
+    Every join carries the house WiFi password as a positional argument, and the
+    journal on this device is read over somebody's shoulder, pasted into a bug
+    report and copied off the SD card. A log line is not a place for it.
+    """
+    out, hide = [], False
+    for arg in args:
+        out.append("<hidden>" if hide else arg)
+        hide = arg in _SECRET_ARGS
+    return " ".join(out)
+
+
+def _nmcli(*args: str, timeout: int = 30) -> subprocess.CompletedProcess | None:
+    """Run nmcli. None means it is not installed or did not answer in time."""
+    try:
+        return subprocess.run(
+            ["nmcli", *args], capture_output=True, text=True,
+            timeout=timeout, check=False,
+        )
+    except FileNotFoundError:
+        return None
+    except (OSError, subprocess.SubprocessError) as exc:
+        log.warning("nmcli %s failed: %s", _redacted(args), exc)
+        return None
+
+
+def available() -> bool:
+    result = _nmcli("--version", timeout=5)
+    return result is not None and result.returncode == 0
+
+
+def _split_terse(line: str) -> list[str]:
+    r"""Split one `nmcli -t` line on unescaped colons.
+
+    Terse output is colon-separated with `\:` and `\\` escaped inside fields.
+    A naive `line.split(':')` works right up until somebody's network is called
+    "Guest:2G" — and then it silently reads that as two fields and the SSID the
+    user taps is not the one that gets joined.
+    """
+    fields, current, escaped = [], [], False
+    for char in line:
+        if escaped:
+            current.append(char)
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == ":":
+            fields.append("".join(current))
+            current = []
+        else:
+            current.append(char)
+    fields.append("".join(current))
+    return fields
+
+
+# ── looking around ──────────────────────────────────────────────────────────
+
+def wifi_profiles() -> list[str]:
+    """Every saved wireless profile *name*, minus our own hotspot.
+
+    Names, not SSIDs. nmcli lets them differ and in practice they usually do:
+    Raspberry Pi Imager writes its pre-seeded network as a profile called
+    `preconfigured`, and nmcli names a second profile for one network `Home 1`.
+    """
+    result = _nmcli("-t", "-f", "NAME,TYPE", "connection", "show")
+    if result is None or result.returncode != 0:
+        return []
+    return [parts[0] for parts in map(_split_terse, result.stdout.splitlines())
+            if len(parts) >= 2 and parts[1] == "802-11-wireless"
+            and parts[0] != AP_CONNECTION]
+
+
+def profile_names_for(ssid: str) -> set[str]:
+    """The profile names that actually carry this SSID."""
+    return {name for name in wifi_profiles() if _profile_ssid(name) == ssid}
+
+
+def saved_ssids() -> set[str]:
+    """SSIDs NetworkManager already has credentials for, minus our own hotspot.
+
+    **Resolved, not assumed.** This used to return profile *names* and was then
+    compared against SSIDs by two callers, which is how a card flashed by
+    Raspberry Pi Imager — profile `preconfigured`, SSID `MyHome` — could have
+    its only working network deleted by somebody mistyping the password once:
+    `"MyHome" in {"preconfigured"}` is False, so the cleanup that is meant to
+    run only for a network the device did not already know ran anyway. The
+    device was then permanently off the house WiFi with no saved network left to
+    recover to.
+
+    Costs one extra nmcli call per profile, which is a handful on any real
+    machine and happens on a scan, not on a tick.
+    """
+    return {ssid for ssid in map(_profile_ssid, wifi_profiles()) if ssid}
+
+
+def scan(rescan: bool = True) -> list[Network]:
+    """Nearby networks, strongest first.
+
+    Duplicates are collapsed by SSID keeping the strongest reading — a mesh or
+    a dual-band router shows the same name several times, and a setup page that
+    lists "BT-HOMEHUB" four times looks broken to the person using it.
+    """
+    args = ["-t", "-f", "SSID,SIGNAL,SECURITY", "device", "wifi", "list",
+            "ifname", config.WIFI_INTERFACE]
+    if rescan:
+        args.append("--rescan")
+        args.append("yes")
+
+    # A scan asks the radio to sweep every channel, which takes several seconds
+    # and cannot be hurried.
+    result = _nmcli(*args, timeout=45)
+    if result is None or result.returncode != 0:
+        return []
+
+    known = saved_ssids()
+    best: dict[str, Network] = {}
+    for line in result.stdout.splitlines():
+        parts = _split_terse(line)
+        if len(parts) < 3:
+            continue
+        ssid = parts[0].strip()
+        if not ssid:
+            continue  # a hidden network; there is nothing to show or tap
+        try:
+            signal = int(parts[1])
+        except ValueError:
+            signal = 0
+        network = Network(ssid=ssid, signal=signal, security=parts[2].strip(),
+                          saved=ssid in known)
+        if ssid not in best or signal > best[ssid].signal:
+            best[ssid] = network
+
+    return sorted(best.values(), key=lambda n: n.signal, reverse=True)
+
+
+def status() -> Status:
+    """What the WiFi is doing right now."""
+    if not available():
+        return Status(mode="unavailable",
+                      detail="NetworkManager is not installed on this machine")
+
+    result = _nmcli("-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status")
+    if result is None or result.returncode != 0:
+        return Status(mode="unavailable", detail="nmcli did not answer")
+
+    for line in result.stdout.splitlines():
+        parts = _split_terse(line)
+        if len(parts) < 4 or parts[0] != config.WIFI_INTERFACE:
+            continue
+        state, connection = parts[2], parts[3]
+        if state != "connected":
+            return Status(mode="disconnected", detail=state)
+        if connection == AP_CONNECTION:
+            return Status(mode="hotspot", ssid=_ap_ssid(), address=config.AP_ADDRESS)
+        return Status(mode="connected", ssid=connection, address=_address())
+
+    return Status(mode="unavailable",
+                  detail=f"no interface called {config.WIFI_INTERFACE}")
+
+
+def _ap_ssid() -> str | None:
+    result = _nmcli("-t", "-f", "802-11-wireless.ssid", "connection", "show", AP_CONNECTION)
+    if result is None or result.returncode != 0:
+        return None
+    parts = _split_terse(result.stdout.strip())
+    return parts[1] if len(parts) >= 2 else None
+
+
+def _address() -> str | None:
+    result = _nmcli("-t", "-f", "IP4.ADDRESS", "device", "show", config.WIFI_INTERFACE)
+    if result is None or result.returncode != 0:
+        return None
+    for line in result.stdout.splitlines():
+        parts = _split_terse(line)
+        if len(parts) >= 2 and parts[1]:
+            return parts[1].split("/")[0]
+    return None
+
+
+# ── joining a network ───────────────────────────────────────────────────────
+
+def connect(ssid: str, password: str | None, timeout: int = 45,
+            hidden: bool = False) -> tuple[bool, str]:
+    """Join a network. Returns (ok, a sentence to show the person).
+
+    The hotspot is taken down first. One radio cannot be an access point and a
+    client on two different channels at once; leaving the AP up makes the join
+    fail in a way whose error message is about the driver rather than about
+    anything the person did. It is done here rather than left to the caller
+    because forgetting it produces exactly that error, and the error does not
+    look like its cause.
+
+    "Joined" means an address as well as an association. nmcli normally waits
+    for the whole activation, but a profile with `ipv4.may-fail` set, or a
+    router that answers the handshake and then never answers DHCP, both come
+    back as success with no lease — and a device with no address is not on the
+    network in any sense the app can use. Checking is one call and turns a
+    silent half-join into a named failure.
+    """
+    if not available():
+        return False, "NetworkManager is not available on this device"
+
+    stop_hotspot()
+
+    args = ["device", "wifi", "connect", ssid, "ifname", config.WIFI_INTERFACE]
+    if password:
+        args += ["password", password]
+    if hidden:
+        # Without this nmcli scans, does not see the name, and reports that no
+        # such network exists — which is true of the scan and not of the house.
+        args += ["hidden", "yes"]
+
+    result = _nmcli(*args, timeout=timeout)
+    if result is None:
+        return False, "the network manager did not respond"
+
+    if result.returncode == 0:
+        address = _address()
+        if not address:
+            log.warning("associated with %s but no address was issued", ssid)
+            return False, ("Joined the network but it did not hand out an address. "
+                           "That is usually a router that needs restarting.")
+        log.info("joined %s as %s", ssid, address)
+        return True, f"Connected to {ssid}."
+
+    message = (result.stderr or result.stdout).strip().splitlines()
+    detail = message[-1] if message else f"exit {result.returncode}"
+
+    # NetworkManager reports a rejected passphrase as a generic activation
+    # failure, and "Secrets were required" is the only reliable tell. Getting
+    # this wrong means telling somebody their router is broken when they have
+    # simply mistyped a password, which is the single most likely thing to go
+    # wrong in this entire flow.
+    lowered = detail.lower()
+    if "secrets were required" in lowered or "802-1x" in lowered:
+        detail = "The password was not accepted."
+    elif "no network with ssid" in lowered or "not found" in lowered:
+        detail = (f"No network called {ssid} answered. If its name is hidden, "
+                  f"add it by hand instead of tapping it in the list.")
+    elif "timeout" in lowered or "timed out" in lowered:
+        detail = "The network did not answer in time."
+
+    log.warning("could not join %s: %s", ssid, detail)
+    return False, detail
+
+
+def forget(ssid: str) -> bool:
+    result = _nmcli("connection", "delete", ssid)
+    return result is not None and result.returncode == 0
+
+
+def forget_profiles_for(ssid: str, keep=()) -> int:
+    """Delete the profiles `nmcli device wifi connect` just created for `ssid`.
+
+    A join with the wrong password can leave a profile behind, and that profile
+    autoconnects. The device then spends the rest of its life trying a password
+    it has already been told is wrong, which both fights the setup hotspot and
+    makes `has_known_network()` answer yes for a network it can never reach.
+
+    Matched on the profile's own SSID rather than its name, because nmcli names
+    the second profile for a network `Home 1`, and a `connection delete Home`
+    leaves that one running.
+
+    `keep` is the safety catch and callers should always pass it: snapshot
+    `profile_names_for(ssid)` *before* the attempt and hand it back here, and
+    only what the attempt itself created is removed. Without it a mistyped
+    password destroys the working profile the device came in on — see
+    `saved_ssids`, which is where that used to happen.
+    """
+    keep = set(keep or ())
+    deleted = 0
+    # In nmcli's own order rather than a set's, so the log reads the same way
+    # twice and `Home` is removed before `Home 1`.
+    for name in wifi_profiles():
+        if name in keep or _profile_ssid(name) != ssid:
+            continue
+        if forget(name):
+            log.info("removed the profile %r left by a failed join", name)
+            deleted += 1
+    return deleted
+
+
+def _profile_ssid(name: str) -> str | None:
+    result = _nmcli("-t", "-f", "802-11-wireless.ssid", "connection", "show", name)
+    if result is None or result.returncode != 0:
+        return None
+    parts = _split_terse(result.stdout.strip())
+    return parts[1] if len(parts) >= 2 else None
+
+
+def has_known_network() -> bool:
+    """Is there anything saved to come back up on, other than our own hotspot?"""
+    return bool(saved_ssids())
+
+
+def wait_until_connected(seconds: float, poll: float = 2.0,
+                         should_stop=None) -> Status:
+    """Give NetworkManager its own time to join something it already knows.
+
+    Used after taking the hotspot down: every saved profile autoconnects, so the
+    right thing to do is stand back for a few seconds rather than to pick a
+    network and drive it. Returns whatever the interface is doing when the time
+    is up.
+    """
+    deadline = time.monotonic() + seconds
+    while True:
+        state = status()
+        if state.mode == "connected":
+            return state
+        if time.monotonic() >= deadline or (should_stop and should_stop()):
+            return state
+        time.sleep(min(poll, max(0.0, deadline - time.monotonic())))
+
+
+# ── being an access point ───────────────────────────────────────────────────
+
+def ensure_captive_dns() -> bool:
+    """Point every DNS name at the device while the hotspot is up.
+
+    This one line is what makes the captive portal open by itself:
+
+        address=/#/10.42.0.1
+
+    A phone that joins a network immediately fetches a known URL to check
+    whether it has internet — `captive.apple.com` on iOS, a `generate_204` on
+    Android. With this wildcard those lookups resolve to the Pi, the Pi answers
+    with a redirect instead of what the phone expected, and the phone concludes
+    it is behind a captive portal and opens the setup page in a sheet. Without
+    it the phone joins, silently reports "no internet", and the person is left
+    holding a device that gave no sign of what to do next.
+
+    NetworkManager reads this directory for the dnsmasq it starts on shared
+    connections. Returns False if the file could not be written — the portal
+    still works, but only if somebody navigates to the address themselves,
+    which is why the printed label carries that URL as a second QR.
+    """
+    try:
+        DNSMASQ_SHARED_DIR.mkdir(parents=True, exist_ok=True)
+        PORTAL_DNS_CONF.write_text(
+            "# Written by the SnapCare dispenser firmware.\n"
+            "# Resolves every name to the device while its setup hotspot is up,\n"
+            "# so a phone's captive-portal check lands on the setup page.\n"
+            f"address=/#/{config.AP_ADDRESS}\n",
+            encoding="utf-8",
+        )
+        return True
+    except OSError as exc:
+        log.warning("could not write the captive portal DNS rule (%s)", exc)
+        return False
+
+
+def start_hotspot(identity: Identity) -> tuple[bool, str]:
+    """Raise the setup access point with this device's permanent credentials."""
+    if not available():
+        return False, "NetworkManager is not available on this device"
+
+    ensure_captive_dns()
+
+    # Rebuilt from scratch each time rather than reused. It is cheap, and it
+    # means a profile left half-configured by an interrupted earlier run cannot
+    # produce a hotspot with the wrong passphrase — which would be a device
+    # whose printed QR no longer works, with no way to find out why.
+    _nmcli("connection", "delete", AP_CONNECTION)
+
+    created = _nmcli(
+        "connection", "add",
+        "type", "wifi",
+        "ifname", config.WIFI_INTERFACE,
+        "con-name", AP_CONNECTION,
+        # Never on its own. The AP must come up only when this firmware asks,
+        # or a device that is perfectly happy on the home network will raise a
+        # competing hotspot at every boot and drop off the network doing it.
+        "autoconnect", "no",
+        "ssid", identity.ssid,
+    )
+    if created is None or created.returncode != 0:
+        return False, _explain(created, "could not create the hotspot profile")
+
+    modified = _nmcli(
+        "connection", "modify", AP_CONNECTION,
+        "802-11-wireless.mode", "ap",
+        # 2.4 GHz for the *hotspot*, and the reason is the phone rather than the
+        # board — a Pi 3B+ is dual-band and joins 5 GHz networks perfectly well.
+        # An access point on 5 GHz is invisible to older phones and, on many
+        # regulatory domains, needs DFS radar detection the AP mode driver does
+        # not do. The one network that absolutely must be joinable by whatever
+        # handset is in the room is this one.
+        "802-11-wireless.band", "bg",
+        "802-11-wireless.channel", "6",
+        "wifi-sec.key-mgmt", "wpa-psk",
+        "wifi-sec.psk", identity.passphrase,
+        # 'shared' is what brings up DHCP and DNS for whoever joins.
+        "ipv4.method", "shared",
+        # Pinned, not left to NetworkManager's default.
+        #
+        # `shared` picks 10.42.0.0/24 *unless that subnet is already in use*,
+        # in which case it silently moves to 10.42.1.0/24 — and four separate
+        # places hardcode 10.42.0.1 and cannot follow it: the captive-portal
+        # dnsmasq rule the installer writes, `_captive_targets` below,
+        # `config.AP_ADDRESS`, which feeds the QR on the *permanently printed*
+        # label, and setup.html itself. A Pi on a house LAN that happens to use
+        # 10.42.0.x would raise a hotspot nobody could reach the portal on, with
+        # a printed label that is wrong for the life of the device.
+        "ipv4.addresses", f"{config.AP_ADDRESS}/24",
+        "ipv6.method", "ignore",
+    )
+    if modified is None or modified.returncode != 0:
+        return False, _explain(modified, "could not configure the hotspot")
+
+    up = _nmcli("connection", "up", AP_CONNECTION, timeout=45)
+    if up is None or up.returncode != 0:
+        return False, _explain(up, "could not start the hotspot")
+
+    log.info("setup hotspot %s is up on %s", identity.ssid, config.AP_ADDRESS)
+    return True, identity.ssid
+
+
+def stop_hotspot() -> bool:
+    result = _nmcli("connection", "down", AP_CONNECTION, timeout=20)
+    return result is not None and result.returncode == 0
+
+
+def _explain(result: subprocess.CompletedProcess | None, fallback: str) -> str:
+    if result is None:
+        return fallback
+    detail = (result.stderr or result.stdout).strip().splitlines()
+    return detail[-1] if detail else fallback

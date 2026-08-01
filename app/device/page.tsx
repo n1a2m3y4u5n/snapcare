@@ -14,7 +14,7 @@ import { toSchedule, type FormSheetValues } from '@/lib/hardware/formSheet';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
 import { decodeToGray, RETRY_WORK_DIM } from '@/lib/formsheet/decode';
 import { parseFormSheet } from '@/lib/formsheet/sheet';
-import { DEFAULT_HOST, FITTED_TRAYS, MAX_TRAYS, planTrays, saveUrl, looksLikeHost } from '@/lib/hardware/dispenser';
+import { DEFAULT_HOST, FITTED_TRAYS, MAX_TRAYS, planTrays, saveUrl, scheduleUrl, releaseUrl, weeklyFrom, looksLikeHost } from '@/lib/hardware/dispenser';
 import { speak } from '@/lib/voice';
 
 /**
@@ -91,12 +91,22 @@ export default function DevicePage() {
   // 읽는 쪽은 아예 없다. 아두이노+ESP32-CAM 시절의 전제를 새 하드웨어에 잘못 옮겨
   // 붙였던 것이다.
   //
-  // 복용 기간을 기기에 전달할 길은 지금 없다. /save 에는 그 칸이 없고, 칸이 있는
-  // /api/schedule 은 POST 라서 HTTPS 페이지에서 부를 수 없다(주소창 이동만 뚫린다).
-  // 펌웨어가 GET 으로도 받아 주면 dispenser.ts 의 weeklyFrom 이 그 자리에 쓰인다.
+  // 이제 길이 있다. 펌웨어가 `GET /schedule?payload=…` 를 링크로 받는다
+  // (server.py 의 `_link_schedule`) — POST 가 아니므로 HTTPS 페이지에서 최상위
+  // 이동으로 부를 수 있고, SC1*W* 페이로드가 통째로 실리므로 요일도 기간도 살아서
+  // 도착한다.
   const payload = sheet?.schedule.length
     ? encodeWeekly(sheet.schedule)
     : slots.length > 0 ? encodeSchedule(slots) : null;
+
+  // 기기로 보낼 것. 시트를 읽었으면 그쪽이 우선이다 — 종이에는 요일과 기간이 적혀
+  // 있고 `/save` 는 그 둘을 버리기 때문이다. 시트가 없으면 앱 안의 알람을 주간
+  // 슬롯으로 바꿔 같은 무손실 경로로 보낸다.
+  const sendPayload = sheet?.schedule.length
+    ? encodeWeekly(sheet.schedule)
+    : trayPlan.plan.length > 0
+      ? encodeWeekly(weeklyFrom(reminders, trays).slots)
+      : null;
 
   /**
    * 의사가 준 종이 폼시트를 찍어 일정을 받는다.
@@ -232,7 +242,7 @@ export default function DevicePage() {
                    className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2">
           <span className="flex-1">SEND THE SCHEDULE</span>
         </Speakable>
-        {trayPlan.plan.length > 0 ? (
+        {trayPlan.plan.length > 0 || sheet?.schedule.length ? (
           <div className="mt-2 rounded-3xl bg-white px-4 py-4 shadow-sm">
             <div className="flex flex-col gap-1">
               {trayPlan.plan.map((t) => (
@@ -313,8 +323,18 @@ export default function DevicePage() {
               fetch 가 아니라 링크다. HTTPS 페이지에서 HTTP 로 요청을 보내면 브라우저가
               막지만, 최상위 이동은 막지 않는다. 누르면 기기 자신의 확인 화면이 뜬다.
             */}
+            {/*
+              fetch 가 아니라 링크다. HTTPS 페이지에서 HTTP 로 요청을 보내면 브라우저가
+              막지만, 최상위 이동은 막지 않는다.
+
+              `/schedule` 로 보낸다 — `/save` 가 아니다. `/save` 에는 요일 칸도 기간
+              칸도 없어서 월·수·금 처방이 매일 나오고 30일 코스가 끝나지 않는다.
+              페이로드를 만들 수 없을 때만(있을 수 없는 경우다) 옛 경로로 떨어진다.
+            */}
             <a
-              href={looksLikeHost(host) ? saveUrl(host, trayPlan.plan) : undefined}
+              href={looksLikeHost(host)
+                ? (sendPayload ? scheduleUrl(host, sendPayload) : saveUrl(host, trayPlan.plan))
+                : undefined}
               className="mt-2 block rounded-2xl py-3 text-center text-sm font-bold text-white"
               style={{ background: looksLikeHost(host) ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)' }}
               aria-disabled={!looksLikeHost(host)}
@@ -323,6 +343,34 @@ export default function DevicePage() {
             </a>
             <p className="mt-1 text-center text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
               Both on the same Wi-Fi. The device shows what it saved.
+              {sheet?.schedule.length ? ' Days of the week and course length are included.' : ''}
+            </p>
+
+            {/*
+              배출 버튼.
+
+              기기는 예정된 시각에 떨어뜨리지 않는다 — 링이 초록으로 켜지고 부저가
+              울리며 기다리고, 이것이 트레이를 여는 유일한 원격 경로다. 이 버튼이
+              없는 동안 제대로 조립된 기기는 한 시간 울리다 미복용으로 기록했다.
+
+              항상 보인다. 지금 나와 있는 복용이 있는지는 이 페이지가 알 수 없고
+              (HTTPS 에서 기기의 /api/status 를 읽을 수 없다), 기다리는 것이 없을 때
+              눌러도 기기가 "기다리던 것이 없다" 는 화면을 보여 줄 뿐 아무것도 열지
+              않는다. 누르지 못하는 것보다 헛누르는 편이 훨씬 낫다.
+            */}
+            <a
+              href={looksLikeHost(host) ? releaseUrl(host) : undefined}
+              className="mt-2 block rounded-2xl border-2 py-3 text-center text-sm font-bold"
+              style={{
+                borderColor: looksLikeHost(host) ? 'var(--color-sc-primary)' : 'var(--color-sc-line)',
+                color: looksLikeHost(host) ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)',
+              }}
+              aria-disabled={!looksLikeHost(host)}
+            >
+              <span {...sayable('Give me my pills now. Press this when the box is lit up and beeping.')}>Give me my pills now</span>
+            </a>
+            <p className="mt-1 text-center text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
+              Press when the box is lit and beeping — or press the button on the box itself.
             </p>
           </div>
         ) : (
@@ -349,8 +397,10 @@ export default function DevicePage() {
             <div className="mt-2 flex flex-col items-center rounded-3xl bg-white px-5 py-6 shadow-sm">
               <QRCodeSVG value={payload} size={180} level="M" />
               <p className="mt-3 text-center text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
-                Needs a device that can read a code. The current build has no camera —
-                this path is kept for the offline case and is not wired up yet.
+                Not how the schedule reaches this device — “Send to the device” above
+                does that. This is the same schedule as a code, for a build with a
+                camera or for reading out over the phone. The current hardware has
+                no camera.
               </p>
             </div>
           </details>

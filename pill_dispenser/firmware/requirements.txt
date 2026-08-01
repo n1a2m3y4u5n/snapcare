@@ -1,0 +1,98 @@
+# The firmware runs on the Python standard library alone. Everything below is
+# optional, and the firmware says at startup which of them it found.
+#
+# On a Pi, prefer apt over pip — `service/install.sh` does this for you:
+#
+#     sudo apt install python3-lgpio python3-segno avahi-daemon \
+#                      python3-cryptography
+#
+# There is deliberately no package here for either screen. Naming one that does
+# not exist aborts the whole apt transaction — that is not hypothetical: the
+# line above used to ask for `python3-rpi-ws281x` for the LED ring these panels
+# replaced, which is in no archive, so the command installed *nothing*,
+# including the GPIO library the device genuinely needs. The panels are driven
+# through /dev/spidev0.0 and /dev/i2c-1, which `dtparam=spi=on` and
+# `dtparam=i2c_arm=on` in config.txt create. See snapcare_dispenser/display/.
+#
+# python3-smbus2 and i2c-tools are needed only for a DS3231 build. The DS1302
+# this guide wires is bit-banged and speaks no bus.
+#
+# Note that pip is not usable system-wide on Bookworm and later anyway: PEP 668
+# marks the system Python externally-managed, and `pip install` there fails.
+# This file is a description of what the firmware wants, not an install method.
+
+# The GPIO library, and the one genuine requirement in this file. Servos, the
+# buzzer and the take-dose button all reach a pin through it. Without *some* GPIO
+# library the device cannot open a tray, and it will now say so and refuse to
+# dispense rather than logging doses that never left the hopper.
+#
+# Preinstalled on every Raspberry Pi OS Lite image since 2023, on Bookworm and
+# Trixie, on both architectures. It comes from the Raspberry Pi archive and is
+# not in Debian, so plain Debian on a Pi does not have it.
+lgpio>=0.2.2 ; platform_machine == "armv7l" or platform_machine == "aarch64"
+
+# Better than lgpio where it exists: pigpio times pulses with the DMA
+# controller, so a busy CPU cannot stretch one, where lgpio times them from an
+# ordinary thread.
+#
+# **It is gone from current Raspberry Pi OS.** It was preinstalled up to and
+# including Bookworm and disappeared at the Trixie rebase — Debian has never
+# packaged the daemon, only the client, and the 64-bit images bootstrap from
+# Debian. So: Bookworm has it, 32-bit Trixie has it via Raspbian, 64-bit Trixie
+# has no path to it at all. The firmware prefers it and does not need it.
+#
+# The client library installing proves nothing: `import pigpio` succeeds on
+# machines where `pigpiod` cannot exist, and `pigpio.pi().connected` is the
+# only real check.
+#
+#     sudo systemctl enable --now pigpiod
+pigpio>=1.78 ; platform_machine == "armv7l" or platform_machine == "aarch64"
+
+# Deliberately absent: RPi.GPIO. It is the last-resort backend and it must not
+# be installed by anything — Raspberry Pi OS now ships `python3-rpi-lgpio`, a
+# shim providing a module named RPi.GPIO over lgpio, and the real package
+# Conflicts with it. Installing it removes a working shim and replaces it with
+# the legacy sysfs implementation.
+
+# Draws the setup QR code. Pure Python, no dependencies of its own. Without it
+# the label page falls back to showing the network name and password as text,
+# which a person can still type — so this is a convenience, not a requirement.
+segno>=1.5
+
+# NEITHER SCREEN NEEDS A PACKAGE, and neither does the drawing.
+#
+# The device has two panels. The ILI9341 LCD — 2.8", 240x320, four-line SPI — is
+# the real one, and a small SSD1306 I2C OLED is the backup. Both are written
+# through the kernel's own device nodes, /dev/spidev0.0 and /dev/i2c-1, with
+# `os.write` and `fcntl.ioctl`. `dtparam=spi=on` and `dtparam=i2c_arm=on` in
+# /boot/firmware/config.txt are the whole dependency.
+#
+# Pillow is absent for the same reason and it is worth being explicit, because
+# it is what every example on the internet reaches for: everything these screens
+# draw is rectangles, a 5x7 bitmap font and integer-scaled 1-bit glyphs, which is
+# a hundred lines of bytearray work — against a package that pip refuses to
+# install system-wide on Trixie (PEP 668) and that would want a compiler on a
+# Pi 3B if it did not. luma.oled and the Adafruit CircuitPython stack are absent
+# on the same grounds: pip-only, and there is nothing for them to do here.
+
+# Reads the DS3231's oscillator-stop flag, which is what says whether its time
+# can be believed at all. Only for a DS3231 build — the DS1302 this firmware
+# defaults to is bit-banged, speaks no bus, and needs nothing here.
+smbus2>=0.4
+
+# AES-256-GCM for cloud sync. This is the one thing the firmware cannot do with
+# the standard library — Python ships no AES — and it is the only reason the
+# device needs a package at all.
+#
+# Without it the dispenser still dispenses: the schedule is on the SD card and
+# the DS3231 knows the time. Cloud sync is reported as unavailable at startup
+# and on the status page, exactly like a missing panel, rather than being a
+# silent absence somebody discovers by wondering why nothing syncs.
+#
+# `apt install python3-cryptography` on a Pi. Do not pip-install it there
+# unless you have to — it wants a Rust toolchain to build from source, and on a
+# Pi 3B that is a long afternoon.
+cryptography>=41.0
+
+# Only for the test suite.
+pytest>=7.0

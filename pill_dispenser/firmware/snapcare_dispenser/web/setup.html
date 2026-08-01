@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Set up the pill dispenser</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <h1>Set up the pill dispenser</h1>
+  <p class="sub">Choose the WiFi network this device should use.</p>
+
+  <!-- The whole of the join, from the tap to the outcome. Hidden until there is
+       something to say, and the first thing this page checks on load — a join
+       that failed while the phone was off this network has to be waiting here
+       when somebody comes back to look, not lost with the page that started it. -->
+  <div class="card" id="progress" hidden>
+    <h2 id="progressTitle">Joining…</h2>
+    <ol class="steps" id="steps">
+      <li id="step-ask">Asked the dispenser to join <b id="stepSsid">the network</b></li>
+      <li id="step-leave">It leaves its own setup network</li>
+      <li id="step-join">On your WiFi, with an address</li>
+    </ol>
+    <div class="toast" id="joinMsg"></div>
+    <p class="small muted" id="progressNote"></p>
+    <div class="row" id="progressActions" hidden>
+      <button type="button" id="tryAgain">Try a different password</button>
+      <a class="btn ghost fit" id="openDevice" href="{{device_url}}" hidden>Open the dispenser</a>
+    </div>
+  </div>
+
+  <div class="card" id="listCard">
+    <h2>Networks nearby</h2>
+    <div id="list"><p class="muted">Scanning…</p></div>
+    <div class="row">
+      <button class="ghost" id="rescan" type="button">Scan again</button>
+      <button class="ghost fit" id="showHidden" type="button">Not listed?</button>
+    </div>
+    <p class="small muted" style="margin:.8rem 0 0">
+      Both bands work — this board's radio is dual-band, so a 5 GHz network in
+      the list can be joined like any other. The setup network you are on right
+      now is 2.4 GHz, because that is what every phone can see.
+    </p>
+  </div>
+
+  <div class="card" id="joinCard" hidden>
+    <h2>Join <span id="joinName"></span></h2>
+    <form id="joinForm">
+      <div id="hiddenRow" hidden>
+        <label for="hiddenSsid">Network name</label>
+        <input id="hiddenSsid" type="text" autocapitalize="off" autocorrect="off"
+               spellcheck="false" placeholder="exactly as the router spells it">
+        <p class="small muted" style="margin:.4rem 0 .9rem">
+          Case and spacing have to match. A network that does not broadcast its
+          name cannot be checked for you, so a typo here comes back as
+          “no network answered”.
+        </p>
+      </div>
+      <div id="passwordRow">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password"
+               autocapitalize="off" autocorrect="off" spellcheck="false">
+      </div>
+      <p class="small muted" id="savedNote" hidden style="margin:.5rem 0 .9rem">
+        This device already has the password for that network.
+        <a href="#" id="changePassword">It has changed</a>.
+      </p>
+      <p class="small muted" style="margin:.5rem 0 .9rem">
+        Your phone will drop off this setup network while the dispenser joins
+        yours — there is one radio in it, and it cannot be in both places. Stay
+        on this page: if the password is not accepted, the setup network comes
+        straight back and this page will say so.
+      </p>
+      <div class="row">
+        <button type="submit" id="joinBtn">Join network</button>
+        <button type="button" class="ghost fit" id="cancel">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Afterwards — pairing with the app</h2>
+    <p class="small muted">
+      Joining the WiFi is the whole of the setup on this device. Pairing is done
+      once from the app, using the code below — the same one printed on the
+      label — and after that a schedule changed in the app arrives here by
+      itself, from anywhere.
+    </p>
+    <dl class="facts">
+      <dt>Pairing code</dt><dd><code>{{claim}}</code></dd>
+      <dt>Cloud</dt><dd class="small">{{cloud_state}} <span class="muted">{{relay_url}}</span></dd>
+    </dl>
+    <p class="small muted" style="margin-top:.7rem">
+      Nothing to do here now. It is shown so the code can be written down while
+      somebody is standing at the device, which is the only awkward moment —
+      the label is usually on the back.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>This device</h2>
+    <dl class="facts">
+      <dt>Setup network</dt><dd><code>{{ssid}}</code></dd>
+      <dt>State</dt><dd id="mode">{{mode}} <span id="current" class="muted">{{current}}</span></dd>
+      <dt>Address afterwards</dt><dd><code>{{device_url}}</code></dd>
+      <dt>Identity from</dt><dd class="small muted">{{identity_source}}</dd>
+    </dl>
+    <p class="small muted" style="margin-top:.8rem">
+      The setup network name and password are derived from this board and never
+      change, so the printed code always works.
+      <a href="/label">Print the label</a>.
+    </p>
+  </div>
+</main>
+
+<script>
+// No framework, no build step, nothing fetched from anywhere. This page is
+// served by a device that is, at this moment, the only network the phone
+// reading it can see — anything external would simply never arrive.
+
+const DEVICE_ORIGIN = new URL('{{device_url}}').origin;
+const HOTSPOT_ORIGIN = 'http://{{ap_address}}';
+
+const list = document.getElementById('list');
+const listCard = document.getElementById('listCard');
+const joinCard = document.getElementById('joinCard');
+const joinName = document.getElementById('joinName');
+const joinMsg = document.getElementById('joinMsg');
+const password = document.getElementById('password');
+const passwordRow = document.getElementById('passwordRow');
+const hiddenRow = document.getElementById('hiddenRow');
+const hiddenSsid = document.getElementById('hiddenSsid');
+const savedNote = document.getElementById('savedNote');
+const progress = document.getElementById('progress');
+const progressTitle = document.getElementById('progressTitle');
+const progressNote = document.getElementById('progressNote');
+const progressActions = document.getElementById('progressActions');
+const openDevice = document.getElementById('openDevice');
+const tryAgain = document.getElementById('tryAgain');
+
+let chosen = null;          // the network being joined, or null for the by-hand form
+let watching = false;
+let joined = false;         // whether the last outcome was a success
+
+const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+
+function bars(signal) {
+  return signal >= 75 ? '••••' : signal >= 50 ? '•••' : signal >= 25 ? '••' : '•';
+}
+
+// ── the list ────────────────────────────────────────────────────────────────
+
+async function scan() {
+  list.innerHTML = '<p class="muted">Scanning…</p>';
+  try {
+    const res = await fetch('/api/wifi/scan', { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.networks || !data.networks.length) {
+      list.innerHTML = '<p class="muted">No networks found. Move the device closer to the router and scan again — or add the network by hand.</p>';
+      return;
+    }
+    list.innerHTML = '';
+    for (const net of data.networks) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'net';
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = net.ssid;          // textContent, never innerHTML:
+      const meta = document.createElement('span');  // an SSID is attacker-chosen
+      meta.className = 'meta';              // text and will contain markup one day
+      meta.textContent = [bars(net.signal), net.open ? 'open' : 'locked',
+                          net.saved ? 'saved' : ''].filter(Boolean).join('  ');
+      btn.append(name, meta);
+      btn.onclick = () => choose(net);
+      list.append(btn);
+    }
+  } catch (err) {
+    list.innerHTML = '<p class="bad">Could not scan. Reload the page.</p>';
+  }
+}
+
+function choose(net) {
+  chosen = net;
+  joinName.textContent = net.ssid;
+  hiddenRow.hidden = true;
+  password.value = '';
+  // Only the field, never the form. Hiding the form is how the Join and Cancel
+  // buttons went with it and an open network became impossible to join at all.
+  passwordRow.hidden = net.open || net.saved;
+  savedNote.hidden = !net.saved || net.open;
+  reveal(joinCard);
+  if (!passwordRow.hidden) password.focus();
+}
+
+function chooseByHand() {
+  chosen = null;
+  joinName.textContent = 'a network by name';
+  hiddenRow.hidden = false;
+  hiddenSsid.value = '';
+  password.value = '';
+  passwordRow.hidden = false;
+  savedNote.hidden = true;
+  reveal(joinCard);
+  hiddenSsid.focus();
+}
+
+function reveal(card) {
+  progress.hidden = true;
+  card.hidden = false;
+  joinMsg.textContent = '';
+  joinMsg.className = 'toast';
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('cancel').onclick = () => { joinCard.hidden = true; };
+document.getElementById('rescan').onclick = scan;
+document.getElementById('showHidden').onclick = chooseByHand;
+document.getElementById('changePassword').onclick = (event) => {
+  event.preventDefault();
+  passwordRow.hidden = false;
+  savedNote.hidden = true;
+  password.focus();
+};
+
+// ── the steps ───────────────────────────────────────────────────────────────
+
+function step(name, state) {
+  document.getElementById('step-' + name).className = state;
+}
+
+function showProgress(ssid) {
+  document.getElementById('stepSsid').textContent = ssid;
+  progressTitle.textContent = 'Joining ' + ssid + '…';
+  step('ask', 'doing'); step('leave', ''); step('join', '');
+  progressNote.textContent = '';
+  progressActions.hidden = true;
+  openDevice.hidden = true;
+  joinMsg.className = 'toast';
+  joinMsg.textContent = '';
+  joinCard.hidden = true;
+  listCard.hidden = true;
+  progress.hidden = false;
+  progress.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── starting a join ─────────────────────────────────────────────────────────
+
+document.getElementById('joinForm').onsubmit = async (event) => {
+  event.preventDefault();
+  const ssid = chosen ? chosen.ssid : hiddenSsid.value.trim();
+  if (!ssid) { hiddenSsid.focus(); return; }
+
+  const btn = document.getElementById('joinBtn');
+  btn.disabled = true;
+  showProgress(ssid);
+
+  try {
+    const res = await fetch('/api/wifi/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ssid,
+        password: passwordRow.hidden ? '' : password.value,
+        hidden: !chosen,
+      }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      // Refused before the radio was touched — busy, or WiFi management off.
+      settle(false, data.message || 'The device would not start a join.', ssid);
+      btn.disabled = false;
+      return;
+    }
+  } catch (err) {
+    // This request is answered while the hotspot is still up, so a failure here
+    // is a genuine one rather than the join succeeding underneath us.
+    settle(false, 'The device did not answer. Reload this page and try again.', ssid);
+    btn.disabled = false;
+    return;
+  }
+
+  step('ask', 'done');
+  step('leave', 'doing');
+  btn.disabled = false;
+  watch(ssid);
+};
+
+// ── watching it happen ──────────────────────────────────────────────────────
+
+/**
+ * The device is answering on whichever address is reachable, and which one that
+ * is *is* the answer.
+ *
+ * While the setup hotspot is up, its DNS resolves every name to the device, so
+ * a plain `pilldispenser.local` probe succeeds and means nothing. That is why
+ * this reads `wifi.mode` out of the body rather than trusting the address it
+ * came back on.
+ */
+async function readAttempt() {
+  for (const origin of ['', HOTSPOT_ORIGIN, DEVICE_ORIGIN]) {
+    try {
+      const res = await fetch(origin + '/api/wifi/attempt', { cache: 'no-store' });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data && data.attempt) return data;
+    } catch (err) {
+      /* not this address; try the next, or nothing is reachable yet */
+    }
+  }
+  return null;
+}
+
+async function watch(ssid) {
+  if (watching) return;
+  watching = true;
+  let goneSince = null;
+
+  while (watching) {
+    const data = await readAttempt();
+
+    if (!data) {
+      // Expected, and the honest thing to say. The hotspot is down and the
+      // phone has not yet fallen back to a network that can see the device.
+      goneSince = goneSince === null ? Date.now() : goneSince;
+      step('leave', 'done');
+      step('join', 'doing');
+      const seconds = Math.round((Date.now() - goneSince) / 1000);
+      progressNote.textContent = seconds < 25
+        ? 'The dispenser has left its setup network. Waiting…'
+        : 'Still waiting. If your phone has not gone back to your home WiFi by '
+          + 'itself, switch it over now — this page will follow. If the password '
+          + 'was wrong, the ' + '{{ssid}}' + ' network reappears on its own.';
+      await sleep(2000);
+      continue;
+    }
+
+    goneSince = null;
+    const attempt = data.attempt || {};
+    const mode = (data.wifi || {}).mode;
+
+    if (mode === 'connected') {
+      settle(true, '', ssid, data);
+      return;
+    }
+    if (attempt.state === 'failed') {
+      settle(false, attempt.detail || 'The network was not joined.', ssid, data);
+      return;
+    }
+    if (attempt.state === 'joining') {
+      step('leave', 'doing');
+      progressNote.textContent = 'Asking the router for an address.';
+    }
+    await sleep(2000);
+  }
+}
+
+function settle(ok, message, ssid, data) {
+  watching = false;
+  joined = ok;
+  progress.hidden = false;
+  progressActions.hidden = false;
+
+  if (ok) {
+    const address = ((data || {}).attempt || {}).address || '';
+    const url = ((data || {}).deviceUrl) || DEVICE_ORIGIN + '/';
+    step('ask', 'done'); step('leave', 'done'); step('join', 'done');
+    progressTitle.textContent = 'On ' + ssid;
+    joinMsg.className = 'toast ok';
+    joinMsg.textContent = 'The dispenser is on ' + ssid
+      + (address ? ' at ' + address : '') + '.';
+    progressNote.textContent = 'Nothing else to do here. Pair the app with the '
+      + 'code above whenever it suits — the dispenser keeps its schedule and its '
+      + 'clock whether or not anything is paired.';
+    openDevice.href = url;
+    openDevice.hidden = false;
+    tryAgain.textContent = 'Choose a different network';
+    return;
+  }
+
+  step('join', 'failed');
+  progressTitle.textContent = 'Not joined';
+  joinMsg.className = 'toast bad';
+  joinMsg.textContent = message;
+  const back = ((data || {}).attempt || {}).hotspotBack;
+  progressNote.textContent = back === false
+    ? 'The setup network could not be restarted either. Power the dispenser off '
+      + 'and on: it raises the setup network again when it finds no WiFi.'
+    : 'The setup network is back up, which is how you are reading this. Nothing '
+      + 'was changed on the dispenser.';
+  tryAgain.textContent = 'Try again';
+}
+
+tryAgain.onclick = () => {
+  watching = false;
+  progress.hidden = true;
+  joinCard.hidden = true;
+  listCard.hidden = false;
+  // After a failure, straight back to the same network with the field focused —
+  // the overwhelmingly likely reason is a mistyped password, and making somebody
+  // find their network in the list again to correct one character is the kind of
+  // small tax that ends with the device in a drawer.
+  if (!joined) { if (chosen) choose(chosen); else chooseByHand(); }
+  scan();
+};
+
+// ── arriving on this page ───────────────────────────────────────────────────
+
+/**
+ * A join that failed took the phone's network with it for a few seconds, which
+ * is long enough for the page that started it to be gone. Whoever comes back —
+ * by reopening the captive portal, or because the phone reopened it for them —
+ * has to find the reason waiting, or a mistyped password looks like a dispenser
+ * that broke.
+ */
+(async function onLoad() {
+  scan();
+  try {
+    const res = await fetch('/api/wifi/attempt', { cache: 'no-store' });
+    const data = await res.json();
+    const attempt = data.attempt || {};
+    if (attempt.state === 'failed') {
+      chosen = { ssid: attempt.ssid, open: false, saved: false };
+      showProgress(attempt.ssid || 'that network');
+      step('ask', 'done'); step('leave', 'done');
+      settle(false, attempt.detail || 'The network was not joined.',
+             attempt.ssid, data);
+      listCard.hidden = false;
+    } else if (attempt.state === 'joining') {
+      showProgress(attempt.ssid || 'that network');
+      step('ask', 'done');
+      watch(attempt.ssid);
+    }
+  } catch (err) {
+    /* Nothing to recover. The page is useful as it stands. */
+  }
+})();
+</script>
+</body>
+</html>

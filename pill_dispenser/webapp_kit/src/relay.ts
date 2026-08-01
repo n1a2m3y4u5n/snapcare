@@ -283,8 +283,21 @@ export class DispenserClient {
    * Be generous with the threshold: the device heartbeats on its own schedule,
    * and after a WiFi outage it republishes the instant the network returns
    * rather than at the end of a retry interval.
+   *
+   * **The timestamp must carry a UTC offset**, and a stamp without one is
+   * treated as unknown rather than guessed at. `new Date('2026-07-29T08:00:00')`
+   * is parsed in the *browser's* timezone, and the browser is the carer's, not
+   * the dispenser's. With a device in Asia/Seoul and a carer in the UK, a nine
+   * hour gap swamps a fifteen minute threshold in both directions: a healthy
+   * dispenser reads as unplugged, and — reversing the zones — one that has been
+   * dead for days never trips. Returning true for an ambiguous stamp errs
+   * towards "go and look at it", which is the recoverable mistake.
+   *
+   * The firmware emits an offset (`cloud.py`, `_report`). Older firmware does
+   * not, which is exactly the case this branch is for.
    */
   static isStale(report: DeviceReport, thresholdSeconds = 15 * 60, now = new Date()): boolean {
+    if (!/(Z|[+-]\d{2}:?\d{2})$/.test(report.at.trim())) return true;
     const at = new Date(report.at);
     if (Number.isNaN(at.getTime())) return true;
     return (now.getTime() - at.getTime()) / 1000 > thresholdSeconds;

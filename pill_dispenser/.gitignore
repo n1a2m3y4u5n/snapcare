@@ -15,8 +15,8 @@ cloud_relay/fly.toml
 
 # pdflatex leftovers from `make guide`. The PDF itself is committed, so that
 # nobody has to install TeX just to read the build procedure.
-rpi_firmware/docs/*.aux
-rpi_firmware/docs/*.log
-rpi_firmware/docs/*.out
-rpi_firmware/docs/*.toc
-rpi_firmware/docs/*.listing
+firmware/docs/*.aux
+firmware/docs/*.log
+firmware/docs/*.out
+firmware/docs/*.toc
+firmware/docs/*.listing

@@ -31,6 +31,15 @@ const HOLD_SECONDS = 50;
 const BACKOFF_START_MS = 1_000;
 const BACKOFF_CAP_MS = 60_000;
 
+/**
+ * Shortest gap between two poll attempts that returned nothing.
+ *
+ * A 204 has already waited `hold` seconds on the server, so this costs it
+ * nothing. A 404 has not waited at all, and this is the only thing standing
+ * between an unpaired device and a busy loop.
+ */
+const IDLE_FLOOR_MS = 2_000;
+
 export interface DispenserState {
   /** Null until the first report arrives. */
   report: DeviceReport | null;
@@ -103,6 +112,17 @@ export function useDispenser(relayUrl: string, claim: string) {
               loading: false,
               stale: s.report ? DispenserClient.isStale(s.report) : s.stale,
             }));
+
+            // A floor under the loop, and it is not optional.
+            //
+            // `read` returns null for a 204 *and* for a 404, and only a 204 has
+            // parked on the server for `hold` seconds first. A 404 — an unpaired
+            // device, a mailbox that has never been written — comes back
+            // immediately, so without this the loop spins as fast as the network
+            // allows: hundreds of requests a second, per open tab, for as long
+            // as the page is up. The firmware has the same guard for the same
+            // reason (`_MIN_CYCLE_S` in `cloud.py`).
+            await new Promise((resolve) => setTimeout(resolve, IDLE_FLOOR_MS));
           }
         } catch (error) {
           if (cancelled || controller.signal.aborted) return;

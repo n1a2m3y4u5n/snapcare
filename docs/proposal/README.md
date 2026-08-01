@@ -59,5 +59,5 @@ OCR 이 웹 워커에서 도는데 Chrome 의 `--virtual-time-budget` 이 그 �
 기록용으로 바뀌고 API·스케줄러·저장은 기기에서 도는 것과 같은 코드다.
 
 ```bash
-cd pill_dispenser/rpi_firmware && make run     # 8099 번
+cd pill_dispenser/firmware && make run     # 8099 번
 ```

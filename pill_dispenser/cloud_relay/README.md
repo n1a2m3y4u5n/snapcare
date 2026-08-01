@@ -211,12 +211,12 @@ cloud_relay/
   fly.toml.example its own app, not the web app's
 ```
 
-The suite importing nothing from `rpi_firmware/` is load-bearing: this is
+The suite importing nothing from `firmware/` is load-bearing: this is
 deployed to a container that has no dispenser code in it. The envelopes in the
 tests are therefore plain dictionaries with nothing sealed inside them, which
 is the point being demonstrated — the relay carries whatever it is given and
 has never been able to read any of it.
 
 The one test that spans both ends lives on the firmware side
-(`rpi_firmware/tests/test_cloud_endtoend.py`), starts a real relay on a real
+(`firmware/tests/test_cloud_endtoend.py`), starts a real relay on a real
 port, and skips if this directory is not checked out.

@@ -35,7 +35,7 @@ examples/
 `pill_dispenser/` is the hardware's directory, and this is the hardware's
 contract with the app. Keeping it here means the firmware and the client it
 implies move together — in particular `tests/vectors.json` is generated from
-`rpi_firmware/snapcare_dispenser/`, so a change to the derivation on the device
+`firmware/snapcare_dispenser/`, so a change to the derivation on the device
 breaks these tests rather than becoming a pairing that silently never works.
 
 Copy `src/` wherever it belongs in the app. Nothing in it imports anything from
@@ -64,7 +64,7 @@ This pairing crypto now exists four times, sharing no code:
 
 | | where |
 |---|---|
-| Python | `rpi_firmware/snapcare_dispenser/{provisioning,envelope}.py` — the device |
+| Python | `firmware/snapcare_dispenser/{provisioning,envelope}.py` — the device |
 | JavaScript | `cloud_relay/snapcare_relay/web/lab.html` — the reference page |
 | TypeScript | here |
 | Kotlin | `../android_demo/` — the demo app |

@@ -1,0 +1,872 @@
+% ---------------------------------------------------------------------------
+%  SnapCare pill dispenser — assembly guide
+%
+%      make guide
+%
+%  Rules this document is written to, and they are worth keeping:
+%
+%    1. Never explain why a value is the value it is. Name it, name the one
+%       thing that changes if it is changed, stop.
+%    2. Never point at source code to finish an argument. If the builder must
+%       know it, write it here. If not, delete it.
+%    3. Never describe an earlier build. Nobody reading this has seen it, and a
+%       changelog reads as a live instruction.
+%    4. Put every hazard where the hand is — inside the step, not in a box on
+%       the page before.
+%    5. State each fact once, in the stage where it is acted on, and give the
+%       physical pin and the GPIO number together every time.
+% ---------------------------------------------------------------------------
+\documentclass[11pt]{article}
+\input{preamble}
+
+\begin{document}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\begin{center}
+  \vspace*{2mm}
+  {\sffamily\bfseries\huge\color{ink} SnapCare pill dispenser}\\[2mm]
+  {\sffamily\large\color{ink70} Building one, from a bare Raspberry Pi}\\[6mm]
+  {\sffamily\small\color{ink40}
+   Raspberry Pi 3B+ \quad\textbullet\quad 64-bit Raspberry Pi OS (Trixie)
+   \quad\textbullet\quad eight stages}
+\end{center}
+
+\vspace{5mm}
+
+\section{A dispenser that asks first}
+
+\begin{dangerbox}
+\dangertitle{Read this before you wire anything}
+\textbf{Nothing drops by itself.} At the scheduled minute the machine
+\emph{offers} the dose: the screen turns green and names the tray, and the
+buzzer chirps every 20 seconds. The tray opens only when somebody asks
+\textemdash{} the button on the machine, or release in the app. They do the same
+thing. Ask within the hour or the screen goes amber, the dose is logged missed,
+and the tray never opened.
+
+\vspace{1ex}
+\textbf{A machine sitting there chirping is working, not broken.}
+\end{dangerbox}
+
+\vspace{2mm}
+\begin{center}
+\begin{tikzpicture}[
+  ev/.style={rounded corners=2pt, draw=ink40, fill=white, line width=0.6pt,
+             minimum height=12mm, minimum width=34mm, align=center,
+             font=\sffamily\scriptsize, text=ink},
+]
+  \node[ev] (due) at (0,1.4)
+       {\textbf{08:00 \textendash{} due}\\[-0.3ex]screen green, names the tray\\[-0.3ex]chirp every 20\,s};
+  \node[ev, fill=okgreen!10, draw=okgreen!55] (ask) at (6.0,1.4)
+       {\textbf{somebody asks}\\[-0.3ex]the button, or the app\\[-0.3ex]tray opens, screen blue};
+  \node[ev, fill=dangerred!7, draw=dangerred!50] (miss) at (6.0,-1.1)
+       {\textbf{nobody asks}\\[-0.3ex]\textbf{the tray stays shut}\\[-0.3ex]screen amber, logged missed};
+
+  \draw[-{Stealth[length=2mm]}, ink40, line width=0.9pt] (due) -- (ask);
+  \draw[-{Stealth[length=2mm]}, dangerred!55, line width=0.9pt, dashed]
+       (due.south) |- (miss.west);
+  \node[font=\sffamily\tiny, text=ink40, anchor=west] at (1.9,-0.3)
+       {09:00 \textendash{} the window closes};
+\end{tikzpicture}
+\end{center}
+
+\vspace{1mm}
+\noindent The window is one hour, and it is \code{GRACE\_MINUTES} if you want it
+to be something else. Everything after this page is wiring.
+
+\vspace{4mm}
+\noindent\footnotesize\color{ink70}
+Pin numbers are given as \emph{GPIO n (pin m)}: the first is what the software
+calls it, the second is what you count on the board. Where this guide and
+\code{snapcare\_dispenser/config.py} disagree, the file is right and this page is
+stale.
+\normalsize\color{ink}
+
+\clearpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{What to buy}
+
+\begin{center}
+\small
+\begin{tabular}{@{}c >{\raggedright}p{40mm} >{\raggedright\arraybackslash}p{82mm}@{}}
+\toprule
+\hdr{Qty} & \hdr{Part} & \hdr{Notes} \\
+\midrule
+1 & Raspberry Pi 3B+ & Any Pi with the 40-pin header; the pin map assumes a 3B/3B+ \\
+1 & microSD, 8\,GB$+$ & 64-bit Raspberry Pi OS, Trixie or newer \\
+1 & Pi power supply, 5\,V 2.5\,A & The official one. Servos do \textbf{not} come off this \\
+1 & 5\,V supply, 2\,A$+$ & Separate, for the servos alone \\
+1 & 1000\uF{} electrolytic, 10\,V$+$ & Across the servo rail, close to the servos \\
+1 per tray & SG90 micro servo & Up to eight. Adding one later is a plug \\
+1 & Passive piezo buzzer & \textbf{Passive}, not an active beeper. They look identical in the bin; Stage~2 tells them apart by ear \\
+1 & 100\ohm{} resistor & In series with the buzzer \\
+1 & Momentary push button & Any normally-open switch. Two wires, no resistor \\
+1 & DS1302 RTC module & The five-pin board with a coin-cell holder \\
+1 & CR2032 cell & \textbf{Not} the LIR2032 the holder is often marked for. The trickle charger is never enabled, so a rechargeable arrives flat and stays flat \\
+\midrule
+\multicolumn{3}{@{}l}{\textbf{\sffamily A screen \textemdash{} one of these two}}\\
+1 & ILI9341 2.8\,in SPI LCD & 240$\times$320, four-line SPI. \textbf{Check yours before powering it}: boards with an on-board regulator want 5\,V, bare ones are 3.3\,V and are destroyed by 5\,V \\
+1 & SSD1306 I\textsuperscript{2}C OLED & The small one with SD / CL / V / G pins. 3.3\,V \\
+\midrule
+\textemdash{} & Jumper wire, terminal blocks & Dupont leads for the bench; screw terminals for anything that gets carried \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{3mm}
+\begin{dangerbox}
+\dangertitle{Two supplies, and they are not interchangeable}
+The Pi has its own. The servos and nothing else share the second one. A stalled
+SG90 pulls most of an amp; a Pi that browns out mid-write corrupts its SD card,
+and the file being written is the one recording whether a dose has already been
+given.
+\end{dangerbox}
+
+\vspace{2mm}
+\noindent\textbf{\sffamily The 3.3\,V pin now carries three things}
+\textemdash{} the clock chip, the screen, and the LCD's backlight, which is
+50\textendash100\,mA on its own. That is within budget, and it is the first
+thing to check if the clock starts behaving oddly after you fit the screen.
+
+\vspace{2mm}
+\noindent\textbf{\sffamily Unplug means unplug.} The GPIO pins are live whenever
+the board is, and \code{sudo halt} does not change that. Power off to wire,
+power on to test. The servo supply is a separate plug and stays off until
+Stage~6.
+
+\clearpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{The header, and every pin this build touches}
+\label{sec:header}
+
+\vspace{1mm}
+\begin{center}
+\begin{tikzpicture}[scale=1.0]
+  \drawheader[0.56]
+\end{tikzpicture}
+
+\vspace{3mm}
+\headerlegend
+\end{center}
+
+\vspace{2mm}
+\noindent\textbf{\sffamily GPIO 2 and 3 carry permanent 1.8\,k\textohm{}
+pull-ups that cannot be switched off.} That is why no servo goes near them
+\textemdash{} a signal line idling high before the software starts slams a horn
+to one end with a loaded tray on it \textemdash{} and it is exactly why the OLED
+does. I\textsuperscript{2}C wants those pull-ups and they are already fitted.
+Run \code{pinout} for the whole header.
+
+\vspace{2mm}
+\begin{center}
+\small
+\begin{tabular}{@{}c l >{\raggedright}p{24mm} >{\raggedright}p{22mm} >{\raggedright\arraybackslash}p{48mm}@{}}
+\toprule
+& \hdr{Signal} & \hdr{GPIO} & \hdr{Pin} & \hdr{Notes} \\
+\midrule
+\swatch{servo} & Servo, trays 1--3 & 17, 27, 22 & 11, 13, 15 & signal only \textemdash{} \textbf{not} power \\
+\swatch{servo} & Servo, trays 4--8 & 5, 6, 13, 19, 26 & 29, 31, 33, 35, 37 & fit a hopper and it works \\
+\swatch{buzzc} & Piezo buzzer & 23 & 16 & through 100\ohm \\
+\swatch{btnc}  & Take-dose button & 24 & 18 & to a ground; the pull-up is internal \\
+\swatch{dispc} & OLED SD, CL & 2, 3 & 3, 5 & \\
+\swatch{dispc} & LCD MOSI, SCK, CS & 10, 11, 8 & 19, 23, 24 & \\
+\swatch{dispc} & LCD DC, RESET & 25, 18 & 22, 12 & \\
+\swatch{rtcc}  & DS1302 CLK, DAT, RST & 16, 20, 21 & 36, 38, 40 & bit-banged; no bus, no kernel driver \\
+\swatch{p33}   & 3.3\,V & \textemdash{} & 1, 17 & clock chip, screen, backlight \\
+\swatch{gndc}  & Ground & \textemdash{} & 6, 9, 14, 20, 25, 39 & one of these must reach the servo supply's ground \\
+\midrule
+\swatch{avoid} & \emph{do not use} & 0, 1, 7, 9, 14, 15 & & HAT ID EEPROM, the rest of SPI, the serial console \\
+\swatch{ink15} & \emph{free} & 4, 12 & 7, 32 & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\clearpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Stage 0 \textemdash{} the card and the install}
+
+Flash 64-bit Raspberry Pi OS and put the Pi on the network \textbf{with an
+Ethernet cable}. The installer needs a network, and the machine's own way onto
+WiFi does not exist until the installer has run. The cable is a build tool, not
+part of the machine \textemdash{} it comes out at Stage~7.
+
+\begin{shell}
+git clone <this repo> && cd h1-SnapCare/pill_dispenser/firmware
+sudo ./service/install.sh
+sudo reboot
+\end{shell}
+
+\noindent It sets the hostname to \code{pilldispenser}, turns on
+I\textsuperscript{2}C and SPI for the screen, installs the service, and prints
+this device's permanent setup network. \textbf{Keep what it prints} \textemdash{}
+that is Stage~7.
+
+\vspace{3mm}
+\noindent Two commands are used at every stage below. They are written out here
+and referred to by name afterwards.
+
+\begin{shell}
+# "status"
+curl -s localhost/api/status | python3 -m json.tool
+
+# "selftest" - asks you what you can see and hear, then writes a report
+sudo systemctl stop snapcare-dispenser
+sudo snapcare-dispenser --selftest
+sudo systemctl start snapcare-dispenser
+\end{shell}
+
+\begin{provebox}
+\provetitle
+\code{status} answers, and \code{gpio.missing} lists everything not yet fitted.
+Every stage below is one item leaving that list.
+\end{provebox}
+
+\vspace{2mm}
+\begin{warnbox}
+\warntitle{Three things about the install}
+\code{apt install pigpio} fails on Trixie and is not coming back.
+\code{python3-lgpio} is preinstalled and is the driver. Nothing to do
+\textemdash{} but the error is alarming if you go looking for it.
+
+\vspace{1ex}
+If the installer stops on \code{could not get lock /var/lib/dpkg/lock-frontend},
+something else is mid-update. It waits five minutes and then gives up; wait and
+run it again. \textbf{Do not delete the lock file.} It does not release the lock
+and it breaks the package database.
+
+\vspace{1ex}
+\code{selftest} reports \code{skip} for anything nobody answered. ``Everything
+passed'' and ``everything anybody looked at passed'' are different sentences.
+\end{warnbox}
+
+\vspace{3mm}
+\noindent Everything except the hardware runs on a laptop:
+
+\begin{shell}
+make            # the whole test suite, no board
+make run        # the firmware with mock servos, on port 8099
+make -C .. demo # the same, plus a relay and a browser app
+\end{shell}
+
+\clearpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Stage 1 \textemdash{} the clock chip}
+
+A Pi has no clock of its own. Without this chip a dispenser that loses power
+overnight comes back believing it is yesterday and opens the wrong day's
+compartment, looking perfectly healthy while it does. \textbf{Fit the cell
+before you set the time.}
+
+\vspace{3mm}
+\begin{center}
+\begin{tikzpicture}
+  \node[modbox, minimum width=32mm, minimum height=22mm] (rtc) at (-4.6,-0.45)
+       {DS1302\\[0.4ex]\footnotesize CR2032 fitted};
+  \foreach \i/\name/\yy in {0/{VCC}/0.45, 1/{GND}/0.0, 2/{CLK}/-0.45,
+                            3/{DAT}/-0.9, 4/{RST}/-1.35}{
+    \node[term] (t\i) at (-3.0,\yy) {};
+    \node[font=\sffamily\tiny, text=ink70, anchor=east] at (-3.15,\yy) {\name};
+  }
+
+  \hframe{1.8}{0.45}{-1.35}{Pi header}
+  \hpin{1.8}{0.45}{17}{ppwr33}{3V3}
+  \hpin{1.8}{0.0}{39}{pusegnd}{GND}
+  \hpin{1.8}{-0.45}{36}{pusertc}{GPIO 16}
+  \hpin{1.8}{-0.9}{38}{pusertc}{GPIO 20}
+  \hpin{1.8}{-1.35}{40}{pusertc}{GPIO 21}
+
+  \draw[wire, p33]  (t0) -- (H17.west);
+  \draw[wire, gndc] (t1) -- (H39.west);
+  \draw[wire, rtcc] (t2) -- (H36.west);
+  \draw[wire, rtcc] (t3) -- (H38.west);
+  \draw[wire, rtcc] (t4) -- (H40.west);
+
+  \node[font=\sffamily\scriptsize\bfseries, text=dangerred, anchor=west] at (-2.6,1.2)
+       {3.3\,V \textemdash{} never 5\,V};
+  \draw[-{Stealth[length=1.6mm]}, dangerred, line width=0.6pt] (-0.55,1.1) -- (0.35,0.6);
+
+  \node[font=\sffamily\scriptsize, text=ink70, align=left, anchor=north west]
+       at (4.4,0.7)
+       {\begin{minipage}{40mm}\scriptsize
+        \textbf{\color{ink}Go by the silkscreen.} Five-pin modules ship in
+        several pin orders. Match the names, never the
+        positions.\end{minipage}};
+\end{tikzpicture}
+\end{center}
+
+\vspace{1mm}
+\noindent The DS1302's data line drives back into the Pi, and that pin is not
+5\,V tolerant. The chip runs happily at either voltage, so nothing complains
+until the GPIO is dead.
+
+\begin{provebox}
+\provetitle
+Set the clock, then take the power away for real:
+\begin{shell}
+curl -X POST http://localhost/api/clock \
+     -H 'Content-Type: application/json' -d "{\"iso\":\"$(date -Is)\"}"
+\end{shell}
+\textbf{Pull the power lead.} Wait a minute. Plug it back in with the Ethernet
+cable out, and read \code{status}: \code{clock.trusted} must be \code{true} and
+\code{clock.source} must read \code{rtc}.
+\end{provebox}
+
+\vspace{1mm}
+\begin{warnbox}
+\warntitle{\code{sudo shutdown now} does not test this}
+A halt leaves the 3.3\,V rail live, so the chip never runs on its cell and you
+have tested nothing. Pull the plug. The DS1302's halt bit is a control and not a
+status \textemdash{} the chip cannot tell you whether it kept time \textemdash{}
+so this is the only evidence there is.
+
+\vspace{1ex}
+\code{i2cdetect} and \code{/dev/rtc0} have nothing to say about this chip. It has
+no bus and no kernel driver. Read \code{status}.
+\end{warnbox}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Stage 2 \textemdash{} the buzzer}
+
+The chirp is the prompt, not an announcement. A machine that cannot make it
+waits out the hour in silence and records a miss.
+
+\vspace{3mm}
+\begin{center}
+\begin{tikzpicture}
+  \draw[ink70, line width=0.8pt, fill=ink15] (-3.4,-0.25) circle (0.55);
+  \draw[ink70, line width=0.8pt, fill=ink40] (-3.4,-0.25) circle (0.16);
+  \node[font=\sffamily\scriptsize\bfseries, text=ink, anchor=south] at (-3.4,0.5)
+       {passive piezo};
+  \foreach \r in {0.75,0.92}{
+    \draw[buzzc, line width=0.8pt] (-3.4,-0.25) ++(-50:\r) arc (-50:50:\r);}
+
+  \node[term] (tp) at (-2.85,0.06) {};
+  \node[font=\sffamily\tiny, text=ink70, anchor=south east] at (-2.8,0.14) {$+$};
+  \node[term] (tm) at (-2.85,-0.56) {};
+  \node[font=\sffamily\tiny, text=ink70, anchor=north east] at (-2.8,-0.64) {$-$};
+
+  \hframe{1.9}{0.06}{-0.56}{Pi header}
+  \hpin{1.9}{0.06}{16}{pusebuzz}{GPIO 23}
+  \hpin{1.9}{-0.56}{14}{pusegnd}{GND}
+
+  \draw[wire, buzzc] (tp) -- (-1.9,0.06);
+  \draw[ink70, line width=0.7pt, fill=white, rounded corners=1pt]
+       (-1.9,-0.09) rectangle (-0.4,0.21);
+  \node[font=\sffamily\tiny, text=ink] at (-1.15,0.06) {100\,\textohm};
+  \draw[wire, buzzc] (-0.4,0.06) -- (H16.west);
+  \draw[wire, gndc] (tm) -- (H14.west);
+\end{tikzpicture}
+\end{center}
+
+\begin{provebox}
+\provetitle
+\code{selftest} sounds three chirps and asks what you heard.
+
+\vspace{1ex}
+\textbf{A clear tone} is a pass. \textbf{Three faint clicks} is an active
+buzzer: it has its own oscillator, so it makes a noise at a frequency nobody
+chose. Fit a passive element instead.
+
+\vspace{1ex}
+(\code{POST /api/drop} deliberately stays silent \textemdash{} a manual drop is
+somebody checking a hopper, not a dose anybody has to be fetched for.)
+\end{provebox}
+
+\clearpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Stage 3 \textemdash{} the screen}
+
+The screen is most of what the person in the room ever sees, and it is the one
+part that can say \emph{which tray} and \emph{what time}.
+
+Fit \textbf{one} of the two. With both fitted the colour panel wins and the OLED
+is the standby; with neither, the machine still doses and still chirps.
+
+\vspace{3mm}
+\begin{center}
+\small
+\begin{tabular}{@{}ll@{\hskip 10mm}ll@{}}
+\toprule
+\multicolumn{2}{@{}l}{\hdr{ILI9341 LCD \textemdash{} the colour one}} &
+\multicolumn{2}{l}{\hdr{SSD1306 OLED \textemdash{} the standby}} \\
+\midrule
+VCC   & \emph{read your module} & V  & 3.3\,V (pin 1) \\
+GND   & GND (pin 6)             & G  & GND (pin 9) \\
+SCK   & GPIO 11 (pin 23)        & CL & GPIO 3 (pin 5) \\
+MOSI  & GPIO 10 (pin 19)        & SD & GPIO 2 (pin 3) \\
+CS    & GPIO 8 (pin 24)         &    & \\
+DC    & GPIO 25 (pin 22)        &    & \\
+RESET & GPIO 18 (pin 12)        &    & \\
+LED   & 3.3\,V (pin 17)         &    & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{4mm}
+\begin{center}
+\begin{tikzpicture}
+  \node[modbox, minimum width=28mm, minimum height=28mm] (lcd) at (-4.8,-0.68)
+       {ILI9341\\[0.4ex]\footnotesize 2.8\,in\\[-0.2ex]\footnotesize 240$\times$320};
+  \foreach \i/\name/\yy in {0/{VCC}/0.9, 1/{GND}/0.45, 2/{CS}/0.0, 3/{RESET}/-0.45,
+                            4/{DC}/-0.9, 5/{MOSI}/-1.35, 6/{SCK}/-1.8, 7/{LED}/-2.25}{
+    \node[term] (t\i) at (-3.4,\yy) {};
+    \node[font=\sffamily\tiny, text=ink70, anchor=east] at (-3.55,\yy) {\name};
+  }
+
+  \hframe{1.9}{0.9}{-2.25}{Pi header}
+  \hpin{1.9}{0.9}{1}{ppwr33}{3V3}
+  \hpin{1.9}{0.45}{6}{pusegnd}{GND}
+  \hpin{1.9}{0.0}{24}{pusedisp}{GPIO 8}
+  \hpin{1.9}{-0.45}{12}{pusedisp}{GPIO 18}
+  \hpin{1.9}{-0.9}{22}{pusedisp}{GPIO 25}
+  \hpin{1.9}{-1.35}{19}{pusedisp}{GPIO 10}
+  \hpin{1.9}{-1.8}{23}{pusedisp}{GPIO 11}
+  \hpin{1.9}{-2.25}{17}{ppwr33}{3V3}
+
+  \draw[wire, p33]  (t0) -- (H1.west);
+  \draw[wire, gndc] (t1) -- (H6.west);
+  \foreach \i/\pinid in {2/24, 3/12, 4/22, 5/19, 6/23}{
+    \draw[wire, dispc] (t\i) -- (H\pinid.west);}
+  \draw[wire, p33]  (t7) -- (H17.west);
+
+  \node[font=\sffamily\scriptsize\bfseries, text=dangerred, anchor=west] at (-4.0,1.6)
+       {check VCC before you power it};
+  \draw[-{Stealth[length=1.6mm]}, dangerred, line width=0.6pt] (-1.4,1.5) -- (-0.3,1.0);
+
+  \node[font=\sffamily\scriptsize, text=ink70, align=left, anchor=north west]
+       at (4.5,1.0)
+       {\begin{minipage}{40mm}\scriptsize
+        \textbf{\color{ink}Go by the silkscreen}, not the order drawn here.
+        These boards vary.\\[0.8ex]
+        Fitting the LCD retires the OLED \textemdash{} only one panel is
+        driven.\end{minipage}};
+\end{tikzpicture}
+\end{center}
+
+\begin{provebox}
+\provetitle
+For the OLED, first check it is answering at all:
+\begin{shell}
+i2cdetect -y 1        # 3c, or 3d on a board with the address link moved
+\end{shell}
+Then, for either panel, \code{selftest}. It paints each state in turn and asks
+which one you are looking at \textemdash{} and on the LCD, what colour it is.
+That question is the whole test; answer it honestly.
+\end{provebox}
+
+\vspace{1mm}
+\begin{dangerbox}
+\dangertitle{A lit screen is not proof, and one wrong bit swaps two doses}
+The LCD is write-only. A dead panel, an unplugged one and one wired a row off
+all accept exactly the same writes without complaint, and the backlight comes on
+regardless of whether anything is being drawn.
+
+\vspace{1ex}
+If the panel's BGR bit is wrong, red and blue trade places \textemdash{} so
+\emph{released} and \emph{missed} swap, and the machine tells somebody their
+pills are in the cup an hour after the window closed. That is why the self-test
+asks what colour you can see and not whether you can see anything.
+\end{dangerbox}
+
+\clearpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Stage 4 \textemdash{} the take-dose button}
+
+Two wires. It is the control the person in the room actually uses, and the only
+one that works with no network at all.
+
+\vspace{3mm}
+\begin{center}
+\begin{tikzpicture}
+  \draw[ink70, line width=0.8pt, fill=ink15, rounded corners=1.5pt]
+       (-4.3,-0.72) rectangle (-3.0,0.32);
+  \draw[ink70, line width=0.8pt, fill=btnc!65, rounded corners=2pt]
+       (-4.0,0.08) rectangle (-3.3,0.66);
+  \node[font=\sffamily\scriptsize\bfseries, text=ink, anchor=south] at (-3.65,0.82)
+       {momentary push button};
+
+  \node[term] (ba) at (-3.0,0.06) {};
+  \node[term] (bb) at (-3.0,-0.5) {};
+
+  \hframe{1.55}{0.06}{-0.5}{Pi header}
+  \hpin{1.55}{0.06}{18}{pusebtn}{GPIO 24}
+  \hpin{1.55}{-0.5}{20}{pusegnd}{GND}
+
+  \draw[wire, btnc] (ba) -- (H18.west);
+  \draw[wire, gndc] (bb) -- (H20.west);
+
+  \draw[ink40, line width=0.5pt, dashed] (-1.2,0.06) -- (-1.2,1.22);
+  \node[font=\sffamily\tiny, text=p33, anchor=south] at (-1.2,1.28)
+       {3V3, inside the chip};
+
+  \node[font=\sffamily\scriptsize, text=ink70, align=left, anchor=north west]
+       at (4.5,0.6)
+       {\begin{minipage}{46mm}\scriptsize
+        \textbf{\color{ink}No resistor} \textemdash{} the pull-up is in the chip.
+        The pin idles high and the button pulls it to ground.\end{minipage}};
+\end{tikzpicture}
+\end{center}
+
+\begin{dangerbox}
+\dangertitle{It releases a due dose. It does not dispense}
+Pressed when a dose is due, the tray sweeps. Pressed at any other time,
+\textbf{nothing happens} \textemdash{} no tray moves and nothing is logged.
+
+\vspace{1ex}
+That is what stops a hopper being walked empty one press at a time by somebody
+curious. Every one of those pills would be missing from a dose later in the
+week, with nothing anywhere saying so.
+\end{dangerbox}
+
+\begin{provebox}
+\provetitle
+\code{selftest} asks you to press it once and reports what it counted.
+
+\vspace{1.5ex}
+\begin{tabular}{@{}>{\bfseries}l l@{}}
+1 press seen   & pass \\
+nothing seen   & open circuit \textemdash{} check the wire from pin 18 to pin 20 \\
+4 presses seen & the debounce filter is not running \\
+\end{tabular}
+
+\vspace{1.5ex}
+Then start the service and press it with no dose due:
+\begin{shell}
+journalctl -u snapcare-dispenser -f
+\end{shell}
+It must log \code{button pressed with no dose waiting} and open nothing. If a
+tray moves here, stop and fix it.
+\end{provebox}
+
+\vspace{1mm}
+\noindent A build with no button is a valid build \textemdash{} the app still
+releases doses \textemdash{} but fit one if the person using the machine does
+not carry a phone.
+
+\clearpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Stage 5 \textemdash{} the servo rail, before any servo}
+
+Wire the second supply and measure it with \textbf{no servos attached and no
+signal wires to the Pi}. This is where a 12\,V brick or a reversed lead is
+caught, while there is nothing connected for it to destroy.
+
+\begin{provebox}
+\provetitle
+Meter across the rail with nothing attached: \textbf{5\,V $\pm$0.25\,V, steady}.
+\end{provebox}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Stage 6 \textemdash{} the servos}
+
+\vspace{2mm}
+\begin{center}
+\begin{tikzpicture}
+  \node[modbox, minimum width=24mm, minimum height=16mm] (sv) at (-4.4,0.0)
+       {SG90\\[0.2ex]\footnotesize tray 1};
+  \foreach \i/\name/\yy in {0/{orange}/0.45, 1/{red}/0.0, 2/{brown}/-0.45}{
+    \node[term] (s\i) at (-3.2,\yy) {};
+    \node[font=\sffamily\tiny, text=ink70, anchor=east] at (-3.35,\yy) {\name};
+  }
+
+  \hframe{2.7}{0.45}{-0.45}{Pi header}
+  \hpin{2.7}{0.45}{11}{puseservo}{GPIO 17}
+  \hpin{2.7}{-0.45}{9}{pusegnd}{GND}
+
+  \node[compbox, minimum width=32mm, fill=p5!7, draw=p5!50] (rail) at (-4.1,-2.9)
+       {servo supply, 5\,V 2\,A$+$};
+
+  % the two rails
+  \draw[wire, servo] (s0) -- (H11.west);
+  \draw[wire, p5]    (s1) -- (-2.4,0.0) -- (-2.4,-2.9) -- (rail.east);
+  \draw[wire, gndc]  (s2) -- (-1.5,-0.45) -- (-1.5,-1.35) -- (1.85,-1.35) -- (H9.west);
+  \draw[wire, gndc]  (-1.5,-1.35) -- (-1.5,-3.45) -- (-4.1,-3.45) -- (rail.south);
+
+  % the bulk capacitor, across the two rails and close to the servo
+  \draw[wire, p5]   (-2.4,-2.15) -- (-2.16,-2.15);
+  \draw[wire, gndc] (-1.84,-2.15) -- (-1.5,-2.15);
+  \draw[ink70, line width=0.7pt, fill=white] (-2.16,-2.42) rectangle (-1.84,-1.88);
+  \draw[ink70, line width=0.7pt, fill=ink40] (-1.92,-2.42) rectangle (-1.84,-1.88);
+  \node[font=\sffamily\tiny, text=ink70, anchor=south] at (-2.0,-1.82) {1000\uF};
+  \node[font=\sffamily\tiny, text=dangerred, anchor=east] at (-2.55,-2.15)
+       {mind the polarity};
+
+  \node[font=\sffamily\scriptsize\bfseries, text=gndc, anchor=north west] at (-1.4,-1.45)
+       {the grounds must be common \textemdash{} this wire is not optional};
+\end{tikzpicture}
+\end{center}
+
+\vspace{1mm}
+\noindent Servos that twitch or ignore commands entirely read as a firmware
+fault and are not one. It is this wire.
+
+\vspace{3mm}
+\noindent The other trays follow the same pattern, one signal wire each:
+
+\begin{center}
+\small
+\begin{tabular}{@{}l c c c c c c c c@{}}
+\toprule
+\hdr{Tray} & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 \\
+\midrule
+GPIO & 17 & 27 & 22 & 5 & 6 & 13 & 19 & 26 \\
+Pin  & 11 & 13 & 15 & 29 & 31 & 33 & 35 & 37 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{provebox}
+\provetitle
+\textbf{One tray at a time}, and watch which hopper moves:
+\begin{shell}
+sudo snapcare-dispenser --drop 1     # then 2, then 3, six seconds apart
+\end{shell}
+\end{provebox}
+
+\begin{dangerbox}
+\dangertitle{``A tray moved'' is the wrong question}
+Two trays wired to each other's pins both move, so a check that asks whether
+something happened passes. The machine then gives the right number of pills from
+the wrong compartment, and nobody notices until the wrong medication has been
+taken for a week. Ask \emph{which one moved}.
+\end{dangerbox}
+
+\vspace{2mm}
+\noindent\textbf{\sffamily Fit the horns with the servo parked.} Run
+\code{-{}-drop} once and let it finish; the horn is then at rest. Nothing on an
+SG90 reports its position, so a horn fitted while the servo happens to be at the
+far end is a tray that never opens \textemdash{} and the dose is logged as
+delivered anyway.
+
+\vspace{2mm}
+\noindent\textbf{\sffamily A servo buzzing at the end of its stroke} is being
+driven past a stop it has already reached, and that one burns out over weeks.
+Trim that tray alone, in microseconds:
+
+\begin{shell}
+# snapcare_dispenser/config.py
+SERVO_TRIM = {3: (520, 2450)}
+\end{shell}
+
+\vspace{1mm}
+\begin{warnbox}
+\warntitle{All eight trays are accepted whether or not they exist}
+An SG90 reports nothing, so the firmware cannot tell a missing hopper from a
+fitted one. A schedule naming a tray you never built is accepted, never
+dispensed, and reported by nothing. Say how many you have:
+\begin{shell}
+sudo systemctl edit snapcare-dispenser    # add: Environment=SNAPCARE_TRAYS=3
+sudo systemctl restart snapcare-dispenser
+\end{shell}
+\end{warnbox}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Stage 7 \textemdash{} WiFi, by scanning a code}
+
+Unplug the Ethernet cable. From here the machine joins a network the way its
+owner will do it: by scanning a printed code. No keyboard, no monitor.
+
+\begin{shell}
+sudo snapcare-dispenser --show-qr     # the permanent setup network
+sudo snapcare-dispenser --show-label  # everything the printed label must carry
+\end{shell}
+
+\begin{enumerate}[leftmargin=*, itemsep=0.5ex]
+\item Print the code. It is derived from this board and \textbf{never changes},
+      so it is printed once for the life of the device.
+\item Scan it with a phone. The phone joins the dispenser's own network.
+\item A setup page opens by itself. Pick the house network and type its password.
+\item The dispenser joins it, its own network disappears, and the phone goes
+      back to the house WiFi.
+\end{enumerate}
+
+\begin{provebox}
+\provetitle
+From the phone, on the house WiFi:
+\code{http://pilldispenser.local/api/status} answers.
+
+\vspace{1ex}
+If that name does not resolve \textemdash{} Chrome on Android does no mDNS
+\textemdash{} use the IP address the setup page showed you.
+\end{provebox}
+
+\vspace{1mm}
+\begin{dangerbox}
+\dangertitle{The pairing code on the label is a credential}
+Anyone who can read it can send this device a schedule \emph{and release a
+dose}. Put the label where the owner will find it and a visitor will not: inside
+a battery door, or on the underside.
+\end{dangerbox}
+
+\vspace{1mm}
+\noindent The QR carries your relay's address alongside the code, so reprint it
+if you ever move relays. The code itself comes from the board and never changes.
+
+\clearpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Commissioning \textemdash{} six tests a bench cannot run}
+
+\code{selftest} checks everything a program can check. These six it cannot, and
+every one of them is a failure that looks exactly like a healthy machine.
+
+\vspace{3mm}
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright}p{32mm} >{\raggedright\arraybackslash}p{108mm}@{}}
+\toprule
+\hdr{Test} & \hdr{What to do, and what must happen} \\
+\midrule
+\textbf{The power cut} &
+Pull the power at 08:30, after the 08:00 dose has been released, and restore it.
+No second dose, and the log survives. Without persisted state this dispenses
+twice, and no demo ever shows it \\
+\textbf{The coin cell} &
+Unplug the Pi, leave it a minute, bring it back with the network unplugged. The
+clock must still be trusted and \code{clock.source} must read \code{rtc}. Nothing
+on a bench with WiFi proves this, because NTP vouches first \\
+\textbf{The wrong password} &
+Type the WiFi password wrong on purpose at Stage~7. The setup network must come
+back within seconds and say the password was refused. On a machine joined by
+scanning a code, this is the difference between a second try and re-imaging the
+card \\
+\textbf{The internet cut} &
+Pull the router's WAN cable, leave the phone and the dispenser on the LAN, and
+release a due dose from the app. The pill must still come out. This catches a
+release path that only works through the relay \\
+\textbf{The dose nobody takes} &
+Let a scheduled dose sit for its whole hour without pressing anything. The tray
+must stay shut, the screen must go amber, and the log must record it missed. A
+build that quietly drops it at the end has lost the point of asking first \\
+\textbf{The idle button} &
+Press the button with nothing due. Nothing must move and nothing must be
+logged \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{4mm}
+\noindent To make a dose fall due on demand, send a schedule for two minutes
+from now:
+
+\begin{shell}
+curl "http://pilldispenser.local/schedule?payload=SC1*W*1:0800-127-000"
+\end{shell}
+
+\vspace{1mm}
+\noindent\small
+\code{SC1*W*}\emph{tray}\code{:}\emph{HHMM}\code{-}\emph{days}\code{-}\emph{length}.
+Several times on one tray join with \code{.}, several trays with \code{/}.
+\emph{days} is a bitmask with Monday as 1 \textemdash{} \code{127} is every day,
+\code{021} is Mon/Wed/Fri. \emph{length} is a number of days, \code{000} for no
+end date.
+\normalsize
+
+\clearpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{When it does not work}
+
+\begin{center}
+\small
+\begin{longtable}{@{}>{\raggedright}p{50mm} >{\raggedright\arraybackslash}p{96mm}@{}}
+\toprule
+\hdr{Symptom} & \hdr{Look at} \\
+\midrule
+\endhead
+\multicolumn{2}{@{}l}{\textbf{\sffamily Doses}}\\
+The screen goes green and chirps, but no tray ever opens &
+Working as designed. Something has to ask: the button, or release in the app \\
+Pressing the button does nothing &
+\code{gpio.button.presses} in \code{status}. Going up means the button works and
+no dose was due. Staying at zero means the wire from pin 18 to pin 20 \\
+Nothing is dispensed at all &
+\code{device.blockedReason}. It is one of two things and they need opposite
+fixes: an untrusted clock, or no GPIO library \\
+Doses expire untaken every day &
+Nobody is being told. Check \code{gpio.missing} for the buzzer \\
+A tray in the schedule never dispenses &
+It was accepted but never fitted. Set \code{SNAPCARE\_TRAYS} \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\sffamily Screen}}\\
+Nothing on the screen, ever &
+\code{gpio.display} in \code{status}. \code{fitted:false} carries the reason \\
+OLED: \code{i2cdetect} finds nothing &
+\code{dtparam=i2c\_arm=on} in \code{/boot/firmware/config.txt}, then reboot.
+\code{3d} instead of \code{3c} is not a fault \\
+LCD: lit but blank &
+The backlight is independent of the data lines, so a lit panel proves only that
+LED has power. Check DC (pin 22) and RESET (pin 12) \\
+LCD: the colours are wrong &
+The BGR bit. \emph{Released} and \emph{missed} swap when it is wrong; do not
+ship it like this \\
+LCD: mirrored or rotated &
+\code{DISPLAY\_ROTATION} in \code{config.py} \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\sffamily Servos and the clock}}\\
+Servo twitches or ignores commands & The common ground. It is not optional \\
+Servo hums between doses &
+\code{gpio.servo.timing} \textemdash{} \code{python} is the slow fallback;
+\code{sudo apt install python3-lgpio} \\
+Pi reboots when a servo moves & Servos on the Pi's 5\,V pin, or no bulk capacitor \\
+Clock right at shutdown, wrong at boot &
+The cell is dead or not seated. \code{clock.rtc.detail} says which \\
+\code{clock.rtc} says ``no record of ever having been set'' &
+The chip has never been written. Set the clock once, then pull the power to
+check it stuck \\
+The RTC never changes after a \code{shutdown} and a boot &
+A shutdown leaves the board powered, so nothing was tested. Pull the plug \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\sffamily Network and install}}\\
+\code{pilldispenser.local} does not resolve & Android does no mDNS. Use the IP address \\
+Setup page never leaves ``waiting\ldots'' &
+The phone has not gone back to the house WiFi. Switch it over \\
+Setup page says no address was handed out &
+The password was right and DHCP was not. Usually a router that needs restarting \\
+A schedule request answers 421 &
+The \code{Host} header is not a name this device answers to. Use
+\code{pilldispenser.local} or the IP \\
+\code{install.sh} stops on a dpkg lock &
+Something else is mid-update. Wait, run it again, and do not delete the lock file \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Appendix \textemdash{} cloud sync, if you want it}
+
+Without this the dispenser is LAN-only, which is a complete machine: the
+schedule arrives over the house WiFi or off a photographed paper sheet, and the
+SD card and the clock chip keep the alarms running.
+
+With it, a schedule edited in the app reaches the device from anywhere, and a
+carer in another country can release a dose. Deploy one relay for all your
+devices \textemdash{} see \code{../cloud\_relay/} \textemdash{} then:
+
+\begin{shell}
+sudo systemctl edit snapcare-dispenser
+# add: Environment=SNAPCARE_RELAY_URL=https://your-relay.example
+sudo systemctl restart snapcare-dispenser
+\end{shell}
+
+\begin{provebox}
+\provetitle
+Pair the app with the code on the label. Then pull the router's WAN cable and
+release a due dose from a phone on the same LAN: the pill still comes out. The
+relay is a way in, never a dependency.
+\end{provebox}
+
+\vfill
+\begin{center}\footnotesize\color{ink40}\sffamily
+Generated from \code{docs/assembly-guide.tex} by \code{make guide}.\\
+The pin map lives in \code{snapcare\_dispenser/config.py}, which is the source of truth.
+\end{center}
+
+\end{document}

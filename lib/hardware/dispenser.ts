@@ -115,6 +115,44 @@ export function saveUrl(host: string, plan: TrayPlan[]): string {
   return `http://${cleanHost(host)}/save?${q.toString()}`;
 }
 
+/**
+ * 요일과 복용 기간까지 담아 보내는 URL. `/save` 의 무손실 판.
+ *
+ * `/save` 에는 요일 칸도 기간 칸도 없어서, 월·수·금 처방이 매일 나오고 30일 코스가
+ * 트레이가 빌 때까지 계속된다. 그 둘을 담을 수 있는 것은 `SC1*W*` 페이로드뿐인데,
+ * 그것을 받는 `/api/schedule` 은 POST 라서 **HTTPS 로 배포된 이 앱에서는 부를 수
+ * 없다** (혼합 콘텐츠). 최상위 이동은 막히지 않으므로 펌웨어가 같은 페이로드를 GET
+ * 링크로도 받는다 — `server.py` 의 `_link_schedule`.
+ *
+ * 종이 폼시트 경로가 실제로 기기에 닿는 것이 이 함수다. 그 전까지 폼시트에서 읽은
+ * 처방은 화면에 요약으로만 뜨고 어디로도 가지 않았다.
+ */
+export function scheduleUrl(host: string, payload: string): string {
+  return `http://${cleanHost(host)}/schedule?payload=${encodeURIComponent(payload)}`;
+}
+
+/**
+ * 지금 나와 있는 복용을 배출한다 — 앱 메인 화면의 버튼과 푸시 알림이 누르는 것.
+ *
+ * 기기는 예정된 시각에 **떨어뜨리지 않는다.** 링이 초록으로 켜지고 부저가 울리며
+ * 기다릴 뿐이고, 이 요청(또는 기기의 물리 버튼)이 트레이를 여는 유일한 길이다.
+ * 이것이 없으면 정상적으로 조립된 기기가 한 시간 울리다 미복용으로 기록한다.
+ *
+ * 인자 없이 부르면 지금 나와 있는 것을 전부 배출한다 — 같은 시각에 두 칸이 걸려
+ * 있으면 두 번 누르게 만드는 쪽이 두 번째를 잊게 만든다. `tray`/`at` 은 알림이
+ * 특정 복용을 가리킬 때 좁히는 용도다.
+ *
+ * 창이 닫힌 뒤에 눌러도 안전하다. 기기가 "기다리던 것이 없다" 는 화면을 보여 주고
+ * 아무것도 열지 않는다 — 잠금화면에 남아 있던 알림을 한 시간 뒤에 누른 경우다.
+ */
+export function releaseUrl(host: string, dose?: { tray?: number; at?: string }): string {
+  const q = new URLSearchParams();
+  if (dose?.tray != null) q.set('tray', String(dose.tray));
+  if (dose?.at) q.set('at', dose.at.replace(':', ''));
+  const query = q.toString();
+  return `http://${cleanHost(host)}/release${query ? `?${query}` : ''}`;
+}
+
 /** 한 칸을 지금 배출한다 — 기기 앞에서 눌러 확인할 때 쓴다. */
 export function dropUrl(host: string, tray: number): string {
   return `http://${cleanHost(host)}/dropout?tray=${tray}`;
@@ -160,14 +198,9 @@ export function durationDays(text: string | undefined): number {
 /**
  * 알람을 주간 슬롯으로. `/save` 로는 보낼 수 없는 것을 담는다.
  *
- * **아직 쓰이는 곳이 없다.** 기기가 이것을 받을 경로가 없기 때문이다 — /save 에는
- * 요일·기간 칸이 없고, 칸이 있는 /api/schedule 은 POST 라서 HTTPS 페이지에서 부를
- * 수 없다. 펌웨어가 `GET /api/schedule?payload=…` 로도 받아 주면 그때 연결된다.
- * (QR 로 보내려 했다가 되돌렸다: 라즈베리파이 판에는 카메라가 없다.)
- *
  * `/save` 에는 **요일 칸도 복용 기간 칸도 없다.** 그래서 그 경로로 보내면 월·수·금
- * 처방이 매일 나오고 30일 코스가 트레이가 빌 때까지 계속된다. 라즈베리파이 펌웨어는
- * 이 둘을 받으므로, 기기 카메라로 읽힐 QR 에는 담아 보낸다.
+ * 처방이 매일 나오고 30일 코스가 트레이가 빌 때까지 계속된다. 이 함수가 만든 슬롯을
+ * `encodeWeekly` 로 묶어 `scheduleUrl` 에 넘기면 둘 다 살아서 도착한다.
  *
  * 요일은 매일(EVERY_DAY)로 둔다 — 앱이 아직 요일을 묻지 않기 때문이고, 모르는 것을
  * 지어내는 것보다 매일이 안전하다. 기간은 처방전에서 읽은 값을 쓴다.

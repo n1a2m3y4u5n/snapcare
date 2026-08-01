@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent.parent / "rpi_firmware"))
+sys.path.insert(0, str(HERE.parent.parent / "firmware"))
 
 from snapcare_dispenser import envelope, provisioning  # noqa: E402
 

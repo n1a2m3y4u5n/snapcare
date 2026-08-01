@@ -2,8 +2,7 @@
 #
 #     make            run every suite that needs nothing installed
 #     make python     the sheet reader and the schedule builder (needs conda env snapcare)
-#     make firmware   the AVR/ESP protocol and scheduler (needs only a C++ compiler)
-#     make rpi        the Raspberry Pi firmware (needs only python)
+#     make firmware   the Raspberry Pi firmware (needs only python)
 #     make relay      the cloud relay (needs only python)
 #     make vectors    regenerate the crypto vectors the other implementations pin to
 #     make apk        the demo app (needs the Android SDK)
@@ -11,28 +10,22 @@
 #     make sweep      re-measure where the reader stops working
 #     make clean
 #
-# They have deliberately different requirements. The C++ tests build with
-# nothing but g++ and make; the Raspberry Pi ones need no board, no servo and no
-# network; the relay's need no container and no account. The part of this
-# project that runs on a device with no debugger can be checked by anyone,
-# anywhere, in a second.
+# They have deliberately different requirements. The firmware's tests need no
+# board, no servo and no network; the relay's need no container and no account.
+# The part of this project that runs on a device with no debugger can be checked
+# by anyone, anywhere, in a second.
 
 PYTHON ?= python
 
-.PHONY: all python firmware rpi relay vectors apk demo sweep clean
+.PHONY: all python firmware relay vectors apk demo sweep clean
 
-all: firmware rpi relay python vectors
+all: firmware relay python vectors
 	@echo
 	@echo "pill dispenser: all tests passed"
 
 firmware:
-	@echo "── firmware (protocol + scheduler, host build) ──"
-	@$(MAKE) --no-print-directory -C firmware/test
-
-rpi:
-	@echo
 	@echo "── raspberry pi firmware ──"
-	@$(MAKE) --no-print-directory -C rpi_firmware test PYTHON=$(PYTHON)
+	@$(MAKE) --no-print-directory -C firmware test PYTHON=$(PYTHON)
 
 relay:
 	@echo
@@ -69,7 +62,6 @@ sweep:
 	@$(PYTHON) -m form_sheet_parser.synth --sweep --trials 16
 
 clean:
-	@$(MAKE) --no-print-directory -C firmware/test clean
-	@$(MAKE) --no-print-directory -C rpi_firmware clean
+	@$(MAKE) --no-print-directory -C firmware clean
 	@$(MAKE) --no-print-directory -C cloud_relay clean
 	@rm -rf form_sheet_parser/__pycache__ form_sheet_parser/tests/__pycache__ .pytest_cache

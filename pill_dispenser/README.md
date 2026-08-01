@@ -51,15 +51,10 @@ pill_dispenser/
     cli.py                   command line
     form_sheet/              the printable sheet, its ArUco markers, the bubble map
     tests/                   75 tests, no printer required
-  firmware/                the two-board build — see firmware/README.md
-    libraries/SC1/           protocol + scheduler, host-testable
-    arduino/snapcare_tray/         Uno/Nano: servos, clock, button, ring
-    esp32/snapcare_optical_head/   ESP32-CAM: camera in, OLED out
-    test/                    `make` — ~24,000 assertions, no board
-  rpi_firmware/            the one-board build — see rpi_firmware/README.md
+  firmware/                the device itself — see firmware/README.md
     snapcare_dispenser/      SC1, scheduler, servos, WiFi, cloud link, web server
     service/                 systemd unit + install.sh
-    tests/                   `make` — 359 tests, no board
+    tests/                   `make` — no board required
     docs/assembly-guide.pdf  building the machine, stage by stage
   cloud_relay/             the mailbox between the app and the device
     snapcare_relay/          six endpoints, a long poll, and no ability to read
@@ -68,38 +63,29 @@ pill_dispenser/
     Dockerfile               one layer, nothing to install
 ```
 
-## Two builds, one protocol
+## One machine, three ways in
 
-There are two firmwares here because there are two machines.
+`firmware/` is a Raspberry Pi 3B+ driving eight servos, an LED ring, a piezo and
+a DS1302 clock chip. There is no camera and no display: the link to the phone is
+the Pi's own WiFi. It raises a setup hotspot with a captive portal, joins the
+house network, and answers on `pilldispenser.local`. Getting a dispenser onto
+WiFi is one QR scan from a printed label — and that label never changes, because
+the hotspot's name and password are derived from the SoC serial number rather
+than generated.
 
-`firmware/` is the original: an Arduino Uno driving eight servos and a DS3231,
-with an ESP32-CAM beside it as an optical modem — the phone shows a QR, the
-camera reads it, and a 128x64 OLED answers with another. No network at all.
+A schedule can arrive three ways, and all three land on the same SC1 grammar:
+from the app over the LAN, from the app through `cloud_relay/` when nobody is
+standing next to the device, or off a photographed paper form sheet when there
+is no network at all.
 
-`rpi_firmware/` is the same device on a Raspberry Pi 3B. One board instead of
-two, no camera and no OLED, and the link to the phone is the Pi's own WiFi: it
-raises a setup hotspot with a captive portal, joins the house network, and
-answers on `pilldispenser.local`. Getting a dispenser onto WiFi is one QR scan
-from a printed label — and that label never changes, because the hotspot's name
-and password are derived from the SoC serial number rather than generated.
+A Pi has no clock of its own — `fake-hwclock` restores a stale time confidently,
+which is worse than none — so this build fits a DS1302 with a coin cell. Three
+things can vouch for the time: the RTC, NTP, or a `SC1*C*` code from the phone.
+Until one of them does, nothing is dispensed.
 
-They share the SC1 grammar and its test vectors, so a schedule from the app or
-from a photographed paper sheet reaches either one unchanged. What differs is
-what each can be told and what each can say back, and both READMEs are explicit
-about it. The Pi has no clock of its own — `fake-hwclock` restores a stale time
-confidently, which is worse than none — so this build fits a DS3231 as well.
-Three things can vouch for the time: the RTC, NTP, or a `SC1*C*` code from the
-phone. Until one of them does, nothing is dispensed.
-
-The Pi build also has the third path in: `cloud_relay/`, which is what lets a
-schedule change reach a device nobody is standing next to. See
-[`cloud_relay/README.md`](cloud_relay/README.md) for what it can and cannot see,
-and what it costs to run. The two-board build has no network and does not have
-this; its answer to the same problem is the paper form sheet.
-
-[`rpi_firmware/docs/assembly-guide.pdf`](rpi_firmware/docs/assembly-guide.pdf)
-builds that machine from a bare Pi, one subsystem per stage, with the command
-that proves each one.
+[`firmware/docs/assembly-guide.pdf`](firmware/docs/assembly-guide.pdf) builds the
+machine from a bare Pi, one subsystem per stage, with the command that proves
+each one.
 
 ### Trying the whole thing without hardware
 
@@ -271,7 +257,7 @@ Fixed field widths so 8-bit firmware can read them with pointer arithmetic
 instead of a tokenizer, and every character stays inside the QR alphanumeric
 set — straying out of it doubles the code's size and is what stops it fitting.
 
-The reference implementations to match are `schedule.py` here and `SC1.cpp` in
+The reference implementations to match are `schedule.py` here and `sc1.py` in
 the firmware, and the vectors all three suites assert on are the contract.
 `decodeWeekly` should return `null` rather than throwing on anything malformed,
 for the same reason `decodeSchedule` does: the camera reads whatever QR happens
@@ -280,35 +266,33 @@ code.
 
 ## The firmware
 
-See [`firmware/README.md`](firmware/README.md) for wiring, flashing, and the two
+See [`firmware/README.md`](firmware/README.md) for wiring, the install, and the
 details that cost boards rather than time.
 
 ```bash
-make -C firmware/test          # ~24,000 assertions and both sketches, no board
+make -C firmware                # the whole suite, no board
 ```
 
-The protocol and the scheduler are free of `<Arduino.h>` and build with a
-desktop compiler. That matters most for the scheduler, because scheduling is the
-part that fails invisibly: a servo that does not move is obvious, a compartment
-that opens twice is not.
-
-The sketches are compiled too, against a stand-in Arduino API — a type check,
-not a simulation, but enough that nobody has to own the hardware to find out
-whether the code is valid.
+The protocol and the scheduler import nothing from the hardware modules and run
+on any machine with Python. That matters most for the scheduler, because
+scheduling is the part that fails invisibly: a servo that does not move is
+obvious, a compartment that opens twice is not.
 
 ## The whole chain, end to end
 
 ```bash
 python -m form_sheet_parser.cli sheet.jpg --emit weekly \
-  | grep SC1 | firmware/test/build/sc1_decode
+  | grep SC1 \
+  | xargs -I{} curl -fsS -X POST http://pilldispenser.local/api/schedule \
+      -H 'Content-Type: application/json' -d '{"payload":"{}"}'
 ```
 
-A photograph goes through the Python reader and out through the exact C++ that
-runs on the dispenser. Four implementations of SC1 — TypeScript in the app,
-Python here, Python again in `rpi_firmware/`, and C++ on the device — share no
-code, so the common vectors in their test suites are the only thing keeping them
-speaking the same language. A mismatch has no symptom on hardware except a
-device that stops listening.
+A photograph goes through the Python reader and straight into the running
+device, over the same endpoint the app uses. Three implementations of SC1 — TypeScript in the
+app, Python here, and Python again in `firmware/` — share no code, so the common
+vectors in their test suites are the only thing keeping them speaking the same
+language. A mismatch has no symptom on hardware except a device that stops
+listening.
 
 The cloud path has the same problem in a second place, and the same answer: the
 crypto behind pairing exists twice, in Python and in the browser's JavaScript.
@@ -324,10 +308,10 @@ python -m form_sheet_parser.cli --clock-qr clock.png        # set the device's c
 python -m form_sheet_parser.cli sheets/*.jpg --qr schedule.png
 ```
 
-Print them or put them on a screen, hold them in front of the ESP32-CAM, and the
-tray fills.
+Print them or put them on a screen, and post them to the device's `/api/schedule`
+— or hand the file to whoever is standing at the machine.
 
-The clock code is not optional the first time. The DS3231 keeps time across a
+The clock code is not optional the first time. The DS1302 keeps time across a
 power cut on a coin cell, but that cell dies eventually — and a clock that has
 lost power does not report *no* time, it reports a wrong one, confidently. A
 tray acting on a wrong clock opens compartments at the wrong hours and looks

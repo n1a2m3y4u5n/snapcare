@@ -1,0 +1,276 @@
+% ---------------------------------------------------------------------------
+%  Shared preamble: page setup, palette, callout boxes, and the wiring toolkit.
+%  Everything visual in the guide is drawn from these styles, so a wire is the
+%  same colour in every figure it appears in.
+% ---------------------------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage{XCharter}
+\usepackage[scaled=0.92]{FiraSans}
+\usepackage[scaled=0.95]{zi4}
+\usepackage{amssymb}
+\usepackage[a4paper,top=22mm,bottom=20mm,left=22mm,right=22mm,headsep=7mm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage[most]{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+
+\usetikzlibrary{calc,positioning,shapes.geometric,shapes.misc,arrows.meta,
+                backgrounds,fit,decorations.pathreplacing,decorations.markings,
+                patterns,shadows.blur}
+
+% ── palette ────────────────────────────────────────────────────────────────
+% The five signal colours are the ring's own colour vocabulary, taken from
+% indicators.py, so a figure of the ring and a figure of a wire agree.
+\definecolor{ink}{HTML}{1B1F24}
+\definecolor{ink70}{HTML}{4A5057}
+\definecolor{ink40}{HTML}{8A9199}
+\definecolor{ink15}{HTML}{D8DDE2}
+\definecolor{paper}{HTML}{FFFFFF}
+\definecolor{shade}{HTML}{F4F6F8}
+
+\definecolor{scred}{HTML}{C2185B}      % accent / raspberry
+\definecolor{servo}{HTML}{E8710A}      % servo signal
+\definecolor{buzzc}{HTML}{B26A00}      % buzzer
+\definecolor{appc}{HTML}{00857A}       % the app, and the release it sends
+\definecolor{btnc}{HTML}{0B7285}       % the take-dose button on the machine
+\definecolor{dispc}{HTML}{9600FF}      % the screen, on either bus
+\definecolor{rtcc}{HTML}{005AFF}       % rtc 3-wire (CE / I/O / SCLK)
+\definecolor{p33}{HTML}{D24B2E}        % 3V3 rail
+\definecolor{p5}{HTML}{B3001B}         % 5V rail
+\definecolor{gndc}{HTML}{2B2B2B}       % ground
+\definecolor{avoid}{HTML}{9AA3AB}      % deliberately not used
+
+% The five states, as the LCD paints them. Same vocabulary the ring had.
+\definecolor{ledgreen}{HTML}{00C83C}
+\definecolor{ledblue}{HTML}{005AFF}
+\definecolor{ledamber}{HTML}{FF8200}
+\definecolor{ledcyan}{HTML}{00AABE}
+
+\definecolor{okgreen}{HTML}{1E7A3C}
+\definecolor{warnamber}{HTML}{9A6400}
+\definecolor{dangerred}{HTML}{B3001B}
+
+% ── shorthands for the units this guide keeps repeating ────────────────────
+\newcommand{\ohm}{\,\textohm}
+\newcommand{\uF}{\,\textmu F}
+\newcommand{\dgr}{\textdegree}
+\newcommand{\iic}{I\textsuperscript{2}C}
+\newcommand{\code}[1]{\texttt{#1}}
+
+% ── headings ───────────────────────────────────────────────────────────────
+\titleformat{\section}
+  {\sffamily\bfseries\Large\color{ink}}{\thesection}{0.6em}{}
+  [\vspace{-0.6ex}{\color{ink15}\titlerule[1.1pt]}]
+\titleformat{\subsection}
+  {\sffamily\bfseries\large\color{ink}}{\thesubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{2.2ex plus 1ex minus .2ex}{1.4ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{1.8ex plus 1ex minus .2ex}{0.9ex plus .2ex}
+
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{ink15}\leaders\hrule height \headrulewidth\hfill}}
+\fancyhead[L]{\sffamily\small\color{ink40}SnapCare pill dispenser \textendash{} assembly}
+\fancyhead[R]{\sffamily\small\color{ink40}\leftmark}
+\fancyfoot[C]{\sffamily\small\color{ink40}\thepage}
+
+% ── code listings ──────────────────────────────────────────────────────────
+\tcbuselibrary{listings,breakable,skins}
+\lstdefinestyle{shellstyle}{
+  basicstyle=\ttfamily\footnotesize\color{ink},
+  breaklines=true, breakatwhitespace=false,
+  columns=fullflexible, keepspaces=true,
+  showstringspaces=false,
+  commentstyle=\color{ink40}\itshape,
+  morecomment=[l]{\#},
+}
+\newtcblisting{shell}{
+  listing only, listing style=shellstyle,
+  colback=shade, colframe=ink15, boxrule=0.6pt, arc=2pt,
+  left=2mm, right=2mm, top=1.4mm, bottom=1.4mm,
+  before skip=1.6ex, after skip=1.6ex,
+}
+\newtcblisting{pycode}{
+  listing only,
+  listing style=shellstyle,
+  colback=shade, colframe=ink15, boxrule=0.6pt, arc=2pt,
+  left=2mm, right=2mm, top=1.4mm, bottom=1.4mm,
+  before skip=1.6ex, after skip=1.6ex,
+}
+
+% ── callout boxes ──────────────────────────────────────────────────────────
+\newtcolorbox{provebox}[1][]{
+  enhanced, breakable,
+  colback=white, colframe=okgreen, boxrule=0pt,
+  leftrule=2.4pt, arc=0pt, outer arc=0pt,
+  left=3.5mm, right=3mm, top=2mm, bottom=2mm,
+  borderline west={2.4pt}{0pt}{okgreen},
+  title=\relax, #1
+}
+\newtcolorbox{warnbox}[1][]{
+  enhanced, breakable,
+  colback=warnamber!5, colframe=warnamber!45, boxrule=0.7pt, arc=2pt,
+  left=3mm, right=3mm, top=2mm, bottom=2mm, #1
+}
+\newtcolorbox{dangerbox}[1][]{
+  enhanced, breakable,
+  colback=dangerred!5, colframe=dangerred!55, boxrule=0.9pt, arc=2pt,
+  left=3mm, right=3mm, top=2mm, bottom=2mm, #1
+}
+
+\newcommand{\provetitle}{\textbf{\sffamily\color{okgreen}Prove it}\par\vspace{0.6ex}}
+\newcommand{\warntitle}[1]{\textbf{\sffamily\color{warnamber}#1}\par\vspace{0.6ex}}
+\newcommand{\dangertitle}[1]{\textbf{\sffamily\color{dangerred}#1}\par\vspace{0.6ex}}
+
+% Caption styling
+\usepackage[font={small,sf},labelfont={bf,color=ink70},textfont={color=ink70}]{caption}
+
+% ── table helpers ──────────────────────────────────────────────────────────
+\renewcommand{\arraystretch}{1.25}
+\newcommand{\hdr}[1]{\textbf{\sffamily\small #1}}
+\newcommand{\chk}{$\square$~}
+
+% Colour swatch used in wire tables: a short length of the wire's own colour.
+\newcommand{\swatch}[1]{\tikz[baseline=-0.5ex]{\draw[#1,line width=2.4pt,line cap=round] (0,0)--(0.5,0);}}
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  THE 40-PIN HEADER
+% ═══════════════════════════════════════════════════════════════════════════
+% One macro, one data table. Every stage figure that shows a pin takes its
+% colour from the same style list, so a pin is the same colour wherever it
+% appears in the guide.
+\tikzset{
+  padbase/.style={rounded corners=1pt, draw=ink40, line width=0.5pt,
+                  minimum width=6.4mm, minimum height=3.9mm, inner sep=0pt,
+                  font=\sffamily\scriptsize},
+  pfree/.style={padbase, fill=white, text=ink40},
+  pavoid/.style={padbase, fill=avoid!18, text=ink40, draw=avoid},
+  ppwr33/.style={padbase, fill=p33!18, text=p33!80!black, draw=p33!60},
+  ppwr5/.style={padbase, fill=p5!14, text=p5!80!black, draw=p5!55},
+  puse33/.style={padbase, fill=p33, text=white, draw=p33!70!black, line width=0.9pt},
+  pusertc/.style={padbase, fill=rtcc, text=white, draw=rtcc!70!black, line width=0.9pt},
+  puseservo/.style={padbase, fill=servo, text=white, draw=servo!70!black, line width=0.9pt},
+  pusebuzz/.style={padbase, fill=buzzc, text=white, draw=buzzc!70!black, line width=0.9pt},
+  pusebtn/.style={padbase, fill=btnc, text=white, draw=btnc!70!black, line width=0.9pt},
+  pusedisp/.style={padbase, fill=dispc, text=white, draw=dispc!70!black, line width=0.9pt},
+  pusegnd/.style={padbase, fill=gndc, text=white, draw=gndc, line width=0.9pt},
+  plabel/.style={font=\sffamily\scriptsize, text=ink70, inner sep=1pt},
+}
+
+% \headerfigure{row spacing}  — draws the whole 40-pin header, top to bottom.
+\newcommand{\drawheader}[1][0.62]{%
+  \def\rowsep{#1}
+  % board outline behind the pins
+  \begin{scope}[on background layer]
+    \fill[shade, rounded corners=2pt]
+      (-4.9,0.62) rectangle (4.9,{-\rowsep*20-0.28});
+  \end{scope}
+  \node[font=\sffamily\bfseries\small, text=ink] at (0,0.36)
+    {Raspberry Pi 3B \textendash{} 40-pin header};
+  \node[font=\sffamily\scriptsize, text=ink70] at (0,0.06)
+    {pin 1 is the corner nearest the microSD / power end};
+  \foreach \r/\lb/\ls/\rb/\rs in {%
+      1/{3V3}/{puse33}/{5V}/{ppwr5},
+      2/{GPIO2 \textperiodcentered{} SDA}/{pusedisp}/{5V}/{ppwr5},
+      3/{GPIO3 \textperiodcentered{} SCL}/{pusedisp}/{GND}/{pusegnd},
+      4/{GPIO4}/{pfree}/{GPIO14 TXD}/{pavoid},
+      5/{GND}/{pusegnd}/{GPIO15 RXD}/{pavoid},
+      6/{GPIO17}/{puseservo}/{GPIO18 \textperiodcentered{} RST}/{pusedisp},
+      7/{GPIO27}/{puseservo}/{GND}/{pusegnd},
+      8/{GPIO22}/{puseservo}/{GPIO23}/{pusebuzz},
+      9/{3V3}/{ppwr33}/{GPIO24}/{pusebtn},
+      10/{GPIO10 \textperiodcentered{} MOSI}/{pusedisp}/{GND}/{pusegnd},
+      11/{GPIO9 MISO}/{pavoid}/{GPIO25 \textperiodcentered{} DC}/{pusedisp},
+      12/{GPIO11 \textperiodcentered{} SCK}/{pusedisp}/{GPIO8 \textperiodcentered{} CS}/{pusedisp},
+      13/{GND}/{pusegnd}/{GPIO7 CE1}/{pavoid},
+      14/{GPIO0 ID}/{pavoid}/{GPIO1 ID}/{pavoid},
+      15/{GPIO5}/{puseservo}/{GND}/{pfree},
+      16/{GPIO6}/{puseservo}/{GPIO12}/{pfree},
+      17/{GPIO13}/{puseservo}/{GND}/{pfree},
+      18/{GPIO19}/{puseservo}/{GPIO16 \textperiodcentered{} SCLK}/{pusertc},
+      19/{GPIO26}/{puseservo}/{GPIO20 \textperiodcentered{} I/O}/{pusertc},
+      20/{GND}/{pusegnd}/{GPIO21 \textperiodcentered{} CE}/{pusertc}%
+    }{%
+    \pgfmathtruncatemacro{\lp}{2*\r-1}%
+    \pgfmathtruncatemacro{\rp}{2*\r}%
+    \pgfmathsetmacro{\yy}{-\rowsep*\r}%
+    \node[\ls] (L\lp) at (-0.62,\yy) {\lp};
+    \node[\rs] (R\rp) at (0.62,\yy) {\rp};
+    \node[plabel, anchor=east] at (-1.05,\yy) {\lb};
+    \node[plabel, anchor=west] at (1.05,\yy) {\rb};
+  }%
+}
+
+% A compact legend for the header figure.
+\newcommand{\headerlegend}{%
+  \begin{tikzpicture}[every node/.style={font=\sffamily\scriptsize,text=ink70}]
+    \def\sw##1##2##3{\node[##1,minimum width=4.6mm,minimum height=3.2mm] at (##2,0) {};
+                     \node[anchor=west] at (##2+0.28,0) {##3};}
+    \sw{puseservo}{0}{servo signal}
+    \sw{pusedisp}{2.9}{screen}
+    \sw{pusebuzz}{5.6}{buzzer}
+    \sw{pusebtn}{7.4}{button}
+    \begin{scope}[yshift=-0.52cm]
+      \sw{pusertc}{0}{RTC 3-wire}
+      \sw{puse33}{2.9}{3V3}
+      \sw{pusegnd}{5.6}{ground}
+      \sw{pavoid}{7.4}{do not use}
+    \end{scope}
+  \end{tikzpicture}%
+}
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  WIRING-FIGURE TOOLKIT  —  used by every stage
+% ═══════════════════════════════════════════════════════════════════════════
+\tikzset{
+  modbox/.style={draw=ink70, line width=0.8pt, fill=white, rounded corners=2pt,
+                 minimum width=30mm, minimum height=14mm, align=center,
+                 font=\sffamily\small},
+  modtitle/.style={font=\sffamily\bfseries\small, text=ink},
+  term/.style={circle, draw=ink70, fill=white, line width=0.5pt,
+               inner sep=0.6pt, minimum size=2.6mm, font=\sffamily\tiny},
+  wire/.style={line width=1.5pt, line cap=round, rounded corners=2pt},
+  compbox/.style={draw=ink40, line width=0.6pt, fill=shade, rounded corners=1.5pt,
+                  font=\sffamily\scriptsize, inner sep=2.4pt, align=center},
+}
+
+\renewcommand{\sectionmark}[1]{\markboth{#1}{#1}}
+
+% A single header pad in a stage figure. Named H<pin>, so wires can say (H11).
+% #1 x  #2 y  #3 physical pin  #4 pad style  #5 label, placed to the right
+\newcommand{\hpin}[5]{%
+  \node[#4] (H#3) at (#1,#2) {#3};
+  \node[plabel, anchor=west] at ({#1+0.42},#2) {#5};
+}
+
+% A frame with a caption behind a strip of pads.
+\newcommand{\hframe}[4]{% #1 x #2 ytop #3 ybottom #4 caption
+  \begin{scope}[on background layer]
+    \fill[shade, rounded corners=2pt]
+      ({#1-0.55},{#2+0.34}) rectangle ({#1+2.5},{#3-0.28});
+  \end{scope}
+  \node[font=\sffamily\scriptsize\bfseries, text=ink40, anchor=west]
+       at ({#1-0.5},{#2+0.62}) {#4};
+}
+
+
+% resistor drawn inline on a wire between two coordinates
+\newcommand{\inlineres}[4]{% #1 colour #2 from #3 to #4 label
+  \coordinate (rA) at ($(#2)!0.38!(#3)$);
+  \coordinate (rB) at ($(#2)!0.62!(#3)$);
+  \draw[wire,#1] (#2) -- (rA);
+  \draw[wire,#1] (rB) -- (#3);
+  \draw[ink70,line width=0.7pt,fill=white] ($(rA)!0.5!(rB)$) ellipse (0.34 and 0.13);
+  \node[font=\sffamily\tiny,text=ink] at ($(rA)!0.5!(rB)$) {#4};
+}

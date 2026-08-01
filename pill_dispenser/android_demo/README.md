@@ -28,7 +28,7 @@ four, sharing no code:
 
 | | where |
 |---|---|
-| Python | `rpi_firmware/snapcare_dispenser/{provisioning,envelope}.py` — the device |
+| Python | `firmware/snapcare_dispenser/{provisioning,envelope}.py` — the device |
 | JavaScript | `cloud_relay/snapcare_relay/web/lab.html` — the reference page |
 | TypeScript | `../webapp_kit/src/` — for the web app |
 | Kotlin | [`Pairing.kt`](app/src/main/java/app/snapcare/dispenserdemo/Pairing.kt) — here |

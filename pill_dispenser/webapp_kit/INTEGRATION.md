@@ -185,7 +185,7 @@ a screen:
 | `status.clock.source` | `ntp` / `rtc` / `phone` — what vouched for the time |
 | `status.nextDose` | `{ tray, time }` or null |
 | `status.awaitingRelease` | **doses due right now, still in the hopper.** Non-empty means show the release button and push a notification; stop offering it at each entry's `expiresAt` |
-| `status.trays`, `status.trayCount` | ask rather than assume; `MAX_TRAYS` in `dispenser.ts` is 10 and the firmware handles 8 |
+| `status.trays`, `status.trayCount` | ask rather than assume. `MAX_TRAYS` is 8 everywhere — `dispenser.ts`, this kit and `sc1.MAX_SLOTS` — but the machine in front of you usually has fewer fitted |
 | `status.notes` | what the loaded schedule *lost* in transit. Show these verbatim |
 | `status.servoSteady` | false means the servos twitch and hum — a real complaint if it is in a bedroom |
 | `status.indicators` | which of the ring and buzzer are actually fitted |
@@ -367,5 +367,5 @@ nothing in any log. The vectors are the only thing that catches it.
   any running relay. Read this before writing the screen.
 - **`android_demo/`** — the same flows as a native app, if you want to see the
   long poll driven from something that is not a browser.
-- **`rpi_firmware/snapcare_dispenser/web/app.html`** — the device's own console,
+- **`firmware/snapcare_dispenser/web/app.html`** — the device's own console,
   which is a working implementation of every LAN endpoint in about 300 lines.

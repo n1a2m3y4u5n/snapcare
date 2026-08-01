@@ -29,8 +29,20 @@ const ATTR_SEP = '-';
 
 /** 1–8. Above that the device refuses the schedule by name. */
 export const MAX_TRAYS = 8;
-/** Times per tray. */
-export const MAX_TIMES = 8;
+/**
+ * Times per tray.
+ *
+ * **Six, because `sc1.py` in the firmware is six.** This was 8, and the
+ * mismatch was silent in the worst way: a seven-times-a-day course passed
+ * `normaliseSlots`, encoded, was stored by the relay and returned a revision —
+ * and then the device's `decode_weekly` returned null and `apply_payload`
+ * refused **the whole schedule**, while the app showed a success. Every other
+ * tray in that payload stopped being dispensed too.
+ *
+ * This file's promise is that a schedule the device will refuse fails here
+ * first, where somebody is still looking at the screen that sent it.
+ */
+export const MAX_TIMES = 6;
 /** Course length is three digits, so this is the ceiling. 0 means ongoing. */
 export const MAX_DURATION_DAYS = 999;
 
