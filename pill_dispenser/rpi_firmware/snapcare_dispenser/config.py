@@ -291,6 +291,25 @@ RTC_I2C_ADDRESS = 0x68
 #: was written, so no correct clock can read it.
 CLOCK_SANITY_EPOCH = "2026-01-01T00:00:00"
 
+#: How often to write the current good time back into the clock chip.
+#:
+#: The chip is only ever *read* after a power cut, which is exactly when nothing
+#: is left to correct it — so whatever it was last told has to be right. Two
+#: things make that not automatic:
+#:
+#:   **Drift.** The DS1302's crystal is uncompensated: a few minutes a month,
+#:   and more as the room warms and cools. A chip seeded once at commissioning
+#:   and consulted a year later is a chip that is minutes out, silently.
+#:
+#:   **A chip that was never seeded.** A cell fitted after the fact, a module
+#:   wired up while the device was already running, a single failed write. The
+#:   periodic pass is what rescues those without anybody noticing they happened.
+#:
+#: Six hours: often enough that drift never accumulates past a few seconds,
+#: rare enough to be nothing on a device that runs for years. Set to 0 to write
+#: the chip only when the clock is first vouched for.
+RTC_RESEED_S = int(os.environ.get("SNAPCARE_RTC_RESEED_S", str(6 * 60 * 60)))
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  NETWORK

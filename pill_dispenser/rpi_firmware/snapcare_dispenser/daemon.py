@@ -42,6 +42,7 @@ import logging
 import signal
 import sys
 import threading
+import time
 
 from . import config, provisioning, qr
 from .clock import Clock
@@ -97,6 +98,49 @@ class Daemon:
         self._stop = threading.Event()
         self._server = None
         self._ntp_trusted = False
+        #: When the clock chip was last written. Seeded at 0 so the first
+        #: tick with a trustworthy clock writes it, which is what rescues a
+        #: device whose RTC has never been vouched for.
+        self._last_seeded = 0.0
+
+    # ── keeping the clock chip fed ──────────────────────────────────────────
+
+    def _seed_rtc(self, why: str) -> None:
+        """Write the current trusted time into the chip, and say what happened."""
+        if self.dispenser.clock.seed_rtc():
+            log.info("clock chip seeded (%s) — it can now carry the time "
+                     "across a power cut", why)
+        else:
+            # Not an error on a build with no RTC, and `rtc.vouch` has already
+            # logged the reason when there is one. Recorded at debug so a device
+            # that is quietly failing to seed can still be diagnosed.
+            log.debug("clock chip not seeded (%s)", why)
+        self._last_seeded = time.monotonic()
+
+    def _reseed_rtc_if_due(self) -> None:
+        """Push the good time back down every `RTC_RESEED_S`, while there is one.
+
+        Two jobs. It corrects the DS1302's drift — an uncompensated crystal is
+        a few minutes a month, and the chip is only ever consulted after a power
+        cut, when nothing is left to correct it. And it is the self-heal for a
+        chip that could not be seeded earlier: a cell fitted after the fact, a
+        module wired up while the device was already running, a write that
+        failed once.
+
+        Only while something trustworthy is vouching, and never from the chip's
+        own reading — seeding it from itself would launder drift into a fresh
+        token that claims the drifted time is correct.
+        """
+        if not config.RTC_RESEED_S:
+            return
+        if time.monotonic() - self._last_seeded < config.RTC_RESEED_S:
+            return
+        if self.dispenser.clock.source not in ("ntp", "phone"):
+            # `rtc` is deliberately excluded: it is the chip vouching for
+            # itself, and re-seeding from that is circular.
+            self._last_seeded = time.monotonic()
+            return
+        self._seed_rtc("periodic")
 
     # ── the loop ────────────────────────────────────────────────────────────
 
@@ -135,6 +179,15 @@ class Daemon:
                 if not self._ntp_trusted and self.dispenser.clock.trust_ntp():
                     self._ntp_trusted = True
                     log.info("clock synchronised from the network")
+                    # And write it down. This is what the coin cell is for, and
+                    # before this line existed nothing on a networked device
+                    # ever ran it: the chip was written only by a phone sending
+                    # an SC1*C* code, which a device with working internet never
+                    # receives. Months of correct operation, and the first power
+                    # cut that outlasted the router left the tray shut.
+                    self._seed_rtc("NTP synchronised")
+
+                self._reseed_rtc_if_due()
 
                 trusted = self.dispenser.clock.trusted
                 if trusted and not last_seen_trusted:

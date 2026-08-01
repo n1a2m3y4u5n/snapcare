@@ -11,7 +11,9 @@ from datetime import datetime
 
 import pytest
 
-from snapcare_dispenser import config, indicators, rtc
+import types
+
+from snapcare_dispenser import config, indicators, rtc, sc1
 from snapcare_dispenser.clock import Clock
 from snapcare_dispenser.indicators import (
     AMBER, BLUE, CYAN, GREEN, OFF, VIOLET, FittedIndicator, LogIndicator,
@@ -307,6 +309,119 @@ def test_the_status_is_cached(monkeypatch):
     for _ in range(20):
         rtc.read_status()
     assert len(calls) == 1, "the I2C bus was opened on every tick"
+
+
+# ── seeding the clock chip ──────────────────────────────────────────────────
+#
+# This is the half of the RTC that nothing used to test, and the bug it hid was
+# the whole point of fitting the part: the chip was never written, so it never
+# vouched, and a device that lost power came back refusing to dispense.
+
+class SpyRtc:
+    """Records what was written to the chip, without there being a chip."""
+
+    def __init__(self):
+        self.vouched: list[datetime] = []
+
+    def __call__(self, when):
+        self.vouched.append(when)
+        return True
+
+
+@pytest.fixture
+def spy_vouch(monkeypatch):
+    spy = SpyRtc()
+    monkeypatch.setattr(rtc, "vouch", spy)
+    return spy
+
+
+def test_setting_the_clock_writes_the_chip_even_when_ntp_owns_the_system_clock(
+        monkeypatch, spy_vouch):
+    """The regression this test exists for.
+
+    `timedatectl set-time` is refused outright whenever NTP is enabled —
+    "Automatic time synchronization is enabled", non-zero exit — and NTP is
+    enabled on every device that has been through Stage 0. The two writes used
+    to be chained with `and`, so the refusal short-circuited the RTC write and
+    the chip was never told anything on a healthy networked build. Months of
+    correct operation, and the first power cut that outlasted the router left
+    the tray shut.
+    """
+    monkeypatch.setattr("snapcare_dispenser.clock._try_set_system_clock",
+                        lambda _target: False)          # exactly what NTP causes
+
+    clock = Clock()
+    clock.accept(sc1.ClockSet.from_datetime(datetime(2026, 8, 1, 9, 15)), source="phone")
+
+    assert spy_vouch.vouched == [datetime(2026, 8, 1, 9, 15)], (
+        "the chip must be written whether or not the system clock could be set"
+    )
+
+
+def test_seeding_refuses_a_time_no_correct_clock_could_read(monkeypatch, spy_vouch):
+    """Worse than leaving the chip unvouched: the token would assert that the
+    nonsense is trustworthy, and it would survive every future boot."""
+    clock = Clock(source=lambda: datetime(2019, 1, 1, 12, 0))
+    assert clock.seed_rtc() is False
+    assert spy_vouch.vouched == []
+
+
+def test_seeding_is_skipped_on_a_build_with_no_rtc(monkeypatch, spy_vouch):
+    monkeypatch.setattr(config, "USE_RTC", False)
+    assert Clock().seed_rtc() is False
+    assert spy_vouch.vouched == []
+
+
+def test_the_daemon_seeds_the_chip_when_ntp_arrives(monkeypatch, spy_vouch, tmp_path):
+    """The case that was missed entirely.
+
+    A networked device corrects itself from NTP within seconds of booting and
+    then never receives an `SC1*C*` code, because it has no need of one. Nothing
+    wrote that good time down, so the coin cell was carrying nothing.
+    """
+    from snapcare_dispenser import daemon as daemon_module
+
+    built = daemon_module.Daemon.__new__(daemon_module.Daemon)   # no hardware
+    built.dispenser = types.SimpleNamespace(clock=Clock())
+    built._last_seeded = 0.0
+
+    built._seed_rtc("NTP synchronised")
+    assert len(spy_vouch.vouched) == 1
+    assert built._last_seeded > 0
+
+
+def test_the_chip_is_not_reseeded_from_its_own_reading(monkeypatch, spy_vouch):
+    """Circular: the chip vouching for itself, laundered into a fresh token that
+    claims the drifted time is correct."""
+    from snapcare_dispenser import daemon as daemon_module
+
+    built = daemon_module.Daemon.__new__(daemon_module.Daemon)
+    clock = Clock()
+    monkeypatch.setattr(type(clock), "source", property(lambda _self: "rtc"))
+    built.dispenser = types.SimpleNamespace(clock=clock)
+    built._last_seeded = 0.0
+    monkeypatch.setattr(config, "RTC_RESEED_S", 1)
+
+    built._reseed_rtc_if_due()
+    assert spy_vouch.vouched == [], "an RTC-vouched clock must not re-seed the RTC"
+
+
+def test_the_chip_is_reseeded_periodically_while_ntp_is_vouching(monkeypatch, spy_vouch):
+    """Drift, and the self-heal for a chip that could not be seeded earlier."""
+    from snapcare_dispenser import daemon as daemon_module
+
+    built = daemon_module.Daemon.__new__(daemon_module.Daemon)
+    clock = Clock()
+    monkeypatch.setattr(type(clock), "source", property(lambda _self: "ntp"))
+    built.dispenser = types.SimpleNamespace(clock=clock)
+    built._last_seeded = 0.0
+    monkeypatch.setattr(config, "RTC_RESEED_S", 1)
+
+    built._reseed_rtc_if_due()
+    assert len(spy_vouch.vouched) == 1
+
+    built._reseed_rtc_if_due()          # immediately again
+    assert len(spy_vouch.vouched) == 1, "the interval must actually bound this"
 
 
 # ── the RTC and the clock together ──────────────────────────────────────────

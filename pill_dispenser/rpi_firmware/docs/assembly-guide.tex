@@ -645,12 +645,28 @@ curl -s http://localhost/api/status     # the "clock" object: trusted, source, r
 curl -X POST http://localhost/api/clock \
      -H 'Content-Type: application/json' -d '{"iso":"2026-07-29T09:15:00"}'
 \end{shell}
-Then prove the only thing the chip is there for. Unplug the Pi, leave it a
-minute, and bring it back with the network unplugged: \code{trusted} must still
-be true and \code{source} must read \code{rtc}. A module that reads back the
-time you just set, but loses it across a power cut, has a dead cell or a cell
-holder that is not making contact.
+First check the chip was actually written. \code{clock.rtc.detail} must not say
+``no record of ever having been set'' \textemdash{} if it does, the write did
+not reach the chip and there is no point going on to the power cut.
+
+\vspace{1ex}
+Then prove the only thing the chip is there for. \textbf{Pull the plug}, leave
+it a minute, and bring it back with the network unplugged: \code{trusted} must
+still be true and \code{source} must read \code{rtc}. A module that reads back
+the time you just set, but loses it across a power cut, has a dead cell or a
+cell holder that is not making contact.
 \end{provebox}
+
+\begin{warnbox}
+\warntitle{\code{sudo shutdown now} does not test the coin cell}
+It halts the operating system and leaves the board powered: the 5\,V and 3.3\,V
+rails stay live, so the DS1302 keeps running on \emph{your} 3.3\,V from pin 17
+and never falls back to its cell. The test passes and proves nothing.
+
+\vspace{1ex}
+Pull the power lead out. That is the only thing that puts the chip on its
+battery, which is the entire question this stage is asking.
+\end{warnbox}
 
 \begin{warnbox}
 \warntitle{This chip cannot answer the question the firmware asks}
@@ -1731,6 +1747,8 @@ Ring is cyan and stays cyan & The device is on its own setup hotspot waiting to 
 \midrule
 \multicolumn{2}{@{}l}{\textbf{\sffamily Clock and schedule}}\\
 Clock right at shutdown, wrong at boot & The cell is dead or not seated. \code{clock.rtc.detail} distinguishes ``never been set'' from ``the cell has been flat since'' \\
+\code{clock.rtc} says ``no record of ever having been set'', and still does after a reboot & The chip has never been written. Check \code{journalctl -u snapcare-dispenser | grep -i "clock chip"} \textemdash{} a seed is logged whenever NTP first synchronises and every \code{RTC\_RESEED\_S} after that. If nothing appears, no trustworthy clock has been available to write down \\
+The RTC never changes after a \code{shutdown} and a boot & A shutdown leaves the board powered, so the chip never ran on its cell and nothing was being tested. Pull the plug instead \\
 Clock drifts a few minutes a month & Expected \textemdash{} the DS1302's crystal is uncompensated. Leave the device able to reach NTP \\
 A schedule is refused by tray number & This build was told how many trays it has. Raise \code{SNAPCARE\_TRAYS}, or drop it to use all eight \\
 A dose for a tray that was never fitted is never offered, and nothing complains & All eight are accepted by default and an SG90 reports nothing. Set \code{SNAPCARE\_TRAYS} to the number really fitted \\

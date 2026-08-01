@@ -155,18 +155,64 @@ class Clock:
         self._vouched_by = source
         self._vouched_at = target
         log.info("clock set to %s by %s", target.isoformat(timespec="seconds"), source)
-        if _try_set_system_clock(target) and config.USE_RTC:
-            # Push it into the clock chip too, whichever one is fitted, or the
-            # correction lives in RAM alone and the next power cut takes it
-            # away — sending the device back to refusing to dispense.
-            #
-            # `rtc.vouch` is also what records that the chip's time can now be
-            # believed, and it does that *last*: on a DS3231 the OSF is cleared
-            # after the write, on a DS1302 the RAM token is written after the
-            # registers. Either one done first would leave the hardware
-            # asserting, across every future boot, that a time nobody corrected
-            # is trustworthy.
-            rtc.vouch(target)
+
+        # Two independent writes, and they must stay independent.
+        #
+        # These used to be chained — `if _try_set_system_clock(...) and ...` —
+        # which meant the chip was written only when the system clock had been.
+        # That is exactly backwards on the device this firmware runs on:
+        # `timedatectl set-time` is **refused outright whenever NTP is enabled**
+        # ("Automatic time synchronization is enabled", non-zero exit), and NTP
+        # is enabled on every device that has been through Stage 0 of the
+        # assembly guide. So on a healthy networked build the call always
+        # failed, the `and` short-circuited, and the RTC was never written at
+        # all — the token never appeared in its RAM, the chip never vouched, and
+        # the status page said "no record of ever having been set" forever,
+        # across every reboot. The one part that survives a power cut was the
+        # one part that never got written.
+        _try_set_system_clock(target)
+        self.seed_rtc(target)
+
+    def seed_rtc(self, when: datetime | None = None) -> bool:
+        """Write a trusted time into the clock chip, so it survives a power cut.
+
+        This is the *only* thing that makes the RTC worth fitting. Until it
+        runs, the chip holds no token, vouches for nothing, and a device that
+        loses power and comes back without a network refuses to dispense — the
+        precise failure the coin cell was added to prevent.
+
+        It has to be reachable from two directions, which is why it is a method
+        rather than a line inside `accept`:
+
+          **a phone set the clock** — `accept` calls it, for the device that has
+          no internet and was corrected by an `SC1*C*` code;
+
+          **NTP synchronised** — the daemon calls it, and this is the common
+          case that used to be missed entirely. A networked device corrects
+          itself from the network within seconds of booting and then dispenses
+          perfectly for months, and nothing ever wrote that good time down. Pull
+          its plug and its router together and it comes back knowing nothing.
+
+        Returns False when there is no chip, no time worth writing, or the write
+        failed; every one of those is logged and none is fatal.
+        """
+        if not config.USE_RTC:
+            return False
+        target = when if when is not None else self.now()
+        if target < datetime.fromisoformat(config.CLOCK_SANITY_EPOCH):
+            # Refuse to write a time no correct clock could read. Seeding the
+            # chip with nonsense is worse than leaving it unvouched, because the
+            # token would then assert that the nonsense is trustworthy.
+            log.warning("refusing to seed the RTC with %s — it is before this "
+                        "firmware existed", target.isoformat(timespec="seconds"))
+            return False
+
+        # `rtc.vouch` writes the registers first and the acknowledgement last —
+        # the DS3231's OSF cleared after the write, the DS1302's RAM token
+        # written after the registers. Either done the other way round would
+        # leave the hardware asserting, across every future boot, that a time
+        # nobody corrected is trustworthy.
+        return rtc.vouch(target)
 
     def adopt_rtc(self) -> bool:
         """Take the time from the clock chip, for a build the kernel cannot read.
