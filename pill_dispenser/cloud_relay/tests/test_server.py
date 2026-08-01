@@ -111,6 +111,44 @@ def test_a_stale_revision_is_409_with_the_current_one(http):
     assert "4" in body["error"]
 
 
+def test_a_command_goes_in_and_comes_back(http):
+    """The slot that carries a release. Same read, same write, same revision
+    rule as the other two — the relay does not know what a release is, and the
+    whole design is about it not needing to."""
+    status, _, body = http("PUT", f"/v1/devices/{DEVICE}/command",
+                           {"envelope": envelope(1)})
+    assert status == 200 and body["rev"] == 1
+
+    status, _, body = http("GET", f"/v1/devices/{DEVICE}/command?since=0")
+    assert status == 200
+    assert body["envelope"]["ct"] == envelope(1)["ct"]
+
+
+def test_a_command_does_not_disturb_the_schedule(http):
+    """Separate slots because they are different kinds of statement. A tap must
+    never be able to land where the device looks for a prescription."""
+    http("PUT", f"/v1/devices/{DEVICE}/desired", envelope(7))
+    http("PUT", f"/v1/devices/{DEVICE}/command", envelope(1))
+
+    status, _, body = http("GET", f"/v1/devices/{DEVICE}")
+    assert body["desired"]["rev"] == 7
+    assert body["command"]["rev"] == 1
+    assert http("GET", f"/v1/devices/{DEVICE}/desired?since=7")[0] == 204
+
+
+def test_a_stale_command_revision_is_refused(http):
+    """The relay's half of the replay guard. The device checks again against its
+    own SD card, because this one is about two phones and that one is about a
+    power cut."""
+    http("PUT", f"/v1/devices/{DEVICE}/command", envelope(1))
+    status, _, body = http("PUT", f"/v1/devices/{DEVICE}/command", envelope(1))
+    assert status == 409
+
+
+def test_an_unknown_slot_is_not_routed(http):
+    assert http("PUT", f"/v1/devices/{DEVICE}/wishlist", envelope(1))[0] == 404
+
+
 def test_the_metadata_endpoint_carries_no_ciphertext(http):
     """It is what a status screen polls. There is no reason for it to move a
     payload around, and every reason not to."""

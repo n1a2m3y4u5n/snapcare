@@ -8,18 +8,28 @@ same WiFi.
    web app / the lab                                       dispenser
         │                                                      │
         │  PUT  /desired    (sealed)          GET /desired ─────┤ held open,
-        ▼                                     ◄────────────     │ answered the
-   ┌─────────────────────────────────────────────────────┐      │ instant the
-   │  relay — stores two envelopes per device            │      │ app writes
-   │  and cannot open either of them                     │      │
+        │  PUT  /command    (sealed)          GET /command ─────┤ answered the
+        ▼                                     ◄────────────     │ instant the
+   ┌─────────────────────────────────────────────────────┐      │ app writes
+   │  relay — stores three envelopes per device          │      │
+   │  and cannot open any of them                        │      │
    └─────────────────────────────────────────────────────┘      │
         ▲  GET  /reported                     PUT /reported ────┘
         │     (sealed)                        ◄────────────
 ```
 
 The dispenser is behind a home router, so nothing can connect *to* it. It holds
-one outbound HTTPS connection here instead, and whatever the app has left in
-the mailbox is waiting on the other end of it.
+outbound HTTPS connections here instead, and whatever the app has left in the
+mailbox is waiting on the other end of them.
+
+**Three slots, and the third is not a fourth kind of schedule.** `desired` and
+`reported` are *states*: what the plan should be, and what the device is doing.
+`command` is an *act* — release the dose, now — and it is separate because a
+device reconnecting after an outage should adopt the newest schedule it finds
+and must emphatically **not** carry out a release tapped four hours ago. The
+relay treats all three identically; the distinction is one the two ends make,
+and the device additionally acts on a release only if the dose it names is one
+it is currently offering.
 
 ---
 
@@ -119,7 +129,7 @@ dispenser hears about it.
 
 ## The API
 
-Six endpoints. `Authorization: Bearer <access token>` on all but the first.
+Eight endpoints. `Authorization: Bearer <access token>` on all but the first.
 
 | | |
 |---|---|
@@ -127,9 +137,14 @@ Six endpoints. `Authorization: Bearer <access token>` on all but the first.
 | `GET /v1/devices/<id>` | revisions and timestamps — no ciphertext |
 | `GET /v1/devices/<id>/desired?since=N&wait=S` | the schedule, held open until there is one |
 | `PUT /v1/devices/<id>/desired` | the app writes a sealed schedule |
+| `GET /v1/devices/<id>/command?since=N&wait=S` | a release, held open the same way |
+| `PUT /v1/devices/<id>/command` | the app writes a sealed release |
 | `GET /v1/devices/<id>/reported?since=N&wait=S` | what the device says about itself |
 | `PUT /v1/devices/<id>/reported` | the device writes a sealed report |
 | `DELETE /v1/devices/<id>` | unpair — drops the mailbox |
+
+The three slot endpoints are the same code with a different slot name; nothing
+in this service knows what a release is.
 
 `204` means "you are up to date"; it is the answer to most polls and has no
 body to parse. `409` means the revision was not newer than the stored one, and

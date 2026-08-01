@@ -181,15 +181,19 @@ def test_the_pins_avoid_the_ones_that_cost_hardware():
 
 
 def test_no_servo_collides_with_a_fitted_peripheral():
-    """The ring, the buzzer and the button are on pins too, and a clash there
-    is a servo that twitches every time the buzzer sounds."""
+    """The ring, the buzzer and the RTC are on pins too, and a clash there is a
+    servo that twitches every time the buzzer sounds."""
     pins = set(config.tray_gpio(installed=config.MAX_TRAYS).values())
-    for name, pin in (("LED ring", config.RING_GPIO),
-                      ("buzzer", config.BUZZER_GPIO),
-                      ("button", config.BUTTON_GPIO)):
+    peripherals = (("LED ring", config.RING_GPIO),
+                   ("buzzer", config.BUZZER_GPIO),
+                   ("RTC clock", config.RTC_SCLK_GPIO),
+                   ("RTC data", config.RTC_IO_GPIO),
+                   ("RTC enable", config.RTC_CE_GPIO))
+    for name, pin in peripherals:
         assert pin not in pins, f"the {name} pin is also a servo pin"
 
-    assert len({config.RING_GPIO, config.BUZZER_GPIO, config.BUTTON_GPIO}) == 3
+    assert len({pin for _, pin in peripherals}) == len(peripherals), \
+        "two peripherals are sharing a pin"
 
 
 def test_the_ring_is_on_a_pin_that_can_actually_drive_one():

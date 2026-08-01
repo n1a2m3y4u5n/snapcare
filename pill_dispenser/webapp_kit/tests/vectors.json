@@ -78,7 +78,7 @@
             "time": "0800",
             "taken": true,
             "confirmed": true,
-            "reason": "confirmed",
+            "reason": "released",
             "seq": 7,
             "sc1": "SC1*E*1*0800*T*07"
           }
@@ -89,7 +89,7 @@
         "rev": 3,
         "alg": "A256GCM",
         "iv": "AAECAwQFBgcICQoL",
-        "ct": "nrwixTdEmRsAO1nPnJqsB9MNOIsJZj0VsQjV2ZDLNPv08wqoyWNuYxZJFIVxXrebgeV1ckDt6EBK_fFnBpF-Vjo_IftQF_99WlPQYn966GI97tfdrmkAQ80ugw9m33rG2ayTwLQc_Ffq1a4M7VMW1M8UZR_BKdS7SCJq6Kejb4VVQEHoQmh49u5yhZsU790LScReGvRpbU5fIrDtORBeSx_qcMNQvtoF6u3ZmflGD6WamEOr8prPj6_uX3dNDhnjxUrUVAOU5HtfpIDFz8VoZe-8AEzVdAqRxEEMD5CvnEZmM-fgze1FRX93z8UIFHWevNow8THWns8z_V1_NZyW8Y8R5WlIOScDdC8_sZh-1vbC6hiHi0c1_kyvBTBMBXho0PCq5ocZBGHn8T1sTiv5xAQRw5KPxcMarJlxak6QPBD9eRkTAqWK5u35nE_i"
+        "ct": "nrwixTdEmRsAO1nPnJqsB9MNOIsJZj0VsQjV2ZDLNPv08wqoyWNuYxZJFIVxXrebgeV1ckDt6EBK_fFnBpF-Vjo_IftQF_99WlPQYn966GI97tfdrmkAQ80ugw9m33rG2ayTwLQc_Ffq1a4M7VMW1M8UZR_BKdS7SCJq6Kejb4VVQEHoQmh49u5yhZsU790LScReGvRpbU5fIrDtORBeSx_qcMNQvtoF6u3ZmflGD6WamEOr8prPj6_uX3dNDhnjxUrUVAOU5HtfpIDFz8VoZe-8AEzVdAqRxEEMD5CvnEZmM-fgze1FRX93z8UIFHWevNow8THWns8z_V1_NZyW8Y8R5WlIOScDdC8_sZh-x_zA6RCGg0Zz8EL-EyQfHXVz3qG6tJQBHBD3gyYDITDi3gwZw4jxu9kducZRSrp9zi5EKV996ydZEwuM9zw"
       }
     },
     "mustNotOpen": [

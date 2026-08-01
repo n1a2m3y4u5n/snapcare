@@ -44,7 +44,6 @@ import sys
 import threading
 
 from . import config, provisioning, qr
-from .button import ConfirmButton
 from .clock import Clock
 from .cloud import CloudLink
 from .device import Dispenser
@@ -70,17 +69,19 @@ class Daemon:
             store=self.store, servos=self.servos, clock=Clock(),
             indicator=LogIndicator() if headless else make_indicator(),
         )
-        # The button and the web page's confirm call the same method, so a
-        # press and a tap are indistinguishable to everything downstream.
-        self.button = None if headless else ConfirmButton(self._confirm)
         # Constructed even when it will not run, so that the status page can
         # say *why* — "no relay configured" is a different thing to explain
         # than "cannot reach the relay", and a None here would collapse them.
         self.cloud = CloudLink(self.dispenser, self.identity,
                                relay_url=relay_url, enabled=cloud)
-        # Every recorded dose goes up promptly, whichever of the five things
+        # Every recorded dose goes up promptly, whichever of the four things
         # that can cause one caused it. See `Dispenser.on_event`.
         self.dispenser.on_event = lambda _record: self.cloud.nudge()
+        # And so does a dose that has only just become *due*. This is the one
+        # that carries the release model: the app cannot offer a button for a
+        # dose it has not heard about, so the report goes up when the ring goes
+        # green rather than at the next heartbeat five minutes later.
+        self.dispenser.on_change = self.cloud.nudge
         # Which mode the radio is in, and the whole of the join flow. Given the
         # indicator so that the room can say "I am not on a network yet", and
         # given the cloud link so that coming back onto the WiFi collapses a
@@ -97,18 +98,6 @@ class Daemon:
         self._server = None
         self._ntp_trusted = False
 
-    def _confirm(self) -> None:
-        """Somebody pressed the button.
-
-        A press with nothing waiting records nothing — `confirm_taken` returns
-        None — which is the right reading of a curious visitor pressing it.
-        """
-        record = self.dispenser.confirm_taken()
-        if record:
-            log.info("tray %d confirmed taken by button press", record["tray"])
-        else:
-            log.debug("button pressed with no dose waiting")
-
     # ── the loop ────────────────────────────────────────────────────────────
 
     def run(self) -> int:
@@ -121,8 +110,7 @@ class Daemon:
         self.dispenser.clock.adopt_rtc()
 
         self._server = serve_forever(self.dispenser, self.port, self.identity,
-                                     cloud=self.cloud, network=self.network,
-                                     button=self.button)
+                                     cloud=self.cloud, network=self.network)
         self.network.start()
 
         # Not conditional on the network being up, and no longer even ordered
@@ -155,7 +143,7 @@ class Daemon:
 
                 for event in self.dispenser.tick():
                     log.info("tray %d %s at %s (%s)", event["tray"],
-                             "dispensed" if event["taken"] else "MISSED",
+                             "released" if event["taken"] else "MISSED",
                              event["time"], event["sc1"])
 
                 # Second, and cheap: it decides and dispatches, never waits.
@@ -184,8 +172,6 @@ class Daemon:
     def close(self) -> None:
         self.cloud.stop()
         self.network.close()
-        if self.button:
-            self.button.close()
         if self._server:
             self._server.shutdown()
             self._server.server_close()
@@ -207,7 +193,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-wifi", action="store_true",
                         help="do not manage the network — for development on a laptop")
     parser.add_argument("--headless", action="store_true",
-                        help="no LED ring, buzzer or button — log what they would have done")
+                        help="no LED ring or buzzer — log what they would have done")
     parser.add_argument("--relay-url", default=None, metavar="URL",
                         help="cloud relay to sync schedules through "
                              f"(default {config.CLOUD_RELAY_URL or 'none — LAN only'})")

@@ -1,14 +1,28 @@
 """The mailboxes, and the waiting that makes a poll feel like a push.
 
-One mailbox per device, two slots in each:
+One mailbox per device, three slots in each:
 
     desired    what the app wants the dispenser to be doing   (app writes, device reads)
     reported   what the dispenser says it is doing            (device writes, app reads)
+    command    do this one thing, now                         (app writes, device reads)
 
-Both slots hold an opaque envelope. This module never looks inside one and has
-no key that would let it — see `snapcare_dispenser/envelope.py` for what is in
-there and why the relay is kept out of it. What this file *does* care about is
-the revision number, because "is there anything newer than revision 6" is the
+`desired` and `command` are both written by the app and read by the device, and
+they are separate slots because they are different kinds of statement. `desired`
+is a *state*: the schedule, which stays true until it is edited, and which a
+device rejoining after a week should adopt. `command` is an *act*: release the
+08:00 dose, which was true for one hour on one morning.
+
+Collapsing them would break in exactly one direction, and it is the dangerous
+one. A device that was offline over lunch reconnects, finds the newest thing in
+the box, and applies it — which is correct for a schedule and is a pill dropped
+into an empty room for a release. Keeping them apart lets the device treat each
+as what it is; see `cloud.py`, which additionally requires that a release name a
+dose it is *currently* offering before it moves anything.
+
+All three slots hold an opaque envelope. This module never looks inside one and
+has no key that would let it — see `snapcare_dispenser/envelope.py` for what is
+in there and why the relay is kept out of it. What this file *does* care about
+is the revision number, because "is there anything newer than revision 6" is the
 whole of the protocol.
 
 Revisions, and who assigns them
@@ -52,7 +66,7 @@ from . import config
 
 log = logging.getLogger("relay")
 
-SLOTS = ("desired", "reported")
+SLOTS = ("desired", "reported", "command")
 
 
 class MailboxError(Exception):
@@ -159,10 +173,15 @@ class Device:
             "createdAt": self.created_at,
             "desired": self.slots["desired"].to_meta(),
             "reported": self.slots["reported"].to_meta(),
-            # Both are things the *device* does, so between them they are the
-            # honest answer to "is it still there" — derived from what actually
-            # happened rather than from a client claiming to be a dispenser.
+            "command": self.slots["command"].to_meta(),
+            # All three are things the *device* does, so between them they are
+            # the honest answer to "is it still there" — derived from what
+            # actually happened rather than from a client claiming to be a
+            # dispenser. The command slot's `readAt` is the sharpest of them:
+            # the device parks a poll on it continuously, so a stale one means
+            # a release tapped now would not arrive.
             "deviceLastSeen": max(self.slots["desired"].read_at,
+                                  self.slots["command"].read_at,
                                   self.slots["reported"].updated_at) or "",
         }
 

@@ -24,13 +24,14 @@
       <dt>Trays → GPIO</dt><dd id="pins" class="small">…</dd>
       <dt>Fitted</dt><dd id="fitted" class="small">…</dd>
       <dt>Next dose</dt><dd id="next">…</dd>
+      <dt>Waiting now</dt><dd id="waiting">…</dd>
       <dt>Loaded plan</dt><dd id="payload"><code>—</code></dd>
     </dl>
     <div id="notes"></div>
     <div class="row" style="margin-top:.9rem">
       <button class="ghost fit" id="setClock" type="button">Set clock from this browser</button>
-      <button class="ghost fit" id="confirm" type="button">Confirm dose taken</button>
-      <button class="ghost fit" id="dismiss" type="button">Dismiss alert</button>
+      <button class="fit" id="release" type="button">Release the dose</button>
+      <button class="ghost fit" id="dismiss" type="button">Silence the chime</button>
     </div>
     <div class="toast" id="statusMsg"></div>
   </div>
@@ -196,10 +197,19 @@ async function refresh() {
 
   if (!TRAYS.length) { TRAYS = d.trays; buildTrays(); buildEditor(); loadInto(d.slots); }
 
-  const waiting = d.awaitingConfirmation;
-  $('confirm').disabled = !waiting;
-  if (waiting) $('confirm').textContent = `Confirm tray ${waiting.tray} taken`;
-  else $('confirm').textContent = 'Confirm dose taken';
+  // The doses this device is offering right now. Nothing has left a hopper —
+  // that is what the release button is for — so the window each one expires at
+  // is shown beside it. A dose that expires is a dose that never comes out.
+  const waiting = d.awaitingRelease || [];
+  $('waiting').textContent = waiting.length
+    ? waiting.map(w => `tray ${w.tray}, due ${hhmm(w.time)}, until ` +
+                       w.expiresAt.slice(11, 16)).join(' · ')
+    : 'nothing due';
+  $('waiting').className = waiting.length ? 'warn' : '';
+  $('release').disabled = !waiting.length;
+  $('release').textContent = waiting.length > 1
+    ? `Release ${waiting.length} doses`
+    : waiting.length ? `Release tray ${waiting[0].tray}` : 'Release the dose';
 }
 
 const hhmm = (t) => `${t.slice(0, 2)}:${t.slice(2)}`;
@@ -276,15 +286,23 @@ $('setClock').onclick = async () => {
   refresh();
 };
 
-$('confirm').onclick = async () => {
-  const data = await post('/api/confirm');
-  toast($('statusMsg'), data.ok, data.ok ? 'Recorded as taken.' : 'Nothing was waiting.');
+$('release').onclick = async () => {
+  // Deliberately with no body: release everything currently due. Two trays owed
+  // at 08:00 are two medications for 08:00.
+  const data = await post('/api/release');
+  const n = (data.released || []).length;
+  toast($('statusMsg'), data.ok && n > 0,
+        !data.ok ? (data.error || 'Nothing moved.')
+        : n ? `Released tray ${data.released.map(r => r.tray).join(', ')}. Check the cup.`
+            : 'Nothing was waiting.');
   refresh(); loadEvents();
 };
 
 $('dismiss').onclick = async () => {
   const data = await post('/api/dismiss');
-  toast($('statusMsg'), true, data.hadAlert ? 'Alert dismissed.' : 'Nothing was alerting.');
+  toast($('statusMsg'), true, data.hadAlert
+        ? 'Chime silenced — the dose is still waiting and can still be released.'
+        : 'Nothing was alerting.');
   refresh();
 };
 
@@ -458,14 +476,14 @@ async function loadEvents() {
   for (const event of data.events || []) {
     const tr = document.createElement('tr');
     const result = event.taken
-      ? (event.reason === 'manual' ? 'dropped by hand'
-        : event.confirmed ? 'taken (confirmed)' : 'dispensed')
-      : 'missed';
+      ? (event.reason === 'manual' ? 'dropped by hand' : 'released')
+      : (event.reason === 'not-released' ? 'missed — never released'
+        : 'missed — window had closed');
     for (const value of [event.at.replace('T', ' '), event.tray, hhmm(event.time),
                          result, event.sc1]) {
       const td = document.createElement('td');
       td.textContent = value;
-      if (value === 'missed') td.className = 'bad';
+      if (value === result && !event.taken) td.className = 'bad';
       tr.append(td);
     }
     body.append(tr);

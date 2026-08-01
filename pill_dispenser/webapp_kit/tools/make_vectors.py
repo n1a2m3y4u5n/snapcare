@@ -74,7 +74,7 @@ def build() -> dict:
         "network": {"ssid": "Home", "address": "192.168.1.42",
                     "deviceUrl": "http://pilldispenser.local/"},
         "events": [{"at": "2026-08-01T08:00:04", "tray": 1, "time": "0800",
-                    "taken": True, "confirmed": True, "reason": "confirmed",
+                    "taken": True, "confirmed": True, "reason": "released",
                     "seq": 7, "sc1": "SC1*E*1*0800*T*07"}],
     }
 

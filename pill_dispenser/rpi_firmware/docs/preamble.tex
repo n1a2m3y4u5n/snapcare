@@ -42,7 +42,7 @@
 \definecolor{servo}{HTML}{E8710A}      % servo signal
 \definecolor{ringc}{HTML}{9600FF}      % ws2812 data (violet, as the ring)
 \definecolor{buzzc}{HTML}{B26A00}      % buzzer
-\definecolor{btnc}{HTML}{00857A}       % button
+\definecolor{appc}{HTML}{00857A}       % the app, and the release it sends
 \definecolor{rtcc}{HTML}{005AFF}       % rtc 3-wire (CE / I/O / SCLK)
 \definecolor{i2cc}{HTML}{005AFF}       % kept: reused by the cloud figure
 \definecolor{p33}{HTML}{D24B2E}        % 3V3 rail
@@ -212,12 +212,12 @@
     \draw[icn,buzzc] (0.02,0) ++(-55:\r) arc (-55:55:\r);}
 }}
 
-\newcommand{\iconbutton}{\iconbox{%
-  \draw[icn,fill=ink15] (-0.3,-0.3) rectangle (0.3,0.0);
-  \draw[icn,fill=btnc!30] (0,0.0) ellipse (0.16 and 0.07);
-  \draw[icn] (-0.16,0.0) -- (-0.16,0.14) arc (180:0:0.16 and 0.1) -- (0.16,0.0);
-  \draw[icn] (-0.22,-0.3) -- (-0.22,-0.42);
-  \draw[icn] (0.22,-0.3) -- (0.22,-0.42);
+% The phone, which is where the release button lives now.
+\newcommand{\iconphone}{\iconbox{%
+  \draw[icn,fill=white,rounded corners=1.4pt] (-0.24,-0.42) rectangle (0.24,0.42);
+  \draw[icn,fill=appc!18,rounded corners=0.6pt] (-0.18,-0.28) rectangle (0.18,0.32);
+  \draw[icn,fill=appc!55,rounded corners=1pt] (-0.13,-0.18) rectangle (0.13,-0.02);
+  \draw[icn] (-0.07,0.37) -- (0.07,0.37);
 }}
 
 \newcommand{\iconrtc}{\iconbox{%
@@ -275,7 +275,6 @@
   puseservo/.style={padbase, fill=servo, text=white, draw=servo!70!black, line width=0.9pt},
   pusering/.style={padbase, fill=ringc, text=white, draw=ringc!70!black, line width=0.9pt},
   pusebuzz/.style={padbase, fill=buzzc, text=white, draw=buzzc!70!black, line width=0.9pt},
-  pusebtn/.style={padbase, fill=btnc, text=white, draw=btnc!70!black, line width=0.9pt},
   pusegnd/.style={padbase, fill=gndc, text=white, draw=gndc, line width=0.9pt},
   presv/.style={padbase, fill=resv!22, text=resv!45!black, draw=resv!70, dashed},
   plabel/.style={font=\sffamily\scriptsize, text=ink70, inner sep=1pt},
@@ -303,7 +302,7 @@
       6/{GPIO17}/{puseservo}/{GPIO18}/{pusering},
       7/{GPIO27}/{puseservo}/{GND}/{pusegnd},
       8/{GPIO22}/{puseservo}/{GPIO23}/{pusebuzz},
-      9/{3V3}/{ppwr33}/{GPIO24}/{pusebtn},
+      9/{3V3}/{ppwr33}/{GPIO24}/{pfree},
       10/{GPIO10}/{pavoid}/{GND}/{pusegnd},
       11/{GPIO9}/{pavoid}/{GPIO25}/{pfree},
       12/{GPIO11}/{pavoid}/{GPIO8}/{pavoid},
@@ -334,12 +333,12 @@
     \sw{puseservo}{0}{servo signal}
     \sw{pusering}{2.9}{ring data}
     \sw{pusebuzz}{5.3}{buzzer}
-    \sw{pusebtn}{7.3}{button}
-    \sw{pusertc}{9.1}{RTC 3-wire}
+    \sw{pusertc}{7.3}{RTC 3-wire}
     \begin{scope}[yshift=-0.52cm]
       \sw{puse33}{0}{3V3 to RTC}
       \sw{pusegnd}{2.9}{ground, used}
-      \sw{pavoid}{5.3}{deliberately avoided}
+      \sw{pfree}{5.3}{free}
+      \sw{pavoid}{7.3}{deliberately avoided}
     \end{scope}
   \end{tikzpicture}%
 }

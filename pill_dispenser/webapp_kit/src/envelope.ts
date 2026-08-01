@@ -28,7 +28,17 @@ export const ALG = 'A256GCM';
 const IV_BYTES = 12;
 
 /** Which direction a message travels. They are separate slots on the relay. */
-export type Slot = 'desired' | 'reported';
+/**
+ * Which mailbox slot an envelope belongs to. Sealed into the AAD, so an
+ * envelope cannot be moved between them: what the device *reported* replayed
+ * back to it as an instruction is exactly the substitution this prevents.
+ *
+ * `desired` and `command` are both written by the app and read by the device,
+ * and they are separate because they are different kinds of statement — a
+ * schedule is a state that stays true, a release is an act that was true once.
+ * See `cloud.py` in the firmware.
+ */
+export type Slot = 'desired' | 'reported' | 'command';
 
 export interface Envelope {
   v: number;

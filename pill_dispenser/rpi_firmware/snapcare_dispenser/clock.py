@@ -87,6 +87,22 @@ class Clock:
         now = self.now()
         return now.hour * 60 + now.minute
 
+    def at_minutes(self, minutes: int) -> datetime:
+        """Today, at a scheduled minute-of-day. The instant a dose was due.
+
+        The scheduler counts in minutes since midnight and never needs more
+        than that. `device.py` does: a dose offered to the person has a
+        deadline, and a deadline has to be an instant that can be compared with
+        `now()` while the minute count is still ticking underneath it.
+
+        Today, deliberately. A dose is only ever offered on the day it belongs
+        to — the scheduler compares within one day too — so anchoring here
+        keeps a dose picked up late honest: an 08:00 dose noticed at 08:45 has
+        fifteen minutes of its hour left, not a fresh hour.
+        """
+        return self.now().replace(hour=minutes // 60, minute=minutes % 60,
+                                  second=0, microsecond=0)
+
     # ── trusting it ─────────────────────────────────────────────────────────
 
     @property

@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import threading
 import time
+from datetime import datetime
 
 import pytest
 
@@ -264,6 +265,148 @@ def test_an_envelope_that_does_not_open_is_a_failure_not_a_schedule(link, dispen
     assert dispenser.status()["payload"] == ""
 
 
+# ── receiving a tap ─────────────────────────────────────────────────────────
+
+def command(session, identity, rev: int, **body):
+    """Queue a sealed command for the link's next command poll."""
+    sealed = envelope.seal(identity.box_key, identity.device_id, "command", rev, body)
+    session.queue("GET", "/command", 200,
+                  {"ok": True, "rev": rev, "envelope": sealed, "updatedAt": "now"})
+    return sealed
+
+
+def due_dose(dispenser, clock, payload="SC1*W*1:0800-127-000"):
+    """Put the device in the state it is in when the app shows a release button."""
+    dispenser.apply_payload(payload)
+    clock.set(datetime(2026, 7, 29, 8, 0))
+    dispenser.tick()
+    return dispenser
+
+
+def test_a_release_from_the_relay_opens_the_tray(link, dispenser, session,
+                                                 identity, clock):
+    """The path from a push notification tapped on a train."""
+    due_dose(dispenser, clock)
+    command(session, identity, 1, action="release", tray=1, minutes=480)
+
+    link._command_once()
+
+    assert dispenser.servos.drops.get(1, 0) == 1
+    assert dispenser.awaiting_release == []
+    assert dispenser.events()[0]["reason"] == "released"
+    assert link.status()["commandRev"] == 1
+
+
+def test_a_release_with_no_tray_releases_everything_due(link, dispenser, session,
+                                                        identity, clock):
+    """What the app's main-screen button sends."""
+    due_dose(dispenser, clock, "SC1*W*1:0800-127-000/2:0800-127-000")
+    command(session, identity, 1, action="release")
+
+    link._command_once()
+    assert dispenser.servos.drops.get(1, 0) == 1
+    assert dispenser.servos.drops.get(2, 0) == 1
+
+
+def test_a_replayed_release_drops_nothing(link, dispenser, session, identity, clock):
+    """The relay hands back the same envelope, or a broken one repeats itself.
+    Without the revision check that is a second pill from one tap."""
+    due_dose(dispenser, clock)
+    sealed = command(session, identity, 1, action="release", tray=1, minutes=480)
+    link._command_once()
+    assert dispenser.servos.drops.get(1, 0) == 1
+
+    # The same envelope, offered again at the same revision.
+    session.queue("GET", "/command", 200,
+                  {"ok": True, "rev": 1, "envelope": sealed, "updatedAt": "now"})
+    link._command_once()
+    assert dispenser.servos.drops.get(1, 0) == 1, "a replay must not open the tray again"
+
+
+def test_a_release_survives_a_reboot_without_being_collected_twice(dispenser, identity,
+                                                                   session, clock):
+    """The revision is on the SD card for exactly this. A device that reboots
+    inside the window would otherwise collect the command again and, because the
+    dose is still due, drop a second one."""
+    due_dose(dispenser, clock)
+    first = cloud.CloudLink(dispenser, identity, relay_url=RELAY, enabled=True,
+                            session=session)
+    sealed = command(session, identity, 1, action="release", tray=1, minutes=480)
+    first._command_once()
+    assert dispenser.servos.drops.get(1, 0) == 1
+
+    session.queue("GET", "/command", 200,
+                  {"ok": True, "rev": 1, "envelope": sealed, "updatedAt": "now"})
+    restarted = cloud.CloudLink(dispenser, identity, relay_url=RELAY, enabled=True,
+                                session=session)
+    assert restarted._command_rev == 1, "the revision came back off the disk"
+    restarted._command_once()
+    assert dispenser.servos.drops.get(1, 0) == 1
+
+
+def test_a_release_that_arrives_after_the_window_drops_nothing(link, dispenser,
+                                                               session, identity, clock):
+    """The guard that actually matters. A command is an act, not a state: a
+    device that was offline over lunch and reconnects at 3 p.m. must not carry
+    out a release tapped at 08:05. Nothing refuses it — it simply finds no dose
+    waiting, because the device's own sense of what is due is the authority."""
+    due_dose(dispenser, clock)
+    clock.set(datetime(2026, 7, 29, 15, 0))
+    dispenser.tick()                       # the window closes; the dose is missed
+    assert dispenser.awaiting_release == []
+
+    command(session, identity, 1, action="release", tray=1, minutes=480)
+    link._command_once()
+
+    assert dispenser.servos.drops.get(1, 0) == 0, "the tray must have stayed shut"
+    assert dispenser.events()[0]["reason"] == "not-released"
+
+
+def test_a_release_naming_a_dose_that_is_not_due_drops_nothing(link, dispenser,
+                                                               session, identity, clock):
+    due_dose(dispenser, clock)
+    command(session, identity, 1, action="release", tray=1, minutes=1200)
+
+    link._command_once()
+    assert dispenser.servos.drops.get(1, 0) == 0
+    assert [d.tray for d in dispenser.awaiting_release] == [1], "still waiting"
+
+
+def test_an_unknown_command_is_ignored_rather_than_guessed_at(link, dispenser,
+                                                              session, identity, clock):
+    due_dose(dispenser, clock)
+    command(session, identity, 1, action="selfDestruct", tray=1)
+
+    link._command_once()
+    assert dispenser.servos.drops.get(1, 0) == 0
+
+
+def test_a_command_sealed_by_a_stranger_does_not_open(link, dispenser, session,
+                                                      identity, clock):
+    """The same protection the schedule slot has. A relay that could forge a
+    command could empty a hopper into an empty room."""
+    due_dose(dispenser, clock)
+    stranger = provisioning.box_key("AAAAA-AAAAA")
+    sealed = envelope.seal(stranger, provisioning.device_id(CLAIM), "command", 1,
+                           {"action": "release", "tray": 1, "minutes": 480})
+    session.queue("GET", "/command", 200,
+                  {"ok": True, "rev": 1, "envelope": sealed, "updatedAt": "now"})
+
+    with pytest.raises(envelope.SealError):
+        link._command_once()
+    assert dispenser.servos.drops.get(1, 0) == 0
+
+
+def test_the_command_poll_ignores_the_cheap_mode(link, session, monkeypatch):
+    """`CLOUD_IDLE_POLL_S` lets a schedule wait fifteen minutes, which is a fair
+    trade for a hosting bill. A release cannot wait fifteen minutes — its whole
+    window is an hour and somebody is standing there — so this slot is polled
+    continuously whatever that setting says."""
+    monkeypatch.setattr(config, "CLOUD_IDLE_POLL_S", 900)
+    link._command_once()
+    assert f"wait={config.CLOUD_HOLD_S}" in session.last["url"]
+
+
 # ── reporting upwards ───────────────────────────────────────────────────────
 
 def test_the_report_carries_the_status_and_the_dose_log(link, dispenser, session,
@@ -383,25 +526,45 @@ def test_an_unchanged_report_is_not_republished(link, session):
 
 
 def test_every_dose_asks_to_be_published_however_it_was_caused(dispenser, identity,
-                                                               session, daemon_wiring):
-    """There are five ways a dose gets recorded — the scheduler, the button,
-    the web console, the app's `/dropout` link, a confirmation timing out — and
-    the notification hangs off the one place they all pass through.
+                                                               session, daemon_wiring,
+                                                               clock):
+    """There are four ways a dose gets recorded — a release, a dose whose window
+    closed untapped, a dose already past its window when the scheduler found it,
+    and a manual drop at the bench — and the notification hangs off the one
+    place they all pass through.
 
-    Wired per-caller instead, the day somebody adds a sixth is the day that one
+    Wired per-caller instead, the day somebody adds a fifth is the day that one
     is silently never reported, and the symptom is a carer who is simply not
     told about one kind of dose.
     """
     link = daemon_wiring
 
     link._wake_publisher.clear()
-    dispenser.drop_now(1)                       # the web console / /dropout path
+    dispenser.drop_now(1)                       # the bench / /dropout path
     assert link._wake_publisher.is_set()
 
+    dispenser.apply_payload("SC1*W*1:0800-127-000")
+    clock.set(datetime(2026, 7, 29, 8, 0))
+    dispenser.tick()
+
     link._wake_publisher.clear()
-    dispenser._pending = (1, 480, dispenser.clock.now())
-    dispenser.confirm_taken()                   # the button / the page
+    assert len(dispenser.release()) == 1        # the tap, from the LAN or the relay
     assert link._wake_publisher.is_set()
+
+
+def test_a_dose_becoming_due_is_published_at_once(dispenser, identity, session,
+                                                  daemon_wiring, clock):
+    """The latency budget of the whole release model. The app cannot offer a
+    button for a dose it has not heard about, so the report has to go up when
+    the ring goes green — not at the next heartbeat five minutes later, by which
+    point a twelfth of the window is already gone."""
+    link = daemon_wiring
+    dispenser.apply_payload("SC1*W*1:0800-127-000")
+    clock.set(datetime(2026, 7, 29, 8, 0))
+
+    link._wake_publisher.clear()
+    assert dispenser.tick() == [], "nothing is recorded yet — it has only been offered"
+    assert link._wake_publisher.is_set(), "but the app has to be told immediately"
 
 
 @pytest.fixture
@@ -410,6 +573,7 @@ def daemon_wiring(dispenser, identity, session):
     link = cloud.CloudLink(dispenser, identity, relay_url=RELAY, enabled=True,
                            session=session)
     dispenser.on_event = lambda _record: link.nudge()
+    dispenser.on_change = link.nudge
     return link
 
 

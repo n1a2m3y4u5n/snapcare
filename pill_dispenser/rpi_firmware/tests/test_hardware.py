@@ -1,4 +1,4 @@
-"""The fitted peripherals: the ring, the buzzer, the button and the RTC.
+"""The fitted peripherals: the ring, the buzzer and the RTC.
 
 None of these need the parts to be present. What is being tested is the
 behaviour around them — that a missing one degrades instead of crashing, that a
@@ -12,7 +12,6 @@ from datetime import datetime
 import pytest
 
 from snapcare_dispenser import config, indicators, rtc
-from snapcare_dispenser.button import ConfirmButton
 from snapcare_dispenser.clock import Clock
 from snapcare_dispenser.indicators import (
     AMBER, BLUE, CYAN, GREEN, OFF, VIOLET, FittedIndicator, LogIndicator,
@@ -53,8 +52,8 @@ def test_each_event_shows_its_colour():
     ring = FakeRing()
     indicator = FittedIndicator(ring=ring, buzzer=None)
 
-    indicator.dose_ready(1)
-    indicator.dose_taken(1)
+    indicator.dose_due(1)
+    indicator.dose_released(1)
     indicator.dose_missed(2)
     indicator.schedule_accepted()
     indicator.clear()
@@ -98,7 +97,7 @@ def test_a_waiting_dose_outranks_the_network_hint():
     ring = FakeRing()
     indicator = FittedIndicator(ring=ring, buzzer=None)
 
-    indicator.dose_ready(1)
+    indicator.dose_due(1)
     indicator.network_needs_setup()
     assert ring.colours == [GREEN], "the green light must not be painted over"
 
@@ -113,8 +112,8 @@ def test_the_hint_comes_back_after_the_dose_that_borrowed_the_ring():
     indicator = FittedIndicator(ring=ring, buzzer=None)
 
     indicator.network_needs_setup()
-    indicator.dose_ready(1)
-    indicator.dose_taken(1)
+    indicator.dose_due(1)
+    indicator.dose_released(1)
     indicator.clear()
     assert ring.colours == [CYAN, GREEN, BLUE, CYAN]
 
@@ -122,7 +121,7 @@ def test_the_hint_comes_back_after_the_dose_that_borrowed_the_ring():
 def test_the_ring_goes_dark_when_there_is_nothing_to_say():
     ring = FakeRing()
     indicator = FittedIndicator(ring=ring, buzzer=None)
-    indicator.dose_ready(1)
+    indicator.dose_due(1)
     indicator.clear()
     assert ring.colours == [GREEN, OFF]
 
@@ -153,10 +152,10 @@ def test_the_buzzer_sounds_while_a_dose_waits_and_stops_when_confirmed(monkeypat
     indicator = FittedIndicator(ring=None, buzzer=buzzer)
 
     try:
-        indicator.dose_ready(1)
+        indicator.dose_due(1)
         _wait_until(lambda: buzzer.beeps >= 3, "the buzzer never repeated")
 
-        indicator.dose_taken(1)
+        indicator.dose_released(1)
         settled = buzzer.beeps
         _sleep(0.1)
         assert buzzer.beeps == settled, "the chirp continued after confirmation"
@@ -169,7 +168,7 @@ def test_dismissing_also_silences_the_chirp(monkeypatch):
     buzzer = FakeBuzzer()
     indicator = FittedIndicator(ring=None, buzzer=buzzer)
     try:
-        indicator.dose_ready(1)
+        indicator.dose_due(1)
         _wait_until(lambda: buzzer.beeps >= 1, "the buzzer never sounded")
         indicator.clear()
         settled = buzzer.beeps
@@ -200,8 +199,8 @@ def test_a_failing_ring_does_not_take_the_dispenser_down():
             raise OSError("the ring is not there")
 
     indicator = FittedIndicator(ring=BrokenRing(), buzzer=None)
-    indicator.dose_ready(1)      # must not raise
-    indicator.dose_taken(1)
+    indicator.dose_due(1)      # must not raise
+    indicator.dose_released(1)
     assert indicator.ring is None, "a broken ring is dropped rather than retried forever"
 
 
@@ -212,7 +211,7 @@ def test_a_device_with_neither_part_still_works(monkeypatch):
                         lambda *a, **k: (_ for _ in ()).throw(OSError("no buzzer")))
     indicator = make_indicator()
     assert isinstance(indicator, LogIndicator)
-    indicator.dose_ready(1)      # must not raise
+    indicator.dose_due(1)      # must not raise
 
 
 def test_one_missing_part_does_not_disable_the_other(monkeypatch):
@@ -226,58 +225,34 @@ def test_one_missing_part_does_not_disable_the_other(monkeypatch):
         indicator.close()
 
 
-# ── the confirm button ──────────────────────────────────────────────────────
+# ── silencing without cancelling ────────────────────────────────────────────
 
-def test_a_button_with_no_gpio_is_inert_rather_than_fatal():
-    presses = []
-    button = ConfirmButton(lambda: presses.append(1))
+def test_silence_stops_the_chirp_and_leaves_the_light(monkeypatch):
+    """A person who silences a chime has asked for quiet, not withdrawn their
+    medication. The dose is still owed and still releasable, so the ring has to
+    go on saying so — a dark ring over a waiting dose is the device lying, and
+    this build has no screen to correct it with."""
+    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    ring, buzzer = FakeRing(), FakeBuzzer()
+    indicator = FittedIndicator(ring=ring, buzzer=buzzer)
     try:
-        # On a laptop there is no GPIO of any kind, and that has to be a device
-        # that runs without a button rather than a device that will not start.
-        assert button.backend in ("none", "pigpio", "poll")
+        indicator.dose_due(1)
+        _wait_until(lambda: buzzer.beeps >= 1, "the buzzer never sounded")
+
+        indicator.silence()
+        settled = buzzer.beeps
+        _sleep(0.1)
+        assert buzzer.beeps == settled, "the chirp continued after being silenced"
+        assert ring.colours == [GREEN], "the light must stand while the dose does"
     finally:
-        button.close()
+        indicator.close()
 
 
-def test_a_handler_that_throws_does_not_kill_the_button():
-    """Otherwise the button silently stops working for the rest of the device's
-    life, and nothing anywhere says so."""
-    calls = []
-
-    def handler():
-        calls.append(1)
-        raise RuntimeError("the dispenser was busy")
-
-    button = ConfirmButton(handler, backend="none")
-    try:
-        button._fire()
-        button._fire()
-        assert len(calls) == 2
-    finally:
-        button.close()
-
-
-def test_the_button_and_the_web_page_take_the_same_path(dispenser, clock):
-    """A press and a tap must be indistinguishable downstream, or the dose log
-    would record where the confirmation came from rather than that it happened."""
-    dispenser.apply_payload("SC1*W*1:0800-127-000")
-    clock.set(datetime(2026, 7, 29, 8, 0))
-    dispenser.tick()
-
-    button = ConfirmButton(lambda: dispenser.confirm_taken(), backend="none")
-    try:
-        button._fire()
-    finally:
-        button.close()
-
-    assert dispenser.status()["awaitingConfirmation"] is None
-    assert dispenser.events()[0]["reason"] == "confirmed"
-
-
-def test_a_press_with_nothing_waiting_records_nothing(dispenser):
-    before = len(dispenser.events())
-    ConfirmButton(lambda: dispenser.confirm_taken(), backend="none")._fire()
-    assert len(dispenser.events()) == before
+def test_every_indicator_answers_silence():
+    """`Dispenser.dismiss` calls this on whatever is installed, including the
+    no-op base — a build with no ring and no buzzer is a valid build."""
+    for indicator in (indicators.Indicator(), LogIndicator()):
+        indicator.silence()
 
 
 # ── the RTC ─────────────────────────────────────────────────────────────────
@@ -457,8 +432,9 @@ def test_the_same_backend_on_a_laptop_is_the_dev_harness_and_does_dispense(tmp_p
 
     device.clock.accept(sc1.ClockSet.from_datetime(datetime(2026, 8, 1, 8, 1)),
                         source="phone")
-    events = device.tick()
-    assert [e["tray"] for e in events] == [1]
+    device.tick()
+    assert [d.tray for d in device.awaiting_release] == [1]
+    assert [r["tray"] for r in device.release()] == [1]
 
 
 def test_a_manual_drop_on_a_dead_pi_raises_rather_than_claiming_success(tmp_path, monkeypatch):

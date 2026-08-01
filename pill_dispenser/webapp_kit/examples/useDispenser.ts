@@ -140,5 +140,22 @@ export function useDispenser(relayUrl: string, claim: string) {
     return client.getSchedule();
   }, []);
 
-  return { ...state, setSchedule, getSchedule, RevisionConflictError };
+  /**
+   * Open the tray for a dose that is due. With no argument, for everything due.
+   *
+   * The device does not dispense on a timer: a due dose sits on
+   * `report.status.awaitingRelease` until this is called, and if nobody calls it
+   * inside the grace window the tray stays shut and the dose is recorded missed.
+   *
+   * This resolves when the *relay* has the command, not when a pill has come
+   * out. The report arriving with an empty `awaitingRelease` is the confirmation,
+   * and the long poll above brings it within a second or two.
+   */
+  const release = useCallback(async (dose?: { tray?: number; at?: string }) => {
+    const client = clientRef.current;
+    if (!client) throw new Error('not paired yet');
+    return client.release(dose);
+  }, []);
+
+  return { ...state, setSchedule, getSchedule, release, RevisionConflictError };
 }

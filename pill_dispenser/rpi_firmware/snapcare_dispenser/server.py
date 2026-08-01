@@ -11,16 +11,20 @@ Two APIs, on purpose
 the week and course durations survive, and the paper form sheet path reaches
 the same firmware the phone does.
 
-**`/save`, `/dropout`, `/dismiss`** are the Shaztech/Pilldispenser shapes that
-`lib/hardware/dispenser.ts` in the web app already builds URLs for. They are
-GET requests returning an HTML page because that is how that file uses them: an
-HTTPS page cannot `fetch()` an HTTP device (mixed content), but it *can* link
-to one, so the app builds a link the person taps and the device answers with a
-confirmation page. Keeping these means the existing app works against this
-firmware with no changes to code that is not ours to edit.
+**`/save`, `/release`, `/dropout`, `/dismiss`** are GET requests that return an
+HTML page. Three of them are the Shaztech/Pilldispenser shapes that
+`lib/hardware/dispenser.ts` in the web app already builds URLs for; `/release`
+is ours and has the same shape for the same reason. An HTTPS page cannot
+`fetch()` an HTTP device (mixed content), but it *can* link to one — so the app
+builds a link the person taps and the device answers with a confirmation page.
 
-The compatibility layer is lossy — it has no field for days of the week — so it
-records what it dropped and the response page says so.
+That constraint is why `/release` exists in this form at all. The release button
+on the app's main screen is the one control the whole device now depends on, and
+a control that only works from an HTTP origin would work in development and fail
+on the deployed app.
+
+The compatibility layer is lossy — `/save` has no field for days of the week —
+so it records what it dropped and the response page says so.
 
 Captive portal
 --------------
@@ -78,21 +82,17 @@ MAX_BODY = 64 * 1024
 #: GET requests that change something. They exist because the web app navigates
 #: to them as links — see the module docstring — and they are checked for a
 #: plausible Host for the same reason the POSTs are.
-MUTATING_GETS = {"/save", "/dropout", "/dismiss"}
+MUTATING_GETS = {"/save", "/release", "/dropout", "/dismiss"}
 
 
 class Router:
     """Everything the handler needs, so the handler stays a thin adapter."""
 
     def __init__(self, dispenser: Dispenser, identity: provisioning.Identity | None = None,
-                 cloud=None, network: Supervisor | None = None, button=None):
+                 cloud=None, network: Supervisor | None = None):
         self.dispenser = dispenser
         self.identity = identity or provisioning.load_identity(dispenser.store)
         self.cloud = cloud
-        #: The confirm button, only so the status page can report which driver
-        #: it got and how many presses it has seen. Nothing here ever drives
-        #: it — the button calls the dispenser directly.
-        self.button = button
         #: The radio-mode policy. A server built without one — the tests, and
         #: `make run` on a laptop — gets a supervisor that manages nothing, so
         #: that every endpoint has something coherent to answer with instead of
@@ -135,11 +135,12 @@ class Router:
         elif backend.quality == "python":
             missing.append("servos are on Python-timed PWM and will hum between doses")
         if not buzzer:
-            missing.append("no buzzer — a dose lights the ring but makes no sound")
+            # Worse on this build than it reads. The chirp is the prompt to go
+            # and release the dose, so a silent device is one whose doses expire
+            # untaken unless the phone's own notification lands.
+            missing.append("no buzzer — a due dose lights the ring but makes no sound")
         if not getattr(indicator, "ring", None):
-            missing.append("no LED ring — the device dispenses in the dark")
-        if self.button is None or self.button.backend == "none":
-            missing.append("no confirm button — nobody can acknowledge a dose at the device")
+            missing.append("no LED ring — nothing in the room shows a dose is due")
 
         return {
             "board": gpiochip.board_model() or "not a Raspberry Pi",
@@ -148,9 +149,6 @@ class Router:
                       "movesHardware": backend.moves_hardware},
             "buzzer": {"backend": buzzer.backend if buzzer else "none",
                        "gpio": buzzer.gpio if buzzer else config.BUZZER_GPIO},
-            "button": {"backend": self.button.backend if self.button else "none",
-                       "gpio": self.button.gpio if self.button else config.BUTTON_GPIO,
-                       "presses": self.button.presses if self.button else 0},
             "ring": {"fitted": bool(getattr(indicator, "ring", None)),
                      "gpio": config.RING_GPIO},
             "missing": missing,
@@ -437,10 +435,9 @@ class Handler(BaseHTTPRequestHandler):
                 "ok": True,
                 "device": device.status(),
                 # What is actually fitted, and which drivers came up. The
-                # dispenser cannot answer this on its own: the confirm button
-                # belongs to the daemon and the buzzer to the indicator, so
-                # before this key existed a device with no chirp reported
-                # nothing wrong anywhere.
+                # dispenser cannot answer this on its own — the buzzer belongs
+                # to the indicator — so before this key existed a device with no
+                # chirp reported nothing wrong anywhere.
                 "gpio": router.gpio_status(),
                 "wifi": state.to_json(),
                 "attempt": router.network.snapshot(),
@@ -519,14 +516,21 @@ class Handler(BaseHTTPRequestHandler):
             self._compat_save(query)
             return
 
+        if path == "/release":
+            self._compat_release(query)
+            return
+
         if path == "/dropout":
             self._compat_dropout(query)
             return
 
         if path == "/dismiss":
             had_alert = device.dismiss()
-            self._confirmation("Alarm dismissed" if had_alert else "Nothing was alerting",
-                               "The device is quiet.")
+            self._confirmation(
+                "Chime silenced" if had_alert else "Nothing was alerting",
+                "The dose is still waiting and can still be released — the "
+                "device is just quiet about it."
+                if had_alert else "The device is quiet.")
             return
 
         self._json({"ok": False, "error": "no such endpoint"}, HTTPStatus.NOT_FOUND)
@@ -590,13 +594,54 @@ class Handler(BaseHTTPRequestHandler):
             self._json({"ok": True, "event": record})
             return
 
-        if path == "/api/confirm":
-            record = device.confirm_taken()
-            self._json({"ok": record is not None, "event": record})
+        if path == "/api/release":
+            # The tap. This is the endpoint the app's main-screen button and its
+            # push notification both hit when the phone is on the house WiFi,
+            # and it is the same `Dispenser.release` the relay's command channel
+            # reaches when it is not.
+            #
+            # An empty body releases everything currently due, which is what the
+            # main-screen button sends: two trays owed at 08:00 are two
+            # medications for 08:00, and making somebody tap twice is how the
+            # second gets forgotten. `tray` and `minutes` narrow it to one dose,
+            # which is what a notification about a specific dose sends.
+            try:
+                tray = int(body["tray"]) if body.get("tray") is not None else None
+                minutes = (sc1.parse_hhmm(str(body["at"])) if body.get("at")
+                           else int(body["minutes"]) if body.get("minutes") is not None
+                           else None)
+            except (TypeError, ValueError):
+                self._json({"ok": False, "error": "tray must be a number and at must be HHMM"},
+                           HTTPStatus.BAD_REQUEST)
+                return
+            if minutes is None and body.get("at"):
+                self._json({"ok": False, "error": "at must be HHMM"},
+                           HTTPStatus.BAD_REQUEST)
+                return
+
+            try:
+                records = device.release(tray=tray, minutes=minutes)
+            except RuntimeError as exc:
+                # No GPIO library. Said plainly rather than answered with an
+                # empty list, because this is somebody standing in front of the
+                # machine having just asked for their medication.
+                self._json({"ok": False, "error": str(exc)},
+                           HTTPStatus.SERVICE_UNAVAILABLE)
+                return
+
+            # `released: []` is not an error. A notification tapped an hour late
+            # and a curious tap at lunchtime both land here, and neither is
+            # worth a red screen — but the app needs to be able to tell them
+            # from a successful release, which is what the list is for.
+            self._json({"ok": True, "released": records,
+                        "awaitingRelease": [d.to_json() for d in device.awaiting_release]})
             return
 
         if path == "/api/dismiss":
-            self._json({"ok": True, "hadAlert": device.dismiss()})
+            # Quiet, not cancelled. The dose stays owed and stays releasable for
+            # the rest of its window — see `Dispenser.dismiss`.
+            self._json({"ok": True, "hadAlert": device.dismiss(),
+                        "awaitingRelease": [d.to_json() for d in device.awaiting_release]})
             return
 
         if path == "/api/wifi/connect":
@@ -730,6 +775,55 @@ class Handler(BaseHTTPRequestHandler):
             "post an <code>SC1*W*</code> payload to <code>/api/schedule</code>.</p>",
             raw=True)
 
+    def _compat_release(self, query: dict) -> None:
+        """`/release` as a link, for an app served over HTTPS.
+
+        The same mixed-content problem as `/dropout`, and it matters more here:
+        a page on `https://` cannot `fetch()` this device over plain HTTP, so
+        the app's release button on the main screen is a *link* the person taps
+        and this is the page they land on. `POST /api/release` is the same
+        action for anything that can reach the device directly — the phone app,
+        the relay, curl.
+
+        `?tray=` and `?at=` narrow it to one dose. With neither, everything due
+        is released, which is what the main-screen button means.
+        """
+        device = self.router.dispenser
+        tray = minutes = None
+        if query.get("tray"):
+            try:
+                tray = int(query["tray"])
+            except ValueError:
+                self._confirmation("Nothing released", "That link did not name a tray.",
+                                   ok=False)
+                return
+        if query.get("at"):
+            minutes = sc1.parse_hhmm(str(query["at"]))
+            if minutes is None:
+                self._confirmation("Nothing released",
+                                   "That link did not carry a readable time.", ok=False)
+                return
+
+        try:
+            records = device.release(tray=tray, minutes=minutes)
+        except RuntimeError as exc:
+            self._confirmation("Nothing released", str(exc), ok=False)
+            return
+
+        if not records:
+            # Not an error page. The overwhelmingly common way to get here is a
+            # notification tapped after the window closed, and telling somebody
+            # their dispenser is broken when it is behaving correctly is how
+            # they stop trusting the one screen that matters.
+            self._confirmation(
+                "Nothing was waiting",
+                "No dose is due right now, so nothing was released. If you were "
+                "expecting one, its window may have closed — check the log.")
+            return
+
+        trays = ", ".join(str(r["tray"]) for r in records)
+        self._confirmation(f"Released tray {trays}", "Check the cup.")
+
     def _compat_dropout(self, query: dict) -> None:
         try:
             tray = int(query.get("tray", ""))
@@ -856,9 +950,8 @@ def _is_ours(host: str) -> bool:
 
 def make_server(dispenser: Dispenser, port: int | None = None,
                 identity: provisioning.Identity | None = None,
-                cloud=None, network: Supervisor | None = None,
-                button=None) -> ThreadingHTTPServer:
-    router = Router(dispenser, identity, cloud, network, button)
+                cloud=None, network: Supervisor | None = None) -> ThreadingHTTPServer:
+    router = Router(dispenser, identity, cloud, network)
 
     handler = type("BoundHandler", (Handler,), {"router": router})
     # 0.0.0.0 because the device is reached from the home network and from the
@@ -872,10 +965,9 @@ def make_server(dispenser: Dispenser, port: int | None = None,
 
 def serve_forever(dispenser: Dispenser, port: int | None = None,
                   identity: provisioning.Identity | None = None,
-                  cloud=None, network: Supervisor | None = None,
-                  button=None) -> ThreadingHTTPServer:
+                  cloud=None, network: Supervisor | None = None) -> ThreadingHTTPServer:
     """Start the server on a background thread and return it."""
-    server = make_server(dispenser, port, identity, cloud, network, button)
+    server = make_server(dispenser, port, identity, cloud, network)
     thread = threading.Thread(target=server.serve_forever, name="http", daemon=True)
     thread.start()
     log.info("web server listening on port %d", server.server_address[1])

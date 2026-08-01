@@ -175,10 +175,20 @@ class MainActivity : AppCompatActivity() {
                 "Not heard from since ${found.at}. It may be unplugged.",
                 R.color.snap_amber,
             )
-            status.optJSONObject("awaitingConfirmation") != null -> {
-                val tray = status.getJSONObject("awaitingConfirmation").optInt("tray")
-                show("Tray $tray is in the cup now, waiting for the button.",
-                    R.color.snap_green)
+            // A dose is due and still in the hopper. The real app puts a
+            // release button here — this demo only reads, so it says what is
+            // waiting and how long it has left.
+            (status.optJSONArray("awaitingRelease")?.length() ?: 0) > 0 -> {
+                val waiting = status.getJSONArray("awaitingRelease")
+                val first = waiting.getJSONObject(0)
+                val until = first.optString("expiresAt").takeLast(8).take(5)
+                show(
+                    if (waiting.length() > 1)
+                        "${waiting.length()} doses are due — release them by $until."
+                    else
+                        "Tray ${first.optInt("tray")} is due — release it by $until.",
+                    R.color.snap_green,
+                )
             }
             else -> show(nextDoseText(status), R.color.snap_blue)
         }
@@ -210,12 +220,15 @@ class MainActivity : AppCompatActivity() {
             if (events.length() == 0) append("  nothing yet")
             for (index in 0 until events.length()) {
                 val event = events.getJSONObject(index)
-                // "dispensed" and "taken" are different facts, and only the
-                // second is the one a carer wants. Never collapsed.
-                val outcome = when {
-                    event.optBoolean("confirmed") -> "taken"
-                    event.optBoolean("taken") -> "dispensed, not confirmed"
-                    else -> "MISSED"
+                // The two ways a dose is missed are different facts and a
+                // carer acts on them differently: one means nobody came, the
+                // other means the device never got to ask. Never collapsed.
+                val outcome = when (event.optString("reason")) {
+                    "released" -> "taken"
+                    "manual" -> "dropped by hand"
+                    "not-released" -> "MISSED — offered, never released"
+                    "window-closed" -> "MISSED — window had closed"
+                    else -> if (event.optBoolean("taken")) "taken" else "MISSED"
                 }
                 append("  ${event.optString("at")}  tray ${event.optInt("tray")}" +
                     "  due ${event.optString("time")}  — $outcome\n")

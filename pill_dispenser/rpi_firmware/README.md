@@ -4,18 +4,23 @@ One scan to get on the WiFi, one to pair it with the app, a light and a chirp
 when a dose is due, and a schedule that survives both a power cut and the
 internet going away.
 
+**Nothing drops until somebody asks for it.** At the scheduled minute the ring
+goes green and the buzzer starts; the tray opens when a release is tapped in the
+app. No tap inside the grace window and the tray stays shut, recorded missed.
+
 ```
    the web app, anywhere                                the person
-        │                                                    ▲
-        │  https                                 green ring  │  chirp
-        ▼                                        ▲           │  every 20s
-   ┌─────────────┐   one outbound connection,    │           │
-   │ cloud relay │◄───── held open ──────┐       │           │
-   └─────────────┘                       │       │           │
-                                         │       │           │
-   phone on the same WiFi                │       │           │
-        │  http://pilldispenser.local    │       │           │
-        ▼                                ▼       │           │
+        │        ▲                                           ▲
+        │  https │ a release                     green ring  │  chirp
+        ▼        │                               ▲           │  every 20s
+   ┌─────────────┴─┐  one outbound connection,   │           │
+   │  cloud relay  │◄───── held open ─────┐      │           │
+   └───────────────┘                      │      │           │
+                                          │      │           │
+   phone on the same WiFi                 │      │           │
+        │  http://pilldispenser.local     │      │           │
+        │  POST /api/release              │      │           │
+        ▼                                 ▼      │           │
    ┌─────────────────────────────────────────────┼───────────┼──────┐
    │  Raspberry Pi 3B                            │           │      │
    │    onboard WiFi ── setup hotspot + captive portal       │      │
@@ -26,14 +31,15 @@ internet going away.
    │    DS1302 ──────── knows the time after a power cut     │      │
    │    lgpio ───────── GPIO 17 27 22   ring 18   buzzer 23  │      │
    └───────────────────────┬─────────────────────────────────┴──────┘
-                           │                          confirm button 24
                            ▼
             the fitted servos, two round trips each
 ```
 
-The cloud link is an extra way *in*, never a dependency. The schedule is on the
-SD card and the RTC knows the time, so a relay that is down, unreachable or
-never configured costs nobody a dose.
+The cloud link is an extra way *in*, never a dependency for the schedule: it is
+on the SD card and the RTC knows the time, so a relay that is down, unreachable
+or never configured costs nobody a dose *provided the phone can still reach the
+device over the LAN*. That is the one thing to keep true — see
+[the release paths](#releasing-a-dose) below.
 
 The unit on the bench has **two trays**, but nothing in the firmware says two:
 all eight are accepted by default and the pin map already lists them, so adding
@@ -223,6 +229,49 @@ Only one servo is ever driven at a time. A stalled SG90 pulls about 700 mA, and
 eight starting together is not a blown regulator — it is a brown-out that reboots
 the Pi *while a compartment is open*.
 
+#### Releasing a dose
+
+**The schedule decides when a dose *may* be taken. It does not open anything.**
+At the scheduled minute the ring goes green, the buzzer starts, and the dose
+lands on `awaitingRelease` — and stays there until somebody taps release in the
+app, which is what actually drives the servo.
+
+```
+08:00        due      ring green + chirp; nothing has left the hopper
+             │        the app shows a release button, and pushes a notification
+08:00-09:00  │
+             ├─ tap ──► the tray sweeps, ring blue, logged taken
+             │
+09:00        └─ no tap ► the tray stays shut, ring amber, logged missed
+```
+
+The earlier build dropped the pills at 08:00 and asked for a button press
+afterwards to say they had been taken. The two facts that produced were "the
+servo swept" and "somebody pressed a button", and neither is the fact anybody
+wanted: pills fell into a cup whether or not the person was in the house, and
+the button could be pressed by a visitor, a cat, or nobody at all while the log
+filled with `dispensed, unconfirmed`.
+
+Asking first collapses that into one fact. A dose that came out is a dose
+somebody asked for, and a dose nobody asked for is still in the machine where
+the next person to look can count it.
+
+**Two paths carry the tap**, and at least one has to work:
+
+| | |
+|---|---|
+| **LAN** | `POST /api/release` to `pilldispenser.local`. No internet involved, ~50 ms |
+| **relay** | the `command` slot, for a phone on cellular or a carer elsewhere |
+
+`--selftest` fails a build that has neither. A machine that cannot be reached
+will chirp for an hour and then record a missed dose — safe, and useless.
+
+**A release names the dose it means**, and the device carries it out only if that
+exact dose is one it is offering right now. That is what stops a release tapped
+at 08:05 and delivered at 3 p.m. — by a relay that was down in between, or a
+notification left on a lock screen — from dropping a pill into an empty room.
+`Dispenser.release` answers with an empty list instead, which is not an error.
+
 ### 3. Keep the schedule in step without anyone being in the house
 
 The first two are enough for a device sitting next to the person who manages
@@ -292,11 +341,11 @@ handled exactly like a missing LED ring.
 
 ## Wiring
 
-The unit on the bench is **two trays**, an LED ring, a buzzer, a confirm button
-and an RTC — but nothing in the firmware says two. All eight trays are accepted
-by default and the pin map lists all eight, so fitting another hopper is a plug
-and nothing else. `SNAPCARE_TRAYS` narrows it when you would rather a schedule
-for a tray this machine lacks be refused than silently never dispensed.
+The unit on the bench is **two trays**, an LED ring, a buzzer and an RTC — but
+nothing in the firmware says two. All eight trays are accepted by default and
+the pin map lists all eight, so fitting another hopper is a plug and nothing
+else. `SNAPCARE_TRAYS` narrows it when you would rather a schedule for a tray
+this machine lacks be refused than silently never dispensed.
 
 To *build* one rather than look up a pin,
 [`docs/assembly-guide.pdf`](docs/assembly-guide.pdf) goes from a bare Pi to a
@@ -314,9 +363,9 @@ it with `make guide`.
 | WS2812 ring data | GPIO **18** | through 330 Ω, close to the ring |
 | WS2812 5 V / GND | the servo supply | ~700 mA at full white; see brightness |
 | Piezo buzzer | GPIO **23** | through 100 Ω |
-| Confirm button | GPIO **24** | other side to GND; internal pull-up, no resistor |
 | DS1302 SCLK / I/O / CE | GPIO **16 / 20 / 21** | bit-banged; pins 36, 38, 40 |
 | DS1302 VCC / GND | 3.3 V (pin 17), GND (pin 39) | **not 5 V** — the I/O line drives back |
+| *(free)* | *GPIO 4, 24, 25* | unassigned. GPIO 24 carried the confirm button on earlier builds |
 
 The servo pins avoid every pin that costs hardware on a 3B: GPIO 0/1 are the HAT
 ID EEPROM, 2/3 have permanent I²C pull-ups (a servo signal idling high before
@@ -359,17 +408,21 @@ device understands the other:
 
 | | |
 |---|---|
-| **green ring, repeating chirp** | a dose is in the cup; press the button |
-| **blue ring** | button pressed, recorded as taken |
+| **green ring, repeating chirp** | a dose is due; release it from the app to get it |
+| **blue ring** | released — the pills are in the cup |
 | **amber ring** | the dose went untaken, or its window closed |
 | **violet ring** | a new schedule was accepted |
 | **cyan ring, silent** | waiting to be put on a WiFi network |
 
-The chirp repeats every `BUZZER_REPEAT_S` (20 s) until the button is pressed or
-the alert is dismissed. That pairing is the point rather than redundancy: a ring
-alone only works if somebody is looking at it, and without a sound the confirm
-button is close to useless — nobody acknowledges what they never noticed, and
-the log fills with doses marked dispensed-but-unconfirmed.
+Green means one step earlier than it did on the Arduino build, where it meant
+"there are pills in the cup". Here it means "there is a dose you can have", and
+blue is what follows once somebody has taken it.
+
+The chirp repeats every `BUZZER_REPEAT_S` (20 s) until the dose is released, the
+chime is silenced, or the grace window closes. That pairing is the point rather
+than redundancy: a ring alone only works if somebody is looking at it, and on
+this build the sound is the *prompt* rather than an announcement — a device that
+cannot chirp waits out the hour in silence and records a miss.
 
 Cyan is the one colour that is new in this build, and it is deliberately outside
 that vocabulary and deliberately silent. A chirp has meant "there are pills in
@@ -559,8 +612,9 @@ curl -X POST http://pilldispenser.local/api/clock -d '{"iso":"2026-07-29T09:15:0
 |---|---|
 | `GET /api/status` | everything: clock, WiFi, pins, driver, next dose |
 | `GET`/`POST /api/schedule` | the plan, as SC1 or as JSON |
-| `POST /api/drop` | `{"tray": n}` — sweep one tray now |
-| `POST /api/confirm` · `/api/dismiss` | the person took it / silence the alert |
+| `POST /api/release` | open what is due — `{}` for everything, `{"tray":n,"at":"0800"}` for one |
+| `POST /api/drop` | `{"tray": n}` — sweep one tray now, ignoring the schedule |
+| `POST /api/dismiss` | silence the chime; the dose stays owed and releasable |
 | `POST /api/clock` | `{"payload": "SC1*C*..."}` or `{"iso": "..."}` |
 | `GET /api/events` | the dose log, each line carrying its `SC1*E*` form |
 | `GET /api/wifi/scan` · `GET /api/wifi/status` | what is nearby, and where we are |
@@ -581,12 +635,17 @@ answer. GETs are deliberately exempt: the captive probes arrive addressed to
 the one flow that has to work. If a router publishes its DHCP clients under a
 domain of its own, `SNAPCARE_EXTRA_HOSTS=pilldispenser.fritz.box` allows it.
 
-### App-compatible — `/save`, `/dropout`, `/dismiss`
+### Link-shaped — `/save`, `/release`, `/dropout`, `/dismiss`
 
-The exact URLs `lib/hardware/dispenser.ts` in the web app already builds, so the
-app works against this firmware unchanged. They are GETs returning HTML because
-that is how that file uses them — an HTTPS page cannot `fetch()` an HTTP device,
-but it can *link* to one.
+Three of these are the exact URLs `lib/hardware/dispenser.ts` in the web app
+already builds, so the app works against this firmware unchanged; `/release` is
+ours and has the same shape for the same reason. They are GETs returning HTML
+because that is how that file uses them — an HTTPS page cannot `fetch()` an HTTP
+device, but it can *link* to one.
+
+That constraint is why `/release` exists in this form at all. The release button
+is the one control the device now depends on, and a control that only works from
+an HTTP origin would work in development and fail on the deployed app.
 
 They are lossy: no days of the week, no course length, so every tray they define
 runs daily and indefinitely. The confirmation page says so rather than showing a
@@ -606,7 +665,7 @@ one screen that matters.
 ## Testing it without a Pi
 
 ```bash
-make            # 472 tests, no board, no servos, no network
+make            # 490 tests, no board, no servos, no network
 make run        # the whole firmware on a laptop, mock servos, port 8099
 make label      # this machine's setup QR and pairing code, in the terminal
 make cloud      # the same, wired to a relay on this machine — see ../cloud_relay
@@ -636,8 +695,8 @@ grace window, finds the dose owed, and dispenses it again.
 **The servos**: the shape of the sweep, the trailing signal-cut, and eight
 threads proving only one pin is ever driven at once.
 
-**The fitted hardware**: that the chirp repeats until confirmed and stops the
-instant it is, that a broken ring is dropped rather than retried forever, that a
+**The fitted hardware**: that the chirp repeats until the dose is released and
+stops the instant it is, that a broken ring is dropped rather than retried forever, that a
 device with neither part still dispenses, and — the one worth the most lines —
 that a device with **no GPIO library at all** refuses to dispense rather than
 filling a carer's app with doses that never left the hopper.
@@ -677,9 +736,16 @@ direction in the browser, at load, by opening an envelope Python sealed.
 | Phone → device | QR into a camera | HTTP over the home WiFi |
 | Device → phone | QR on a 128×64 OLED | JSON, and the `SC1*E*` string in it |
 | Clock | DS3231 on a coin cell | DS1302, NTP, or a phone |
-| Servo timing | hardware `Servo` library | pigpio DMA, or lgpio |
+| Servo timing | hardware `Servo` library | lgpio, or pigpio DMA where it exists |
 | Schedule storage | EEPROM | JSON, atomically replaced |
 | Setup | flash it | scan a QR |
+| Opening a tray | at the scheduled minute | when a release is tapped in the app |
+| Saying it was taken | a button beside the hopper | the same tap — there is one fact, not two |
+
+The last two rows are the substantive change, and they removed a part rather
+than adding one: with the tap that releases a dose also being the tap that
+records it, the confirm button on GPIO 24 had nothing left to say and is gone
+along with its two wires.
 
 The 20-character device→phone ceiling is kept even though this hardware has no
 screen. Events are still emitted as `SC1*E*` and still fit, so the log stays
@@ -714,12 +780,11 @@ rpi_firmware/
     server.py         both APIs, the captive portal, the pages
     daemon.py         the process
     indicators.py     the LED ring and the buzzer
-    button.py         the confirm button, debounced in the GPIO daemon
     rtc.py            whether the clock chip can be believed, whichever is fitted
     ds1302.py         three bit-banged wires, and the trust model they force
     web/              four pages, no build step, nothing external
   service/            systemd unit + install.sh
-  tests/              472 tests; only the end-to-end one opens a socket
+  tests/              490 tests; only the end-to-end one opens a socket
 ```
 
 `NOTES-FOR-WEBAPP.md` is for whoever is building the production web app.

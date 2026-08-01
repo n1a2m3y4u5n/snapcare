@@ -27,13 +27,21 @@ Firing them all is a double or triple dose delivered into one hand. Dropping
 them silently is also wrong: the 08:00 dose noticed at 08:20 is simply late,
 and refusing it makes a working device look broken.
 
-So a dose is dispensed only within `grace_minutes` of its time. Past that it is
+So a dose is offered only within `grace_minutes` of its time. Past that it is
 reported as missed and the tray never opens. The phone learns about it either
 way, because a missed dose is a fact the person's carer needs, and a device
 that quietly drops doses is worse than one that admits to it.
+
+What DISPENSE means, and what it does not
+-----------------------------------------
+`Due.DISPENSE` says the tray *may* open, not that it should open now. The tray
+itself is opened by a person tapping release in the app; `device.py` holds the
+dose in the meantime and hands the same window back here as a miss if nobody
+ever taps. That split is why `next` takes a `skip` set — see below.
 """
 from __future__ import annotations
 
+from collections.abc import Collection
 from dataclasses import dataclass, field, replace
 from enum import Enum
 
@@ -44,7 +52,7 @@ DEFAULT_GRACE_MINUTES = 60
 
 class Due(Enum):
     NOTHING = "nothing"
-    DISPENSE = "dispense"  # open this tray now
+    DISPENSE = "dispense"  # this tray may open — offer it to the person
     MISSED = "missed"      # this dose's window closed unopened; report, do not open
 
 
@@ -120,12 +128,26 @@ class Scheduler:
 
     # ── the decision ────────────────────────────────────────────────────────
 
-    def next(self, day: int, weekday: int, minutes: int) -> Decision:
+    def next(self, day: int, weekday: int, minutes: int,
+             skip: Collection[tuple[int, int]] = ()) -> Decision:
         """What should happen at this instant.
 
         Call repeatedly until it returns NOTHING: one tick can owe more than
         one action, and each call reports at most one so the caller can drive a
         single servo, record a single event, and come back for the rest.
+
+        `skip` is the set of `(slot, minutes)` the caller is already dealing
+        with — doses offered to the person and waiting on a tap. They are not
+        finished, so they must not be marked through `confirm`, and they are
+        not new, so they must not be offered again on the next tick fifteen
+        seconds later. Without this the alert would be re-raised four times a
+        minute for the whole hour.
+
+        Keeping them out of `_state` rather than in it is what preserves the
+        rule the whole module is built on: nothing is recorded as dealt with
+        until the code that deals with it says so. A dose the person never taps
+        comes back through here as a miss, because as far as this class is
+        concerned it was never handled at all.
         """
         best = Decision()
         best_minutes = 0
@@ -147,6 +169,9 @@ class Scheduler:
                 # Already handled? Same day, and at or past this dose's time.
                 if st.ever_fired and st.last_day == day and st.last_minutes >= due:
                     continue
+
+                if (s.slot, due) in skip:
+                    continue  # already offered, still waiting on a tap
 
                 what = Due.DISPENSE if minutes - due <= self.grace_minutes else Due.MISSED
 

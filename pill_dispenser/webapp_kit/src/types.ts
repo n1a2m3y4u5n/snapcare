@@ -78,11 +78,32 @@ export interface DispenserStatus {
    */
   notes: string[];
   nextDose: { tray: number; time: string } | null;
-  /** A dose in the cup, waiting for the button. Null when there is none. */
-  awaitingConfirmation: { tray: number; time: string } | null;
+  /**
+   * Doses that are due **and have not been released yet**, earliest first.
+   * Empty almost all the time.
+   *
+   * Nothing has left the hopper for any entry here: at its scheduled minute the
+   * device lights up and chirps, and the tray opens only when the app posts to
+   * `/api/release`. A non-empty array is a release button on the main screen and
+   * a push notification.
+   *
+   * Stop offering the button at `expiresAt` — past it the device will refuse to
+   * open, and a button that quietly does nothing is worse than no button.
+   */
+  awaitingRelease: AwaitingRelease[];
   dropCounts: Record<string, number>;
   /** Which of `'ring'` and `'buzzer'` are actually fitted. */
   indicators: string[];
+}
+
+export interface AwaitingRelease {
+  tray: number;
+  /** `'0800'` — the scheduled minute this dose belongs to. */
+  time: string;
+  /** ISO 8601. When it fell due. */
+  dueAt: string;
+  /** ISO 8601. After this the tray will not open and the dose is recorded missed. */
+  expiresAt: string;
 }
 
 export interface DoseEvent {
@@ -92,9 +113,21 @@ export interface DoseEvent {
   /** `'0800'` — the time the dose was *due*, not when it was recorded. */
   time: string;
   taken: boolean;
-  /** Whether a person pressed the button. Different fact from `taken`. */
+  /**
+   * Whether a person asked for this dose. True for a release and for a manual
+   * drop at the bench; false for anything the device recorded on its own.
+   */
   confirmed: boolean;
-  reason: 'dispensed' | 'window-closed' | 'manual' | 'confirmed' | string;
+  /**
+   * - `released` — somebody tapped, the tray opened. The only scheduled path
+   *   by which pills leave the machine.
+   * - `not-released` — offered, nobody tapped, the window closed. **The tray
+   *   stayed shut**, so nothing was dispensed.
+   * - `window-closed` — already past its window when the device found it; it
+   *   was never offered to anybody.
+   * - `manual` — a bench drop through `/api/drop`, outside the schedule.
+   */
+  reason: 'released' | 'not-released' | 'window-closed' | 'manual' | string;
   /** Wraps at 100. Used to spot a replayed or dropped event. */
   seq: number;
   /** The 20-character `SC1*E*` form, replayable through any implementation. */
@@ -128,11 +161,33 @@ export interface DesiredSchedule {
   slots?: WeeklySlot[];
 }
 
+/**
+ * What the app writes into the `command` slot.
+ *
+ * An *act*, not a state — which is why it is not part of `DesiredSchedule`. A
+ * schedule stays true until it is edited and a device coming back after a week
+ * offline should adopt the newest one it finds; a release was true for one hour
+ * on one morning, and a device that treated it the same way would drop a pill
+ * into an empty room.
+ *
+ * `tray` and `minutes` name the dose. Omit both to release everything currently
+ * due. The device acts only on a dose it is offering right now, so a command
+ * that arrives late moves nothing.
+ */
+export interface ReleaseCommand {
+  action: 'release';
+  /** 1–8. Omit to mean every tray with a dose due. */
+  tray?: number;
+  /** Minutes since midnight — 480 is 08:00. Omit to mean any time due. */
+  minutes?: number;
+}
+
 /** The relay's own view of a mailbox — revisions and timestamps, no plaintext. */
 export interface MailboxMeta {
   ok: boolean;
   deviceId: string;
   desired?: { rev: number; updatedAt: number; bytes: number };
   reported?: { rev: number; updatedAt: number; bytes: number };
+  command?: { rev: number; updatedAt: number; bytes: number };
   [key: string]: unknown;
 }

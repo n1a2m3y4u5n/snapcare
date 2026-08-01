@@ -1,4 +1,4 @@
-"""The relay's HTTP surface. Six endpoints and two pages.
+"""The relay's HTTP surface. A handful of endpoints and two pages.
 
 Standard library only, like the firmware, and for a related reason: this is a
 service that has to be deployable by whoever inherits the project, from a
@@ -6,9 +6,14 @@ container that builds in one line and has nothing in it to keep up to date.
 
 What the relay is
 -----------------
-A mailbox with a long poll. It stores one envelope per direction per device and
+A mailbox with a long poll. It stores one envelope per slot per device and
 hands it back to whoever presents the right token. It cannot read any of them —
 see `mailbox.py` and `snapcare_dispenser/envelope.py`.
+
+Three slots: `desired`, `reported` and `command`. Nothing here treats them
+differently — the same read, the same write, the same revision rule — which is
+the point. `mailbox.py` explains why they are separate, and it is a distinction
+the *ends* need to make, not this one.
 
 That is a deliberately small job. Everything that could be done here and is
 done at the ends instead — parsing SC1, deciding whether a schedule is valid,
@@ -50,7 +55,8 @@ log = logging.getLogger("relay")
 
 WEB_DIR = Path(__file__).parent / "web"
 
-_DEVICE_PATH = re.compile(r"^/v1/devices/([A-Za-z0-9_-]{1,64})(?:/(desired|reported))?$")
+_DEVICE_PATH = re.compile(
+    r"^/v1/devices/([A-Za-z0-9_-]{1,64})(?:/(desired|reported|command))?$")
 
 
 class Handler(BaseHTTPRequestHandler):

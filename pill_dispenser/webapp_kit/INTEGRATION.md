@@ -184,7 +184,7 @@ a screen:
 | `status.clock.trusted` | **false means nothing will be dispensed.** This is the most important boolean on the object |
 | `status.clock.source` | `ntp` / `rtc` / `phone` — what vouched for the time |
 | `status.nextDose` | `{ tray, time }` or null |
-| `status.awaitingConfirmation` | a dose is in the cup right now, waiting for the button |
+| `status.awaitingRelease` | **doses due right now, still in the hopper.** Non-empty means show the release button and push a notification; stop offering it at each entry's `expiresAt` |
 | `status.trays`, `status.trayCount` | ask rather than assume; `MAX_TRAYS` in `dispenser.ts` is 10 and the firmware handles 8 |
 | `status.notes` | what the loaded schedule *lost* in transit. Show these verbatim |
 | `status.servoSteady` | false means the servos twitch and hum — a real complaint if it is in a bedroom |

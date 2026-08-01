@@ -23,14 +23,14 @@
 % ═══════════════════════════════════════════════════════════════════════════
 \thispagestyle{empty}
 \begin{center}
-\vspace*{12mm}
+\vspace*{10mm}
 
 {\sffamily\bfseries\fontsize{30}{34}\selectfont\color{ink}
  Building the dispenser}
 
 \vspace{2.5mm}
 {\sffamily\large\color{ink70}
- A bare Raspberry Pi 3B to a machine that drops a pill and chirps about it}
+ A bare Raspberry Pi 3B to a machine that asks for a dose and drops it}
 
 \vspace{1.5mm}
 {\sffamily\small\color{ink40}
@@ -39,7 +39,7 @@
 \vfill
 
 % ── hero figure: the whole machine on one page ────────────────────────────
-\begin{tikzpicture}[scale=1.15]
+\begin{tikzpicture}[scale=1.12]
 
   % --- the Pi ---
   \node[draw=ink, line width=1pt, fill=okgreen!8, rounded corners=3pt,
@@ -62,8 +62,6 @@
        {\textbf{WS2812 ring}\\[-0.3ex]{\scriptsize 12 pixels}};
   \node[modbox, minimum width=28mm, minimum height=11mm] (buz) at (5.0,0)
        {\textbf{piezo buzzer}\\[-0.3ex]{\scriptsize passive}};
-  \node[modbox, minimum width=28mm, minimum height=11mm] (btn) at (5.0,-2.15)
-       {\textbf{confirm button}\\[-0.3ex]{\scriptsize momentary}};
 
   % --- signal wires, orthogonal, labels on the vertical legs ---
   \draw[wire, rtcc]  (pi.west|-0,0.55) -- (-2.9,0.55) -- (-2.9,2.15) -- (rtc.east);
@@ -78,20 +76,25 @@
   \draw[wire, buzzc] (pi.east) -- (buz.west);
   \node[font=\sffamily\scriptsize, text=buzzc, above] at (2.9,0.04) {GPIO 23};
 
-  \draw[wire, btnc]  (pi.east|-0,-0.55) -- (2.9,-0.55) -- (2.9,-2.15) -- (btn.west);
-  \node[font=\sffamily\scriptsize, text=btnc, anchor=east] at (2.82,-1.45) {GPIO 24};
+  % --- the phone: no wire, because that is the point ---
+  \node[modbox, minimum width=28mm, minimum height=11mm, fill=appc!6,
+        draw=appc!55] (app) at (5.0,-2.15)
+       {\textbf{the app}\\[-0.3ex]{\scriptsize releases the dose}};
+  \draw[wire, appc, dashed] (pi.east|-0,-0.55) -- (2.9,-0.55) -- (2.9,-2.15) -- (app.west);
+  \node[font=\sffamily\scriptsize, text=appc, anchor=east, align=right] at (2.82,-1.45)
+       {WiFi\\[-0.4ex]or relay};
 
   % --- power, as its own band so no supply wire crosses a signal wire ---
-  \draw[ink15, line width=0.7pt, rounded corners=3pt] (-6.6,-5.5) rectangle (6.6,-3.15);
+  \draw[ink15, line width=0.7pt, rounded corners=3pt] (-6.6,-5.5) rectangle (6.6,-3.2);
   \node[font=\sffamily\scriptsize\bfseries, text=ink40, fill=white, inner sep=2pt]
-       at (-5.35,-3.15) {power};
+       at (-5.35,-3.2) {power};
 
-  \node[compbox, minimum width=24mm, fill=p5!7, draw=p5!50] (psuA) at (-3.7,-3.85)
+  \node[compbox, minimum width=24mm, fill=p5!7, draw=p5!50] (psuA) at (-3.7,-3.9)
        {\textbf{5\,V 2.5\,A}};
-  \node[compbox, minimum width=24mm, fill=p5!7, draw=p5!50] (psuB) at (1.5,-3.85)
+  \node[compbox, minimum width=24mm, fill=p5!7, draw=p5!50] (psuB) at (1.5,-3.9)
        {\textbf{5\,V 2\,A+}};
-  \node[compbox, minimum width=15mm] (loadA) at (-0.9,-3.85) {Pi};
-  \node[compbox, minimum width=20mm] (loadB) at (4.3,-3.85) {servos $+$ ring};
+  \node[compbox, minimum width=15mm] (loadA) at (-0.9,-3.9) {Pi};
+  \node[compbox, minimum width=20mm] (loadB) at (4.3,-3.9) {servos $+$ ring};
 
   \draw[wire, p5, -{Stealth[length=2mm]}] (psuA.east) -- (loadA.west);
   \draw[wire, p5, -{Stealth[length=2mm]}] (psuB.east) -- (loadB.west);
@@ -107,10 +110,10 @@
 \vfill
 
 {\sffamily\small\color{ink70}
- Eleven stages. Each one adds a single subsystem\\
+ Ten stages. Each one adds a single subsystem\\
  and ends with the command that proves it works.}
 
-\vspace{12mm}
+\vspace{10mm}
 {\sffamily\footnotesize\color{ink40}
  Matches \code{snapcare\_dispenser/config.py}. Where the two disagree, that file is right.\par
  Generated from \code{docs/assembly-guide.tex}.}
@@ -124,14 +127,123 @@
 \vspace{4mm}
 
 \begin{notebox}
-\textbf{\sffamily Read this first.} Assemble in the order given and test after
-every stage. Each stage adds one subsystem and ends with a command that proves
-it. Wiring the whole thing and then powering it on means debugging five
-subsystems at once \textemdash{} and on this device three of the five fail
-\emph{silently}. A servo on the wrong pin, a ring that never lights, and an RTC
-with a dead cell all look exactly the same from the outside: a machine sitting
-there doing nothing.
+\textbf{\sffamily Read this first.} Build in the order given, and test at the end
+of every stage. Each stage adds one subsystem and finishes with a command that
+proves it.
+
+\vspace{1ex}
+Wiring everything and then powering on means debugging five subsystems at once
+\textemdash{} and three of these five fail \emph{silently}. A servo on the wrong
+pin, a ring that never lights, and an RTC with a dead cell all look identical
+from the outside: a machine sitting there doing nothing.
 \end{notebox}
+
+\clearpage
+\markboth{How a dose happens}{How a dose happens}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{How a dose happens}
+\label{sec:model}
+
+Read this before you wire anything. It is the one thing about this machine that
+is not obvious from its parts, and every stage that follows makes more sense
+once you have it.
+
+\vspace{1mm}
+\noindent\textbf{\sffamily The dispenser asks before it drops.} At the scheduled
+minute nothing leaves the hopper. The ring goes green, the buzzer starts
+chirping, and a release button appears on the app's main screen \textemdash{}
+also as a push notification, so the phone does not have to be open. The tray
+opens when somebody taps it.
+
+\vspace{2mm}
+\begin{center}
+\begin{tikzpicture}[
+  ev/.style={rounded corners=2pt, draw=ink40, fill=white, line width=0.6pt,
+             minimum height=11mm, minimum width=26mm, align=center,
+             font=\sffamily\scriptsize, text=ink},
+  good/.style={ev, fill=okgreen!10, draw=okgreen!55},
+  bad/.style={ev, fill=dangerred!7, draw=dangerred!50},
+]
+  % --- the top row: what happens, in order ---
+  \node[ev, minimum width=28mm] (due) at (0,1.6)
+       {\textbf{the dose falls due}\\[-0.3ex]ring green\\[-0.3ex]chirp every 20\,s};
+  \node[ev, fill=appc!8, draw=appc!55, minimum width=32mm] (ask) at (5.1,1.6)
+       {\textbf{the app asks}\\[-0.3ex]button on the main screen\\[-0.3ex]$+$ push notification};
+  \node[good, minimum width=28mm] (rel) at (10.2,1.6)
+       {\textbf{somebody taps}\\[-0.3ex]the tray opens, ring blue\\[-0.3ex]logged as taken};
+
+  \foreach \a/\b in {due/ask, ask/rel}{
+    \draw[-{Stealth[length=2mm]}, ink40, line width=0.8pt] (\a) -- (\b);}
+
+  % --- the hour underneath, with each end tied to the box above it ---
+  \draw[ink15, line width=1.6pt] (0,0) -- (11.6,0);
+  \foreach \x in {0,11.6}{\draw[ink40, line width=0.9pt] (\x,-0.15) -- (\x,0.15);}
+  \draw[ink15, line width=0.5pt, dashed] (0,0.2) -- (0,1.0);
+  \draw[ink15, line width=0.5pt, dashed] (11.6,0.2) -- (11.6,0.62);
+
+  % Both end labels sit *above* the line, so the dashed drop to the miss box
+  % below has clear air all the way down.
+  \node[font=\sffamily\tiny, text=ink40, anchor=south west] at (-0.05,0.12)
+       {\textbf{08:00} \textendash{} the scheduled minute};
+  \node[font=\sffamily\tiny, text=ink40, anchor=south east] at (11.65,0.12)
+       {\textbf{09:00} \textendash{} the window closes};
+  \node[font=\sffamily\tiny, text=ink40, anchor=north] at (5.8,-0.24)
+       {one grace hour \textemdash{} \code{GRACE\_MINUTES}};
+
+  % --- the branch: nothing happens, and the hour runs out ---
+  \node[bad, minimum width=32mm] (miss) at (9.4,-1.7)
+       {\textbf{nobody taps}\\[-0.3ex]\textbf{the tray stays shut}\\[-0.3ex]ring amber, logged missed};
+  \draw[-{Stealth[length=2mm]}, dangerred!55, line width=0.8pt, dashed]
+       (11.6,-0.2) |- (miss.east);
+  \node[font=\sffamily\tiny, text=dangerred, anchor=east, align=right] at (7.5,-1.7)
+       {no pills ever\\leave the machine};
+\end{tikzpicture}
+\end{center}
+
+\vspace{1mm}
+\noindent Two consequences worth knowing before you build:
+
+\vspace{2mm}
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright}p{44mm} >{\raggedright\arraybackslash}p{102mm}@{}}
+\toprule
+\hdr{What changes} & \hdr{Why it is built this way} \\
+\midrule
+\textbf{Nothing is ever dispensed unattended} &
+Pills only leave the machine when somebody has said they are there to take
+them. A dose nobody asks for stays in the hopper, where the next person to look
+can still count it \textemdash{} rather than in a cup that may or may not have
+been emptied by somebody who then takes the next dose as well \\
+\textbf{The buzzer is not optional any more} &
+It used to announce pills that had already dropped. Now it is the \emph{prompt}:
+a machine that cannot chirp waits out the hour in silence and records a miss.
+Stage~2 fits it early for that reason \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{2mm}
+\begin{notebox}
+\textbf{\sffamily There is no button on this machine.} Earlier builds had a
+momentary switch on GPIO 24 for confirming a dose after it dropped. It is gone,
+along with its two wires: the tap that releases the dose is the same tap that
+records it, so a second control confirming the first had nothing left to say.
+GPIO 24 is now free.
+\end{notebox}
+
+\vspace{1mm}
+\begin{warnbox}
+\warntitle{The release has to be able to reach the device \textemdash{} check you have one of the two paths}
+On the house WiFi the phone talks to \code{pilldispenser.local} directly, and no
+internet is involved. Away from the house it goes through the relay
+(Stage~8). A machine with neither working will chirp for an hour and then
+record a missed dose, which is safe and is not useful.
+
+\vspace{1ex}
+\code{-{}-selftest} checks for both and fails if there is no path at all.
+\end{warnbox}
 
 \clearpage
 \markboth{Overview}{Overview}
@@ -139,7 +251,7 @@ there doing nothing.
 % ═══════════════════════════════════════════════════════════════════════════
 \section{The build at a glance}
 
-Nothing in stages 0 to 8 depends on there being a network beyond the house.
+Nothing in stages 0 to 7 needs a network beyond the house.
 
 \vspace{2mm}
 \begin{center}
@@ -151,28 +263,28 @@ Nothing in stages 0 to 8 depends on there being a network beyond the house.
    opt/.style={stg, fill=ink15!45, draw=ink40, dashed},
 ]
   \foreach \i/\lbl in {%
-      0/{the Pi}, 1/{DS1302}, 2/{button}, 3/{buzzer}, 4/{ring},
-      5/{rail}, 6/{servo 1}, 7/{the rest}, 8/{fitting}}{
-    \node[done] (s\i) at ({\i*1.66},0) {\textbf{\i}\\[-0.4ex]\lbl};
+      0/{the Pi}, 1/{DS1302}, 2/{buzzer}, 3/{ring},
+      4/{rail}, 5/{servo 1}, 6/{the rest}, 7/{fitting}}{
+    \node[done] (s\i) at ({\i*1.85},0) {\textbf{\i}\\[-0.4ex]\lbl};
   }
-  \foreach \i in {0,...,7}{
+  \foreach \i in {0,...,6}{
     \pgfmathtruncatemacro{\j}{\i+1}
     \draw[-{Stealth[length=2mm]}, ink40, line width=0.7pt] (s\i) -- (s\j);}
 
   \draw[decorate, decoration={brace, amplitude=4pt, mirror}, ink40]
-       (-0.72,-0.58) -- (1.66*8+0.72,-0.58)
+       (-0.8,-0.58) -- (1.85*7+0.8,-0.58)
        node[midway, below=3.5pt, font=\sffamily\scriptsize, text=ink70]
        {a complete, working dispenser \textemdash{} stop here if you like};
 
-  \node[opt] (s9)  at (1.66*6,-2.35) {\textbf{9}\\[-0.4ex]cloud};
-  \node[stg, fill=scred!10, draw=scred!55] (s10) at (1.66*8,-2.35)
-       {\textbf{10}\\[-0.4ex]label};
+  \node[opt] (s8)  at (1.85*5,-2.35) {\textbf{8}\\[-0.4ex]cloud};
+  \node[stg, fill=scred!10, draw=scred!55] (s9) at (1.85*7,-2.35)
+       {\textbf{9}\\[-0.4ex]label};
   \draw[-{Stealth[length=2mm]}, ink40, line width=0.7pt, dashed]
-       (s8.south) |- (s9.east);
-  \draw[-{Stealth[length=2mm]}, ink40, line width=0.7pt] (s9) -- (s10);
-  \node[font=\sffamily\scriptsize, text=ink40, anchor=east] at (1.66*5.1,-2.35)
+       (s7.south) |- (s8.east);
+  \draw[-{Stealth[length=2mm]}, ink40, line width=0.7pt] (s8) -- (s9);
+  \node[font=\sffamily\scriptsize, text=ink40, anchor=east] at (1.85*4.1,-2.35)
        {optional};
-  \node[font=\sffamily\scriptsize, text=scred, anchor=west] at (1.66*8+0.8,-2.35)
+  \node[font=\sffamily\scriptsize, text=scred, anchor=west] at (1.85*7+0.85,-2.35)
        {always};
 \end{tikzpicture}
 \end{center}
@@ -185,13 +297,75 @@ Nothing in stages 0 to 8 depends on there being a network beyond the house.
 & \hdr{Subsystem} & \hdr{Where it lands} & \hdr{What it is for} \\
 \midrule
 \swatch{rtcc}  & DS1302         & GPIO 16/20/21 $+$ 3.3\,V   & knows the time after a power cut \\
+\swatch{buzzc} & piezo buzzer   & GPIO 23, through 100\ohm   & the prompt that fetches a person from another room \\
 \swatch{ringc} & WS2812 ring    & GPIO 18, through 330\ohm   & green / blue / amber / violet \\
-\swatch{buzzc} & piezo buzzer   & GPIO 23, through 100\ohm   & the sound that fetches a person from another room \\
-\swatch{btnc}  & confirm button & GPIO 24 to GND             & internal pull-up, 20\,ms glitch filter \\
 \swatch{servo} & SG90 servos    & GPIO 17, 27, 22, \ldots     & one per tray, signal only \textemdash{} never power \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Powering up and down between stages}
+\label{sec:power}
+
+Every stage has the same rhythm, and it is worth saying once rather than
+repeating it eleven times.
+
+\vspace{2mm}
+\begin{center}
+\begin{tikzpicture}[
+  ph/.style={rounded corners=2pt, draw=ink40, fill=white, line width=0.7pt,
+             minimum height=12mm, minimum width=30mm, align=center,
+             font=\sffamily\scriptsize, text=ink},
+  off/.style={ph, fill=dangerred!6, draw=dangerred!45},
+  on/.style={ph, fill=okgreen!10, draw=okgreen!55},
+]
+  \node[off] (a) at (0,0)    {\textbf{unplug}\\[-0.3ex]then wire the stage};
+  \node[on]  (b) at (3.9,0)  {\textbf{plug in}\\[-0.3ex]wait for it to boot};
+  \node[on]  (c) at (7.8,0)  {\textbf{prove it}\\[-0.3ex]run the stage's command};
+  \node[off] (d) at (11.7,0) {\textbf{unplug}\\[-0.3ex]on to the next stage};
+  \foreach \x/\y in {a/b,b/c,c/d}{
+    \draw[-{Stealth[length=2.2mm]}, ink40, line width=0.8pt] (\x) -- (\y);}
+  \draw[-{Stealth[length=2.2mm]}, ink40, line width=0.8pt]
+       (d.south) -- ++(0,-0.55) -| (a.south);
+\end{tikzpicture}
+\end{center}
+
+\vspace{1mm}
+\noindent So: \textbf{power off to wire, power on to test.} The stages below do
+not repeat the instruction \textemdash{} they say what to connect, and then what
+to run once it is back on.
+
+\vspace{2mm}
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright}p{40mm} >{\raggedright\arraybackslash}p{106mm}@{}}
+\toprule
+\hdr{Power state} & \hdr{What you may do} \\
+\midrule
+\textbf{Unplugged} &
+Connect or move any wire. Fit or remove the coin cell. Mount a servo horn \\
+\textbf{Running} &
+Run the \code{curl} commands, watch the ring, listen to the buzzer, meter the
+servo rail. \textbf{Do not move a wire on a running Pi} \textemdash{} a signal
+pin brushed against 5\,V is a dead GPIO, and a ground momentarily lifted while a
+servo is drawing current is a brown-out \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{2mm}
+\begin{notebox}
+\textbf{\sffamily ``Unplug'' means unplug.} Not a shutdown that leaves the 5\,V
+rail live, and not a hub switch. The Pi's GPIO pins are powered whenever the
+board is, and \code{sudo halt} does not change that.
+
+\vspace{1ex}
+The one exception is the servo supply, which is a separate plug: it can be left
+off through every stage up to Stage~4, and that is the safer way to work.
+\end{notebox}
+
+\clearpage
 
 % ═══════════════════════════════════════════════════════════════════════════
 \section{Bill of materials}
@@ -210,54 +384,19 @@ Nothing in stages 0 to 8 depends on there being a network beyond the house.
 \iconservo  & 1 per tray & SG90 micro servo & Fit as many as you want hoppers, up to eight. The firmware accepts all eight, so a servo added later needs no change \\
 \iconpsu    & 1 & 5\,V supply, 2\,A or better & Separate, for the servos and the ring \\
 \iconcap    & 1 & 1000\uF{} electrolytic, 10\,V+ & Across the servo rail, physically close to the servos \\
+\iconbuzzer & 1 & Passive piezo buzzer & \textbf{Passive}, not an active beeper. The difference is not cosmetic and the two look identical in a listing \textemdash{} see Stage~2 \\
+\iconres    & 1 & 100\ohm{} resistor & In series with the buzzer \\
 \iconring   & 1 & WS2812 / NeoPixel ring, 12\,px & 16 and 24 also work \textemdash{} set \code{RING\_PIXELS} \\
 \iconres    & 1 & 330\ohm{} resistor & In the ring's data line, at the \textbf{ring} end \\
-\iconbuzzer & 1 & Passive piezo buzzer & Passive, not an active beeper \textemdash{} see below \\
-\iconres    & 1 & 100\ohm{} resistor & In series with the buzzer \\
-\iconbutton & 1 & Momentary push button & Any normally-open button. No external resistor needed \\
 \iconrtc    & 1 & DS1302 RTC module & The 5-pin board with a coin-cell holder. Read the accuracy note below \\
 \iconwire   & \textemdash{} & Jumper wire, terminal blocks & Dupont leads are fine for the bench; solder or screw terminals for anything that gets carried \\
+\iconphone  & \textemdash{} & a phone running the app & \emph{Not a part}, but not optional either: it is what releases each dose. See page~\pageref{sec:model} \\
 \iconcloud  & \textemdash{} & a relay, if you want cloud sync & \emph{Not a part.} One container, deployed once for all your devices \textemdash{} see \code{../cloud\_relay/}. Skip it and the dispenser is LAN-only \\
 \bottomrule
 \end{longtable}
 \end{center}
 
 \vspace{-2mm}
-\begin{warnbox}
-\warntitle{``Passive'' buzzer}
-The firmware makes the tone itself \textemdash{} pigpio drives the pin as a
-2.7\,kHz square wave (\code{indicators.Buzzer.beep}). An \emph{active} buzzer
-contains its own oscillator and sounds at its own frequency the moment it sees a
-voltage, so it will still make a noise here, just not the one that was chosen.
-
-\vspace{1.5ex}
-\begin{center}
-\begin{tikzpicture}[scale=0.95]
-  % passive vs active
-  \node[font=\sffamily\scriptsize\bfseries, text=okgreen] at (-2.6,1.05) {passive \textemdash{} use this};
-  \node[font=\sffamily\scriptsize\bfseries, text=dangerred] at (2.9,1.05) {active \textemdash{} wrong tone};
-  % passive: pi generates square wave
-  \node[compbox, minimum width=12mm] (pa) at (-4.3,0.35) {Pi};
-  \draw[wire, buzzc] (pa.east) -- (-3.4,0.35);
-  \draw[buzzc, line width=1pt]
-    (-3.4,0.15) -- (-3.4,0.55) -- (-3.15,0.55) -- (-3.15,0.15) -- (-2.9,0.15)
-    -- (-2.9,0.55) -- (-2.65,0.55) -- (-2.65,0.15) -- (-2.4,0.15) -- (-2.4,0.55) -- (-2.25,0.55);
-  \draw[wire, buzzc] (-2.25,0.35) -- (-1.7,0.35);
-  \draw[ink70, line width=0.7pt, fill=ink15] (-1.4,0.35) circle (0.3);
-  \node[font=\sffamily\tiny, text=ink70] at (-1.4,-0.15) {piezo};
-  \node[font=\sffamily\tiny, text=okgreen] at (-2.85,-0.15) {2.7\,kHz, chosen};
-  % active
-  \node[compbox, minimum width=12mm] (ac) at (1.3,0.35) {Pi};
-  \draw[wire, ink40] (ac.east) -- (2.1,0.35);
-  \draw[ink40, line width=1pt] (2.1,0.35) -- (2.6,0.35);
-  \node[font=\sffamily\tiny, text=ink40] at (2.35,0.62) {DC};
-  \draw[ink70, line width=0.7pt, fill=dangerred!12] (3.1,0.35) circle (0.34);
-  \node[font=\sffamily\tiny, text=dangerred] at (3.1,0.35) {osc.};
-  \node[font=\sffamily\tiny, text=dangerred] at (3.5,-0.15) {its own frequency};
-\end{tikzpicture}
-\end{center}
-\end{warnbox}
-
 \begin{warnbox}
 \warntitle{The DS1302 keeps worse time than you would expect}
 Its 32.768\,kHz crystal is uncompensated, so a typical module drifts a few
@@ -274,15 +413,13 @@ marked LIR2032; an ordinary non-rechargeable CR2032 is the safer choice and
 works, because the DS1302's built-in trickle charger stays switched off here.
 \end{warnbox}
 
-\clearpage
-
 % ═══════════════════════════════════════════════════════════════════════════
 \section{The header, and every pin this build touches}
 \label{sec:header}
 
 Keep this page open while you wire. Everything is BCM numbering, which is what
-pigpio and RPi.GPIO both use; the small number inside each pad is the
-\emph{physical} pin, which is what you actually count on the board.
+both GPIO libraries use; the small number inside each pad is the \emph{physical}
+pin, which is what you actually count on the board.
 
 \vspace{3mm}
 \begin{center}
@@ -305,11 +442,15 @@ pigpio and RPi.GPIO both use; the small number inside each pad is the
 \hdr{Pin} & \hdr{Why it is not used} \\
 \midrule
 GPIO 0, 1 & HAT ID EEPROM. Driving them is how a HAT you plug in later fails to be detected \\
-GPIO 2, 3 & Permanent 1.8\,k\textohm{} pull-ups \textemdash{} a servo line idling high slams the horn at power-on. Harmless for the RTC's clock and data lines, which live here now \\
+GPIO 2, 3 & Permanent 1.8\,k\textohm{} pull-ups. A servo line idling high slams the horn at power-on, and on the RTC's bidirectional data line a \emph{disconnected} wire would read as valid data \\
 GPIO 14, 15 & The serial console: the one way back into a Pi whose network setup you just broke \\
 GPIO 7--11 & SPI. Free today, gone the moment anyone adds an SPI display \\
 \bottomrule
 \end{tabular}
+
+\vspace{1ex}
+\noindent GPIO 24 and 25 are free and unassigned. GPIO 24 carried the confirm
+button on earlier builds and has nothing on it now.
 
 \columnbreak
 
@@ -383,19 +524,22 @@ switched on: the firmware drives its three pins directly.
 
 \vspace{2mm}
 \begin{notebox}
-\textbf{\sffamily pigpio is gone, and that is expected.} It was preinstalled on
-Raspberry Pi OS up to and including Bookworm and disappeared at the Trixie
-rebase \textemdash{} Debian has never packaged the daemon, only the client, and
-the 64-bit images bootstrap from Debian. So \code{sudo apt install pigpio} fails
-on a current 64-bit card and there is no way to make it work.
+\textbf{\sffamily lgpio is the driver. pigpio is gone, and that is expected.}
+pigpio was preinstalled on Raspberry Pi OS up to and including Bookworm, and
+disappeared at the Trixie rebase \textemdash{} Debian has never packaged the
+daemon, only the client, and the 64-bit images bootstrap from Debian. So
+\code{sudo apt install pigpio} fails on a current card, and there is no way to
+make it work.
 
 \vspace{1ex}
-The installer tries it anyway, because a Bookworm card still has it and DMA
-timing is genuinely better, and carries on when it is not there.
 \code{python3-lgpio} is the one that matters: it is preinstalled on every
-Raspberry Pi OS Lite image since 2023 and it is what will drive your pins.
-\code{/api/status} says which one came up, and \code{-{}-selftest} will not sign
-off a build that landed on neither.
+Raspberry Pi OS Lite image since 2023, and it is what will drive your pins. The
+installer still tries pigpio, because a Bookworm card has it and its DMA-timed
+servo pulses are genuinely steadier, and carries on when it is not there.
+
+\vspace{1ex}
+\code{/api/status} reports which one came up under \code{gpio.servo.timing}, and
+\code{-{}-selftest} will not sign off a build that landed on neither.
 \end{notebox}
 
 \begin{provebox}
@@ -418,12 +562,6 @@ the end and by nothing before it.
 
 % ═══════════════════════════════════════════════════════════════════════════
 \section{Stage 1 \textemdash{} the DS1302}
-
-\begin{dangerbox}
-\dangertitle{Power off first \textemdash{} every time}
-Not ``put it to sleep''. Unplug it. Every wiring stage in this guide starts that
-way, and this reminder is not repeated after this page.
-\end{dangerbox}
 
 Five wires. Three of them land on the last three pins of the header's
 even-numbered row \textemdash{} 36, 38 and 40, at the far end from the microSD
@@ -491,11 +629,13 @@ the firmware is the only thing that can read this chip, and \code{/api/status}
 is where you look.
 
 \vspace{1ex}
-GPIO 2 and 3 carry permanent 1.8\,k\textohm{} pull-ups. They are harmless on a
-clock and a data line, which is why the RTC gets them; \code{CE} is put on
-GPIO 4, which has none. That same pull-up is why GPIO 2 and 3 are kept out of
-the servo map: a servo line that idles high before the software starts slams the
-horn to one end at power-on, with a loaded tray on it.
+All three of its lines are deliberately kept off GPIO 2 and 3, whose permanent
+1.8\,k\textohm{} pull-ups are wrong here in two separate ways. On the
+bidirectional \code{I/O} line the pull-up sources current the chip has to sink
+to show a zero \textemdash{} and a \emph{floating} line then reads as a one, so
+a disconnected wire would look exactly like valid data. On the clock line it
+holds SCLK high before the pin is configured, breaking the chip's rule that SCLK
+must be low when CE rises.
 \end{notebox}
 
 \begin{provebox}
@@ -519,7 +659,7 @@ is a real step down from the DS3231 the Arduino build used.
 
 \vspace{1.5ex}
 A DS3231 has an \emph{oscillator stop flag}: the hardware sets it whenever the
-oscillator has stopped and it stays set until software clears it. That answers
+oscillator has stopped, and it stays set until software clears it. That answers
 the only question worth asking \textemdash{} \emph{did this chip lose time at
 some point, so that everything it has said since is invented?}
 
@@ -541,7 +681,7 @@ direction. \code{snapcare\_dispenser/ds1302.py} is the whole argument.
 \end{warnbox}
 
 \begin{warnbox}
-\warntitle{There is no kernel driver, so nothing sets the clock but this firmware}
+\warntitle{Nothing but this firmware ever sets the clock}
 On a DS3231 the kernel reads the chip and sets the system clock before userspace
 starts. The DS1302 has no such path on a Pi at all, so the firmware reads it
 itself at startup \textemdash{} which happens later, after systemd has already
@@ -555,107 +695,11 @@ installed is harmless.
 \end{warnbox}
 
 % ═══════════════════════════════════════════════════════════════════════════
-\section{Stage 2 \textemdash{} the confirm button}
+\section{Stage 2 \textemdash{} the buzzer}
 
-Two wires, nothing else.
-
-\begin{center}
-\begin{tikzpicture}
-  % --- the button ---
-  \node[modbox, minimum width=34mm, minimum height=19mm] (m) at (-4.2,-0.25) {};
-  \node[modtitle] at (-4.2,0.3) {confirm button};
-  \node[font=\sffamily\scriptsize, text=ink40] at (-4.2,0.0) {momentary, N/O};
-  \node[font=\sffamily\scriptsize, text=ink40] at (-4.2,-0.3) {either leg, either way};
-  \node[font=\sffamily\scriptsize, text=ink40] at (-4.2,-0.6) {no external resistor};
-
-  \node[term] (t0) at (-2.5,0.06) {};
-  \node[term] (t1) at (-2.5,-0.56) {};
-
-  \hframe{0.6}{0.06}{-0.56}{Pi header}
-  \hpin{0.6}{0.06}{18}{pusebtn}{GPIO 24}
-  \hpin{0.6}{-0.56}{20}{pusegnd}{GND}
-
-  \draw[wire, btnc]  (t0) -- (H18.west);
-  \draw[wire, gndc]  (t1) -- (H20.west);
-
-  % --- inset: the internal pull-up, and why no resistor is needed ---
-  \begin{scope}[shift={(5.3,-0.3)}]
-    \node[font=\sffamily\scriptsize\bfseries, text=ink] at (0.55,1.5) {inside the Pi};
-    \draw[p33, line width=1pt] (0.1,1.12) -- (1.0,1.12);
-    \node[font=\sffamily\tiny, text=p33, anchor=south] at (0.55,1.2) {3.3\,V};
-    \draw[ink70, line width=0.7pt] (0.55,1.12) -- (0.55,0.86);
-    \draw[ink70, line width=0.7pt, fill=white] (0.42,0.86) rectangle (0.68,0.42);
-    \node[font=\sffamily\tiny, text=ink70, anchor=west] at (0.8,0.64) {50\,k\textohm{} internal};
-    \draw[ink70, line width=0.7pt] (0.55,0.42) -- (0.55,0.16);
-    \node[pusebtn, minimum width=5.4mm, minimum height=3.6mm] at (0.55,-0.06) {24};
-    \draw[btnc, line width=1pt] (0.55,-0.3) -- (0.55,-0.6);
-    % the switch
-    \draw[ink, line width=0.9pt] (0.3,-0.6) -- (0.8,-0.6);
-    \draw[ink, line width=0.9pt] (0.36,-0.66) -- (0.9,-0.9);
-    \draw[ink, line width=0.9pt] (0.55,-0.96) -- (0.55,-1.16);
-    \node[font=\sffamily\tiny, text=ink70, anchor=west] at (0.98,-0.62) {your button};
-    \draw[gndc, line width=1.4pt] (0.25,-1.16) -- (0.85,-1.16);
-    \draw[gndc, line width=1.4pt] (0.35,-1.26) -- (0.75,-1.26);
-    \draw[gndc, line width=1.4pt] (0.45,-1.36) -- (0.65,-1.36);
-    \node[font=\sffamily\tiny, text=ink40, align=center, anchor=north] at (0.9,-1.55)
-         {idles high; a press pulls it to ground};
-  \end{scope}
-\end{tikzpicture}
-\end{center}
-
-\vspace{1mm}
-\noindent\textbf{\sffamily Why there is no debounce capacitor.} A real switch
-does not close once; it chatters for a few milliseconds. Pigpio's glitch filter
-discards any edge that does not then hold for 20\,ms
-(\code{BUTTON\_DEBOUNCE\_US}), \emph{before} a callback is ever queued.
-Undebounced, one press records several doses.
-
-\vspace{2mm}
-\begin{center}
-\begin{tikzpicture}[scale=1]
-  \node[font=\sffamily\scriptsize, text=ink70, anchor=east] at (-0.25,0.5) {raw pin};
-  \node[font=\sffamily\scriptsize, text=ink70, anchor=east] at (-0.25,-0.95)
-       {what the firmware sees};
-  \node[font=\sffamily\tiny, text=ink40, anchor=east] at (-0.25,0.85) {3.3\,V};
-  \node[font=\sffamily\tiny, text=ink40, anchor=east] at (-0.25,0.15) {0\,V};
-
-  % raw: idles high, chatters, settles low
-  \draw[ink, line width=1.3pt]
-    (0,0.85) -- (2.2,0.85) -- (2.2,0.15) -- (2.35,0.15) -- (2.35,0.85) -- (2.5,0.85)
-    -- (2.5,0.15) -- (2.62,0.15) -- (2.62,0.85) -- (2.72,0.85) -- (2.72,0.15)
-    -- (9.2,0.15);
-  \draw[decorate, decoration={brace, amplitude=3pt}, ink40, line width=0.6pt]
-    (2.18,1.0) -- (2.76,1.0)
-    node[midway, above=2pt, font=\sffamily\tiny, text=ink40] {chatter, a few ms};
-  \node[font=\sffamily\tiny, text=ink40, anchor=south] at (1.1,0.92) {idle, pulled up};
-
-  % filtered
-  \draw[btnc, line width=1.6pt]
-    (0,-0.6) -- (4.42,-0.6) -- (4.42,-1.3) -- (9.2,-1.3);
-  \draw[ink15, line width=0.6pt, dashed] (2.72,0.15) -- (2.72,-1.55);
-  \draw[ink15, line width=0.6pt, dashed] (4.42,0.15) -- (4.42,-1.55);
-  \draw[{Stealth[length=1.6mm]}-{Stealth[length=1.6mm]}, ink40, line width=0.5pt]
-       (2.72,-1.75) -- (4.42,-1.75)
-       node[midway, below=1pt, font=\sffamily\tiny, text=ink40]
-       {20\,ms must hold \textemdash{} \code{BUTTON\_DEBOUNCE\_US}};
-  \node[font=\sffamily\tiny, text=okgreen, anchor=west] at (4.55,-1.75)
-       {only then: one press, once};
-\end{tikzpicture}
-\end{center}
-
-\begin{provebox}
-\provetitle
-You need a dose waiting to confirm, so this is easiest tested at the end of
-Stage 3 \textemdash{} but you can check the firmware claimed the pin now:
-\begin{shell}
-journalctl -u snapcare-dispenser | grep -i button
-\end{shell}
-It should report the \code{pigpio} backend. \code{poll} means pigpiod is not
-running, and \code{none} means neither is available.
-\end{provebox}
-
-% ═══════════════════════════════════════════════════════════════════════════
-\section{Stage 3 \textemdash{} the buzzer}
+Two wires and a resistor. This comes early because on this build the chirp is
+the prompt: it is what tells somebody there is a dose to release, and a machine
+that cannot make it waits out the hour and records a miss.
 
 \begin{center}
 \begin{tikzpicture}
@@ -687,37 +731,76 @@ running, and \code{none} means neither is available.
   \node[font=\sffamily\scriptsize, text=ink70, align=left, anchor=north west]
        at (4.6,0.35)
        {\begin{minipage}{50mm}\scriptsize Any free GPIO would do \textemdash{}
-        the tone is software-timed PWM from pigpio, so it does not compete with
-        the ring for a hardware PWM channel.\\[0.6ex]
+        the tone is software-timed, so it does not compete with the ring for a
+        hardware PWM channel.\\[0.6ex]
         The tone is \textbf{2.7\,kHz}, 0.12\,s, repeating every 20\,s while a
-        dose is waiting.\end{minipage}};
+        dose is waiting to be released.\end{minipage}};
 \end{tikzpicture}
 \end{center}
+
+\begin{warnbox}
+\warntitle{Passive, not active \textemdash{} they look the same and are not}
+The firmware makes the tone itself, driving the pin as a 2.7\,kHz square wave
+(\code{indicators.Buzzer.beep}). An \emph{active} buzzer has its own oscillator
+and sounds at its own frequency the moment it sees a voltage \textemdash{} so it
+will make a noise here, just not the one that was chosen.
+
+\vspace{1.5ex}
+\begin{center}
+\begin{tikzpicture}[scale=0.95]
+  % passive vs active
+  \node[font=\sffamily\scriptsize\bfseries, text=okgreen] at (-2.6,1.05) {passive \textemdash{} use this};
+  \node[font=\sffamily\scriptsize\bfseries, text=dangerred] at (2.9,1.05) {active \textemdash{} wrong tone};
+  % passive: pi generates square wave
+  \node[compbox, minimum width=12mm] (pa) at (-4.3,0.35) {Pi};
+  \draw[wire, buzzc] (pa.east) -- (-3.4,0.35);
+  \draw[buzzc, line width=1pt]
+    (-3.4,0.15) -- (-3.4,0.55) -- (-3.15,0.55) -- (-3.15,0.15) -- (-2.9,0.15)
+    -- (-2.9,0.55) -- (-2.65,0.55) -- (-2.65,0.15) -- (-2.4,0.15) -- (-2.4,0.55) -- (-2.25,0.55);
+  \draw[wire, buzzc] (-2.25,0.35) -- (-1.7,0.35);
+  \draw[ink70, line width=0.7pt, fill=ink15] (-1.4,0.35) circle (0.3);
+  \node[font=\sffamily\tiny, text=ink70] at (-1.4,-0.15) {piezo};
+  \node[font=\sffamily\tiny, text=okgreen] at (-2.85,-0.15) {2.7\,kHz, chosen};
+  % active
+  \node[compbox, minimum width=12mm] (ac) at (1.3,0.35) {Pi};
+  \draw[wire, ink40] (ac.east) -- (2.1,0.35);
+  \draw[ink40, line width=1pt] (2.1,0.35) -- (2.6,0.35);
+  \node[font=\sffamily\tiny, text=ink40] at (2.35,0.62) {DC};
+  \draw[ink70, line width=0.7pt, fill=dangerred!12] (3.1,0.35) circle (0.34);
+  \node[font=\sffamily\tiny, text=dangerred] at (3.1,0.35) {osc.};
+  \node[font=\sffamily\tiny, text=dangerred] at (3.5,-0.15) {its own frequency};
+\end{tikzpicture}
+\end{center}
+\end{warnbox}
 
 \begin{provebox}
 \provetitle
 The buzzer is proved by the self-test, which sounds it deliberately and asks
-what you heard:
+what you heard. Stop the service first \textemdash{} it holds the GPIO lines:
 
 \begin{shell}
 sudo systemctl stop snapcare-dispenser
 sudo python3 -m snapcare_dispenser --selftest
+sudo systemctl start snapcare-dispenser
 \end{shell}
 
-\noindent What you are listening for is a clear \emph{tone}, not a click. A
-click means an active buzzer with its own oscillator, which makes a noise at
-whatever frequency it likes rather than the one the firmware asked for
-\textemdash{} fit a passive piezo element instead.
-
-\vspace{1ex}
-\code{POST /api/drop} deliberately does \textbf{not} chirp. A manual drop is a
-nurse checking a hopper, not a dose somebody has to be fetched for, so it moves
-the servo and stays silent. The repeating twenty-second chirp belongs to a
-\emph{scheduled} dose, and the way to see that is to schedule one a minute out.
+\noindent You are listening for a clear \emph{tone}, not a click. A click means
+an active buzzer with its own oscillator, which makes a noise at whatever
+frequency it likes rather than the one the firmware asked for \textemdash{} fit
+a passive piezo element instead.
 \end{provebox}
 
+\vspace{1mm}
+\begin{notebox}
+\textbf{\sffamily \code{POST /api/drop} deliberately does not chirp.} A manual
+drop is somebody checking a hopper at the bench, not a dose anybody has to be
+fetched for, so it moves the servo and stays silent. The repeating chirp belongs
+to a \emph{scheduled} dose waiting on a release, and the way to hear it in
+context is to schedule one a minute out.
+\end{notebox}
+
 % ═══════════════════════════════════════════════════════════════════════════
-\section{Stage 4 \textemdash{} the LED ring}
+\section{Stage 3 \textemdash{} the LED ring}
 
 This is the first stage that touches the servo supply. The ring's 5\,V does
 \emph{not} come from the Pi.
@@ -783,7 +866,7 @@ This is the first stage that touches the servo supply. The ring's 5\,V does
 peripheral and the DMA controller, and \textbf{GPIO 18, 12, 21 and 10 are the
 only pins wired to them.} Anything else is a ring that never lights and an error
 message about DMA. GPIO 18 is PWM0 and is not in the servo map. A test asserts
-this (\code{tests/test\_servo.py:181}).
+this (\code{tests/test\_servo.py}).
 \end{dangerbox}
 
 \noindent\textbf{\sffamily The 330\,\textohm{} is not folklore.} It damps the
@@ -812,12 +895,12 @@ text, because the person the machine is for cannot be assumed to read.
 \begin{center}
 \begin{tikzpicture}
   \foreach \i/\col/\ttl/\sub in {%
-      0/ledgreen/{dose ready}/{$+$ chirp},
-      1/ledblue/{dose taken}/{button pressed},
-      2/ledamber/{dose missed}/{grace ran out},
+      0/ledgreen/{dose is due}/{release it from the app},
+      1/ledblue/{released}/{pills are in the cup},
+      2/ledamber/{dose missed}/{nobody released it},
       3/ledviolet/{new schedule}/{accepted},
       4/ledcyan/{needs a network}/{join its hotspot}}{
-    \pgfmathsetmacro{\x}{\i*2.85}
+    \pgfmathsetmacro{\x}{\i*2.9}
     \begin{scope}[shift={(\x,0)}]
       \draw[ink15, line width=0.6pt] (0,0) circle (0.42);
       \foreach \a in {0,30,...,330}{\fill[\col] (\a:0.32) circle (0.055);}
@@ -827,8 +910,16 @@ text, because the person the machine is for cannot be assumed to read.
 \end{tikzpicture}
 \end{center}
 
+\vspace{1mm}
+\begin{notebox}
+\textbf{\sffamily Green now means one step earlier than it used to.} On the
+Arduino build green meant ``there are pills in the cup''. Here it means ``there
+is a dose you can have'', and blue is what follows once somebody has taken it.
+Only green chirps.
+\end{notebox}
+
 % ═══════════════════════════════════════════════════════════════════════════
-\section{Stage 5 \textemdash{} the servo power rail, before any servo}
+\section{Stage 4 \textemdash{} the servo power rail, before any servo}
 
 Wire and measure the rail with \textbf{no servos attached and no signal wires to
 the Pi}. This is the stage that protects the SD card.
@@ -864,7 +955,7 @@ the Pi}. This is the stage that protects the SD card.
     \node[compbox, minimum width=15mm, minimum height=7mm, draw=ink40, dashed,
           fill=white, text=ink40] at (\x+0.175,-1.0) {servo \i};}
   \node[font=\sffamily\scriptsize\itshape, text=dangerred, anchor=north west]
-       at (-0.9,-2.12) {not yet \textemdash{} the servos go on at Stages 6 and 7};
+       at (-0.9,-2.12) {not yet \textemdash{} the servos go on at Stages 5 and 6};
 
   % --- the Pi's ground, which is the whole point ---
   \node[compbox, minimum width=18mm, minimum height=8mm] (pig) at (-4.9,-2.95)
@@ -902,9 +993,9 @@ connected yet, so anything else is the supply or the wiring, not the firmware.
 \end{provebox}
 
 % ═══════════════════════════════════════════════════════════════════════════
-\section{Stage 6 \textemdash{} one servo}
+\section{Stage 5 \textemdash{} one servo}
 
-Do one, entirely, before the other two.
+Do one, entirely, before the others.
 
 \begin{center}
 \begin{tikzpicture}
@@ -931,7 +1022,7 @@ Do one, entirely, before the other two.
   \node[font=\sffamily\scriptsize, text=dangerred, anchor=north] at (-0.3,-1.75)
        {\textbf{signal only} \textemdash{} the servo's power never comes from the Pi};
 
-  % --- the rail from stage 5 ---
+  % --- the rail from stage 4 ---
   \draw[p5, line width=2.2pt] (-2.5,-0.72) -- (2.9,-0.72);
   \draw[gndc, line width=2.2pt] (-2.5,-1.29) -- (2.9,-1.29);
   \node[font=\sffamily\scriptsize\bfseries, text=p5, anchor=west] at (3.02,-0.72) {servo V$+$};
@@ -1003,28 +1094,29 @@ a dose given and is not one. The second round trip is what shakes it through.
 \end{center}
 
 \vspace{2mm}
-\noindent\textbf{\sffamily Check which driver you got.} \code{servoBackend} in
-the status, with \code{servoSteady} saying whether its timing can be trusted:
+\noindent\textbf{\sffamily Check which driver you got.} \code{gpio.servo} in the
+status says which library came up and how its pulses are timed:
 
 \begin{shell}
-curl -s http://localhost/api/status | grep -i servo
+curl -s http://localhost/api/status | grep -i -A3 servo
 \end{shell}
 
 \begin{center}
 \small
-\begin{tabular}{@{}l l >{\raggedright\arraybackslash}p{78mm}@{}}
+\begin{tabular}{@{}l l >{\raggedright\arraybackslash}p{74mm}@{}}
 \toprule
-\hdr{Backend} & \hdr{Verdict} & \hdr{What it means} \\
+\hdr{\code{timing}} & \hdr{Verdict} & \hdr{What it means} \\
 \midrule
-\code{pigpio} & \textcolor{okgreen}{\textbf{what you want}} & Pulses timed by the DMA controller, immune to CPU load \\
-\code{rpigpio} & \textcolor{warnamber}{\textbf{jittery fallback}} & Pulses timed from a Python thread; every kernel preemption is a visible twitch and an audible buzz. Reports \code{servoSteady: false}. Fix with \code{sudo systemctl enable -{}-now pigpiod} \\
-\code{mock} & \textcolor{dangerred}{\textbf{nothing moves}} & No servo library present at all \\
+\code{dma} & \textcolor{okgreen}{\textbf{best}} & pigpio. Pulses timed by the DMA controller, immune to CPU load. Only on a Bookworm card \\
+\code{threaded} & \textcolor{okgreen}{\textbf{fine}} & lgpio, the normal answer on a current image. Timed in C below Python; the occasional twitch under heavy load \\
+\code{python} & \textcolor{warnamber}{\textbf{jittery}} & RPi.GPIO's software PWM, timed from a Python thread. Every kernel preemption is a visible twitch and an audible buzz \textemdash{} \code{sudo apt install python3-lgpio} \\
+\code{none} & \textcolor{dangerred}{\textbf{nothing moves}} & No GPIO library at all. The firmware refuses to dispense rather than logging doses that never came out \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 % ═══════════════════════════════════════════════════════════════════════════
-\section{Stage 7 \textemdash{} the remaining servos}
+\section{Stage 6 \textemdash{} the remaining servos}
 
 \begin{center}
 \begin{minipage}{0.36\textwidth}
@@ -1106,7 +1198,7 @@ calling tray 2.
   % --- correct ---
   \node[font=\sffamily\scriptsize\bfseries, text=okgreen] at (-3.4,1.5) {what you asked for};
   \foreach \i/\x in {1/-4.6, 2/-3.4, 3/-2.2}{
-    \node[pusesservoish/.try, compbox, minimum width=8mm, minimum height=6mm,
+    \node[compbox, minimum width=8mm, minimum height=6mm,
           fill=servo!12, draw=servo!60] (a\i) at (\x,0.9) {\i};
     \node[compbox, minimum width=8mm, minimum height=8mm] (b\i) at (\x,-0.35) {\i};}
   \foreach \i in {1,2,3}{\draw[servo, line width=1pt, -{Stealth[length=1.6mm]}] (a\i) -- (b\i);}
@@ -1130,17 +1222,18 @@ calling tray 2.
 \end{dangerbox}
 
 \noindent\textbf{\sffamily Only one servo is ever driven at a time}, enforced by
-a lock \textemdash{} three doses owed at the same minute still move one horn at a
-time. Eight SG90s starting together is a current step that reboots the Pi with a
+a lock \textemdash{} two trays released together still move one horn at a time.
+Eight SG90s starting together is a current step that reboots the Pi with a
 compartment open.
 
 % ═══════════════════════════════════════════════════════════════════════════
-\section{Stage 8 \textemdash{} mechanical fitting and trim}
+\section{Stage 7 \textemdash{} mechanical fitting and trim}
 
 Fit the hoppers with the servos at their \textbf{resting 0\dgr}, not wherever the
 horn happened to stop. Park each one there first, then mount the horn:
 
 \begin{shell}
+sudo systemctl stop snapcare-dispenser
 sudo python3 -m snapcare_dispenser --drop 1     # sweeps, and ends at rest
 \end{shell}
 
@@ -1200,18 +1293,45 @@ about half a second \textemdash{} and still leave the hopper time to settle
 before the horn reverses. Raising it lengthens the drop by four times whatever
 you add.
 
+\vspace{2mm}
+\begin{provebox}
+\provetitle
+This is the first point at which the whole machine can be run end to end.
+Restart the service, schedule a dose a minute or two out, and \emph{do not touch
+anything}:
+
+\begin{shell}
+sudo systemctl start snapcare-dispenser
+curl -s http://localhost/api/status      # read "now", then pick a time 2 min later
+curl -X POST http://localhost/api/schedule \
+     -H 'Content-Type: application/json' -d '{"payload":"SC1*W*1:HHMM-127-000"}'
+\end{shell}
+
+\noindent At \code{HHMM} the ring should go green and the buzzer should start
+chirping, and \textbf{no tray should open}. Then release it:
+
+\begin{shell}
+curl -s http://localhost/api/status | grep -i awaitingRelease
+curl -X POST http://localhost/api/release -H 'Content-Type: application/json' -d '{}'
+\end{shell}
+
+\noindent Now the tray sweeps and the ring goes blue. If you would rather see
+the other branch, leave it alone for the full grace hour: the tray must stay
+shut and the ring must go amber.
+\end{provebox}
+
 % ═══════════════════════════════════════════════════════════════════════════
-\section{Stage 9 \textemdash{} cloud sync, if you want it}
+\section{Stage 8 \textemdash{} cloud sync, if you want it}
 
-Skip this stage entirely and everything still works: the schedule arrives from
-the app over the home WiFi or off a photographed paper sheet, and the device
-runs it from the SD card against the DS1302. That is the whole machine, and it
-is a reasonable way to ship one.
+Skip this stage entirely and the dispenser still works, on one condition: the
+phone has to be on the house WiFi to release a dose. That is a reasonable way to
+ship one, and it is the whole machine \textemdash{} the schedule arrives from
+the app over the LAN or off a photographed paper sheet, and the device runs it
+from the SD card against the DS1302.
 
-What this stage adds is that a schedule edited in the app reaches the device
-\textbf{without anybody being in the house} \textemdash{} which is the normal
-case, because the person managing a prescription is usually not the person
-taking it.
+What this stage adds is that both directions work from anywhere: a schedule
+edited by a carer across town arrives \textbf{without anybody being in the
+house}, and a release tapped on a notification reaches the device from a train.
 
 \begin{center}
 \begin{tikzpicture}
@@ -1222,14 +1342,14 @@ taking it.
   \node[modbox, minimum width=26mm, minimum height=15mm] (dev) at (4.6,0)
        {\textbf{this dispenser}\\[-0.3ex]{\scriptsize behind the house router}};
 
-  \draw[wire, i2cc, -{Stealth[length=2mm]}] (app.east) -- (rel.west)
-       node[midway, above, font=\sffamily\tiny, text=ink70] {a new schedule};
+  \draw[wire, i2cc, -{Stealth[length=2mm]}] (app.north) -- ++(0,0.5) -| (rel.north)
+       node[pos=0.25, above, font=\sffamily\tiny, text=ink70] {a new schedule, or a release};
   \draw[wire, i2cc, -{Stealth[length=2mm]}] (rel.east) -- (dev.west)
        node[midway, above, font=\sffamily\tiny, text=ink70] {long poll};
   \draw[wire, okgreen, -{Stealth[length=2mm]}]
        (dev.south) -- ++(0,-0.55) -- ($(app.south)+(0,-0.55)$) -- (app.south);
   \node[font=\sffamily\tiny, text=okgreen, fill=white, inner sep=1.5pt] at (0,-1.3)
-       {doses given, and the device's own state, go back the same way};
+       {doses given, and which are waiting to be released, go back the same way};
 
   \node[font=\sffamily\scriptsize, text=ink40, anchor=north, align=center] at (0,-1.9)
        {the relay is \emph{not} a part in the bill of materials:\\
@@ -1260,9 +1380,11 @@ last one is the device having published its own state, which is what creates its
 mailbox.
 
 \vspace{1ex}
-Then prove the direction that matters, from the relay's demo app: open
-\code{https://<your relay>/lab}, pair with this device's code, and send it a
-schedule. It should appear in \code{payload} here within a second or two.
+Then prove both directions from the relay's demo app: open
+\code{https://<your relay>/lab}, pair with this device's code, send it a
+schedule, and \textemdash{} once a dose is due \textemdash{} release it from
+there. The schedule should appear in \code{payload} within a second or two, and
+the release should open the tray about as fast.
 \end{provebox}
 
 \vspace{1mm}
@@ -1286,17 +1408,34 @@ schedule. It should appear in \code{payload} here within a second or two.
 
 \begin{dangerbox}
 \dangertitle{The test nobody does: unplug the internet, not the device}
-Pull the router's WAN cable, leave the dispenser on its LAN, and check that a
-scheduled dose still comes out on time. It must. A build that has just gained a
-cloud feature is exactly when a dependency on it gets introduced by accident,
-and the symptom is a machine that works perfectly in every test anyone runs at a
-desk.
+Pull the router's WAN cable, leave the dispenser and the phone on the LAN, and
+release a due dose from the app. The pill must still come out.
+
+\vspace{1ex}
+This matters more than it did before the release model. A build that has just
+gained a cloud feature is exactly when a dependency on it gets introduced by
+accident \textemdash{} and now that dependency would not merely delay a report,
+it would mean the tray cannot be opened at all. The symptom is a machine that
+works perfectly in every test anyone runs at a desk.
 \end{dangerbox}
+
+\begin{notebox}
+\textbf{\sffamily A release is not a schedule, and the relay carries it
+differently.} The schedule lives in a slot the device treats as \emph{state}:
+whatever is newest is what it should be running, so a device coming back after a
+week adopts it. A release is an \emph{act} \textemdash{} true for one hour on one
+morning \textemdash{} so it has a slot of its own, and the device carries one out
+only if the dose it names is one it is offering right now.
+
+\vspace{1ex}
+That is what stops a release tapped at 08:05 and delivered at 3\,p.m., by a
+relay that was down in between, from dropping a pill into an empty room.
+\end{notebox}
 
 \clearpage
 
 % ═══════════════════════════════════════════════════════════════════════════
-\section{Stage 10 \textemdash{} the label}
+\section{Stage 9 \textemdash{} the label}
 
 The setup code is printed once and never changes. It is derived, not generated:
 HMAC-SHA256 over the SoC serial in \code{/proc/cpuinfo}, so it survives a
@@ -1341,10 +1480,10 @@ sudo python3 -m snapcare_dispenser --show-qr      # scannable, in the terminal
 
 \begin{dangerbox}
 \dangertitle{The pairing code is a credential}
-Anyone who can read it can send this device a schedule, in the same way anyone
-who can read the WiFi password can join the hotspot. Put the label where the
-owner can find it and a visitor cannot \textemdash{} inside a battery door, or
-on the underside.
+Anyone who can read it can send this device a schedule \emph{and release a
+dose}, in the same way anyone who can read the WiFi password can join the
+hotspot. Put the label where the owner can find it and a visitor cannot
+\textemdash{} inside a battery door, or on the underside.
 \end{dangerbox}
 
 \begin{warnbox}
@@ -1373,21 +1512,22 @@ app can read and a plain camera cannot.
 \swatch{servo} & Servo tray 2 & 27 & 13 & \\
 \swatch{servo} & Servo tray 3 & 22 & 15 & \\
 \swatch{servo} & Servo trays 4--8 & 5, 6, 13, 19, 26 & 29, 31, 33, 35, 37 & same status as the first three; fit a hopper and it works \\
-\swatch{ringc} & WS2812 ring data & 18 & 12 & through 330\ohm{} at the ring; must be 18/12/21/10 \\
 \swatch{buzzc} & Piezo buzzer & 23 & 16 & through 100\ohm \\
-\swatch{btnc}  & Confirm button & 24 & 18 & other leg to GND; internal pull-up \\
+\swatch{ringc} & WS2812 ring data & 18 & 12 & through 330\ohm{} at the ring; must be 18/12/21/10 \\
 \swatch{rtcc}  & DS1302 SCLK & 16 & 36 & bit-banged; no bus, no kernel driver \\
 \swatch{rtcc}  & DS1302 I/O & 20 & 38 & bidirectional \textemdash{} 3.3\,V only \\
 \swatch{rtcc}  & DS1302 CE & 21 & 40 & \\
 \swatch{p33}   & DS1302 VCC & \textemdash{} & 17 (3.3\,V) & not 5\,V \\
-\swatch{gndc}  & Ground & \textemdash{} & 6, 9, 14, 20, 25, 30, 34, 39 & pin 9 to the RTC; at least one to the servo supply GND \\
+\swatch{gndc}  & Ground & \textemdash{} & 6, 9, 14, 20, 25, 30, 34, 39 & pin 39 to the RTC; at least one to the servo supply GND \\
+\midrule
+\swatch{ink15} & \emph{free} & 4, 24, 25 & 7, 18, 22 & unassigned. GPIO 24 carried the confirm button on earlier builds \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 \vspace{1mm}
 \noindent Run \code{pinout} on the Pi for the full header. Everything above is
-BCM numbering, which is what pigpio and RPi.GPIO both use.
+BCM numbering, which is what both GPIO libraries use.
 
 % ═══════════════════════════════════════════════════════════════════════════
 \section{Power budget}
@@ -1448,6 +1588,7 @@ Run this before the device goes anywhere near real medication.
 \begin{shell}
 sudo systemctl stop snapcare-dispenser
 sudo python3 -m snapcare_dispenser --selftest
+sudo systemctl start snapcare-dispenser
 \end{shell}
 
 \noindent It checks what can be checked, asks about what only eyes and ears can
@@ -1466,9 +1607,9 @@ real consequence and it is unanswerable three stages later, so the self-test
 waits three seconds after the last stroke and asks then. ``Every tray you fitted
 moves'' is ticked truthfully by a machine whose trays 1 and 2 are wired to each
 other's pins \textemdash{} both moved \textemdash{} so the self-test asks
-\emph{which hopper moved}, by number. And nothing on paper can tell a button
-that fires once per press from one that fires four times, which is the entire
-reason the debounce exists, so the self-test counts the edges.
+\emph{which hopper moved}, by number. And ``the buzzer works'' is ticked by an
+active buzzer playing the wrong note, so it asks whether you heard a tone or a
+click.
 
 \vspace{1ex}
 The rule it follows throughout: never ask about something it did not just make
@@ -1476,7 +1617,7 @@ happen.
 \end{notebox}
 
 \vspace{2mm}
-\noindent It reports in three states, and the third is the one worth reading:
+\noindent It reports in four states, and the last is the one worth reading:
 
 \begin{center}
 \small
@@ -1486,14 +1627,14 @@ happen.
 \midrule
 \code{ok} & Checked and correct \\
 \code{FAIL} & Checked and wrong, with the fix beside it \\
-\code{warn} & True but not blocking \textemdash{} an lgpio-timed servo, a tray count left at the default \\
+\code{warn} & True but not blocking \textemdash{} a Python-timed servo, a tray count left at the default \\
 \code{skip} & \textbf{Nobody looked.} ``Everything passed'' and ``everything anybody looked at passed'' are different sentences, and this is the difference \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 \vspace{3mm}
-\noindent\textbf{\sffamily Five things it cannot do, which are the five that
+\noindent\textbf{\sffamily Six things it cannot do, which are the six that
 matter most.} Each needs the power, the network or the calendar interfered with,
 and each is invisible in any test run at a desk:
 
@@ -1504,26 +1645,29 @@ and each is invisible in any test run at a desk:
 \hdr{Test} & \hdr{What it catches} \\
 \midrule
 \textbf{The power cut} &
-Pull the power at 08:30, after the 08:00 dose, and restore it. No second dose,
-and the log survives. This is exactly the case that dispenses twice without
-persisted state \\
+Pull the power at 08:30, after the 08:00 dose has been released, and restore it.
+No second dose, and the log survives. This is exactly the case that dispenses
+twice without persisted state \\
 \textbf{The coin cell} &
 Unplug the Pi, leave it a minute, bring it back with the network unplugged.
 \code{clock.trusted} must still be true and \code{clock.source} must read
 \code{rtc}. Nothing on a bench with WiFi proves this, because NTP vouches first
 and the RTC is never consulted \\
+\textbf{The dose nobody takes} &
+Let a scheduled dose sit for its whole grace window without releasing it. The
+tray must stay shut, the log must say missed, and the ring must go amber. A
+build that quietly drops it at the end has lost the point of asking first \\
+\textbf{The stale notification} &
+Let a dose expire, then tap release on a notification still sitting on the
+phone's lock screen. Nothing must move \textemdash{} the device's own sense of
+what is due is the authority, and this is the only way to watch it refuse \\
+\textbf{The internet cut} &
+Pull the router's WAN cable, leave the dispenser and the phone on the LAN, and
+release a due dose. It must come out. This catches a release path that only
+works through the relay, which passes every test at a desk \\
 \textbf{The wrong password} &
 Type the WiFi password wrong on purpose. The setup network must come back within
 a few seconds and the page you re-open must say the password was not accepted \\
-\textbf{The internet cut} &
-Pull the router's WAN cable and leave the dispenser on the LAN. A scheduled dose
-must still come out on time. This is the one that catches a dependency on the
-relay introduced by accident, because everything passes at a desk \\
-\textbf{The repeated revision} &
-Send the same schedule revision twice; the second must be ignored. The relay
-refuses it, so this is the only way to see the \emph{device's} own check
-\textemdash{} which is what stands between a rolled-back relay and last month's
-prescription being applied as new \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -1550,34 +1694,59 @@ prescription being applied as new \\
 \hdr{Symptom} & \hdr{Look at} \\
 \midrule
 \endhead
+\multicolumn{2}{@{}l}{\textbf{\sffamily Releasing a dose}}\\
+The ring goes green and chirps, but no release button appears in the app &
+The app has not heard about the dose. On the LAN, check \code{pilldispenser.local}
+resolves from the phone; through the relay, check \code{cloud.state} is
+\code{connected}. \code{device.awaitingRelease} in \code{/api/status} is what the
+app is waiting to see \\
+Tapping release does nothing, and the ring stays green &
+\code{device.blockedReason} says which of the two gates it is: an untrusted
+clock, or no GPIO library. They need opposite fixes \\
+Tapping release says nothing was waiting &
+The window closed \textemdash{} \code{GRACE\_MINUTES}, one hour by default. The
+dose is in the log as \code{not-released}. This is correct behaviour, not a
+fault \\
+Doses expire untaken every day &
+Nobody is being told. Almost always a missing buzzer: check \code{gpio.missing}.
+On this build the chirp is the prompt, not an announcement \\
+The release works at home and not away &
+That is the LAN path working and the relay path not. Stage 8, and
+\code{cloud.state} \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\sffamily Servos}}\\
 Servo twitches or ignores commands & Common ground. The Pi's GND and the servo supply GND must be joined \\
-Servo hums between doses & You are on the \code{rpigpio} fallback \textemdash{} \code{sudo apt install python3-lgpio}. \code{gpio.servo.timing} in \code{/api/status} says which you have: \code{dma}, \code{threaded} or \code{python} \\
-Nothing moves and no error appears & No GPIO library at all. The firmware now refuses to dispense rather than logging doses that never came out \textemdash{} \code{gpio.missing} says so. \code{sudo apt install python3-lgpio} \\
+Servo hums between doses & You are on the RPi.GPIO fallback \textemdash{} \code{sudo apt install python3-lgpio}. \code{gpio.servo.timing} in \code{/api/status} says which you have: \code{dma}, \code{threaded} or \code{python} \\
+Nothing moves and no error appears & No GPIO library at all. The firmware refuses to dispense rather than logging doses that never came out \textemdash{} \code{gpio.missing} says so. \code{sudo apt install python3-lgpio} \\
 \code{apt install pigpio} says there is no such package & Correct, on Raspberry Pi OS Trixie. It is not coming back; lgpio is the driver now \\
 Servo buzzes at the end of a stroke & Being driven past its mechanical stop. Trim it in \code{SERVO\_TRIM} before it burns out \\
 Pi reboots when a servo moves & Servos are on the Pi's 5\,V pin, or the rail has no bulk capacitor \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\sffamily Ring and buzzer}}\\
 Ring never lights, DMA error in the log & Data line is not on GPIO 18/12/21/10 \\
 First pixel is the wrong colour & 330\ohm{} missing, or at the Pi end instead of the ring end. If it persists, the ring's 5\,V logic threshold ($0.7 \times V_{DD} = 3.5$\,V) is above the Pi's 3.3\,V output \textemdash{} shorten the lead, or drop the ring's supply to $\sim$4.5\,V \\
 Ring flickers only when a servo moves & pigpio and the ring contending for PWM. pigpiod's \code{-t} selects its clock peripheral: \code{-t 1} is PCM, which is the default and the one that leaves PWM0 free for the ring. \code{-t 0} selects PWM and is the setting that \emph{causes} this \\
 Buzzer makes a tone but not \emph{this} tone & It is an active buzzer with its own oscillator. Use a passive element \\
-One press logs several doses & Debounce \textemdash{} check \code{journalctl} says the \code{pigpio} button backend, not \code{poll} \\
-Tray stays shut, nothing dispenses & \code{device.blockedReason} in \code{/api/status} says which of the two reasons it is: an untrusted clock, or no GPIO library. They need opposite fixes \\
+Ring is cyan and stays cyan & The device is on its own setup hotspot waiting to be put on a network. Join \code{SnapCare-\ldots} and the page opens itself \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\sffamily Clock and schedule}}\\
 Clock right at shutdown, wrong at boot & The cell is dead or not seated. \code{clock.rtc.detail} distinguishes ``never been set'' from ``the cell has been flat since'' \\
 Clock drifts a few minutes a month & Expected \textemdash{} the DS1302's crystal is uncompensated. Leave the device able to reach NTP \\
+A schedule is refused by tray number & This build was told how many trays it has. Raise \code{SNAPCARE\_TRAYS}, or drop it to use all eight \\
+A dose for a tray that was never fitted is never offered, and nothing complains & All eight are accepted by default and an SG90 reports nothing. Set \code{SNAPCARE\_TRAYS} to the number really fitted \\
+A schedule POST answers 421 & The \code{Host} header is not a name this device answers to. Use \code{pilldispenser.local} or the IP; \code{SNAPCARE\_EXTRA\_HOSTS} adds a router's own domain \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{\sffamily Network and cloud}}\\
 \code{pilldispenser.local} does not resolve & avahi, and the hostname. The web app's \code{DEFAULT\_HOST} is that exact string \\
-Ring is cyan and stays cyan & The device is on its own setup hotspot waiting to be put on a network. Join \code{SnapCare-\ldots} and the page opens itself \\
 Setup page says ``did not hand out an address'' & The password was right and DHCP was not. Usually a router that needs restarting, or a MAC filter \\
 The setup hotspot keeps disappearing for half a minute & That is the unattended retry finding a saved network worth trying. It stops once one works; raise \code{HOTSPOT\_RETRY\_S} if it is in the way of a bench session \\
-A schedule POST answers 421 & The \code{Host} header is not a name this device answers to. Use \code{pilldispenser.local} or the IP; \code{SNAPCARE\_EXTRA\_HOSTS} adds a router's own domain \\
 Setup page never leaves ``waiting\ldots'' & The phone has not gone back to the house WiFi. Switch it over; the page follows. If the device's own network reappeared, the password was refused \\
-A schedule is refused by tray number & This build was told how many trays it has. Raise \code{SNAPCARE\_TRAYS}, or drop it to use all eight \\
-A dose for a tray that was never fitted never comes out, and nothing complains & All eight are accepted by default and an SG90 reports nothing. Set \code{SNAPCARE\_TRAYS} to the number really fitted \\
 Cloud \code{state: unsupported} & \code{sudo apt install python3-cryptography}. Everything else still works meanwhile \\
 Cloud \code{state: retrying}, DNS in \code{lastError} & The Pi has no working resolver. It joined the WiFi but got no DNS, or the router blocks it \\
 Cloud connects, but no schedule ever arrives & The app is paired to a different code. Compare \code{cloud.deviceId} here with the one the app shows \textemdash{} they must match exactly \\
 The app shows the device as never seen & Nothing has written to the mailbox. Check \code{reportedRev} here is 1 or more \\
 A schedule sent from the app is refused & \code{cloud.lastError} says why, in the same words the LAN API would use. Usually a tray that is not fitted \\
-Cloud fine, but doses take minutes to appear & \code{SNAPCARE\_CLOUD\_IDLE\_S} is set. That is the cheap mode working as asked \\
+Cloud fine, but doses take minutes to appear in the log & \code{SNAPCARE\_CLOUD\_IDLE\_S} is set. That is the cheap mode working as asked \textemdash{} it does not delay releases, which are polled continuously either way \\
 \bottomrule
 \end{longtable}
 \end{center}

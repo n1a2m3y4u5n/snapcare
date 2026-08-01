@@ -1,14 +1,21 @@
 /**
  * Talking to a dispenser through the relay.
  *
- * The relay is a mailbox with a long poll. Two slots per device:
+ * The relay is a mailbox with a long poll. Three slots per device:
  *
  *     desired    the app writes, the dispenser reads   — what the schedule should be
  *     reported   the dispenser writes, the app reads   — what it is actually doing
+ *     command    the app writes, the dispenser reads   — release the dose, now
  *
- * They are separate because they have different writers and different truths.
- * Merging them is how a device's own report of what it did gets played back to
- * it as an instruction.
+ * `desired` and `reported` are separate because they have different writers and
+ * different truths: merging them is how a device's own report of what it did
+ * gets played back to it as an instruction.
+ *
+ * `command` is separate from `desired` for a different reason. A schedule is a
+ * *state* — true until it is edited, and a device reconnecting after a week
+ * should adopt the newest one it finds. A release is an *act*, true for one hour
+ * on one morning, and a device that treated it the same way would drop a pill
+ * into an empty room the moment its connection came back.
  *
  * Everything crossing the relay is sealed (`envelope.ts`). The relay stores
  * ciphertext, revisions, sizes and timestamps, and is structurally incapable of
@@ -22,8 +29,14 @@
 
 import { deriveKeys, type DeviceKeys } from './derive.ts';
 import { seal, unseal, type Envelope, type Slot } from './envelope.ts';
-import { encodeWeekly } from './schedule.ts';
-import type { DesiredSchedule, DeviceReport, MailboxMeta, WeeklySlot } from './types.ts';
+import { encodeWeekly, parseHhmm } from './schedule.ts';
+import type {
+  DesiredSchedule,
+  DeviceReport,
+  MailboxMeta,
+  ReleaseCommand,
+  WeeklySlot,
+} from './types.ts';
 
 /** A relay that answered, but not the way we hoped. */
 export class RelayError extends Error {
@@ -158,6 +171,78 @@ export class DispenserClient {
   async getSchedule(): Promise<{ rev: number; schedule: DesiredSchedule } | null> {
     const found = await this.read('desired', 0, 0);
     return found && { rev: found.rev, schedule: found.opened as DesiredSchedule };
+  }
+
+  // ── releasing a dose ─────────────────────────────────────────────────────
+
+  /**
+   * Open the tray, now. This is what the release button sends when the phone
+   * cannot reach the device over the LAN.
+   *
+   * **The device does not dispense on a timer.** At a dose's scheduled minute it
+   * lights up, chirps, and puts the dose on `status.awaitingRelease` — and
+   * opens nothing. This is what opens it, and if nobody sends it inside the
+   * grace window the tray stays shut and the dose is recorded missed.
+   *
+   * With no arguments it releases everything currently due, which is what a
+   * main-screen button means: two trays owed at 08:00 are two medications for
+   * 08:00, and making somebody tap twice is how the second gets forgotten. Pass
+   * `tray` and `at` to name one dose, which is what a notification about a
+   * specific dose should do.
+   *
+   * ```ts
+   * await client.release();                          // everything due
+   * await client.release({ tray: 1, at: '0800' });    // one dose
+   * ```
+   *
+   * Returns the revision the relay now holds. **It does not tell you whether a
+   * pill came out** — the relay is a mailbox and cannot know. Watch
+   * `awaitingRelease` empty out, or the dose appear in `report.events`, through
+   * {@link waitForReport}.
+   *
+   * A release that arrives after its dose expired moves nothing: the device acts
+   * only on a dose it is currently offering. So this is safe to send from a
+   * stale notification, and you still want to stop *offering* the button at
+   * `expiresAt` — a control that silently does nothing sends somebody away
+   * believing they have their medication.
+   */
+  async release(dose?: { tray?: number; at?: string }): Promise<number> {
+    const command: ReleaseCommand = { action: 'release' };
+    if (dose?.tray !== undefined) command.tray = dose.tray;
+    if (dose?.at !== undefined) {
+      const minutes = parseHhmm(dose.at);
+      if (minutes === null) throw new Error(`"${dose.at}" is not an HHMM time`);
+      command.minutes = minutes;
+    }
+
+    let currentRev = 0;
+    try {
+      const meta = await this.meta();
+      currentRev = Number(meta.command?.rev ?? 0);
+    } catch (error) {
+      // No mailbox yet means no device has ever reported, so there is nothing
+      // due to release — but the write is harmless and creates it.
+      if (!(error instanceof RelayError) || error.status !== 404) throw error;
+    }
+
+    const rev = currentRev + 1;
+    const envelope = await seal(this.keys.boxKey, this.keys.deviceId, 'command', rev, command);
+    const response = await this.request('PUT', '/command', { envelope });
+
+    if (response.status === 409) {
+      // Two phones tapped release at once. Unlike a schedule conflict this
+      // needs no merge — the other tap is doing the same job, and the device
+      // will open the tray once either way. Re-read and retry once.
+      const meta = await this.meta().catch(() => null);
+      const next = Number(meta?.command?.rev ?? rev) + 1;
+      const retry = await seal(this.keys.boxKey, this.keys.deviceId, 'command', next, command);
+      const second = await this.request('PUT', '/command', { envelope: retry });
+      await this.assertOk(second);
+      return ((await second.json()) as { rev: number }).rev;
+    }
+
+    await this.assertOk(response);
+    return ((await response.json()) as { rev: number }).rev;
   }
 
   // ── reading what the device says ─────────────────────────────────────────

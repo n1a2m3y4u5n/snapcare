@@ -122,9 +122,25 @@
           <dt>Dispensing</dt><dd id="repDispensing" class="small">—</dd>
           <dt>Loaded plan</dt><dd class="small"><code id="repPayload">—</code></dd>
           <dt>Next dose</dt><dd id="repNext" class="small">—</dd>
+          <dt>Waiting to be released</dt><dd id="repWaiting" class="small">—</dd>
           <dt>Applied revision</dt><dd id="repRev" class="small">—</dd>
         </dl>
         <div id="repError"></div>
+
+        <!-- The control the whole device depends on. A due dose sits in the
+             hopper until this is sent; nothing is dispensed on a timer. -->
+        <div class="row" style="margin-top:.9rem">
+          <button class="fit" id="release" type="button" disabled>Release the dose</button>
+          <button class="ghost fit" id="releaseStale" type="button" disabled>
+            Release a dose that is not due
+          </button>
+        </div>
+        <p class="small muted">
+          The second one is the guard worth seeing: a release naming a dose the
+          device is not currently offering moves nothing. That is what makes a
+          notification tapped an hour late safe.
+        </p>
+        <div class="toast" id="releaseMsg"></div>
         <p class="small muted" style="margin:.9rem 0 .3rem">Recent doses</p>
         <div class="scroll-x">
           <table><thead>
@@ -144,7 +160,8 @@
         </p>
         <div class="row">
           <button class="fit" id="simToggle" type="button">Start the simulated device</button>
-          <button class="ghost fit" id="simDose" type="button">Report a dose</button>
+          <button class="ghost fit" id="simDue" type="button">Make a dose due</button>
+          <button class="ghost fit" id="simDose" type="button">Report a manual drop</button>
         </div>
         <dl class="facts" style="margin-top:.9rem">
           <dt>Holding</dt><dd id="simPayload" class="small"><code>nothing</code></dd>
@@ -332,7 +349,8 @@ $('clearLog').onclick = () => { $('log').innerHTML = ''; };
 
 const state = {
   claim: '', deviceId: '', token: '', key: null,
-  desiredRev: 0, reportedRev: 0,
+  desiredRev: 0, reportedRev: 0, commandRev: 0,
+  waiting: [],
   watching: false, sim: null,
 };
 
@@ -426,7 +444,7 @@ $('forget').onclick = () => {
   stopWatching();
   if (state.sim) toggleSim();
   Object.assign(state, { claim: '', deviceId: '', token: '', key: null,
-                         desiredRev: 0, reportedRev: 0 });
+                         desiredRev: 0, reportedRev: 0, commandRev: 0, waiting: [] });
   try { localStorage.removeItem('snapcare.lab.claim'); } catch (e) { /* ignore */ }
   $('pairState').className = 'pill';
   $('pairState').textContent = 'not paired';
@@ -454,6 +472,7 @@ async function refreshMeta() {
 
   state.desiredRev = data.desired.rev;
   state.reportedRev = data.reported.rev;
+  state.commandRev = (data.command && data.command.rev) || 0;
   $('statDesired').textContent = data.desired.rev;
   $('statReported').textContent = data.reported.rev;
   $('statSeen').textContent = data.deviceLastSeen
@@ -650,6 +669,21 @@ async function showReport(data) {
     : 'nothing further today';
   $('repRev').textContent = report.desiredRev ?? '—';
 
+  // What the device is offering right now. Nothing has left a hopper for
+  // anything listed here — this is what the release button acts on, and what
+  // an app would draw its main-screen button and its push notification from.
+  const waiting = status.awaitingRelease || [];
+  $('repWaiting').textContent = waiting.length
+    ? waiting.map((d) => `tray ${d.tray}, due ${hhmm(d.time)}, until ` +
+                         (d.expiresAt || '').slice(11, 16)).join(' · ')
+    : 'nothing due';
+  $('repWaiting').className = 'small' + (waiting.length ? ' warn' : '');
+  state.waiting = waiting;
+  $('release').disabled = waiting.length === 0;
+  $('releaseStale').disabled = waiting.length === 0;
+  $('release').textContent = waiting.length > 1
+    ? `Release ${waiting.length} doses` : 'Release the dose';
+
   $('repError').innerHTML = '';
   if (report.lastError) {
     const p = document.createElement('p');
@@ -662,8 +696,7 @@ async function showReport(data) {
   body.innerHTML = '';
   for (const event of (report.events || []).slice(0, 12)) {
     const row = document.createElement('tr');
-    for (const value of [event.at, event.tray, hhmm(event.time),
-                         event.taken ? (event.confirmed ? 'confirmed' : 'dispensed') : 'MISSED']) {
+    for (const value of [event.at, event.tray, hhmm(event.time), describeEvent(event)]) {
       const cell = document.createElement('td');
       cell.textContent = value;
       row.append(cell);
@@ -671,6 +704,60 @@ async function showReport(data) {
     body.append(row);
   }
 }
+
+/* ── releasing a dose ───────────────────────────────────────────────── */
+
+// A dose event, in words. `released` and the two kinds of miss are different
+// facts and a carer acts on them differently: `not-released` means the machine
+// asked and nobody came, `window-closed` means it never got to ask.
+function describeEvent(event) {
+  switch (event.reason) {
+    case 'released':     return 'taken';
+    case 'manual':       return 'dropped by hand';
+    case 'not-released': return 'MISSED — offered, never released';
+    case 'window-closed': return 'MISSED — window had closed';
+    default:             return event.taken ? 'taken' : 'MISSED';
+  }
+}
+
+/**
+ * Write a release into the `command` slot.
+ *
+ * A separate slot from `desired` on purpose. A schedule is a *state* — the
+ * newest one is what should be running, and a device reconnecting after a week
+ * should adopt it. A release is an *act*, true for one hour on one morning, and
+ * a device that treated it the same way would drop a pill into an empty room
+ * the moment its connection came back.
+ */
+async function sendRelease(dose) {
+  const body = { action: 'release' };
+  if (dose) { body.tray = dose.tray; body.minutes = dose.minutes; }
+
+  await refreshMeta();
+  const rev = (state.commandRev || 0) + 1;
+  const envelope = await seal(state.key, state.deviceId, 'command', rev, body);
+  logEntry('out', 'SEAL', `command rev ${rev}`, null, body);
+
+  const { status, data } = await relay('PUT', '/command', { envelope },
+                                       { label: `command rev ${rev}` });
+  if (status === 200) {
+    state.commandRev = data.rev;
+    toast($('releaseMsg'), true,
+          'Sent. The device opens the tray only if that dose is still due — '
+          + 'watch "waiting to be released" empty out.');
+  } else {
+    toast($('releaseMsg'), false, (data && data.error) || `the relay answered ${status}`);
+  }
+}
+
+$('release').onclick = () => sendRelease(null);   // everything currently due
+
+$('releaseStale').onclick = () => {
+  // A dose that is not due: same tray, a time nothing is scheduled for. The
+  // device must find nothing waiting and move nothing.
+  const first = (state.waiting || [])[0];
+  return sendRelease({ tray: first ? first.tray : 1, minutes: 3 * 60 });
+};
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -720,7 +807,14 @@ $('faultTray').onclick = async () => {
 
 /* ── the simulated device ───────────────────────────────────────────── */
 
-const sim = { rev: 0, payload: '', reportRev: 0, running: false, seq: 0, events: [] };
+const sim = {
+  rev: 0, commandRev: 0, payload: '', reportRev: 0, running: false, seq: 0,
+  events: [],
+  // The dose this simulated device is currently offering, if any. The real
+  // firmware rebuilds this from the schedule on every tick; here it is put
+  // there by "Make a dose due" so the release path can be driven by hand.
+  waiting: [],
+};
 
 async function simPublishReport(note) {
   sim.reportRev = Math.max(sim.reportRev, state.reportedRev) + 1;
@@ -735,6 +829,7 @@ async function simPublishReport(note) {
       clock: { now: new Date().toISOString().slice(0, 19), source: 'browser', trusted: true },
       payload: sim.payload,
       nextDose: null,
+      awaitingRelease: sim.waiting,
       servoBackend: 'simulated', servoSteady: true,
     },
     events: sim.events,
@@ -752,8 +847,78 @@ async function simPublishReport(note) {
   if (status === 200) sim.reportRev = data.rev;
 }
 
+/**
+ * Carry out a release, the way the firmware does.
+ *
+ * The guard is the whole point: the command names a dose, and this only moves
+ * if that dose is one the device is *currently* offering. A command that
+ * arrives after the window closed — a relay that was down, a notification left
+ * on a lock screen — finds nothing waiting and does nothing. It is not refused
+ * and not an error; there is simply nothing to release.
+ */
+async function simRelease(command) {
+  const wanted = sim.waiting.filter((d) =>
+    (command.tray === undefined || d.tray === command.tray) &&
+    (command.minutes === undefined || hhmmToMinutes(d.time) === command.minutes));
+
+  if (!wanted.length) {
+    logEntry('in', 'DEVICE', 'a release arrived with no matching dose due — nothing moved',
+             null, command);
+    await simPublishReport('');
+    return;
+  }
+
+  for (const dose of wanted) {
+    sim.waiting = sim.waiting.filter((d) => d !== dose);
+    sim.events.unshift({
+      at: new Date().toISOString().slice(0, 19),
+      tray: dose.tray, time: dose.time, taken: true, confirmed: true,
+      reason: 'released', seq: sim.seq,
+      sc1: `SC1*E*${dose.tray}*${dose.time}*T*${String(sim.seq).padStart(2, '0')}`,
+    });
+    sim.seq = (sim.seq + 1) % 100;
+    logEntry('in', 'DEVICE', `released tray ${dose.tray} (due ${hhmm(dose.time)})`, null);
+  }
+  sim.events = sim.events.slice(0, 25);
+  await simPublishReport('');
+}
+
+const hhmmToMinutes = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(2));
+
+async function simCommandLoop() {
+  let backoff = 2000;
+  while (sim.running) {
+    try {
+      const { status, data } = await relay('GET', `/command?since=${sim.commandRev}&wait=50`,
+                                           undefined, { quiet: true, label: 'sim command' });
+      if (status === 200) {
+        const rev = Number(data.envelope.rev);
+        // Recorded before acting, exactly as the firmware does: a command that
+        // is collected twice is a second pill.
+        sim.commandRev = rev;
+        try {
+          const opened = await unseal(state.key, state.deviceId, 'command', data.envelope);
+          if (String(opened.action) === 'release') {
+            await simRelease(opened);
+          } else {
+            logEntry('err', 'DEVICE', `command rev ${rev}: unknown action`, null, opened);
+          }
+        } catch (err) {
+          logEntry('err', 'DEVICE', `command rev ${rev}: the envelope did not open`, null);
+        }
+      }
+      backoff = 2000;
+    } catch (err) {
+      if (!sim.running) break;
+      await sleep(backoff);
+      backoff = Math.min(backoff * 2, 30000);
+    }
+  }
+}
+
 async function simLoop() {
   await simPublishReport('');
+  simCommandLoop();
   let backoff = 2000;
   while (sim.running) {
     try {
@@ -812,6 +977,31 @@ function toggleSim() {
 
 $('simToggle').onclick = toggleSim;
 
+/**
+ * Put a dose in the "due" state, which is where the real device puts one at its
+ * scheduled minute. Nothing is dispensed by this — that is the point. The
+ * release button in the panel opposite is what opens the tray.
+ */
+$('simDue').onclick = async () => {
+  if (!sim.running) {
+    toast($('simMsg'), false, 'Start the simulated device first.');
+    return;
+  }
+  const now = new Date();
+  const time = String(now.getHours()).padStart(2, '0')
+             + String(now.getMinutes()).padStart(2, '0');
+  const expires = new Date(now.getTime() + 60 * 60 * 1000);   // one grace hour
+  sim.waiting = [{
+    tray: 1,
+    time,
+    dueAt: now.toISOString().slice(0, 19),
+    expiresAt: expires.toISOString().slice(0, 19),
+  }];
+  await simPublishReport('');
+  toast($('simMsg'), true,
+        'A dose is due. Nothing has been dispensed — use "Release the dose" opposite.');
+};
+
 $('simDose').onclick = async () => {
   if (!sim.running) {
     toast($('simMsg'), false, 'Start the simulated device first.');
@@ -829,7 +1019,7 @@ $('simDose').onclick = async () => {
   sim.seq = (sim.seq + 1) % 100;
   sim.events = sim.events.slice(0, 25);
   await simPublishReport('');
-  toast($('simMsg'), true, 'Reported. It appears in the panel opposite.');
+  toast($('simMsg'), true, 'Reported as a manual drop. It appears in the panel opposite.');
 };
 
 /* ── proving this page agrees with the firmware ─────────────────────── */

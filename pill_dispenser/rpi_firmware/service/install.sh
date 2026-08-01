@@ -10,8 +10,8 @@
 #
 # What it does, and why each one is needed:
 #
-#   python3-lgpio    The GPIO library. Servos, the buzzer and the confirm
-#                    button all go through it. Preinstalled on every Raspberry
+#   python3-lgpio    The GPIO library. The servos and the buzzer both go
+#                    through it. Preinstalled on every Raspberry
 #                    Pi OS Lite image since 2023, so this is normally a no-op —
 #                    but it is the one package the device genuinely needs, and
 #                    without it no tray can be opened at all.

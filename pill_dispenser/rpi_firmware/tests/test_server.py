@@ -356,16 +356,69 @@ def test_a_clock_code_with_the_wrong_weekday_is_refused(http):
     assert status == 400 and not data["ok"]
 
 
-def test_confirm_and_dismiss(http, clock):
+def test_release_opens_the_tray_and_reports_what_it_opened(http, clock):
     http.post_json("/api/schedule", {"payload": "SC1*W*1:0800-127-000"})
     clock.set(datetime(2026, 7, 29, 8, 0))
     http.device.tick()
 
-    status, data = http.post_json("/api/confirm", {})
-    assert status == 200 and data["ok"] and data["event"]["confirmed"]
+    _status, data = http.get_json("/api/status")
+    assert data["device"]["awaitingRelease"] == [{
+        "tray": 1, "time": "0800",
+        "dueAt": "2026-07-29T08:00:00", "expiresAt": "2026-07-29T09:00:00",
+    }]
+
+    status, data = http.post_json("/api/release", {})
+    assert status == 200 and data["ok"]
+    assert [r["tray"] for r in data["released"]] == [1]
+    assert data["released"][0]["reason"] == "released"
+    assert data["awaitingRelease"] == []
+
+
+def test_release_with_nothing_waiting_is_ok_and_empty(http):
+    """A notification tapped an hour late lands here. It is not an error and it
+    must not read as one — telling somebody their dispenser is broken when it is
+    behaving correctly is how they stop trusting the screen that matters."""
+    status, data = http.post_json("/api/release", {})
+    assert status == 200 and data["ok"]
+    assert data["released"] == []
+
+
+def test_release_can_name_one_dose(http, clock):
+    http.post_json("/api/schedule",
+                   {"payload": "SC1*W*1:0800-127-000/2:0800-127-000"})
+    clock.set(datetime(2026, 7, 29, 8, 0))
+    http.device.tick()
+
+    status, data = http.post_json("/api/release", {"tray": 2, "at": "0800"})
+    assert status == 200
+    assert [r["tray"] for r in data["released"]] == [2]
+    assert [w["tray"] for w in data["awaitingRelease"]] == [1]
+
+
+def test_the_release_link_works_for_a_page_that_cannot_fetch(http, clock):
+    """An HTTPS app cannot `fetch()` an HTTP device, so the release button is a
+    link the person taps. If this shape breaks, the one control the device
+    depends on works in development and fails on the deployed app."""
+    http.post_json("/api/schedule", {"payload": "SC1*W*1:0800-127-000"})
+    clock.set(datetime(2026, 7, 29, 8, 0))
+    http.device.tick()
+
+    status, _headers, body = http.get("/release")
+    assert status == 200 and "Released tray 1" in body
+    assert http.device.servos.drops.get(1, 0) == 1
+
+
+def test_dismiss_silences_but_leaves_the_dose_releasable(http, clock):
+    http.post_json("/api/schedule", {"payload": "SC1*W*1:0800-127-000"})
+    clock.set(datetime(2026, 7, 29, 8, 0))
+    http.device.tick()
 
     status, data = http.post_json("/api/dismiss", {})
-    assert status == 200 and data["hadAlert"] is False
+    assert status == 200 and data["hadAlert"] is True
+    assert [w["tray"] for w in data["awaitingRelease"]] == [1], "silenced, not cancelled"
+
+    _status, data = http.post_json("/api/release", {})
+    assert [r["tray"] for r in data["released"]] == [1]
 
 
 # ── WiFi ────────────────────────────────────────────────────────────────────

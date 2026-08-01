@@ -14,6 +14,12 @@
  *       { tray: 1, times: ['0800', '2000'], days: EVERY_DAY, durationDays: 30 },
  *     ]);
  *
+ * The dispenser does not drop pills on a timer. When a dose falls due it goes on
+ * `status.awaitingRelease` and the machine waits — so the screen you build has
+ * one control the whole device depends on:
+ *
+ *     await client.release();     // opens the tray for everything due now
+ *
  * See INTEGRATION.md for the flows, the states a UI has to show, and the three
  * mistakes that are worth reading about before writing the screen.
  */
@@ -76,8 +82,10 @@ export {
   type WeeklySlot,
   type ClockStatus,
   type DispenserStatus,
+  type AwaitingRelease,
   type DoseEvent,
   type DeviceReport,
   type DesiredSchedule,
+  type ReleaseCommand,
   type MailboxMeta,
 } from './types.ts';

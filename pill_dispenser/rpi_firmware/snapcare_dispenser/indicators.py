@@ -8,15 +8,18 @@ why this build has the same two things.
 The pairing is the point, and it is not redundancy. A ring alone only works if
 somebody happens to be looking at it. The chirp is what fetches a person from
 another room; the colour is what tells them what is going on once they arrive.
-And without the sound the confirm button is close to useless — nobody presses a
-button to acknowledge something they never noticed, so the dose log fills with
-"dispensed, unconfirmed" and stops telling a carer anything.
 
-The colour vocabulary is carried over from the Arduino firmware unchanged, so
-somebody who has used one device understands the other:
+That matters more in this build than it did in the last one. The pills do not
+leave the hopper until somebody taps release in the app, so the chirp is not a
+notification about something that has already happened — it is the entire
+prompt. A device with no sound waits an hour for a tap that nobody was told to
+make, and then records a missed dose.
 
-    green + chirp   a dose is in the cup; take it and press the button
-    blue            recorded as taken
+The colour vocabulary is carried over from the Arduino firmware, with green
+meaning one step earlier in the story than it used to:
+
+    green + chirp   a dose is due; release it from the app to get it
+    blue            released — the pills are in the cup
     amber           the dose went untaken, or its window closed
     violet          a new schedule was accepted
 
@@ -64,12 +67,13 @@ class Indicator:
     #: What this device actually has fitted, for the status page.
     fitted: tuple[str, ...] = ()
 
-    def dose_ready(self, tray: int) -> None: ...
-    def dose_taken(self, tray: int) -> None: ...
+    def dose_due(self, tray: int) -> None: ...
+    def dose_released(self, tray: int) -> None: ...
     def dose_missed(self, tray: int) -> None: ...
     def schedule_accepted(self) -> None: ...
     def network_needs_setup(self) -> None: ...
     def network_online(self) -> None: ...
+    def silence(self) -> None: ...
     def clear(self) -> None: ...
     def close(self) -> None: ...
 
@@ -84,11 +88,11 @@ class LogIndicator(Indicator):
 
     fitted = ()
 
-    def dose_ready(self, tray: int) -> None:
-        log.info("indicator: green + chirp — tray %d is ready", tray)
+    def dose_due(self, tray: int) -> None:
+        log.info("indicator: green + chirp — tray %d is due, waiting for a release", tray)
 
-    def dose_taken(self, tray: int) -> None:
-        log.info("indicator: blue — tray %d recorded as taken", tray)
+    def dose_released(self, tray: int) -> None:
+        log.info("indicator: blue — tray %d released", tray)
 
     def dose_missed(self, tray: int) -> None:
         log.info("indicator: amber — tray %d was missed", tray)
@@ -101,6 +105,9 @@ class LogIndicator(Indicator):
 
     def network_online(self) -> None:
         log.info("indicator: cyan off — on a network")
+
+    def silence(self) -> None:
+        log.info("indicator: chirp silenced; the light stands")
 
     def clear(self) -> None:
         log.debug("indicator: off")
@@ -165,10 +172,10 @@ class Buzzer:
     consequence of pigpio leaving Raspberry Pi OS. There was no fallback: on a
     Trixie card the buzzer simply did not exist, the failure was logged at INFO
     once at startup, and `/api/status` said nothing about it at all as long as
-    the ring had come up. The device then dispensed in silence — and the module
-    docstring above is explicit about what that costs. Nobody presses a button
-    to acknowledge something they never noticed, so the dose log fills with
-    "dispensed, unconfirmed" and stops telling a carer anything.
+    the ring had come up. The device then ran in silence — and the module
+    docstring above is explicit about what that costs now that the chirp is the
+    prompt rather than an announcement. A dose nobody is told about is a dose
+    nobody releases, and an hour later it is a missed dose in the log.
 
     So there are two drivers now, picked the same way the servos pick theirs,
     and `fitted` on the indicator reports which parts are genuinely present.
@@ -260,7 +267,7 @@ class FittedIndicator(Indicator):
 
     The repeating chirp runs on its own thread rather than from the scheduler
     tick. A dose alert has to keep sounding every twenty seconds until somebody
-    presses the button, and hanging that off the tick would either make the tick
+    releases the dose, and hanging that off the tick would either make the tick
     slow or make the interval depend on it.
     """
 
@@ -277,10 +284,11 @@ class FittedIndicator(Indicator):
         #: ring and hand it back rather than cancelling the hint outright.
         self._needs_network = False
         self._showing = OFF
-        # The scheduler tick, the button, and now the network worker all paint
-        # this ring. Filling it is twelve writes and a latch, and two threads
-        # interleaving there is one frame of wrong colours on a device whose
-        # colours are the entire user interface.
+        # The scheduler tick, the release path on an HTTP thread, the cloud's
+        # command poll and the network worker all paint this ring. Filling it is
+        # twelve writes and a latch, and two threads interleaving there is one
+        # frame of wrong colours on a device whose colours are the entire user
+        # interface.
         self._paint = threading.Lock()
         if buzzer:
             self._thread = threading.Thread(target=self._chirp_loop,
@@ -311,13 +319,13 @@ class FittedIndicator(Indicator):
                 log.exception("the LED ring failed; carrying on without it")
                 self.ring = None
 
-    def dose_ready(self, tray: int) -> None:
-        log.info("indicator: green + chirp — tray %d is ready", tray)
+    def dose_due(self, tray: int) -> None:
+        log.info("indicator: green + chirp — tray %d is due, waiting for a release", tray)
         self._show(GREEN)
         self._alerting.set()
 
-    def dose_taken(self, tray: int) -> None:
-        log.info("indicator: blue — tray %d recorded as taken", tray)
+    def dose_released(self, tray: int) -> None:
+        log.info("indicator: blue — tray %d released", tray)
         self._alerting.clear()
         self._show(BLUE)
 
@@ -348,6 +356,17 @@ class FittedIndicator(Indicator):
         # dose being reported, and that outranks this.
         if self._showing == CYAN:
             self._show(OFF)
+
+    def silence(self) -> None:
+        """Stop the chirp; leave the ring showing whatever it was showing.
+
+        Somebody who silences a chime has asked for quiet, not withdrawn their
+        medication — the dose is still owed and still releasable. Taking the
+        light down too would leave a device with a dose waiting and nothing at
+        all to say so, which on a build with no screen is the device lying.
+        """
+        log.info("indicator: chirp silenced; the light stands")
+        self._alerting.clear()
 
     def clear(self) -> None:
         self._alerting.clear()
@@ -390,21 +409,22 @@ def make_indicator(want_ring: bool = True, want_buzzer: bool = True) -> Indicato
 
     if not ring and not buzzer:
         log.warning(
-            "neither an LED ring nor a buzzer is available — the device will "
-            "dispense silently and rely on the phone to notify anyone"
+            "neither an LED ring nor a buzzer is available — a dose due here is "
+            "announced by the app alone, so a phone that misses the notification "
+            "is a dose nobody is told about"
         )
         return LogIndicator()
 
     if want_buzzer and not buzzer:
         # At WARNING, not INFO, and said in terms of the consequence rather
         # than the missing library. A ring with no chirp only works if somebody
-        # happens to be looking at it, and the confirm button beside it becomes
-        # decorative — which turns the dose log into a column of
-        # "dispensed, unconfirmed" that tells a carer nothing.
+        # happens to be looking at it, and on this build the chirp is the prompt
+        # to go and release the dose — not an announcement that it has already
+        # been delivered.
         log.warning(
-            "NO BUZZER — the ring will light for a dose but nothing will sound. "
-            "Nobody presses a button to acknowledge a dose they never noticed, "
-            "so expect the log to fill with unconfirmed doses. "
+            "NO BUZZER — a due dose will light the ring but nothing will sound. "
+            "Nobody releases a dose they were never told about, so expect the "
+            "log to fill with doses that expired untaken. "
             "sudo apt install python3-lgpio"
         )
 

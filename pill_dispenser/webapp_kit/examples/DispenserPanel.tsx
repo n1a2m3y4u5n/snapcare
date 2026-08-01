@@ -22,8 +22,12 @@ import { describeDays, EVERY_DAY, RevisionConflictError } from '@/lib/snapcare/d
 import { useDispenser } from './useDispenser';
 
 export function DispenserPanel({ relayUrl, claim }: { relayUrl: string; claim: string }) {
-  const { report, loading, error, stale, setSchedule, getSchedule } = useDispenser(relayUrl, claim);
+  const { report, loading, error, stale, setSchedule, getSchedule, release } = useDispenser(
+    relayUrl,
+    claim,
+  );
   const [saving, setSaving] = useState(false);
+  const [releasing, setReleasing] = useState(false);
   const [conflict, setConflict] = useState<string | null>(null);
 
   if (loading) return <p>Looking for the dispenser…</p>;
@@ -72,6 +76,19 @@ export function DispenserPanel({ relayUrl, claim }: { relayUrl: string; claim: s
     }
   }
 
+  async function doRelease() {
+    setReleasing(true);
+    try {
+      // No argument: everything currently due.
+      await release();
+    } finally {
+      // Cleared on the way out either way. The report that comes back with an
+      // empty `awaitingRelease` is what removes the button, so a failed release
+      // has to leave it tappable — this is somebody's medication.
+      setReleasing(false);
+    }
+  }
+
   return (
     <section>
       {/* The one that stops pills coming out. Above everything else. */}
@@ -95,13 +112,51 @@ export function DispenserPanel({ relayUrl, claim }: { relayUrl: string; claim: s
         </div>
       )}
 
+      {/* The one control the machine depends on. Nothing has left the hopper
+          for anything listed here — the tray opens when this is tapped, and if
+          nobody taps before `expiresAt` the dose is recorded missed with the
+          tray still shut. Stop offering it past that instant: a button that
+          quietly does nothing sends somebody away believing they have their
+          medication. */}
+      {status.awaitingRelease.length > 0 && (
+        <div role="alert">
+          <h2>Ready to take</h2>
+          <ul>
+            {status.awaitingRelease.map((dose) => (
+              <li key={`${dose.tray}-${dose.time}`}>
+                Tray {dose.tray}, due {dose.time} — until{' '}
+                {new Date(dose.expiresAt).toLocaleTimeString()}
+              </li>
+            ))}
+          </ul>
+          {/* Through the relay, so it works whether or not the phone is on the
+              house WiFi. Sending no tray releases everything due, which is what
+              this button means — two trays owed at 08:00 are two medications
+              for 08:00, and making somebody tap twice is how the second gets
+              forgotten.
+
+              This does not tell us whether a pill came out; the relay is a
+              mailbox. The report arriving with an empty `awaitingRelease` is
+              what does, and `waitForReport` will bring it within a second or
+              two. */}
+          <button onClick={doRelease} disabled={releasing}>
+            {releasing
+              ? 'Releasing…'
+              : `Release ${status.awaitingRelease.length > 1 ? 'these doses' : 'this dose'}`}
+          </button>
+          {report.network.deviceUrl && (
+            <p>
+              On the same WiFi? <a href={`${report.network.deviceUrl}release`}>
+                Release it directly
+              </a>{' '}
+              — no internet needed.
+            </p>
+          )}
+        </div>
+      )}
+
       <h2>Next dose</h2>
-      {status.awaitingConfirmation ? (
-        <p>
-          <strong>Tray {status.awaitingConfirmation.tray} is in the cup now</strong> — waiting
-          for the button to be pressed.
-        </p>
-      ) : status.nextDose ? (
+      {status.nextDose ? (
         <p>
           Tray {status.nextDose.tray} at {status.nextDose.time}
         </p>
@@ -138,13 +193,17 @@ export function DispenserPanel({ relayUrl, claim }: { relayUrl: string; claim: s
         {report.events.map((event) => (
           <li key={`${event.at}-${event.seq}`}>
             {new Date(event.at).toLocaleString()} — tray {event.tray}, due {event.time}
-            {/* "dispensed" and "taken" are different facts, and only the second
-                is the one a carer wants. Never collapse them. */}
-            {event.confirmed
+            {/* The two ways a dose can be missed are worth telling apart: one
+                means nobody was told, the other means the device never got the
+                chance to ask. Only the first is a problem with the household's
+                routine. */}
+            {event.reason === 'released'
               ? ' — taken'
-              : event.taken
-                ? ' — dispensed, not confirmed'
-                : ' — missed'}
+              : event.reason === 'manual'
+                ? ' — dropped by hand at the device'
+                : event.reason === 'not-released'
+                  ? ' — missed: it was offered and nobody released it'
+                  : ' — missed: its window had already closed'}
           </li>
         ))}
       </ul>

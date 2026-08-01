@@ -45,6 +45,10 @@ from pathlib import Path
 #
 # The eight below avoid all of that, are contiguous enough to keep the ribbon
 # tidy, and none of them is a boot-strapping pin.
+#
+# GPIO 24 is free and unassigned. It carried the confirm button on earlier
+# builds; the dose is released from the app now, so the pin and its two wires
+# are gone. Left out of this map on purpose — it is the obvious spare.
 
 TRAY_GPIO: dict[int, int] = {
     1: 17,
@@ -140,11 +144,14 @@ SERVO_BACKEND = os.environ.get("SNAPCARE_SERVO_BACKEND", "auto")
 # A light and a sound, never text. That is the founding constraint of the whole
 # project: the person cannot be assumed to read.
 #
-# Both are fitted on this build, and the pairing is the point. A ring alone
-# only works if somebody happens to be looking at it, and the confirm button is
-# useless if nobody knows there is anything to confirm — so the chirp is what
-# actually fetches a person from another room, and the colour is what tells
-# them what is going on once they arrive.
+# Both are fitted on this build, and the pairing is the point. A ring alone only
+# works if somebody happens to be looking at it — so the chirp is what fetches a
+# person from another room, and the colour is what tells them what is going on
+# once they arrive.
+#
+# On this build the chirp is the *prompt*, not an announcement: nothing has left
+# the hopper yet, and it will not until somebody releases the dose from the app.
+# A silent device waits out the hour and records a miss.
 
 #: WS2812 / NeoPixel ring data line. **Must be GPIO 18, 12, 21 or 10** — the
 #: driver generates the 800 kHz waveform with the PWM or PCM peripheral, and
@@ -175,50 +182,44 @@ BUZZER_GPIO = 23
 BUZZER_HZ = 2700
 BUZZER_BEEP_S = 0.12
 
-#: Seconds between chirps while a dose is waiting to be confirmed.
+#: Seconds between chirps while a dose is waiting to be released.
 #:
 #: Long enough not to be maddening, short enough that somebody in the next room
-#: hears it again before they have forgotten the first one. It stops the moment
-#: the button is pressed.
+#: hears it again before they have forgotten the first one. It stops when the
+#: dose is released, when somebody silences it from the app or the device's own
+#: page, or when the grace window closes.
 BUZZER_REPEAT_S = 20
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-#  THE CONFIRM BUTTON
-# ═══════════════════════════════════════════════════════════════════════════
-
-#: Momentary button between this pin and GND. The internal pull-up is enabled
-#: in software, so no external resistor is needed — two wires and nothing else.
-BUTTON_GPIO = 24
-
-#: Debounce, in microseconds. A mechanical button bounces for a few hundred
-#: microseconds to a couple of milliseconds, and every bounce is an edge;
-#: without this one press records several doses.
-BUTTON_DEBOUNCE_US = 20_000
 
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  SCHEDULING
 # ═══════════════════════════════════════════════════════════════════════════
 
-#: How long after its scheduled time a dose may still be dispensed.
+#: How long after its scheduled time a dose may still be released.
 #:
-#: Outside this window the dose is reported as missed and the tray stays shut.
+#: This is the whole window, and it does two jobs at once now. It is how late a
+#: dose may still be taken, and it is how long the device will go on offering
+#: one: at its scheduled minute the ring goes green and the chirp starts, and if
+#: nobody has tapped release in the app by the end of this window the tray stays
+#: shut and the dose is recorded missed.
+#:
 #: Both halves matter. A device unplugged all day must not, on being plugged
-#: back in, drop breakfast, lunch and dinner into one hand — that is an
-#: overdose. And it must not drop them silently either, because "no pills came
+#: back in, offer breakfast, lunch and dinner at once — that is an overdose one
+#: tap away. And a dose that goes untaken must be *said*, because "no pills came
 #: out today" is exactly what the person's carer needs to be told.
+#:
+#: Nothing is ever dispensed at the end of this window. That is the point of
+#: asking first: pills that nobody asked for stay in the machine, where the next
+#: person to look can still count them, rather than in a cup that may or may not
+#: have been emptied by somebody who then takes the next dose as well.
 GRACE_MINUTES = 60
 
 #: Seconds between scheduler ticks. Doses are specified to the minute, so this
 #: only needs to be comfortably under 60; smaller just wastes wakeups.
+#:
+#: It is also how long a due dose can sit before the app is told about it, since
+#: the report that carries `awaitingRelease` goes up when the dose is offered.
 TICK_SECONDS = 15
-
-#: How long the green light / chime stays up waiting for the person to confirm
-#: they took the dose. After this the event is recorded as taken anyway — the
-#: pills are physically in the cup, and calling that "missed" would make the
-#: log lie in the more dangerous direction.
-CONFIRM_TIMEOUT_S = 15 * 60
 
 
 # ═══════════════════════════════════════════════════════════════════════════

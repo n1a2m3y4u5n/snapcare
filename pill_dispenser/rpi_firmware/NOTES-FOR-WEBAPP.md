@@ -23,7 +23,14 @@ against it.
 > Two things have changed in the firmware since it was written, both worth
 > knowing:
 >
-> - **`/api/status` gained a `gpio` object** — which servo, buzzer and button
+> - **A dose is now released by the app, not dropped on a timer.** This is the
+>   biggest change and it is described in full in §3a below. In short: at the
+>   scheduled minute the device lights up and chirps, publishes the dose on
+>   `device.awaitingRelease`, and **opens nothing**. `POST /api/release` is what
+>   opens the tray. No release inside the grace window and the dose is recorded
+>   missed with the tray still shut. The confirm button on the hardware is gone —
+>   the tap that releases a dose is the same tap that records it.
+> - **`/api/status` gained a `gpio` object** — which servo and buzzer
 >   drivers actually came up, and a `missing` array of plain sentences about
 >   what is absent. `device.blockedReason` says, in words, why a device is not
 >   dispensing; `device.servoUsable` is false when no GPIO library is installed
@@ -137,14 +144,15 @@ same endpoint the app uses. There is no second path to maintain.
 
 `GET /api/status` is the one to build a device screen on. It answers with the
 clock, the WiFi, the pin map, which servo driver is in use, the loaded plan, the
-next dose, and whether a dose is currently waiting to be confirmed.
+next dose, and which doses are waiting to be released.
 
 | | |
 |---|---|
 | `GET /api/status` | everything, in one request |
 | `GET`/`POST /api/schedule` | the plan, as SC1 or as JSON |
-| `POST /api/drop` | `{"tray": n}` |
-| `POST /api/confirm` · `/api/dismiss` | taken / silence |
+| `POST /api/release` | **open what is due** — see §3a |
+| `POST /api/drop` | `{"tray": n}` — a bench check, ignores the schedule |
+| `POST /api/dismiss` | silence the chime; the dose stays owed |
 | `POST /api/clock` | `{"iso": "..."}` or `{"payload": "SC1*C*..."}` |
 | `GET /api/events?limit=n` | the dose log, newest first |
 | `GET /api/wifi/scan` · `GET /api/wifi/status` | what is nearby, and where we are |
@@ -160,13 +168,96 @@ malformed payload is a 400, never a 500.
 a real device from `http://localhost:3000`. It does not widen access — anything
 on the LAN could already reach it — it only lets a browser page read the answer.
 
+## 3a. Releasing a dose — the one flow you have to build
+
+**The device no longer drops pills on a timer.** At the scheduled minute it
+lights the ring green, starts chirping, and publishes the dose. The tray opens
+when your app asks it to, and if nobody asks within the grace window the tray
+stays shut and the dose is recorded missed.
+
+That makes the release button in your app the single control the whole machine
+depends on. Everything else here is reporting; this is the part that dispenses.
+
+### What to show, and when
+
+Poll `/api/status` (or read the relay's `reported` envelope) and look at
+`device.awaitingRelease`. It is an array — empty almost all the time:
+
+```jsonc
+"awaitingRelease": [
+  {
+    "tray": 1,
+    "time": "0800",                      // the scheduled minute, HHMM
+    "dueAt":     "2026-08-01T08:00:00",  // when it fell due
+    "expiresAt": "2026-08-01T09:00:00"   // after this the tray will not open
+  }
+]
+```
+
+Non-empty means: show the release button on the main screen, and fire a push
+notification. `expiresAt` is what tells you when to stop offering it — a button
+that quietly does nothing is worse than no button, because somebody taps it and
+walks away believing they have their medication.
+
+### Releasing
+
+```ts
+// Everything currently due. This is what the main-screen button should send:
+// two trays owed at 08:00 are two medications for 08:00, and making somebody
+// tap twice is how the second one gets forgotten.
+const res = await fetch(`http://${host}/api/release`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: '{}',
+});
+const { ok, released, awaitingRelease } = await res.json();
+```
+
+`{"tray": 1, "at": "0800"}` narrows it to one dose — which is what a
+notification *about* a specific dose should send.
+
+**`released: []` is a success, not an error.** It is what a stale notification
+tapped an hour late gets, and what a curious tap at lunchtime gets. Distinguish
+it in your UI from `ok: false`, which means the device could not move at all
+(no GPIO library — a 503, with `error` set).
+
+The tray takes about four seconds per dose to sweep, and the request does not
+return until it has. Do not race it with a second tap.
+
+### From a page served over HTTPS
+
+You cannot `fetch()` an HTTP device from an HTTPS origin. Same constraint as
+`/save` and `/dropout`, and it bites harder here because this is the control
+that matters — so `/release` also exists as a **link**:
+
+```
+http://pilldispenser.local/release              → everything due
+http://pilldispenser.local/release?tray=1&at=0800
+```
+
+A GET returning a readable HTML page. Build it as an anchor the person taps.
+
+### When the phone is not on the house WiFi
+
+Write the release to the relay's **`command`** slot rather than the device's
+LAN API — see §7. It is a separate slot from `desired` on purpose: a schedule is
+a *state* the newest of which should always be adopted, and a release is an
+*act* that was true for one hour on one morning.
+
+The device carries out a release only if the dose it names is one it is
+currently offering, so a command that arrives late finds nothing waiting and
+moves nothing. You do not need to build an expiry yourself, but you should still
+stop *offering* the button at `expiresAt` for the reason above.
+
+---
+
 ### One header your requests must get right
 
 Since 2026-07-30 a request that **changes** something is refused with **421
 Misdirected Request** unless its `Host` is a name the device answers to:
 `pilldispenser`, `pilldispenser.local`, a two-label name starting with the
 hostname (`pilldispenser.lan`), or any bare IP address. That covers `POST
-/api/*` and the three mutating GETs `/save`, `/dropout` and `/dismiss`.
+/api/*` and the mutating GETs `/save`, `/release`, `/dropout` and `/dismiss`.
 
 This costs a normal caller nothing — the browser sets `Host` from the URL you
 fetched, and `http://pilldispenser.local/...` is exactly what `dispenser.ts`
@@ -398,6 +489,41 @@ device end on about one message in four.
 hundred readable lines, at `cloud_relay/snapcare_relay/web/lab.html`. It is
 served at `/lab` on any running relay. Copy from it rather than from the sketch
 above.
+
+### Sending a release through the relay
+
+Identical mechanics, one slot along. Write to **`command`** instead of
+`desired`, with `command` in the AAD, and a body naming the dose:
+
+```ts
+const aad = new TextEncoder().encode(`snapcare/relay/v1|${deviceId}|command|${rev}`);
+// ... seal exactly as above, with:
+{ action: 'release', tray: 1, minutes: 480 }   // 480 = 08:00, minutes since midnight
+```
+
+```
+PUT ${RELAY}/v1/devices/${deviceId}/command
+```
+
+`tray` and `minutes` are both optional; omitting them releases everything
+currently due, which is what a main-screen button means. `rev` must increase,
+same as `desired` — the relay 409s otherwise, and the device rejects a revision
+it has already seen even across a reboot.
+
+**Three slots, and why `command` is not part of `desired`:**
+
+| slot | writer | reader | it is a… |
+|---|---|---|---|
+| `desired` | the app | the device | **state** — the schedule, true until edited |
+| `reported` | the device | the app | **state** — what the device is doing |
+| `command` | the app | the device | **act** — do this one thing, now |
+
+The distinction is the whole safety argument. A device that has been offline
+should adopt the newest schedule it finds when it reconnects; it must emphatically
+*not* carry out a release tapped four hours ago. Keeping them in separate slots
+lets the device treat each as what it is — and on top of that it will only act on
+a release naming a dose it is offering right now, so a late command finds nothing
+waiting and moves nothing.
 
 ### Reading what the device says
 

@@ -14,9 +14,9 @@ actually observe.**
 a real consequence, and it is unanswerable as a line on paper — by the time
 somebody reads it they are three stages past the drop. "Every tray you fitted
 moves" is ticked by a machine whose trays 1 and 2 are wired to each other's
-pins, because both moved. And a checklist cannot tell a button that fires once
-per press from one that fires four times, which is the entire reason the
-debounce exists.
+pins, because both moved. And "the buzzer works" is ticked by an active buzzer
+playing the wrong note, which is a device that chirps and is not the device this
+firmware thinks it is talking through.
 
 So this splits the job in two, which is the only thing that makes either half
 trustworthy:
@@ -62,7 +62,6 @@ from datetime import datetime
 from pathlib import Path
 
 from . import config, envelope, gpiochip, provisioning, rtc
-from .button import ConfirmButton
 from .clock import Clock
 from .indicators import AMBER, CYAN, GREEN, OFF, VIOLET, make_indicator
 from .servo import TrayServos, make_backend
@@ -201,15 +200,15 @@ def check_servo_backend(report: Report, backend) -> None:
 def check_pin_map(report: Report, servos: TrayServos) -> None:
     pins = servos.pins
     clashes = [t for t, g in pins.items()
-               if g in (config.RING_GPIO, config.BUZZER_GPIO, config.BUTTON_GPIO,
+               if g in (config.RING_GPIO, config.BUZZER_GPIO,
                         config.RTC_SCLK_GPIO, config.RTC_IO_GPIO, config.RTC_CE_GPIO)]
     if clashes:
         # Not theoretical: `SNAPCARE_TRAY_GPIO` exists so a bench can move a
         # servo, and moving one onto the ring's pin is a tray that fires
         # whenever a colour changes.
         report.add("no tray shares a pin with a peripheral", FAIL,
-                   f"tray(s) {clashes} are on a pin also used by the ring, buzzer, "
-                   "button or RTC",
+                   f"tray(s) {clashes} are on a pin also used by the ring, buzzer "
+                   "or RTC",
                    "check TRAY_GPIO and SNAPCARE_TRAY_GPIO in config.py")
         return
     report.add("no tray shares a pin with a peripheral", PASS,
@@ -367,9 +366,8 @@ def check_buzzer(report: Report, indicator, interactive: bool) -> None:
     buzzer = getattr(indicator, "buzzer", None)
     if not buzzer:
         report.add("the buzzer sounds a tone", FAIL,
-                   "no buzzer came up — a dose will light the ring and make no "
-                   "sound, and nobody presses a button to acknowledge a dose they "
-                   "never noticed",
+                   "no buzzer came up — a due dose will light the ring and make no "
+                   "sound, and nobody releases a dose they were never told about",
                    "sudo apt install python3-lgpio, and check the piezo is on "
                    f"GPIO {config.BUZZER_GPIO} through a 100 Ω resistor")
         return
@@ -402,52 +400,42 @@ def check_buzzer(report: Report, indicator, interactive: bool) -> None:
                    f"check the piezo on GPIO {config.BUZZER_GPIO} and its 100 Ω resistor")
 
 
-def check_button(report: Report, interactive: bool) -> None:
-    button = ConfirmButton(lambda: None)
-    try:
-        if button.backend == "none":
-            report.add("the button registers exactly one press", FAIL,
-                       "no confirm button driver came up",
-                       f"check the button between GPIO {config.BUTTON_GPIO} and GND")
-            return
-        if not interactive:
-            report.add("the button registers exactly one press", SKIP, "not asked")
-            return
+def check_release_path(report: Report, servos: TrayServos) -> None:
+    """Can a tap actually reach this machine and open a tray?
 
-        if button.backend == "polling":
-            report.add("the button is debounced below Python", WARN,
-                       "the polling fallback samples at 50 Hz and debounces in "
-                       "Python; a press may feel late",
-                       "sudo apt install python3-lgpio")
+    On this build the release button in the app is the only thing that opens a
+    tray on the schedule's behalf, so the question a checklist could never ask —
+    "is the one control that matters connected?" — is worth asking here.
 
-        print("        .. press the confirm button ONCE, then press Enter here")
-        before = button.presses
-        try:
-            input("           ")
-        except (EOFError, KeyboardInterrupt):
-            print()
-            report.add("the button registers exactly one press", SKIP, "not answered")
-            return
+    Both halves are machine-checkable and neither needs a person. A device that
+    cannot move a horn will fail every release; a device with no way for the app
+    to reach it will never be asked to.
+    """
+    if not servos.backend.moves_hardware:
+        report.add("a release can open a tray", FAIL,
+                   f"the servo backend is {servos.backend.name}, which moves nothing",
+                   "sudo apt install python3-lgpio")
+    else:
+        report.add("a release can open a tray", PASS,
+                   f"{servos.backend.name} backend, {len(servos.pins)} tray(s) wired")
 
-        counted = button.presses - before
-        if counted == 1:
-            report.add("the button registers exactly one press", PASS,
-                       f"{button.backend} backend, {config.BUTTON_DEBOUNCE_US} µs debounce")
-        elif counted == 0:
-            report.add("the button registers exactly one press", FAIL,
-                       "the press was not seen at all",
-                       "check both wires, and that the button is between the pin "
-                       "and GND rather than between the pin and 3.3 V")
-        else:
-            # The failure the debounce exists for. It is invisible in normal
-            # use — the dose log just grows duplicate confirmations with
-            # identical timestamps.
-            report.add("the button registers exactly one press", FAIL,
-                       f"one press registered {counted} times — it is bouncing",
-                       "raise BUTTON_DEBOUNCE_US in config.py, or check for a "
-                       "long unshielded lead")
-    finally:
-        button.close()
+    # The LAN path needs the name to resolve; the cloud path needs a relay. One
+    # is enough, and having neither is a machine that will chirp for an hour and
+    # then record a miss because nobody could tell it to open.
+    reachable = []
+    if shutil.which("avahi-daemon") or Path("/etc/avahi").exists():
+        reachable.append(f"{config.MDNS_HOSTNAME}.local on the LAN")
+    if config.CLOUD_RELAY_URL:
+        reachable.append(f"the relay at {config.CLOUD_RELAY_URL}")
+
+    if reachable:
+        report.add("the app has a way to send a release", PASS, " and ".join(reachable))
+    else:
+        report.add("the app has a way to send a release", FAIL,
+                   "no mDNS and no relay configured — nothing can tell this device "
+                   "to open a tray, so every dose will expire untaken",
+                   "install avahi-daemon for the LAN path, or set SNAPCARE_RELAY_URL "
+                   "so a phone can reach it from anywhere")
 
 
 def check_trays(report: Report, servos: TrayServos, fitted: int | None,
@@ -515,10 +503,10 @@ def check_trays(report: Report, servos: TrayServos, fitted: int | None,
 # ── what a self-test cannot do ──────────────────────────────────────────────
 
 _BY_HAND = [
-    ("the power cut", "Pull the power at 08:30, after the 08:00 dose, and restore "
-                      "it. No second dose, and the log survives. This is the case "
-                      "that dispenses twice without persisted state, and it is "
-                      "invisible in any demo."),
+    ("the power cut", "Pull the power at 08:30, after the 08:00 dose has been "
+                      "released, and restore it. No second dose, and the log "
+                      "survives. This is the case that dispenses twice without "
+                      "persisted state, and it is invisible in any demo."),
     ("the coin cell", "Unplug the Pi, leave it a minute, and bring it back with "
                       "the network unplugged. The clock must still be trusted and "
                       "its source must read `rtc`. Nothing on a bench with WiFi "
@@ -526,11 +514,22 @@ _BY_HAND = [
     ("the wrong password", "Type the WiFi password wrong on purpose. The setup "
                            "network must come back within a few seconds and the "
                            "page must say the password was not accepted."),
-    ("the internet cut", "Pull the router's WAN cable and leave the dispenser on "
-                         "the LAN. A scheduled dose must still come out on time. "
-                         "This is the one that catches a dependency on the relay "
-                         "introduced by accident, because everything passes at a "
-                         "desk with working internet."),
+    ("the internet cut", "Pull the router's WAN cable, leave the dispenser and the "
+                         "phone on the LAN, and release a due dose from the app. "
+                         "The pill must still come out. This is the one that "
+                         "catches a release path that only works through the "
+                         "relay — everything passes at a desk with internet, and "
+                         "the failure is a machine that cannot dispense at all."),
+    ("the dose nobody takes", "Let a scheduled dose sit for its whole grace window "
+                              "without tapping release. The tray must stay shut, "
+                              "the log must record it missed, and the ring must go "
+                              "amber. A build that quietly drops it at the end has "
+                              "lost the entire point of asking first."),
+    ("the stale notification", "Let a dose expire, then tap the release button on "
+                               "a notification still sitting on the phone's lock "
+                               "screen. Nothing must move. The device's own sense "
+                               "of what is due is the authority, and this is the "
+                               "only way to see it refuse."),
     ("the repeated revision", "Send the same schedule revision twice. The second "
                               "must be ignored. The relay refuses it, so this is "
                               "the only way to see the device's own check."),
@@ -562,7 +561,7 @@ def run(interactive: bool = True, fitted: int | None = None,
         check_tray_count(report, servos, fitted)
         check_ring(report, indicator, interactive)
         check_buzzer(report, indicator, interactive)
-        check_button(report, interactive)
+        check_release_path(report, servos)
 
         if interactive and servos.backend.moves_hardware:
             print("\n  The next part OPENS TRAYS. Anything loaded will come out.")

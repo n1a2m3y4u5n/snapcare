@@ -26,14 +26,46 @@ If you change one thing in this file, keep that. The failure this project is
 written against is a dispenser that silently stops dispensing, and "the relay
 was down" is a spectacularly bad reason for it to happen.
 
-The two directions
-------------------
+The three slots
+---------------
     desired    the app writes, this reads   — what the schedule should be
     reported   this writes, the app reads   — what the device is actually doing
+    command    the app writes, this reads   — release the dose, now
 
 They are separate slots rather than one document because they have different
-writers and different truths. Merging them is how a device's own report of
-what it did gets played back to it as an instruction.
+writers and different truths. Merging `desired` and `reported` is how a device's
+own report of what it did gets played back to it as an instruction.
+
+`command` is the tap
+--------------------
+A dose does not leave the hopper until somebody asks for it. When the phone is
+on the house WiFi it asks the device directly — `POST /api/release`, no internet
+involved — and this slot is how the same tap arrives when it is not: from a push
+notification on a train, from a carer in another city.
+
+**A command is an act, not a state, and that is the whole danger of it.** A
+schedule in `desired` stays true and a device that has been offline for a week
+should adopt the newest one it finds. A release is true for one hour on one
+morning, and a device that finds one on reconnecting must *not* treat it that
+way — a pill dropped into an empty room at 3 p.m. because a poll finally
+succeeded is precisely the failure the release model exists to prevent.
+
+So there are three guards, and they fail in the same direction:
+
+  the revision, as with `desired`, against a number on the SD card, so a command
+  cannot be replayed across a reboot or handed back a second time by a broken
+  relay;
+
+  the naming — a release says *which* dose it means, tray and scheduled minute;
+
+  and the only one that really matters: the device releases nothing unless that
+  exact dose is one it is offering right now. `Dispenser.release` answers an
+  empty list otherwise. A command that arrives late is not refused, logged as an
+  error, or retried. It simply finds nothing waiting and moves no horn.
+
+That last guard is what makes the other two belt and braces rather than the
+argument. The authority on whether a pill may fall is the device's own sense of
+what is due, and it always was.
 
 Replay, and why the revision is checked twice
 ---------------------------------------------
@@ -105,11 +137,17 @@ class CloudLink:
 
         self._desired_rev = int(stored.get("desiredRev") or 0)
         self._reported_rev = int(stored.get("reportedRev") or 0)
+        #: The last command revision seen, on the SD card for the same reason
+        #: `desiredRev` is: it has to survive the power cut. Without it a device
+        #: rebooting would collect the last release command again and, if the
+        #: dose happened to still be inside its window, drop a second one.
+        self._command_rev = int(stored.get("commandRev") or 0)
         self._applied_at = str(stored.get("appliedAt") or "")
 
         self._stop = threading.Event()
         self._wake_publisher = threading.Event()
         self._wake_poller = threading.Event()
+        self._wake_commander = threading.Event()
         self._threads: list[threading.Thread] = []
         self._lock = threading.RLock()
 
@@ -153,6 +191,7 @@ class CloudLink:
                 "deviceId": self.identity.device_id if self.identity.claim else "",
                 "desiredRev": self._desired_rev,
                 "reportedRev": self._reported_rev,
+                "commandRev": self._command_rev,
                 "appliedAt": self._applied_at,
                 "lastContactSecondsAgo": round(age) if age is not None else None,
                 "lastError": self._last_error,
@@ -197,6 +236,11 @@ class CloudLink:
         self._threads = [
             threading.Thread(target=self._poll_loop, name="cloud-poll", daemon=True),
             threading.Thread(target=self._publish_loop, name="cloud-publish", daemon=True),
+            # Its own thread, and its own parked request. A release tapped on a
+            # phone has somebody standing in front of the machine waiting for a
+            # noise, so it cannot queue behind a schedule poll that is halfway
+            # through a fifty-second hold.
+            threading.Thread(target=self._command_loop, name="cloud-command", daemon=True),
         ]
         for thread in self._threads:
             thread.start()
@@ -205,6 +249,7 @@ class CloudLink:
         self._stop.set()
         self._wake_publisher.set()
         self._wake_poller.set()
+        self._wake_commander.set()
 
     def reconfigure(self, relay_url: str | None = None,
                     enabled: bool | None = None) -> dict:
@@ -229,6 +274,7 @@ class CloudLink:
         self._stop = threading.Event()
         self._wake_publisher = threading.Event()
         self._wake_poller = threading.Event()
+        self._wake_commander = threading.Event()
 
         with self._lock:
             if relay_url is not None:
@@ -240,6 +286,7 @@ class CloudLink:
                     # then ignores the schedule waiting there at revision 1.
                     self._desired_rev = 0
                     self._reported_rev = 0
+                    self._command_rev = 0
                     self._last_published = ""
                 self.relay_url = new_url
             if enabled is not None:
@@ -276,6 +323,7 @@ class CloudLink:
                                  "address": state.address or ""}
         self._wake_poller.set()
         self._wake_publisher.set()
+        self._wake_commander.set()
 
     # ── receiving: the long poll ────────────────────────────────────────────
 
@@ -381,6 +429,116 @@ class CloudLink:
 
         log.info("applied a schedule from the cloud (revision %d)", rev)
         self._remember(rev, applied=True, error="")
+        self.nudge()
+
+    # ── receiving: the tap ──────────────────────────────────────────────────
+
+    def _command_loop(self) -> None:
+        """The same long poll as `_poll_loop`, on the slot that carries taps.
+
+        A duplicate of the shape rather than a shared helper on purpose: the two
+        differ in what a failure costs. A schedule that arrives a minute late is
+        a schedule that arrives; a release that arrives a minute late may find
+        its window closed. If these ever need different backoffs — and the
+        argument for a shorter ceiling here is a good one — this is where that
+        goes, and merging them now would have to be undone to get it.
+        """
+        backoff = config.CLOUD_BACKOFF_MIN_S
+        epoch = self._network_epoch
+        while not self._stop.is_set():
+            try:
+                started = time.monotonic()
+                self._command_once()
+                self._note_success()
+                backoff = config.CLOUD_BACKOFF_MIN_S
+
+                remaining = _MIN_CYCLE_S - (time.monotonic() - started)
+                if remaining > 0:
+                    self._wait_to_command(remaining)
+            except Exception as exc:  # noqa: BLE001
+                self._note_failure(exc)
+                self._wait_to_command(_jittered(backoff))
+                if self._network_epoch != epoch:
+                    epoch = self._network_epoch
+                    backoff = config.CLOUD_BACKOFF_MIN_S
+                else:
+                    backoff = min(backoff * config.CLOUD_BACKOFF_FACTOR,
+                                  config.CLOUD_BACKOFF_MAX_S)
+
+    def _wait_to_command(self, seconds: float) -> None:
+        self._wake_commander.wait(seconds)
+        self._wake_commander.clear()
+
+    def _command_once(self) -> None:
+        """Collect one command, if there is a newer one, and carry it out.
+
+        Note what this deliberately does *not* honour: `CLOUD_IDLE_POLL_S`. The
+        cheap mode lets a schedule wait fifteen minutes, which is a reasonable
+        trade for somebody's hosting bill. A release cannot wait fifteen minutes
+        — its whole window is an hour and the person is standing there — so this
+        slot is polled continuously whatever that setting says. A device on a
+        metered relay should turn the *cloud* off, not keep it on in a mode where
+        the release button silently does nothing for a quarter of an hour.
+        """
+        hold = config.CLOUD_HOLD_S
+        found = self._request(
+            "GET", f"/command?since={self._command_rev}&wait={hold}",
+            timeout=hold + _HOLD_MARGIN_S)
+        if found is None:
+            return
+
+        opened = envelope.unseal(self.identity.box_key, self.identity.device_id,
+                                 "command", found["envelope"])
+        rev = int(found["envelope"]["rev"])
+
+        if rev <= self._command_rev:
+            log.warning("relay offered command revision %d, which is not newer than %d "
+                        "— ignoring", rev, self._command_rev)
+            return
+
+        # Recorded *before* acting, and persisted. If the drop below throws, or
+        # the power goes at the wrong instant, the command must not be collected
+        # a second time and turned into a second pill. The dose is still owed
+        # and still releasable — from the app again, or from the LAN — which is
+        # the recoverable direction.
+        with self._lock:
+            self._command_rev = rev
+        self._save_state()
+
+        self._carry_out(opened, rev)
+
+    def _carry_out(self, opened: dict, rev: int) -> None:
+        action = str(opened.get("action") or "").strip().lower()
+        if action != "release":
+            log.warning("command revision %d asks for %r, which this firmware "
+                        "does not do", rev, action or "nothing")
+            return
+
+        tray = _optional_int(opened.get("tray"))
+        minutes = _optional_int(opened.get("minutes"))
+
+        try:
+            released = self.dispenser.release(tray=tray, minutes=minutes)
+        except RuntimeError as exc:
+            # No GPIO library. Reported up the same channel the tap came down,
+            # because the person who tapped is the one who needs to hear it.
+            log.error("a release from the cloud could not be carried out: %s", exc)
+            self._remember(self._desired_rev, applied=False, error=str(exc))
+            self.nudge()
+            return
+
+        if not released:
+            # The ordinary case for a stale notification, and not an error. See
+            # the module docstring: the device's own sense of what is due is the
+            # authority, and it has just said nothing is.
+            log.info("a release arrived (revision %d) with no matching dose "
+                     "waiting — nothing moved", rev)
+            return
+
+        log.info("released tray %s from the cloud (revision %d)",
+                 ", ".join(str(r["tray"]) for r in released), rev)
+        # `_record` already nudged the publisher for each dose. This is belt and
+        # braces for the app, which is showing a spinner on somebody's phone.
         self.nudge()
 
     # ── sending: what the device says about itself ──────────────────────────
@@ -530,6 +688,7 @@ class CloudLink:
                 "relayUrl": self.relay_url,
                 "desiredRev": self._desired_rev,
                 "reportedRev": self._reported_rev,
+                "commandRev": self._command_rev,
                 "appliedAt": self._applied_at,
             }
         try:
@@ -609,6 +768,22 @@ def _schedule_kind(payload: str) -> str | None:
     from . import sc1
     kind = sc1.message_kind(payload)
     return kind if kind in ("schedule", "weekly") else None
+
+
+def _optional_int(value) -> int | None:
+    """An int, or None for anything a command left out or got wrong.
+
+    None means "do not narrow on this field", which for a release means every
+    dose currently due. That is the safe reading: the set of doses due is the
+    device's own, and the worst a malformed command achieves is releasing what
+    the person would have got by tapping the main-screen button anyway.
+    """
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _jittered(seconds: float) -> float:
