@@ -70,12 +70,39 @@ EOF
   exit 1
 fi
 
+# ── apt, made to wait rather than fall over ─────────────────────────────────
+#
+# `set -e` plus an unguarded `apt-get update` is a script that dies on the spot
+# if anything else holds the dpkg lock. On a freshly imaged card something
+# usually does: `apt-daily` and `unattended-upgrades` fire on a systemd timer a
+# few minutes after first boot, take the frontend lock, and hold it for as long
+# as the upgrade takes — which is exactly when somebody is running this script
+# for the first time.
+#
+# That contention is transient and clears itself, so waiting is the right answer
+# rather than exiting and asking somebody to run the whole thing again. apt has
+# known how to do this since 2.1.5; every Raspberry Pi OS release this firmware
+# supports is well past that.
+APT_WAIT_S="${SNAPCARE_APT_WAIT_S:-300}"
+apt_get() { apt-get -o DPkg::Lock::Timeout="$APT_WAIT_S" "$@"; }
+
+# Said before the wait, not after it, so a script that appears to hang for four
+# minutes has already explained why.
+if pgrep -x 'apt|apt-get|dpkg|unattended-upgr' >/dev/null 2>&1; then
+  echo
+  echo "  .. another package manager is already running:"
+  pgrep -a -x 'apt|apt-get|dpkg|unattended-upgr' 2>/dev/null | sed 's/^/     /'
+  echo "  .. waiting up to ${APT_WAIT_S}s for it to finish before touching anything."
+  echo "     This is normal on a freshly imaged card. Nothing has been changed yet,"
+  echo "     and re-running this script later is always safe."
+fi
+
 say "Installing packages"
-apt-get update
+apt_get update
 # Only these are genuinely required. Everything below is optional: the firmware
 # reports at startup which of them it found, so a package that is not in this
 # suite must not abort an otherwise good install.
-apt-get install -y avahi-daemon python3 i2c-tools python3-smbus2
+apt_get install -y avahi-daemon python3 i2c-tools python3-smbus2
 
 # The GPIO library. This is the one that actually matters: without some way to
 # drive a pin, no tray can be opened, and the firmware will now refuse to
@@ -84,7 +111,7 @@ apt-get install -y avahi-daemon python3 i2c-tools python3-smbus2
 # It is preinstalled on every Raspberry Pi OS Lite image since 2023, on both
 # Bookworm and Trixie and both architectures, so this is usually a no-op. It is
 # still worth asserting, because the failure it prevents is silent.
-if ! apt-get install -y python3-lgpio; then
+if ! apt_get install -y python3-lgpio; then
   echo "  !! python3-lgpio could not be installed."
   echo "  !! Without a GPIO library this device cannot open a tray, and it will"
   echo "  !! say so on its status page rather than pretending. If this is plain"
@@ -101,7 +128,7 @@ fi
 #
 # Which is why this is tried and not required. `servo.make_backend` walks
 # pigpio -> lgpio -> RPi.GPIO -> mock by itself.
-apt-get install -y pigpio 2>/dev/null \
+apt_get install -y pigpio 2>/dev/null \
   || echo "  (no pigpio on this release — lgpio will drive the pins, which is expected on Trixie)"
 
 # Deliberately NOT installed: python3-rpi.gpio.
@@ -112,9 +139,9 @@ apt-get install -y pigpio 2>/dev/null \
 # shim and replace it with the legacy sysfs implementation — a downgrade on
 # this board and a hard break on a Pi 5. The RPi.GPIO path in the firmware is a
 # last resort for machines that already have it, not something to install.
-apt-get install -y python3-segno || echo "  (segno unavailable — the label will show text instead of a QR)"
-apt-get install -y python3-rpi-ws281x || echo "  (rpi-ws281x unavailable — the LED ring will be skipped)"
-apt-get install -y python3-cryptography || echo "  (cryptography unavailable — cloud sync will be off; the device still dispenses)"
+apt_get install -y python3-segno || echo "  (segno unavailable — the label will show text instead of a QR)"
+apt_get install -y python3-rpi-ws281x || echo "  (rpi-ws281x unavailable — the LED ring will be skipped)"
+apt_get install -y python3-cryptography || echo "  (cryptography unavailable — cloud sync will be off; the device still dispenses)"
 
 say "Enabling I2C and the DS3231 real-time clock"
 # This is what removes the Pi's worst weakness. The kernel reads the chip and

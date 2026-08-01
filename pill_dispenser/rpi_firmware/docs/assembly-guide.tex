@@ -1730,6 +1730,20 @@ The release works at home and not away &
 That is the LAN path working and the relay path not. Stage 8, and
 \code{cloud.state} \\
 \midrule
+\multicolumn{2}{@{}l}{\textbf{\sffamily Installing}}\\
+\code{install.sh} stops at ``could not get lock \code{/var/lib/dpkg/lock-frontend}'' &
+Another package manager is running \textemdash{} on a freshly imaged card that is
+almost always \code{unattended-upgrades}, which fires on a timer a few minutes
+after first boot. Nothing was changed; the script now waits up to five minutes
+instead of stopping. Watch it finish with \code{systemctl list-jobs} or just run
+the installer again in a few minutes \\
+The installer waits, then still gives up &
+The other job is a long one, not a stuck one. \code{sudo systemctl stop
+unattended-upgrades} if you would rather not wait, or raise the timeout with
+\code{SNAPCARE\_APT\_WAIT\_S=900 sudo -E ./service/install.sh}. \textbf{Do not
+delete the lock file} \textemdash{} it does not release the lock, and it breaks
+the package database \\
+\midrule
 \multicolumn{2}{@{}l}{\textbf{\sffamily Servos}}\\
 Servo twitches or ignores commands & Common ground. The Pi's GND and the servo supply GND must be joined \\
 Servo hums between doses & You are on the RPi.GPIO fallback \textemdash{} \code{sudo apt install python3-lgpio}. \code{gpio.servo.timing} in \code{/api/status} says which you have: \code{dma}, \code{threaded} or \code{python} \\
