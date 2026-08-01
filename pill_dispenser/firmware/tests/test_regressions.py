@@ -301,6 +301,72 @@ def test_ordinary_drift_does_not_throw_the_correction_away(monkeypatch):
     assert clock.now().date() == datetime(2026, 7, 27).date()
 
 
+# ── the clock chip the firmware could not open ──────────────────────────────
+
+def test_probe_actually_reaches_the_chip(monkeypatch):
+    """`/api/status` reported `"present": false, "detail": "the DS1302 could not
+    be opened: cannot access local variable 'chip'"` on a correctly wired board.
+
+    The module-level accessor was called `chip()` and the caller assigned its
+    result to a local also called `chip`. Python decides a name is local for the
+    whole function body the moment it is assigned anywhere in it, so the call
+    read an unbound local instead of the function above it — and the broad
+    `except` folded the `UnboundLocalError` into the same reading a loose wire
+    produces. The device then never trusted the RTC, so every power cut that
+    outlasted the router left the tray shut.
+    """
+    from datetime import datetime as _dt
+
+    from snapcare_dispenser import ds1302
+
+    class FakeChip(ds1302.Ds1302):
+        def __init__(self):  # noqa: D107 - no wires
+            pass
+
+        def present(self):
+            return True
+
+        def halted(self):
+            return False
+
+        def read_token(self):
+            return _dt(2026, 8, 1, 9, 0)
+
+        def trickle_charging(self):
+            return False
+
+        def read_time(self):
+            return _dt(2026, 8, 2, 7, 30)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(ds1302, "Ds1302", FakeChip)
+    ds1302._reset_chip_for_tests()          # noqa: SLF001
+    try:
+        reading = ds1302.probe()
+    finally:
+        ds1302._reset_chip_for_tests()      # noqa: SLF001
+
+    assert reading.present is True
+    assert reading.vouched is True
+    assert "could not be opened" not in reading.detail
+
+
+def test_the_shared_chip_accessor_cannot_be_shadowed():
+    """The name is the fix, so the name is what is pinned.
+
+    `chip` is the obvious local-variable name in every caller inside this
+    module, and a module function of the same name is a trap that fires as an
+    `UnboundLocalError` at runtime rather than at import.
+    """
+    from snapcare_dispenser import ds1302
+
+    assert hasattr(ds1302, "shared_chip")
+    assert not hasattr(ds1302, "chip"), \
+        "a module-level `chip()` is shadowed by any local named `chip`"
+
+
 # ── the WiFi profile that must survive a mistyped password ──────────────────
 
 def test_a_preconfigured_profile_counts_as_a_saved_network(monkeypatch):

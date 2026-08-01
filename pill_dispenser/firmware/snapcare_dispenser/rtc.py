@@ -287,7 +287,7 @@ def _vouch_ds1302(when: datetime) -> bool:
     # between them reads registers that are halfway through being rewritten.
     with ds1302._chip_lock:  # noqa: SLF001 - the module's own concurrency guard
         try:
-            chip = ds1302.chip()
+            chip = ds1302.shared_chip()
         except Exception as exc:  # noqa: BLE001
             log.info("could not open the DS1302 to set it (%s)", exc)
             return False

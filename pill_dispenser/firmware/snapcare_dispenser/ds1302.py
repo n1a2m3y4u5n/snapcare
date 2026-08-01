@@ -530,11 +530,22 @@ _chip: Ds1302 | None = None
 _chip_lock = threading.RLock()
 
 
-def chip() -> Ds1302:
+def shared_chip() -> Ds1302:
     """The process's one DS1302, opened on first use.
 
     Never closed per call. The lines stay claimed for the life of the process
     and are released by `close_chip()` from the daemon's shutdown path only.
+
+    **Named `shared_chip` and not `chip` deliberately.** `chip` is the obvious
+    name for the local variable in every function that calls this, and Python
+    decides a name is local for the *whole* body the moment it is assigned
+    anywhere in it — so `chip = chip()` inside this module does not call this
+    function, it reads a local that does not exist yet and raises
+    `UnboundLocalError`. That bug shipped, and because the caller wrapped it in
+    a broad `except` it surfaced on the status page as
+    `"present": false, "detail": "the DS1302 could not be opened"` — a naming
+    mistake wearing a hardware fault's clothes, on a device that then refuses to
+    dispense after any power cut.
     """
     global _chip
     with _chip_lock:
@@ -576,8 +587,15 @@ def _probe_locked(chip_in: Ds1302 | None) -> Reading:
     # An explicitly passed chip is a test's, and it owns it. Otherwise use the
     # process-wide one and do NOT close it.
     try:
-        chip = chip_in if chip_in is not None else chip()
+        chip = chip_in if chip_in is not None else shared_chip()
     except Exception as exc:  # noqa: BLE001
+        # Logged with its traceback, not just folded into the reading.
+        #
+        # Everything below reports a failure to open as "no chip", which is the
+        # right answer for a loose wire and completely the wrong one for a bug
+        # in this file — and the two are indistinguishable on the status page.
+        # The journal is where the difference shows.
+        log.exception("the DS1302 could not be opened")
         return Reading(False, None, None, None, None, None,
                        f"the DS1302 could not be opened: {exc}")
 
