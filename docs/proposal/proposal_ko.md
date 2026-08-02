@@ -319,6 +319,16 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 남아공에서 정규교육 7년 이하의 저문해 성인 60명을 대조군과 실험군으로 나눈 시험에서도, 그림을 함께 받은 쪽에서 약 라벨과 복약 안내문 **양쪽 모두 이해도 80%를 넘긴 참여자가 유의하게 많았다** (Mansoor, L. E. & Dowse, R., "Effect of pictograms on readability of patient information materials," *Annals of Pharmacotherapy*, 37:1003–1009, 2003).
 
+무엇을 겹쳐야 하는지를 직접 가른 시험도 있다. 카타르에서 아랍어와 영어를 읽지 못하는 이주노동자 123명을 세 갈래로 무작위 배정해, 글에 구두 설명을 더한 것과 그림만 있는 라벨과 그림에 구두 설명을 더한 것을 견주었다. **그림에 구두 설명을 더한 쪽이 대부분의 지시에서 가장 나았다** (*p* ≤ 0.05) (Kheir, N., Awaisu, A., Radoui, A., El Badawi, A., Jean, L. & Dowse, R., "Development and evaluation of pictograms on medication labels for patients with limited literacy skills in a culturally diverse multiethnic population," *Research in Social and Administrative Pharmacy*, 10(5):720–730, 2014, doi:10.1016/j.sapharm.2013.11.003).
+
+세 갈래 가운데 이긴 것이 SnapCare 의 구성과 같다. 글에 음성을 더한 것도 아니고 그림만도 아니며, 그림에 음성을 더한 것이다. §2.1 에서 세 층을 겹치기로 한 판단이 이 시험에서 직접 지지된다.
+
+같은 연구가 남긴 반대쪽 결과도 적어 둔다. "두 알을 하루 세 번" 이나 "한 방울을 눈에" 는 잘 전달되었으나 **"유제품과 함께 먹지 말 것" 은 그림과 설명을 함께 주어도 여전히 어려웠다.** 추상적이고 부정형인 지시가 남는다는 뜻이며, §5.7 에서 AAC 응답자가 공복이나 상호작용 같은 추상 개념이 먼저 실패할 것이라고 짚은 것과 §5.3 에서 우리가 개선하지 못한 다섯 종이 모두 개념의 문제였던 것이 같은 자리다.
+
+표본을 크게 잡은 것도 있다. 레바논 성인 1,848명에게 같은 처방 지시를 글로만, 그리고 그림을 곁들여 보인 결과 이해도 점수가 9.36(±1.60)에서 10.88(±0.89)로 올랐다 (차이 1.52, 95% CI 1.45~1.60, *p* < 0.001) (Mourad, N., Younes, S., Mourad, L. et al., "Comprehension of prescription orders with and without pictograms," *BMC Public Health*, 23:1926, 2023, doi:10.1186/s12889-023-16856-5).
+
+이 연구에도 우리에게 불리한 결과가 있다. **나이가 많을수록 그림으로 얻는 이득이 작았다** (Beta = −0.019, *p* < 0.001). 이 앱이 고령자를 주요 대상으로 삼는다는 점(§1.7)을 생각하면 이것은 그냥 지나칠 수치가 아니다. §5.7 에서 김은경 국립공주대학교 교수가 "이런 이미지와 친숙하지 않은 고령자들은 더 어려울 것" 이라고 적은 것이 같은 방향의 관찰이다.
+
 개별 시험을 넘어 전체를 모은 것도 있다. 4,160편을 훑어 무작위 대조시험 54편을 고르고 그중 42편을 메타분석한 결과, 그림을 곁들인 건강 정보는 지식·이해와 회상을 전반적으로 중간 정도 높였고, **건강문해력이 낮은 집단(13편)에서는 지식·이해가 크게 올랐다** (Schubbe, D., Scalia, P., Yen, R. W., Saunders, C. H., Cohen, S., Elwyn, G., van den Muijsenbergh, M. & Durand, M.-A., "Using pictures to convey health information: A systematic review and meta-analysis of the effects on patient and consumer health behaviors and outcomes," *Patient Education and Counseling*, 103(10):1935–1960, 2020, doi:10.1016/j.pec.2020.04.010).
 
 같은 논문이 우리 설계에 직접 걸리는 문장을 하나 더 남겼다. **낱말이 적은 아이콘이 가장 도움이 될 수 있다**는 것이다. §5.7 에서 세 나라의 응답자가 한 장에 요소가 너무 많다고 지적한 것과 독립적으로 같은 방향을 가리킨다. 다만 저자들이 결과의 이질성이 크므로 조심해 읽으라고 적어 두었고, 여기서도 그렇게 읽는다. 이 값들은 그림을 쓰라는 근거이지 어떤 그림이든 된다는 근거가 아니다.
@@ -365,6 +375,10 @@ Medhi 등은 방갈로르 빈민가의 비문해 가사노동자와의 민족지
 이어진 연구에서 인도·필리핀·남아공의 저문해·저소득 400명을 대상으로 조사한 결과, 장벽은 문해력만이 아니라 인지적 어려움, 문화적 예절, 노출 경험, 위압감, 매개, 동기, 가격, 권력 관계, 사회적 지위까지 얽혀 있음이 확인되었다 (Medhi, I., Cutrell, E. & Toyama, K., "It's not just illiteracy," *Proc. International Conference on Interaction Design & International Development*, 2010).
 
 구조의 문제도 확인되었다. 방갈로르 빈민가의 비문해 성인 20명을 대상으로 터치스크린 휴대폰에서 40개 항목 중 5개를 찾게 한 실험에서, 7쪽에 걸친 다중 페이지 목록형은 평균 25초가 걸린 반면 4단계 깊이의 계층형은 65.5초가 걸렸다 (*t*(18) = 4.6, *p* < 0.001). 정답률도 목록형 100%, 계층형 80%로 갈렸다 (*t*(18) = −3, *p* = 0.0077) (Medhi, I., Toyama, K., Joshi, A., Athavankar, U. & Cutrell, E., "A Comparison of List vs. Hierarchical UIs on Mobile Phones for Non-literate Users," *INTERACT 2013*, LNCS 8118:497–504, doi:10.1007/978-3-642-40480-1_33).
+
+다른 연구진이 다른 과제에서 같은 실패를 찾았다. 만성신장병 5기 환자 10명(REALM 검사로 셋이 3학년 이하, 셋이 7~8학년, 넷이 9학년 이상)에게 휴대기기로 음식의 양을 추정하게 한 연구에서, 액체와 형태가 일정하지 않은 음식은 열 명 모두 또는 여덟 명이 맞혔으나 **고형식을 재는 화면에서는 성공한 사람이 한 명도 없었다.** 저자들이 관찰한 원인은 참여자들이 어느 그림을 골라야 할지 정하지 못했고, 자기가 이미 어느 치수를 쟀는지를 자꾸 잊었다는 것이다 (Chaudry, B., Connelly, K., Siek, K. A. & Welch, J. L., "The design of a mobile portion size estimation interface for a low literacy population," *International Conference on Pervasive Computing Technologies for Healthcare*, 160–167, 2011, doi:10.4108/icst.pervasivehealth.2011.246113).
+
+과제도 연구진도 다른데 실패한 이유가 같다. 화면이 사용자에게 무언가를 머릿속에 들고 있으라고 요구한 것이다. 앞의 연구에서는 어디까지 내려왔는지였고 여기서는 어느 치수를 이미 쟀는지다. SnapCare 가 단계를 없앤 것은 화면 수를 줄이려는 것이 아니라 이 요구를 없애려는 것이다.
 
 저자들은 원인을 중첩(nesting) 개념 자체의 이해에서 찾는다. 계층형에서 상위 그림이 하위 항목의 묶음을 뜻한다는 것을 이해하지 못한 참여자들이 있었고, 잘못 들어간 뒤 상위로 돌아오는 방법을 기억하지 못한 경우도 있었다. 쪽을 넘기는 것 자체는 문제가 되지 않았다. 문제는 어디까지 내려왔는지를 머릿속에 들고 있어야 한다는 데 있다.
 
