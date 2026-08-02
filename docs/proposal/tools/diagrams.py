@@ -430,6 +430,30 @@ def sign_payload():
             fontsize=7.6, color=RED, fontweight='bold')
     save(fig, 'fig24_sign')
 
+# ── 실패했을 때 무엇을 보이는가 ─────────────────────────────────────
+def failure_paths():
+    """§3.4. 다시 찍으면 되는 실패와 다시 찍어도 소용없는 실패를 가른다."""
+    fig, ax = canvas(6.0, 2.6)
+    TOP = 38.0
+
+    box(ax, 34, TOP - 6.6, 32, 6.4, T('읽지 못했다'), (), GREY, fs=9.0)
+
+    B = TOP - 11.4
+    arrow(ax, 42, TOP - 7.2, 22, B - 0.4)
+    arrow(ax, 58, TOP - 7.2, 78, B - 0.4)
+    box(ax, 2, B - 11.0, 44, 10.8, T('다시 찍으면 된다'),
+        [T('422 · 못 알아봄'), T('더 가까이 · 평평하게 · 손을 멈추고')], GREEN)
+    box(ax, 54, B - 11.0, 44, 10.8, T('다시 찍어도 소용없다'),
+        [T('501 · 수단 없음'), T('성분표를 찍거나 예시를 고른다')], RED)
+
+    ax.text(2, 6.4, T('실패 문장은 화면에 뜨는 동시에 스스로 소리 내어 읽힌다'),
+            fontsize=7.8, color=MUTED, fontweight='bold')
+    ax.text(2, 3.4, T('앱의 다른 화면은 모두 그림과 음성으로 말하는데, 실패했을 때만 글자 한 줄이 조용히 떠 있었다'),
+            fontsize=7.4, color=MUTED)
+    ax.text(2, 0.6, T('가장 도움이 필요한 순간에만 유일하게 글을 요구하고 있었던 셈이다'),
+            fontsize=7.4, color=RED)
+    save(fig, 'fig25_failure')
+
 
 if __name__ == '__main__':
     userflow()
@@ -443,3 +467,4 @@ if __name__ == '__main__':
     verdict_order()
     formsheet_flow()
     sign_payload()
+    failure_paths()

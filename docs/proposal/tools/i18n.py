@@ -405,6 +405,20 @@ EN = {
         'Derived from the public key. There is no way to request another person\'s data',
     '셋 중 하나라도 빠지면 서명은 있으나 마나가 된다':
         'Missing any one of the three makes the signature worthless',
+    '읽지 못했다': 'Could not read it',
+    '다시 찍으면 된다': 'Another photograph will do',
+    '422 · 못 알아봄': '422 · not recognised',
+    '더 가까이 · 평평하게 · 손을 멈추고':
+        'Move closer · lay it flat · hold steady',
+    '다시 찍어도 소용없다': 'Retrying will not help',
+    '501 · 수단 없음': '501 · no means available',
+    '성분표를 찍거나 예시를 고른다': 'Photograph a label or pick a sample',
+    '실패 문장은 화면에 뜨는 동시에 스스로 소리 내어 읽힌다':
+        'The failure sentence is spoken aloud as it appears',
+    '앱의 다른 화면은 모두 그림과 음성으로 말하는데, 실패했을 때만 글자 한 줄이 조용히 떠 있었다':
+        'Every other screen speaks in pictures and speech; on failure alone a line of text sat there silently',
+    '가장 도움이 필요한 순간에만 유일하게 글을 요구하고 있었던 셈이다':
+        'The one moment that most needed help was the only one demanding text',
 }
 
 
