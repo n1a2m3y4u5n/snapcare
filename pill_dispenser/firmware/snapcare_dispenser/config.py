@@ -39,11 +39,10 @@ from pathlib import Path
 #   - GPIO 2/3  have permanent 1.8 kΩ pull-ups to 3.3 V that cannot be switched
 #     off. A servo signal line that idles high before the software starts is a
 #     servo that slams to one end at power-on, with a tray full of pills on it.
-#     **Those same two resistors are now why the OLED is on these pins**: I²C is
-#     an open-drain bus, so SDA and SCL are pulled up by the master or they do
-#     not work at all, and the Pi has already done it. The panel needs no
-#     resistors of its own and the wiring is four wires with nothing on them.
-#     SDA is GPIO 2 (pin 3), SCL GPIO 3 (pin 5).
+#     **Those same two resistors are why they are the I²C pair**: an open-drain
+#     bus is pulled up by the master or it does not work at all, and the Pi has
+#     already done it. SDA is GPIO 2 (pin 3), SCL GPIO 3 (pin 5), and a DS3231
+#     build hangs its clock chip there with no resistors of its own.
 #   - GPIO 14/15 are the serial console. Fine if you disable it, but then you
 #     lose the one way to log into a Pi whose network setup you just broke.
 #   - GPIO 7/8/9/10/11 are SPI, and no longer spare: the ILI9341 is a four-line
@@ -53,9 +52,9 @@ from pathlib import Path
 # tidy, and none of them is a boot-strapping pin.
 #
 # GPIO 24 carries the take-dose button and is deliberately not in this map, and
-# nor are 23 (the buzzer), 16/20/21 (the DS1302), 2/3 and 8/10/11 (the two
-# panels) or 18/25 — the LCD's RESET and DC. GPIO 18 is free for that only
-# because the LED ring that used to want it is gone. See the sections below.
+# nor are 23 (the buzzer), 16/20/21 (the DS1302), 2/3 (I²C), 8/10/11 (the LCD's
+# SPI) or 18/25 — the LCD's RESET and DC. GPIO 18 is free for that only because
+# the LED ring that used to want it is gone. See the sections below.
 
 TRAY_GPIO: dict[int, int] = {
     1: 17,
@@ -166,46 +165,34 @@ SERVO_BACKEND = os.environ.get("SNAPCARE_SERVO_BACKEND", "auto")
 # the hopper yet, and it will not until somebody releases the dose. A silent
 # device waits out the hour and records a miss.
 #
-# The screen replaced an LED ring, and it inherits the ring's five-colour
-# vocabulary unchanged — green due, blue released, amber missed, violet a new
-# schedule, cyan put me on a network. What it adds is the one thing a ring could
-# never do: it can say *which tray* and *what time*. What it must not become is a
-# text display, which would put the whole interface behind a skill the person it
-# is built for may not have.
+# The screen replaced an LED ring and kept the ring's colour vocabulary — green
+# due, blue released, amber missed, violet a new schedule, cyan put me on a
+# network — plus the one distinction a ring could not draw: red for a tray that
+# will not open, which used to have to share amber with a missed dose. What the
+# screen adds on top is what a ring could never do: it says *which tray*, *at
+# what time*, and what else is owed today. What it must not become is a text
+# display, which would put the whole interface behind a skill the person it is
+# built for may not have.
 
 #: Which panel is fitted.
 #:
-#:     ili9341  the 2.8" 240x320 LCD on SPI0 — the panel this build ships
-#:     ssd1306  a small I2C OLED on bus 1 — the backup, and what the bench has
+#:     ili9341  the 2.8" 320x240 LCD on SPI0 — the panel this build ships
 #:     none     no panel; the chirp and the app are the whole interface
-#:     auto     try the LCD, then the OLED
+#:     auto     the LCD
 #:
-#: The two are not interchangeable, and `auto` prefers the LCD for the reason
-#: the whole project turns on: the LCD has colour, and on a device whose user
-#: cannot be assumed to read, the colour *is* the message. The OLED has one ink,
-#: so `display/canvas.py` has to spend a treatment — inverted, framed, plain — on
-#: each state instead, which keeps them distinguishable and is still strictly
-#: worse from across a dim room. A build with the OLED is a working build, not a
-#: broken one; it is the one that has to lean harder on the chirp.
+#: `auto` and `ili9341` are now the same instruction, and saying so is more
+#: honest than keeping a choice that was never made. The monochrome OLED that
+#: used to be the alternative is gone, and it took the only real presence test
+#: with it: an I2C address either acknowledges or it does not, while the LCD is
+#: write-only — no MISO, nothing ever read back — so it initialises exactly as
+#: well with nothing on the end of the ribbon. `auto` therefore opens the LCD
+#: and logs that the panel is *assumed*, which is the first time that has
+#: actually been what happens rather than what this comment claimed.
+#:
+#: `none` is a working build, not a broken one. The dose still comes out, the
+#: chirp still fetches somebody and the app still shows the tray; what is lost
+#: is the person in the room being told which one without a phone.
 DISPLAY_BACKEND = os.environ.get("SNAPCARE_DISPLAY", "auto").strip().lower()
-
-#: The OLED's bus and address. Bus 1 is GPIO 2 (SDA) and GPIO 3 (SCL), which is
-#: also where a DS3231 would sit — the two share the wire happily, since 0x3C
-#: and 0x68 are different addresses on the same two pins.
-#:
-#: 0x3C is the address of every SSD1306 module sold with four pins labelled
-#: SD/CL/V/G. The other documented address, 0x3D, needs a resistor moved on the
-#: back of the board; if the panel is silent, `i2cdetect -y 1` answers this
-#: question in one line.
-DISPLAY_I2C_BUS = 1
-DISPLAY_I2C_ADDRESS = 0x3C
-
-#: The OLED's geometry. 128x64 is the 0.96" part; the 0.91" one is 128x32 and
-#: works by changing this alone. Height must be a multiple of 8 — an SSD1306
-#: page is eight rows tall and `Mono1` refuses anything else rather than
-#: silently drawing off the bottom of the buffer.
-DISPLAY_OLED_WIDTH = 128
-DISPLAY_OLED_HEIGHT = 64
 
 #: The LCD's SPI character device. `dtparam=spi=on` in /boot/firmware/config.txt
 #: creates it; install.sh adds that line, and it takes effect on the next boot.
@@ -248,6 +235,31 @@ DISPLAY_ROTATION = 90
 #: The real rate is whatever the SPI divider can make of the core clock, so
 #: nothing here depends on the exact figure.
 DISPLAY_SPI_HZ = 32_000_000
+
+#: The hours the panel wears its night palette — start inclusive, end exclusive,
+#: whole hours, wrapping midnight.
+#:
+#: This is a *palette* substitution and not a brightness, because there is no
+#: brightness to set: the LED pin is tied to 3V3 on this build, so nothing in
+#: this firmware can dim the backlight and a policy that pretended otherwise was
+#: inert. At night the text and the three band surfaces darken; the state
+#: colours never do — a dose waiting at 3 a.m. is exactly the dose that must not
+#: be made quiet, and neither the panel nor the room ever goes blank.
+#:
+#: Set the two equal for no quiet hours at all.
+DISPLAY_QUIET_HOURS = (22, 7)
+
+#: Seconds the boot screen is held after the daemon starts, even once every
+#: subsystem has already answered.
+#:
+#: A machine whose power was pulled comes back with somebody standing in front
+#: of it, and until the first snapshot lands there is nothing true to draw. The
+#: honest frame is "starting", and it has to stay up long enough to be read as a
+#: deliberate start rather than a flicker on the way to a screen. 2.5 s is
+#: roughly a glance; longer starts to feel like a device that is stuck, and it
+#: delays nothing else — the tray, the button and the schedule are all live
+#: underneath it.
+DISPLAY_BOOT_DWELL_S = 2.5
 
 #: Piezo buzzer, through 100 Ω. Any free GPIO — the tone is software-timed PWM,
 #: so this does not compete for a hardware PWM channel with anything.

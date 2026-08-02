@@ -11,19 +11,20 @@ chip knows whether any of that survives the next power cut.
 Left to themselves, every screen would go and ask those five directly, and
 within a release the machine would be disagreeing with itself in front of the
 person it exists to inform — the idle screen calling the device healthy while
-the status screen showed a warning, because the two had picked different
-questions off different objects. On a device whose whole interface is one panel
-that is not a cosmetic bug: as far as anybody in the room is concerned, the
-panel *is* the machine.
+the status bar showed a warning, because the two had picked different questions
+off different objects. On a device whose whole interface is one panel that is
+not a cosmetic bug: as far as anybody in the room is concerned, the panel *is*
+the machine.
 
 So there is one snapshot, taken once per tick, and every screen and the presence
-policy read it and nothing else. `Health` is deliberately flat — strings, ints
-and a bool. A screen handed a `Dispenser` could ask it anything, and eventually
-would; a screen handed nine fields can only draw them.
+policy read it and nothing else. `Health` is deliberately flat — strings, ints,
+a bool, and one tuple of small frozen records. A screen handed a `Dispenser`
+could ask it anything, and eventually would; a screen handed twenty-two fields
+can only draw them.
 
 One problem at a time
 ---------------------
-`problem` is a single slug and never a list. A 128-pixel panel has room for one
+`problem` is a single slug and never a list. The hero band has room for one
 cause, and a person handed three faults acts on none of them. So the choice of
 which one to show is made here, once, rather than by whichever screen is up.
 
@@ -31,7 +32,9 @@ The order is by what it costs to act on the wrong one:
 
     gpio   no tray can open at all, and no amount of clock changes that
     clock  the tray will not open, because nothing has vouched for the time
+    card   doses are being given and no record of them reaches the card
     trays  a schedule names a tray that is not fitted
+    power  the supply is sagging, silently, under everything else here
     wifi   the device is not on a network
     relay  it is on a network, and the carer's phone still is not hearing
     cell   everything works today, and the next power cut stops it
@@ -44,12 +47,27 @@ is a bug waiting for somebody to fix only one of them. **wifi before relay**
 because the relay cannot work without the network, so naming the relay would
 send somebody to debug the cloud when the fault is a router in the hall.
 
-`trays` sits above `wifi` because it is the silent one. A schedule naming a tray
-with no servo is accepted at restore, offered to the person, and fails at the
-moment they tap release — after which the dose ages out of its window and is
+`card` is third, above the fault that stops a single tray, because it is the
+quietest failure this firmware has. A device whose card has gone read-only —
+which is exactly how ext4's `errors=remount-ro` presents a dying SD card — keeps
+dispensing perfectly, and no record of any of it survives. After the next power
+cut `_restore` reads stale state, this morning's dose looks un-dispensed inside
+its grace window, and it is dispensed again. Nothing else anywhere in the
+firmware notices.
+
+`trays` sits above `wifi` because it is the other silent one. A schedule naming
+a tray with no servo is accepted at restore, offered to the person, and fails at
+the moment they tap release — after which the dose ages out of its window and is
 reported to the carer as `not-released`, a refusal nobody made. Being off the
 WiFi, by contrast, is loud: the app says so from the other end within minutes.
 This firmware's standing rule is that the quiet failure outranks the noisy one.
+
+`power` sits above `wifi` for the same reason and one more. Under-voltage has no
+symptom a person can see: it corrupts the card, browns out a servo in the middle
+of a sweep, and produces nothing on the panel that would otherwise change. It is
+also the most trivially actionable thing on this list — it means the supply is
+the wrong one — so the cost of naming it when something else was the real fault
+is one glance at a plug.
 
 `cell` is last because it is a forecast rather than a fault. It is still worth a
 triangle: the coin cell is the entire answer to "the power went out and the
@@ -59,8 +77,19 @@ announces nothing at all until the morning it matters.
 What this is allowed to cost
 ----------------------------
 `snapshot` runs on the scheduler tick, four times a minute, so nothing here may
-be slow. Measured at about 9 µs on a laptop with eight trays and three doses a
-day loaded, which is the shape of the largest real machine.
+be slow. The "about 9 µs" this section used to claim was a microbenchmark
+artefact, and the real cost is dominated by something that is not in this file:
+`blocked_reason()` reaches `Clock.trusted` → `Clock.source` → `ntp_synchronised()`,
+which forks `timedatectl`, measured at 5.8 ms. Against a 15 s tick and a 10 s
+NTP cache that fork happened on *every* tick; the cache is now 60 s, so most
+ticks pay nothing and a tight-loop benchmark — which always hit the cache — was
+never going to show it. `clock_source` is free on top of that: the same call
+already computed it.
+
+The rest, with eight trays and three doses a day loaded, is microseconds:
+`soc.undervoltage()` is a cached kernel integer behind a 2 s cache, `soc.storage()`
+one `statvfs` behind a 60 s cache, `cloud.status()` a lock and a dict, and `day`
+one pass over the doses the day actually has.
 
 `wifi.status()` is three nmcli processes and is never called from this module;
 the supervisor's own cached reading of the radio is used instead, which is a
@@ -75,21 +104,25 @@ One call here can block: `Dispenser.awaiting_release` takes the device's lock,
 which is held for the four seconds of a servo sweep. A repaint that lands in
 that window waits for it. That is the right way round — the frame it is waiting
 to draw is the one describing the dose being delivered — but it is a wait, and
-anything that must not wait should not call this.
+anything that must not wait should not call this. It is read **once** per
+snapshot and the four fields that describe the waiting dose are all derived from
+that one reading, because four reads would be four chances to catch that lock
+and, worse, four readings that could disagree with each other mid-release.
 
 Nothing here raises
 -------------------
 Every field is read behind its own guard, so one component having a bad day
-costs its own field and not the other eight. Anything that cannot be worked out
-becomes the honest empty value — never a guess, and never an exception, because
-an exception on this path would be a screen that took the dispenser down with it.
+costs its own field and not the other twenty-one. Anything that cannot be worked
+out becomes the honest empty value — never a guess, and never an exception,
+because an exception on this path would be a screen that took the dispenser down
+with it.
 """
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
-from .. import config, rtc
+from .. import config, rtc, soc
 from .shapes import Shape
 
 log = logging.getLogger(__name__)
@@ -100,12 +133,67 @@ log = logging.getLogger(__name__)
 #: never be reported, which is the intended failure: the vocabulary a screen has
 #: to understand is fixed, and one that grows quietly is one screens stop
 #: covering.
-PRECEDENCE: tuple[str, ...] = ("gpio", "clock", "trays", "wifi", "relay", "cell")
+#:
+#: Every slug here must also name a status-bar slot in `bar.PROBLEM_SLOT`, which
+#: is what draws the red octagon that says *which* subsystem the hero is
+#: refusing about. A commit that adds a slug here adds it there in the same
+#: commit; a test asserts the two agree.
+PRECEDENCE: tuple[str, ...] = ("gpio", "clock", "card", "trays", "power",
+                               "wifi", "relay", "cell")
+
+#: Relay states that mean the carer's phone is not hearing about doses. `off`
+#: and `unpaired` are deliberately absent — they are somebody's decision, not a
+#: fault. `incompatible` is not a state `CloudLink._state` emits today; it is in
+#: the vocabulary the status bar covers, and listing it here means that if the
+#: relay client ever does emit it, the slug and the chip cannot disagree about
+#: what it means.
+_RELAY_FAULTS = ("offline", "retrying", "unsupported", "incompatible")
+
+
+@dataclass(frozen=True)
+class Dose:
+    """One dose in today's plan, as the schedule band draws it.
+
+    Small, frozen and made of nothing but a nullable int, an int and two short
+    strings, because a tuple of these rides inside `Health` and is compared for
+    equality on every tick — see the rule on `Health`.
+    """
+
+    #: The tray, or `None` when the schedule names one this machine cannot
+    #: resolve — a plan saved when eight trays were wired, read back on a
+    #: machine that now has four. Never the number from the schedule in that
+    #: case: this panel's standing rule is that a plausible wrong number is
+    #: worse than a question mark.
+    tray: int | None
+    #: Minutes since midnight. What the band orders and windows by; the printed
+    #: string is for reading, not for arithmetic.
+    minutes: int
+    #: "08:00" — the same instant as `minutes`, spelt for the panel.
+    at: str
+    #: waiting | taken | missed | upcoming | unknown.
+    #:
+    #: `unknown` is a past dose the ledger has no entry for, and it is the
+    #: reason this field has five values instead of four. It must never render
+    #: as `taken` and never as `upcoming`: a confident false claim about the
+    #: past is the worst class of error this codebase recognises, and an empty
+    #: ledger is a reachable state — `store.read_events` returns `[]`
+    #: permanently after one bad UTF-8 byte.
+    state: str
 
 
 @dataclass(frozen=True)
 class Health:
     """One reading of the whole machine.
+
+    **Every field must be a bucketed enum, a bool, or an integer that changes at
+    most a few times a day.** This is a rule, not a preference. `Health` rides
+    inside the display plan and is compared for equality to decide whether to
+    repaint, so one unbucketed field — a temperature in degrees, an uptime in
+    seconds, a percentage, a `lastContactSecondsAgo`, a countdown in seconds —
+    turns "nine ticks out of ten the panel is left alone" into a 38 ms SPI
+    transfer four times a minute for the rest of the device's life. Anything
+    that genuinely changes per tick belongs on `/api/status` and in `--selftest`,
+    where somebody is reading it on purpose.
 
     Every default is the honest empty value, which means **the defaults do not
     describe a healthy device — they describe one that has told you nothing.**
@@ -113,7 +201,8 @@ class Health:
     That is deliberate and it is the cheaper of the two lies available: a false
     octagon sends somebody to look at a machine that turns out to be fine, and a
     false circle leaves a machine that is not dispensing looking perfectly well
-    until somebody counts the pills.
+    until somebody counts the pills. The same rule runs through every new field:
+    `""` must render as an absent chip on the status bar, never as a green tick.
 
     A test that wants a specific state should say so — `Health(dispensing=True,
     now="12:34", next_tray=2, next_at="20:00")` — rather than starting from
@@ -123,17 +212,24 @@ class Health:
     #: False means the tray will not open. `Shape.AVOID`, on every panel.
     dispensing: bool = False
     #: The most severe standing problem, as one slug from `PRECEDENCE`, or "".
-    #: Fed straight to `screens.blocked`, which substring-matches it.
+    #: Names the bar chip that is forced to a red octagon beside the blocked
+    #: hero: the hero says how bad, the bar says which.
     problem: str = ""
-    #: "online" | "hotspot" | "joining" | "offline". Also "offline" when nobody
-    #: is managing the radio — see `_network_fields`, which explains why that
-    #: does not raise a `wifi` problem.
+    #: "online" | "hotspot" | "joining" | "failed" | "offline". Also "offline"
+    #: when nobody is managing the radio — see `_network_fields`, which explains
+    #: why that does not raise a `wifi` problem. "failed" is "we are back on our
+    #: own setup network *because* a join did not work", which is the one case
+    #: where the setup screen can say something specific about the passphrase.
     wifi: str = "offline"
     #: The device's **own setup network**, for the hotspot screen. Never the
     #: house network's name: a screen that printed the house SSID over a join
     #: instruction would be telling somebody to connect to the network they are
     #: already on.
     ssid: str = ""
+    #: The setup network's passphrase, for the same screen. Without it that
+    #: screen names a network the person cannot join — the QR carries it, and
+    #: until now a camera that would not scan left them with nothing.
+    passphrase: str = ""
     #: Where the device answers on the house network, or "". Empty on the setup
     #: hotspot on purpose — the AP's own 10.42.0.1 is not an address anybody can
     #: reach from the sofa, and a screen showing it sends them to a dead page.
@@ -146,6 +242,51 @@ class Health:
     #: How many doses have been offered and are waiting on a press. Not a
     #: problem and not a caution — see `shape_for`.
     waiting: int = 0
+
+    # ── the machine's own health, one bucket each ───────────────────────────
+
+    #: True once a snapshot has actually been taken. Everything above and below
+    #: is an honest empty until then, and the panel needs to tell "nothing has
+    #: told us anything yet" apart from "we asked and the answer was nothing" —
+    #: the first is the boot screen, the second is a row of absent chips.
+    known: bool = False
+    #: Today's doses, ascending by `minutes`. The schedule band's whole input.
+    day: tuple[Dose, ...] = ()
+    #: The tray of the *earliest* waiting dose, and its scheduled time. Read
+    #: together from one reading of `awaiting_release`, so the due screen cannot
+    #: name one dose's tray beside another dose's time — which is exactly what
+    #: happened when the screen took its tray from `next_tray` instead.
+    waiting_tray: int | None = None
+    waiting_at: str = ""
+    #: Tenths of that dose's release window still left, 0..10. Quantised to
+    #: tenths on purpose and it is load-bearing: in minutes it would repaint the
+    #: panel sixty times an hour, and as a float it would repaint it on every
+    #: tick forever.
+    waiting_frac: int = 0
+    #: `Clock.source` verbatim: "ntp" | "rtc" | "api" | "cloud" | "untrusted",
+    #: or "" if it could not be read. Free — `blocked_reason` already computed
+    #: it on this same tick.
+    clock_source: str = ""
+    #: "ok" | "low" | "" — the supply, from the hwmon under-voltage flag.
+    power: str = ""
+    #: "ok" | "flat" | "" — the RTC's coin cell, from the same cached
+    #: `rtc.read_status()` the `cell` slug is derived from.
+    cell: str = ""
+    #: "ok" | "low" | "readonly" | "" — whether this device can still write down
+    #: what it did.
+    storage: str = ""
+    #: `CloudLink.status()["state"]` verbatim: off | unsupported | unpaired |
+    #: connecting | connected | offline | retrying. Kept whole rather than
+    #: reduced to a bool, because "paired and connected", "paired and not
+    #: reaching the relay" and "never paired" are three things a person acts on
+    #: differently and the bar has room to say which.
+    relay: str = ""
+    #: How many trays have a schedule loaded. 0 is a real state — a device with
+    #: no prescription — and not the same as a device that has told us nothing.
+    trays_loaded: int = 0
+    #: The panel driver's last error, for `/api/status`. Never drawn: a panel
+    #: that cannot be written to cannot report it on itself.
+    panel_error: str = ""
 
     @classmethod
     def blank(cls) -> Health:
@@ -163,9 +304,8 @@ def shape_for(health: Health) -> Shape:
     """The one place this product decides how bad something is.
 
     One function rather than a rule each screen applies, so the panel cannot
-    show a circle on the idle screen and a triangle on the status screen for the
-    same machine — which is exactly what happens when two files each hold half
-    of "severe".
+    show a circle in one band and a triangle in another for the same machine —
+    which is exactly what happens when two files each hold half of "severe".
 
     Note what is *not* a caution: a dose waiting on a press. That is the machine
     doing its job, and `shapes.FOR_TONE` already made this call for `Tone.DUE`
@@ -181,27 +321,33 @@ def shape_for(health: Health) -> Shape:
     return Shape.SAFE
 
 
-def snapshot(dispenser, network=None, cloud=None) -> Health:
+def snapshot(dispenser, network=None, cloud=None, display=None) -> Health:
     """Read the machine. Cheap, total, and safe to call from the tick.
 
     `network` is a `network.Supervisor` and `cloud` a `cloud.CloudLink`; both are
     optional because both are optional on a real build — a dispenser with no
     relay and no managed radio is a supported machine, not a degraded one, and
-    it must not be shown a warning about parts it does not have.
+    it must not be shown a warning about parts it does not have. `display` is
+    the panel driver, for its error string alone.
     """
     try:
-        return _read(dispenser, network, cloud)
+        return _read(dispenser, network, cloud, display)
     except Exception:  # noqa: BLE001
         # The guards below mean reaching this is a bug in *this* file rather
-        # than a component misbehaving. Logged loudly and repeatedly on purpose:
-        # the panel has just gone to an octagon with no cause on it, and the
-        # journal is the only place the reason can be.
+        # than a component misbehaving, so it is logged loudly and repeatedly:
+        # the panel is about to say nothing at all, and the journal is the only
+        # place the reason can be.
+        #
+        # `known` stays False, which is what the person in the room sees — the
+        # boot frame, "this device is starting", rather than a row of confident
+        # falsehoods about a machine nobody could read. It is also the honest
+        # description of what just happened: we have learnt nothing this tick.
         log.exception("could not read the machine's health — the panel will "
-                      "show a refusal it cannot name")
+                      "fall back to the frame it starts on")
         return Health()
 
 
-def _read(dispenser, network, cloud) -> Health:
+def _read(dispenser, network, cloud, display=None) -> Health:
     # One reading of the clock rather than four. `day_number`, `weekday` and
     # `minutes` each call `now()` again, and a tick that lands on a minute
     # boundary would otherwise print 07:59 beside a next dose worked out at
@@ -225,31 +371,72 @@ def _read(dispenser, network, cloud) -> Health:
     no_clock = bool(blocked) and _try(
         "the clock's authority", lambda: not dispenser.clock.trusted, False)
 
-    wifi, ssid, address, wifi_standing = _try(
-        "the network", lambda: _network_fields(network), ("offline", "", "", False))
+    wifi, ssid, passphrase, address, wifi_standing = _try(
+        "the network", lambda: _network_fields(network),
+        ("offline", "", "", "", False))
 
-    standing = {
-        "gpio": no_gpio,
-        "clock": no_clock,
-        "trays": _try("the trays", lambda: _unfitted_tray(dispenser), False),
-        "wifi": wifi_standing,
-        "relay": _try("the relay", lambda: _relay_standing(cloud), False),
-        "cell": _try("the clock chip", lambda: _cell_standing(), False),
-    }
+    # One `status()` for both the field and the slug. Two calls would be two
+    # dicts built under the relay's lock, and — the part that matters — two
+    # readings that a reconnect landing between them could make disagree.
+    relay_status = _try("the relay",
+                        lambda: dict(cloud.status() or {}) if cloud else {}, {})
+
+    # One reading of the doses waiting, for the four fields that describe them
+    # and for the schedule band. See the module docstring: this is the one call
+    # here that can block on the device's lock.
+    owed = _try("the doses waiting", lambda: list(dispenser.awaiting_release), [])
+    soonest = owed[0] if owed else None
 
     next_tray, next_at = _next_dose(dispenser, at)
 
-    return Health(
+    health = Health(
         dispensing=dispensing,
-        problem=next((slug for slug in PRECEDENCE if standing.get(slug)), ""),
         wifi=wifi,
         ssid=ssid,
+        passphrase=passphrase,
         address=address,
         next_tray=next_tray,
         next_at=next_at,
         now=f"{at.hour:02d}:{at.minute:02d}" if at is not None else "",
-        waiting=_try("the doses waiting", lambda: len(dispenser.awaiting_release), 0),
+        waiting=len(owed),
+        known=True,
+        day=_try("today's doses", lambda: _day(dispenser, at, owed), ()),
+        waiting_tray=soonest.tray if soonest is not None else None,
+        waiting_at=_hhmm(soonest.minutes) if soonest is not None else "",
+        waiting_frac=_try("the release window",
+                          lambda: _waiting_frac(soonest, at), 0),
+        clock_source=_try("what is vouching for the time",
+                          lambda: str(dispenser.clock.source or ""), ""),
+        power=_try("the supply", soc.undervoltage, ""),
+        cell=_try("the clock chip", _cell, ""),
+        storage=_try("the card", soc.storage, ""),
+        relay=str(relay_status.get("state") or ""),
+        trays_loaded=_try("the loaded trays",
+                          lambda: len(dispenser.scheduler.slots), 0),
+        panel_error=_try("the panel", lambda: _panel_error(dispenser, display), ""),
     )
+
+    # Derived from the fields the panel is about to draw rather than from a
+    # second reading of the same components. That is what stops the bar's green
+    # relay chip sitting beside a hero blaming the relay: there is exactly one
+    # reading, and the slug is a function of it.
+    standing = {
+        "gpio": no_gpio,
+        "clock": no_clock,
+        # `low` stands as well as `readonly`, because a card with no room left
+        # reports as `low` and is the same silent failure — doses given, nothing
+        # written down. The cost is that the bar's amber CARD chip is only
+        # reachable when something worse is the named problem, which is the
+        # right way round for the quietest fault on the list.
+        "card": health.storage in ("low", "readonly"),
+        "trays": _try("the trays", lambda: _unfitted_tray(dispenser), False),
+        "power": health.power == "low",
+        "wifi": wifi_standing,
+        "relay": _relay_standing(health, bool(relay_status.get("lastError"))),
+        "cell": _cell_standing(health),
+    }
+    return replace(health,
+                   problem=next((slug for slug in PRECEDENCE if standing.get(slug)), ""))
 
 
 def _try(what: str, call, default):
@@ -295,6 +482,105 @@ def _next_dose(dispenser, at) -> tuple[int | None, str]:
     return upcoming[0], _hhmm(upcoming[1])
 
 
+def _day(dispenser, at, owed) -> tuple[Dose, ...]:
+    """Today's doses and what became of each, ascending by time.
+
+    Three sources, and the join is where the honesty lives. The scheduler says
+    what today *was meant to be*; `awaiting_release` says what is owed right
+    now; the ledger says what happened to the rest. Where all three are silent
+    about a dose whose time has passed, the answer is `unknown` — not `taken`,
+    which would be a fabrication, and not `upcoming`, which would put a past
+    dose in the future.
+
+    That case is reachable and not rare: the ledger is `events.jsonl`, and
+    `store.read_events` returns `[]` permanently after a single bad UTF-8 byte,
+    so a device that lost power mid-append renders its whole day as outlined
+    squares. That is the correct picture. "We do not know" is a fact, and the
+    outlined shape is the one part of the panel's vocabulary that says it.
+
+    A dose whose minute is the current minute is left `upcoming` rather than
+    `unknown`. Within one minute the scheduler has not necessarily run yet, and
+    a mark that flickered to "we do not know" for the fifteen seconds before a
+    dose was offered would be the panel doubting itself in front of somebody
+    standing there waiting for it.
+
+    The ledger is read behind its own guard: a build whose device has no ledger
+    yet loses the `taken`/`missed` distinction and draws the day in outlined
+    squares, rather than losing the whole band.
+    """
+    if at is None:
+        return ()
+
+    plan = list(dispenser.scheduler.day_plan(at.date().toordinal(), at.weekday()))
+    outcomes = _try("today's ledger", lambda: dict(dispenser.today_outcomes()), {})
+    fitted = _try("the fitted trays", lambda: set(dispenser.servos.pins), set())
+    waiting_keys = {(dose.tray, dose.minutes) for dose in owed}
+    now_minutes = at.hour * 60 + at.minute
+
+    # A dose owed right now whose scheduled time is not in today's plan — one
+    # that crossed midnight inside its grace window, or one whose course expired
+    # while it waited. It is still owed, so it is still drawn; leaving it out
+    # would be the band contradicting the hero about a dose somebody can act on.
+    planned = set(plan)
+    keys = plan + [key for key in sorted(waiting_keys) if key not in planned]
+
+    doses = []
+    for slot, minutes in keys:
+        if (slot, minutes) in waiting_keys:
+            state = "waiting"
+        else:
+            recorded = str(outcomes.get((slot, minutes), ""))
+            if recorded in ("taken", "missed"):
+                state = recorded
+            elif minutes >= now_minutes:
+                state = "upcoming"
+            else:
+                # The ledger has nothing, and the time has gone. Say so.
+                state = "unknown"
+        doses.append(Dose(tray=slot if slot in fitted else None,
+                          minutes=minutes, at=_hhmm(minutes), state=state))
+
+    doses.sort(key=lambda dose: (dose.minutes, dose.tray if dose.tray is not None else -1))
+    return tuple(doses)
+
+
+def _waiting_frac(dose, at) -> int:
+    """How much of a waiting dose's release window is left, in tenths, 0..10.
+
+    Tenths rather than minutes or a percentage, and that is the entire point of
+    the field. The window is an hour by default, so minutes would repaint the
+    panel sixty times an hour to move a bar by three pixels, and a fraction
+    would repaint it on every tick forever. Ten steps is as much as a 212 px
+    track can show and it is the coarsest quantisation that still visibly moves.
+
+    Measured from the dose's own scheduled instant, matching `DueDose.deadline`:
+    a dose picked up late after a power cut has less of its window left, and a
+    bar that reset to full for it would be promising time the tray will not give.
+    """
+    if dose is None or at is None:
+        return 0
+    window = (dose.deadline - dose.due_at).total_seconds()
+    if window <= 0:
+        return 0
+    left = (dose.deadline - at).total_seconds()
+    return max(0, min(10, int(left * 10 // window)))
+
+
+def _panel_error(dispenser, display) -> str:
+    """The panel driver's last error, for `/api/status`.
+
+    `display` is passed by anything that holds the driver. Nothing does on the
+    tick path — the daemon has the dispenser and hands its indicator the
+    snapshot afterwards — so the fallback reaches the panel through the
+    indicator that owns it. Both hops are public attributes and both are
+    guarded, because this is the one field on the whole snapshot whose absence
+    costs nothing at all.
+    """
+    panel = display if display is not None else getattr(
+        getattr(dispenser, "indicator", None), "display", None)
+    return str(getattr(panel, "error", "") or "")
+
+
 def _unfitted_tray(dispenser) -> bool:
     """Does the loaded schedule name a tray this machine does not have?
 
@@ -311,60 +597,75 @@ def _unfitted_tray(dispenser) -> bool:
     return any(slot.slot not in fitted for slot in dispenser.scheduler.slots)
 
 
-def _cell_standing() -> bool:
-    """Will the clock chip carry this device through the next power cut?
+def _cell() -> str:
+    """`"ok"` | `"flat"` | `""` — is the clock chip carrying its own time?
 
-    A chip that is fitted and says it is not vouching for itself: the DS1302
-    with no token in its RAM, the DS3231 whose oscillator has stopped, either of
-    them with a flat cell or none fitted. `Clock.source` will not answer `rtc`
-    for any of those, so the tray opens today on NTP's word or a phone's — and
-    the next time the power and the router go together there is nothing left to
-    vouch for the time and the tray stays shut, which is the exact failure the
-    coin cell was fitted to prevent, arriving anyway.
+    A chip that is fitted and says it is not vouching for itself is `flat`: the
+    DS1302 with no token in its RAM, the DS3231 whose oscillator has stopped,
+    either of them with a flat cell or none fitted. `Clock.source` will not
+    answer `rtc` for any of those, so the tray opens today on NTP's word or a
+    phone's — and the next time the power and the router go together there is
+    nothing left to vouch for the time and the tray stays shut, which is the
+    exact failure the coin cell was fitted to prevent, arriving anyway.
 
-    Two things deliberately do *not* count, and both are the same judgement.
+    Two things deliberately read as `""` rather than `flat`, and both are the
+    same judgement.
 
     `running is None` is `rtc.py` saying it could not tell — a DS3231 on a build
     with no smbus2, a chip that would not answer. That is not a statement about
     the hardware, and reporting a flat cell on no reading is the fabrication
     `rtc.py` is careful never to make. The cost is real and worth naming: on a
     DS3231 build missing smbus2 the next power cut will block the tray and this
-    slug will not have warned about it. The `detail` on the status page says so,
+    field will not have warned about it. The `detail` on the status page says so,
     and that failure is an apt-get rather than a person at the machine.
 
     A chip that is not there at all is a build without an RTC rather than a
     broken one. It is also the one caution nobody could ever clear, and a
     permanent triangle is a triangle everybody learns to read past.
+
+    There is no third value for "how full is the cell", because there is no such
+    reading anywhere: the DS1302 has no ADC, no kernel driver and no voltage to
+    report. Three states is the whole truth available.
     """
     if not config.USE_RTC:
-        return False
+        return ""
     state = rtc.read_status()
-    return state.present and state.running is False
+    if not state.present or state.running is None:
+        return ""
+    return "ok" if state.running else "flat"
 
 
-def _relay_standing(cloud) -> bool:
-    """Is the carer's phone failing to hear about doses?"""
-    if cloud is None:
-        return False
-    status = cloud.status() or {}
-    if not status.get("enabled") or not status.get("configured"):
-        # Switched off, or never paired. Both are somebody's decision rather
-        # than a fault — a device that has never been paired is running
-        # perfectly well on the LAN alone — and a triangle nobody can clear is a
-        # triangle everybody stops seeing.
-        return False
-    state = str(status.get("state") or "")
-    if state in ("offline", "retrying", "unsupported"):
-        return True
-    # `connecting` is the few seconds before first contact at boot. It is also
-    # where a device with a wrong relay URL sits *forever*: `lastContact` never
-    # starts, so the age never grows and the state never ripens into `offline`.
-    # The recorded error is the only thing that tells those two apart.
-    return state == "connecting" and bool(status.get("lastError"))
+def _cell_standing(health: Health) -> bool:
+    """Will the clock chip carry this device through the next power cut?
+
+    A pure function of the field the battery chip draws, so the slug and the
+    chip cannot disagree — which they could when each made its own call on the
+    same `RtcState`.
+    """
+    return health.cell == "flat"
 
 
-def _network_fields(network) -> tuple[str, str, str, bool]:
-    """`(wifi, ssid, address, standing)` — the radio, without touching nmcli.
+def _relay_standing(health: Health, last_error: bool) -> bool:
+    """Is the carer's phone failing to hear about doses?
+
+    A pure function of `health.relay` and one fact that is not a field, for the
+    same reason as `_cell_standing`. `off` and `unpaired` are not faults: both
+    are somebody's decision — a device that has never been paired is running
+    perfectly well on the LAN alone — and a triangle nobody can clear is a
+    triangle everybody stops seeing.
+
+    `connecting` is the few seconds before first contact at boot. It is also
+    where a device with a wrong relay URL sits *forever*: `lastContact` never
+    starts, so the age never grows and the state never ripens into `offline`.
+    The recorded error is the only thing that tells those two apart, and it is
+    not a field because an error string is unbounded and this snapshot is
+    compared for equality.
+    """
+    return health.relay in _RELAY_FAULTS or (health.relay == "connecting" and last_error)
+
+
+def _network_fields(network) -> tuple[str, str, str, str, bool]:
+    """`(wifi, ssid, passphrase, address, standing)` — the radio, without touching nmcli.
 
     `standing` is kept separate from the `wifi` value on purpose. The value is
     what the firmware *knows*, and with no supervisor, or one started with
@@ -375,16 +676,20 @@ def _network_fields(network) -> tuple[str, str, str, bool]:
     radio alone, would be this file inventing a fault out of its own ignorance.
     """
     if network is None:
-        return "offline", "", "", False
+        return "offline", "", "", "", False
 
-    # The device's own setup SSID, not whatever it is joining or joined to. It
-    # is a constant of the board, so it is free, and the hotspot screen is the
-    # one place it is read.
-    ssid = _try("the setup network name", lambda: network.identity.ssid, "")
+    # The device's own setup credentials, not whatever it is joining or joined
+    # to. They are constants of the board held on an object the supervisor
+    # already has, so they are free here; reading them from `provisioning` would
+    # be a file read or a `/proc/cpuinfo` parse on every tick for a value that
+    # cannot change while the process is running.
+    identity = _try("the setup identity", lambda: network.identity, None)
+    ssid = str(getattr(identity, "ssid", "") or "")
+    passphrase = str(getattr(identity, "passphrase", "") or "")
 
     snap = _try("the network supervisor", lambda: network.snapshot(), None) or {}
     if not snap.get("managed", True):
-        return "offline", ssid, "", False
+        return "offline", ssid, passphrase, "", False
 
     state = str(snap.get("state") or "")
     if state in ("joining", "recovering"):
@@ -392,7 +697,7 @@ def _network_fields(network) -> tuple[str, str, str, bool]:
         # either stale or about to be wrong, and there is no address to give.
         # Not a problem either: it settles within a minute either way, and a
         # caution that clears itself is how a person is taught to ignore them.
-        return "joining", ssid, "", False
+        return "joining", ssid, passphrase, "", False
 
     radio = _radio(network)
     mode = str(getattr(radio, "mode", "") or "")
@@ -402,24 +707,36 @@ def _network_fields(network) -> tuple[str, str, str, bool]:
     # The radio reading is the present tense and outranks the attempt state,
     # which is a record of the last thing somebody asked for.
     if mode == "connected":
-        return "online", ssid, address, False
+        return "online", ssid, passphrase, address, False
     if mode == "hotspot":
         # No address: `wifi.status()` fills in the AP's own 10.42.0.1 here, and
         # that is not the house address this field promises.
-        return "hotspot", ssid, "", True
+        #
+        # The attempt state is what separates the two setup screens. Sitting on
+        # our own AP having never been configured is the ordinary first-run
+        # card; sitting on it *because a join failed* is a device whose
+        # passphrase is probably wrong, and that screen gets to say so. Both
+        # draw the same QR — the difference is one word and the colour of the
+        # field, and without it the second person to try the same wrong password
+        # gets no more help than the first.
+        return ("failed" if state == "failed" else "hotspot"), ssid, passphrase, "", True
     if mode in ("disconnected", "unavailable"):
-        return "offline", ssid, "", True
+        return "offline", ssid, passphrase, "", True
 
     # No reading in hand — the first tick has not run yet, or a worker has just
     # invalidated the cache. Fall back to the last attempt, which is at least
     # something somebody did.
     if state == "joined":
-        return "online", ssid, address, False
+        return "online", ssid, passphrase, address, False
     if state == "failed":
         # `hotspotBack` is the difference between "try again here" and "this
         # device has vanished", which is the one thing the setup page acts on.
-        return ("hotspot" if snap.get("hotspotBack") else "offline"), ssid, "", True
-    return "offline", ssid, "", False
+        # With the hotspot back, the setup screen is reachable and the join
+        # failure is the news; without it there is no network to point anybody
+        # at and the honest word is "offline".
+        return (("failed" if snap.get("hotspotBack") else "offline"),
+                ssid, passphrase, "", True)
+    return "offline", ssid, passphrase, "", False
 
 
 def _radio(network):

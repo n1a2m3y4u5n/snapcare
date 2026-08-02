@@ -1,22 +1,21 @@
-"""When the panel is on, how bright it is, and what it is showing.
+"""What is on the panel, and which palette it is wearing.
 
 Why this file exists
 --------------------
-Until now the screen showed whatever the last event painted, and it showed it
-for ever. A dose released at eight in the morning was still lit at midnight,
+Until it did, the screen showed whatever the last event painted, and it showed
+it for ever. A dose released at eight in the morning was still lit at midnight,
 because nothing ever decided otherwise. That is not a policy, it is the absence
-of one, and it costs three separate things: an OLED that ages under a picture
-nobody is looking at, a 2.8-inch backlight burning in a bedroom at three in the
-morning, and — worst — a panel whose contents stopped being true hours ago.
+of one, and it costs two things: a panel whose contents stopped being true hours
+ago, and a bedside lamp at three in the morning showing a fact from breakfast.
 
-So the decision moves here, into one object with no wires attached to it. This
+So the decision lives here, in one object with no wires attached to it. This
 file answers a single question, once per scheduler tick: *given what just
-happened and what the machine currently is, what should be on the screen and how
-bright.* It draws nothing, opens nothing and sleeps nothing. `tick` is a pure
-function of the clock, the events it has been told about, and the `Health` it is
-handed, which is what makes the whole policy drivable from a fake clock through
-a simulated day — and a policy about time that cannot be tested against time is
-a policy nobody will ever change again.
+happened and what the machine currently is, what should be on the screen.* It
+draws nothing, opens nothing and sleeps nothing. `tick` is a pure function of the
+clock, the events it has been told about, and the `Health` it is handed, which is
+what makes the whole policy drivable from a fake clock through a simulated day —
+and a policy about time that cannot be tested against time is a policy nobody
+will ever change again.
 
 It imports nothing that draws, on purpose. `Plan.screen` is the *name* of a
 function in `screens.py`, not the function, so this module has no font, no
@@ -24,8 +23,9 @@ glyphs and no panel in its import graph; a test asserts on a string.
 
 The ranking, which is the whole design
 --------------------------------------
-Five layers, and the top one wins outright:
+Six layers, and the top one wins outright:
 
+    0  nothing has told us anything yet   `boot`      a held frame, then it goes
     1  the machine will not dispense      `blocked`   stands until fixed
     2  a dose is waiting on a press       `due`       stands, and stays bright
     3  something just happened            a dwell, then it falls back
@@ -36,7 +36,7 @@ Layer 2 above layer 3 is what the brief calls the standing dose alert, and it is
 the important one: a dose waiting on a press is not a notification that has been
 delivered, it is the entire prompt, and it has to still be there when somebody
 walks back in with a glass of water four minutes later. Nothing transient may
-paint over it and quiet hours may not dim it.
+paint over it and quiet hours may not quieten it.
 
 Layer 1 above layer 2 is a deliberate departure from that rule and the one
 judgement in this file worth arguing with. When the tray will not open, a screen
@@ -47,14 +47,30 @@ coming, fetch somebody. The two states should not co-occur — the scheduler oug
 not to offer a dose it cannot release — and if they ever do, that contradiction
 is itself the fault worth showing.
 
+Layer 0 is new and is the cheapest of the six. Before the first snapshot lands
+every field on `Health` is its honest empty, and a bar drawn from those is seven
+grey chips and `--:--`: true, but indistinguishable from a machine that has
+answered and had nothing to say. `known` tells those apart, and a machine that
+has just been plugged in owes the person standing over it a frame that says
+*starting* rather than a black panel that reads as dead. It is also held for
+`boot_dwell_s` after the daemon says so, because a frame that flickers past in
+80 ms is not a frame anybody read.
+
+Layer 2 reads `waiting_tray` and `waiting_at` and never `next_tray`. That is a
+fixed bug rather than a preference: with two doses waiting, releasing one used to
+leave a green screen naming a tray twelve hours away, because the screen took its
+tray from the *next* dose when the latch had been dropped. The due screen now
+takes no scalar arguments at all — everything it draws comes off the snapshot —
+so there is no argument left to be about the wrong dose.
+
 What dwells and what stands
 ---------------------------
 A transient is something that *happened*: a dose went into the cup, a schedule
 arrived. It is news, it is true for a moment, and afterwards the resting screen
 is more use than the news is. It gets `dwell_s` and falls back.
 
-A standing state is something that *is*: the clock cannot be trusted, there is
-no network configured. Those do not dwell, because they are still true in ten
+A standing state is something that *is*: the tray will not open, there is no
+network configured. Those do not dwell, because they are still true in ten
 minutes and a person who walks in then needs to see them exactly as much as the
 person who walked in when they started. Falling back to a cheerful idle screen
 would be the machine forgetting.
@@ -63,8 +79,9 @@ A missed dose sits between the two and is treated as a long transient. It is
 history rather than a condition — nothing about it can be fixed — but it is the
 one piece of history nobody has seen yet, so it holds for `missed_dwell_s`,
 which is long enough that somebody who heard the buzzer from another room and
-came to look still finds out *which* dose it was. It costs a lit panel for five
-minutes, at night as well; quiet hours dim it rather than taking it away.
+came to look still finds out *which* dose it was. It no longer has to hold any
+longer than that: the schedule band keeps the amber triangle for the rest of the
+day, so the memory outlives the frame without the frame outstaying its welcome.
 
 Dwells are quantised by the caller, not by this file
 ----------------------------------------------------
@@ -83,89 +100,84 @@ screen still gets its turn once the snapshot catches up. (With two doses waiting
 releasing one goes straight back to the due screen and skips the cup entirely.
 That is right: there is another dose on the table.)
 
-Quiet hours
------------
-This device sits on a bedside table. A 2.8-inch backlight at full brightness at
-3 a.m. is a real complaint and one that gets a machine unplugged, which is the
-worst outcome this project has.
+Quiet hours are a palette, not a brightness
+-------------------------------------------
+This device sits on a bedside table, and the obvious answer — turn the backlight
+down at night — is one this board cannot perform. The LED pin is tied to 3V3,
+the factory passes no backlight pin, and `Ili9341.backlight()` returns False
+without doing anything. The brightness axis this file used to carry (`FULL`,
+`_DAY`, `_NIGHT`, `Plan.brightness`) was therefore inert: a number computed every
+tick, threaded through two files, and dropped on the floor by the driver.
 
-So between `quiet` hours the panel drops to a level that is legible in a dark
-room and invisible from a bed. It **dims and never blanks**, because the person
-waking at three wondering whether they have a dose due must be able to answer
-that by looking, not by finding a button in the dark. And the dimming has one
-exception, which is layer 2: a dose waiting at 3 a.m. is the single event this
-machine exists for, and it gets full brightness at any hour.
+It is deleted rather than made to work, because making it work needs a free PWM
+pin on the board and a line in `config.txt`, not code. What replaces it moves the
+*pixels* instead: between `quiet` hours the panel wears the night palette, where
+the three surfaces darken and the two text greys each step down one rank. It
+never blanks — the person waking at three wondering whether they have a dose due
+must be able to answer that by looking, not by finding a button in the dark.
+
+`Level` survives all of this and gains a real job: it is what says a waiting dose
+is never night-substituted. A dose at 3 a.m. is the single event this machine
+exists for, and it gets the full palette at any hour.
 
 Quiet hours are read off `health.now` — the device's own clock, the same one the
 doses are scheduled against — and not off `time.localtime`, so that a test can
 drive midnight without touching the system clock, and so that a device with a
 clock nobody has vouched for cannot decide it is night. An unparseable `now` is
-treated as daytime: brighter than it needs to be beats a machine that dims
-itself permanently because its clock returned a blank string.
+treated as daytime: brighter than it needs to be beats a machine that dims itself
+permanently because its clock returned a blank string.
 
-Burn-in, which is this file's problem and nobody else's
--------------------------------------------------------
-An OLED ages where it is lit. The resting screen is up for something like
-twenty-three hours a day for years, and a static one leaves a permanent ghost of
-a clock face and a colon in the middle of every screen that follows it. Two
-defences, both here, because neither is enough alone:
+Burn-in drift, deleted
+----------------------
+The resting layout used to step around a 3x3 ring every ten minutes, because an
+OLED ages where it is lit. There is no OLED any more. An ILI9341 does not burn
+in, so what the drift bought on this build was a forced full-frame repaint six
+times an hour, a 2 px vertical twitch against the bar's hard bottom edge every
+ten minutes, and a silent breakage waiting for the next drawing primitive that
+did not go through the proxy. All three costs, no benefit; it is gone, along with
+`Plan.offset`, `burn_in` and `drift_period_s`.
 
-**Reduced drive.** The resting screen never runs at full brightness — 128 in the
-day and 24 at night against 255 — and on the SSD1306 that maps straight onto
-`contrast`, which is drive current rather than gamma. Less current is
-proportionally less ageing, and it is free: 128 is perfectly legible indoors.
+The rest rotation, deleted
+--------------------------
+`REST_CARDS` used to be three screens taking turns, so that `status` and `wifi`
+were reachable without a button. The status bar now shows everything `status`
+showed, permanently and in fixed positions, and the hero's secondary line shows
+the address that was the only reason to look at `wifi`. There is nothing left to
+rotate.
 
-**Drift.** Every `drift_period_s` the resting layout moves one step around an
-eight-position ring inside a 3x3 pixel box, so no edge sits over the same pixels
-for more than ten minutes at a time. Be honest about what this buys: it softens
-*edges*, and does nothing at all for the interior of a large lit glyph, which
-ages exactly as fast wherever it is. It is a mitigation, not a fix. What it
-costs is a repaint every ten minutes that `tick` would otherwise have suppressed
-— 38 ms of SPI, four times an hour, which is nothing.
+It was also broken. `rest_rotate_s` was 8 s and `tick` is called every 15 s, so
+the turn advanced 1.875 per sample and the real sequence with two cards was
+`idle, status x8, idle x3` — the screen that answers "when is my next dose" on
+the glass about 11 % of the resting day. Deleting the rotation is strictly better
+than fixing the period, and it takes the whole aliasing class of bug with it.
 
-Drift applies to every screen that can stand for hours and not to the transients,
-which cannot be up long enough to matter. The one screen it cannot help is the
-due screen on the OLED, which is a fully inverted panel: every pixel is lit and
-moving it moves nothing. That one is bounded by the grace window instead — an
-hour, once or twice a day, and the alternative is a dose prompt somebody misses.
-
-`burn_in` defaults to True even though the ILI9341 does not burn in, because the
-cost of drifting a panel that does not need it is two pixels of offset nobody
-will ever see, and the cost of not drifting one that does is a permanent mark.
-Asymmetric, so take the safe side by default.
-
-Brightness is a request, not a promise
---------------------------------------
-`Plan.brightness` is 0..255 and what happens to it depends on the panel. On the
-SSD1306 it is `contrast` and behaves exactly as written. On the ILI9341 the
-backlight is on/off — `ili9341.backlight` explains why it is not PWM, and on this
-build the LED pin is tied to 3V3 and there is nothing to switch at all — so any
-non-zero value is simply "lit". Which means the 3 a.m. complaint is solved today
-on the OLED and not on the LCD, and solving it there needs a hardware PWM pin,
-not code.
-
-The invariant that falls out of this, and it must hold: **no screen may depend on
-being dimmed to be correct.** Every `Plan` this file emits has to be the right
-thing to show at full brightness, because on half the builds that is what it
-will get. Dimming is comfort, never meaning.
-
-Returning None is load-bearing
-------------------------------
-A full 240x320 repaint is 38 ms of SPI and this runs on the scheduler tick every
+Returning None is load-bearing, and so is what equality ignores
+---------------------------------------------------------------
+A full 320x240 repaint is 38 ms of SPI and this runs on the scheduler tick every
 15 s. `tick` returns `None` — meaning "change nothing" — whenever the plan it
-would produce is identical to the one it last returned, which for a device
-sitting idle is almost always. Only the minute rolling over on the clock, the
-drift stepping, the brightness changing, or something actually happening
-produces a frame. Callers must treat `None` as *leave the panel alone*, not as
-*blank it*.
+would produce is the same as the one it last returned, which for a device sitting
+idle is almost always. Callers must treat `None` as *leave the panel alone*, not
+as *blank it*.
+
+That only works because `Plan.args` is excluded from the comparison. `args`
+always starts with the whole `Health`, so that every screen can draw the status
+bar and the schedule band without the policy having to know what they contain —
+and `Health` has twenty-two fields, any one of which moving would otherwise force
+a frame. What is compared instead is `key`: the handful of facts the *hero* is
+actually showing. A relay that flaps from `connected` to `retrying` changes the
+status bar and not the hero, and the painter repaints the bar alone for 5.76 ms
+rather than the panel for 38.4 ms. Getting this backwards does not break a test;
+it quietly spends a quarter of the tick budget forever.
 """
 from __future__ import annotations
 
 import logging
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable
+
+from .. import config
 
 if TYPE_CHECKING:  # pragma: no cover - typing only; see below
     from .health import Health
@@ -174,7 +186,7 @@ if TYPE_CHECKING:  # pragma: no cover - typing only; see below
 # policy over a value object, and it reads that object's fields — it has no use
 # for `shape_for`, and no business pulling in a module whose `snapshot()` reaches
 # for the dispenser, the network and the cloud. The practical payoff is that a
-# fake with the same seven fields drives every test in this module, and the
+# fake with the right handful of fields drives every test in this module, and the
 # policy can be exercised long before there is a machine to snapshot.
 #
 # `shape_for` is deliberately not consulted anywhere below, which is worth
@@ -183,10 +195,15 @@ if TYPE_CHECKING:  # pragma: no cover - typing only; see below
 # are different axes and they cross: `missed` is a triangle and dwells, `network`
 # is the same triangle and stands. Ranking screens by shape would happen to work
 # on today's states and would be a coincidence, not a rule.
+#
+# `config` is imported for two default values and is never read at decision time.
+# A duration that is a constructor argument can be driven from a test; one read
+# out of a global on every tick can only be tested one way. Naming the constant
+# once beats a second spelling of 2.5 that somebody will change in one place.
 
 log = logging.getLogger(__name__)
 
-__all__ = ["Level", "Plan", "Presence"]
+__all__ = ["Level", "Plan", "Presence", "boot_stage", "earlier_day"]
 
 
 class Level(Enum):
@@ -195,7 +212,11 @@ class Level(Enum):
     This is not the three-level SAFE/CAUTION/AVOID grammar from `shapes.py` and
     must not be confused with it. That one grades how bad the machine's state is,
     for the person reading the panel. This one grades how long the screen may
-    stand and how much light it may use, for the panel itself.
+    stand and whether the night palette may quieten it, for the panel itself.
+
+    It survived the deletion of the brightness axis because it is still the right
+    vocabulary: the day a board frees a PWM pin, the change is `theme.pack` plus
+    one constructor argument and these four names are unchanged.
     """
 
     ALERT = "alert"        # a dose is waiting on a press — the reason for the device
@@ -204,36 +225,17 @@ class Level(Enum):
     REST = "rest"          # nothing is happening
 
 
-#: Full drive. On the OLED this is a sunlit-kitchen setting and the fastest way
-#: to age the panel, which is why almost nothing here asks for it.
-FULL = 255
-
-#: What each level gets by day. `STANDING` sits below `NOTICE` even though it is
-#: the more serious of the two, and that is not a mistake: a notice is up for
-#: twenty seconds and a standing screen can be up for weeks. The setup screen on
-#: a dispenser that never got configured is the worst burn-in case this device
-#: has, and 192 is still comfortably readable across a room.
-_DAY = {Level.ALERT: FULL, Level.STANDING: 192, Level.NOTICE: FULL, Level.REST: 128}
-
-#: And by night. 24 on the OLED is legible in a dark room from arm's length and
-#: does not light the room; 72 is enough to notice from the doorway without
-#: being a lamp. Neither is ever 0 — see the module docstring on blanking.
-_NIGHT = {Level.ALERT: FULL, Level.STANDING: 72, Level.NOTICE: 72, Level.REST: 24}
-
-#: The drift ring: eight positions around the edge of a 3x3 box, all
-#: non-negative so that a caller which clamps at the origin loses nothing. Two
-#: pixels is within the margin `screens.py` already keeps clear on every panel
-#: (4 px on the 128x64 OLED), so nothing is ever pushed off the edge, and it is
-#: far below the point where a person would notice the layout had moved.
-_DRIFT: tuple[tuple[int, int], ...] = (
-    (0, 0), (1, 0), (2, 0), (2, 1), (2, 2), (1, 2), (0, 2), (0, 1),
-)
-
 #: Events that mean a person is standing in front of the machine right now.
 #: Everything else in the vocabulary is the machine talking to itself.
 _ATTENTION = frozenset({"boot", "button", "touch"})
 
 #: The events that put a screen up for a dwell, and the screen each one names.
+#:
+#: `network` is in here as well as at layer 4, and that is not a duplicate. Layer
+#: 4 reads the snapshot, which can be a tick behind the radio; this arm is the
+#: supervisor saying "I have just raised the hotspot" and is the difference
+#: between the setup card appearing now and appearing fifteen seconds after
+#: somebody has walked away.
 _TRANSIENT = {
     "released": "released",
     "missed": "missed",
@@ -241,10 +243,21 @@ _TRANSIENT = {
     "network": "network",
 }
 
+#: The `wifi` values that mean somebody has to do something in the room.
+#:
+#: `failed` joins `hotspot` because they are the same situation with one extra
+#: fact: we are back on our own setup network *because a join did not work*, so
+#: the passphrase is probably wrong and that screen is the only place anybody
+#: will ever be told so. A device that is merely `offline` is not here — nobody
+#: standing in the room can fix a router by reading a screen, and the cyan card
+#: would hide the clock and the next dose, which are what that person came to
+#: find out.
+_NEEDS_SETUP = ("hotspot", "failed")
+
 
 @dataclass(frozen=True)
 class Plan:
-    """What should be on the panel now. Compared for equality, so it is frozen.
+    """What should be on the panel now.
 
     `screen` is the name of a function in `screens.py` and `args` is everything
     after its `canvas`, so a caller is exactly:
@@ -252,32 +265,35 @@ class Plan:
         fn = getattr(screens, plan.screen)
         fn(canvas, *plan.args)
 
-    The seven names and their arguments, which match `screens.py` as it stands:
+    The eight names and their arguments, which match `screens.py`:
 
-        due       (tray, when)          released  (tray,)
-        missed    (tray, when)          schedule  (tray_count,)
-        network   (ssid,)               blocked   (reason_kind,)
-        idle      (now, next_tray, next_at)
+        boot    (health,)            blocked  (health,)
+        due     (health,)            network  (health,)
+        released(health, tray)       idle     (health,)
+        missed  (health, tray, at)   schedule (health, count)
 
-    `offset` is the burn-in drift, in pixels, and it is a request the caller may
-    ignore — a caller that ignores it gets a correct screen that never moves.
-    Honouring it means translating the whole frame by `(dx, dy)`, which is a
-    dozen lines: wrap the canvas in a proxy whose `pixel` adds the offset before
-    it delegates. It is expressed here rather than inside `screens.py` because
-    the screens are a layout problem and this is an ageing problem, and mixing
-    the two would put a `dx` parameter on seven functions that have no reason to
-    know what an OLED is.
+    **`args` always starts with `health` and is never compared.** Both halves of
+    that are load-bearing. Passing the whole snapshot is what lets every screen
+    draw the status bar and the schedule band without this file knowing a thing
+    about either; excluding it from equality is what stops a twenty-two-field
+    object forcing a 38 ms repaint every time the relay reconnects.
 
-    `level` is why the brightness is what it is. Nothing needs it to draw; it is
-    for the log line, and for a test to assert on the policy rather than on a
-    number.
+    `key` is what is compared instead: the facts the *hero band* is showing, and
+    nothing else. If a fact is in `key` it must be drawn in the hero, and if it
+    is drawn in the hero it must be in `key` — the first mistake repaints for
+    nothing, the second leaves a stale number on the glass.
+
+    `night` is part of the comparison because the palette flipping at 22:00 is a
+    frame the panel has to be told about; `level` is not, because it is a
+    function of `screen` and comparing it would only be a second spelling of the
+    same fact.
     """
 
     screen: str
-    args: tuple[Any, ...]
-    brightness: int
-    offset: tuple[int, int] = (0, 0)
-    level: Level = Level.REST
+    args: tuple[Any, ...] = field(compare=False)
+    key: tuple[Any, ...] = ()
+    level: Level = field(default=Level.REST, compare=False)
+    night: bool = False
 
 
 def _hour_of(when: object) -> int | None:
@@ -292,6 +308,18 @@ def _hour_of(when: object) -> int | None:
         return None
     hour = int(parts[0])
     return hour if 0 <= hour <= 23 else None
+
+
+def _minutes_of(when: object) -> int | None:
+    """An `HH:MM` as minutes since midnight, or None if it is not one."""
+    parts = str(when).strip().split(":")
+    if len(parts) != 2:
+        return None
+    hour, minute = (part.strip() for part in parts)
+    if not hour.isdigit() or not minute.isdigit():
+        return None
+    total = int(hour) * 60 + int(minute)
+    return total if 0 <= total < 24 * 60 else None
 
 
 def _is_quiet(hour: int | None, window: tuple[int, int]) -> bool:
@@ -309,6 +337,60 @@ def _is_quiet(hour: int | None, window: tuple[int, int]) -> bool:
     if start < end:
         return start <= hour < end
     return hour >= start or hour < end
+
+
+def earlier_day(at: object, now: object) -> bool:
+    """Does an `HH:MM` that has just gone belong to a day before today?
+
+    The missed screen prints a `DD-MM` only for a dose from an earlier day, and
+    this is the one fact that decides it. Both strings are wall-clock times with
+    no date on them, so the inference is the only one available: a dose owed at
+    20:00, being reported at 09:00, cannot be today's.
+
+    It is a claim about the past, so it fails towards saying nothing. An
+    unparseable time on either side returns False and the screen prints no date,
+    which is the cheaper of the two errors — a missing stamp costs somebody a
+    guess, and a wrong one sends them to the log looking for a dose that was
+    never scheduled.
+
+    It is deliberately not exact. A dose missed more than a day ago reads as
+    today's, and that is survivable: the ledger and the app hold the history, and
+    this screen is up for five minutes.
+    """
+    owed, clock = _minutes_of(at), _minutes_of(now)
+    if owed is None or clock is None:
+        return False
+    return owed > clock
+
+
+def boot_stage(health: Health) -> int:
+    """How much of the machine has reported in, 0..3, for the boot frame.
+
+    Three squares fill in as the three slow things finish: the GPIO claim, the
+    first clock reading, the radio starting. It lives here rather than in
+    `screens.py` because the boot frame's `key` has to be exactly what the boot
+    frame draws — two derivations of one number is how a panel ends up not
+    repainting when the picture changed.
+
+    Every stage needs *positive* evidence and none of them may be inferred from
+    an empty field. `problem != "gpio"` on a snapshot that has not happened is
+    not a GPIO claim, it is silence, and a boot screen that lit all three squares
+    before anything had answered would be the panel congratulating itself.
+
+    The radio's signal is the setup identity rather than the `wifi` value,
+    because `wifi` reads `"offline"` both when the radio is genuinely off a
+    network and when nobody is managing it at all. `ssid` is a constant of the
+    board held by the supervisor, so it appears the moment there is a supervisor
+    to ask — which is precisely the event this square is about.
+
+    This is cosmetic and says so: the frame is up for two and a half seconds and
+    a square that never lights costs nobody a dose.
+    """
+    return sum((
+        bool(_field(health, "known", False)) and _field(health, "problem", "") != "gpio",
+        bool(_field(health, "now", "")),
+        bool(_field(health, "ssid", "") or _field(health, "address", "")),
+    ))
 
 
 def _field(health: object, name: str, default: Any) -> Any:
@@ -329,35 +411,31 @@ def _field(health: object, name: str, default: Any) -> Any:
 class Presence:
     """The panel's attention policy. Feed it events, call `tick`, draw what it says.
 
-    Every duration is a constructor argument rather than a `config` import,
-    because this object is meant to be instantiated with a fake clock and a
-    two-second dwell in a test and with the real numbers in the daemon, and
-    because a policy file that reads global configuration is a policy file that
-    can only be tested one way.
+    Every duration is a constructor argument rather than a value read out of
+    `config` at decision time, because this object is meant to be instantiated
+    with a fake clock and a two-second dwell in a test and with the real numbers
+    in the daemon. The two that have a `config` name take it as their default, so
+    the number is written down once and is still overridable.
     """
 
     def __init__(self, *, dwell_s: float = 20.0, dim_after_s: float = 30.0,
-                 missed_dwell_s: float = 300.0, quiet: tuple[int, int] = (22, 7),
-                 drift_period_s: float = 600.0, rest_rotate_s: float = 8.0,
-                 burn_in: bool = True,
+                 missed_dwell_s: float = 300.0,
+                 boot_dwell_s: float = config.DISPLAY_BOOT_DWELL_S,
+                 quiet: tuple[int, int] = config.DISPLAY_QUIET_HOURS,
                  monotonic: Callable[[], float] = time.monotonic):
         self.dwell_s = max(0.0, float(dwell_s))
-        #: How long the panel stays at full brightness after somebody has
-        #: touched it. Long enough to read a screen and think about it, short
-        #: enough that a press at 3 a.m. does not leave the room lit.
+        #: How long the panel keeps the day palette after somebody has touched
+        #: it. Long enough to read a screen and think about it, short enough that
+        #: a press at 3 a.m. does not leave the room lit for the rest of the
+        #: night.
         self.dim_after_s = max(0.0, float(dim_after_s))
         self.missed_dwell_s = max(0.0, float(missed_dwell_s))
+        #: How long the boot frame is held after the daemon says it has started,
+        #: even once every subsystem has already answered. Below about a second
+        #: it is a flicker on the way to another screen rather than a machine
+        #: starting deliberately.
+        self.boot_dwell_s = max(0.0, float(boot_dwell_s))
         self.quiet = (int(quiet[0]), int(quiet[1]))
-        self.drift_period_s = max(0.0, float(drift_period_s))
-        #: Seconds each resting screen holds before the next takes its turn.
-        #:
-        #: Eight is long enough to read a clock and a next-dose line without
-        #: hurrying, and short enough that somebody who walked over to check one
-        #: particular thing does not stand there waiting for it to come round.
-        #: Below about five it reads as flickering; above about fifteen the
-        #: second screen might as well not be there.
-        self.rest_rotate_s = max(1.0, float(rest_rotate_s))
-        self.burn_in = bool(burn_in)
         self._monotonic = monotonic
 
         # Everything starts already expired. A `Presence` that is constructed
@@ -368,13 +446,19 @@ class Presence:
         self._ev_tray: int | None = None
         self._ev_at = ""
         self._ev_count: int | None = None
+        self._ev_ssid = ""
         self._due_seen = float("-inf")
         self._due_tray: int | None = None
         self._due_at = ""
-        self._ev_ssid = ""
-        self._rest_since: float | None = None
+        self._boot_at = float("-inf")
         self._attention_at = float("-inf")
         self._last: Plan | None = None
+
+    #: The resting screens. One, now — see the module docstring on the rotation.
+    #: Kept as a name rather than inlined because "is this a screen that may
+    #: stand for a month" is a question the painter and the tests both ask, and
+    #: it should have one answer.
+    REST_CARDS = ("idle",)
 
     # ── being told things ───────────────────────────────────────────────────
 
@@ -387,11 +471,12 @@ class Presence:
         calls `tick` straight after `event` rather than waiting for the
         scheduler, and that is cheap because `tick` is pure.
 
-        The keyword facts are optional and exist because a screen without them
-        is a screen missing the point. `released` with no tray is a picture of a
-        cup that will not say which drawer to look in, and `screens.py` renders
-        the gap as `?` — honest, and much less use than a number. Pass them when
-        you have them; the policy degrades quietly when you do not.
+        The keyword facts are optional and are now only ever used to decide
+        *which* screen, never to draw one: every number a screen prints comes off
+        the snapshot in `args`. `released` and `missed` still carry a tray
+        because the event reaches this file before the snapshot that will confirm
+        it, and `schedule` still carries a count because the accepted plan is not
+        on the machine's own health at all.
 
         An unrecognised `kind` is ignored rather than raised on. This is called
         from the scheduler, from the button's callback thread and from the web
@@ -400,16 +485,17 @@ class Presence:
         now = self._monotonic()
 
         if kind in _ATTENTION:
-            # Somebody is here. Wake the panel but leave what it is showing
-            # alone: pressing the button while a dose is due must not replace
-            # the prompt with anything, and pressing it when nothing is due is
-            # somebody asking "are you alive, when is my next one" — which the
-            # resting screen already answers, brightly, for free. The button is
+            # Somebody is here. Wake the panel to the day palette but leave what
+            # it is showing alone: pressing the button while a dose is due must
+            # not replace the prompt with anything, and pressing it when nothing
+            # is due is somebody asking "are you alive, when is my next one" —
+            # which the resting screen already answers for free. The button is
             # inert for dispensing outside a window; the panel need not be.
             self._attention_at = now
             if kind == "boot":
                 # A fresh start inherits nothing. Whatever was on the panel
                 # before the power cut is not evidence about now.
+                self._boot_at = now
                 self._event = ""
                 self._event_at = float("-inf")
                 self._forget_due()
@@ -418,12 +504,11 @@ class Presence:
         if kind == "due":
             # Latched rather than shown from here: `health.waiting` is the
             # authority on whether a dose is still outstanding, and this only
-            # records *which* dose, plus the fact that it was announced. The
-            # latch covers the gap where the event has arrived and the snapshot
-            # has not caught up — trusting only the snapshot would leave the
-            # panel silent for up to a tick after a dose becomes due, and
-            # fifteen seconds of nothing is worse than fifteen seconds of a
-            # prompt that is about to be confirmed anyway.
+            # records that one was announced. The latch covers the gap where the
+            # event has arrived and the snapshot has not caught up — trusting
+            # only the snapshot would leave the panel silent for up to a tick
+            # after a dose becomes due, and fifteen seconds of nothing is worse
+            # than fifteen seconds of a prompt that is about to be confirmed.
             self._due_seen = now
             self._due_tray = tray
             self._due_at = at
@@ -435,24 +520,12 @@ class Presence:
             # The caller has finished with whatever was on the panel: a dose
             # released and acknowledged, an alert withdrawn, a schedule
             # replaced. Drop both latches so the next decision falls through to
-            # the resting screens.
+            # the resting screen.
             #
             # Without this, `dwell_s` kept the due prompt up for twenty seconds
             # after the dose it was about to announce had been cancelled — which
             # is a machine asking somebody to come and press a button for pills
             # that are not coming.
-            self._event = ""
-            self._event_at = float("-inf")
-            self._forget_due()
-            return
-
-        if kind == "blocked":
-            # Deliberately close to inert, and the reason matters: a screen that
-            # says "this machine will not open a tray" has to be backed by the
-            # field that decides whether it will, not by a message that arrived
-            # once and might since have been resolved. `health.dispensing` is
-            # that field. What this does do is take down any dwell that would
-            # otherwise hide the fault for the next twenty seconds.
             self._event = ""
             self._event_at = float("-inf")
             self._forget_due()
@@ -467,8 +540,8 @@ class Presence:
             self._ev_ssid = ssid
             if kind in ("released", "missed"):
                 # That dose is finished with, one way or the other. Keeping the
-                # latch would let a stale tray number reappear on tomorrow's due
-                # screen if a snapshot ever arrived late.
+                # latch would let a stale prompt reappear if a snapshot ever
+                # arrived late.
                 self._forget_due()
             return
 
@@ -486,8 +559,14 @@ class Presence:
 
         `None` means *leave the panel alone*. It is not "blank it" and it is not
         an error: for a machine sitting idle it is the answer nine ticks out of
-        ten, and it is what keeps a 38 ms full-panel SPI transfer off a loop
-        that also has to hit a scheduled minute.
+        ten, and it is what keeps a 38 ms full-panel SPI transfer off a loop that
+        also has to hit a scheduled minute.
+
+        The plan is stored even when it is a repeat, so that `_last.args` always
+        carries the freshest snapshot. Nothing here reads it, but the painter
+        does: it is the object it redraws from when the status bar and the
+        schedule band have both changed under a screen that is otherwise still
+        correct.
         """
         try:
             plan = self._decide(health)
@@ -499,132 +578,108 @@ class Presence:
             log.exception("presence: the display policy failed; leaving the screen as it is")
             return None
 
-        if plan == self._last:
-            return None
+        repeat = plan == self._last
         self._last = plan
-        return plan
-
-    #: The screens the resting rotation cycles through. Named here so that
-    #: `_decide` can tell resting from everything else without guessing.
-    REST_CARDS = ("idle", "status", "wifi")
+        return None if repeat else plan
 
     def _decide(self, health: Health) -> Plan:
-        plan = self._decide_inner(health, self._monotonic())
-        if plan.screen not in self.REST_CARDS:
-            # Anything that takes the panel restarts the rotation, so the first
-            # frame after it always lands on `idle`.
-            self._rest_since = None
-        return plan
-
-    def _decide_inner(self, health: Health, now: float) -> Plan:
+        now = self._monotonic()
         attended = now - self._attention_at < self.dim_after_s
         quiet = _is_quiet(_hour_of(_field(health, "now", "")), self.quiet)
+
+        def plan(screen: str, args: tuple[Any, ...], key: tuple[Any, ...],
+                 level: Level) -> Plan:
+            # The night substitution is decided once, here, so that no layer can
+            # forget the two exceptions: a waiting dose is never quietened, and
+            # neither is a panel somebody has just pressed a button on. Both are
+            # somebody standing in front of the machine at 3 a.m., which is the
+            # one time the screen has to be at its most readable rather than its
+            # least.
+            return Plan(screen=screen, args=args, key=key, level=level,
+                        night=quiet and not attended and level is not Level.ALERT)
+
+        # 0. Nothing has told us anything yet, or the machine has just started.
+        #    Above everything, because every layer below reads fields that are
+        #    empty rather than false at this point, and a bar drawn from them is
+        #    a row of confident nothings.
+        if not _field(health, "known", False) or now - self._boot_at < self.boot_dwell_s:
+            return plan("boot", (health,), (boot_stage(health),), Level.REST)
 
         # 1. Will not dispense. Above the dose prompt, for the reason in the
         #    module docstring: never tell somebody to press a button that has
         #    been disconnected from the thing it is supposed to do.
         if not _field(health, "dispensing", True):
-            return self._plan("blocked", (_field(health, "problem", ""),),
-                              Level.STANDING, quiet, attended, now)
+            return plan("blocked", (health,),
+                        (_field(health, "problem", ""),
+                         _field(health, "address", ""),
+                         _field(health, "ssid", "")),
+                        Level.STANDING)
 
-        # 2. A dose is waiting. Stands for as long as it is true, at full
-        #    brightness, at any hour.
+        # 2. A dose is waiting. Stands for as long as it is true, in the day
+        #    palette, at any hour. Every fact it draws is read from the one
+        #    reading of `awaiting_release` the snapshot took, so the tray, the
+        #    time and the window bar cannot describe three different doses.
         waiting = _field(health, "waiting", 0)
         announced = now - self._due_seen < self.dwell_s
         if (isinstance(waiting, int) and waiting > 0) or announced:
-            tray = self._due_tray if self._due_tray is not None else _field(health, "next_tray", None)
-            when = self._due_at or _field(health, "next_at", "")
-            return self._plan("due", (tray, when), Level.ALERT, quiet, attended, now)
+            return plan("due", (health,),
+                        (_field(health, "waiting_tray", None),
+                         _field(health, "waiting_at", ""),
+                         _field(health, "waiting_frac", 0), waiting),
+                        Level.ALERT)
 
         # 3. Something happened recently.
         wifi = str(_field(health, "wifi", ""))
         if self._event and now - self._event_at < self._dwell_for(self._event):
-            args = self._transient_args(self._event, health, wifi)
-            if args is not None:
-                return self._plan(_TRANSIENT[self._event], args,
-                                  Level.NOTICE, quiet, attended, now)
+            transient = self._transient(self._event, health, wifi)
+            if transient is not None:
+                return plan(_TRANSIENT[self._event], *transient, Level.NOTICE)
 
-        # 4. Not on a network and somebody has to do something about it.
-        #
-        #    Only `hotspot`. A device that is merely `offline` has a router
-        #    problem, and nobody standing in the room can fix a router by
-        #    reading a screen — putting the cyan setup card up permanently for
-        #    that would spend the one persistent screen on something unactionable
-        #    and, worse, would name a setup network that is not being broadcast.
-        #    It would also hide the clock and the next dose, which are what that
-        #    person actually came to find out. Offline gets a dwell at layer 3
-        #    when it changes, and then the resting screen.
-        if wifi == "hotspot":
-            return self._plan("network", (_field(health, "ssid", ""),),
-                              Level.STANDING, quiet, attended, now)
+        # 4. Not on a network and somebody in the room has to do something.
+        if wifi in _NEEDS_SETUP:
+            return plan("network", (health,),
+                        (wifi, _field(health, "ssid", ""),
+                         _field(health, "passphrase", "")),
+                        Level.STANDING)
 
-        # 5. Nothing is happening, which is still worth a screen: alive, the
-        #    time, and when the next dose is. `screens.idle` argues that one.
-        screen, args = self._resting(health, now)
-        return self._plan(screen, args, Level.REST, quiet, attended, now)
-
-    def _resting(self, health: Health, now: float) -> tuple[str, tuple[Any, ...]]:
-        """Which resting screen it is this turn, and its arguments.
-
-        The resting state used to be `idle` for ever, which answered "is it
-        alive, what time is it, when is my next dose" and nothing else. The
-        questions somebody actually walks over to ask are wider than that: is it
-        on the network, has the relay heard from me, what is that thing it has
-        been quietly unhappy about. Those have screens now — and a screen
-        nothing ever shows is a screen that does not exist.
-
-        So the resting state **rotates**. No button, no gesture, nothing to
-        learn: the panel takes its turn through what it has to say, slowly
-        enough to read. That is the accessible answer. Putting the second screen
-        behind an interaction would put it behind a skill this device may not
-        assume, and the person who most needs to know the machine is off the
-        network is the least likely to go looking for a way to ask.
-
-        `wifi` earns a turn only when the radio has something to say. On a
-        device that has been happily online for a month it reads "yes, still
-        fine" — true, and a waste of one of the few turns anybody will look at.
-
-        It is also the best thing available for the OLED: a rotating panel is
-        one that is not burning a single static frame into the glass for months.
-        """
-        cards = ["idle", "status"]
-        if _field(health, "wifi", "") != "online":
-            cards.append("wifi")
-
-        # Anchored to when resting began, not to the process's uptime.
-        #
-        # Against absolute monotonic time the turn is whatever the clock happens
-        # to be on, so the first frame a person sees after walking up is an
-        # arbitrary card — and `idle`, the one that answers "is it alive and
-        # when is my next dose", is the one they most often wanted. Anchoring
-        # also makes the sequence reproducible, which is the difference between
-        # a testable policy and one nobody can pin down.
-        if self._rest_since is None:
-            self._rest_since = now
-        turn = int((now - self._rest_since) // self.rest_rotate_s)
-        return cards[turn % len(cards)], (health,)
+        # 5. Nothing is happening, which is still worth a screen: the next dose,
+        #    the day so far, and where to find this machine on the network.
+        next_at = _field(health, "next_at", "")
+        return plan("idle", (health,),
+                    (_field(health, "next_tray", None), next_at,
+                     # The hero shows the wall clock only when there is no dose
+                     # left to show instead. Including `now` unconditionally
+                     # would repaint the whole panel every minute for a number
+                     # that is in the status bar, where a minute costs 5.76 ms
+                     # rather than 38.4.
+                     "" if next_at else _field(health, "now", ""),
+                     _field(health, "address", ""),
+                     _field(health, "trays_loaded", 0)),
+                    Level.REST)
 
     def _dwell_for(self, kind: str) -> float:
         return self.missed_dwell_s if kind == "missed" else self.dwell_s
 
-    def _transient_args(self, kind: str, health: Health,
-                        wifi: str) -> tuple[Any, ...] | None:
-        """Arguments for a dwelling screen, or None to skip it entirely.
+    def _transient(self, kind: str, health: Health,
+                   wifi: str) -> tuple[tuple[Any, ...], tuple[Any, ...]] | None:
+        """`(args, key)` for a dwelling screen, or None to skip it entirely.
 
         The skip exists for one case. A `network` event fires whenever the radio
         changes state, including on the way *back* to online, and
-        `screens.network` says one thing only: put me on a network. Showing it
-        to celebrate a successful join would tell somebody to go and do a job
-        that has just finished, so that transition gets no screen of its own and
-        falls through to whatever is underneath — which, since the join
-        succeeded, is the resting screen.
+        `screens.network` says one thing only: put me on a network. Showing it to
+        celebrate a successful join would tell somebody to go and do a job that
+        has just finished, so that transition gets no screen of its own and falls
+        through to whatever is underneath — which, since the join succeeded, is
+        the resting screen.
         """
         if kind == "released":
-            return (self._ev_tray,)
+            return (health, self._ev_tray), (self._ev_tray,)
         if kind == "missed":
-            return (self._ev_tray, self._ev_at)
+            return ((health, self._ev_tray, self._ev_at),
+                    (self._ev_tray, self._ev_at,
+                     earlier_day(self._ev_at, _field(health, "now", ""))))
         if kind == "schedule":
-            return (self._ev_count,)
+            return (health, self._ev_count), (self._ev_count,)
         if kind == "network":
             # An SSID on the event is the supervisor saying it has just raised
             # the hotspot, and that is better evidence than the snapshot, which
@@ -632,39 +687,8 @@ class Presence:
             # exactly the moment it was needed — the radio had changed, the
             # cached health had not, and the one screen somebody has to read to
             # get the machine onto WiFi never appeared.
-            if self._ev_ssid:
-                return (self._ev_ssid,)
-            if wifi not in ("hotspot", "joining"):
+            if not self._ev_ssid and wifi not in ("hotspot", "failed", "joining"):
                 return None
-            return (_field(health, "ssid", ""),)
+            return (health,), (wifi, _field(health, "ssid", ""),
+                               _field(health, "passphrase", ""))
         return None
-
-    def _plan(self, screen: str, args: tuple[Any, ...], level: Level,
-              quiet: bool, attended: bool, now: float) -> Plan:
-        return Plan(screen=screen, args=args,
-                    brightness=self._brightness(level, quiet, attended),
-                    offset=self._offset(level, now), level=level)
-
-    def _brightness(self, level: Level, quiet: bool, attended: bool) -> int:
-        """0..255, and see the module docstring on what a panel does with it."""
-        if level is Level.ALERT:
-            # The one exception to quiet hours, and the reason the device exists.
-            return FULL
-        if attended:
-            # Somebody has just pressed something, so somebody is standing there
-            # reading it — at three in the morning as much as at noon. Dimming
-            # the screen of a person who has explicitly asked for it is the
-            # wrong side of the trade.
-            return FULL
-        return (_NIGHT if quiet else _DAY)[level]
-
-    def _offset(self, level: Level, now: float) -> tuple[int, int]:
-        """Where the layout sits this minute, for burn-in.
-
-        Only for screens that can stand for hours. A transient is up for twenty
-        seconds and moving it would be a visible twitch bought for no protection
-        at all.
-        """
-        if not self.burn_in or self.drift_period_s <= 0 or level is Level.NOTICE:
-            return (0, 0)
-        return _DRIFT[int(now // self.drift_period_s) % len(_DRIFT)]

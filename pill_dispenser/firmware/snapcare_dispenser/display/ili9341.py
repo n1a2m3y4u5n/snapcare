@@ -90,7 +90,11 @@ diagnosis is somebody looking at it.
 
 Failure here is not allowed to reach the scheduler. A write that fails logs one
 sentence somebody can act on and the paint returns False; doses keep being
-offered, released and recorded on a machine with a dark screen.
+offered, released and recorded on a machine with a dark screen. What it leaves
+behind is `error` and `failures` — sticky text and a live consecutive count.
+Those two are the only facts about this panel anything above can read, and they
+are the difference between a ribbon that has worked loose being *reported* and
+being a screen that quietly stopped changing.
 """
 from __future__ import annotations
 
@@ -289,11 +293,17 @@ _INIT: tuple[tuple[int, bytes, int], ...] = (
     # the wrong supply rails. 150 gives Python's timers room to be late in the
     # wrong direction.
     (_SLPOUT, b"", 150),
-
-    # And on. Everything above ran against a display that was off, so nothing
-    # of the init is ever visible.
-    (_DISPON, b"", 10),
 )
+
+#: DISPON is deliberately **not** in the table above. It is the moment the glass
+#: starts showing what is in GDDRAM, and what is in GDDRAM at that point is the
+#: previous run's last frame — so `_configure` sends MADCTL and floods the RAM
+#: black first, and only then turns the panel on. Keeping it in the table would
+#: make that ordering a thing somebody could undo by tidying a loop.
+#:
+#: The 10 ms afterwards is the vendor sequence's own pause before the first
+#: frame; it costs nothing once per boot.
+_DISPON_MS = 10
 
 #: RESX low. The datasheet's minimum is 10 µs, which `time.sleep` on a loaded Pi
 #: cannot produce reliably, so this is milliseconds instead — spent once at
@@ -468,8 +478,20 @@ class Ili9341:
         #: the screen is perfectly well lit, which is why it is not a health
         #: signal.
         self.lit = False
-        #: Set by the first write that fails, and reported on the status page.
+        #: The last failure, as a sentence, and **sticky**: it is never cleared
+        #: by a transfer that later succeeds. A ribbon that has worked loose
+        #: comes and goes, and the fact that it happened at all is the useful
+        #: half of the diagnosis — the log says it once, and this is where
+        #: anybody who was not reading the journal at that moment finds it.
         self.error = ""
+        #: Consecutive failed transfers, zeroed by any transfer that lands. The
+        #: live half of the pair: `error` says something went wrong once,
+        #: `failures` says whether it is still going wrong. Nothing here is
+        #: read back from the panel, so this count and the backlight are the
+        #: only evidence about a screen that exists at all — which is why it is
+        #: surfaced on `/api/status` rather than kept as a private strike count
+        #: inside whichever painter happened to notice.
+        self.failures = 0
         self._complained = False
         # One window and one DC line, shared by the scheduler tick and the web
         # server's preview. Without this, two painters interleave and the second
@@ -494,8 +516,9 @@ class Ili9341:
             self.limit = self._port.limit
 
             self._hardware_reset()
+            # `_configure` ends with the panel blanked and switched on, in that
+            # order — see the comment there before moving anything.
             self._configure()
-            self.clear()
             self.backlight(True)
         except BaseException:
             self._release()
@@ -537,7 +560,7 @@ class Ili9341:
         time.sleep(_RESET_SETTLE_MS / 1000)
 
     def _configure(self) -> None:
-        """Software reset, the vendor sequence, rotation, then on."""
+        """Software reset, the vendor sequence, rotation, blank, *then* on."""
         # A software reset on top of the hardware one, because a panel whose
         # RESET wire is not actually connected — a real and common assembly
         # mistake — still gets a clean start from this one.
@@ -549,8 +572,32 @@ class Ili9341:
             if delay_ms:
                 time.sleep(delay_ms / 1000)
 
-        # Last, so that a build changing rotation only has to change this.
+        # Rotation before the blank, and that order is load-bearing rather than
+        # tidy: `clear` addresses a window of `self.width` x `self.height`,
+        # which is the *rotated* geometry, and CASET/PASET are interpreted
+        # against whatever MADCTL currently says. Flood a 320-column window at a
+        # panel still in its power-on portrait mode and the columns are out of
+        # range, the window is clamped, and the flood wraps inside it — leaving
+        # the last eighty rows holding exactly the stale frame this is here to
+        # get rid of. A build changing rotation still only changes `_ROTATIONS`.
         self._command(_MADCTL, bytes((self._madctl,)))
+
+        # Blank the RAM while the display is still off.
+        #
+        # GDDRAM survives a reset and this module has no power switch, so at
+        # this instant the panel is holding the last frame of the *previous*
+        # run. Switching on first — which is what this driver used to do —
+        # flashes it for as long as the first real frame takes to arrive: on a
+        # machine that was hard-restarted overnight, a settled green "tray 3 is
+        # due" that nothing is waiting behind. Somebody presses the button and
+        # nothing happens, and that is the whole reason the clear is inside the
+        # initialisation rather than a line after it.
+        self.clear()
+
+        # And on. Everything above ran against a display that was off, so
+        # neither the init nor the blanking is ever visible.
+        self._command(_DISPON)
+        time.sleep(_DISPON_MS / 1000)
 
     # ── the bus ─────────────────────────────────────────────────────────────
 
@@ -603,6 +650,9 @@ class Ili9341:
     def show(self, canvas) -> bool:
         """The whole canvas. Returns False if the panel did not take it."""
         if canvas.width != self.width or canvas.height != self.height:
+            # Not counted as a failure: this is our bug, not the panel's, and
+            # reporting it as a hardware fault sends somebody to the ribbon
+            # cable for a mistake that is in the code.
             log.error(
                 "screen: refusing a %dx%d canvas on a %dx%d panel — ask the "
                 "driver for one with new_canvas() rather than building it by "
@@ -665,6 +715,7 @@ class Ili9341:
         except OSError as exc:
             self._degrade(exc)
             return False
+        self.failures = 0
         return True
 
     def _paint(self, x: int, y: int, w: int, h: int, payload) -> bool:
@@ -677,6 +728,9 @@ class Ili9341:
         except OSError as exc:
             self._degrade(exc)
             return False
+        # The panel took it, so whatever was wrong is not wrong now. `error`
+        # stays as it was — see the attribute.
+        self.failures = 0
         return True
 
     def _degrade(self, exc: OSError) -> None:
@@ -687,8 +741,14 @@ class Ili9341:
         the screen back without anybody restarting the daemon — a panel that
         actually lost power needs a restart anyway, because the init sequence
         only runs when this object is built.
+
+        The count is what makes that recoverable *and* reportable: the log
+        sentence is written once so a flapping ribbon cannot fill the journal,
+        and everything after it is carried by `failures`, which a caller can
+        read on any tick and which drops back to zero the moment a frame lands.
         """
         self.error = str(exc)
+        self.failures += 1
         if self._complained:
             return
         self._complained = True

@@ -1,31 +1,37 @@
-"""The screen: the drawing, the two panels, and what actually reaches the wire.
+"""The screen: the drawing, the panel, and what actually reaches the wire.
 
-None of this needs a panel. Both drivers reach the kernel through `os.open`,
+None of this needs a panel. The driver reaches the kernel through `os.open`,
 `os.write` and `fcntl.ioctl` and nothing else, so a recording stand-in for those
 three is a complete substitute for the hardware — and a much better one for the
 things that matter here, because the failures are not "it does not light up",
 they are "it lights up and says the wrong thing".
 
-The two that would cost somebody their medication:
+There used to be two panels and two such failures. The first — a page-packed
+buffer written in the wrong order, a legible picture rotated or interleaved —
+left with the OLED, along with the `Mono1` surface that had a wire format to get
+wrong at all.
 
-  * a page-packed buffer written in the wrong order — a legible picture, rotated
-    or interleaved, that a person reads as *something*;
-  * the BGR bit inverted on the LCD, which swaps blue and amber and therefore
-    swaps *released* and *missed*.
+The second is still here and now carries more than it ever did: the BGR bit in
+`MADCTL` swaps red and blue, and therefore swaps *missed* for *released*, so the
+machine says the pills are in the cup an hour after the window closed. On the
+mono panel the picture was a second channel and would have caught it. The
+picture is now a solid shape that is the same silhouette in both of those
+states, so colour is the whole of what tells them apart, and one bit in one
+register is the whole of the colour.
 
-Both are asserted below against the bytes, not against a rendering.
+It is asserted below against the bytes, not against a rendering.
 """
 from __future__ import annotations
 
+import dataclasses
 import os
 import struct
-from datetime import datetime
 
 import pytest
 
 from snapcare_dispenser.display import NoDisplay, make_display, screens
 from snapcare_dispenser.display.health import Health
-from snapcare_dispenser.display.canvas import Mono1, Rgb565, Tone
+from snapcare_dispenser.display.canvas import Rgb565, Tone
 from snapcare_dispenser.display import font, glyphs
 
 
@@ -63,28 +69,6 @@ class FakeKernel:
 
 # ── the canvas ──────────────────────────────────────────────────────────────
 
-def test_the_mono_buffer_is_in_the_panels_own_page_order():
-    """`Mono1.buffer()` is handed to the OLED untouched, so its layout is not an
-    internal detail — it is the wire format.
-
-    Byte `page*width + x` holds the eight pixels at `(x, page*8 .. +7)` with bit
-    0 at the top. Transposed, the picture is legible and wrong, which is the
-    only kind of wrong that matters on a screen somebody reads a tray number off.
-    """
-    canvas = Mono1(128, 64)
-    canvas.pixel(0, 0, 1)
-    assert canvas.buffer()[0] == 0x01
-
-    canvas = Mono1(128, 64)
-    canvas.pixel(0, 8, 1)
-    assert canvas.buffer()[128] == 0x01, "page stride is wrong"
-
-    canvas = Mono1(128, 64)
-    canvas.pixel(127, 63, 1)
-    assert canvas.buffer()[1023] == 0x80
-    assert sum(canvas.buffer()) == 0x80, "one pixel lit one bit and nothing else"
-
-
 def test_rgb565_packs_big_endian():
     canvas = Rgb565(8, 8)
     green = Rgb565.rgb(0, 200, 60)
@@ -105,17 +89,20 @@ def test_a_full_screen_fill_is_not_a_python_loop_per_pixel():
 
 
 def test_drawing_outside_the_canvas_is_ignored_rather_than_fatal():
-    canvas = Mono1(128, 64)
+    canvas = Rgb565(320, 240)
     canvas.pixel(-5, -5, 1)
     canvas.pixel(999, 999, 1)
     canvas.rect(-20, -20, 400, 400, 1)          # must clip, not raise
-    canvas.blit(120, 60, (0xFF,) * 7, 5, 1, scale=4)
-    assert len(canvas.buffer()) == 128 * 8
+    canvas.blit(316, 236, (0xFF,) * 7, 5, 1, scale=4)
+    assert len(canvas.buffer()) == 320 * 240 * 2
 
 
 # ── the screens ─────────────────────────────────────────────────────────────
 
-PANELS = [Mono1(128, 64), Mono1(128, 32), Mono1(72, 40), Rgb565(320, 240)]
+#: One panel, and every screen is laid out against it. The list survives the
+#: OLED because the parametrisation is what makes a new surface — a bench rig, a
+#: second size — cost one line here rather than a rewrite of every test below.
+PANELS = [Rgb565(320, 240)]
 
 
 WELL = Health(dispensing=True, problem="", wifi="online", ssid="SNAPCARE-V5XH",
@@ -124,21 +111,30 @@ WELL = Health(dispensing=True, problem="", wifi="online", ssid="SNAPCARE-V5XH",
 UNWELL = Health(dispensing=False, problem="clock", wifi="offline",
                 ssid="SNAPCARE-V5XH", address="", next_tray=3, next_at="20:00",
                 now="12:34", waiting=0)
+#: A dose waiting on a press. `due` takes no scalars any more — the tray and the
+#: time it draws both come off the snapshot — so this is what the state *is*.
+WAITING = dataclasses.replace(WELL, waiting=1, waiting_tray=3,
+                              waiting_at="08:00", waiting_frac=6)
+#: On its own setup network, with the pair a person has to be given to join it.
+#: The passphrase is shaped like a real one (`provisioning._ALPHABET`, twelve
+#: characters) rather than a word, because that is what the screen will be
+#: handed and its length is what the wrapping has to survive.
+SETUP = dataclasses.replace(WELL, wifi="hotspot", address="",
+                            passphrase="k7mfq3ptx9wd")
 
 
 def render_all(canvas):
     """Every state, as the buffer each one produces."""
     when = "08:00"
     return {
-        "due": _frame(canvas, screens.due, 3, when),
-        "released": _frame(canvas, screens.released, 3),
-        "missed": _frame(canvas, screens.missed, 3, when),
-        "schedule": _frame(canvas, screens.schedule, 2),
-        "network": _frame(canvas, screens.network, "SNAPCARE-V5XH"),
+        "due": _frame(canvas, screens.due, WAITING),
+        "released": _frame(canvas, screens.released, WELL, 3),
+        "missed": _frame(canvas, screens.missed, WELL, 3, when),
+        "schedule": _frame(canvas, screens.schedule, WELL, 2),
+        "network": _frame(canvas, screens.network, SETUP),
         "idle": _frame(canvas, screens.idle, WELL),
-        "status": _frame(canvas, screens.status, WELL),
-        "wifi": _frame(canvas, screens.wifi, WELL),
-        "blocked": _frame(canvas, screens.blocked, "clock"),
+        "blocked": _frame(canvas, screens.blocked, UNWELL),
+        "boot": _frame(canvas, screens.boot, Health()),
     }
 
 
@@ -150,37 +146,7 @@ def _frame(canvas, fn, *args):
 @pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
 def test_every_state_renders_on_every_panel(canvas):
     frames = render_all(canvas)
-    assert len(frames) == 9
-
-
-@pytest.mark.parametrize("canvas", PANELS[:3], ids=lambda c: f"{c.width}x{c.height}")
-def test_no_two_states_look_the_same_in_one_bit(canvas):
-    """On the OLED there is no colour, so the *picture* carries the whole
-    meaning. Two states that render identically there are a device that cannot
-    tell somebody the difference between a dose waiting for them and one they
-    have already missed."""
-    frames = render_all(canvas)
-    assert len(set(frames.values())) == len(frames), \
-        f"identical frames on {canvas.width}x{canvas.height}"
-
-
-def test_due_and_missed_are_opposite_polarity_on_the_oled():
-    """The pair that must never be confused, on the panel that has one colour.
-
-    `due` lights the panel and `missed` leaves it dark, which is as far apart as
-    one bit gets and is readable from a doorway.
-    """
-    canvas = Mono1(128, 64)
-    screens.due(canvas, 3, "08:00")
-    lit_due = sum(bin(b).count("1") for b in canvas.buffer())
-
-    canvas = Mono1(128, 64)
-    screens.missed(canvas, 3, "08:00")
-    lit_missed = sum(bin(b).count("1") for b in canvas.buffer())
-
-    total = 128 * 64
-    assert lit_due > total * 0.5, "the due screen must be a lit panel"
-    assert lit_missed < total * 0.5, "the missed screen must be a dark panel"
+    assert len(frames) == 8
 
 
 def test_no_screen_renders_a_sentence():
@@ -229,70 +195,6 @@ def test_every_glyph_fits_its_declared_grid():
             f"{name} has a row wider than its {glyphs.SPAN}-bit span"
 
 
-# ── the OLED ────────────────────────────────────────────────────────────────
-
-def test_the_oled_init_turns_the_charge_pump_on(monkeypatch):
-    """`0x8D 0x14`. Without it the panel is dark for ever, on a module that has
-    no other power source — and it is the single most common reason an SSD1306
-    'does not work'."""
-    from snapcare_dispenser.display.ssd1306 import Ssd1306
-
-    kernel = FakeKernel(monkeypatch)
-    panel = Ssd1306(bus=1, address=0x3C, width=128, height=64, probe=False)
-    assert b"\x8d\x14" in kernel.stream
-    panel.close()
-
-
-def test_the_oled_blanks_its_ram_before_switching_on(monkeypatch):
-    """GDDRAM survives a reset and the module has no power switch, so the last
-    frame of the previous run is still in it. Switch on first and a settled
-    'tray 3 is due' flashes up; somebody presses the button and nothing
-    happens."""
-    from snapcare_dispenser.display.ssd1306 import Ssd1306
-
-    kernel = FakeKernel(monkeypatch)
-    Ssd1306(bus=1, address=0x3C, width=128, height=64, probe=False)
-
-    blank_at = next(i for i, w in enumerate(kernel.writes)
-                    if len(w) == 1025 and set(w[1:]) == {0})
-    on_at = next(i for i, w in enumerate(kernel.writes) if w == b"\x00\xaf")
-    assert blank_at < on_at
-
-
-def test_the_oled_writes_the_canvas_buffer_byte_for_byte(monkeypatch):
-    """The whole reason `Mono1` builds in page order: no repack per frame."""
-    from snapcare_dispenser.display.ssd1306 import Ssd1306
-
-    kernel = FakeKernel(monkeypatch)
-    panel = Ssd1306(bus=1, address=0x3C, width=128, height=64, probe=False)
-    canvas = panel.new_canvas()
-    screens.due(canvas, 3, "08:00")
-
-    kernel.writes.clear()
-    assert panel.show(canvas)
-
-    data = [w for w in kernel.writes if len(w) > 64]
-    assert len(data) == 1, "a 128x64 frame is one transfer"
-    assert data[0][0] == 0x40, "the data control byte"
-    assert data[0][1:] == bytes(canvas.buffer())
-
-
-def test_an_oled_that_dies_mid_run_stops_rather_than_raising(monkeypatch):
-    """Nothing here may reach the scheduler tick."""
-    from snapcare_dispenser.display.ssd1306 import Ssd1306
-
-    kernel = FakeKernel(monkeypatch)
-    panel = Ssd1306(bus=1, address=0x3C, width=128, height=64, probe=False)
-    canvas = panel.new_canvas()
-
-    def dies(_fd, _data):
-        raise OSError(5, "Input/output error")
-
-    monkeypatch.setattr(os, "write", dies)
-    assert panel.show(canvas) is False          # must not raise
-    assert panel.show(canvas) is False
-
-
 # ── the LCD ─────────────────────────────────────────────────────────────────
 
 def test_the_lcd_ioctl_numbers_are_encoded_correctly():
@@ -330,21 +232,27 @@ def test_the_lcd_landscape_rotations_swap_the_dimensions():
 
 # ── the factory ─────────────────────────────────────────────────────────────
 
-def test_the_factory_constructor_arguments_match_both_drivers():
-    """The two are opened by keyword, and a name that does not match is a
+def test_the_factory_constructor_arguments_match_the_driver():
+    """The panel is opened by keyword, and a name that does not match is a
     `TypeError` at startup — a panel that is fitted, wired and never opened,
-    reported only as 'no display'."""
+    reported only as 'no display'.
+
+    This mattered when there were two drivers to keep in step and it matters
+    more now that there is one, because there is no longer a second backend for
+    `auto` to fall through to: `make_display` catches everything `_open` can
+    raise, so a renamed keyword does not surface as a stack trace. It comes out
+    as a single WARNING and a `NoDisplay`, which is indistinguishable from a
+    ribbon nobody plugged in.
+    """
     import inspect
     import re
 
     from snapcare_dispenser.display import _open  # noqa: PLC0415
     from snapcare_dispenser.display.ili9341 import Ili9341
-    from snapcare_dispenser.display.ssd1306 import Ssd1306
 
     source = inspect.getsource(_open)
     used = set(re.findall(r"(\w+)=config\.", source))
-    accepted = (set(inspect.signature(Ili9341.__init__).parameters)
-                | set(inspect.signature(Ssd1306.__init__).parameters))
+    accepted = set(inspect.signature(Ili9341.__init__).parameters)
     assert used <= accepted, f"the factory passes {used - accepted}"
 
 

@@ -63,11 +63,11 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from . import config, envelope, gpiochip, indicators, provisioning, rtc
+from . import config, envelope, gpiochip, indicators, provisioning, rtc, soc, wifi
 from .button import TakeDoseButton
 from .clock import Clock
-from .display import WRITE_ONLY, Tone, probe_i2c, screens, shapes
-from .display.health import Health, shape_for
+from .display import Tone, screens, shapes
+from .display.health import Dose, Health, shape_for
 from .display.shapes import Shape
 from .indicators import make_indicator
 from .servo import TrayServos, make_backend

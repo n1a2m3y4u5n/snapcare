@@ -57,6 +57,13 @@ log = logging.getLogger(__name__)
 #: reacting to is seconds at minimum, and the one this exists for is hours.
 _STEP_SLACK_S = 5.0
 
+#: How far `now()` may be from what the clock chip itself reads before we stop
+#: claiming the chip is where our time came from. A minute is far more than the
+#: DS1302's few minutes a *month* of drift and far less than the hours that
+#: separate a stale `fake-hwclock` restore from the truth, so it separates the
+#: two cases with room to spare either side.
+_RTC_AGREEMENT_S = 60.0
+
 
 class Clock:
     """The firmware's notion of the time, and how much it trusts it.
@@ -82,6 +89,10 @@ class Clock:
         self._wall_at_anchor: datetime | None = None
         self._vouched_by: str | None = None
         self._vouched_at: datetime | None = None
+        #: True once `adopt_rtc` has actually taken the chip's time. See
+        #: `source`: the chip vouching for itself is not evidence that anything
+        #: read it.
+        self._adopted_from_rtc = False
 
     # ── reading it ──────────────────────────────────────────────────────────
 
@@ -113,23 +124,38 @@ class Clock:
         time counts *elapsed* seconds and no adjustment to the wall clock can
         reach it. `_check_for_step` then notices the step and drops the
         correction, because after a step the system clock is the right one.
+
+        The elapsed seconds are added to an *instant*, not to a local wall
+        reading, and the sum is rendered back into local time. Naive addition
+        counts monotonic seconds as though every hour of the year were sixty
+        minutes long, so a corrected clock crossing a DST boundary carried the
+        old offset for ever — an hour out, which is inside the grace window and
+        therefore shifts doses rather than refusing them. Two `astimezone()`
+        calls per read (microseconds) buy a clock that changes with the country
+        it is standing in.
         """
         if self._anchor is None:
             return self._source()
         self._check_for_step()
         if self._anchor is None:                       # dropped just above
             return self._source()
-        return self._corrected_at + timedelta(
+        instant = self._corrected_at.astimezone() + timedelta(
             seconds=self._monotonic() - self._anchor)
+        # Naive local time, because that is what every caller compares against
+        # and what the scheduler counts days and minutes in.
+        return instant.astimezone().replace(tzinfo=None)
 
     def _set_offset(self, target: datetime) -> None:
         """Start applying a correction, measured from the monotonic clock."""
         self._corrected_at = target
         self._anchor = self._monotonic()
-        self._wall_at_anchor = self._source()
+        wall = self._source()
+        #: The same instant, as an *absolute* point in time rather than a local
+        #: wall reading. See `_check_for_step`.
+        self._wall_at_anchor = wall.astimezone()
         # Kept for the status page and for tests that assert a correction is in
         # force; `now()` does not read it.
-        self._offset = target - self._wall_at_anchor
+        self._offset = target - wall
 
     def _drop_offset(self) -> None:
         self._anchor = None
@@ -159,14 +185,35 @@ class Clock:
 
         The slack is generous because ordinary skew between the two clocks is
         milliseconds and a step worth reacting to is seconds at minimum.
+
+        **Both readings are converted to absolute time first.** `datetime.now()`
+        is naive *local* time, and at a DST transition local time moves an hour
+        against monotonic without anything having stepped the clock — so this
+        test used to fire twice a year and throw away the correction that was
+        the only thing making the device right. Reproduced: a phone sets the
+        clock on a device whose system time is three days stale, ten minutes
+        pass correctly, and the 02:00 spring-forward returns `now()` to the
+        stale reading while `trusted` stays True. Converting through
+        `astimezone()` prices the offset change in, so 01:59:30 → 03:00:00 is
+        the thirty real seconds it actually was.
+
+        The vouch goes with the offset. Something moved the system clock and
+        this object did not do it, so whatever was vouching was vouching for a
+        correction that no longer exists; trust has to be re-derived from
+        whatever can still vouch *now* rather than inherited. In the case this
+        is written for that is NTP, which is exactly what stepped the clock, so
+        a healthy device keeps dispensing without a gap. In every other case it
+        fails towards the tray staying shut.
         """
-        wall_moved = (self._source() - self._wall_at_anchor).total_seconds()
+        wall_moved = (self._source().astimezone() - self._wall_at_anchor).total_seconds()
         really_elapsed = self._monotonic() - self._anchor
         drift = abs(wall_moved - really_elapsed)
         if drift > _STEP_SLACK_S:
             log.info("the system clock moved about %.0f s under us — dropping the "
                      "correction and reading it directly", drift)
             self._drop_offset()
+            self._vouched_by = None
+            self._adopted_from_rtc = False
 
     def day_number(self) -> int:
         """A monotonic day count for the scheduler. Only differences are used."""
@@ -216,14 +263,62 @@ class Clock:
         flag says it has run without interruption, and then it is right whether
         or not there is a network. The phone comes last — it was right once, at
         the moment somebody held up a code.
+
+        With one rule ahead of all three, because this property is not only a
+        ranking: it is the answer to "where did the number `now()` just returned
+        come from", and `/api/status` and the panel both present it as such. A
+        correction supplied by name is what `now()` is returning, so it is what
+        is vouching — even when NTP is synchronised and disagrees. Reproduced:
+        an `SC1*C*` code accepted on a networked device moved `now()` nine hours
+        while the status page went on reporting `source: ntp, trusted: true`.
+        A disagreement is now visible in the one field somebody would look at.
         """
+        if self._anchor is not None and self._vouched_by:
+            return self._vouched_by
         if ntp_synchronised():
             return "ntp"
-        if config.USE_RTC and rtc.read_status().trustworthy:
-            return "rtc"
+        if config.USE_RTC:
+            chip = rtc.read_status()
+            if chip.trustworthy and self._reads_as_the_chip(chip):
+                return "rtc"
         if self._vouched_by:
             return self._vouched_by
         return "untrusted"
+
+    def _reads_as_the_chip(self, chip: rtc.RtcState) -> bool:
+        """Is the time this object returns actually the chip's?
+
+        The chip vouching for itself says the oscillator never stopped. It says
+        nothing at all about whether anything read it — and on a DS1302 build
+        nothing does until `adopt_rtc()` succeeds, which is a one-shot at boot
+        that returns False silently on any transient failure of a bit-banged
+        transfer. Reproduced with a stubbed chip: one bad read during the boot
+        storm and the device reported `source: rtc, trusted: true` while `now()`
+        answered the previous Friday from `fake-hwclock` and the chip held
+        Tuesday. That is the wrong-day dispensing this whole module exists to
+        refuse, arrived at through the fix for it.
+
+        Three ways the answer can be yes, in the order they are cheapest:
+
+          the chip's time was adopted in this session, so it *is* our time;
+
+          the chip reports no reading of its own — the DS3231 case, where the
+          kernel applied the chip's time through the `i2c-rtc` overlay before
+          this process started, so the system clock already is the chip's and
+          there is nothing here to cross-check against;
+
+          it reports one and we agree with it, which is the honest answer for a
+          device whose clock happens to be right for some other reason.
+
+        Disagreement is not called a chip failure — `running` is still the
+        chip's own business. It just means the chip is not what is vouching for
+        *us*, so the answer falls through to the phone or to `untrusted`.
+        """
+        if self._adopted_from_rtc:
+            return True
+        if chip.reads is None:
+            return True
+        return abs((self.now() - chip.reads).total_seconds()) <= _RTC_AGREEMENT_S
 
     def status(self) -> dict:
         return {
@@ -340,7 +435,11 @@ class Clock:
         self._vouched_at = when
         # Deliberately not setting `_vouched_by`: `source` already answers
         # `rtc` from the chip's own state, and claiming it here would keep
-        # saying so after the cell died.
+        # saying so after the cell died. `_adopted_from_rtc` is the narrower
+        # claim `source` does need — "the chip's time reached us" — and it is
+        # cleared again by `_check_for_step` and by `trust_ntp`, both of which
+        # replace the reading this flag is about.
+        self._adopted_from_rtc = True
         log.info("clock taken from the RTC: %s", when.isoformat(timespec="seconds"))
         _try_set_system_clock(when)
         return True
@@ -359,13 +458,19 @@ class Clock:
         self._drop_offset()
         self._vouched_by = None
         self._vouched_at = None
+        self._adopted_from_rtc = False
         return True
 
 
 #: How long an NTP answer is reused. The status page polls every few seconds
 #: and every poll would otherwise be a process spawn; the answer changes at
-#: most once per boot, so a few seconds of staleness costs nothing.
-_NTP_CACHE_S = 10.0
+#: most once per boot, so a minute of staleness costs nothing.
+#:
+#: It has to be longer than `config.TICK_SECONDS`. At ten seconds it was
+#: shorter, so the display's health snapshot — which reaches `blocked_reason()`
+#: → `trusted` → `source` — forked `timedatectl` on *every* tick, measured at
+#: about 5.8 ms of a budget that is supposed to be microseconds.
+_NTP_CACHE_S = 60.0
 _ntp_cache: tuple[float, bool] | None = None
 
 

@@ -165,7 +165,7 @@ class Scheduler:
         # to 00:05 lost that night's 23:30 dose the same way. The module
         # docstring and `device.py` both promise a missed dose is *said*, and a
         # dose nobody was told about is the one thing a carer cannot act on.
-        stale = self._overdue_before(day, weekday)
+        stale = self._overdue_before(day, weekday, skip)
         if stale:
             return stale
 
@@ -186,8 +186,25 @@ class Scheduler:
                 if minutes < due:
                     continue  # not yet
 
-                # Already handled? Same day, and at or past this dose's time.
-                if st.ever_fired and st.last_day == day and st.last_minutes >= due:
+                # Already handled? The mark is a high-water mark over
+                # `(day, minutes)`, so anything at or below it is settled.
+                #
+                # This used to read `st.last_day == day and st.last_minutes >=
+                # due`, which agrees with `confirm`'s rule — and with
+                # `_overdue_before`'s — only while the day number never goes
+                # backwards. When it does, for any of the reasons a clock moves
+                # (a DST correction on a stale system clock, NTP correcting a
+                # fast clock across a midnight, a phone posting `SC1*C*` with an
+                # earlier date), `last_day != day` un-suppressed every dose
+                # already given while `confirm` went on refusing to re-mark
+                # them. Reproduced: release the 08:00 dose, rewind the clock one
+                # day, then tick and release four times — drops went 1,2,3,4,5,
+                # unbounded, once per fifteen-second tick for the whole window.
+                #
+                # Comparing the same tuple all three places compare makes the
+                # rewind fail towards the tray staying shut: nothing is offered
+                # again until real time passes the mark.
+                if st.ever_fired and (day, due) <= (st.last_day, st.last_minutes):
                     continue
 
                 if (s.slot, due) in skip:
@@ -214,7 +231,8 @@ class Scheduler:
     #: tick at a time would bury the ones that matter under a wall of them.
     CATCHUP_DAYS = 7
 
-    def _overdue_before(self, day: int, weekday: int) -> Decision:
+    def _overdue_before(self, day: int, weekday: int,
+                        skip: Collection[tuple[int, int]] = ()) -> Decision:
         """The earliest un-acted dose from a day that has already ended.
 
         Returned as `MISSED` without qualification: the window closed while the
@@ -224,6 +242,16 @@ class Scheduler:
 
         Earliest first, and one per call, for the same reason as the main loop —
         the log a carer reads has to be in the order things happened.
+
+        `skip` is the same collection `next` applies to today, and it has to be
+        applied here too. A dose offered at 23:30 with an hour of grace is still
+        owed at 00:00 — and one minute after midnight it belongs to a day that
+        has ended, so this method found it and called it MISSED while the person
+        still had half their window left. Reproduced with
+        `SC1*W*1:0800.2330-127-000`: the tick at 00:00:15 wrote a
+        `window-closed` miss and stopped the chirp, and a tap at 00:00 then
+        wrote a contradictory `released` line for the same dose. Every dose
+        scheduled after 23:00 was affected, every night.
         """
         for back in range(self.CATCHUP_DAYS, 0, -1):
             past_day = day - back
@@ -246,6 +274,8 @@ class Scheduler:
                 for due in sorted(s.times):
                     if (past_day, due) <= (st.last_day, st.last_minutes):
                         continue  # already dealt with
+                    if (s.slot, due) in skip:
+                        continue  # offered last night, still waiting on a tap
                     return Decision(what=Due.MISSED, slot=s.slot, minutes=due,
                                     day=past_day)
         return Decision()
@@ -310,6 +340,36 @@ class Scheduler:
         return day >= st.start_day + s.duration_days
 
     # ── for the status page ─────────────────────────────────────────────────
+
+    def day_plan(self, day: int, weekday: int) -> list[tuple[int, int]]:
+        """Every `(slot, minutes)` this day is supposed to see, ascending.
+
+        The whole day, not the rest of it: the panel's schedule band draws what
+        has already happened as well as what has not, so a person can see at a
+        glance that the morning dose was taken. What each one *did* is not this
+        class's business — it comes from `Dispenser.today_outcomes` and from the
+        doses currently waiting on a tap — and keeping the plan and the outcome
+        apart is what lets a dose with no record at all render as "nothing is
+        known" rather than as a confident claim either way.
+
+        Deliberately the same two filters `upcoming` applies, and no others: a
+        course that has run its `duration_days` and a day the mask excludes are
+        both days on which the tray genuinely has nothing scheduled. Sorted by
+        minute, then by tray, so two trays at 08:00 always draw in the same
+        order — a schedule band whose columns swap between frames is one nobody
+        can read.
+        """
+        plan: list[tuple[int, int]] = []
+        for s in self._slots:
+            st = self._state.get(s.slot)
+            if st is None:
+                continue
+            if s.duration_days and day >= st.start_day + s.duration_days:
+                continue
+            if not s.due_on_day(weekday):
+                continue
+            plan.extend((s.slot, due) for due in s.times)
+        return sorted(plan, key=lambda pair: (pair[1], pair[0]))
 
     def upcoming(self, day: int, weekday: int, minutes: int) -> tuple[int, int] | None:
         """The next (slot, minutes) still to come today, ignoring what is owed.

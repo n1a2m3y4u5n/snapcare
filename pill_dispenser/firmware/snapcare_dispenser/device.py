@@ -54,16 +54,39 @@ from __future__ import annotations
 import logging
 import threading
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from . import config, gpiochip, sc1
 from .clock import Clock
 from .indicators import Indicator, LogIndicator
-from .scheduler import Decision, Due, Scheduler
+from .scheduler import Decision, Due, Scheduler, SlotState
 from .servo import TrayServos
 from .store import Store
 
 log = logging.getLogger(__name__)
+
+#: How a recorded dose appears in the day's ledger, by the reason it was
+#: recorded under. A reason that is not in here leaves **no entry at all**, and
+#: that absence is the whole point of the table:
+#:
+#:   `manual` is a nurse checking a hopper at the bench, not a scheduled dose.
+#:   Its minute is the current minute, so letting it in would mark whatever
+#:   happens to be scheduled for that minute as taken — a false claim about a
+#:   dose still sitting in the machine.
+#:
+#:   `interrupted` is the one case where the firmware genuinely does not know
+#:   whether the pills fell. It says so by leaving the ledger silent, which the
+#:   panel draws as an outline: solid means we know, outline means we do not.
+_LEDGER = {
+    "released": "taken",
+    "not-released": "missed",
+    "window-closed": "missed",
+}
+
+#: How far back the ledger is rebuilt at boot. Eight trays at six doses a day is
+#: 48 events, so this covers several days of history — far more than the one day
+#: the ledger holds — while never reading a 3000-line log to find this morning.
+_LEDGER_LOOKBACK = 200
 
 
 def _stamp(when: datetime) -> str:
@@ -97,6 +120,25 @@ class DueDose:
     @property
     def key(self) -> tuple[int, int]:
         return (self.tray, self.minutes)
+
+    def tenths_left(self, now: datetime) -> int:
+        """How much of the release window remains, in tenths, 0..10.
+
+        Quantised deliberately. This is drawn as a bar on the due screen, and
+        the panel repaints only when something it shows has changed — a value in
+        seconds would change on every fifteen-second tick and cost a full 38 ms
+        frame four times a minute for the whole hour. Tenths change at most ten
+        times in a sixty-minute window.
+
+        Measured from the dose's own scheduled instant, so a dose picked up late
+        after a power cut shows the remainder of its window rather than a fresh
+        one — the same rule `deadline` itself follows.
+        """
+        window = (self.deadline - self.due_at).total_seconds()
+        if window <= 0:
+            return 0
+        left = (self.deadline - now).total_seconds()
+        return max(0, min(10, int(left * 10 // window)))
 
     def to_json(self) -> dict:
         # Offset-aware, because the reader is usually in a different timezone
@@ -159,6 +201,20 @@ class Dispenser:
         #: with it.
         self._due: dict[tuple[int, int], DueDose] = {}
         self._seq = 0
+        #: Trays this machine has no servo for that the stored schedule names.
+        #: Reported rather than merely dropped — see `_restore`.
+        self._unfitted: tuple[int, ...] = ()
+        #: True when scheduler.json exists and cannot be read. See
+        #: `blocked_reason`; this is the one flag that fails the tray shut on a
+        #: damaged card rather than on a damaged clock.
+        self._state_unknown = False
+        #: Today's taken/missed ledger, keyed by `(tray, scheduled minute)`.
+        #: See `today_outcomes` for why an absent key is load-bearing.
+        self._outcomes: dict[tuple[int, int], str] = {}
+        self._outcomes_day = 0
+        #: True while the chirp has been stopped because the device is blocked
+        #: with a dose still owed. See `tick`.
+        self._silenced_by_block = False
         self._restore()
 
     # ── startup ─────────────────────────────────────────────────────────────
@@ -168,7 +224,32 @@ class Dispenser:
         self._payload = payload
         self._source = "restored" if slots else "none"
 
-        state = self.store.load_state(payload)
+        # A tray with no servo behind it cannot deliver anything, and a plan
+        # that names one is a medication this machine will silently never give.
+        # `set_schedule` has always refused those; `_restore` did not, so a
+        # schedule accepted while eight trays were configured and read back
+        # after `SNAPCARE_TRAYS=4` — exactly the change config.py recommends —
+        # offered a dose for tray 7 and then raised `KeyError` out of `release`
+        # into three callers that catch only `RuntimeError`. Reproduced: the app
+        # got a 500, the button press vanished, and an hour later the dose was
+        # recorded `not-released` — a refusal the person never made.
+        #
+        # Dropped from the running scheduler, never from the card. schedule.json
+        # still holds the full prescription, so putting the servo back (or
+        # correcting `SNAPCARE_TRAYS`) brings the tray back on the next boot.
+        self._unfitted = tuple(sorted({s.slot for s in slots
+                                       if s.slot not in self.servos.pins}))
+        if self._unfitted:
+            log.error("the stored schedule names tray(s) %s, which have no servo "
+                      "on this machine (%s) — those trays are NOT loaded and "
+                      "nothing will be dispensed from them",
+                      list(self._unfitted), sorted(self.servos.pins))
+            slots = [s for s in slots if s.slot in self.servos.pins]
+
+        state, damaged = self.store.load_state(payload)
+        #: True when the record of what has already been dispensed exists and
+        #: cannot be read. See `blocked_reason`.
+        self._state_unknown = damaged
         self.scheduler.restore(slots, state)
 
         # If the stored state did not match the schedule, `restore` gave every
@@ -179,9 +260,11 @@ class Dispenser:
             if slot_state.start_day == 0:
                 slot_state.start_day = today
 
-        recent = self.store.read_events(limit=1)
+        recent = self.store.read_events(limit=_LEDGER_LOOKBACK)
         if recent:
             self._seq = (int(recent[0].get("seq", 0)) + 1) % 100
+        self._outcomes_day = today
+        self._outcomes = self._outcomes_from(recent, today)
 
         if slots:
             log.info("restored a schedule for %d tray(s): %s",
@@ -189,15 +272,99 @@ class Dispenser:
         else:
             log.info("no schedule stored — nothing will be dispensed until one arrives")
 
+        self._settle_interrupted_dose()
+
+    def _settle_interrupted_dose(self) -> None:
+        """Close out a dose the last run was cut in the middle of dropping.
+
+        `inflight.json` is written before the horn moves and removed once the
+        dose is durable, so finding one at boot means the machine lost power
+        somewhere inside a two-second sweep. Nothing on the card can say whether
+        the pills cleared the gate, and there is no sensor that could.
+
+        So it is settled the only honest way: the dose is marked dealt with, so
+        it is never offered a second time, and it is written to the log as
+        `taken` but **not** confirmed, with the reason `interrupted`. A carer
+        reading that line learns exactly what the machine knows. The alternative
+        — re-offering it — is a double dose the person has no way to detect,
+        and this codebase's rule is that the tray fails shut.
+
+        The tray is parked first. A servo cut mid-sweep simply stops where it
+        is, which for the first of the two commands is the gate held open, and
+        nothing else in the firmware ever closes it: `TrayServos.park` says in
+        its own docstring that it is not part of any dose path. One tray, half a
+        second, and only when this file exists — not a sweep of all eight at
+        boot, which would be four seconds and a current spike on a supply
+        `config.py` already warns about.
+        """
+        intent = self.store.load_inflight()
+        if not intent:
+            return
+        try:
+            tray = int(intent["tray"])
+            minutes = int(intent["minutes"])
+            day = int(intent["day"])
+        except (KeyError, TypeError, ValueError):
+            log.error("the interrupted-dose marker is unreadable (%s) — clearing it",
+                      intent)
+            self.store.clear_inflight()
+            return
+
+        log.warning("tray %d: the %s dose was interrupted mid-drop — recording it "
+                    "as given but unconfirmed, and closing the tray",
+                    tray, sc1.format_hhmm(minutes))
+        if tray in self.servos.pins:
+            try:
+                self.servos.park(tray)
+            except Exception:  # noqa: BLE001
+                # A tray that will not park is worth saying and is not worth
+                # refusing to boot over; the dose still has to be settled.
+                log.exception("tray %d could not be parked after an interrupted drop",
+                              tray)
+
+        self.scheduler.confirm(
+            Decision(what=Due.DISPENSE, slot=tray, minutes=minutes), day)
+        self._save_state()
+        self._record(tray, minutes, taken=True, reason="interrupted",
+                     confirmed=False, day=day)
+        self.store.clear_inflight()
+
     # ── the schedule ────────────────────────────────────────────────────────
 
     def set_schedule(self, slots: list[sc1.SlotSchedule], source: str = "api") -> None:
-        """Adopt a new schedule. This forgets what has already been dispensed.
+        """Adopt a schedule. Only a tray whose plan actually changed forgets.
 
-        That is correct for a new prescription and wrong for a restart, which
-        is why a restart goes through `_restore` instead. The two are kept
-        apart deliberately: conflating them is how a reboot turns into a repeat
-        of the day's doses.
+        This used to call `Scheduler.load` unconditionally, which rebuilds every
+        tray's `SlotState` with `ever_fired=False`. That is right for a new
+        prescription and a double dose for everything else, because a schedule
+        arriving is not the same event as a schedule *changing*:
+
+          * a carer opens the schedule screen in the app and taps Save twice;
+          * the same paper form sheet is photographed again;
+          * `cloud.json` is lost to a power cut, so `CloudLink` restarts from
+            `desiredRev = 0` and re-applies the plan already running — its own
+            comment calls that a no-op, and it was a second pill;
+          * a second medication is added at 08:20, rebuilding tray 1 with it.
+
+        Reproduced against the real classes in every one of those shapes: the
+        08:00 dose already in the person's hand was offered again, the chirp
+        restarted, and the next tap dropped another pill.
+
+        So identity is decided *before* the scheduler is touched, at two
+        granularities. The canonical `SC1*W*` payload answers "is this the same
+        plan" — the same string `Store.save_schedule` has always written for
+        exactly that question on a restart — and per-slot comparison answers
+        "is this the same plan *for this tray*". Anything that genuinely
+        changed still starts from scratch, which it must: an 08:00 mark left
+        over from yesterday's drug would suppress today's first dose of the one
+        that replaced it.
+
+        The cost, stated: a course re-sent unchanged does not restart its
+        `duration_days` countdown. Re-prescribing the same drug for another
+        thirty days therefore needs a payload that differs (a changed time, a
+        changed duration), because SC1 has no "start again" verb. That is the
+        right way round — a course that silently never ends is the failure that
+        was reproduced, and one that ends on time is one a carer sees.
         """
         with self._lock:
             unknown = [s.slot for s in slots if s.slot not in self.servos.pins]
@@ -210,16 +377,64 @@ class Dispenser:
                     f"this machine has {sorted(self.servos.pins)}"
                 )
 
+            payload = sc1.encode_weekly(slots)
             today = self.clock.day_number()
-            self.scheduler.load(slots, today)
-            self._payload = sc1.encode_weekly(slots)
+
+            if payload == self._payload and self.scheduler.slots \
+                    and not self._state_unknown:
+                # Byte-identical to what is already running. Nothing about the
+                # plan changed, so nothing about the dispensing record may
+                # change either — and scheduler.json is deliberately left
+                # untouched rather than rewritten with the same contents, so a
+                # cut during a cloud resync cannot damage the one file that
+                # remembers this morning's dose.
+                #
+                # The standing offer survives too. It was made against this
+                # exact plan and is still owed; withdrawing it would take the
+                # alert down over a dose nobody has taken.
+                #
+                # Not taken when the record is damaged (`_state_unknown`), and
+                # that is the whole recovery route: there is no dispensing state
+                # to preserve, so the same payload sent again means "start a
+                # fresh record", which is exactly what `blocked_reason` tells
+                # whoever is standing there to do. Without this exception a
+                # machine with a damaged card could only be revived by inventing
+                # a schedule that differs from the one it should be running.
+                self._source = source
+                self.store.save_schedule(slots, source=source)
+                self.indicator.schedule_accepted()
+                log.info("the schedule from %s is the one already running; "
+                         "keeping what has been dispensed: %s", source, payload)
+                return
+
+            carried = self._unchanged_slot_state(slots)
+            if carried:
+                self.scheduler.restore(slots, carried)
+                # `restore` hands a tray that is new to this plan a blank state
+                # with `start_day` 0, which would make a course of "30 days"
+                # have expired three million days ago. Same fixup as `_restore`.
+                for slot_state in self.scheduler.state.values():
+                    if slot_state.start_day == 0:
+                        slot_state.start_day = today
+            else:
+                self.scheduler.load(slots, today)
+
+            self._payload = payload
             self._source = source
             self.store.save_schedule(slots, source=source)
             self.store.save_state(self.scheduler.state, self._payload)
-            # A dose offered under the old prescription is withdrawn rather than
-            # carried over. Releasing it now would drop a pill against a plan
-            # that has just been replaced, and the tray it names may not even be
-            # in the new schedule.
+            # A fresh record has just been written, so whatever was unreadable
+            # about the old one no longer stands between this machine and a
+            # dose. This is the operator's way out of the damaged-card refusal:
+            # re-send the prescription.
+            self._state_unknown = False
+
+            # A dose offered under a plan that has just been replaced is
+            # withdrawn rather than carried over: releasing it would drop a pill
+            # against a prescription that no longer exists, and the tray it
+            # names may not even be in the new one. A tray whose own line is
+            # unchanged keeps its offer, for the same reason the identity path
+            # above keeps it.
             #
             # `clear()` before `schedule_accepted()`, and it has to be the
             # indicator's `clear` and not just the dict's: `schedule_accepted`
@@ -227,11 +442,38 @@ class Dispenser:
             # offer that was mid-alert left the buzzer sounding every twenty
             # seconds for a dose that no longer existed — indefinitely, since
             # nothing was left in `_due` for `_expire_due` to settle.
-            if self._due:
-                self._due.clear()
+            withdrawn = [key for key in self._due if key[0] not in carried]
+            if withdrawn:
+                for key in withdrawn:
+                    del self._due[key]
                 self.indicator.clear()
             self.indicator.schedule_accepted()
+            # A dose still owed outranks a card about a plan. Without this the
+            # acknowledgement would sit on the panel over a tray that is still
+            # waiting on a tap.
+            self._reassert_alert()
             log.info("new schedule from %s: %s", source, self._payload)
+
+    def _unchanged_slot_state(self, slots: list[sc1.SlotSchedule]) -> dict[int, SlotState]:
+        """The dispensing state of every tray whose plan is unchanged.
+
+        Compared field by field rather than by the tray's encoded line, because
+        `times` is a list whose order is not part of the prescription — the same
+        two doses written in the other order is the same plan, and treating it
+        as a new one is the double dose this whole path exists to refuse.
+        """
+        running = {s.slot: s for s in self.scheduler.slots}
+        carried: dict[int, SlotState] = {}
+        for wanted in slots:
+            was = running.get(wanted.slot)
+            state = self.scheduler.state.get(wanted.slot)
+            if was is None or state is None:
+                continue
+            if (sorted(was.times) == sorted(wanted.times)
+                    and was.days == wanted.days
+                    and was.duration_days == wanted.duration_days):
+                carried[wanted.slot] = state
+        return carried
 
     def apply_payload(self, payload: str, source: str = "api") -> tuple[bool, str]:
         """Accept an `SC1*S*` / `SC1*W*` / `SC1*C*` string from anywhere.
@@ -247,6 +489,22 @@ class Dispenser:
             clock_set = sc1.decode_clock(payload)
             if clock_set is None:
                 return False, "that is not a valid clock code"
+            if self.clock.source == "ntp":
+                # NTP outranks a phone and this is the only place that could
+                # quietly overrule it. `Clock.accept` installs an offset with no
+                # regard for what is already vouching, and nothing ever takes it
+                # off — `daemon.run` latches its NTP check, so `trust_ntp()`,
+                # the one thing that clears an offset, never runs again after
+                # the first success. Reproduced: with the system clock
+                # synchronised and reading 08:00, an `SC1*C*` code for 17:00 was
+                # accepted and `now()` read 17:01 for the rest of uptime, from
+                # whatever timezone the phone that scanned it was in.
+                #
+                # `cloud.py` has always refused this on the relay path for the
+                # same reason. The LAN and QR paths had no such guard.
+                return False, ("this device is already synchronised from the "
+                               "network, which is a better authority than a "
+                               "phone — the clock was left alone")
             self.clock.accept(clock_set, source=source)
             return True, f"Clock set to {clock_set.to_datetime():%Y-%m-%d %H:%M}."
 
@@ -289,16 +547,34 @@ class Dispenser:
     def blocked_reason(self) -> str:
         """Why nothing is being dispensed, or `''` if something can be.
 
-        Two gates, in the order they are checked. Both fail towards the tray
-        staying shut, and both are reported rather than being silent: a device
-        that will not dispense is a problem somebody notices within hours, and
-        a device that logs doses it never gave is one nobody notices at all.
+        Three gates, in the order they are checked. All of them fail towards the
+        tray staying shut, and all of them are reported rather than being
+        silent: a device that will not dispense is a problem somebody notices
+        within hours, and a device that logs doses it never gave is one nobody
+        notices at all.
         """
         if not self.servos_usable:
             return ("no GPIO library is installed, so no tray can be opened — "
                     "sudo apt install python3-lgpio")
         if not self.clock.trusted:
             return "the clock has not been vouched for by NTP, the RTC or a phone"
+        if self._state_unknown and self.scheduler.slots:
+            # store.py's own docstring has always promised this direction —
+            # "the safe reading of 'cannot tell' is to refuse to dispense" — and
+            # the code did the opposite. A damaged scheduler.json read as an
+            # absent one, every tray got a blank state, and the doses already
+            # given today were offered again. Reproduced end to end: reboot at
+            # 08:30 with a truncated state file and tray 1 dropped a second
+            # pill.
+            #
+            # Gated on there being a schedule at all, because with nothing
+            # loaded there is nothing the missing record could be hiding, and a
+            # device refusing to dispense a prescription it has not got yet is a
+            # fault nobody can act on. It clears when a schedule is applied,
+            # which writes a fresh record that matches it.
+            return ("the record of what has already been dispensed is damaged, "
+                    "so a dose already given cannot be told from one still owed "
+                    "— re-send the schedule to start a fresh record")
         return ""
 
     # ── dispensing ──────────────────────────────────────────────────────────
@@ -327,7 +603,23 @@ class Dispenser:
             # gate above it exists to refuse, arrived at from the other
             # direction.
             if self.blocked_reason():
+                if self._due and not self._silenced_by_block:
+                    # A dose offered at 08:00 whose clock loses its voucher at
+                    # 08:05 stays in `_due` for ever, because `_expire_due` is
+                    # below this return. `release` refuses it, so the buzzer was
+                    # repeating every twenty seconds, all night, for a dose the
+                    # device would not deliver. The offer itself is kept — it
+                    # is still owed, and if the clock comes back inside the
+                    # window it is still releasable — but the noise is not.
+                    self.indicator.silence()
+                    self._silenced_by_block = True
                 return []
+
+            if self._silenced_by_block:
+                # Whatever was wrong has cleared and something is still owed.
+                # Put the alert back rather than leaving a silent green screen.
+                self._silenced_by_block = False
+                self._reassert_alert()
 
             events = self._expire_due()
 
@@ -353,14 +645,20 @@ class Dispenser:
         # was off, or blocked on an untrusted clock, for the whole hour. Nobody
         # was ever offered this one, which is what separates it from the
         # `not-released` case below.
+        belongs_to = decision.day or day
         self.scheduler.confirm(decision, day)
         self._save_state()
-        self.indicator.dose_missed(decision.slot,
-                                   self.clock.at_minutes(decision.minutes))
+        self.indicator.dose_missed(decision.slot, self._instant_of(belongs_to,
+                                                                   decision.minutes))
         log.warning("tray %d: dose at %s was missed — its window had already closed",
                     decision.slot, sc1.format_hhmm(decision.minutes))
-        return self._record(decision.slot, decision.minutes, taken=False,
-                            reason="window-closed", confirmed=False)
+        event = self._record(decision.slot, decision.minutes, taken=False,
+                             reason="window-closed", confirmed=False, day=belongs_to)
+        # `_expire_due` has always done this and this branch never did. Settling
+        # a dose the device slept through must not take the alert down over a
+        # different dose that is owed right now and waiting on a tap.
+        self._reassert_alert()
+        return event
 
     def _offer(self, decision: Decision, day: int) -> None:
         """Paint the due screen, start the chirp, and wait for somebody to ask.
@@ -408,7 +706,8 @@ class Dispenser:
             log.warning("tray %d: the %s dose was never released — the tray stayed shut",
                         dose.tray, sc1.format_hhmm(dose.minutes))
             events.append(self._record(dose.tray, dose.minutes, taken=False,
-                                       reason="not-released", confirmed=False))
+                                       reason="not-released", confirmed=False,
+                                       day=dose.day))
         if expired:
             # Amber for the one that lapsed is right only if nothing else is
             # owed. Two trays at 08:00, one released and one not, must not leave
@@ -502,11 +801,39 @@ class Dispenser:
 
             records = []
             for dose in wanted:
-                # If this raises, everything before it is already recorded and
-                # this dose stays in `_due` — still owed, still releasable for
-                # the rest of its window. A jammed servo must not become a dose
-                # the log says was given.
-                self.servos.drop(dose.tray)
+                # Written down *before* the horn moves. The sweep is about two
+                # seconds and the gate is open for one of them, and everything
+                # that makes the dose durable happens after it — so a cut
+                # anywhere in there used to leave either a dose that gets
+                # dropped again on the next boot or one that was physically
+                # given and appears nowhere. `_settle_interrupted_dose` turns
+                # both into one honest line.
+                self.store.save_inflight({
+                    "tray": dose.tray,
+                    "minutes": dose.minutes,
+                    "day": dose.day,
+                    "seq": self._seq,
+                    "startedAt": _stamp(self.clock.now()),
+                })
+                try:
+                    # If this raises, everything before it is already recorded
+                    # and this dose stays in `_due` — still owed, still
+                    # releasable for the rest of its window. A jammed servo must
+                    # not become a dose the log says was given.
+                    self.servos.drop(dose.tray)
+                except KeyError as exc:
+                    # A tray with no servo behind it. `_restore` and
+                    # `set_schedule` both refuse those now, so this is the
+                    # belt-and-braces path for a pin map that changed under a
+                    # running process — and it must not escape as a `KeyError`,
+                    # because all three callers catch only `RuntimeError` and
+                    # turn anything else into a 500 or a silently swallowed
+                    # button press.
+                    self.store.clear_inflight()
+                    raise RuntimeError(str(exc)) from exc
+                except Exception:
+                    self.store.clear_inflight()
+                    raise
                 del self._due[dose.key]
                 self.scheduler.confirm(
                     Decision(what=Due.DISPENSE, slot=dose.tray, minutes=dose.minutes),
@@ -514,7 +841,12 @@ class Dispenser:
                 self._save_state()
                 self.indicator.dose_released(dose.tray)
                 records.append(self._record(dose.tray, dose.minutes, taken=True,
-                                            reason="released", confirmed=True))
+                                            reason="released", confirmed=True,
+                                            day=dose.day))
+                # Last, and only once the scheduler mark and the log line are
+                # both on the card. Until this line runs the dose is covered by
+                # the marker; after it, it is covered by the two files.
+                self.store.clear_inflight()
             self._reassert_alert()
             return records
 
@@ -560,6 +892,84 @@ class Dispenser:
         with self._lock:
             return sorted(self._due.values(), key=lambda d: d.minutes)
 
+    def first_waiting(self) -> tuple[int, str, int] | None:
+        """The dose the panel is asking about: `(tray, "08:00", tenths left)`.
+
+        One call, one lock, three values that are all bucketed — a tray number,
+        a printed time, and a count of tenths — because the caller is the health
+        snapshot and everything it carries is compared for equality to decide
+        whether to spend 38 ms repainting the panel. A remaining-seconds field
+        here would repaint four times a minute for the whole grace hour.
+
+        The earliest waiting dose, not the next scheduled one. Painting a green
+        "a dose is waiting" screen and captioning it with a tray twelve hours
+        away is the confirmed bug this exists to make impossible: with two doses
+        owed and one released, the screen has to keep naming the one still owed.
+
+        `None` when nothing is waiting, which is most of the day.
+        """
+        with self._lock:
+            if not self._due:
+                return None
+            dose = min(self._due.values(), key=lambda d: d.minutes)
+            # With the colon, not `sc1.format_hhmm`'s wire spelling: this one is
+            # read by a person from across a room, and `2000` on a panel reads
+            # as a year.
+            printed = f"{(dose.minutes // 60) % 24:02d}:{dose.minutes % 60:02d}"
+            return dose.tray, printed, dose.tenths_left(self.clock.now())
+
+    def today_outcomes(self) -> dict[tuple[int, int], str]:
+        """What happened to each of today's doses: `(tray, minute) -> state`.
+
+        `"taken"` or `"missed"`, and **a dose that is not in here is not a dose
+        nothing happened to** — it is a dose about which this machine is making
+        no claim. The distinction is the whole reason this is a separate ledger
+        rather than a field on the schedule:
+
+          a dose still in the future has no entry, and the panel draws it as
+          pending;
+
+          a dose in the *past* with no entry is drawn as an outline, meaning
+          "we do not know" — because `read_events` can legitimately come back
+          empty (an SD card only has to lose one byte), and a machine that
+          rendered an empty ledger as a row of confident ticks would be telling
+          a carer that six doses were taken on the strength of no evidence at
+          all. A false "taken" is the worst error this codebase recognises.
+
+        Written where the distinction is already known — inside `_record`, which
+        is the one place every dose passes through — rather than re-derived from
+        the scheduler's high-water mark, which cannot tell a delivered dose from
+        a missed one because it deliberately marks both the same way.
+
+        Rebuilt at boot from the recent log, so a restart at lunchtime does not
+        erase the morning from the panel. Emptied when the day rolls.
+        """
+        with self._lock:
+            self._roll_ledger(self.clock.day_number())
+            return dict(self._outcomes)
+
+    @property
+    def unfitted_trays(self) -> tuple[int, ...]:
+        """Trays the stored schedule names that this machine has no servo for.
+
+        Non-empty means a prescription is on the card and is not being
+        dispensed. It is kept as a fact rather than as a log line because
+        nothing else can notice it: the trays are dropped from the scheduler at
+        restore, so by the time anything asks, the plan looks perfectly
+        consistent with the hardware.
+        """
+        return self._unfitted
+
+    @property
+    def state_unknown(self) -> bool:
+        """True when scheduler.json is present and unreadable.
+
+        Separate from `blocked_reason`'s sentence so a caller can name the
+        subsystem — this is a card fault, not a clock fault, and they need
+        different corrective actions from whoever is standing in front of it.
+        """
+        return self._state_unknown
+
     def _notify_change(self) -> None:
         if not self.on_change:
             return
@@ -574,12 +984,24 @@ class Dispenser:
     # ── recording ───────────────────────────────────────────────────────────
 
     def _record(self, tray: int, minutes: int, taken: bool,
-                reason: str, confirmed: bool) -> dict:
+                reason: str, confirmed: bool, day: int | None = None) -> dict:
         event = sc1.DoseEvent(slot=tray, minutes=minutes, taken=taken, seq=self._seq)
         self._seq = (self._seq + 1) % 100
 
+        today = self.clock.day_number()
+        day = day or today
+        self._note_outcome(tray, minutes, reason, day, today)
+
         record = {
             "at": _stamp(self.clock.now()),
+            #: Which day this dose *belongs to*, which is not always the day it
+            #: was written. A reboot after a long outage emits up to
+            #: `CATCHUP_DAYS` of misses in one tick, and every one of them used
+            #: to carry the reboot instant and a bare HH:MM — so a carer opening
+            #: the app saw six lines reading "08:00 missed" stamped this
+            #: morning and could not tell six missed mornings from six misses
+            #: today.
+            "forDate": date.fromordinal(day).isoformat(),
             "tray": tray,
             "time": sc1.format_hhmm(minutes),
             "taken": taken,
@@ -602,6 +1024,74 @@ class Dispenser:
                 # dispensed and never written down.
                 log.exception("an event listener failed; the dose is recorded regardless")
         return record
+
+    def _instant_of(self, day: int, minutes: int) -> datetime:
+        """The instant a dose was due, on the day it belongs to.
+
+        `Clock.at_minutes` answers for *today*, which is right for every dose
+        the device is watching and wrong for the ones it slept through: a
+        machine catching up after a four-day outage told the panel that a dose
+        from last Friday was missed at 08:00 this morning.
+        """
+        at = self.clock.at_minutes(minutes)
+        if day and day != self.clock.day_number():
+            return datetime.combine(date.fromordinal(day), at.time())
+        return at
+
+    def _note_outcome(self, tray: int, minutes: int, reason: str,
+                      day: int, today: int) -> None:
+        """Add one dose to today's ledger, if it is one this ledger describes."""
+        state = _LEDGER.get(reason)
+        if state is None or day != today:
+            # A dose from a day that has ended is not part of today's picture,
+            # and putting it in would mark today's dose at the same minute as
+            # settled — a claim about a dose still sitting in the machine.
+            return
+        self._roll_ledger(today)
+        self._outcomes[(tray, minutes)] = state
+
+    def _roll_ledger(self, today: int) -> None:
+        """Empty the ledger when the day it describes has ended."""
+        if self._outcomes_day != today:
+            self._outcomes = {}
+            self._outcomes_day = today
+
+    @staticmethod
+    def _outcomes_from(events: list[dict], today: int) -> dict[tuple[int, int], str]:
+        """Rebuild today's ledger from the event log, oldest line winning last.
+
+        Read at boot so a machine that restarts at lunchtime still knows the
+        morning dose was taken — otherwise every reboot would erase the day's
+        record from the panel, and a person looking at it would see this
+        morning as a dose nothing is known about.
+
+        Every field is re-derived defensively: this is a file on an SD card that
+        a bit flip can reach, and one unparseable line must cost its own dose
+        rather than the whole ledger.
+        """
+        out: dict[tuple[int, int], str] = {}
+        for record in reversed(events):        # oldest first, so later wins
+            state = _LEDGER.get(str(record.get("reason", "")))
+            if state is None:
+                continue
+            try:
+                tray = int(record["tray"])
+                minutes = sc1.parse_hhmm(str(record["time"]))
+                stamp = record.get("forDate")
+                if stamp:
+                    day = date.fromisoformat(str(stamp)).toordinal()
+                else:
+                    # Written before `forDate` existed. The `at` stamp is the
+                    # instant it was recorded, which is the same day for
+                    # everything except a catch-up miss — and those are exactly
+                    # the lines that do not belong in today's ledger anyway.
+                    day = datetime.fromisoformat(str(record["at"])).date().toordinal()
+            except (KeyError, TypeError, ValueError):
+                continue
+            if minutes is None or day != today:
+                continue
+            out[(tray, minutes)] = state
+        return out
 
     def _save_state(self) -> None:
         self.store.save_state(self.scheduler.state, self._payload)
@@ -635,6 +1125,17 @@ class Dispenser:
                 "blockedReason": self.blocked_reason(),
                 "scheduleSource": self._source,
                 "payload": self._payload,
+                #: Trays the stored prescription names that this machine cannot
+                #: open. Non-empty means a medication is on the card and is not
+                #: being given, which nothing else anywhere reports — the trays
+                #: are dropped at restore, so by the time anybody looks, the
+                #: plan and the hardware agree perfectly.
+                "unfittedTrays": list(self._unfitted),
+                #: True when scheduler.json is present and unreadable. Paired
+                #: with `blockedReason`, which carries the sentence; this is the
+                #: machine-readable half, so the app can name the card rather
+                #: than blaming the clock.
+                "recordDamaged": self._state_unknown,
                 "slots": sc1.slots_to_json(slots),
                 "notes": sc1.loses_detail(slots),
                 "nextDose": ({"tray": upcoming[0], "time": sc1.format_hhmm(upcoming[1])}

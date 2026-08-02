@@ -21,7 +21,7 @@ import types
 
 from snapcare_dispenser import config, indicators, rtc, sc1
 from snapcare_dispenser.clock import Clock
-from snapcare_dispenser.display.canvas import Mono1
+from snapcare_dispenser.display.canvas import Rgb565
 from snapcare_dispenser.indicators import (
     FittedIndicator, LogIndicator, make_indicator,
 )
@@ -30,20 +30,21 @@ from snapcare_dispenser.indicators import (
 class FakeDisplay:
     """A panel that records the frames pushed at it instead of lighting up.
 
-    It hands out a real `Mono1`, not a stub, so anything that actually draws is
-    drawing on the surface the OLED uses — a screen function that runs off the
-    end of the buffer fails here rather than on the bench.
+    It hands out a real `Rgb565` at the fitted panel's own size, not a stub, so
+    anything that actually draws is drawing on the surface the ILI9341 reads —
+    a screen function that runs off the end of the buffer, or lays out against a
+    width it invented, fails here rather than on the bench.
     """
 
     backend = "fake"
-    width, height = 128, 64
+    width, height = 320, 240
 
     def __init__(self):
         self.frames = []
         self.closed = False
 
     def new_canvas(self):
-        return Mono1(self.width, self.height)
+        return Rgb565(self.width, self.height)
 
     def show(self, canvas):
         self.frames.append(canvas)
