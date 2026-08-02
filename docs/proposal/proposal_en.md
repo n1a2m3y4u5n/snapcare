@@ -219,6 +219,13 @@ Teach-back, telling the carer as well, finding pictures on the internet. None of
 > "The person concerned relies on the explanation of the pharmacist or of the family member who collected the medicine."
 > (Professor Eun-Kyoung Kim, Kongju National University)
 
+Why that place is the last one, Professor Katarina Vučićević of the University of Belgrade in Serbia set down in a single sentence.
+
+> "The pharmacist is the last healthcare professional to interact with the patient before the medication reaches their hands and therefore has a crucial responsibility to ensure that appropriate information is given."
+> (Professor Katarina Vučićević, University of Belgrade, Faculty of Pharmacy)
+
+The pharmacist is the last clinician the patient meets before the medicine is in their hands. After that there is no one. What §1.4 calls "the last step" is what lies after that sentence.
+
 This is what the blind spot of this section actually looks like. As far as the system reaches, people are filling it in, and what is empty begins where those people are not. The picture a pharmacist drew exists only inside the pharmacy; by the time the patient is home it is gone.
 
 This gap does not exist because the problem has gone unrecognised. National policy and health systems reach as far as the clinic and the pharmacy, and the moment a patient opens the medicine packet at home lies outside that reach. The point at which SnapCare intervenes is exactly that last step.
@@ -536,6 +543,10 @@ The thickest category, conversely, is dosage form. The reason is in §2.3. Once 
 The constraint of the black-and-white silhouette was touched from two directions in §5.7. Professor Namsoo Park of Hyupsung University wrote that in black and white alone it is hard to tell that the egg allergy marking is an egg, and that icons need to be drawn as the real thing; Professor Myoungsoon You of Seoul National University named "the half picture" as a place likely to be misread. The first became the basis, among the fixes after the survey in §5.7, for redrawing `allergen_egg` as a cracked egg; the second says that the half drawn by the `half{}` operator may not read as meaning a half. We have not fixed the second.
 
 E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols, pointed at another layer. Our set is black and white, whereas the symbol systems AAC users are familiar with are usually coloured, and the two look different. It interlocks with the decision in §3.7 to use colour only for the verdict and keep morphemes black and white. Using colour loses users with colour vision deficiency; not using it loses users accustomed to coloured symbols. We chose the former, and we record the cost here.
+
+What is missing, the respondents pointed out themselves. Sheron Sir Loon Goh, Pharmacy Lecturer, gave as examples of special instructions "shake before use" and "keep away from children". Neither is among the present 78. Niken Nur Widyakusuma, PhD and pharmacist at Universitas Gadjah Mada in Indonesia, pointed at another layer: telling the medicines apart comes first when several arrive at once, and the present set distinguishes medicines only by dosage form. Receiving two different capsules produces two identical rows.
+
+Professor Katarina Vučićević of the University of Belgrade widened the scope of interactions. Over-the-counter products, dietary supplements and underlying conditions may be clinically significant too, not only other medicines. What the verdict of §2.4 handles is the prescribed medicine and the conditions the user registered, so that scope currently lies outside.
 
 We record here that the set is not closed. Prescriptions keep producing things these 78 cannot draw, and what the app does at that moment is covered by the `\?concept` marker in §2.3 and the expansion path in §5.10.
 
@@ -1657,6 +1668,10 @@ Five symbols were reworked without improving. These differ in nature from the se
 | `sesame` | Seeds in a pod worked better than scattered seeds, but `soy` is already a bean pod | **Collides within the set** |
 | `sachet` | The tear serration of a medicine sachet and the crimp of a sweet wrapper are the same shape in silhouette | Form alone does not separate them |
 
+§5.7 added one that is not in this table. Sheron Sir Loon Goh, Pharmacy Lecturer, wrote that a capsule picture with one dot beside it does not read as "once a day"; without hearing the audio the relationship is not visible.
+
+This is the kind the semantic check of §5.2 cannot catch. That check shows one morpheme on its own and asks what it looks like, whereas this problem is whether the relationship reads when two morphemes occupy one cell. One dot reads well as one dot and a capsule reads well as a capsule. Whether overlaying them yields "once a day" was never asked. That the procedure of §5.2 checks morphemes and not combinations shows here.
+
 These five are set out because they show where the limits of the pictogram as a medium lie. All seven that could be improved were resolved by choosing a better object, whereas for these five the concept itself does not hold as a standalone silhouette.
 
 The rework log for `sachet` is worth keeping. Two directions were tried and both failed.
@@ -1910,6 +1925,8 @@ The zero for "No" and the two thirds for "Partly" have to be read together. No o
 
 In the pharmacy segment, 9 of 12 answered that a pharmacist should review the instructions this app produces every time, with 3 answering that once at the start is enough. As to where it belongs, 7 chose a tool supporting the pharmacist's explanation, 3 a means for the patient to check alone at home, and 2 an alternative route for patients a pharmacist cannot reach. As to what must not be wrong medically, 7 named dose and frequency, 3 named contraindications and interactions, and one each named route of administration and not stopping early.
 
+In the nursing and public health segment, asked whether it can change health outcomes, 8 of 9 answered that it can once the conditions are met, and one answered differently. Professor Raghupathy Anchala of the Public Health Foundation of India judged that dosing behaviour might change but not outcomes. It sits in the same place as the third item in §5.9, where we record that we make no claim about clinical outcomes, and although the split is eight to one, the side this document stands on is the one.
+
 In the nursing and public health segment, 6 of 9 answered that the patient and the carer should be designed for separately. This app is designed on the premise that the patient uses it alone, so what was caught is the premise rather than a feature.
 
 #### How far the numbers can be pushed
@@ -2083,6 +2100,10 @@ Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, wrote that
 
 Professor Celia of the University of Pretoria recommended using an adherence instrument together with the K-HLAT-8 and HLS family of instruments. Professor Namsoo Park of Hyupsung University judged that since the purpose of this app is comprehension of medication instructions, measuring user satisfaction, intention to continue using it and the degree of improvement in convenience fits better than a health-literacy instrument.
 
+Sheron Sir Loon Goh, Pharmacy Lecturer, asked for one more thing ahead of the test: before launching the app, seek professional advice from local pharmacists on whether the symbols are appropriate in the local context. That five clinical errors turned up in our sample prescriptions in §5.7 shows why that advice is needed. We corrected them against public sources without review, and for the 78 morphemes we have not even done that much checking.
+
+The same respondent also pointed us to a reference: a study testing pictograms designed in Malaysia on that country's population (Tumkur, A., Ingle, P., Ling Sze Ning, Q., Bustamin, N. A., Tee, K. H., Chai, T. L. & Hatware, K., "Evaluation of designed pharmaceutical pictograms among the Malaysian population," *Clinical Epidemiology and Global Health*, 2025, doi:10.1016/j.cegh.2025.102115). We record why its results are not used in the body: all three routes, the publisher, DOAJ and Semantic Scholar, failed to open the abstract, and we could not confirm the figures in the search summary at a primary source. What is recorded here is only that the survey pointed us to literature we did not know.
+
 Professor Eun-Kyoung Kim pointed at the procedure before the test rather than the test itself: explain the purpose and the benefit from the learner's point of view to the institution and the literacy teacher first, obtain their cooperation, and only then use part of a class period. Asked whether a tool like this might reduce the motivation to learn to read, the same respondent answered that it would not, on the grounds that the motivation to learn to read is more than the acquisition of a skill.
 
 #### Every answer, by occupation
@@ -2209,6 +2230,12 @@ The denominators are small. The largest segment, pharmacy, is 12 people. Written
 
 **There was no response from the 41 chosen by hand.** The 41 with the clearest selection basis were put at the front of the sending order and all received it within seven minutes, and the response count is zero. This result cannot be used as "the judgement of the 41 we considered most important."
 
+Three respondents told us the survey instrument itself was flawed. Professor Atif Usman of The Islamia University of Bahawalpur asked that multiple responses be allowed in every segment, and Associate Professor Hangil Lee of Ewha Womans University wrote that only one option could be selected so he chose contraindications, though side effects and dose adjustment belong in the same place. Professor Namsoo Park of Hyupsung University said the same thing: asked where an older patient living alone fails first, he answered that operating the screen, managing the device and trust arrive together.
+
+The distributions for single-choice questions in this section therefore do not hold everything the respondents wanted to choose. That has to be read alongside the figures in Table 45, and it is why this section presents the free text next to the multiple choice.
+
+E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols, told us of another flaw: they only realised at the end that there was a button back to the screen showing the 78 morphemes. How many responses were given without being able to look at the morphemes again, we do not know. The same respondent suggested putting a link back to the morphemes inside the questions.
+
 There are groups the link does not reach. The Korea Institute for Health and Social Affairs replied that as a public institution it cannot open an unverified URL and asked us to send the questions by email. The list contains 91 international organisations alone, and running a survey through a single link structurally fails to reach this group. A version with the same questions written in the body of the email should have been prepared alongside.
 
 The screen respondents saw is not the screen our users will see. Of the 35, 30 answered on a desktop, 3 on mobile and 2 on a tablet. This app is built on the premise of use on a handheld device (§1.6), so a judgement formed on a large screen may come out more generous than the real condition. That the point about icons being small and needing magnification came from a desktop respondent rather than a mobile one should be read alongside this.
@@ -2261,7 +2288,11 @@ Sixth, the site of administration is empty for two dosage forms. As Table 9 show
 
 Seventh, the sample prescriptions have not been reviewed by a pharmacist. The four samples used in this document and in the survey of §5.7 were made by us from public sources; no pharmacist or doctor reviewed them. Five clinical errors came to light after the fact. One storage condition was raised by a respondent, and four warning lines we found ourselves while re-checking after that. All four were problems with the example rather than with the engine, but that example was where the heaviest finding of §5.7 stood. We have no grounds for saying there are no more. The wording as corrected now was corrected against public sources, not reviewed.
 
-Eighth, whether people keep using it was not measured. The formative evaluation of §5.1 covers a single capture, and whether the same person opens this app again a few days later was not measured. What the industry-practice respondent in §5.7 chose as the first thing to break in operation is that point.
+Eighth, users with intellectual disability were not addressed. Raisa Kravchenko, Deputy Director of the All Ukrainian NGO Coalition for Persons with Intellectual Disabilities in Ukraine, wrote that the sounds are good but the pictograms should be improved and tested with people with intellectual disability. This app was designed for low literacy, and intellectual disability is a different condition. The checking step of §3.8 is the feature closest to that direction, but it was not designed for that group.
+
+Ninth, cross-cultural misreading was not measured. Professor Afonso Cavaco of the Universidade de Lisboa wrote that the design needs robust testing and that interpretation errors may happen, especially in cross-cultural practice. Table 6 and Figure 10 in §1.8 already show this, and our set was designed in Korea and has not yet been tested anywhere. It sits in the same place as the second item in this section, but where that item states the absence of cultural adaptation, this one states that we have not measured in which direction misreading occurs before adaptation.
+
+Tenth, whether people keep using it was not measured. The formative evaluation of §5.1 covers a single capture, and whether the same person opens this app again a few days later was not measured. What the industry-practice respondent in §5.7 chose as the first thing to break in operation is that point.
 
 ---
 

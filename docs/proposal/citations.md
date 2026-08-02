@@ -312,6 +312,7 @@ PMC8544505 한국 고령자 79.4%/28.2% · PMC7532569 몰도바 건강문해력 
 | Mourad, N. et al., *BMC Public Health* 23:1926 | PMC 전문 | 확인. n=1,848. 9.36±1.60 → 10.88±0.89, 차이 1.52 (95% CI 1.45~1.60). 나이 Beta = −0.019 |
 | Chaudry, B. et al., *PervasiveHealth 2011*:160 | PMC 전문 | 확인. CKD 5기 10명, REALM 3/3/4. 액체 10/10, 무정형 8/10, 고형식 0/10 |
 | Nielsen, J. & Landauer, T. K., *Proc. INTERCHI 93*:206 | 응답자가 지목 | 최묘정 연구원이 소규모 표본의 근거로 든 것이다. 서지 정보만 보완했고 우리가 이 값을 주장에 쓰지는 않는다 |
+| Tumkur, A. et al., *Clin Epidemiol Glob Health*, 2025 | 열지 못함 | Sheron Sir Loon Goh 전임강사가 알려 준 논문이다. 출판사·DOAJ·Semantic Scholar 셋 다 초록을 열지 못해 결과를 쓰지 않고, 응답자가 알려 주었다는 사실만 5.10 에 적었다 |
 
 ### 표본 처방전을 대조한 것
 
