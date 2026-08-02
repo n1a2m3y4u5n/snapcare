@@ -329,6 +329,29 @@ def chart_three_layers():
     fig.subplots_adjust(left=0.32 if LANG != 'en' else 0.36)
     save(fig, 'chart13_three_layers')
 
+# ── 항생제 내성이 지역별로 어디에 몰리는가 ─────────────────────────
+def chart_amr_region():
+    """§1.1 의 문해율이 가장 낮은 지역과 겹친다는 것이 이 그림의 논지다."""
+    fig, ax = plt.subplots(figsize=(6.0, 2.6))
+    title(fig, T('보고된 세균 감염 중 항생제 내성 비율 (WHO GLASS, 2025)'),
+          note=T('세계 평균은 여섯 중 하나다. 값이 높은 두 지역이 문해율이 가장 낮은 지역과 겹친다.'))
+    labs = [T('동남아시아 · 동지중해'), T('아프리카'), T('세계 평균'), T('아메리카')]
+    vals = [33.3, 20.0, 16.7, 14.3]
+    frac = [T('셋 중 하나'), T('다섯 중 하나'), T('여섯 중 하나'), T('일곱 중 하나')]
+    cols = [RED, ORANGE, DARK, GREY]
+    for i, (v, c, f) in enumerate(zip(vals, cols, frac)):
+        ax.barh(i, v, 0.55, color=c, zorder=2)
+        ax.text(v + 0.7, i, f, va='center', fontsize=9, fontweight='bold',
+                color=c if c != GREY else INK)
+    ax.set_yticks(range(len(labs)))
+    ax.set_yticklabels(labs)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 45)
+    ax.set_xlabel(T('내성을 보인 감염의 비율 (%)'))
+    frame(ax)
+    fig.subplots_adjust(left=0.29 if LANG != 'en' else 0.32)
+    save(fig, 'chart14_amr_region')
+
 
 if __name__ == '__main__':
     chart_literacy()
@@ -344,3 +367,4 @@ if __name__ == '__main__':
     chart_harm_stage()
     chart_policy_depth()
     chart_three_layers()
+    chart_amr_region()

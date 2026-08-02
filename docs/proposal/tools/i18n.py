@@ -221,6 +221,15 @@ EN = {
     '31개국 성인의 18% · 분모가 달라 막대로 그리지 않는다':
         '18% of adults across 31 countries. A different denominator, so no bar is drawn',
     '사람 수 (백만 명)': 'People (millions)',
+    '보고된 세균 감염 중 항생제 내성 비율 (WHO GLASS, 2025)':
+        'Share of reported bacterial infections resistant to antibiotics (WHO GLASS, 2025)',
+    '세계 평균은 여섯 중 하나다. 값이 높은 두 지역에 문해율이 가장 낮은 나라들이 있다.':
+        'The world average is one in six. The two highest regions overlap with those of lowest literacy.',
+    '동남아시아 · 동지중해': 'South-East Asia · Eastern Mediterranean',
+    '아프리카': 'Africa', '세계 평균': 'World average', '아메리카': 'Americas',
+    '셋 중 하나': '1 in 3', '다섯 중 하나': '1 in 5', '여섯 중 하나': '1 in 6', '일곱 중 하나': '1 in 7',
+    '내성을 보인 감염의 비율 (%)': 'Share of infections showing resistance (%)',
+    '그 밖': 'Other',
 }
 
 
