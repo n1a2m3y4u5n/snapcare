@@ -464,7 +464,15 @@ function DemoBlock({
     <section
       className="mb-7"
       onClickCapture={(e) => {
-        if ((e.target as HTMLElement).closest('button')) onTouch();
+        /*
+         * role="button" 을 함께 본다.
+         *
+         * 스피커는 <button> 이 아니라 <span role="button"> 이다 (components/sc/Say.tsx).
+         * closest('button') 만 보던 동안 클릭이 한 번도 잡히지 않아, 응답 34건의
+         * demoTouched 가 전부 false 로 기록되었다. 아무도 듣지 않은 것이 아니라 우리가
+         * 재지 못한 것이며, 그 34건의 값은 쓸 수 없다.
+         */
+        if ((e.target as HTMLElement).closest('button,[role="button"]')) onTouch();
       }}
     >
       {/* 1. 아이디어 */}
