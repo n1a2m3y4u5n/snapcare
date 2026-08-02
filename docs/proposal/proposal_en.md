@@ -1594,6 +1594,426 @@ What survives when the connection drops and what does not divides as follows. Wi
 
 This division matches the boundary described in §4.5. The most urgent things were placed on the device, so what dies first when the connection drops is the least urgent route. This check was made by cutting the connection in developer tools, however, rather than measured in an actual low-bandwidth environment. Having no connection and having a slow one fail differently, and the latter has not yet been measured (§5.9).
 
+### 5.7 Expert opinion survey
+
+As stated in §5.4, every measurement up to this point has been a machine scoring a machine. So we asked people. The people we asked, however, are not low-literate patients but those who deal with such patients every day. Because that distinction matters, we state it first. **This survey does not stand in for the comprehension testing of §5.9.** An expert answering that "a patient would probably be able to read this" does not mean a patient read it.
+
+#### How the list was built
+
+The list was not built in one pass. It was researched separately across eight domains and then combined. Searching sequentially, one person carries the criteria of the first domain into the later ones and the sample tilts one way. Researching by domain means people are chosen by the standards of each field.
+
+[Table 39] The eight domains of the list (846 in total)
+
+| Domain | Count | On what criteria they were chosen |
+|---|---|---|
+| Korean pharmacy schools | 109 | 8 with direct contact in counselling and patient communication, 16 in social pharmacy, 45 in clinical pharmacy and pharmacotherapy, 26 in pharmacoepidemiology, medicines policy and health informatics |
+| Korean nursing and public health | 64 | 18 health-literacy researchers, 10 in digital and e-health literacy, 5 in migrant and multicultural health, 11 in gerontological and community nursing, 12 in health education and policy |
+| Korean HCI and design | 86 | 23 core HCI, 21 information design, pictograms and universal design, 15 security and privacy, 6 voice and audio |
+| Korean literacy and special education | 92 | 11 in AAC and graphic symbol design, 19 in adult literacy and lifelong education, 38 in intellectual disability and special-education technology, 5 in multicultural education |
+| International pictogram research | 78 | 38 on pictogram comprehension and validation, 27 on medicine label comprehension and health literacy, 5 institutional addresses |
+| International pharmacy | 221 | By department rather than by individual. Utrecht 71, Ohio State 30, Nottingham 25, Western Cape 17 and others |
+| International HCI | 88 | 12 on text-free UI, low literacy and ICT4D, 13 on pictogram comprehension, 16 on AAC and graphic symbol systems, 18 on accessibility, 9 on plain language |
+| International organisations | 108 | WHO, UNESCO, UNICEF and others. 91 addresses confirmed, 17 with a contact form only or unpublished |
+
+The eight domains sum to 846. The remaining 257 came from the regional expansion described below, bringing the final list to 1,103.
+
+Each domain is further divided into priority bands, and the name of the band is itself the selection criterion for that domain. The top band for Korean nursing and public health, for example, is named "people who research health literacy itself", and the reason for writing that criterion was to have the premise of §1.2 examined.
+
+A source URL was recorded for every entry: 599 of them, 296 unique, across 169 hosts. The leading hosts are `pmc.ncbi.nlm.nih.gov` with 94, where corresponding-author addresses were confirmed from papers, the Moldovan Ministry of Health public directory with 32, and `who.int` with 11.
+
+Where an address could not be found it was not invented but left in a separate band. Fourteen from Korean pharmacy schools, 8 from Korean nursing and public health, 15 from Korean HCI, 17 from Korean literacy and special education, 8 from international pictogram research and 17 international organisations were classified this way and excluded from sending. The corresponding band in the international-organisations sheet is named `Contact-form-only or address-not-published (no address fabricated)`.
+
+The initial list leaned towards Korea and the English-speaking world. Since this app claims not to be for one particular region (§1.2), we judged that the people reviewing it should not be concentrated in one country either, and researched and added 105 in Eastern Europe, 100 in the Middle East and North Africa, 96 in South Asia, 50 in Latin America, 49 in Southeast Asia and 47 in Africa. Those six groups come to 447, 40.5% of the whole. That responses arrived from five continents is the result of this step.
+
+Moldova was a judgement call. Thirty-one addresses were obtained from the Ministry of Health directory and only three were used. Thirty-one messages leaving for one ministry at once reads as spam in itself, and we judged it would not serve the team's Moldovan working relationships either.
+
+Rules for handling the list were written down separately. Taking Article 50-2 of the Korean Act on Promotion of Information and Communications Network Utilisation (prohibition of unauthorised collection of email addresses) as the basis, we set out that messages would be sent individually rather than with several recipients on one message, that the list would not leave the team, that addresses obtained from pages posting a refusal of collection would be excluded from sending, and that no one would be contacted a second time if they did not reply. That no address from the two institutions confirmed to have posted such a refusal remained among the recipients was verified against both the domain and the affiliation string, and the count was zero.
+
+Each recipient was assigned a ten-character token derived from their email address. The token alone identifies no one, and the table linking tokens to people exists only in a spreadsheet in our own hands. The response server stores only tokens, and because the folder holding the list was excluded when the Docker image was built, the server does not hold the list at all. That the deployed image contains no list was verified by connecting to it.
+
+#### How it was sent
+
+Between 04:48 and 07:50 on 31 July 2026, over 182 minutes, 1,103 messages were sent one at a time. The mean interval was 9.9 seconds and no address was rejected. Bulk mail and blind copy were not used because the rules forbid addresses being exposed to one another and because the link carries a different token for each person, so several people cannot share one message.
+
+A delivery service was not used; the SMTP of a personal mail account was. A delivery service can send 1,103 messages in minutes, but it needs a domain on which SPF and DKIM can be configured, and ours is `snapcare.fly.dev`, a subdomain to which DNS records cannot be attached. Even buying a new domain, sending 1,103 messages from a freshly created domain to university and government mail servers gets filtered harder. Fast, and worse at arriving.
+
+The daily sending limit was not guessed at, because it is not published. Instead the program was built not to die when blocked, and run once. It writes each person to a file and flushes to disk as it goes, so a run cut short can be resumed. The record is written immediately after sending: if we recorded first and the send then failed, that person would never receive it, whereas sending first and failing to record means they might receive it once more, which we judged the less bad tail. A temporary rejection waits and retries with a growing delay, a non-existent address is counted and passed over, and three failures on one message is taken as the account being blocked and stops the run.
+
+The 41 people with the clearest selection basis were put at the front of the sending order. The list is not ordered by rank, so sending it as it stood would have scattered them across three hours, and an account blocked partway would have meant some of them never receiving it. Changing only the order removes that risk. All 41 were in fact sent within the first seven minutes.
+
+Language was decided from the email top-level domain alone. Searching the affiliation string for a country name was not used. If the selection-reason field contains "Moldova", WHO and a Portuguese researcher are caught as Moldovan too; tested that way it caught 30 people, a good number of them misclassified. By domain alone it yields 34, all of them genuinely Romanian-language institutions.
+
+The subject line was revised three times. It began with `SnapCare`, but that name means nothing to the recipient, and a subject beginning with an unfamiliar name reads as advertising. The next version put a ministry name in square brackets at the front, which was worse. It reads as an official letter from an institution rather than a student asking for advice, and gives the impression of borrowing that authority. The final version drops the brackets and leads with the name of the contest alone.
+
+There is judgement in what was taken out of the body as well. The draft carried "I am asking those who have worked on medication guidance and low-literate users," but the 1,103 include professors of computer science and legal scholars, so for many of them it is not true. Reading something at odds with your own career makes you disbelieve the rest of the sentences too. It was changed to "I am writing after reading your published research and work." That is true of everyone and also answers "why me."
+
+A plain-text version was sent alongside the HTML one. In a text-only message the address cannot be tapped and has to be copied by hand, and some people stop there. The HTML version contains no images and no tracking pixel. Anything fetched from outside raises the chance of being caught as spam, and there is no need to know who opened it.
+
+A test send before the run caught three defects: greetings for 63 international recipients that would have gone out with Korean mixed in, message generation dying with an exception in header handling, and links that could not be clicked.
+
+The survey is three screens: consent, a screen showing what we built, and the questions for the field the respondent selected. The second screen places two sample prescriptions beside the result of passing them through the engine. The DSL shown there is the engine's actual output, not something a person wrote. It was written by hand at first, and that produced five lines; putting the same prescription through the engine produced ten. Finish-the-course, no-alcohol, pregnancy contraindication and breastfeeding caution had been missing from the hand-written version. One ends up showing only what one wants to show.
+
+The answer options always kept a choice that is unfavourable to us: "there is nowhere to put it", "it is fundamentally wrong-headed", and "that there is no validation". We judged that having those answers come back was better than learning it after the contest.
+
+A morpheme comprehension test was left out of the survey. A professor reading our pictograms does not mean a low-literate patient reads them, and writing that number down as meeting the ISO 67% criterion would state something untrue.
+
+#### Who answered
+
+As of 2 August 2026, 34 people had answered: 3.1% of those contacted, with 93 free-text responses alongside.
+
+[Table 40] Composition of respondents (n = 34)
+
+| Field | Responses | Field | Responses |
+|---|---|---|---|
+| Pharmacy and medication counselling practice | 11 | HCI and design | 2 |
+| Nursing and public health | 9 | Adult literacy education | 1 |
+| Other | 9 | AAC and special education | 1 |
+| | | Industry practice | 1 |
+
+![Figure 39](fig/chart15_survey_who.png)
+
+**[Figure 39]** The composition of the 34 respondents. Field on the left, continent on the right. Pharmacy and nursing account for two thirds at 20 people, and these two are the centre of the five segments we judged qualified to view the demonstration and rule on patient comprehension. That Asia accounts for 24 reflects exactly the order in which the list was built, starting in Korea and widening region by region.
+
+The countries respondents recorded as working in span 19 countries across five continents, with 16 recording Korea only. All respondents consented to being quoted by name and affiliation, so they are recorded here as given.
+
+[Table 41] The 34 respondents (all consented to being named with their affiliation)
+
+| Name | Position | Affiliation | Country |
+|---|---|---|---|
+| **Pharmacy and medication counselling practice (11)** | | | |
+| Hwi-Yeol Yun | Professor | College of Pharmacy, Chungnam National University | Republic of Korea |
+| So-Young Lee | Professor and pharmacist | Chungnam National University | Republic of Korea |
+| Dongmun Ha | Professor | Mokpo National University | Republic of Korea |
+| Niken Nur Widyakusuma | PhD, pharmacist | Universitas Gadjah Mada | Indonesia |
+| Samirah Abdu-Aguye | Professor | Ahmadu Bello University, Zaria | Nigeria |
+| Atif Usman | Professor | The Islamia University of Bahawalpur | Pakistan and Malaysia |
+| Srikanth Malavalli Siddalingegwod | Assistant Professor | JSS College of Pharmacy, JSS Academy of Higher Education & Research | India |
+| Maria Stefanova | Researcher | Medical University of Sofia | Bulgaria |
+| Katarina Vučićević | Professor | University of Belgrade, Faculty of Pharmacy | Serbia |
+| E. Michael Murphy | Assistant Professor of Clinical Pharmacy | The Ohio State University College of Pharmacy | United States |
+| Sheron Sir Loon Goh | Pharmacy Lecturer | Department of Clinical Pharmacy and Pharmacy Practice | Malaysia |
+| **Nursing and public health (9)** | | | |
+| Sung-il Cho | Professor | Seoul National University | Republic of Korea |
+| Myoungsoon You | Professor | Seoul National University | Republic of Korea |
+| Minsun Song | Professor | Konyang University | Republic of Korea |
+| Namsoo Park | Professor | Hyupsung University | Republic of Korea, Japan and Taiwan |
+| Rahul Malhotra | Associate Professor | Duke-NUS Medical School | Singapore |
+| Raghupathy Anchala | Professor | Public Health Foundation of India | India |
+| Celia | Professor | University of Pretoria | South Africa |
+| Foued Maaoui | Researcher | Institut Pasteur de Tunis | Tunisia |
+| Aliya Naheed | Senior Scientist | International Centre for Diarrhoeal Disease Research (icddr,b) | Bangladesh |
+| **AAC and special education · adult literacy · HCI and design · industry practice (5)** | | | |
+| E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · University of Southampton | United Kingdom |
+| Eun-Kyoung Kim | Professor | Kongju National University | Republic of Korea |
+| Yonghan Lee | Senior Manager | Korea Craft and Design Foundation | Republic of Korea |
+| Myojung Choi | Researcher | Korea Disabled People's Development Institute | Republic of Korea |
+| Cheolhyeon Park | Team Leader | VOICEYE | Republic of Korea |
+| **Other (9)** | | | |
+| Kyogu Lee | Professor | Seoul National University | Republic of Korea |
+| Kyunghwa Lee | Professor | Soongsil University | Republic of Korea |
+| Heejung Seo | Professor | Dong-eui University | Republic of Korea |
+| Youngmee Lee | Professor | Department of Communication Disorders, Ewha Womans University | Republic of Korea |
+| Kyungseo Park | Assistant Manager | Korea Disabled People's Development Institute | Republic of Korea |
+| (name withheld) | Team Leader | GC Medi-AI, Uisarang Service Centre | Republic of Korea |
+| Raisa Kravchenko | Deputy Director | All Ukrainian NGO Coalition for Persons with Intellectual Disabilities | Ukraine |
+| Afonso Cavaco | Professor | Faculdade de Farmácia, Universidade de Lisboa | Portugal |
+| Mustapha Taibi | Professor of Translation and Interpreting | Western Sydney University | Australia |
+
+Half the respondents work outside Korea. Since this app claims not to be for one particular region (§1.2), we judged that the people reviewing it should not be concentrated in one country either, and when building the list we separately researched and added groups for Eastern Europe, the Middle East and North Africa, South Asia, Latin America, Southeast Asia and Africa. Those groups are 40.5% of the 1,103.
+
+One thing has to be set down here. Forty-four percent of respondents (15 people) answered that they "almost never" encounter someone unable to read a written medication instruction. Four answered that they encounter such a person almost daily. And one respondent pointed this out directly. It means the answers to this question are themselves evidence about the premise of §1.1, and not in a direction that favours us.
+
+#### What they answered
+
+The questions calling for a judgement on the demonstration were attached to five segments only. They were not attached to the law, standards and industry segments. Ruling on patient comprehension is not something that can be done from those positions, and mixing unqualified answers into the denominator makes the resulting proportion a proportion of nothing.
+
+[Table 42] Could a patient who cannot read take their medicine correctly, alone, with only these screens? (five qualified segments, n = 24)
+
+| Answer | Responses |
+|---|---|
+| Partly. Some of it would work and some would not | 16 |
+| Yes, it probably could | 7 |
+| No basis on which to judge | 1 |
+| No | 0 |
+
+The zero for "No" and the two thirds for "Partly" have to be read together. No one answered that the approach itself is wrong, and only a few answered that it is sufficient as it stands. Of the five who answered the broad question across the five segments, four chose "that there is no validation with people" as the first thing to resolve.
+
+In the pharmacy segment, 8 of 11 answered that a pharmacist should review the instructions this app produces every time, with 3 answering that once at the start is enough. As to where it belongs, 6 chose a tool supporting the pharmacist's explanation, 3 a means for the patient to check alone at home, and 2 an alternative route for patients a pharmacist cannot reach. As to what must not be wrong medically, 6 named dose and frequency and 3 named contraindications and interactions.
+
+In the nursing and public health segment, 6 of 9 answered that the patient and the carer should be designed for separately. This app is designed on the premise that the patient uses it alone, so what was caught is the premise rather than a feature.
+
+#### How far the numbers can be pushed
+
+An n of 34 is small. So rather than recording proportions alone we record how much those proportions move. The intervals below are 95% confidence intervals by the Wilson method. With a small sample the normal approximation produces intervals dropping below 0 or exceeding 1; Wilson does not.
+
+[Table 43] Proportions and 95% confidence intervals for the judgement question (n = 24)
+
+| Answer | Responses | Proportion | 95% CI |
+|---|---|---|---|
+| Partly | 16 / 24 | 66.7% | 46.7% – 82.0% |
+| Yes, it probably could | 7 / 24 | 29.2% | 14.9% – 49.2% |
+| No basis on which to judge | 1 / 24 | 4.2% | 0.7% – 20.2% |
+| No | 0 / 24 | 0.0% | 0.0% – 13.8% |
+
+![Figure 40](fig/chart10_survey.png)
+
+**[Figure 40]** Proportions and 95% confidence intervals for the judgement question (n = 24). The dot is the proportion, the line is the interval. The width of the intervals is the size of this sample, and what to read in this figure is the length of the lines rather than the position of the dots. Even with zero "No" answers, the interval reaches 13.8%.
+
+The last row is the place in this table to be most careful about. Zero "No" answers does not mean no one would answer that way. What this sample supports is that the proportion is probably below 13.8%, and as many as three in 24 would not contradict this result.
+
+We then tested whether differences exist between groups. Fisher's exact test was used throughout. Chi-squared cannot be used when an expected cell frequency falls below 5, and the tables from this sample always do. It is the same reason the same test is used for allergy inference in §2.5.
+
+[Table 44] Tests of difference between groups
+
+| What against what | Observed | Test | p | Verdict |
+|---|---|---|---|---|
+| Contact frequency vs judgement | "possible" in 2/4 frequent, 5/20 rare | Fisher | 0.552 | no difference can be claimed |
+| Occupation vs judgement | "possible" in 4/11 pharmacy, 3/9 nursing | Fisher | 1.000 | no difference can be claimed |
+| Response rate, band A vs B | 0/41 against 34/1,062 | Fisher | 0.634 | no difference can be claimed |
+| Language vs judgement | "possible" in 0/10 Korean, 7/14 English | Fisher | 0.019 | below threshold after correction |
+| Language vs time taken | median 7.1 min against 24.0 min | Mann-Whitney | 0.034 | below threshold after correction |
+| Time taken vs free-text volume | rho = 0.717 | Spearman | < 0.0001 | significant |
+
+Five tests were run, so the Bonferroni-corrected threshold is 0.010. Only the last row exceeds it, and that says people who stayed longer wrote more, which is not a finding about content. In other words, nothing in this survey supports a claim of difference between groups. Dropping the non-significant tests and reporting only the significant one would be the worst thing that could be done with this sample, so everything that was run is recorded.
+
+The fourth and fifth rows are interesting but are not made into claims. That not one of the ten who answered in Korean answered "possible" while half of the fourteen who answered in English did, and that Korean respondents stayed far more briefly than English respondents, are significant before correction and not after. And language is entangled with the respondent's country and occupation, so even if a difference exists, this data cannot separate whether it is due to language or to something else.
+
+The sixth row is worth reading on its own. A rank correlation of 0.717 between time taken and free-text volume means that people who stayed longer did in fact write more, and it can serve as a proxy for the care taken over a response. The median time taken is 10.3 minutes, with quartiles at 6.0 and 40.5 minutes. E. A. Draffan noted separately that they were interrupted partway and that their own time should not be read as time actually spent.
+
+Free text was written by 29 of the 34 respondents, 113 items in all. Counting by keyword how many people independently raised the same point gives 6 on the absence of validation, 5 on too many elements in one image, 5 on blind users, 4 on the prohibition marking and 3 on referring to existing sets. That count is by words we chose, however, so the body text uses the counts a person read and confirmed.
+
+#### Points raised in several countries at once
+
+The heaviest finding was that a prohibition is not read as a prohibition. The morpheme for pregnancy contraindication, `state_pregnant`, is a picture of a pregnant woman with no prohibition marking. The prescription says "do not use during pregnancy" and the speech says so too, but to someone looking only at the picture it reads the other way round.
+
+> "The prescription says not to use during pregnancy, yet the pictogram shows a pregnant woman, which makes the patient think it is safe to use during pregnancy."
+> (Professor Atif Usman, The Islamia University of Bahawalpur)
+
+> "Putting in the pregnancy symbol alone does not convey that it is unsafe, so an X mark should be added."
+> (Sheron Sir Loon Goh, Pharmacy Lecturer, Department of Clinical Pharmacy and Pharmacy Practice)
+
+Raisa Kravchenko, Deputy Director in Ukraine, wrote that "with no danger marking it can be understood as being recommended for pregnant women", and Professor Eun-Kyoung Kim of Kongju National University noted that "'you must do this' and 'you must not' are not properly distinguished; the 'must not' in particular ought to be emphasised." The same statement came from four different countries.
+
+**This is exactly the critical confusion that ANSI Z535.3, cited in §1.8, is about.** And as described in §2.2 the engine already has the `\no{}` operator and can draw the prohibition circle and slash. `\no{\contact_lens}` in the same demonstration comes out with the slash on it. The code emitting contraindications simply was not calling it. It is a defect caused by not calling a capability that exists rather than by a capability being absent, which is the same kind as the 0 of 28 in §5.1.
+
+The same kind of inversion was raised for the finish-the-course morpheme.
+
+> "As the black dots are not filled to the end, to me it reads as meaning I do not have to finish the course."
+> (Sheron Sir Loon Goh)
+
+`finish_course` is the very morpheme named in the SDG 3.d contribution of §5.8 as what this app aims at. The finding is that it reads as the exact opposite.
+
+Too many elements in one image was raised in three countries. Myojung Choi, a researcher at the Korea Disabled People's Development Institute, wrote that "if additional information is presented as small images inside the eye-drop bottle pictogram, the information overlaps and legibility falls, so present the dosage form early and separate the details", and Yonghan Lee of the Korea Craft and Design Foundation proposed splitting the explanation into two or three. The structure of SIGIL, designed in §2.2 to place modifiers in a slot inside the head, is what is caught here.
+
+The target population differs from our premise was raised five times. Yonghan Lee said that "the largest group of people who cannot read is likely to be blind people rather than non-literate people, and for a blind person the act of taking a photograph is itself a barrier." Niken Nur Widyakusuma, a pharmacist in Indonesia, also answered that she sees far more patients with visual impairment, and Professor Hwi-Yeol Yun of Chungnam National University College of Pharmacy answered that in Korea it is mainly foreign patients. It runs in the same direction as what we wrote in §1.5, that even someone who can read has no guarantee the text is in their own language, and it means we defined the target too narrowly.
+
+#### Individual findings
+
+Foued Maaoui, a researcher at the Institut Pasteur de Tunis, noted the absence of teach-back. There is no procedure for confirming that the patient understood correctly, and from a patient-safety standpoint the absence of this feedback loop is a serious risk.
+
+There is evidence behind that point. A systematic review synthesising 20 studies of teach-back found positive results in 19, with significant improvement in medication adherence and diet among patients with type 2 diabetes (Talevski, J., Wong Shee, A., Rasmussen, B., Kemp, G. & Beauchamp, A., "Teach-back: A systematic review of implementation and impacts," *PLOS ONE*, 15(4):e0231350, 2020). It is exactly the procedure that Professor Samirah Abdu-Aguye of Ahmadu Bello University in Nigeria answered she currently uses in practice. Acting on this point we built a checking step, described in §3.8. Instead of speaking back, the user points at pictures; whether that substitution produces the same confirming effect has not yet been put to people. The same respondent also set out a validation design: work with low-literate participants and do not substitute educated volunteers; use predefined scoring criteria and blinded assessors; test pictogram-only, audio-only and both separately; and use real prescriptions rather than a clean demonstration. The evaluation design in §5.10 was revised accordingly.
+
+Professor Celia of the University of Pretoria judged that it would not work on handwritten prescriptions. We tested only with printed samples.
+
+Professor Atif Usman noted that **the dose per intake and the number of times a day are not distinguished**. In the amoxicillin example the first picture represents three times a day but cannot represent one capsule at a time, and the morning, midday and evening pictures that follow create confusion. This corresponds directly to the dose errors that make up 28.4% of the total in Table 4.
+
+E. A. Draffan of Global Symbols wrote that AAC users frequently have visual difficulties as well, which makes an audio button hard to reach by scanning, and that since a user's communication-aid interface may differ from this app, the **WCAG 2.2 mobile criteria** should be checked. There was also a point that the morning, midday and evening icons are small and need magnification. Both were addressed. The result of the WCAG 2.2 sweep and what was changed are in §3.7, and the icon size was resolved not by magnification but by giving the time morphemes a cell of their own. The account of that is below.
+
+Professor Katarina Vučićević of the University of Belgrade wrote that the refrigerated-storage and midday morphemes are confusable and proposed at least two colours: black and red for warnings, black and yellow for daytime. It is a request to revisit the decision in §3.7 to use colour only for the verdict and keep morphemes in black and white.
+
+Professor Kyogu Lee of Seoul National University raised three things by email reply: whether recombining 78 morphemes can really cover the full range of medicines and regimens; that with the audio alongside it helps, but some pictures are not particularly intuitive; and that where the instruction is negative the pictogram should carry a slash or X, which is missing in the alcohol and pregnancy cases. The last of these found the same defect independently of the four countries in the previous section. The same respondent also proposed push notifications at dosing times and a speech-synthesis toolchain for multilingual expansion.
+
+Aliya Naheed, Senior Scientist at icddr,b in Bangladesh, pointed at a different layer: for this app to change health outcomes the patient has to be able to buy the full course they were prescribed. What the `finish_course` morpheme sets out to convey is completing the course, and if there is no money for the medicine, completing it does not happen however well the picture arrives.
+
+Kyungseo Park of the Korea Disabled People's Development Institute wrote that being unable to read arises from a range of circumstances including old age, childhood, blindness and low vision, and added that the same institute has run a typeface development project for legibility.
+
+Niken Nur Widyakusuma of Universitas Gadjah Mada in Indonesia proposed adding markings that can be identified by touch, such as tearing the packaging slightly, for patients with visual impairment. It is a solution outside the screen, and a layer this app does not address.
+
+Professor Atif Usman and Professor Hwi-Yeol Yun both recommended referring to existing pictogram sets, the former naming the USP pictograms and the latter the health.kr pictograms of the Korea Pharmaceutical Information Center. This interlocks with the licence clause prohibiting composition described in §1.9, and it is where the differentiation claimed in §2.6 is directly tested.
+
+Our sample prescription contained a clinical error. Sheron Sir Loon Goh noted that amoxicillin capsules are normally stored at room temperature, 25 degrees, and do not require refrigeration at 2–8 degrees. The sample prescription we made was wrong, and we showed it to 1,103 people. The refrigeration morpheme was not misattached; the prescription itself was wrong, so it is not an engine defect, but sending an unvalidated example to experts was our error.
+
+#### Objections to the approach itself
+
+The sharpest response asked whether our product is needed at all. The team leader at the GC Medi-AI Uisarang Service Centre wrote five things: that Korean prescriptions already carry a barcode, so scanning the whole sheet is inefficient; that apps reading the barcode and guiding people with disabilities already exist; that medication counselling is a legal duty of pharmacists and doctors and that many solutions for it already exist; that the market for a business aimed at people who cannot read is too small relative to the investment; and that electronic prescriptions are being prepared, so once they arrive this becomes useless.
+
+We include the response as it stands because there is something in it we have to answer. Three of the five do not conflict with our design. Barcodes are on Korean prescriptions but not on the paper prescriptions of the countries covered in §1.1, and electronic prescriptions will not arrive in those countries first either. That counselling is a legal duty has to be read alongside the physician-density gap cited in §1.4; a duty existing and there being time to discharge it are different things.
+
+For the other two we have no answer. That the domestic market is small is true, and how this app differs from solutions that already exist is what the table in §2.6 tried to answer, but that table is the result of us choosing the comparators. This respondent is in a position to know the comparators we did not choose.
+
+A finding in the same direction came from the industry-practice segment. Cheolhyeon Park, Team Leader at VOICEYE, wrote that "however good a product or piece of software is, without recognition at the client or operator level there is no diffusion", and added that anyone thinking about commercialisation should propose it to a body such as the Korean Pharmaceutical Association and settle both acceptability and price.
+
+#### Responses that made us revisit our premise
+
+The finding from Professor Heejung Seo of Dong-eui University was the most fundamental in this survey.
+
+> "Pictograms are a good medium for conveying information intuitively, but to a non-literate person these too can feel like letters. As the saying goes, 'the black is the writing and the white is the paper,' so it would be good to implement this with a design and colouring that can be perceived from a non-literate person's point of view."
+
+In §2.1 we assumed that removing text lowers the barrier. This response inverts that assumption. For someone who cannot read, black shapes sitting on paper may already be "writing", and whether it is a picture or a letter may be a distinction only a reader makes. The pictogram comprehension studies cited in §1.8 measured comprehension after a picture was recognised as a picture. Whether a picture is recognised as a picture was not measured.
+
+The point from Professor Eun-Kyoung Kim of Kongju National University runs the same way.
+
+> "Even to me, in my forties, it was hard to grasp at once what the images were saying. I would expect older people unfamiliar with images of this kind to find it harder still."
+
+Professor Kyunghwa Lee of Soongsil University wrote that whether the pictures are fully understood depends on whether the target's level is a matter of literacy alone or also of age and information comprehension, and that more consideration is needed if the prescription is for a condition requiring more expertise than eye drops.
+
+Professor Namsoo Park of Hyupsung University pointed at digital literacy. How well people who cannot read handle a mobile device has to be examined first, and the app in fact contains an instruction reading "select any that apply to you", which blocks that screen for anyone who cannot read it. This is a direct finding about the profile-setup screen of §3.2.
+
+#### New risks our design could create
+
+Professor and pharmacist So-Young Lee of Chungnam National University pointed out that this app could create a risk that did not exist before.
+
+> "It seems necessary to prevent situations where a patient discontinues medication on their own because of wrong information. For example, even a medicine that carries risk for pregnant women is sometimes prescribed after considering the patient's overall condition, and where the patient checks alone without any clinician's mediation, they may end up not receiving the drug therapy."
+
+In §2.4 we designed contraindications to be displayed according to the user's conditions. In clinical practice, however, there are cases where a drug is prescribed in full knowledge of the risk, and an app displaying the contraindication then amounts to voiding the prescription. Professor Katarina Vučićević of the University of Belgrade writing that "it should go through a pharmacist so that the pharmacy's information and the app's information do not diverge", and 8 of the 11 in the pharmacy segment answering that a pharmacist should review every time, both read as the same concern.
+
+This runs directly into the differentiator we put forward in §2.6, that the verdict is derived from an individual's requirement. A personalised verdict cannot beat a personalised prescription.
+
+#### Advice on the evaluation design
+
+The field evaluation design in §5.10 was revised in line with the responses. Advice came from four places.
+
+Foued Maaoui of the Institut Pasteur de Tunis asked for low-literate participants rather than educated volunteers, predefined scoring criteria and blinded assessors, separate testing of pictogram-only, audio-only and both, real prescriptions rather than a clean demonstration, and audio in a language matching the participants'.
+
+Myojung Choi of the Korea Disabled People's Development Institute cited Nielsen and Landauer (1993) to the effect that a small sample of around 15 can secure the validity of a usability evaluation, and that a small sample in fact allows user behaviour and reactions to be grasped in detail, recommending behavioural analysis alongside the survey responses.
+
+Yonghan Lee of the Korea Craft and Design Foundation wrote that the sample should be balanced by age, level of schooling and sex, that participants should have no prior knowledge of the pictograms in question, and that the method should have them describe the meaning. He added that multiple choice looks meaningless, which is the same judgement behind our decision in §5.2 not to offer options.
+
+Professor Celia of the University of Pretoria recommended using an adherence instrument together with the K-HLAT-8 and HLS family of instruments. Professor Namsoo Park of Hyupsung University judged that since the purpose of this app is comprehension of medication instructions, measuring user satisfaction, intention to continue using it and the degree of improvement in convenience fits better than a health-literacy instrument.
+
+Professor Eun-Kyoung Kim pointed at the procedure before the test rather than the test itself: explain the purpose and the benefit from the learner's point of view to the institution and the literacy teacher first, obtain their cooperation, and only then use part of a class period. Asked whether a tool like this might reduce the motivation to learn to read, the same respondent answered that it would not, on the grounds that the motivation to learn to read is more than the acquisition of a skill.
+
+#### Every answer, by occupation
+
+The preceding subsections quoted only the questions we selected. To see whether the basis of that selection tilted one way, we laid out the whole tally by occupation again. It had tilted. There were places where the figure unfavourable to us was included and the favourable one omitted, and the bold rows in the table below are those.
+
+[Table 45] Every answer by occupation (the denominator is the number of respondents in that occupation)
+
+| Occupation | Question | Answer | Responses |
+|---|---|---|---|
+| Pharmacy (11) | Where in medication counselling should it sit | A tool supporting the pharmacist's explanation | 6 |
+| | | A means for the patient to check alone at home | 3 |
+| | | An alternative route for patients a pharmacist cannot reach | 2 |
+| Pharmacy (11) | Should a pharmacist review it | Every time, without exception | 8 |
+| | | Once at the start is enough | 3 |
+| Pharmacy (11) | What must not be wrong medically | Dose and frequency | 6 |
+| | | Contraindications and interactions | 3 |
+| | | Route of administration | 1 |
+| | | Not stopping on one's own | 1 |
+| Pharmacy (11) | Anything that must not be conveyed by picture and speech alone | Yes. Contraindications and interactions | 4 |
+| | | Yes. Cases needing dose adjustment | 3 |
+| | | Yes. Other | 2 |
+| | | No. In principle all of it can be | 2 |
+| Pharmacy (11) | Can it fit the pharmacy workflow | It can be recommended while dispensing | 8 |
+| | | Difficult, there is no time | 1 |
+| | | Non-pharmacist staff can help | 1 |
+| | | It should happen outside the pharmacy | 1 |
+| Nursing (9) | Can it change actual health outcomes | It can, if the conditions are met | 8 |
+| | | Dosing behaviour may change but not health outcomes | 1 |
+| Nursing (9) | In the field, do people who cannot read fail to receive medication information properly | Yes | 3 |
+| | | Partly | 5 |
+| | | No | 1 |
+| Nursing (9) | For an older patient living alone, where does it fail first | They cannot operate the screen | 4 |
+| | | They cannot manage the device (charging, loss) | 4 |
+| | | They do not trust the app | 1 |
+| Nursing (9) | Instrument for measuring the effect | An adherence instrument | 6 |
+| | | A health-literacy instrument | 1 |
+| | | Count medication errors directly | 1 |
+| | | Existing instruments do not fit | 1 |
+| Nursing (9) | Who should it be designed for | The two separately | 6 |
+| | | Patient / carer / hard to say | 1 each |
+| HCI (2) | The biggest problem | That there is no validation with users | 2 |
+| HCI (2) | Can machine pre-screening stand ahead of testing with people | It is justified with conditions attached | 2 |
+| HCI (2) | As morpheme combinations grow, what breaks first | It becomes impossible to tell what the main meaning is | 2 |
+| HCI (2) | How to measure the criterion with a small sample | Choose from options / observe actual behaviour | 1 each |
+| HCI (2) | Where does a first-time user get stuck | Granting camera permission / they do not get stuck | 1 each |
+| AAC (1) | Does it fit the accumulated knowledge of this field | Broadly yes, with places where it diverges | 1 |
+| AAC (1) | Does combining 78 morphemes by grammar hold up | It holds up with conditions attached | 1 |
+| AAC (1) | Which morphemes will be misread first | Abstract concepts (empty stomach, interaction and so on) | 1 |
+| AAC (1) | The problem that symbols presuppose learning | It holds for some categories only | 1 |
+| Adult literacy (1) | Is there a place for it in adult literacy education | Yes, but the form has to change | 1 |
+| Adult literacy (1) | Does it reduce the motivation to learn to read | No. It helps, if anything | 1 |
+| Industry (1) | What is most lacking | A route that reaches users | 1 |
+| Industry (1) | In operation, what breaks first | Users stop using it after a few days | 1 |
+| Other (9) | What has to be resolved first | That there is no validation with people | 2 |
+| | | A route that reaches actual users | 1 |
+
+![Figure 41](fig/chart18_field_answers.png)
+
+**[Figure 41]** What the 11 pharmacy and 9 nursing and public-health respondents answered. The denominators are small, so head counts are drawn rather than percentages. The third row on the left and the first row on the right point in different directions. Pharmacy sees things this app cannot handle; nursing sees outcomes that can be changed once the conditions are met.
+
+What we had omitted comes first.
+
+Eight of the nine nursing and public-health respondents answered that in the field people who cannot read are not receiving medication information properly: 3 "yes" and 5 "partly", against 1 "no". This confirms the premise of §1.1 and §1.2 from the field, and in the earlier subsection we recorded only that 44% of respondents almost never encounter such patients and did not record this question. The two questions ask different things. The first is how often the respondent sees it; the second is what those who have seen it saw. Including only the unfavourable side is the same problem that the appendix in §5.11 exists to address, and it is corrected here.
+
+There is one more in the same place. Both HCI and design respondents answered "justified with conditions attached" about our procedure of screening morphemes by asking a vision-language model instead of people (§5.2). That procedure is one of the two rows we claimed in §2.6 to have put down as new, and we had not included the outside judgement on it. The qualifier "with conditions attached" overlaps with the three limitations we set down for ourselves in §5.4.
+
+Then the things that read newly.
+
+Nine of the eleven pharmacy respondents answered that there are things which must not be conveyed by picture and speech alone: contraindications and interactions for 4, cases needing dose adjustment for 3, other for 2, against 2 who answered that all of it can be. This app includes interactions in its verdict (§2.4), so this answer is a request to narrow the scope of our design. It interlocks with the risk of unilateral discontinuation written by Professor So-Young Lee of Chungnam National University.
+
+The nine nursing respondents split on where an older patient living alone fails first: 4 on operating the screen and 4 on managing the device. The latter is charging and loss, which lies outside our design. However much the app is improved, it does not open if the device is flat. The offline operation of §4.5 handles a connection being cut; it does not handle the device being off.
+
+Both HCI respondents chose "it becomes impossible to tell what the main meaning is" as what breaks first as morpheme combinations grow. It is the too-many-elements-in-one-image finding of the earlier subsection, said from another side. It is a prediction that things get worse as the set grows, so it has to be measured alongside step 4 of §5.10 when morphemes are added.
+
+Asked which morphemes would be misread first, the AAC respondent chose abstract concepts, things like empty stomach and interaction. That agrees with all five of the morphemes we could not improve in §5.3 being problems of concept rather than of form. The same respondent answered that the approach of combining 78 morphemes by grammar "holds up with conditions attached", and that on the point that AAC symbols normally presuppose learning while we expect immediate comprehension from a first-time viewer, it "holds for some categories only". It means the range over which our grammar holds differs by the kind of morpheme.
+
+Asked what breaks first in operation, the industry-practice respondent chose "users stop using it after a few days". No measurement in this document addresses continued use. It has been added to the unverified items in §5.9. That the formative evaluation of §5.1 covers only a single capture is what is caught here.
+
+#### What was fixed after the survey
+
+This survey was carried out in order to fix things rather than to record results and stop, so what was fixed and what further came to light in the fixing is set down here. All of it took place after the survey in August 2026.
+
+The contraindication marking was fixed. `contentLabels` had handled every flag through a single `avoid`, and it was split into three according to the nature of the flag. Flags that say what is contained (`peanut`, `high_salt`) gain and lose the slash according to the verdict, while flags that say what not to do (`unsafe_pregnancy`) are always drawn as prohibited regardless of the verdict.
+
+Fixing it found one more of the same accident running the other way. An avoid verdict was wrapping `\no{}` around every flag, so the no-alcohol morpheme `no_alcohol` became `\no{\no_alcohol}` and the no-alcohol marking was getting a slash through it. Putting a slash through a picture saying do not drink means it is fine to drink. The bleeding warning `warn_bleeding` was likewise becoming a picture that does not say "do not bleed". What the survey caught was contraindications not being marked, and on the other side of the same function there was a path where contraindications were marked inverted.
+
+`finish_course` was redrawn. The problem was filling three of five cells and leaving two empty. It was meant to draw a number of days, but drawing a state in progress says "not finished yet" rather than "finish it". Using the directional arrow proposed by Sheron Sir Loon Goh, all five cells are now filled with an arrow beneath pointing to the last one.
+
+This revealed why the semantic check of §5.2 had passed it. The expected value of the check was `row of boxes`. Because it asked only about appearance, a picture meaning the opposite passes too. The expected value was changed to `arrow pointing to the end of a row of boxes`, so that looking merely like a row of boxes now fails. What we recorded as the third limitation of that procedure in §5.4 is confirmed here as an actual case. The semantic check is an instrument for asking what a picture looks like, not for asking whether its meaning stands the right way up.
+
+The set was made to use itself as its own list. When Professor Katarina Vučićević wrote that refrigerated storage and midday are confusable, opening the confusion list for the two morphemes showed that neither recorded the other. Each had been asked whether it is confusable with a star; no one had asked whether they are confusable with each other. Writing a longer list does not close this. With 78 morphemes there are 3,003 pairs. So if a picture reads as the meaning of another morpheme, it counts as a collision whether or not we wrote it down in advance.
+
+A pixel-level check for similar pairs was added too. Installed morphemes are reduced to the 32 pixels at which they are actually seen and the distance between them measured, because being distinguishable at 512 pixels is not this app's problem. Recorded honestly, this check does not catch the pair the expert named (refrigeration against midday). It ranks 944th of 3,003. That confusion is a structural overlap of radial forms rather than a pixel one, a different kind, and that side is the semantic check's job.
+
+So it was fixed by looking rather than by the metric. A snowflake and a sun are both star shapes radiating from a centre, and if the silhouettes are the same, enlarging them does not separate them. The professor's proposal was colour: black and red for warnings, black and yellow for daytime. Colour is good as a second layer but cannot be the first. To someone who cannot see colour the two pictures are still the same, and that person is the one §3.7 undertook to protect. A composed cell is a single PNG, so there is no way to tint only the morpheme inside it either; adding colour would require the engine to emit colour, and that changes the black-and-white-silhouette rule itself. The silhouette was changed instead. The snowflake was not discarded, because it is a picture people have already learned from the refrigeration mark printed on packaging; it was cut into a box as a hole. What was learned stays and what collides disappears. The outline is now a filled rectangle, so there is nowhere left for it to overlap with the sun.
+
+Instead the check found something nobody had raised. `time_morning` and `time_evening` rank fifth. It is the confusion of morning and evening doses being swapped, and it is the same place as `time_evening`, which §5.3 records as one we could not improve.
+
+Part of it was resolved by changing the position rather than redrawing the picture. Several respondents asked for the morning, midday and evening pictures to be enlarged; enlarging did not work, and why it did not was the answer. `\tablet_blister{\time_morning}` is a grammatically correct line. Rendered at the 88 pixels the app draws, however, the six holes of the blister take up the cell and the sun that carries the meaning is trapped in a 20-pixel window in the middle. Put four side by side and morning, midday, evening and night are not distinguishable from one another. Raising the modifier scale further does not help, because the window is the size of the slot, and a black drawing that leaves the window disappears into the black head.
+
+So the dictionary was given a way to record whether a morpheme can stand alone. The principle stays: a modifier cannot stand alone, because a peanut on its own does not say whether it means "contains" or "do not eat". Time of day is the exception to that principle. A sunrise is morning whatever it is attached to, and the preceding cell has already said what the medicine is. Time of day now fills a whole cell the way a head does. A line now reads as one capsule · sunrise · midday · sunset · to the end · with food, and since each cell has come down to one element it also reaches the too-many-elements finding raised in the same survey.
+
+The wording for standing alone was kept separate. Hearing only "In the morning." leaves the sentence unfinished as to what should happen in the morning, so a time morpheme standing alone is read as "Take it in the morning." What remains is exactly as §5.3 judged. That sunrise and sunset differ only in direction does not change when the cell grows, and that side is carried over to the field evaluation in §5.10.
+
+There were inversions in the speech as well. `say.ts` had no tests at all. A pictogram at least looks odd when it is wrong, but speech cannot be seen, so it flows out wrong and the listener has no way of knowing. Adding 12 tests caught one. Having split the administration verb by dosage form (§2.3), this file was still ending every closing sentence with "Take as prescribed." Sending out "Put 2 drops in the eye" and "Take as prescribed." together for one eye drop collapses, in that last sentence, the reason the verbs were split.
+
+The same kind appeared in the storage instruction. The positive check was looking only for `refrigerat`, so "Do not refrigerate" was read as refrigerated. A medicine to be kept at room temperature reads as refrigerated, and that inversion goes out through both the picture and the speech. This came to light while fixing the clinical error in the sample prescription that Sheron Sir Loon Goh identified. The corrected wording happened to be "Do not refrigerate".
+
+Two morphemes were redrawn. `allergen_egg` followed the point made by Professor Namsoo Park of Hyupsung University. A fried egg seen from above loses its white in the silhouette because the white is white, leaving a single yolk circle that reads like a target or a button. In a set drawn as filled silhouettes, a picture whose meaning is carried by the white part never stood up in the first place, so it was changed to a cracked egg. That `tree_nut` was read as "cracked egg" in §5.2 is the evidence that this form reads as an egg. `hand_wash` followed the instruction given by Yonghan Lee of the Korea Craft and Design Foundation exactly: a hand under a running tap.
+
+The accessibility criteria were swept. Checking WCAG 2.2 item by item, as E. A. Draffan had asked, found all five verdict colours below the contrast criterion and the target size of secondary controls between 16 and 20 pixels. The colours looked perfectly fine on screen, and that is in fact how they survived this long. They are values the eye cannot hold, so they were locked with a test, and the numbers and the judgement are carried as Table 19 in §3.7. What should be recorded here is that this sweep is something we would not have done without the survey. In §3.7 we had five channels standing in for colour and had not measured whether the colour itself could be read.
+
+A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
+
+The test count went from 231 to 311.
+
+#### Limits of this survey
+
+The sample is self-selected. Thirty-four of 1,103 answered, and those who answered are people with an interest in the subject. The judgement of the 1,069 who did not answer is unknown.
+
+The denominators are small. The largest segment, pharmacy, is 11 people. Written as a percentage, one person moves 9 points, so this section records numerator and denominator together.
+
+**There was no response from the 41 chosen by hand.** The 41 with the clearest selection basis were put at the front of the sending order and all received it within seven minutes, and the response count is zero. This result cannot be used as "the judgement of the 41 we considered most important."
+
+There are groups the link does not reach. The Korea Institute for Health and Social Affairs replied that as a public institution it cannot open an unverified URL and asked us to send the questions by email. The list contains 91 international organisations alone, and running a survey through a single link structurally fails to reach this group. A version with the same questions written in the body of the email should have been prepared alongside.
+
+The screen respondents saw is not the screen our users will see. Of the 34, 29 answered on a desktop, 3 on mobile and 2 on a tablet. This app is built on the premise of use on a handheld device (§1.6), so a judgement formed on a large screen may come out more generous than the real condition. That the point about icons being small and needing magnification came from a desktop respondent rather than a mobile one should be read alongside this.
+
+We do not know how many people heard the audio. Whether the speaker in the demonstration was pressed was being recorded, but the instrumentation failed to account for the speaker rendering as `<span role="button">` rather than `<button>`, so all 34 were recorded as not pressed. It was fixed during the survey, so only later responses are valid. In other words, of the responses to the judgement question in this section, how many were answered after hearing the audio cannot be known.
+
+---
+
 ### 5.8 Contribution to SDG 3
 
 The point at which SnapCare intervenes is the last step described in §1.4. The health system takes care of consultation and dispensing, but from the moment the patient opens the medicine packet at home it is left to their own ability to read.
