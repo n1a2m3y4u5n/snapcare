@@ -593,7 +593,7 @@ Design intent. Age is folded into four representative values. The user picks one
 
 There is judgement in `Math.min(1, energyRatio)` as well. Salt and fibre are recommended as absolute amounts and cannot be converted proportionally. Children are scaled down in proportion to energy requirement (the very recommendation underlying §2.4 says children should have less according to their energy intake), but someone who eats more than an adult does not get a raised salt limit. The recommendation is a ceiling.
 
-Returning the `basis` string alongside is also deliberate. "1,800 kcal at age 70, free sugars under 10%" appears on screen exactly as written (Figure 10(b)). If the user cannot see where a verdict came from, there is no way for them to examine it.
+Returning the `basis` string alongside is also deliberate. "1,800 kcal at age 70, free sugars under 10%" appears on screen exactly as written (Figure 21(b)). If the user cannot see where a verdict came from, there is no way for them to examine it.
 
 The user's conditions are then added. Diabetes narrows the sugar threshold, taking a blood thinner makes ibuprofen-class drugs something to avoid, and pregnancy or breastfeeding changes the contraindication list.
 
@@ -837,7 +837,7 @@ The third row is why this app's verdict differs from person to person. Because t
 
 The second row was added later. The vision model tends to return all values as zero when it is not confident, and zero passes every one of the physical checks in §4.2. It catches on no check at all and is displayed as a green "safe." A separate judgement, that all zeros means the item was not recognised, was therefore added apart from the physical checks.
 
-The screen during recognition and the resulting verdict screen are in Figure 10(b) and (c).
+The screen during recognition and the resulting verdict screen are in Figure 21(b) and (c).
 
 ### 3.4 The path when recognition fails
 
@@ -1339,7 +1339,7 @@ In practice three kinds of test in this repository each require something differ
 | Paper form and scheduling (`pytest`) | 105 | OpenCV |
 | Firmware protocol and scheduler | Host build | A C++ compiler only |
 
-All three run without the hardware. No servo, no Raspberry Pi and no network is needed. Making code that runs on a device you cannot attach a debugger to verifiable by anyone in a few seconds is the purpose of this arrangement, and bringing the whole firmware up on a laptop with `make run` (Figure 11, right) comes from the same principle.
+All three run without the hardware. No servo, no Raspberry Pi and no network is needed. Making code that runs on a device you cannot attach a debugger to verifiable by anyone in a few seconds is the purpose of this arrangement, and bringing the whole firmware up on a laptop with `make run` (Figure 22, right) comes from the same principle.
 
 Roles were divided as follows. Yunsu Nam took the web app and the SIGIL and VOCA engines, Dohun Kim took the hardware firmware, the paper form reading and the nutrition estimation model, and the Moldovan team took 3D printing, mechanical design and screen design. Over 11 days 194 commits accumulated.
 
