@@ -105,10 +105,14 @@ function admitsIllegible(item) {
 
 const results = [];
 /*
-  하나씩 보낸다. 넷씩 보냈더니 열 장이 상류에서 밀려 실패했고, 그러면 재는 것이 앱이
-  아니라 대기열이 된다. 느려도 이쪽이 정직하다.
+  셋씩 보낸다.
+
+  처음에 넷으로 재다가 열 장이 실패하자 "동시 요청 때문" 이라 보고 하나로 줄였는데,
+  하나로 줄여도 **같은 장이 같은 수만큼** 실패했다. 원인은 대기열이 아니라 답이
+  잘리는 것이었다(max_tokens). 원인을 바로 짚었으면 여기를 건드릴 이유가 없었다.
+  잘못 짚은 진단이 코드에 남지 않게 되돌린다.
 */
-const CONCURRENCY = 1;
+const CONCURRENCY = 3;
 for (let i = 0; i < chosen.length; i += CONCURRENCY) {
   const batch = chosen.slice(i, i + CONCURRENCY);
   const done = await Promise.all(batch.map(async (r) => {
