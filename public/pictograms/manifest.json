@@ -125,5 +125,7 @@
   "080b438c": "\\state_breastfeeding",
   "cb8461a1": "\\no{\\contact_lens}",
   "__assets": "5e5a514a51ff4d92",
-  "d98407b9": "\\three_times_daily{\\capsule_strip{\\food_bowl}}"
+  "d98407b9": "\\three_times_daily{\\capsule_strip{\\food_bowl}}",
+  "b23f6956": "\\three_times_daily{\\pill_bottle}",
+  "7d3fb808": "\\no{\\pill_bottle}"
 }
