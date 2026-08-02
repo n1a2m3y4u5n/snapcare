@@ -32,5 +32,14 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  // pill_dispenser/webapp_kit 은 **기기 쪽 웹앱에 붙여 넣으라고 만든 예제**이지 이 앱의
+  // 코드가 아니다. 앱 어디에서도 import 하지 않는다.
+  //
+  // 그런데 include 가 저장소 전체의 *.tsx 를 걷어 오는 바람에 그 예제가 우리 tsconfig 로
+  // 검사됐고, 거기 적힌 `@/lib/snapcare/dispenser` 는 **그쪽 프로젝트의 경로**라 우리
+  // 별칭으로는 풀리지 않는다. 결과는 `next build` 의 "Failed to type check" 였다 —
+  // 앱과 아무 상관 없는 파일 하나 때문에 배포가 막혀 있었다.
+  //
+  // 남의 코드를 우리 설정으로 검사하지 않는 것이 맞다. 그쪽은 그쪽 프로젝트에서 검사한다.
+  "exclude": ["node_modules", "pill_dispenser/webapp_kit"]
 }
