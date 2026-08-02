@@ -214,9 +214,75 @@ def gate_flow():
             fontsize=7.6, color=MUTED)
     save(fig, 'fig17_gate')
 
+# ── 픽토그램이 배포되기까지 지나는 관문 ────────────────────────────
+def gate_pictogram():
+    """§5.2. 사다리가 사유에 걸려 있다는 것이 이 그림에서 볼 것이다."""
+    fig, ax = canvas(6.0, 2.6)
+    TOP = 40.0
+
+    box(ax, 2, TOP - 8.0, 22, 7.8, T('그림 생성'), [T('형태소 하나')], GREY)
+    arrow(ax, 24.6, TOP - 4.1, 29.4, TOP - 4.1)
+    box(ax, 30, TOP - 8.0, 30, 7.8, T('관문 1. 기계 검사'),
+        [T('잉크 비율 · 32px 생존'), T('덩어리 개수')], BLUE)
+    arrow(ax, 60.6, TOP - 4.1, 65.4, TOP - 4.1)
+    box(ax, 66, TOP - 8.0, 32, 7.8, T('관문 2. 의미 검사'),
+        [T('"무엇으로 보이는가"'), T('보기를 주지 않는다')], BLUE)
+
+    ax.text(82, TOP - 9.6, T('통과하면 설치'), ha='center', fontsize=7.6, color=GREEN)
+
+    M = TOP - 13.0
+    ax.text(2, M + 0.6, T('떨어지면 사유에 맞춰 다시 그린다'),
+            fontsize=8.4, color=MUTED, fontweight='bold')
+    rungs = [(T('뭉쳤다'), [T('더 작게 · 구멍을 뚫어')], ORANGE),
+             (T('가늘다'), [T('더 두껍게 · 채워')], ORANGE),
+             (T('개수가 다르다'), [T('정확히 그 수만큼')], ORANGE),
+             (T('뜻이 안 맞는다'), [T('형태를 바꿔 · 무게는 그대로')], RED)]
+    w, gap = 23.0, 2.0
+    for i, (h, ls, c) in enumerate(rungs):
+        box(ax, 2 + i * (w + gap), M - 10.4, w, 10.2, h, ls, c, fs=8.6)
+
+    ax.text(2, 8.0, T('처음에는 시도 횟수로 사다리를 올렸다. 둘째 칸이 "더 두껍게" 였고,'),
+            fontsize=7.6, color=MUTED)
+    ax.text(2, 5.0, T('뭉쳐서 떨어진 그림에 그 지시를 주면 실패한 방향으로 더 민다.'),
+            fontsize=7.6, color=MUTED)
+    ax.text(2, 1.8, T('마지막 칸이 중요하다. 뜻이 어긋난 것은 형태의 문제이지 무게의 문제가 아니다.'),
+            fontsize=7.6, color=RED, fontweight='bold')
+    save(fig, 'fig18_pictogram_gate')
+
+# ── 인식이 두 층으로 갈린다 ─────────────────────────────────────────
+def recognition_layers():
+    """§3.3. 글자가 있는 것은 기기에서 끝내고 통신이 필요한 것만 내보낸다."""
+    fig, ax = canvas(6.0, 2.8)
+    TOP = 42.0
+
+    box(ax, 34, TOP - 7.4, 32, 7.2, T('사진 한 장'), [T('무엇을 찍었는지 고르지 않는다')], GREY)
+    arrow(ax, 50, TOP - 8.0, 50, TOP - 12.0)
+
+    M = TOP - 12.2
+    box(ax, 22, M - 8.6, 56, 8.4, T('층 1. 기기 안에서 글자를 읽는다'),
+        [T('표지와 영양소 이름을 센다')], BLUE)
+
+    B = M - 12.8
+    arrow(ax, 34, M - 9.2, 20, B - 1.0)
+    arrow(ax, 66, M - 9.2, 80, B - 1.0)
+    ax.text(15, M - 11.6, T('표지가 맞으면'), ha='center', fontsize=7.6, color=MUTED)
+    ax.text(85, M - 11.6, T('글자가 없거나 안 맞으면'), ha='center', fontsize=7.6, color=MUTED)
+    box(ax, 2, B - 9.4, 36, 9.2, T('전용 해석기'),
+        [T('성분표 · 처방전'), T('서버를 부르지 않는다')], GREEN)
+    box(ax, 62, B - 9.4, 36, 9.2, T('서버의 시각 모형'),
+        [T('음식 · 음료'), T('인터넷이 필요하다')], ORANGE)
+
+    ax.text(2, 5.0, T('이 순서 덕분에 처방전과 성분표는 인터넷 없이 읽힌다 (§4.5)'),
+            fontsize=7.8, color=MUTED, fontweight='bold')
+    ax.text(2, 1.8, T('이 앱에서 가장 급한 두 가지가 그 둘이다'),
+            fontsize=7.6, color=MUTED)
+    save(fig, 'fig19_recognition')
+
 
 if __name__ == '__main__':
     userflow()
     verdict_flow()
     condition_branches()
     gate_flow()
+    gate_pictogram()
+    recognition_layers()

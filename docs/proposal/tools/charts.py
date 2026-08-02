@@ -352,6 +352,38 @@ def chart_amr_region():
     fig.subplots_adjust(left=0.29 if LANG != 'en' else 0.32)
     save(fig, 'chart14_amr_region')
 
+# ── 조사 응답자가 어디서 왔는가 ─────────────────────────────────────
+def chart_survey_who():
+    """직군과 대륙을 나란히. 34명이 어떤 사람들인지가 이 조사의 무게다."""
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.6))
+    title(fig, T('전문가 조사 응답자 34명의 구성'),
+          note=T('왼쪽은 응답자가 고른 분야, 오른쪽은 일한다고 적은 지역이다.'))
+
+    fields = [(T('약국·복약지도'), 11), (T('간호·보건'), 9), (T('그 밖'), 9),
+              (T('HCI·디자인'), 2), (T('그 외 셋'), 3)]
+    cols = [BLUE, GREEN, GREY, ORANGE, LIGHT]
+    a1.pie([v for _, v in fields], labels=[f'{k}\n{v}' for k, v in fields],
+           colors=cols, startangle=90, counterclock=False,
+           wedgeprops=dict(width=0.42, edgecolor='white', linewidth=1.4),
+           textprops=dict(fontsize=7.8, color=INK))
+    a1.set_title(T('분야'), fontsize=9, color=MUTED, pad=2)
+
+    conts = [(T('아시아'), 24), (T('유럽'), 5), (T('아프리카'), 3),
+             (T('북미'), 1), (T('오세아니아'), 1)]
+    y = range(len(conts))
+    for i, (k, v) in enumerate(conts):
+        a2.barh(i, v, 0.6, color=DARK if i == 0 else GREY, zorder=2)
+        a2.text(v + 0.5, i, str(v), va='center', fontsize=8.6,
+                fontweight='bold', color=INK)
+    a2.set_yticks(list(y))
+    a2.set_yticklabels([k for k, _ in conts], fontsize=8)
+    a2.invert_yaxis()
+    a2.set_xlim(0, 30)
+    a2.set_title(T('대륙'), fontsize=9, color=MUTED, pad=2)
+    frame(a2)
+    fig.subplots_adjust(left=0.02, right=0.97, wspace=0.55)
+    save(fig, 'chart15_survey_who')
+
 
 if __name__ == '__main__':
     chart_literacy()
@@ -368,3 +400,4 @@ if __name__ == '__main__':
     chart_policy_depth()
     chart_three_layers()
     chart_amr_region()
+    chart_survey_who()

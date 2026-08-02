@@ -270,6 +270,46 @@ EN = {
         'The third route arrived later, and no new verification code was written for it (§4.2)',
     '경로마다 검사를 두면 붙이는 것을 잊은 경로가 검증 없는 통로가 된다':
         'Per-route checks turn any route someone forgot to attach them to into an unverified channel',
+    '전문가 조사 응답자 34명의 구성': 'Composition of the 34 expert respondents',
+    '왼쪽은 응답자가 고른 분야, 오른쪽은 일한다고 적은 지역이다.':
+        'Left: the field each respondent chose. Right: the region they said they work in.',
+    '약국·복약지도': 'Pharmacy', '간호·보건': 'Nursing / public health',
+    'HCI·디자인': 'HCI / design', '그 외 셋': 'Three others',
+    '분야': 'Field', '대륙': 'Continent',
+    '아시아': 'Asia', '유럽': 'Europe', '아프리카': 'Africa',
+    '북미': 'N. America', '오세아니아': 'Oceania',
+    '그림 생성': 'Generate the picture', '형태소 하나': 'One morpheme',
+    '관문 1. 기계 검사': 'Gate 1. Mechanical check',
+    '잉크 비율 · 32px 생존': 'Ink ratio · survival at 32px',
+    '덩어리 개수': 'Number of blobs',
+    '관문 2. 의미 검사': 'Gate 2. Semantic check',
+    '"무엇으로 보이는가"': '"What does this look like"',
+    '보기를 주지 않는다': 'No options are given',
+    '통과하면 설치': 'Installed if it passes',
+    '떨어지면 사유에 맞춰 다시 그린다': 'On failure it is redrawn according to the reason',
+    '뭉쳤다': 'Too clotted', '더 작게 · 구멍을 뚫어': 'Smaller · punch holes',
+    '가늘다': 'Too thin', '더 두껍게 · 채워': 'Thicker · fill more',
+    '개수가 다르다': 'Wrong count', '정확히 그 수만큼': 'Exactly that many',
+    '뜻이 안 맞는다': 'Meaning is wrong',
+    '형태를 바꿔 · 무게는 그대로': 'Change the shape · not the weight',
+    '처음에는 시도 횟수로 사다리를 올렸다. 둘째 칸이 "더 두껍게" 였고,':
+        'At first the ladder was climbed by attempt count. The second rung was "thicker",',
+    '뭉쳐서 떨어진 그림에 그 지시를 주면 실패한 방향으로 더 민다.':
+        'and giving that to a picture that failed for being clotted pushes it further the way it failed.',
+    '마지막 칸이 중요하다. 뜻이 어긋난 것은 형태의 문제이지 무게의 문제가 아니다.':
+        'The last rung matters. A wrong meaning is a problem of shape, not of weight.',
+    '사진 한 장': 'One photograph',
+    '무엇을 찍었는지 고르지 않는다': 'The subject is not chosen',
+    '층 1. 기기 안에서 글자를 읽는다': 'Layer 1. Text is read on the device',
+    '표지와 영양소 이름을 센다': 'Markers and nutrient names are counted',
+    '표지가 맞으면': 'markers match', '글자가 없거나 안 맞으면': 'no text, or no match',
+    '전용 해석기': 'Dedicated parser', '성분표 · 처방전': 'Label · prescription',
+    '서버를 부르지 않는다': 'No server is called',
+    '서버의 시각 모형': 'Vision model on the server',
+    '음식 · 음료': 'Food · drink', '인터넷이 필요하다': 'Needs a connection',
+    '이 순서 덕분에 처방전과 성분표는 인터넷 없이 읽힌다 (§4.5)':
+        'This order is why prescriptions and labels are read without a connection (§4.5)',
+    '이 앱에서 가장 급한 두 가지가 그 둘이다': 'Those two are the most urgent things in this app',
 }
 
 
