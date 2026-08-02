@@ -183,6 +183,48 @@ def chart_glyphs():
     save(fig, 'chart07_glyph_check')
 
 
+# ── 고정 목록과 문법이 늘어나는 방식 ───────────────────────────────
+def chart_expressive():
+    """§1.9. 개수의 차이가 아니라 종류의 차이라는 주장을 수로 잰다.
+
+    수는 engine/dictionary.json 에서 그대로 나온다. 머리 57 종에 슬롯이
+    하나씩 있고 어느 수식어가 들어갈지 제한하는 목록이 없으므로,
+    머리 하나를 더 만들면 수식어 21 종과 짝지을 자리가 함께 생긴다."""
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.5))
+    title(fig, T('고정 목록과 문법은 다른 속도로 늘어난다'),
+          note=T('연산자(금지 · 하루 횟수 · 반쪽)를 적용하기 전의 수'))
+    # 판이 둘이라 title() 의 기본 여백으로는 오른쪽 판의 눈금 이름이
+    # 왼쪽 판의 막대 위에 얹힌다.
+    fig.subplots_adjust(left=0.155, right=0.975, wspace=0.62)
+
+    rows = [(T('USP 세트'), 81, LIGHT), (T('SIGIL 문법'), 1258, DARK)]
+    for i, (lab, v, c) in enumerate(rows):
+        a1.barh(i, v, height=0.5, color=c, zorder=2)
+        a1.text(v + 30, i, f'{v:,}', va='center', fontsize=9.4,
+                fontweight='bold', color=INK)
+    a1.set_yticks(range(len(rows)))
+    a1.set_yticklabels([r[0] for r in rows])
+    a1.set_xlim(0, 1560)
+    a1.set_ylim(-0.6, 1.6)
+    a1.set_xlabel(T('지금 낼 수 있는 칸 수'))
+    frame(a1, grid='x')
+
+    rows2 = [(T('USP 심볼'), 1, LIGHT),
+             (T('SIGIL 머리'), 21, BLUE),
+             (T('SIGIL 수식어'), 57, DARK)]
+    for i, (lab, v, c) in enumerate(rows2):
+        a2.barh(i, v, height=0.5, color=c, zorder=2)
+        a2.text(v + 1.4, i, f'+{v}', va='center', fontsize=9.4,
+                fontweight='bold', color=INK)
+    a2.set_yticks(range(len(rows2)))
+    a2.set_yticklabels([r[0] for r in rows2])
+    a2.set_xlim(0, 72)
+    a2.set_ylim(-0.6, 2.6)
+    a2.set_xlabel(T('하나를 더 만들 때 늘어나는 칸 수'))
+    frame(a2, grid='x')
+    save(fig, 'chart19_expressive')
+
+
 # ── 영양 추정 모델의 항목별 오차 ───────────────────────────────────
 def chart_model():
     rows = [(T('질량'), 16.61), (T('열량'), 22.75), (T('탄수화물'), 30.60),
@@ -487,6 +529,7 @@ if __name__ == '__main__':
     chart_pictogram()
     chart_eval()
     chart_glyphs()
+    chart_expressive()
     chart_model()
     chart_country()
     chart_survey()

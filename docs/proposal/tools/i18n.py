@@ -406,6 +406,17 @@ EN = {
         'A signature cannot be detached and attached to other content',
     '둘 중 하나라도 빠지면 서명은 있으나 마나가 된다':
         'Missing either one makes the signature worthless',
+    # ── charts.py · chart_expressive (§1.9) ───────────────────────
+    '고정 목록과 문법은 다른 속도로 늘어난다':
+        'A fixed list and a grammar grow at different rates',
+    '연산자(금지 · 하루 횟수 · 반쪽)를 적용하기 전의 수':
+        'Counted before any operator (negation, daily cadence, half) is applied',
+    'USP 세트': 'USP set', 'SIGIL 문법': 'SIGIL grammar',
+    'USP 심볼': 'One USP symbol', 'SIGIL 머리': 'One SIGIL head',
+    'SIGIL 수식어': 'One SIGIL modifier',
+    '지금 낼 수 있는 칸 수': 'Cells the set can render today',
+    '하나를 더 만들 때 늘어나는 칸 수': 'Cells gained by drawing one more',
+
     # ── diagrams.py · voca_rebuild (§2.3) ─────────────────────────
     '처방전 한 장에 적혀 있는 것': 'What one prescription sheet carries',
     '읽지 않고 버린다': 'Dropped, never read aloud',
