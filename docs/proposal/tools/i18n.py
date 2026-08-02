@@ -446,6 +446,25 @@ EN = {
     '복약 안전 교육 받음': 'Received medication-safety education',
     '한국 고령자에서의 비율 (%)': 'Share among older adults in Korea (%)',
 
+    # ── charts.py · 손글씨 측정 (§5.7) ────────────────────────────
+    '손글씨 약 이름 {n}장을 읽힌 결과': 'Reading {n} handwritten drug names',
+    'RxHandBD (Zenodo 18478741) · 방글라데시 실제 처방전에서 잘라낸 낱말':
+        'RxHandBD (Zenodo 18478741) · words cut from real Bangladeshi prescriptions',
+    '정확히 읽음': 'Read exactly', '한두 글자 어긋남': 'Off by a\ncharacter or two',
+    '전혀 다르게 읽음': 'Read as\nsomething else', '장수': 'Count',
+    '붉은 칸이 더 위험하다': 'The red bar is the more dangerous one',
+    '남는 비율': 'Share surviving', '남은 것의 정확도': 'Accuracy of survivors',
+    '확신도 문턱': 'Confidence threshold',
+    '둘을 함께 만족하는\n문턱이 없다': 'No threshold satisfies\nboth at once',
+    '처방전 전장 {n}장. 답이 잘리던 것을 고치기 전과 뒤':
+        '{n} full prescription pages, before and after fixing the truncated replies',
+    'Mendeley k62rfd23kz · 약 이름 영역 개수가 주석된 방글라데시 처방전':
+        'Mendeley k62rfd23kz · Bangladeshi prescriptions annotated with drug-name counts',
+    '처방전으로 알아본 비율': 'Recognised as a prescription',
+    '약 가짓수 재현율': 'Recall of medicine count',
+    '실패한 11장은 무작위가 아니었다.\n전부 약이 5~12가지 적힌 장이었다':
+        'The 11 failures were not random.\nEvery one carried 5 to 12 medicines',
+
     # ── charts.py · chart_expressive (§1.9) ───────────────────────
     '고정 목록과 문법은 다른 속도로 늘어난다':
         'A fixed list and a grammar grow at different rates',

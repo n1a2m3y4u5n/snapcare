@@ -9,6 +9,8 @@
 """
 import matplotlib.pyplot as plt
 
+import pathlib
+
 from survey_data import field_answers, judgement, survey_who
 from style import (BLUE, DARK, GREEN, GREY, INK, LIGHT, MUTED, ORANGE, RED,
                    frame, legend_in, line, note, save, title)
@@ -283,6 +285,87 @@ def chart_ageing():
     a2.set_xlabel(T('한국 고령자에서의 비율 (%)'))
     frame(a2, grid='x')
     save(fig, 'chart20_ageing')
+
+
+# ── 손글씨 약 이름 200장 ────────────────────────────────────────────
+def chart_handwriting():
+    """§5.7. 낱말 단위 성적과, 확신도로 걸러낼 수 없다는 것.
+
+    오른쪽 판이 설계 근거다. 남는 비율과 남은 것의 정확도가 반대로
+    움직여 둘을 함께 만족하는 문턱이 없다."""
+    import json
+    ev = json.loads((pathlib.Path(__file__).resolve().parents[3]
+                     / 'scripts' / 'handwriting-eval.json').read_text())
+    sm, th = ev['summary'], ev['confidenceThresholds']
+    n = sm['sampled']
+
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.6))
+    title(fig, T('손글씨 약 이름 {n}장을 읽힌 결과').format(n=n),
+          note=T('RxHandBD (Zenodo 18478741) · 방글라데시 실제 처방전에서 잘라낸 낱말'))
+    fig.subplots_adjust(left=0.09, right=0.965, wspace=0.34)
+
+    rows = [(T('정확히 읽음'), sm['exact'], BLUE),
+            (T('한두 글자 어긋남'), sm['nearMiss'], RED),
+            (T('전혀 다르게 읽음'), sm['wrong'], GREY)]
+    for i, (k, v, c) in enumerate(rows):
+        a1.bar(i, v, 0.56, color=c, zorder=2)
+        a1.text(i, v + 2.5, f'{v}', ha='center', fontsize=9.4,
+                fontweight='bold', color=INK)
+    a1.set_xticks(range(3))
+    a1.set_xticklabels([r[0] for r in rows], fontsize=7.2)
+    a1.set_ylim(0, 118)
+    a1.set_ylabel(T('장수'))
+    a1.text(1, 108, T('붉은 칸이 더 위험하다'), ha='center', fontsize=7.4, color=RED)
+    frame(a1, grid='y')
+
+    xs = [t['threshold'] for t in th]
+    a2.plot(xs, [t['keptPct'] for t in th], 'o-', color=GREY, lw=2.2, ms=5,
+            label=T('남는 비율'), zorder=3)
+    a2.plot(xs, [t['exactPctOfKept'] for t in th], 'o-', color=BLUE, lw=2.2, ms=5,
+            label=T('남은 것의 정확도'), zorder=3)
+    a2.set_xlabel(T('확신도 문턱'))
+    a2.set_ylabel('%')
+    a2.set_ylim(0, 112)
+    a2.legend(fontsize=7.4, frameon=False, loc='lower left')
+    a2.text(0.79, 60, T('둘을 함께 만족하는\n문턱이 없다'), fontsize=7.4,
+            color=RED, fontweight='bold', ha='right')
+    frame(a2, grid='both')
+    save(fig, 'chart21_handwriting')
+
+
+# ── 처방전 전장 60장. 고치기 전과 뒤 ────────────────────────────────
+def chart_pageeval():
+    """§5.7. max_tokens 를 고치기 전과 뒤. 같은 60장이다.
+
+    고치기 전 값 둘은 고친 뒤에 만들어진 JSON 에 없으므로 MEASUREMENTS.md
+    §2 에서 옮겼다."""
+    import json
+    sm = json.loads((pathlib.Path(__file__).resolve().parents[3]
+                     / 'scripts' / 'prescription-page-eval.json').read_text())['summary']
+    BEFORE = {'seen': 81.7, 'recall': 89.7}          # MEASUREMENTS.md §2
+
+    fig, ax = plt.subplots(figsize=(6.0, 2.3))
+    title(fig, T('처방전 전장 {n}장. 답이 잘리던 것을 고치기 전과 뒤').format(n=sm['sampled']),
+          note=T('Mendeley k62rfd23kz · 약 이름 영역 개수가 주석된 방글라데시 처방전'))
+
+    pairs = [(T('처방전으로 알아본 비율'), BEFORE['seen'], sm['seenAsPrescriptionPct']),
+             (T('약 가짓수 재현율'), BEFORE['recall'], sm['recallPct'])]
+    w = 0.34
+    for i, (k, b, a) in enumerate(pairs):
+        ax.bar(i - w / 2, b, w, color=LIGHT, zorder=2)
+        ax.bar(i + w / 2, a, w, color=DARK, zorder=2)
+        ax.text(i - w / 2, b + 1.4, f'{b}%', ha='center', fontsize=9.0,
+                fontweight='bold', color=MUTED)
+        ax.text(i + w / 2, a + 1.4, f'{a}%', ha='center', fontsize=9.0,
+                fontweight='bold', color=INK)
+    ax.set_xticks(range(2))
+    ax.set_xticklabels([p[0] for p in pairs], fontsize=8.4)
+    ax.set_ylim(0, 132)
+    ax.set_ylabel('%')
+    ax.text(0.5, 116, T('실패한 11장은 무작위가 아니었다.\n전부 약이 5~12가지 적힌 장이었다'),
+            ha='center', fontsize=7.6, color=RED, fontweight='bold')
+    frame(ax, grid='y')
+    save(fig, 'chart22_pageeval')
 
 
 # ── 영양 추정 모델의 항목별 오차 ───────────────────────────────────
@@ -608,6 +691,8 @@ if __name__ == '__main__':
     chart_glyphs()
     chart_expressive()
     chart_ageing()
+    chart_handwriting()
+    chart_pageeval()
     chart_model()
     chart_country()
     chart_survey()

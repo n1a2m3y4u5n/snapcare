@@ -2013,7 +2013,7 @@ Foued Maaoui, a researcher at the Institut Pasteur de Tunis, noted the absence o
 
 There is evidence behind that point. A systematic review synthesising 20 studies of teach-back found positive results in 19, with significant improvement in medication adherence and diet among patients with type 2 diabetes (Talevski, J., Wong Shee, A., Rasmussen, B., Kemp, G. & Beauchamp, A., "Teach-back: A systematic review of implementation and impacts," *PLOS ONE*, 15(4):e0231350, 2020). It is exactly the procedure that Professor Samirah Abdu-Aguye of Ahmadu Bello University in Nigeria answered she currently uses in practice. Acting on this point we built a checking step, described in §3.8. Instead of speaking back, the user points at pictures; whether that substitution produces the same confirming effect has not yet been put to people. The same respondent also set out a validation design: work with low-literate participants and do not substitute educated volunteers; use predefined scoring criteria and blinded assessors; test pictogram-only, audio-only and both separately; and use real prescriptions rather than a clean demonstration. The evaluation design in §5.10 was revised accordingly.
 
-Professor Celia of the University of Pretoria judged that it would not work on handwritten prescriptions. Up to the survey we had tested only with printed samples, so it was a point we could not answer; after the survey we measured twice and answered it.
+Professor Celia of the University of Pretoria judged that it would not work on handwritten prescriptions. Up to the survey we had tested only with printed samples, so it was a point we could not answer; after the survey we measured three times and answered it.
 
 First we put in a real one: a public-domain (CC0) photograph of a handwritten prescription from the Eye Foundation Hospital in Lagos. The result was worse than the objection. It did not fail to work; it **worked wrongly.** It read the paper's "8hrly" (every 8 hours) as "8mg", so a frequency became a dose; three dosing times the paper never mentions were attached; and a green verdict lit up on top. That is different from not reading. When it cannot read, the user asks a person; when it reads like this, it is confidently wrong. We fixed three things. Frequency abbreviations (hrly, od, bd, tds, nocte and so on) were built into recognition; times absent from the paper are no longer invented, the schedule is left empty; and when the model judges the writing handwritten, no green light comes on and the screen tells the user to ask a person while offering the paper form (§4.4) as another route. What is read is not erased. What is erased is the confidence.
 
@@ -2023,7 +2023,33 @@ One photograph is a case, not a measurement, so we measured again on public data
 
 We also measured whether confidence can filter it. It cannot. At a threshold of 0.4, 44% survive and only 74% of those are correct; at 0.6, 4% survive. No threshold satisfies accuracy and coverage together, so treating all handwriting without confidence, as the app now does, is the only honest choice left. One thing is reassuring: not one of the 200 was wrong while carrying confidence of 0.8 or higher. The model does say it cannot read what it cannot read.
 
-In sum, Professor Celia's point is confirmed by measurement. This app cannot read handwriting; what has changed is that the screen now knows it.
+**[Figure 41]** How 200 handwritten drug names were read, and why confidence cannot filter them. The right panel is the design basis: the share surviving (grey) and the accuracy of the survivors (blue) move in opposite directions, so no threshold satisfies both, and all handwriting is therefore handled without confidence. The red bar on the left is the heaviest finding of this measurement. A name read as something else looks wrong; a name off by a character or two can be a different drug that actually exists.
+
+![Figure 41](fig/chart21_handwriting.png)
+
+We also measured what the user actually photographs, the full prescription page. From 200 Bangladeshi prescription pages annotated with the number of drug-name regions (Mendeley k62rfd23kz, CC BY 4.0), 60 were drawn at fixed intervals and sent not to the model but to the app's `/api/analyze`, because a value only becomes the app's value after passing the deployed prompt and post-processing. The ground truth is a count, not text. This dataset has no drug-name text; it records how many medicines each page carries, and the count matters for a reason. If three of five medicines are read, two vanish silently, and the user takes the three on screen to be all of them.
+
+This measurement found a defect. On the first run 11 of the 60 pages failed outright, and not at random: every one carried 5 to 12 medicines, and the same pages failed on every rerun. The cause was the reply-length cap (`max_tokens: 700`). The answer was cut off mid-stream, the truncated JSON failed to parse, and the screen said "could not read it." **It was failing against exactly the people who need it most.** The person taking ten medicines needs this app most, and precisely that person's prescription would not read. The comment in the fixed code, carried over as written:
+
+```ts
+/*
+  It was 700. Right there, prescriptions with many medicines were
+  failing outright. The answer was truncated at 700 tokens
+  (stop_reason: max_tokens), the cut JSON failed to parse, and the
+  failure surfaced as "could not read it." It was failing against
+  exactly the people who need it most.
+*/
+```
+
+The same measurement surfaced one more defect. When a call failed briefly, the app was saying "this server has no photo recognition." A permanent statement about a passing event, and whoever hears it does not try again, because it sounds like something that cannot be fixed. The two are now split: a momentary backlog (503) says try again in a moment, and only the genuine absence of means (501) says there are none.
+
+After the fix the same 60 pages were measured again. Recognition as a prescription rose from 81.7% to 98.3%, recall of the medicine count from 89.7% to 91.0%, all 60 were flagged handwritten, and no page had an invented schedule. Opening the 4 pages that carried one showed each was reading notation actually on the paper, the Bangladeshi `1+0+1` style.
+
+**[Figure 42]** The same 60 pages measured before and after the fix. The gap in the left pair is the 11 truncated replies. A caveat belongs beside it: the two values must not be multiplied together. The 91% recall is a count, not letter accuracy; letter accuracy is the 47% of Figure 41. Different sample, different task.
+
+![Figure 42](fig/chart22_pageeval.png)
+
+In sum, Professor Celia's point is confirmed by three measurements. This app cannot read handwriting. Two things have changed: the screen now knows it, and what the app does everywhere else is now stated in numbers.
 
 Professor Atif Usman noted that **the dose per intake and the number of times a day are not distinguished**. In the amoxicillin example the first picture represents three times a day but cannot represent one capsule at a time, and the morning, midday and evening pictures that follow create confusion. This corresponds directly to the dose errors that make up 28.4% of the total in Table 4.
 
@@ -2172,9 +2198,9 @@ The preceding subsections quoted only the questions we selected. To see whether 
 | Other (9) | What has to be resolved first | That there is no validation with people | 2 |
 | | | A route that reaches actual users | 1 |
 
-![Figure 41](fig/chart18_field_answers.png)
+![Figure 43](fig/chart18_field_answers.png)
 
-**[Figure 41]** What the 12 pharmacy and 9 nursing and public-health respondents answered. The denominators are small, so head counts are drawn rather than percentages. The third row on the left and the first row on the right point in different directions. Pharmacy sees things this app cannot handle; nursing sees outcomes that can be changed once the conditions are met.
+**[Figure 43]** What the 12 pharmacy and 9 nursing and public-health respondents answered. The denominators are small, so head counts are drawn rather than percentages. The third row on the left and the first row on the right point in different directions. Pharmacy sees things this app cannot handle; nursing sees outcomes that can be changed once the conditions are met.
 
 What we had omitted comes first.
 
@@ -2278,9 +2304,9 @@ The link to 3.d is the most direct. An analysis of more than 23 million laborato
 
 Broken down by region, this problem too is concentrated where we are aimed. In South-East Asia and the Eastern Mediterranean one in three reported infections showed resistance, in Africa one in five and in the Americas one in seven (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). The regions with the lowest literacy in §1.1 appear here again.
 
-**[Figure 42]** Share of reported bacterial infections showing antibiotic resistance (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). The world average is one in six; in South-East Asia and the Eastern Mediterranean it is one in three. The low-literacy countries of Table 1 are in those two regions. That is the place the `finish_course` morpheme aims at.
+**[Figure 44]** Share of reported bacterial infections showing antibiotic resistance (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). The world average is one in six; in South-East Asia and the Eastern Mediterranean it is one in three. The low-literacy countries of Table 1 are in those two regions. That is the place the `finish_course` morpheme aims at.
 
-![Figure 42](fig/chart14_amr_region.png)
+![Figure 44](fig/chart14_amr_region.png)
 
 If one person in three believes that, the course length written on the prescription is not unread but read and not followed. On top of this come the people who cannot read it. If a duration written in text is never delivered in the first place, that instruction may as well not exist, and this is the point SnapCare's `finish_course` morpheme is aimed at. A picture alone does not change a belief, however, and what this morpheme does extends only as far as making the duration arrive.
 
