@@ -12,7 +12,7 @@
  *  - API        : 통과 (판정은 신선해야 하고, 오프라인 폴백은 앱 코드가 직접 처리한다)
  */
 
-const VERSION = 'snapcare-7802af68e75cce2d';
+const VERSION = 'snapcare-5e5a514a51ff4d92';
 const SHELL = `${VERSION}-shell`;
 const ASSETS = `${VERSION}-assets`;
 
