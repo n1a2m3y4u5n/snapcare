@@ -776,6 +776,10 @@ The first layer runs on the device. Text is read from the photograph first (Tess
 
 The second layer is invoked only when the first has failed. If the text read from the photograph is shorter than four characters (which is usually the case for food photographs) or the markers match neither pattern, the photograph is sent to the vision model on the server.
 
+**[Figure 26]** The two layers that decide what was photographed. Falling to the left calls no server; only falling to the right needs a connection. This split is what makes the offline operation of §4.5 possible.
+
+![Figure 26](fig/fig19_recognition.png)
+
 There is a reason for this order. Finishing anything with text on the device and sending out only what needs a connection means prescriptions and nutrition labels are read without an internet connection. These two are the most urgent things in this app (§4.5).
 
 #### What is shown while waiting
@@ -807,6 +811,10 @@ The verdict screen splits into two versions depending on what was photographed. 
 | 4 | Nutrient bars (up to 3) | Pictogram sequence |
 | 5 | Alternative suggestion card | Dose card and storage card |
 | 6 | Confirm button | Dosing schedule |
+
+**[Figure 27]** The two vertical orders of the verdict screen. The red arrow marks where the pictogram was moved up two places on the prescription side. The colour-and-symbol band is pushed down with it.
+
+![Figure 27](fig/fig22_verdict_order.png)
 
 The difference between the two versions is at positions 4 and 3. For prescriptions the pictograms were moved above the text cards. They were below at first, and a user who cannot read scanning from the top had to pass three empty cards before reaching a picture. Changing the order alone removes those three.
 
@@ -848,6 +856,10 @@ Alongside the sentence come one picture and a two-word instruction.
 | Camera shake | 📱 | Hold steady | Steady the hand and retry |
 | Could not reach the server | 📡 | No connection | Retrying will not help. Photograph a label or pick a sample |
 | Not recognised | 🔄 | Try again | Taking another photograph will do |
+
+**[Figure 28]** The two paths a failure takes. On the left, failures that another photograph will fix; on the right, failures another photograph will not. This split is why server responses 422 and 501 are handled separately.
+
+![Figure 28](fig/fig25_failure.png)
 
 What matters in this table is that the fourth and fifth rows are separated. Server responses are handled separately as 501 (no means available) and 422 (not recognised). If it was not recognised, taking another photograph is the answer, but if there is no connection a hundred more photographs give the same result. Showing the same sentence in both cases leaves the user retaking photographs until it works.
 
@@ -931,7 +943,7 @@ The same verdict therefore goes out through five channels at once.
 
 | Channel | Safe | Caution | Avoid |
 |---|---|---|---|
-| Colour | Green `#15A34A` | Amber `#DE8500` | Red `#DC2626` |
+| Colour | Green `#0E7A38` | Amber `#B45309` | Red `#C81E1E` |
 | Symbol | ✅ | ⚠️ | ⛔ |
 | Word | Safe | Caution | Avoid |
 | Sentence | "Safe to eat." | "Caution for 〈name〉" | "Do not eat." |
@@ -943,7 +955,66 @@ The same principle repeats in the nutrient bars. One fact is expressed five time
 
 The line currently being read gains an outline. Where the audio has reached has to be visible as well as audible, so that someone who lost the thread can press that spot again.
 
+
+#### Whether the colours themselves can be read was measured separately
+
+If everything so far concerns the layers that substitute for colour, whether the colour itself can be read is a separate question. In §5.7, E. A. Draffan of Global Symbols wrote that the WCAG 2.2 mobile criteria should be checked. The reason given was that AAC users frequently have visual difficulties as well and operate by scanning, which makes an audio button hard to reach. Working through the criteria, two items failed.
+
+The first is contrast. All five verdict colours fell short. SC 1.4.3 of WCAG 2.2 requires 4.5:1 for body text, and these colours are not decoration but the colour of the verdict sentence itself. It is not that one of the five channels in Table 18 dims but that the sentence does not read.
+
+[Table 19] Contrast of the verdict colours (on the off-white background `#F4F3EF`, criterion 4.5:1)
+
+| Use | Before | Ratio | Now | Ratio |
+|---|---|---|---|---|
+| Safe | `#15A34A` | 2.97:1 | `#0E7A38` | 4.90:1 |
+| Caution | `#DE8500` | 2.53:1 | `#B45309` | 4.52:1 |
+| Avoid | `#DC2626` | 4.35:1 | `#C81E1E` | 5.17:1 |
+| Accent | `#2F6BF6` | 4.15:1 | `#1D4ED8` | 6.04:1 |
+| Secondary text | `#6B7280` | 4.35:1 | `#55606E` | 5.76:1 |
+
+All five were darkened by one step while the hue was kept. Green, amber and red have to be recognisable as such at a glance for the channels to remain distinct. The present values exceed 4.5:1 in all four combinations: on a white card, on the off-white background, on their own tinted band, and as white text on the colour itself.
+
+These are values the eye cannot hold, so they were locked with a test. The earlier values looked perfectly fine on screen, and that is in fact how they survived this long. The test measures more than contrast: it also checks that the three colours remain distinct in hue. Measuring contrast alone can be satisfied by collapsing everything to dark grey, which is the most common way of passing a test while losing what the test was for.
+
+The second is target size. SC 2.5.8 requires a minimum of 24 pixels. The large controls were already 44 pixels, but secondary controls such as the read-again row and the row back to settings were between 16 and 20. A thin row to scan and tap is particularly bad in this app, because tapping that row is how someone who cannot read reads the screen. A 24-pixel floor was applied.
+
+What was already correct should be recorded too. The path by which a scanning device reaches the audio (SC 2.1.1, keyboard operation), the absence of unnamed controls (SC 4.1.2), no horizontal scrolling at 375 pixels (SC 1.4.10) and no obscured focus (SC 2.4.11) were all confirmed to hold. These four are listed not to claim credit for passing but because stating the scope of the sweep is what separates "passed" from "not checked".
+
 ---
+
+### 3.8 Checking that it was understood
+
+A verdict screen having appeared does not mean the delivery is finished. This is the point Foued Maaoui, a researcher at the Institut Pasteur de Tunis, raised in §5.7. However clear the screen, without a procedure for confirming that the person who saw it understood it there is no returning signal, and from a patient-safety standpoint the absence of that loop is a serious risk.
+
+Teach-back as used in clinical practice runs like this. When the explanation is finished, the clinician asks the patient to say how they will take the medicine at home, and re-explains whatever is missing from the answer. The premise is that nodding is not evidence of understanding. The systematic review cited in §5.7 found positive results in 19 of 20 studies of this procedure.
+
+The procedure cannot be carried across to our users as it stands. They cannot read, and the microphone is closed off entirely (§4.6). Speaking back would require speech recognition, and that is a permission we chose not to open. So instead of speaking back, the user points back with pictures. The question goes out as sound and the answer is a picture that gets tapped. The pictures to tap are not drawn afresh; they are the morphemes of §2.2.
+
+This is where the reason for using morphemes rather than a line of DSL as the answer set becomes visible. `\qty_two` is "two" without saying two of what. It is the same reason the grammar of §2.2 forbids a modifier standing alone, and what is needed in this position is not a sentence but a single picture to point at.
+
+[Table 20] What the check asks (it asks only what the prescription said)
+
+| Order | What is asked | Spoken question | Answer set | When it is not asked |
+|---|---|---|---|---|
+| 1 | How many at a time | How many do you take at a time? | three count morphemes | when the prescription carries no per-intake count |
+| 2 | When | When do you take it? | three time morphemes | when the times absent from the prescription cannot fill two slots |
+| 3 | With food or not | Do you take it with food? | bowl · empty bowl | when the prescription does not state a meal context |
+
+Count was put first. Of the 155 dispensing errors found by pharmacists in Table 4, 28.4% were dose errors, and Professor Atif Usman's remark in §5.7 that the dose per intake and the times per day are not distinguished points at the same place. At most two of the three are asked rather than all three. A check that drags on becomes another step in itself, and steps are what this app set out to remove.
+
+Three things were not conceded in the design.
+
+First, it does not block. A wrong answer moves on, the check can be skipped, and the medicine information stays on the screen below throughout. An app that withholds information until a check is passed is an app that stops people taking their medicine. This is a check, not a test.
+
+Second, it asks only what the prescription said. Asking about something not written there would require us to invent an answer, and we would then be teaching an invented answer as correct. Asking about a meal context only when the prescription mentions one is that rule.
+
+Third, when the answer is wrong it says the right thing again on the spot. The correct picture is lit and read aloud once more, using **the same sentence** as when the answer was right. Whichever way the user pointed, the last thing they hear has to be the correct instruction. The point of the check is not a score but a second chance.
+
+What was decided not to ask should also be recorded. The distractors for the time question have to be times absent from that prescription. Offering an actual dosing time as a distractor would mean telling someone who pointed correctly that they were wrong. For a medicine taken three times a day only one time remains, so the answer set would be two, and a fifty-fifty guess is not a check. It is a question that fails to separate those who understood from those who did not while leaving behind the fact that a question was asked, so it is not asked at all. A medicine taken three times a day already has count and meal context worth asking about.
+
+The answer order is shuffled, but always the same way. If the answer moves around each time it is seen, someone who remembered the position they tapped the first time is lost the second. What is needed here is not randomness but only that the correct answer is not always in the first slot, so the shuffle is derived from the item identifier.
+
+This step was built after the survey in §5.7. It has not been verified with people, and whether pointing at pictures produces the same confirming effect as speaking back is an item for the field evaluation in §5.10.
 
 ## □ Development and Implementation
 
@@ -1002,6 +1073,10 @@ SnapCare therefore applies the same checks regardless of which route a value cam
 | Subset | Saturated fat ≤ total fat, sugars ≤ carbohydrates |
 | Mass balance | Does the sum of nutrients exceed the total mass |
 | Atwater identity | 4·carbohydrate + 4·protein + 9·fat ≈ energy |
+
+**[Figure 29]** Three paths pass through one gate (§4.2). The red line underneath is the reason the checks were gathered in one place rather than placed on each path. The third path arrived in this app later, and no additional validation code was written for it. It was simply routed through the gate that already existed.
+
+![Figure 29](fig/fig17_gate.png)
 
 The Atwater identity is particularly useful. It is a relation that must hold for values from any source, so the consistency of the values themselves can be checked without having to trust the source.
 
@@ -1066,6 +1141,10 @@ printed code ──HKDF──► device id      the relay's address    (relay se
              ──HKDF──► box key        opens the schedule     (relay never sees it)
 ```
 
+**[Figure 30]** Three values separate out of ten printed characters. The relay distinguishes mailboxes by the first two, and the last is sent by neither side, so the relay has no way of holding it.
+
+![Figure 30](fig/fig20_relay_keys.png)
+
 This is one more channel rather than a dependency. The schedule is already on the device's SD card and the time is known to the DS3231. Whether the relay is down, unreachable or never configured at all, nobody's dose is missed. The judgement in Table 24 stands. We still do not require a cloud.
 
 ### 4.4 Reading the paper form
@@ -1106,6 +1185,10 @@ else:                                          # multi-select items (days of wee
     unclear = [k for k in group["bubbles"] if abs_min - margin <= s[k] < abs_min]
 ```
 
+**[Figure 31]** The four stages of reading the paper form, and the three branches on which a single-choice item yields no value. All three red boxes end on the side that produces nothing.
+
+![Figure 31](fig/fig23_formsheet.png)
+
 Design intent. That branches ①, ② and ③ all end by yielding no value is the character of this function. Branch ② especially. When two cells are both properly filled in, picking the darker is technically easy, but it manufactures something the paper did not say.
 
 A named problem (`problems`) sends the user back to the paper and is recoverable. A confident misreading is not. This is why the reader has to be able to say "I do not know," and it is the same principle as the parser in §2.2 turning an invented name into an error rather than a picture, and the checker in §5.2 not lowering the pass criterion to fit the results.
@@ -1145,6 +1228,10 @@ Two practical instructions come out of this. Fill more than half the box when ma
 ### 4.5 Offline operation
 
 The app is built as a PWA, with a service worker caching screens, assets and the model. The strategy differs by the nature of the resource. Navigation is handled network-first so that the latest is always fetched when connected, while static assets and pictograms are handled cache-first. The verdict API is not intercepted, because failing is better than serving a stale answer.
+
+**[Figure 33]** The three ways the service worker splits a request. Each is a distinct judgement, and the red cell is a constraint that exists because this app handles medicines.
+
+![Figure 33](fig/fig21_sw.png)
 
 The branching of the strategy is visible directly in the service worker's `fetch` handling.
 
@@ -1213,6 +1300,10 @@ export async function sign(method: string, body: string, ts: number): Promise<st
   return b64(await crypto.subtle.sign(SIGN, privateKey, new TextEncoder().encode(payload)));
 }
 ```
+
+**[Figure 34]** What goes into the signature and what each part prevents. Missing either one makes the signature worthless. Deriving the storage location from the public key is not the signature but a separate access control.
+
+![Figure 34](fig/fig24_sign.png)
 
 Design intent. The second argument to `generateKey` being `false` means not even our own code can read the private key. All we can do is ask the browser to sign with it. Taking the device's entire storage therefore yields nothing worth taking. It becomes something usable only by holding that device rather than a value that can be observed and imitated.
 
