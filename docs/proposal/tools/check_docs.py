@@ -16,6 +16,7 @@
   · 기계가 쓴 티가 나는 상투구가 남아 있지 않은가
   · 두 판에서 그림이 같은 자리에 있는가
   · 두 판이 절마다 비슷한 수의 상호 참조를 갖는가
+  · 인용이 이름과 해만 적혀 있지 않은가
 """
 import re
 import sys
@@ -126,6 +127,33 @@ def orphan_figs(f: str, fw: str) -> set:
     return out
 
 
+def short_cites(f: str) -> list:
+    """서지 정보 없이 이름과 해만 적은 인용을 찾는다.
+
+    (UNESCO, 2025) 처럼 적으면 읽는 사람이 앞으로 되돌아가야 무엇인지
+    안다. 제목이나 학술지가 함께 있으면 되돌아갈 일이 없다. 여기서는
+    괄호 안에 이탤릭 제목도 따옴표 제목도 없는 것을 걸러 낸다."""
+    s = (DOC / f).read_text()
+    s = s[:s.index('### 5.11')]
+    out = []
+    for m in re.finditer(r'\(([^()]{6,58})\)', s):
+        t = m.group(1)
+        if not re.search(r'(19|20)\d\d', t):
+            continue
+        if '*' in t or '"' in t:
+            continue
+        # 연도만 있는 괄호와 조사 시점 표기는 인용이 아니다
+        if re.fullmatch(r'[\d\-~. ]+(기준|census round)?', t.strip()):
+            continue
+        if re.fullmatch(r'(as of |조사 기간 )?[\d\-~ ]+(기준)?', t.strip()):
+            continue
+        # "as of 29 July 2026" 같은 시점 표기. 인용이 아니라 날짜다.
+        if re.fullmatch(r'as of \d+ \w+ \d{4}|\d{4}-\d\d-\d\d 기준', t.strip()):
+            continue
+        out.append(t)
+    return out
+
+
 def sec_refs(f: str) -> dict:
     """절마다 다른 절을 몇 번 가리키는지 센다.
 
@@ -211,6 +239,10 @@ def main() -> int:
             note(f'{f}: 상투구 — {x}')
         for x in unattributed(f):
             note(f'{f}: 직책 없이 인용했다 — {x}')
+
+    for f, _, _ in PAIR:
+        for t in short_cites(f):
+            note(f'{f}: 서지 정보 없는 인용 — ({t})')
 
     ka, ea = sec_refs('proposal_ko.md'), sec_refs('proposal_en.md')
     gap = [(k, ka.get(k, 0), ea.get(k, 0)) for k in set(ka) | set(ea)

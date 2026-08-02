@@ -311,6 +311,7 @@ PMC8544505 한국 고령자 79.4%/28.2% · PMC7532569 몰도바 건강문해력 
 | Kheir, N. et al., *Res Social Adm Pharm* 10(5):720 | PubMed 초록 | 확인. 123명 세 갈래 무작위. 그림+구두가 대부분 지시에서 최고 (p ≤ 0.05). "Do not take with dairy products" 는 여전히 어려웠다 |
 | Mourad, N. et al., *BMC Public Health* 23:1926 | PMC 전문 | 확인. n=1,848. 9.36±1.60 → 10.88±0.89, 차이 1.52 (95% CI 1.45~1.60). 나이 Beta = −0.019 |
 | Chaudry, B. et al., *PervasiveHealth 2011*:160 | PMC 전문 | 확인. CKD 5기 10명, REALM 3/3/4. 액체 10/10, 무정형 8/10, 고형식 0/10 |
+| Nielsen, J. & Landauer, T. K., *Proc. INTERCHI 93*:206 | 응답자가 지목 | 최묘정 연구원이 소규모 표본의 근거로 든 것이다. 서지 정보만 보완했고 우리가 이 값을 주장에 쓰지는 않는다 |
 
 ### 표본 처방전을 대조한 것
 

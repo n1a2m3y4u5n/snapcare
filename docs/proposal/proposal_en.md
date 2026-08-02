@@ -21,17 +21,17 @@ SnapCare is a web app that answers a single photograph of a prescription, a nutr
 
 ### 1.1 The size and trend of the non-literate population
 
-There are 739 million non-literate adults worldwide, and roughly two thirds of them, 466 million, are women (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). The adult literacy rate rose from 86% in 2015 to 88% in 2024, so on the numbers alone the situation is improving (UNESCO, 2025).
+There are 739 million non-literate adults worldwide, and roughly two thirds of them, 466 million, are women (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). The adult literacy rate rose from 86% in 2015 to 88% in 2024, so on the numbers alone the situation is improving (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025).
 
-There are regions, however, where the improvement in the rate has not kept pace with population growth. In sub-Saharan Africa the literacy rate rose from 65% to 69% over the same period, yet the absolute number of non-literate adults grew from 196 million to 225 million (UNESCO, 2025). Central and Southern Asia follows with 347 million, the second largest total after sub-Saharan Africa (UNESCO, 2025). More than half of all non-literate adults, 441 million people, are concentrated in ten countries (UNESCO, 2025).
+There are regions, however, where the improvement in the rate has not kept pace with population growth. In sub-Saharan Africa the literacy rate rose from 65% to 69% over the same period, yet the absolute number of non-literate adults grew from 196 million to 225 million (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). Central and Southern Asia follows with 347 million, the second largest total after sub-Saharan Africa (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). More than half of all non-literate adults, 441 million people, are concentrated in ten countries (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025).
 
 This is therefore not the kind of problem that time resolves on its own. While education expands, the number of people collecting medicine today does not fall.
 
-Averages hide the size of the problem. The fifteen countries with the lowest adult literacy rates fall between 29% and 60%, and Chad stands at 28% (UNESCO, 2025).
+Averages hide the size of the problem. The fifteen countries with the lowest adult literacy rates fall between 29% and 60%, and Chad stands at 28% (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025).
 
 The values below are not period averages. Each is **the value from the single most recent survey year available for that country within the 2015 to 2024 census round**, so the reference year differs from country to country. National literacy rates vary considerably with survey year and definition (the same country can differ by more than 10 percentage points across different compilations), so only values from within a single source are used here, which keeps them comparable with one another.
 
-[Table 1] Countries with low adult literacy rates (2015–2024 census round, UNESCO, 2025)
+[Table 1] Countries with low adult literacy rates (2015–2024 census round; UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, 2025)
 
 | Country | Adult literacy | Country | Adult literacy |
 |---|---|---|---|
@@ -48,7 +48,7 @@ In Chad seven adults in ten cannot read a prescription. In these countries a pap
 
 The countries with the worst rates and the countries with the most people, however, largely do not overlap. More than half of all non-literate adults, 441 million, are concentrated in ten countries, and those ten are mostly populous ones.
 
-[Table 2] The ten countries with the most non-literate adults (UNESCO, 2025)
+[Table 2] The ten countries with the most non-literate adults (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025)
 
 | Country | Non-literate adults | Country | Non-literate adults |
 |---|---|---|---|
@@ -65,7 +65,7 @@ Placing the two tables side by side shows what kind of problem this is. Only thr
 
 This distinction affects the design. Where the rate is high the app is dealing with the condition of the majority, and where the head count is high it is dealing with a minority that is nonetheless very large in absolute terms. India's literacy rate is 81%, close to the world average, but that remaining 19% is 191 million people. Either way the problem at the moment one person collects their medicine is the same, and it is the head count rather than the rate that sets the size of what this app has to reach.
 
-The distribution is also uneven within a single country. In some sub-Saharan African countries **the literacy rate among older women is 31% against 55% among older men**, while among men in parts of Europe and North America it is 99% (UNESCO, 2025).
+The distribution is also uneven within a single country. In some sub-Saharan African countries **the literacy rate among older women is 31% against 55% among older men**, while among men in parts of Europe and North America it is 99% (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025).
 
 We record here that the experts we asked answered in a direction that cuts against this statistic. Of the 35 respondents in §5.7, 15 answered that they "almost never" encounter someone unable to read a written medication instruction, and 4 that they encounter such a person almost daily. Half the respondents work in Korea, so this answer reflects the within-country distribution seen in §1.2 rather than contradicting the world figures of §1.1. Professor Hwi-Yeol Yun of Chungnam National University College of Pharmacy set down the circumstance directly.
 
@@ -78,11 +78,11 @@ What this distribution indicates is not that the target should be narrowed but w
 
 ![Figure 1](fig/chart09_country_literacy.png)
 
-**[Figure 1]** The fifteen countries with the lowest adult literacy rates (UNESCO, 2025). The distance from the world average of 88% is the point of this figure. In these countries the people who cannot read a prescription are the majority.
+**[Figure 1]** The fifteen countries with the lowest adult literacy rates (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). The distance from the world average of 88% is the point of this figure. In these countries the people who cannot read a prescription are the majority.
 
 ![Figure 2](fig/chart01_literacy.png)
 
-**[Figure 2]** Literacy rate and number of non-literate adults in sub-Saharan Africa (UNESCO, 2025). Bars are absolute numbers, the line is the rate. The two axes moving in opposite directions is the point of this section. The rate rose 4 percentage points while the head count grew by 29 million. By the rate this is improvement, by the head count it is deterioration. This is the evidence that the problem is not one that time will resolve.
+**[Figure 2]** Literacy rate and number of non-literate adults in sub-Saharan Africa (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). Bars are absolute numbers, the line is the rate. The two axes moving in opposite directions is the point of this section. The rate rose 4 percentage points while the head count grew by 29 million. By the rate this is improvement, by the head count it is deterioration. This is the evidence that the problem is not one that time will resolve.
 
 
 ### 1.2 The distribution of health literacy
@@ -104,10 +104,10 @@ What Table 3 shows is that this problem divides more sharply within a country th
 
 ![Figure 3](fig/chart02_health_literacy.png)
 
-**[Figure 3]** Share of Korean adults without sufficient health literacy (Korea Disease Control and Prevention Agency, 2023). Against 39.6% overall, the figure for those aged 65 and over is 59.7%, higher by 20.1 percentage points. Splitting by income gives a difference of 11.9 percentage points. That this problem divides more sharply within a country than between countries is the point of this figure.
+**[Figure 3]** Share of Korean adults without sufficient health literacy (Korea Disease Control and Prevention Agency, *Korea National Health and Nutrition Examination Survey, 9th cycle, year 2*, 2023). Against 39.6% overall, the figure for those aged 65 and over is 59.7%, higher by 20.1 percentage points. Splitting by income gives a difference of 11.9 percentage points. That this problem divides more sharply within a country than between countries is the point of this figure.
 
 
-Measuring literacy directly rather than by self-report makes the picture worse. In the Programme for the International Assessment of Adult Competencies (PIAAC), covering 31 developed countries, **18% of adults did not reach the most elementary level in literacy, numeracy and adaptive problem solving**, and adult literacy in these countries has stagnated or declined since 2012 (UNESCO, 2025, citing PIAAC). The distance between the self-report "I can read" and the ability "I can follow the instruction on a medicine packet" appears here.
+Measuring literacy directly rather than by self-report makes the picture worse. In the Programme for the International Assessment of Adult Competencies (PIAAC), covering 31 developed countries, **18% of adults did not reach the most elementary level in literacy, numeracy and adaptive problem solving**, and adult literacy in these countries has stagnated or declined since 2012 (OECD, *Programme for the International Assessment of Adult Competencies*, cited in UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). The distance between the self-report "I can read" and the ability "I can follow the instruction on a medicine packet" appears here.
 
 Nor is this particular to Korea. The OECD, pooling data from 18 countries, wrote that at least one third show low health literacy, and the same report, citing United States research, put the additional cost arising from low health literacy at 3 to 5% of total annual health expenditure (Moreira, L., "Health literacy for people-centred care: Where do OECD countries stand?", *OECD Health Working Papers*, No. 107, DELSA/HEA/WD/HWP(2018)4, 2018).
 
@@ -140,7 +140,7 @@ Looking at which types medication errors cluster into narrows down what has to b
 | Timing error | 36 | 23.2% | `time_morning` – `time_night` |
 | Other | 24 | 15.5% | — |
 
-Based on 155 dispensing errors found by pharmacists (Anacleto et al., 2007).
+Based on 155 dispensing errors found by pharmacists (Anacleto, T. A., Perini, E., Rosa, M. B. & César, C. C., "Medication dispensing errors in a Brazilian hospital pharmacy," *Clinics*, 62(3):243–250, 2007).
 
 Table 4 shows that most errors cluster into three things: what, how much and when. All three are information that can be carried in a picture, and SnapCare's morpheme design follows exactly this distribution.
 
@@ -157,7 +157,7 @@ One qualification is needed here. This distribution covers errors made on the di
 
 ![Figure 4](fig/chart03_error_types.png)
 
-**[Figure 4]** Distribution by type of 155 dispensing errors found by pharmacists (Anacleto et al., 2007). Omission, dose and timing account for 84.5%. That all three are information which can be carried in a picture is the starting point of the SIGIL morpheme design, and `finish_course`, `qty_*` and `time_*` correspond to them respectively.
+**[Figure 4]** Distribution by type of 155 dispensing errors found by pharmacists (Anacleto, T. A., Perini, E., Rosa, M. B. & César, C. C., "Medication dispensing errors in a Brazilian hospital pharmacy," *Clinics*, 62(3):243–250, 2007). Omission, dose and timing account for 84.5%. That all three are information which can be carried in a picture is the starting point of the SIGIL morpheme design, and `finish_course`, `qty_*` and `time_*` correspond to them respectively.
 
 
 #### Misreading measured on the patient side
@@ -184,7 +184,7 @@ The cost estimates span a wide range, and the basis of the 300 billion dollar up
 
 ### 1.4 International policy and its blind spot
 
-In 2017 the World Health Organization declared Medication Without Harm as its third Global Patient Safety Challenge, setting a goal of reducing severe avoidable medication-related harm by 50% within five years (WHO, 2017). It identified three priority areas: high-risk situations, polypharmacy and transitions of care (WHO, 2017).
+In 2017 the World Health Organization declared Medication Without Harm as its third Global Patient Safety Challenge, setting a goal of reducing severe avoidable medication-related harm by 50% within five years (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017). It identified three priority areas: high-risk situations, polypharmacy and transitions of care (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017).
 
 Seven years after that declaration, however, as of 2024 only **18% of WHO member states** have established national targets for reducing medication-related harm (World Health Organization, *Medication without harm: policy brief*, ISBN 978-92-4-006276-4, 2024).
 
@@ -192,7 +192,7 @@ The global patient safety report of the same year records that 74% of member sta
 
 ![Figure 5](fig/chart12_policy_depth.png)
 
-**[Figure 5]** How far Medication Without Harm has reached inside national systems (WHO, 2024). Seventy-four percent of member states have accepted the challenge; 18% have set a numerical reduction target. What to read here is the distance between declaration and implementation. The blind spot §1.4 describes exists not because there is no policy but because the policy has not come down this far.
+**[Figure 5]** How far Medication Without Harm has reached inside national systems (World Health Organization, *Global patient safety report 2024*, ISBN 978-92-4-009545-8, 2024). Seventy-four percent of member states have accepted the challenge; 18% have set a numerical reduction target. What to read here is the distance between declaration and implementation. The blind spot §1.4 describes exists not because there is no policy but because the policy has not come down this far.
 
 A gap remains even after the instruction has been delivered. Adherence among patients with chronic disease averages 50% in developed countries and is lower in developing ones (World Health Organization, *Adherence to long-term therapies: evidence for action*, 2003). That figure was measured over populations including people who can read and who have been diagnosed, which also means this is not a problem that literacy alone accounts for.
 
@@ -229,7 +229,7 @@ Here we set down, alongside it, evidence that cuts against our own argument. Acc
 
 ![Figure 6](fig/chart11_harm_stage.png)
 
-**[Figure 6]** The stage at which preventable medication harm arises (WHO, 2024). Grey is the world, red is low- and middle-income countries. We include it because it is not a figure that favours us.
+**[Figure 6]** The stage at which preventable medication harm arises (World Health Organization, *Global patient safety report 2024*, ISBN 978-92-4-009545-8, 2024). Grey is the world, red is low- and middle-income countries. We include it because it is not a figure that favours us.
 
 The centre of gravity of this harm therefore lies with the prescriber rather than the patient, and that skew is more pronounced in the regions we target. This app does not intervene at the prescribing stage.
 
@@ -245,7 +245,7 @@ Where that reach ends also shows up in staffing. Physician density is 2.9 per 10
 
 Existing personalised health apps assume the user knows their own condition. That assumption does not hold.
 
-Diabetes prevalence among adults aged 20 to 79 is 11.1%, reaching 589 million people, and of these **252 million, about 43%, do not know they have diabetes** (International Diabetes Federation, *IDF Diabetes Atlas*, 11th ed., 2025). Three in four adults with diabetes live in low- and middle-income countries. The figure is projected to reach 853 million (13%) by 2050, and in 2024 alone diabetes caused 3.4 million deaths, one every nine seconds (IDF, 2025).
+Diabetes prevalence among adults aged 20 to 79 is 11.1%, reaching 589 million people, and of these **252 million, about 43%, do not know they have diabetes** (International Diabetes Federation, *IDF Diabetes Atlas*, 11th ed., 2025). Three in four adults with diabetes live in low- and middle-income countries. The figure is projected to reach 853 million (13%) by 2050, and in 2024 alone diabetes caused 3.4 million deaths, one every nine seconds (International Diabetes Federation, *IDF Diabetes Atlas*, 11th ed., 2025).
 
 The number that matters to us here is not the prevalence but the **43%**. These people have never been to a hospital and received the name, so they answer no to the question "do you have diabetes." The app that receives that answer then gives them a verdict computed without regard to diabetes.
 
@@ -271,13 +271,13 @@ That gap overlaps with the regions we target. Smartphones have already spread, a
 
 This app was not designed for blindness. The pictures are drawn large and speech is attached, but two responses in §5.7 noted that the act of taking a photograph is itself a barrier for someone who cannot see. It is a layer we have not addressed and it belongs to the unverified items in §5.10.
 
-There is a further assumption still. Even someone who can read has no guarantee that the text in front of them is in their own language. Forty percent of the world's population does not have access to education in a language they understand, and most literacy surveys themselves measure in a single language (UNESCO, 2025). Prescriptions and nutrition labels are printed in a country's official language or in English, so among those counted as "able to read" in literacy statistics there are people who cannot read the paper in front of them. Pictures and speech step over both layers at once.
+There is a further assumption still. Even someone who can read has no guarantee that the text in front of them is in their own language. Forty percent of the world's population does not have access to education in a language they understand, and most literacy surveys themselves measure in a single language (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). Prescriptions and nutrition labels are printed in a country's official language or in English, so among those counted as "able to read" in literacy statistics there are people who cannot read the paper in front of them. Pictures and speech step over both layers at once.
 
 ### 1.6 How widely the delivery medium has spread
 
 The medium for solving the problem has already spread. In a 2025 survey, smartphone ownership among United States adults aged 65 and over was 78%. In the same survey it was 97% for those under 50 and 90% for those aged 50 to 64, with 91% across all adults, up from 35% in the first survey in 2011 (Pew Research Center, *Mobile Fact Sheet: Demographics of Mobile Device Ownership and Adoption in the United States*, fieldwork 5 February to 18 June 2025, 2025). Mobile internet users in sub-Saharan Africa are projected to grow from about 287 million in 2022 to 438 million in 2030, with smartphone adoption rising from 51% to 88% (GSM Association, *The Mobile Economy Sub-Saharan Africa 2023*, GSMA Intelligence, 2023).
 
-[Table 5] Smartphone ownership by age group (United States, 2025)
+[Table 5] Smartphone ownership by age group (United States; Pew Research Center, *Mobile Fact Sheet*, 2025)
 
 | Age group | Ownership |
 |---|---|
@@ -289,7 +289,7 @@ What Table 5 says is that people are not failing to use these tools for want of 
 
 ![Figure 8](fig/chart04_smartphone.png)
 
-**[Figure 8]** Smartphone ownership by age group (United States, 2025). The gap between those 65 and over and those under 50 is 19 percentage points, already too narrow for "device availability" to explain the problem. The remaining gap lies on the side of the screen.
+**[Figure 8]** Smartphone ownership by age group (United States; Pew Research Center, *Mobile Fact Sheet*, 2025). The gap between those 65 and over and those under 50 is 19 percentage points, already too narrow for "device availability" to explain the problem. The remaining gap lies on the side of the screen.
 
 Having a device and reaching the internet are different things, however. As of 2024, 5.5 billion people use the internet (68% of the world population), while 2.6 billion still do not. That is 32% of the world population, one person in three (International Telecommunication Union, *Measuring digital development: Facts and Figures 2024*, 2024).
 
@@ -317,7 +317,7 @@ The middle condition is confirmed numerically. Synthesising 545 studies covering
 
 That half of older adults take five or more medicines together also means that several medicines arrive on one screen of this app at once. In §5.7, Niken Nur Widyakusuma, a pharmacist at Universitas Gadjah Mada in Indonesia, noting that "when several medicines are handed over at once it is hard to tell which one is three times a day" comes out of this condition.
 
-Korean data show this overlap concretely. In a study surveying 131 people aged 65 and over, **79.4% took their medicines themselves** while only **28.2%** had received medication safety education (Lee, M., Kim, K., Rhew, K. & Choi, K.-H., "A knowledge, attitude, and practice survey on medication safety in Korean older adults," *Healthcare*, 9(10):1365, 2021, doi:10.3390/healthcare9101365). And the share of that age group with adequate health literacy is 40.3% (Korea Disease Control and Prevention Agency, 2023). Most of them have to manage on their own, while only a minority are equipped to read what they are given.
+Korean data show this overlap concretely. In a study surveying 131 people aged 65 and over, **79.4% took their medicines themselves** while only **28.2%** had received medication safety education (Lee, M., Kim, K., Rhew, K. & Choi, K.-H., "A knowledge, attitude, and practice survey on medication safety in Korean older adults," *Healthcare*, 9(10):1365, 2021, doi:10.3390/healthcare9101365). And the share of that age group with adequate health literacy is 40.3% (Korea Disease Control and Prevention Agency, *Korea National Health and Nutrition Examination Survey, 9th cycle, year 2*, 2023). Most of them have to manage on their own, while only a minority are equipped to read what they are given.
 
 The sample of 131 is small and the survey was conducted in 2017, which should be stated. Using this value as an estimate for Korean older adults as a whole would be a stretch, and what is used here is the direction of the ratio: that those managing on their own far outnumber those who have been taught how.
 
@@ -347,13 +347,13 @@ How far the pharmaceutical pictograms actually produced pass these criteria is t
 
 What Table 6 shows is that making a pictogram does not mean it will be read. When 108 internationally used USP and FIP pictograms were tested on Filipino adults, 17 passed the ANSI 85% criterion, roughly one in six (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022, doi:10.1186/s40545-022-00426-y).
 
-Placing the three studies side by side shows what separates the pass rates. The highest belongs to the set made locally and tested on local people (Dowse et al., 2023: 8 of 10). The most direct evidence is the controlled comparison by Dowse & Ehlers. When the same 46 people were shown two sets carrying the same instructions, 20 of the 23 locally made symbols (87%) passed the ANSI 85% criterion while only 11 of the 23 USP-DI symbols (48%) did (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). The same people were asked about the same meanings, and the answers split almost twofold according to where the pictures came from.
+Placing the three studies side by side shows what separates the pass rates. The highest belongs to the set made locally and tested on local people (Dowse, R., Okeyo, S., Sikhondze, S. & Khumalo, N., *Health SA Gesondheid*, 28:2192, 2023: 8 of 10). The most direct evidence is the controlled comparison by Dowse & Ehlers. When the same 46 people were shown two sets carrying the same instructions, 20 of the 23 locally made symbols (87%) passed the ANSI 85% criterion while only 11 of the 23 USP-DI symbols (48%) did (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). The same people were asked about the same meanings, and the answers split almost twofold according to where the pictures came from.
 
 The same thing is observed outside pharmaceutical pictograms. In a study testing 18 internationally standardised in-vitro diagnostic symbols on 293 health workers in four countries, the number of symbols exceeding the ISO criterion was six in Belgium and Cuba, two in the Democratic Republic of the Congo and one in Cambodia. The widest gap was the biological-hazard symbol, answered correctly by 94.1% in Cuba and by 8.0% in the Democratic Republic of the Congo (Hermans, V., Monzote, L., Van den Sande, B. et al., "Assessment of the knowledge of graphical symbols labelled on malaria rapid diagnostic tests in four international settings," *Malaria Journal*, 10:331, 2011).
 
 ![Figure 10](fig/chart16_symbol_country.png)
 
-**[Figure 10]** The same internationally standardised symbols tested in four countries (Hermans et al., 2011). On the left, how many of the 18 exceeded the ISO criterion; on the right, the correct-answer rate for the biological-hazard symbol alone. The symbols are the same; only the country differs.
+**[Figure 10]** The same internationally standardised symbols tested in four countries (Hermans, V., Monzote, L., Van den Sande, B. et al., "Assessment of the knowledge of graphical symbols labelled on malaria rapid diagnostic tests in four international settings," *Malaria Journal*, 10:331, 2011). On the left, how many of the 18 exceeded the ISO criterion; on the right, the correct-answer rate for the biological-hazard symbol alone. The symbols are the same; only the country differs.
 
 One and the same picture becomes 94% in one country and 8% in another. This is the sharpest available demonstration that pictogram comprehension is not settled by the quality of the drawing alone, and it also means that the name "international standard" does not guarantee comprehension.
 
@@ -381,7 +381,7 @@ There is also work that pools the individual trials. Screening 4,160 records pro
 
 The same paper left one sentence that bears directly on our design: **icons with few words may be most helpful** in conveying health information. It points the same way, independently, as the respondents in three countries who said in §5.7 that there are too many elements in one image. The authors note that heterogeneity across the outcomes was substantial and that the results should be read with caution, and we read them that way here. These figures are grounds for using pictures, not grounds for thinking any picture will do.
 
-To summarise, this field has observed three things together. Well-made pictures do in fact reduce errors (Yin et al., 2008: 47.8% to 5.4%). Pictures work better with speech than alone (Kheir et al., 2014). And making them does not mean making them well (Gutierrez et al., 2022: 17 of 108). The first two are the reason to take this approach, and the third is the reason to measure afterwards.
+To summarise, this field has observed three things together. Well-made pictures do in fact reduce errors (Yin, H. S. et al., *Arch Pediatr Adolesc Med*, 162(9):814–822, 2008: 47.8% to 5.4%). Pictures work better with speech than alone (Kheir, N., Awaisu, A., Radoui, A., El Badawi, A., Jean, L. & Dowse, R., *Res Social Adm Pharm*, 10(5):720–730, 2014). And making them does not mean making them well (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., *J Pharm Policy Pract*, 15:30, 2022: 17 of 108). The first two are the reason to take this approach, and the third is the reason to measure afterwards.
 
 One thing the field has not answered attaches to that. Mourad et al. finding that the gain from pictures shrinks with age, and Schubbe et al. finding that icons with few words help most, both ask how much we should be showing an older person and in what form. Neither answers it for our set. That is what we have to measure in the field evaluation of §5.10.
 
@@ -442,15 +442,15 @@ The authors locate the cause in the understanding of nesting itself. Some partic
 
 The discussion so far comes to five points.
 
-First, scale. There are 739 million non-literate adults, and in some regions the absolute number is rising (UNESCO, 2025). Applying a health literacy criterion widens the target further. Health literacy is not sufficient for 39.6% of Korean adults and 59.7% of those aged 65 and over (Korea Disease Control and Prevention Agency, 2023).
+First, scale. There are 739 million non-literate adults, and in some regions the absolute number is rising (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). Applying a health literacy criterion widens the target further. Health literacy is not sufficient for 39.6% of Korean adults and 59.7% of those aged 65 and over (Korea Disease Control and Prevention Agency, *Korea National Health and Nutrition Examination Survey, 9th cycle, year 2*, 2023).
 
-Second, cost. Medication errors generate 42 billion dollars a year in costs (WHO, 2017), and in 2019 deaths directly attributable to bacterial antimicrobial resistance numbered 1.27 million, more than HIV/AIDS or malaria (Murray, C. J. L. et al. (Antimicrobial Resistance Collaborators), "Global burden of bacterial antimicrobial resistance in 2019: a systematic analysis," *The Lancet*, 399(10325):629–655, 2022). In 2023 data, one in six laboratory-confirmed bacterial infections showed resistance to antibiotics (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025).
+Second, cost. Medication errors generate 42 billion dollars a year in costs (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017), and in 2019 deaths directly attributable to bacterial antimicrobial resistance numbered 1.27 million, more than HIV/AIDS or malaria (Murray, C. J. L. et al. (Antimicrobial Resistance Collaborators), "Global burden of bacterial antimicrobial resistance in 2019: a systematic analysis," *The Lancet*, 399(10325):629–655, 2022). In 2023 data, one in six laboratory-confirmed bacterial infections showed resistance to antibiotics (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025).
 
-Third, the effect and the limits of visual methods. Pictures are remembered better than text (Houts et al., 2006), yet of 108 pharmaceutical pictograms actually produced only 17 passed the ANSI criterion (Gutierrez et al., 2022).
+Third, the effect and the limits of visual methods. Pictures are remembered better than text (Houts, P. S., Doak, C. C., Doak, L. G. & Loscalzo, M. J., "The role of pictures in improving health communication," *Patient Education and Counseling*, 61(2):173–190, 2006), yet of 108 pharmaceutical pictograms actually produced only 17 passed the ANSI criterion (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
 
 Fourth, the structural constraint of the standard. The 81 USP symbols are prohibited from being combined, so a compound instruction cannot be made into a single picture (USP Pictogram Library License Agreement).
 
-Fifth, an open delivery channel. Seventy-eight percent of United States adults aged 65 and over already own a smartphone (Pew Research Center, 2025).
+Fifth, an open delivery channel. Seventy-eight percent of United States adults aged 65 and over already own a smartphone (Pew Research Center, *Mobile Fact Sheet: Demographics of Mobile Device Ownership and Adoption in the United States*, 2025).
 
 **[Figure 13]** The five strands of chapter 1 and the three things they point to. Every number on the left is quoted exactly as it appears in the preceding sections, and nothing new is claimed here. All this figure does is put in one frame the fact that the five point at the same place. The red line beneath it is what this section is careful about.
 
@@ -474,7 +474,7 @@ Within the range we searched, no system had all three. Pictogram sets exist but 
 
 SnapCare has one design principle. At no point on the path by which a user arrives at a judgement are they required to read or type.
 
-The principle follows from two facts established in the previous section. First, removing text is a necessary condition. For someone who cannot read a prescription, a text interface is no different from the paper one. Second, removing text is not sufficient. Pictures too can fail to be read (Gutierrez et al., 2022), and a hierarchy is itself a barrier (Medhi et al., 2013).
+The principle follows from two facts established in the previous section. First, removing text is a necessary condition. For someone who cannot read a prescription, a text interface is no different from the paper one. Second, removing text is not sufficient. Pictures too can fail to be read (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022), and a hierarchy is itself a barrier (Medhi, I., Toyama, K., Joshi, A., Athavankar, U. & Cutrell, E., "A Comparison of List vs. Hierarchical UIs on Mobile Phones for Non-literate Users," *INTERACT 2013*, LNCS 8118:497–504).
 
 SnapCare therefore answers in three layers. What to do is carried by a picture, what that picture means is carried by speech, and whether this is safe or dangerous right now is carried by a single colour. The three layers overlap rather than substitute for one another. Someone who does not recognise the picture still has the speech, and where the speech cannot be heard the colour remains.
 
@@ -712,7 +712,7 @@ The user's conditions are then added. Diabetes narrows the sugar threshold, taki
 
 ### 2.5 Collecting conditions and inferring allergies
 
-As established in the previous section, about 43% of adults with diabetes do not know they have it (IDF, 2025), and for allergies there is a large gap between self-report and confirmed diagnosis.
+As established in the previous section, about 43% of adults with diabetes do not know they have it (International Diabetes Federation, *IDF Diabetes Atlas*, 11th ed., 2025), and for allergies there is a large gap between self-report and confirmed diagnosis.
 
 The question "what are you allergic to" can therefore only be answered by someone who has been tested. SnapCare splits this question three ways.
 
@@ -825,7 +825,7 @@ The design of the transmission path is the result of several constraints applyin
 
 ### 3.1 The overall flow
 
-SnapCare's user flow is built on the principle of running from a single photograph to a verdict without branching. As cited in the previous section, a deep hierarchy takes non-literate users 65.5 seconds on average against 25 seconds for a flat list (Medhi et al., 2013). Choices on the path to a verdict were therefore minimised.
+SnapCare's user flow is built on the principle of running from a single photograph to a verdict without branching. As cited in the previous section, a deep hierarchy takes non-literate users 65.5 seconds on average against 25 seconds for a flat list (Medhi, I., Toyama, K., Joshi, A., Athavankar, U. & Cutrell, E., "A Comparison of List vs. Hierarchical UIs on Mobile Phones for Non-literate Users," *INTERACT 2013*, LNCS 8118:497–504). Choices on the path to a verdict were therefore minimised.
 
 ![Figure 24](fig/fig11_userflow.png)
 
@@ -913,7 +913,7 @@ While recognition runs, the preview area displays what is happening in text, and
 | `Estimating…` | The on-device nutrition model is running and server classification is awaited | 2–5 s |
 | `Loading sample…` | A sample image was chosen | Under 1 s |
 
-Showing the percentage rather than hiding it is deliberate. One of the barriers identified in research on low-literate users is intimidation (Medhi, Cutrell & Toyama, 2010), and a screen that has stopped with no indication reads as a fault. Simply watching the number climb conveys "it is running," and that is conveyed without reading. For the same reason the shutter and every button below it are locked against presses while recognition runs. Pressing twice must not run it twice.
+Showing the percentage rather than hiding it is deliberate. One of the barriers identified in research on low-literate users is intimidation (Medhi, I., Cutrell, E. & Toyama, K., "It's not just illiteracy," *Proc. International Conference on Interaction Design & International Development*, 2010), and a screen that has stopped with no indication reads as a fault. Simply watching the number climb conveys "it is running," and that is conveyed without reading. For the same reason the shutter and every button below it are locked against presses while recognition runs. Pressing twice must not run it twice.
 
 #### The vertical order of the verdict screen
 
@@ -1543,7 +1543,7 @@ It should be made clear that what this evaluation measured is the arrival of inf
 
 ### 5.2 A procedure for verifying pictogram comprehension
 
-As established in §1.8, making a pictogram does not mean it will be read. Of 108 international standard pictograms, only 17 passed the ANSI 85% criterion (Gutierrez et al., 2022).
+As established in §1.8, making a pictogram does not mean it will be read. Of 108 international standard pictograms, only 17 passed the ANSI 85% criterion (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
 
 Comprehension testing requires assembling people, however, so it is expensive and hard to repeat. As a result most pictogram sets are evaluated after they are built, and by the time a problem is found they have already been released.
 
@@ -2077,7 +2077,7 @@ The field evaluation design in §5.10 was revised in line with the responses. Ad
 
 Foued Maaoui, researcher at the Institut Pasteur de Tunis, asked for low-literate participants rather than educated volunteers, predefined scoring criteria and blinded assessors, separate testing of pictogram-only, audio-only and both, real prescriptions rather than a clean demonstration, and audio in a language matching the participants'.
 
-Myojung Choi, researcher at the Korea Disabled People's Development Institute, cited Nielsen and Landauer (1993) to the effect that a small sample of around 15 can secure the validity of a usability evaluation, and that a small sample in fact allows user behaviour and reactions to be grasped in detail, recommending behavioural analysis alongside the survey responses.
+Myojung Choi, researcher at the Korea Disabled People's Development Institute, cited Nielsen, J. & Landauer, T. K., "A mathematical model of the finding of usability problems," *Proc. INTERCHI '93*, 206–213, 1993, to the effect that a small sample of around 15 can secure the validity of a usability evaluation, and that a small sample in fact allows user behaviour and reactions to be grasped in detail, recommending behavioural analysis alongside the survey responses.
 
 Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, wrote that the sample should be balanced by age, level of schooling and sex, that participants should have no prior knowledge of the pictograms in question, and that the method should have them describe the meaning. He added that multiple choice looks meaningless, which is the same judgement behind our decision in §5.2 not to offer options.
 
@@ -2233,11 +2233,11 @@ The link to 3.4 runs through the undiagnosed population described in §1.5. Of 5
 
 The link to 3.8 comes from the workforce gap. As cited in §1.4, physician density varies more than thirteenfold by region, and when consultation time shortens the first thing cut is the explanation of how to take the medicine. Universal health coverage is generally measured by whether care and medicines are within reach, but if the instructions cannot be read once the medicine is in hand, coverage stops there. The 50% adherence figure cited in §1.4 is the size of that stopping point. Half disappears after the medicine has been prescribed, dispensed and handed over, so however much is invested in the earlier stages, leaving this one untouched lets that much leak away. What SnapCare sets out to reduce is this gap remaining after care, and it is a gap that divides along literacy.
 
-The link to 3.d is the most direct. An analysis of more than 23 million laboratory-confirmed infections reported from 104 countries found that in 2023 one in six bacterial infections showed resistance to antibiotics. Between 2018 and 2023 resistance rose in more than 40% of the monitored pathogen and antibiotic combinations, at an annual rate of 5% to 15% (WHO GLASS, 2025). In 2019, deaths directly attributable to bacterial resistance numbered 1.27 million, more than HIV/AIDS or malaria (Murray et al., 2022). Stopping an antibiotic once symptoms subside is the principal human route to resistance. And it is not the behaviour of a minority. A survey of 9,772 people across 12 countries found **32% believed it was acceptable to stop antibiotics once they felt better**, and 64% believed antibiotics work on colds and flu (World Health Organization, *WHO multi-country survey reveals widespread public misunderstanding about antibiotic resistance*, 2015).
+The link to 3.d is the most direct. An analysis of more than 23 million laboratory-confirmed infections reported from 104 countries found that in 2023 one in six bacterial infections showed resistance to antibiotics. Between 2018 and 2023 resistance rose in more than 40% of the monitored pathogen and antibiotic combinations, at an annual rate of 5% to 15% (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). In 2019, deaths directly attributable to bacterial resistance numbered 1.27 million, more than HIV/AIDS or malaria (Murray, C. J. L. et al. (Antimicrobial Resistance Collaborators), "Global burden of bacterial antimicrobial resistance in 2019," *The Lancet*, 399(10325):629–655, 2022). Stopping an antibiotic once symptoms subside is the principal human route to resistance. And it is not the behaviour of a minority. A survey of 9,772 people across 12 countries found **32% believed it was acceptable to stop antibiotics once they felt better**, and 64% believed antibiotics work on colds and flu (World Health Organization, *WHO multi-country survey reveals widespread public misunderstanding about antibiotic resistance*, 2015).
 
-Broken down by region, this problem too is concentrated where we are aimed. In South-East Asia and the Eastern Mediterranean one in three reported infections showed resistance, in Africa one in five and in the Americas one in seven (WHO GLASS, 2025). The regions with the lowest literacy in §1.1 appear here again.
+Broken down by region, this problem too is concentrated where we are aimed. In South-East Asia and the Eastern Mediterranean one in three reported infections showed resistance, in Africa one in five and in the Americas one in seven (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). The regions with the lowest literacy in §1.1 appear here again.
 
-**[Figure 42]** Share of reported bacterial infections showing antibiotic resistance (WHO GLASS, 2025). The world average is one in six; in South-East Asia and the Eastern Mediterranean it is one in three. The low-literacy countries of Table 1 are in those two regions. That is the place the `finish_course` morpheme aims at.
+**[Figure 42]** Share of reported bacterial infections showing antibiotic resistance (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). The world average is one in six; in South-East Asia and the Eastern Mediterranean it is one in three. The low-literacy countries of Table 1 are in those two regions. That is the place the `finish_course` morpheme aims at.
 
 ![Figure 42](fig/chart14_amr_region.png)
 
@@ -2249,7 +2249,7 @@ We state what this proposal does not claim.
 
 First, no comprehension testing with people was carried out. The expert survey in §5.7 is not that test: it asked people who deal with such patients daily, whereas a comprehension test has to ask the patients. The measurement in §5.2 concerns a machine, and whether the 67% criterion required by ISO 9186 is met has to be confirmed with people. Further, because misreading a dosing instruction leads directly to harm, we judge it appropriate to also apply the **critical confusion of 5% or less** required by ANSI Z535.3. The field evaluation plans to tally wrong answers separately as ordinary errors and as opposite-meaning errors.
 
-Second, cultural adaptation has not been verified. In the controlled comparison showing two sets to the same 46 people, 20 of 23 locally made pictograms passed the ANSI criterion while USP-DI managed 11 of 23 (Dowse & Ehlers, 2001). Pictogram comprehension therefore varies by culture. This set was designed in Korea and needs verification with Moldovan users.
+Second, cultural adaptation has not been verified. In the controlled comparison showing two sets to the same 46 people, 20 of 23 locally made pictograms passed the ANSI criterion while USP-DI managed 11 of 23 (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). Pictogram comprehension therefore varies by culture. This set was designed in Korea and needs verification with Moldovan users.
 
 Third, no claim is made about clinical outcomes. This work measured the arrival of information and did not measure improvement in adherence or health outcomes.
 

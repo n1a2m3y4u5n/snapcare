@@ -21,17 +21,17 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 ### 1.1 비문해 인구의 규모와 추세
 
-전 세계 비문해 성인은 7억 3,900만 명이며, 그중 약 3분의 2인 4억 6,600만 명이 여성이다 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). 성인 문해율은 2015년 86%에서 2024년 88%로 올랐고 숫자만 보면 개선되고 있다 (UNESCO, 2025).
+전 세계 비문해 성인은 7억 3,900만 명이며, 그중 약 3분의 2인 4억 6,600만 명이 여성이다 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). 성인 문해율은 2015년 86%에서 2024년 88%로 올랐고 숫자만 보면 개선되고 있다 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025).
 
-그러나 비율의 개선이 인구의 증가를 따라잡지 못하는 지역이 있다. 사하라이남 아프리카의 문해율은 같은 기간 65%에서 69%로 올랐는데, 비문해 성인의 절대수는 1억 9,600만 명에서 2억 2,500만 명으로 오히려 늘었다 (UNESCO, 2025). 중앙·남아시아는 3억 4,700만 명으로 사하라이남 아프리카 다음으로 많다 (UNESCO, 2025). 비문해 성인의 절반 이상인 4억 4,100만 명이 10개국에 집중되어 있다 (UNESCO, 2025).
+그러나 비율의 개선이 인구의 증가를 따라잡지 못하는 지역이 있다. 사하라이남 아프리카의 문해율은 같은 기간 65%에서 69%로 올랐는데, 비문해 성인의 절대수는 1억 9,600만 명에서 2억 2,500만 명으로 오히려 늘었다 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). 중앙·남아시아는 3억 4,700만 명으로 사하라이남 아프리카 다음으로 많다 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). 비문해 성인의 절반 이상인 4억 4,100만 명이 10개국에 집중되어 있다 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025).
 
 즉 이 문제는 시간이 해결해 주는 종류가 아니다. 교육이 확대되는 동안에도 지금 약을 받아 가는 사람의 수는 줄지 않는다.
 
-평균은 이 문제의 크기를 감춘다. 성인 문해율이 가장 낮은 15개국의 값은 29%에서 60% 사이이며, 차드는 28%다 (UNESCO, 2025).
+평균은 이 문제의 크기를 감춘다. 성인 문해율이 가장 낮은 15개국의 값은 29%에서 60% 사이이며, 차드는 28%다 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025).
 
 아래 값은 기간 평균이 아니다. **2015~2024년 인구조사 기간 중 각 나라에서 가장 최근에 확보된 조사 한 해의 값**이므로, 나라마다 기준 연도가 다르다. 국가별 문해율은 조사 연도와 정의에 따라 크게 달라지므로 (같은 나라가 다른 집계에서 10%p 이상 차이 나는 경우가 있다) 여기서는 한 출처 안의 값만 써서 서로 비교할 수 있게 했다.
 
-[표 1] 성인 문해율이 낮은 국가 (2015~2024 인구조사, UNESCO, 2025)
+[표 1] 성인 문해율이 낮은 국가 (2015~2024 인구조사, UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025)
 
 | 국가 | 성인 문해율 | 국가 | 성인 문해율 |
 |---|---|---|---|
@@ -48,7 +48,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 그런데 비율이 가장 나쁜 나라와 사람이 가장 많은 나라는 대체로 겹치지 않는다. 비문해 성인의 절반 이상인 4억 4,100만 명이 열 개 나라에 몰려 있는데, 그 열 곳은 대체로 인구가 큰 나라들이다.
 
-[표 2] 비문해 성인이 가장 많은 10개국 (UNESCO, 2025)
+[표 2] 비문해 성인이 가장 많은 10개국 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025)
 
 | 국가 | 비문해 성인 | 국가 | 비문해 성인 |
 |---|---|---|---|
@@ -65,7 +65,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 이 구분이 설계에 영향을 준다. 비율이 높은 곳에서는 앱이 다수의 조건을 상대하고, 사람 수가 많은 곳에서는 소수이지만 절대수가 큰 집단을 상대한다. 인도의 문해율은 81%로 세계 평균에 가깝지만 그 19%가 1억 9,100만 명이다. 어느 쪽이든 한 사람이 약을 받아 가는 순간의 문제는 같으며, 비율이 아니라 머릿수가 이 앱이 닿아야 할 크기다.
 
-그리고 같은 나라 안에서도 분포가 고르지 않다. 일부 사하라이남 아프리카 국가에서 **고령 여성의 문해율은 31%인 반면 고령 남성은 55%**이고, 유럽과 북미 일부 지역의 남성은 99%다 (UNESCO, 2025).
+그리고 같은 나라 안에서도 분포가 고르지 않다. 일부 사하라이남 아프리카 국가에서 **고령 여성의 문해율은 31%인 반면 고령 남성은 55%**이고, 유럽과 북미 일부 지역의 남성은 99%다 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025).
 
 우리가 물은 전문가들의 답이 이 통계와 어긋나는 방향으로 나왔다는 점을 여기 적어 둔다. §5.7 의 35명 가운데 15명이 글로 된 복약 지시를 읽지 못하는 사람을 "거의 마주치지 않는다" 고 답했고, 거의 매일 마주친다고 답한 사람은 4명이다. 응답자의 절반이 한국에서 일하므로 이 답은 §1.2 에서 볼 국가 안의 분포를 반영한 것이지 §1.1 의 세계 통계를 반박하는 것이 아니다. 충남대학교 약학대학 윤휘열 교수가 그 사정을 그대로 적었다.
 
@@ -78,18 +78,18 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 ![그림 1](fig/chart09_country_literacy.png)
 
-**[그림 1]** 성인 문해율이 낮은 15개국 (UNESCO, 2025). 세계 평균 88%에서 얼마나 떨어져 있는지를 보면 된다. 이 나라들에서는 처방전을 읽지 못하는 사람이 다수다.
+**[그림 1]** 성인 문해율이 낮은 15개국 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). 세계 평균 88%에서 얼마나 떨어져 있는지를 보면 된다. 이 나라들에서는 처방전을 읽지 못하는 사람이 다수다.
 
 ![그림 2](fig/chart01_literacy.png)
 
-**[그림 2]** 사하라이남 아프리카의 문해율과 비문해 성인 수 (UNESCO, 2025). 막대는 절대수, 선은 비율이다. 두 축이 반대로 움직이는 것이 이 절의 논지다. 비율은 4%p 올랐는데 사람 수는 2,900만 명 늘었다. 비율만 보면 개선이고, 머릿수로 보면 악화다. 이 문제가 시간이 해결해 줄 종류가 아니라는 근거가 여기 있다.
+**[그림 2]** 사하라이남 아프리카의 문해율과 비문해 성인 수 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). 막대는 절대수, 선은 비율이다. 두 축이 반대로 움직이는 것이 이 절의 논지다. 비율은 4%p 올랐는데 사람 수는 2,900만 명 늘었다. 비율만 보면 개선이고, 머릿수로 보면 악화다. 이 문제가 시간이 해결해 줄 종류가 아니라는 근거가 여기 있다.
 
 
 ### 1.2 건강 문해력의 분포
 
 글자를 읽을 수 있는 것과 건강 정보를 이해하는 것은 다르다. 유럽 17개국에서 42,445명을 면접한 HLS19 조사는 일반 건강문해력을 우수·충분·문제적·부적절 네 수준으로 나누어 재었고, 참여한 모든 나라에서 낮은 건강문해력이 상당한 비율로 남아 있음을 보고했다 (HLS19 Consortium of the WHO Action Network M-POHL, *International Report on the Methodology, Results, and Recommendations of the European Health Literacy Population Survey 2019–2021*, Austrian National Public Health Institute, Vienna, 2021). 다만 이 보고서는 자료 수집 시기와 방법이 나라마다 달라 국가 간 비교를 신중히 하라고 명시하며, 17개국을 하나로 묶은 대표값을 내세우지 않는다. 따라서 여기서는 통합 백분율 대신 한국 자료를 본다.
 
-[표 3] 한국 성인의 건강정보이해능력 (국민건강영양조사, 2023)
+[표 3] 한국 성인의 건강정보이해능력 (질병관리청, *국민건강영양조사 제9기 2차년도*, 2023)
 
 | 집단 | 충분한 수준 | 그 여집합 | 출처 |
 |---|---|---|---|
@@ -104,10 +104,10 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 ![그림 3](fig/chart02_health_literacy.png)
 
-**[그림 3]** 한국 성인의 건강정보이해능력이 충분하지 않은 비율 (질병관리청, 2023). 전체 39.6% 에 비해 65세 이상은 59.7% 로, 20.1%p 높다. 소득으로 갈라도 11.9%p 차이가 난다. 이 문제가 나라 사이보다 나라 안에서 더 크게 갈린다는 것을 이 그림에서 읽어야 한다.
+**[그림 3]** 한국 성인의 건강정보이해능력이 충분하지 않은 비율 (질병관리청, *국민건강영양조사 제9기 2차년도*, 2023). 전체 39.6% 에 비해 65세 이상은 59.7% 로, 20.1%p 높다. 소득으로 갈라도 11.9%p 차이가 난다. 이 문제가 나라 사이보다 나라 안에서 더 크게 갈린다는 것을 이 그림에서 읽어야 한다.
 
 
-문해력을 자기보고가 아니라 직접 측정하면 그림이 더 나빠진다. 31개 선진국이 참여한 국제성인역량조사(PIAAC)에서 성인의 **18%가 문해·수리·적응적 문제해결의 가장 기초적인 수준에 미치지 못했고**, 이들 국가의 성인 문해력은 2012년 이후 오히려 정체하거나 낮아졌다 (UNESCO, 2025 재인용). "글을 읽을 줄 안다" 는 자기보고와 "약 봉지의 지시를 따를 수 있다" 는 능력 사이의 거리가 여기서 드러난다.
+문해력을 자기보고가 아니라 직접 측정하면 그림이 더 나빠진다. 31개 선진국이 참여한 국제성인역량조사(PIAAC)에서 성인의 **18%가 문해·수리·적응적 문제해결의 가장 기초적인 수준에 미치지 못했고**, 이들 국가의 성인 문해력은 2012년 이후 오히려 정체하거나 낮아졌다 (OECD, *Programme for the International Assessment of Adult Competencies*; UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025 재인용). "글을 읽을 줄 안다" 는 자기보고와 "약 봉지의 지시를 따를 수 있다" 는 능력 사이의 거리가 여기서 드러난다.
 
 한국만의 사정도 아니다. OECD 는 18개국의 자료를 종합해 최소 3분의 1이 낮은 건강 문해력을 보인다고 적었고, 같은 보고서가 미국 연구를 인용해 낮은 건강 문해력이 연간 총 의료비의 3~5%에 해당하는 추가 비용을 낳는다고 밝혔다 (Moreira, L., "Health literacy for people-centred care: Where do OECD countries stand?", *OECD Health Working Papers*, No. 107, DELSA/HEA/WD/HWP(2018)4, 2018).
 
@@ -140,7 +140,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 | 시각 오류 | 36 | 23.2% | `time_morning` ~ `time_night` |
 | 나머지 | 24 | 15.5% | — |
 
-약사가 발견한 조제 오류 155건 기준 (Anacleto et al., 2007).
+약사가 발견한 조제 오류 155건 기준 (Anacleto, T. A., Perini, E., Rosa, M. B. & César, C. C., "Medication dispensing errors in a Brazilian hospital pharmacy," *Clinics*, 62(3):243–250, 2007).
 
 표 4는 오류의 대부분이 "무엇을·얼마나·언제" 세 가지에 몰려 있음을 보여준다. 이 셋은 모두 그림으로 옮길 수 있는 정보이며, SnapCare 의 형태소 설계가 정확히 이 분포를 따른다.
 
@@ -157,7 +157,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 ![그림 4](fig/chart03_error_types.png)
 
-**[그림 4]** 약사가 발견한 조제 오류 155건의 유형별 분포 (Anacleto et al., 2007). 누락·용량·시각 세 유형이 84.5%를 차지한다. 세 유형이 모두 그림으로 옮길 수 있는 정보라는 것이 SIGIL 형태소 설계의 출발점이며, `finish_course`·`qty_*`·`time_*` 가 각각 이 셋에 대응한다.
+**[그림 4]** 약사가 발견한 조제 오류 155건의 유형별 분포 (Anacleto, T. A., Perini, E., Rosa, M. B. & César, C. C., "Medication dispensing errors in a Brazilian hospital pharmacy," *Clinics*, 62(3):243–250, 2007). 누락·용량·시각 세 유형이 84.5%를 차지한다. 세 유형이 모두 그림으로 옮길 수 있는 정보라는 것이 SIGIL 형태소 설계의 출발점이며, `finish_course`·`qty_*`·`time_*` 가 각각 이 셋에 대응한다.
 
 
 #### 환자 쪽에서 측정된 오독
@@ -184,7 +184,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 ### 1.4 국제 정책과 그 사각지대
 
-세계보건기구는 2017년 제3차 국제 환자안전 과제로 Medication Without Harm 을 선언하고, 5년 안에 중대한 회피 가능 약물 위해를 50% 줄이겠다는 목표를 세웠다 (WHO, 2017). 우선 영역으로 고위험 상황, 다제복용, 진료 이행 셋을 지목했다 (WHO, 2017).
+세계보건기구는 2017년 제3차 국제 환자안전 과제로 Medication Without Harm 을 선언하고, 5년 안에 중대한 회피 가능 약물 위해를 50% 줄이겠다는 목표를 세웠다 (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017). 우선 영역으로 고위험 상황, 다제복용, 진료 이행 셋을 지목했다 (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017).
 
 그러나 선언으로부터 7년이 지난 2024년 기준, 약물 위해 감축에 관한 국가 목표를 수립한 WHO 회원국은 **전체의 18%에 그친다** (World Health Organization, *Medication without harm: policy brief*, ISBN 978-92-4-006276-4, 2024).
 
@@ -192,7 +192,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 ![그림 5](fig/chart12_policy_depth.png)
 
-**[그림 5]** Medication Without Harm 이 국가 단위로 내려온 정도 (WHO, 2024). 과제를 받아들인 나라는 74%인데 감축 목표를 수로 세운 나라는 18%다. 여기서 볼 것은 선언과 이행 사이의 거리이며, §1.4 가 말하는 사각지대는 정책이 없어서가 아니라 정책이 여기까지 내려오지 않아서 생긴다.
+**[그림 5]** Medication Without Harm 이 국가 단위로 내려온 정도 (World Health Organization, *Global patient safety report 2024*, ISBN 978-92-4-009545-8, 2024). 과제를 받아들인 나라는 74%인데 감축 목표를 수로 세운 나라는 18%다. 여기서 볼 것은 선언과 이행 사이의 거리이며, §1.4 가 말하는 사각지대는 정책이 없어서가 아니라 정책이 여기까지 내려오지 않아서 생긴다.
 
 지시가 전달된 뒤에도 남는 간극이 있다. 만성 질환자의 복약 순응도는 선진국에서 평균 50%이며 개발도상국에서는 그보다 낮다 (World Health Organization, *Adherence to long-term therapies: evidence for action*, 2003). 이 수치는 글을 읽을 수 있고 진단도 받은 사람들을 포함해 잰 것이므로, 문해력만 해결하면 되는 문제가 아니라는 뜻이기도 하다.
 
@@ -229,7 +229,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 ![그림 6](fig/chart11_harm_stage.png)
 
-**[그림 6]** 예방 가능한 약물 위해가 생기는 단계 (WHO, 2024). 회색이 전 세계, 빨강이 저·중소득국이다. 우리에게 유리한 그림이 아니라서 싣는다.
+**[그림 6]** 예방 가능한 약물 위해가 생기는 단계 (World Health Organization, *Global patient safety report 2024*, ISBN 978-92-4-009545-8, 2024). 회색이 전 세계, 빨강이 저·중소득국이다. 우리에게 유리한 그림이 아니라서 싣는다.
 
 즉 위해의 무게중심은 환자가 아니라 처방하는 쪽에 있으며, 그 쏠림은 우리가 대상으로 삼는 지역에서 더 심하다. 이 앱은 처방 단계에 개입하지 않는다.
 
@@ -245,7 +245,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 기존의 개인화 건강 앱은 사용자가 자신의 상태를 알고 있다고 전제한다. 그러나 그 전제가 성립하지 않는다.
 
-20~79세 성인의 당뇨 유병률은 11.1%로 5억 8,900만 명에 이르며, 이 가운데 **2억 5,200만 명, 약 43%가 자신이 당뇨임을 모른다** (International Diabetes Federation, *IDF Diabetes Atlas*, 11th ed., 2025). 당뇨 성인 네 명 중 세 명이 저·중소득국에 산다. 2050년에는 8억 5,300만 명(13%)에 이를 것으로 예측되며, 2024년 한 해 당뇨로 인한 사망은 340만 명, 9초에 한 명꼴이었다 (IDF, 2025).
+20~79세 성인의 당뇨 유병률은 11.1%로 5억 8,900만 명에 이르며, 이 가운데 **2억 5,200만 명, 약 43%가 자신이 당뇨임을 모른다** (International Diabetes Federation, *IDF Diabetes Atlas*, 11th ed., 2025). 당뇨 성인 네 명 중 세 명이 저·중소득국에 산다. 2050년에는 8억 5,300만 명(13%)에 이를 것으로 예측되며, 2024년 한 해 당뇨로 인한 사망은 340만 명, 9초에 한 명꼴이었다 (International Diabetes Federation, *IDF Diabetes Atlas*, 11th ed., 2025).
 
 여기서 우리에게 중요한 수는 유병률이 아니라 **43%** 다. 이들은 병원에 가서 이름을 얻은 적이 없으므로, "당뇨가 있으십니까" 라는 질문에 아니라고 답한다. 그리고 그 답을 받은 앱은 그들에게 당뇨를 고려하지 않은 판정을 내놓는다.
 
@@ -271,13 +271,13 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 이 앱은 시각장애를 대상으로 설계되지 않았다. 그림을 크게 그리고 음성을 붙였으나, 사진을 찍는 행위 자체가 앞을 보지 못하는 사람에게 장벽이 된다는 지적이 §5.7 에서 두 건 나왔다. 우리가 다루지 않은 층이며 §5.9 의 미검증 항목에 해당한다.
 
-또 하나의 전제가 있다. 글을 읽을 수 있다 해도 그 글이 자기 언어라는 보장이 없다. 세계 인구의 40%는 자신이 이해하는 언어로 교육에 접근하지 못하며, 문해력 조사조차 대부분 한 언어만으로 측정한다 (UNESCO, 2025). 처방전과 성분표는 그 나라의 공용어나 영어로 인쇄되므로, 문해율 통계에서 "읽을 수 있다" 로 집계된 사람 가운데도 자기 앞의 종이를 읽지 못하는 사람이 있다. 그림과 음성은 이 층을 함께 건너뛴다.
+또 하나의 전제가 있다. 글을 읽을 수 있다 해도 그 글이 자기 언어라는 보장이 없다. 세계 인구의 40%는 자신이 이해하는 언어로 교육에 접근하지 못하며, 문해력 조사조차 대부분 한 언어만으로 측정한다 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). 처방전과 성분표는 그 나라의 공용어나 영어로 인쇄되므로, 문해율 통계에서 "읽을 수 있다" 로 집계된 사람 가운데도 자기 앞의 종이를 읽지 못하는 사람이 있다. 그림과 음성은 이 층을 함께 건너뛴다.
 
 ### 1.6 전달 매체의 보급 현황
 
 문제를 해결할 매체 자체는 이미 보급되어 있다. 2025년 조사에서 미국의 65세 이상 스마트폰 보유율은 78%였다. 같은 조사에서 50세 미만은 97%, 50~64세는 90%였고, 전체 성인은 91%로 2011년 첫 조사의 35%에서 올랐다 (Pew Research Center, *Mobile Fact Sheet: Demographics of Mobile Device Ownership and Adoption in the United States*, 조사 기간 2025-02-05~06-18, 2025). 사하라이남 아프리카의 모바일 인터넷 이용자는 2022년 약 2억 8,700만 명에서 2030년 4억 3,800만 명으로, 스마트폰 보급률은 51%에서 88%로 확대될 전망이다 (GSM Association, *The Mobile Economy Sub-Saharan Africa 2023*, GSMA Intelligence, 2023).
 
-[표 5] 연령대별 스마트폰 보유율 (미국, 2025)
+[표 5] 연령대별 스마트폰 보유율 (미국, Pew Research Center, *Mobile Fact Sheet*, 2025)
 
 | 연령대 | 보유율 |
 |---|---|
@@ -289,7 +289,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 ![그림 8](fig/chart04_smartphone.png)
 
-**[그림 8]** 연령대별 스마트폰 보유율 (미국, 2025). 65세 이상과 50세 미만의 격차는 19%p 로, 이 문제를 "기기 보급" 으로 설명하기에는 이미 좁다. 남은 격차는 화면 쪽에 있다.
+**[그림 8]** 연령대별 스마트폰 보유율 (미국, Pew Research Center, *Mobile Fact Sheet*, 2025). 65세 이상과 50세 미만의 격차는 19%p 로, 이 문제를 "기기 보급" 으로 설명하기에는 이미 좁다. 남은 격차는 화면 쪽에 있다.
 
 다만 기기가 있다는 것과 인터넷에 닿는다는 것은 다른 말이다. 2024년 기준 55억 명이 인터넷을 쓰지만(세계 인구의 68%), 26억 명은 여전히 쓰지 않는다. 세계 인구의 32%, 세 명 중 한 명이다 (International Telecommunication Union, *Measuring digital development: Facts and Figures 2024*, 2024).
 
@@ -317,7 +317,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 고령자의 절반이 다섯 종 이상을 함께 먹는다는 것은 이 앱이 다루는 화면 하나에 약이 여럿 온다는 뜻이기도 하다. §5.7 에서 인도네시아 Universitas Gadjah Mada 의 Niken Nur Widyakusuma 약사가 "여러 약을 한꺼번에 받았을 때 어느 약이 하루 세 번인지 구분하기 어렵다" 고 지적한 것이 이 조건에서 나온다.
 
-한국의 자료가 이 겹침을 구체적으로 보여준다. 65세 이상 131명을 조사한 연구에서 **79.4%가 스스로 약을 복용**하지만 복약 안전 교육을 받은 사람은 **28.2%**에 그쳤다 (Lee, M., Kim, K., Rhew, K. & Choi, K.-H., "A knowledge, attitude, and practice survey on medication safety in Korean older adults," *Healthcare*, 9(10):1365, 2021, doi:10.3390/healthcare9101365). 그리고 그 연령대의 건강정보이해능력이 적절한 비율은 40.3%다 (질병관리청, 2023). 스스로 관리해야 하는 사람이 다수인데, 읽어낼 준비를 갖춘 사람은 소수라는 뜻이다.
+한국의 자료가 이 겹침을 구체적으로 보여준다. 65세 이상 131명을 조사한 연구에서 **79.4%가 스스로 약을 복용**하지만 복약 안전 교육을 받은 사람은 **28.2%**에 그쳤다 (Lee, M., Kim, K., Rhew, K. & Choi, K.-H., "A knowledge, attitude, and practice survey on medication safety in Korean older adults," *Healthcare*, 9(10):1365, 2021, doi:10.3390/healthcare9101365). 그리고 그 연령대의 건강정보이해능력이 적절한 비율은 40.3%다 (질병관리청, *국민건강영양조사 제9기 2차년도*, 2023). 스스로 관리해야 하는 사람이 다수인데, 읽어낼 준비를 갖춘 사람은 소수라는 뜻이다.
 
 표본이 131명으로 작고 조사가 2017년에 이루어졌다는 점은 밝혀 둔다. 이 값을 한국 고령자 전체의 추정치로 쓰기에는 무리가 있으며, 여기서 쓰는 것은 비율의 방향이다. 스스로 관리하는 쪽이 교육받은 쪽보다 훨씬 많다는 것.
 
@@ -342,18 +342,18 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 | 연구 | 대상 | 기준 | 결과 |
 |---|---|---|---|
 | Gutierrez 등 (2022) | 필리핀 성인 · USP 82종 + FIP 26종 | ANSI 85% | 통과 **108종 중 17종 (15.7%)** |
-| Dowse 등 (2023) | 남아공 저문해 성인 · 현지 제작 10종 | ISO 66.7% | 통과 **10종 중 8종 (80%)** · 평균 이해도 7.9 ± 1.8 / 10 |
+| Dowse, R., Okeyo, S., Sikhondze, S. & Khumalo, N. (2023) | 남아공 저문해 성인 · 현지 제작 10종 | ISO 66.7% | 통과 **10종 중 8종 (80%)** · 평균 이해도 7.9 ± 1.8 / 10 |
 | Dowse & Ehlers (2001) | 남아공 Xhosa 46명(정규교육 ≤7년) · 각 23종 | ANSI 85% | 현지 제작 **23종 중 20종(87%)** vs. USP-DI **23종 중 11종(48%)** |
 
 표 6가 보여주는 것은 픽토그램을 만든다고 해서 읽히는 것이 아니라는 사실이다. 국제적으로 통용되는 USP·FIP 픽토그램 108종을 필리핀 성인에게 시험했을 때 ANSI 85% 기준을 통과한 것은 17종, 여섯에 하나꼴에 그쳤다 (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022, doi:10.1186/s40545-022-00426-y).
 
-세 연구를 나란히 놓으면 무엇이 통과율을 가르는지가 보인다. 통과율이 가장 높은 것은 현지에서 만들어 현지 사람에게 시험한 세트다 (Dowse et al., 2023: 10종 중 8종). 가장 직접적인 증거는 Dowse & Ehlers 의 대조 실험이다. 같은 46명에게 같은 지시를 담은 두 세트를 보였을 때, 현지에서 만든 23종 중 20종(87%)이 ANSI 85% 기준을 통과한 반면 USP-DI 23종에서는 11종(48%)만 통과했다 (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). 같은 사람들에게 같은 뜻을 물었는데 그림의 출신에 따라 두 배 가까이 갈렸다.
+세 연구를 나란히 놓으면 무엇이 통과율을 가르는지가 보인다. 통과율이 가장 높은 것은 현지에서 만들어 현지 사람에게 시험한 세트다 (Dowse, R., Okeyo, S., Sikhondze, S. & Khumalo, N., *Health SA Gesondheid*, 28:2192, 2023: 10종 중 8종). 가장 직접적인 증거는 Dowse & Ehlers 의 대조 실험이다. 같은 46명에게 같은 지시를 담은 두 세트를 보였을 때, 현지에서 만든 23종 중 20종(87%)이 ANSI 85% 기준을 통과한 반면 USP-DI 23종에서는 11종(48%)만 통과했다 (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). 같은 사람들에게 같은 뜻을 물었는데 그림의 출신에 따라 두 배 가까이 갈렸다.
 
 의약 픽토그램 밖에서도 같은 것이 관찰된다. 국제 표준으로 정해진 체외진단기기 기호 18종을 네 나라의 보건인력 293명에게 시험한 연구에서, ISO 기준을 넘긴 기호가 벨기에와 쿠바에서는 여섯 종인 반면 콩고민주공화국에서는 두 종, 캄보디아에서는 한 종이었다. 가장 벌어진 것은 생물학적 위험 기호로, 쿠바에서 94.1%가 맞힌 것을 콩고민주공화국에서는 8.0%가 맞혔다 (Hermans, V., Monzote, L., Van den Sande, B. et al., "Assessment of the knowledge of graphical symbols labelled on malaria rapid diagnostic tests in four international settings," *Malaria Journal*, 10:331, 2011).
 
 ![그림 10](fig/chart16_symbol_country.png)
 
-**[그림 10]** 같은 국제 표준 기호를 네 나라에 시험한 결과 (Hermans 등, 2011). 왼쪽은 18종 가운데 ISO 기준을 넘긴 수이고, 오른쪽은 생물학적 위험 기호 하나의 정답률이다. 기호는 같고 나라만 다르다.
+**[그림 10]** 같은 국제 표준 기호를 네 나라에 시험한 결과 (Hermans, V., Monzote, L., Van den Sande, B. et al., "Assessment of the knowledge of graphical symbols labelled on malaria rapid diagnostic tests in four international settings," *Malaria Journal*, 10:331, 2011). 왼쪽은 18종 가운데 ISO 기준을 넘긴 수이고, 오른쪽은 생물학적 위험 기호 하나의 정답률이다. 기호는 같고 나라만 다르다.
 
 같은 그림 하나가 나라를 옮기면 94%에서 8%가 된다. 이 값은 픽토그램의 이해도가 그림의 품질만으로 정해지지 않는다는 것을 가장 뚜렷하게 보여 주는 자료이며, 국제 표준이라는 이름이 이해도를 보장하지 않는다는 뜻이기도 하다.
 
@@ -381,7 +381,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 같은 논문이 우리 설계에 직접 걸리는 문장을 하나 더 남겼다. **낱말이 적은 아이콘이 가장 도움이 될 수 있다**는 것이다. §5.7 에서 세 나라의 응답자가 한 장에 요소가 너무 많다고 지적한 것과 독립적으로 같은 방향을 가리킨다. 다만 저자들이 결과의 이질성이 크므로 조심해 읽으라고 적어 두었고, 여기서도 그렇게 읽는다. 이 값들은 그림을 쓰라는 근거이지 어떤 그림이든 된다는 근거가 아니다.
 
-정리하면 이 분야는 세 가지를 함께 관찰해 왔다. 잘 만든 그림은 실제로 오류를 줄인다(Yin 등, 2008: 47.8% → 5.4%). 그림은 혼자보다 음성과 함께일 때 낫다(Kheir 등, 2014). 그리고 만들었다고 해서 잘 만들어지는 것은 아니다(Gutierrez 등, 2022: 108종 중 17종). 앞의 둘이 이 접근을 택할 이유이고, 뒤의 것이 만든 뒤에 재야 할 이유다.
+정리하면 이 분야는 세 가지를 함께 관찰해 왔다. 잘 만든 그림은 실제로 오류를 줄인다(Yin, H. S. et al., *Arch Pediatr Adolesc Med*, 162(9):814–822, 2008: 47.8% → 5.4%). 그림은 혼자보다 음성과 함께일 때 낫다(Kheir, N., Awaisu, A., Radoui, A., El Badawi, A., Jean, L. & Dowse, R., *Res Social Adm Pharm*, 10(5):720–730, 2014). 그리고 만들었다고 해서 잘 만들어지는 것은 아니다(Gutierrez, M. M., Patikorn, C. & Anantachoti, P., *J Pharm Policy Pract*, 15:30, 2022: 108종 중 17종). 앞의 둘이 이 접근을 택할 이유이고, 뒤의 것이 만든 뒤에 재야 할 이유다.
 
 여기에 이 분야가 아직 답하지 못한 것이 하나 붙는다. 그림으로 얻는 이득이 나이가 많을수록 작아진다는 Mourad 등의 결과와, 낱말이 적은 아이콘이 가장 낫다는 Schubbe 등의 결과는 둘 다 우리가 고령자에게 무엇을 얼마나 보여야 하는지를 묻는다. 어느 쪽도 우리 세트에 대해 답해 주지 않는다. 그것은 §5.10 의 현지 평가에서 우리가 재야 할 것이다.
 
@@ -440,15 +440,15 @@ Medhi 등은 방갈로르 빈민가의 비문해 가사노동자와의 민족지
 
 지금까지의 논의는 다섯 갈래로 정리된다.
 
-첫째, 규모. 비문해 성인은 7억 3,900만 명이며, 지역에 따라 절대수가 증가하고 있다 (UNESCO, 2025). 여기에 건강 문해력 기준을 적용하면 대상은 더 넓어진다. 한국 성인의 39.6%, 65세 이상의 59.7% 가 건강정보이해능력이 충분하지 않다 (질병관리청, 2023).
+첫째, 규모. 비문해 성인은 7억 3,900만 명이며, 지역에 따라 절대수가 증가하고 있다 (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). 여기에 건강 문해력 기준을 적용하면 대상은 더 넓어진다. 한국 성인의 39.6%, 65세 이상의 59.7% 가 건강정보이해능력이 충분하지 않다 (질병관리청, *국민건강영양조사 제9기 2차년도*, 2023).
 
-둘째, 대가. 복약 오류는 연간 420억 달러의 비용을 발생시키고 (WHO, 2017), 2019년 세균 내성에 직접 기인한 사망은 127만 명으로 HIV/AIDS 나 말라리아보다 많았다 (Murray, C. J. L. et al. (Antimicrobial Resistance Collaborators), "Global burden of bacterial antimicrobial resistance in 2019: a systematic analysis," *The Lancet*, 399(10325):629–655, 2022). 2023년 자료에서 실험실로 확인된 세균 감염 여섯 건 중 한 건이 항생제에 내성을 보였다 (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025).
+둘째, 대가. 복약 오류는 연간 420억 달러의 비용을 발생시키고 (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017), 2019년 세균 내성에 직접 기인한 사망은 127만 명으로 HIV/AIDS 나 말라리아보다 많았다 (Murray, C. J. L. et al. (Antimicrobial Resistance Collaborators), "Global burden of bacterial antimicrobial resistance in 2019: a systematic analysis," *The Lancet*, 399(10325):629–655, 2022). 2023년 자료에서 실험실로 확인된 세균 감염 여섯 건 중 한 건이 항생제에 내성을 보였다 (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025).
 
-셋째, 시각적 방법의 효과와 한계. 그림은 문자보다 잘 기억되지만 (Houts et al., 2006), 실제로 만들어진 의약 픽토그램 108종 가운데 ANSI 기준을 통과한 것은 17종뿐이었다 (Gutierrez et al., 2022).
+셋째, 시각적 방법의 효과와 한계. 그림은 문자보다 잘 기억되지만 (Houts, P. S., Doak, C. C., Doak, L. G. & Loscalzo, M. J., "The role of pictures in improving health communication," *Patient Education and Counseling*, 61(2):173–190, 2006), 실제로 만들어진 의약 픽토그램 108종 가운데 ANSI 기준을 통과한 것은 17종뿐이었다 (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
 
 넷째, 표준의 구조적 제약. USP 81종은 결합이 금지되어 있어 복합 지시를 하나의 그림으로 만들 수 없다 (USP Pictogram Library License Agreement).
 
-다섯째, 전달 경로의 개방. 미국 65세 이상의 78%가 이미 스마트폰을 보유하고 있다 (Pew Research Center, 2025).
+다섯째, 전달 경로의 개방. 미국 65세 이상의 78%가 이미 스마트폰을 보유하고 있다 (Pew Research Center, *Mobile Fact Sheet: Demographics of Mobile Device Ownership and Adoption in the United States*, 2025).
 
 이 다섯이 가리키는 결론은 하나다. 처방전에서 픽토그램과 음성까지 자동으로 이어지고, 그 결과가 실제로 읽히는지를 측정하며, 문자를 요구하지 않는 통합 파이프라인이 필요하다.
 
@@ -472,7 +472,7 @@ Medhi 등은 방갈로르 빈민가의 비문해 가사노동자와의 민족지
 
 SnapCare 의 설계 원칙은 하나다. 사용자가 판단에 이르는 경로 어디에서도 글을 읽거나 입력할 것을 요구하지 않는다.
 
-이 원칙은 앞 절에서 확인한 두 가지 사실에서 나온다. 첫째, 문자를 없애는 것은 필요조건이다. 처방전을 읽지 못하는 사람에게 문자 인터페이스는 종이 처방전과 다르지 않다. 둘째, 문자를 없애는 것만으로는 충분하지 않다. 그림도 읽히지 않을 수 있고 (Gutierrez et al., 2022), 계층 구조는 그 자체로 장벽이 된다 (Medhi et al., 2013).
+이 원칙은 앞 절에서 확인한 두 가지 사실에서 나온다. 첫째, 문자를 없애는 것은 필요조건이다. 처방전을 읽지 못하는 사람에게 문자 인터페이스는 종이 처방전과 다르지 않다. 둘째, 문자를 없애는 것만으로는 충분하지 않다. 그림도 읽히지 않을 수 있고 (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022), 계층 구조는 그 자체로 장벽이 된다 (Medhi, I., Toyama, K., Joshi, A., Athavankar, U. & Cutrell, E., "A Comparison of List vs. Hierarchical UIs on Mobile Phones for Non-literate Users," *INTERACT 2013*, LNCS 8118:497–504).
 
 따라서 SnapCare 는 세 층으로 답한다. 무엇을 해야 하는지는 그림으로, 그 그림이 무슨 뜻인지는 음성으로, 그리고 지금 이것이 안전한지 위험한지는 색 하나로 전달한다. 세 층은 서로를 대체하지 않고 겹친다. 그림을 못 알아본 사람에게는 음성이 남고, 음성을 듣지 못하는 상황에서는 색이 남는다.
 
@@ -706,7 +706,7 @@ export function referenceFor(member: Member): DailyReference {
 
 ### 2.5 조건 수집과 알레르기 추론
 
-앞 절에서 확인했듯 당뇨 성인의 약 43%가 자신이 당뇨임을 모르며 (IDF, 2025), 알레르기에서도 자가보고와 확진 사이에 큰 간극이 있다.
+앞 절에서 확인했듯 당뇨 성인의 약 43%가 자신이 당뇨임을 모르며 (International Diabetes Federation, *IDF Diabetes Atlas*, 11th ed., 2025), 알레르기에서도 자가보고와 확진 사이에 큰 간극이 있다.
 
 따라서 "무슨 알레르기가 있습니까" 라는 질문은 검사를 받아 본 사람만 답할 수 있다. SnapCare 는 이 질문을 세 갈래로 나눈다.
 
@@ -818,7 +818,7 @@ Fisher 정확검정을 쓴 이유는 표본이 작기 때문이다. 카이제곱
 
 ### 3.1 전체 흐름
 
-SnapCare 의 사용자 흐름은 한 번의 촬영에서 판정까지 분기 없이 이어지는 것을 원칙으로 한다. 앞 절에서 인용한 대로 비문해 사용자에게 깊은 계층 구조는 평균 65.5초가 걸리는 반면 평면 목록은 25초에 그친다 (Medhi et al., 2013). 따라서 판정에 이르는 경로에서 선택지를 최소화했다.
+SnapCare 의 사용자 흐름은 한 번의 촬영에서 판정까지 분기 없이 이어지는 것을 원칙으로 한다. 앞 절에서 인용한 대로 비문해 사용자에게 깊은 계층 구조는 평균 65.5초가 걸리는 반면 평면 목록은 25초에 그친다 (Medhi, I., Toyama, K., Joshi, A., Athavankar, U. & Cutrell, E., "A Comparison of List vs. Hierarchical UIs on Mobile Phones for Non-literate Users," *INTERACT 2013*, LNCS 8118:497–504). 따라서 판정에 이르는 경로에서 선택지를 최소화했다.
 
 ![그림 24](fig/fig11_userflow.png)
 
@@ -906,7 +906,7 @@ SnapCare 의 사용자 흐름은 한 번의 촬영에서 판정까지 분기 없
 | `Estimating…` | 기기 안의 영양 추정 모형이 돌고 서버 판별을 기다리는 중 | 2~5초 |
 | `Loading sample…` | 예시 이미지를 고른 경우 | 1초 미만 |
 
-백분율을 숨기지 않고 그대로 보이는 것은 의도한 것이다. 저문해 사용자 연구에서 지적된 장벽 가운데 하나가 위압감(intimidation)이며 (Medhi, Cutrell & Toyama, 2010), 아무 표시 없이 멈춘 화면은 고장으로 읽힌다. 숫자가 올라가는 것을 보는 것만으로 "돌고 있다" 가 전달되고, 그것은 글을 읽지 못해도 전달된다. 같은 이유로 인식이 도는 동안 셔터와 아래의 모든 버튼은 눌리지 않게 잠근다. 두 번 눌러서 두 번 도는 일이 없어야 한다.
+백분율을 숨기지 않고 그대로 보이는 것은 의도한 것이다. 저문해 사용자 연구에서 지적된 장벽 가운데 하나가 위압감(intimidation)이며 (Medhi, I., Cutrell, E. & Toyama, K., "It's not just illiteracy," *Proc. International Conference on Interaction Design & International Development*, 2010), 아무 표시 없이 멈춘 화면은 고장으로 읽힌다. 숫자가 올라가는 것을 보는 것만으로 "돌고 있다" 가 전달되고, 그것은 글을 읽지 못해도 전달된다. 같은 이유로 인식이 도는 동안 셔터와 아래의 모든 버튼은 눌리지 않게 잠근다. 두 번 눌러서 두 번 도는 일이 없어야 한다.
 
 #### 판정 화면의 세로 순서
 
@@ -1535,7 +1535,7 @@ export async function sign(method: string, body: string, ts: number): Promise<st
 
 ### 5.2 픽토그램 이해도 검증 절차
 
-§1.8 에서 확인했듯 픽토그램은 만든다고 읽히는 것이 아니다. 국제 표준 픽토그램 108종 가운데 ANSI 85% 기준을 통과한 것은 17종에 그쳤다 (Gutierrez et al., 2022).
+§1.8 에서 확인했듯 픽토그램은 만든다고 읽히는 것이 아니다. 국제 표준 픽토그램 108종 가운데 ANSI 85% 기준을 통과한 것은 17종에 그쳤다 (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
 
 그러나 이해도 시험은 사람을 모아야 하므로 비용이 크고 반복하기 어렵다. 그 결과 대부분의 픽토그램 세트는 만들어진 뒤에 평가되며, 문제가 발견되어도 이미 배포된 뒤다.
 
@@ -2069,7 +2069,7 @@ Atif Usman 교수와 윤휘열 교수는 기존 픽토그램 세트를 참조하
 
 튀니지 파스퇴르연구소 Foued Maaoui 연구원은 저문해자를 대상으로 하되 교육받은 자원자로 대체하지 말 것, 사전에 정의된 채점 기준과 눈가림 평가자를 둘 것, 픽토그램만·음성만·둘 다를 따로 시험할 것, 깨끗한 데모가 아닌 실제 처방전을 쓸 것, 음성 언어가 참가자의 언어와 맞을 것을 요구했다.
 
-한국장애인개발원 최묘정 연구원은 Nielsen 과 Landauer(1993)를 들어 15명 내외의 소규모 표본으로도 사용성 평가의 타당성을 확보할 수 있으며, 소규모 표본은 오히려 사용자 행동과 반응을 세부적으로 파악할 수 있으므로 설문 응답과 함께 행동 분석을 병행하라고 권했다.
+한국장애인개발원 최묘정 연구원은 Nielsen, J. & Landauer, T. K., "A mathematical model of the finding of usability problems," *Proc. INTERCHI '93*, 206–213, 1993 을 들어 15명 내외의 소규모 표본으로도 사용성 평가의 타당성을 확보할 수 있으며, 소규모 표본은 오히려 사용자 행동과 반응을 세부적으로 파악할 수 있으므로 설문 응답과 함께 행동 분석을 병행하라고 권했다.
 
 한국공예디자인문화진흥원 이용한 선임은 표본을 연령·학습수준·성별로 고르게 잡을 것, 참가자가 해당 픽토그램에 사전지식이 전혀 없을 것, 그리고 뜻을 서술하게 하는 방식을 쓸 것을 적었다. 객관식은 의미가 없어 보인다는 단서를 함께 달았는데, 이는 §5.2 에서 우리가 보기를 주지 않기로 한 것과 같은 판단이다.
 
@@ -2223,13 +2223,13 @@ SnapCare 가 개입하는 지점은 §1.4 에서 서술한 마지막 한 걸음 
 
 3.8 과의 연결은 인력 격차에서 나온다. §1.4 에서 인용한 대로 의사 밀도는 지역에 따라 열세 배 넘게 벌어져 있고, 진료 시간이 짧아지면 가장 먼저 줄어드는 것이 복약 설명이다. 보편적 건강보장은 대체로 진료와 약값에 닿을 수 있는가로 측정되지만, 약을 손에 넣고도 그 지시를 읽지 못하면 보장은 거기서 끊긴다. §1.4 에서 인용한 순응도 50%가 그 끊긴 자리의 크기다. 약이 처방되고 조제되어 손에 들어간 뒤에 절반이 사라지는 것이므로, 앞 단계에 아무리 투자해도 이 단계를 그대로 두면 그만큼이 새어 나간다. SnapCare 가 줄이려는 것은 진료 이후에 남는 이 격차이며, 그것은 문해력에 따라 갈리는 격차다.
 
-특히 3.d 와의 연결이 직접적이다. 104개국에서 보고된 실험실 확인 감염 2,300만 건 이상을 분석한 결과, 2023년 세균 감염 여섯 건 중 한 건이 항생제에 내성을 보였다. 2018년부터 2023년까지 감시 대상 병원체·항생제 조합의 40% 이상에서 내성이 상승했고, 연평균 상승률은 5~15% 였다 (WHO GLASS, 2025).
+특히 3.d 와의 연결이 직접적이다. 104개국에서 보고된 실험실 확인 감염 2,300만 건 이상을 분석한 결과, 2023년 세균 감염 여섯 건 중 한 건이 항생제에 내성을 보였다. 2018년부터 2023년까지 감시 대상 병원체·항생제 조합의 40% 이상에서 내성이 상승했고, 연평균 상승률은 5~15% 였다 (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025).
 
-지역별로 보면 이 문제도 우리가 대상으로 삼는 곳에 몰려 있다. 동남아시아와 동지중해 지역에서는 보고된 감염 셋 중 하나가 내성을 보였고, 아프리카에서는 다섯 중 하나, 아메리카에서는 일곱 중 하나다 (WHO GLASS, 2025). §1.1 에서 문해율이 가장 낮았던 지역이 여기서 다시 나온다.
+지역별로 보면 이 문제도 우리가 대상으로 삼는 곳에 몰려 있다. 동남아시아와 동지중해 지역에서는 보고된 감염 셋 중 하나가 내성을 보였고, 아프리카에서는 다섯 중 하나, 아메리카에서는 일곱 중 하나다 (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). §1.1 에서 문해율이 가장 낮았던 지역이 여기서 다시 나온다.
 
 ![그림 42](fig/chart14_amr_region.png)
 
-**[그림 42]** 보고된 세균 감염 중 항생제 내성 비율 (WHO GLASS, 2025). 세계 평균은 여섯 중 하나인데 동남아시아와 동지중해에서는 셋 중 하나다. 이 두 지역에 표 1 의 문해율 하위 국가들이 있다. `finish_course` 형태소가 겨냥하는 자리가 그곳이다. 2019년 기준 세균 내성에 직접 기인한 사망은 127만 명으로 HIV/AIDS 나 말라리아보다 많았다 (Murray et al., 2022). 증상이 가시면 항생제를 중단하는 것이 내성의 주요 인적 경로다. 그리고 그것이 소수의 행동이 아니다. 12개국 9,772명을 조사한 결과 **32%가 몸이 나아지면 항생제를 끊어도 된다고 믿고 있었고**, 64%는 항생제가 감기나 독감에 듣는다고 답했다 (World Health Organization, *WHO multi-country survey reveals widespread public misunderstanding about antibiotic resistance*, 2015).
+**[그림 42]** 보고된 세균 감염 중 항생제 내성 비율 (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). 세계 평균은 여섯 중 하나인데 동남아시아와 동지중해에서는 셋 중 하나다. 이 두 지역에 표 1 의 문해율 하위 국가들이 있다. `finish_course` 형태소가 겨냥하는 자리가 그곳이다. 2019년 기준 세균 내성에 직접 기인한 사망은 127만 명으로 HIV/AIDS 나 말라리아보다 많았다 (Murray, C. J. L. et al. (Antimicrobial Resistance Collaborators), "Global burden of bacterial antimicrobial resistance in 2019," *The Lancet*, 399(10325):629–655, 2022). 증상이 가시면 항생제를 중단하는 것이 내성의 주요 인적 경로다. 그리고 그것이 소수의 행동이 아니다. 12개국 9,772명을 조사한 결과 **32%가 몸이 나아지면 항생제를 끊어도 된다고 믿고 있었고**, 64%는 항생제가 감기나 독감에 듣는다고 답했다 (World Health Organization, *WHO multi-country survey reveals widespread public misunderstanding about antibiotic resistance*, 2015).
 
 세 명 중 한 명이 그렇게 믿는다면, 처방전에 적힌 복용 기간은 읽히지 않아서가 아니라 읽히고도 지켜지지 않는다. 여기에 읽지 못하는 사람이 더해진다. 문자로 적힌 기간이 애초에 전달되지 않으면 그 지시는 존재하지 않는 것과 같고, SnapCare 의 `finish_course` 형태소가 겨냥하는 것이 그 지점이다. 다만 그림 하나로 믿음이 바뀌지는 않으며, 이 형태소가 하는 일은 기간이 전달되게 하는 것까지다.
 
@@ -2239,7 +2239,7 @@ SnapCare 가 개입하는 지점은 §1.4 에서 서술한 마지막 한 걸음 
 
 첫째, 사람 대상 이해도 시험이 수행되지 않았다. §5.7 의 전문가 조사는 이 시험이 아니다. 그 조사는 환자를 매일 상대하는 사람들에게 물은 것이고, 이해도 시험은 환자에게 물어야 한다. §5.2 의 측정은 기계에 대한 것이며, ISO 9186 이 요구하는 67% 기준의 충족 여부는 사람을 대상으로 확인해야 한다. 나아가 복약 지시는 오독이 곧 위해로 이어지므로, ANSI Z535.3 이 요구하는 **치명적 혼동 5% 이하** 를 함께 보는 것이 타당하다고 판단한다. 현지 평가에서 오답을 단순 오답과 반대 뜻 오답으로 나누어 집계할 계획이다.
 
-둘째, 문화 적응이 검증되지 않았다. 같은 46명에게 두 세트를 보인 대조 실험에서 현지 제작 픽토그램은 23종 중 20종이 ANSI 기준을 통과한 반면 USP-DI 는 23종 중 11종에 그쳤다 (Dowse & Ehlers, 2001). 즉 픽토그램의 이해도는 문화권에 따라 달라진다. 본 세트는 한국에서 설계되었으며 몰도바 사용자에 대한 검증이 필요하다.
+둘째, 문화 적응이 검증되지 않았다. 같은 46명에게 두 세트를 보인 대조 실험에서 현지 제작 픽토그램은 23종 중 20종이 ANSI 기준을 통과한 반면 USP-DI 는 23종 중 11종에 그쳤다 (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). 즉 픽토그램의 이해도는 문화권에 따라 달라진다. 본 세트는 한국에서 설계되었으며 몰도바 사용자에 대한 검증이 필요하다.
 
 셋째, 임상 결과에 대한 주장을 하지 않는다. 본 연구는 정보의 도달을 측정했을 뿐, 복약 순응도나 건강 결과의 개선을 측정하지 않았다.
 
