@@ -1,0 +1,1656 @@
+{
+ "summary": {
+  "model": "claude-sonnet-5",
+  "dataset": "RxHandBD (Zenodo 18478741, MIT)",
+  "sampled": 200,
+  "read": 200,
+  "failed": 0,
+  "exact": 94,
+  "nearMiss": 53,
+  "wrong": 53,
+  "exactPct": 47,
+  "confidentlyWrong": 0,
+  "confidentlyWrongPct": 0,
+  "meanConfidenceWhenRight": 0.45,
+  "meanConfidenceWhenWrong": 0.343
+ },
+ "results": [
+  {
+   "img": "P0001.jpg",
+   "truth": "Nexcital",
+   "reading": "Nexcital",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0006.jpg",
+   "truth": "Asynta",
+   "reading": "ASynta",
+   "confidence": 0.3,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0011.jpg",
+   "truth": "Kacin",
+   "reading": "Kacin.",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0016.jpg",
+   "truth": "Escilex",
+   "reading": "Eslilex",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0021.jpg",
+   "truth": "Napa",
+   "reading": "Galactonnhia",
+   "confidence": 0.18,
+   "exact": false,
+   "distance": 10
+  },
+  {
+   "img": "P0026.jpg",
+   "truth": "Nimens",
+   "reading": "Panicel",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 5
+  },
+  {
+   "img": "P0031.jpg",
+   "truth": "Medroxy",
+   "reading": "Relvis",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0036.jpg",
+   "truth": "Thyrox",
+   "reading": "Dextac",
+   "confidence": 0.5,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0041.jpg",
+   "truth": "Sergel",
+   "reading": "Domin",
+   "confidence": 0.45,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0046.jpg",
+   "truth": "Omep",
+   "reading": "Xpq",
+   "confidence": 0.2,
+   "exact": false,
+   "distance": 4
+  },
+  {
+   "img": "P0051.jpg",
+   "truth": "VASCO",
+   "reading": "Cortan",
+   "confidence": 0.45,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0056.jpg",
+   "truth": "Omep",
+   "reading": "Frugest",
+   "confidence": 0.45,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0061.jpg",
+   "truth": "Sergel",
+   "reading": "Maxpro",
+   "confidence": 0.55,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0066.jpg",
+   "truth": "Domin",
+   "reading": "Sensel 20",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 8
+  },
+  {
+   "img": "P0071.jpg",
+   "truth": "Etorix",
+   "reading": "Inderal (10)",
+   "confidence": 0.55,
+   "exact": false,
+   "distance": 8
+  },
+  {
+   "img": "P0076.jpg",
+   "truth": "Mixit",
+   "reading": "Tenocab",
+   "confidence": 0.55,
+   "exact": false,
+   "distance": 7
+  },
+  {
+   "img": "P0081.jpg",
+   "truth": "Voligel",
+   "reading": "Voltigel",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0086.jpg",
+   "truth": "Voligel",
+   "reading": "Voltrel",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0091.jpg",
+   "truth": "Esahil",
+   "reading": "Esolil",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0096.jpg",
+   "truth": "Nervion",
+   "reading": "Nervion",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0101.jpg",
+   "truth": "Telmacal",
+   "reading": "Telmacal",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0106.jpg",
+   "truth": "Vonocab",
+   "reading": "Dexnaf",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0111.jpg",
+   "truth": "myotax",
+   "reading": "Mydfax",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0116.jpg",
+   "truth": "Vonocab",
+   "reading": "Vonoceb",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0121.jpg",
+   "truth": "Ulfix",
+   "reading": "Ulfix",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0126.jpg",
+   "truth": "Esotid",
+   "reading": "Esotid",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0131.jpg",
+   "truth": "Apeelo",
+   "reading": "Apeclo",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0136.jpg",
+   "truth": "Napa one",
+   "reading": "Renerwix-SR",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 9
+  },
+  {
+   "img": "P0141.jpg",
+   "truth": "Indever",
+   "reading": "Inderal",
+   "confidence": 0.55,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0146.jpg",
+   "truth": "Tuspel",
+   "reading": "Tuspel",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0151.jpg",
+   "truth": "Neurou",
+   "reading": "Neurou",
+   "confidence": 0.3,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0156.jpg",
+   "truth": "Bilaxe",
+   "reading": "Pulfibro",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 7
+  },
+  {
+   "img": "P0161.jpg",
+   "truth": "Cortan",
+   "reading": "Nexe mups",
+   "confidence": 0.25,
+   "exact": false,
+   "distance": 8
+  },
+  {
+   "img": "P0166.jpg",
+   "truth": "Beklo",
+   "reading": "Beklo",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0171.jpg",
+   "truth": "Trilock 10",
+   "reading": "Trilock 10",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0176.jpg",
+   "truth": "Rifagut",
+   "reading": "Rifagut",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0181.jpg",
+   "truth": "Cortan",
+   "reading": "Costmy",
+   "confidence": 0.25,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0186.jpg",
+   "truth": "Dinovo",
+   "reading": "Dinovo",
+   "confidence": 0.6,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0191.jpg",
+   "truth": "Termitan",
+   "reading": "Linatab M 25/500",
+   "confidence": 0.28,
+   "exact": false,
+   "distance": 11
+  },
+  {
+   "img": "P0196.jpg",
+   "truth": "Zo.mups 20",
+   "reading": "Zomups",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0201.jpg",
+   "truth": "Trilock 10",
+   "reading": "Trilock 10",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0206.jpg",
+   "truth": "Ecosprin Plus",
+   "reading": "Ecosporin plus",
+   "confidence": 0.45,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0211.jpg",
+   "truth": "Clavutil",
+   "reading": "Clavutil",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0216.jpg",
+   "truth": "TRD Coutine",
+   "reading": "Ted Guthrie",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0221.jpg",
+   "truth": "Elodep 5",
+   "reading": "Elodep 5",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0226.jpg",
+   "truth": "Nexum Mups 20",
+   "reading": "Nexe mun6",
+   "confidence": 0.15,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0231.jpg",
+   "truth": "Atoz",
+   "reading": "Ato2 premixing",
+   "confidence": 0.25,
+   "exact": false,
+   "distance": 10
+  },
+  {
+   "img": "P0236.jpg",
+   "truth": "Zo.mups 20",
+   "reading": "Zo-macro 20",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 4
+  },
+  {
+   "img": "P0241.jpg",
+   "truth": "Trilock 10",
+   "reading": "Torilock10",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0246.jpg",
+   "truth": "Ambrox",
+   "reading": "Ambrox",
+   "confidence": 0.75,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0251.jpg",
+   "truth": "Max dol",
+   "reading": "Maxdol",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0256.jpg",
+   "truth": "clavutil",
+   "reading": "Clavuxil",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0261.jpg",
+   "truth": "Esmax",
+   "reading": "Esmax",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0266.jpg",
+   "truth": "Monfast",
+   "reading": "Monfast",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0271.jpg",
+   "truth": "Texit",
+   "reading": "Texit",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0276.jpg",
+   "truth": "Emprelina",
+   "reading": "Empalina",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0281.jpg",
+   "truth": "Nexe",
+   "reading": "Nexe",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0286.jpg",
+   "truth": "Fixgut",
+   "reading": "Fixgut",
+   "confidence": 0.3,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0291.jpg",
+   "truth": "BONID",
+   "reading": "BONID",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0296.jpg",
+   "truth": "Fixgut",
+   "reading": "Ativan",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0301.jpg",
+   "truth": "Seko",
+   "reading": "Seko",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0306.jpg",
+   "truth": "Alcet",
+   "reading": "Alcof",
+   "confidence": 0.55,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0311.jpg",
+   "truth": "Kindial-D",
+   "reading": "Kindfal-D",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0316.jpg",
+   "truth": "Ossica",
+   "reading": "Ossica",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0321.jpg",
+   "truth": "Itogut",
+   "reading": "Tegut",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0326.jpg",
+   "truth": "Palonron",
+   "reading": "Paloron",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0331.jpg",
+   "truth": "Telmocal",
+   "reading": "Telmocal",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0336.jpg",
+   "truth": "Bilaxe",
+   "reading": "Bilaxe",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0341.jpg",
+   "truth": "Azibact",
+   "reading": "Azibact",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0346.jpg",
+   "truth": "Neopem",
+   "reading": "Neopem",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0351.jpg",
+   "truth": "Kinate",
+   "reading": "Kinate",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0356.jpg",
+   "truth": "Texit",
+   "reading": "Texit",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0361.jpg",
+   "truth": "Loxodol",
+   "reading": "Loxadol",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0366.jpg",
+   "truth": "Prestel",
+   "reading": "Prestel",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0371.jpg",
+   "truth": "Anustat",
+   "reading": "Anustat",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0376.jpg",
+   "truth": "Dexnaaf",
+   "reading": "Dexnaal",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0381.jpg",
+   "truth": "Vonocab",
+   "reading": "Vonocab",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0386.jpg",
+   "truth": "Dexnaaf",
+   "reading": "Dexnaaf",
+   "confidence": 0.3,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0391.jpg",
+   "truth": "Rostil",
+   "reading": "Rostil",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0396.jpg",
+   "truth": "Ecosprin",
+   "reading": "Ecosprin",
+   "confidence": 0.92,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0401.jpg",
+   "truth": "Diaryl",
+   "reading": "Diaryl",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0406.jpg",
+   "truth": "Dexnaaf",
+   "reading": "Dexnaal",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0411.jpg",
+   "truth": "Apeclo",
+   "reading": "Apeelo",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0416.jpg",
+   "truth": "Orofer",
+   "reading": "Orofer",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0421.jpg",
+   "truth": "Elodep",
+   "reading": "Elodep",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0426.jpg",
+   "truth": "Clavutil",
+   "reading": "Clavuftl",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0431.jpg",
+   "truth": "Ecosprin",
+   "reading": "Ecosprin",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0436.jpg",
+   "truth": "Bilau",
+   "reading": "Bilau",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0441.jpg",
+   "truth": "Nexe",
+   "reading": "Nexe",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0446.jpg",
+   "truth": "Bilaxe",
+   "reading": "Bilaxe",
+   "confidence": 0.5,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0451.jpg",
+   "truth": "melpred",
+   "reading": "Melpred",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0456.jpg",
+   "truth": "Bilaxe",
+   "reading": "Bilaxe",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0461.jpg",
+   "truth": "Rivo",
+   "reading": "Rivo",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0466.jpg",
+   "truth": "Furotil",
+   "reading": "Furosin",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0471.jpg",
+   "truth": "Tryptin",
+   "reading": "Trophy",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 4
+  },
+  {
+   "img": "P0476.jpg",
+   "truth": "Bilaxe",
+   "reading": "Bilaxe",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0481.jpg",
+   "truth": "Carticare",
+   "reading": "Carticare",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0486.jpg",
+   "truth": "Prestel",
+   "reading": "Prestel",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0491.jpg",
+   "truth": "Algin",
+   "reading": "Algin",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0496.jpg",
+   "truth": "Fixgul",
+   "reading": "Fixgul",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0501.jpg",
+   "truth": "Spilac",
+   "reading": "Spilac",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0506.jpg",
+   "truth": "Kinate",
+   "reading": "Kinate",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0511.jpg",
+   "truth": "Fylox",
+   "reading": "Fylox",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0516.jpg",
+   "truth": "Napa",
+   "reading": "Nopa",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0521.jpg",
+   "truth": "Furotil Plus",
+   "reading": "Furosemide",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 7
+  },
+  {
+   "img": "P0526.jpg",
+   "truth": "Feup",
+   "reading": "Feup",
+   "confidence": 0.25,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0531.jpg",
+   "truth": "Sardopa",
+   "reading": "Sardopa",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0536.jpg",
+   "truth": "Seko",
+   "reading": "Seko",
+   "confidence": 0.3,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0541.jpg",
+   "truth": "Texit",
+   "reading": "Texit",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0546.jpg",
+   "truth": "Esonix",
+   "reading": "Fornix",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0551.jpg",
+   "truth": "Seko",
+   "reading": "Sefo",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0556.jpg",
+   "truth": "Indo",
+   "reading": "Indo",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0561.jpg",
+   "truth": "Bilaxe",
+   "reading": "Bilaxe",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0566.jpg",
+   "truth": "Montelon",
+   "reading": "Montelu",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0571.jpg",
+   "truth": "Xiva",
+   "reading": "Xiva",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0576.jpg",
+   "truth": "Bexitrol",
+   "reading": "Benitrol",
+   "confidence": 0.45,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0581.jpg",
+   "truth": "Fixocard",
+   "reading": "Fixocard",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0586.jpg",
+   "truth": "Dexnaaf",
+   "reading": "Dexnaal",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0591.jpg",
+   "truth": "Fixgut",
+   "reading": "Fixgut",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0596.jpg",
+   "truth": "Telmivas",
+   "reading": "Tamivas",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0601.jpg",
+   "truth": "Amlocal",
+   "reading": "Amoxical",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0606.jpg",
+   "truth": "Zimax",
+   "reading": "Dimox",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0611.jpg",
+   "truth": "Vorinox",
+   "reading": "Vorinox",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0616.jpg",
+   "truth": "Deflacort",
+   "reading": "Deflacet",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0621.jpg",
+   "truth": "xinc B",
+   "reading": "Xinc B",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0626.jpg",
+   "truth": "vorinox",
+   "reading": "Vibnox",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0631.jpg",
+   "truth": "Phenocid",
+   "reading": "Phenergan",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 5
+  },
+  {
+   "img": "P0636.jpg",
+   "truth": "Neuroxen",
+   "reading": "Nopitor",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 7
+  },
+  {
+   "img": "P0641.jpg",
+   "truth": "Emlidus",
+   "reading": "Emlibus",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0646.jpg",
+   "truth": "norium",
+   "reading": "Norvir",
+   "confidence": 0.45,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0651.jpg",
+   "truth": "cildip",
+   "reading": "Crand.",
+   "confidence": 0.25,
+   "exact": false,
+   "distance": 5
+  },
+  {
+   "img": "P0656.jpg",
+   "truth": "propenta",
+   "reading": "Prunet",
+   "confidence": 0.2,
+   "exact": false,
+   "distance": 4
+  },
+  {
+   "img": "P0661.jpg",
+   "truth": "Monas 10",
+   "reading": "Monaslo",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0666.jpg",
+   "truth": "Naproxen",
+   "reading": "Nemoxew",
+   "confidence": 0.2,
+   "exact": false,
+   "distance": 4
+  },
+  {
+   "img": "P0671.jpg",
+   "truth": "moxilin",
+   "reading": "Moxilin",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0676.jpg",
+   "truth": "probio",
+   "reading": "Probio",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0681.jpg",
+   "truth": "Dexter",
+   "reading": "Dexta",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0686.jpg",
+   "truth": "DON A",
+   "reading": "Dona.",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0691.jpg",
+   "truth": "arth",
+   "reading": "Amoxil",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 5
+  },
+  {
+   "img": "P0696.jpg",
+   "truth": "arth",
+   "reading": "Amit",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0701.jpg",
+   "truth": "Terbikill",
+   "reading": "Terbihill",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0706.jpg",
+   "truth": "Gintex",
+   "reading": "Gintex",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0711.jpg",
+   "truth": "Dexter",
+   "reading": "Dexta",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0716.jpg",
+   "truth": "Bislol",
+   "reading": "Bactrim",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0721.jpg",
+   "truth": "m-lucas 10",
+   "reading": "Mulesio",
+   "confidence": 0.25,
+   "exact": false,
+   "distance": 5
+  },
+  {
+   "img": "P0726.jpg",
+   "truth": "rosu",
+   "reading": "Cave",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 4
+  },
+  {
+   "img": "P0731.jpg",
+   "truth": "vigorex",
+   "reading": "Vigorex",
+   "confidence": 0.62,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0736.jpg",
+   "truth": "Dexter",
+   "reading": "Defzol",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 4
+  },
+  {
+   "img": "P0741.jpg",
+   "truth": "Calboral",
+   "reading": "Calbosal",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0746.jpg",
+   "truth": "naprox",
+   "reading": "Naprox",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0751.jpg",
+   "truth": "Neuro B",
+   "reading": "Neuro-B",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0756.jpg",
+   "truth": "Esprazo",
+   "reading": "Esparzo",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0761.jpg",
+   "truth": "Calboral",
+   "reading": "Calboral",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0766.jpg",
+   "truth": "Revarol",
+   "reading": "Revapol",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0771.jpg",
+   "truth": "Napa",
+   "reading": "Napa",
+   "confidence": 0.5,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0776.jpg",
+   "truth": "Plus",
+   "reading": "Plus",
+   "confidence": 0.5,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0781.jpg",
+   "truth": "Flugal",
+   "reading": "Flugal",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0786.jpg",
+   "truth": "calboral",
+   "reading": "Carbosel",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0791.jpg",
+   "truth": "Calboral",
+   "reading": "Cespon",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0796.jpg",
+   "truth": "Montene",
+   "reading": "Morfene",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0801.jpg",
+   "truth": "Barbit",
+   "reading": "Naprosyn",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0806.jpg",
+   "truth": "Arnitip",
+   "reading": "Amitip",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0811.jpg",
+   "truth": "Neuro",
+   "reading": "Neuro",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0816.jpg",
+   "truth": "Calboral",
+   "reading": "Carbosal",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0821.jpg",
+   "truth": "Barbit",
+   "reading": "Barbit",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0826.jpg",
+   "truth": "Calbo",
+   "reading": "Carbo",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0831.jpg",
+   "truth": "epitra",
+   "reading": "Epiba",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0836.jpg",
+   "truth": "Acliz Plus",
+   "reading": "Aeknoplus",
+   "confidence": 0.25,
+   "exact": false,
+   "distance": 4
+  },
+  {
+   "img": "P0841.jpg",
+   "truth": "Neuro",
+   "reading": "Neuro",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0846.jpg",
+   "truth": "demelon",
+   "reading": "Denton",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0851.jpg",
+   "truth": "Amitip",
+   "reading": "Amitip",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0856.jpg",
+   "truth": "Esprazo",
+   "reading": "Esprazo",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0861.jpg",
+   "truth": "Calboral",
+   "reading": "Carboral",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0866.jpg",
+   "truth": "Montene",
+   "reading": "Montene",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0871.jpg",
+   "truth": "Naprox",
+   "reading": "Naprox",
+   "confidence": 0.6,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0876.jpg",
+   "truth": "Amitip",
+   "reading": "Amitip",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0881.jpg",
+   "truth": "Neuro B",
+   "reading": "Neuro-B",
+   "confidence": 0.65,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0886.jpg",
+   "truth": "demelon",
+   "reading": "Demolon",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0891.jpg",
+   "truth": "Amitip",
+   "reading": "Amitip",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0896.jpg",
+   "truth": "Nexe mups",
+   "reading": "Nexum Mups",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0901.jpg",
+   "truth": "Gestrenol",
+   "reading": "Gestenol",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0906.jpg",
+   "truth": "Calboral",
+   "reading": "Calbosal",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
+  },
+  {
+   "img": "P0911.jpg",
+   "truth": "Esprazo",
+   "reading": "Esprazo",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0916.jpg",
+   "truth": "Seclo",
+   "reading": "Zeeb",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 4
+  },
+  {
+   "img": "P0921.jpg",
+   "truth": "Epitra",
+   "reading": "Epilsa",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0926.jpg",
+   "truth": "Nexum",
+   "reading": "Nexum",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0931.jpg",
+   "truth": "Calboral DX",
+   "reading": "Carboset DS",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 5
+  },
+  {
+   "img": "P0936.jpg",
+   "truth": "Folzin",
+   "reading": "Folzin",
+   "confidence": 0.3,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0941.jpg",
+   "truth": "Acliz Plus",
+   "reading": "Aciloc-plus",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0946.jpg",
+   "truth": "Naprox",
+   "reading": "Naprox",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0951.jpg",
+   "truth": "Fenix",
+   "reading": "Ferx-",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0956.jpg",
+   "truth": "?icrogent",
+   "reading": "Microgen",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0961.jpg",
+   "truth": "Nexum",
+   "reading": "Neovon",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 4
+  },
+  {
+   "img": "P0966.jpg",
+   "truth": "Malucan",
+   "reading": "Medrol",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 6
+  },
+  {
+   "img": "P0971.jpg",
+   "truth": "Dexter",
+   "reading": "Dexta",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0976.jpg",
+   "truth": "Tryptin",
+   "reading": "Trophic",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0981.jpg",
+   "truth": "Zymet Pro",
+   "reading": "Zynerttro",
+   "confidence": 0.22,
+   "exact": false,
+   "distance": 3
+  },
+  {
+   "img": "P0986.jpg",
+   "truth": "FLAMEX",
+   "reading": "FLAMEX",
+   "confidence": 0.75,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0991.jpg",
+   "truth": "viodin",
+   "reading": "Viodin",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0996.jpg",
+   "truth": "m-lucas",
+   "reading": "Melucan",
+   "confidence": 0.25,
+   "exact": false,
+   "distance": 2
+  }
+ ],
+ "confidenceThresholds": [
+  {
+   "threshold": 0.0,
+   "keptPct": 100.0,
+   "exactPctOfKept": 47.0
+  },
+  {
+   "threshold": 0.3,
+   "keptPct": 92.5,
+   "exactPctOfKept": 50.3
+  },
+  {
+   "threshold": 0.4,
+   "keptPct": 44.0,
+   "exactPctOfKept": 73.9
+  },
+  {
+   "threshold": 0.5,
+   "keptPct": 18.5,
+   "exactPctOfKept": 83.8
+  },
+  {
+   "threshold": 0.6,
+   "keptPct": 3.5,
+   "exactPctOfKept": 100.0
+  },
+  {
+   "threshold": 0.7,
+   "keptPct": 1.5,
+   "exactPctOfKept": 100.0
+  },
+  {
+   "threshold": 0.8,
+   "keptPct": 0.5,
+   "exactPctOfKept": 100.0
+  }
+ ]
+}
