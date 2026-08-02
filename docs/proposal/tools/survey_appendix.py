@@ -13,6 +13,8 @@ import re
 
 import openpyxl
 
+from survey_ko_en import TRANSLATION
+
 LANG = os.environ.get('SNAPCARE_LANG', 'ko').lower()
 XLSX = pathlib.Path.home() / 'Desktop/Claude/snapcare-survey/scratchpad/SnapCare_설문응답.xlsx'
 _DOC = pathlib.Path(__file__).resolve().parent.parent
@@ -31,6 +33,7 @@ NICK_EN = {
 }
 AFF_EN = {
     '충남대학교': 'Chungnam National University',
+    '충남대학교 약학대학': 'Chungnam National University College of Pharmacy',
     '서울대학교': 'Seoul National University',
     '국립목포대학교': 'Mokpo National University',
     '건양대학교': 'Konyang University',
@@ -246,9 +249,15 @@ QUESTION_CHOICE_EN = {
 
 
 def cell(x: str) -> str:
-    """표 칸에 들어갈 수 있게 다듬는다. 파이프와 줄바꿈이 표를 깨뜨린다."""
+    """표 칸에 들어갈 수 있게 다듬는다. 파이프와 줄바꿈이 표를 깨뜨린다.
+
+    영어판에서는 한국어 응답을 번역으로 갈아 끼운다. 사전에 없으면 원문이
+    그대로 나가므로, 번역을 빠뜨리면 영어판에서 눈에 띈다."""
     x = re.sub(r'\s*\n\s*', ' ', str(x)).strip()
-    return x.replace('|', '/')
+    x = x.replace('|', '/')
+    if LANG == 'en':
+        x = TRANSLATION.get(x, x)
+    return x
 
 
 def main():
@@ -277,7 +286,9 @@ def main():
                  f'towards what favours us, so all {total} free-text responses received '
                  f'are set down here in full, by question. Only line breaks were removed; '
                  f'nothing else was touched. Short answers ("N/A", "Yes.") are left in '
-                 f'rather than being dropped and reinstated.')
+                 f'rather than being dropped and reinstated. Responses written in Korean '
+                 f'are given here in our own translation; the originals stand unaltered '
+                 f'in the Korean version of this document.')
     else:
         intro = (f'§5.7 은 우리가 고른 응답만 인용한다. 고르는 순간 우리에게 유리한 쪽으로 '
                  f'기울 수 있으므로, 받은 자유 서술 {total}건을 문항별로 그대로 싣는다. '

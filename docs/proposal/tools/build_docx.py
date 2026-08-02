@@ -158,6 +158,10 @@ def blocks(md: str):
         ln = lines[i]
         if not ln.strip():
             i += 1
+        elif ln.startswith('<!--'):
+            # 부록의 시작·끝 표지 같은 주석. 원본에서는 필요하지만 서식에
+            # 그대로 찍히면 독자에게는 뜻 없는 줄이다. 실제로 네 줄이 찍혔다.
+            i += 1
         elif ln.startswith('> '):
             j = i
             while j < len(lines) and lines[j].startswith('> '):
