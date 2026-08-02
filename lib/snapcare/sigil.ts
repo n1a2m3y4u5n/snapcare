@@ -43,40 +43,66 @@ const FORM_HEAD: Record<string, string> = {
   sachet: 'sachet',
 };
 
-/** 아이템 플래그 → 그것을 가리키는 형태소. */
-const FLAG_GLYPH: Partial<Record<ItemFlag, string>> = {
-  peanut: 'allergen_peanut',
-  tree_nuts: 'allergen_tree_nut',
-  gluten: 'allergen_gluten',
-  lactose: 'allergen_milk',
-  shellfish: 'allergen_shellfish',
-  egg: 'allergen_egg',
-  soy: 'allergen_soy',
-  sesame: 'allergen_sesame',
-  high_sugar: 'food_sugar',
-  high_salt: 'food_salt',
-  high_sat_fat: 'food_oil',
-  caffeine: 'caffeine',
-  alcohol: 'no_alcohol',
-  nsaid_bleed: 'warn_bleeding',
-  unsafe_pregnancy: 'state_pregnant',
-  unsafe_breastfeeding: 'state_breastfeeding',
+/**
+ * 그림이 그 플래그를 **어떤 목소리로** 말하는가.
+ *
+ * 이 구분이 없어서 뜻이 뒤집혀 나갔다. 2026년 8월 전문가 조사에서 네 나라가 같은 것을
+ * 짚었다 — "처방전은 임신 중 사용하지 말라고 적혀 있는데 픽토그램은 임신부를 보여주어
+ * 환자가 임신 중 사용해도 안전하다고 생각하게 만든다"(파키스탄 Atif Usman 교수). 뜻이
+ * 전달되지 않는 것이 아니라 **정반대로 전달된다.** ISO 9186 의 단순 오독이 아니라
+ * ANSI Z535.3 이 말하는 치명적 혼동이다.
+ *
+ *  content — 들어 있는 것. 땅콩·소금·카페인처럼 "이 안에 무엇이 있는가"를 말한다.
+ *            이 사람에게 걸리면 사선을 긋고, 안 걸리면 그냥 둔다. 걸리지 않아도 그림은
+ *            남긴다 — 무엇이 들어 있는지는 경고가 아닐 때도 알아야 한다.
+ *
+ *  forbid  — 하지 말 것인데 **그림 자체는 중립적인 상태**다. `state_pregnant` 는 임신부
+ *            그림 한 장이라, 그대로 두면 "임신부용" 으로 읽힌다. 판정과 무관하게 언제나
+ *            감싼다. 임신하지 않은 사용자가 찍었다고 해서 임신 금기가 사라지는 것이
+ *            아니다 — 그 처방전은 다른 사람에게도 간다.
+ *
+ *  carries — 그림에 이미 금지나 경고가 들어 있다. 절대 감싸지 않는다.
+ *            `no_alcohol` 을 `\no{}` 로 감싸면 금주 표시에 사선이 그어져 **마셔도 된다**가
+ *            된다. 위와 정확히 반대 방향의 같은 사고이고, 지금까지 회피 판정에서 실제로
+ *            그렇게 나가고 있었다. `warn_bleeding` 은 경고이지 상태가 아니라서, 감싸면
+ *            "출혈하지 말 것" 이라는 말이 안 되는 그림이 된다.
+ */
+type FlagVoice = 'content' | 'forbid' | 'carries';
+
+/** 아이템 플래그 → 그것을 가리키는 형태소와, 그 형태소가 말하는 방식. */
+const FLAG_GLYPH: Partial<Record<ItemFlag, { glyph: string; voice: FlagVoice }>> = {
+  peanut: { glyph: 'allergen_peanut', voice: 'content' },
+  tree_nuts: { glyph: 'allergen_tree_nut', voice: 'content' },
+  gluten: { glyph: 'allergen_gluten', voice: 'content' },
+  lactose: { glyph: 'allergen_milk', voice: 'content' },
+  shellfish: { glyph: 'allergen_shellfish', voice: 'content' },
+  egg: { glyph: 'allergen_egg', voice: 'content' },
+  soy: { glyph: 'allergen_soy', voice: 'content' },
+  sesame: { glyph: 'allergen_sesame', voice: 'content' },
+  high_sugar: { glyph: 'food_sugar', voice: 'content' },
+  high_salt: { glyph: 'food_salt', voice: 'content' },
+  high_sat_fat: { glyph: 'food_oil', voice: 'content' },
+  caffeine: { glyph: 'caffeine', voice: 'content' },
+  alcohol: { glyph: 'no_alcohol', voice: 'carries' },
+  nsaid_bleed: { glyph: 'warn_bleeding', voice: 'carries' },
+  unsafe_pregnancy: { glyph: 'state_pregnant', voice: 'forbid' },
+  unsafe_breastfeeding: { glyph: 'state_breastfeeding', voice: 'forbid' },
 };
 
 /**
- * 이 아이템에 들어 있는 것들.
+ * 이 아이템에 들어 있는 것과, 이 약으로 하지 말아야 할 것.
  *
- * 판정이 안전이 아니면 금지 기호를 씌운다. 안전할 때도 그림은 남긴다 — "무엇이 들어
- * 있는가"는 경고가 아닐 때도 알아야 하는 정보이고, 이 앱에서 그걸 전할 통로는 그림뿐이다.
+ * 사선을 언제 긋는지는 위 FlagVoice 가 정한다. 판정(avoid)이 정하는 것은 content 뿐이다.
  */
 function contentLabels(item: ScanItem, avoid: boolean): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const flag of item.flags) {
-    const glyph = FLAG_GLYPH[flag];
-    if (!glyph || seen.has(glyph)) continue;
-    seen.add(glyph);
-    out.push(avoid ? `\\no{\\${glyph}}` : `\\${glyph}`);
+    const entry = FLAG_GLYPH[flag];
+    if (!entry || seen.has(entry.glyph)) continue;
+    seen.add(entry.glyph);
+    const negate = entry.voice === 'forbid' || (entry.voice === 'content' && avoid);
+    out.push(negate ? `\\no{\\${entry.glyph}}` : `\\${entry.glyph}`);
   }
   return out;
 }
@@ -137,13 +163,22 @@ function medicineLabels(item: ScanItem, avoid: boolean): string[] {
   // 부위가 슬롯을 차지했으면 식사 맥락은 따로 한 칸을 받는다 (둘 다 지시의 일부다).
   if (site && meal) labels.push(`\\${head}{\\${meal}}`);
 
+  // 한 번에 몇 개인가. 숫자를 못 읽는 사용자에게 '1정' 은 점 하나로만 도착한다.
+  //
+  // **시각보다 앞에 온다.** 전에는 뒤였고, 그 순서가 지적을 받았다 — "첫 그림은 하루
+  // 세 번을 나타내지만 한 번에 한 캡슐이라는 것을 나타내지 못한다. 그 뒤에 아침·정오·
+  // 저녁 그림이 따로 오므로 혼동이 생긴다"(파키스탄 Atif Usman 교수, 2026년 8월 조사).
+  // 표 4 에서 전체 오류의 28.4% 가 용량 오류였다.
+  //
+  // 순서가 곧 읽는 순서다. '한 번에 몇 개' 를 먼저 놓고 '언제' 를 뒤에 놓으면 다섯 장이
+  // 한 문장이 된다 — 이만큼을, 이때·이때·이때. 반대로 놓으면 세 번 나온 시각 뒤에
+  // 개수가 하나 붙어서, 그 개수가 하루치인지 한 번치인지가 그림만으로는 갈리지 않는다.
+  if (rx?.doseCount && QTY[rx.doseCount]) labels.push(`\\${head}{\\${QTY[rx.doseCount]}}`);
+
   for (const s of rx?.schedule ?? []) {
     const tm = TIME_MOD[s.label];
     if (tm) labels.push(`\\${head}{\\${tm}}`);
   }
-
-  // 한 번에 몇 개인가. 숫자를 못 읽는 사용자에게 '1정' 은 점 하나로만 도착한다.
-  if (rx?.doseCount && QTY[rx.doseCount]) labels.push(`\\${head}{\\${QTY[rx.doseCount]}}`);
 
   // 보관. 냉장이라고 적힌 처방전이 그림에는 나오지 않고 있었다 —
   // 상온에 둔 항생제 시럽은 며칠이면 못 쓰게 된다.

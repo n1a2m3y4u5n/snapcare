@@ -116,5 +116,7 @@
   "a6af924d": "\\four_times_daily{\\liquid_bottle{\\body_mouth}}",
   "080b438c": "\\state_breastfeeding",
   "d98407b9": "\\three_times_daily{\\capsule_strip{\\food_bowl}}",
-  "7ae9598c": "\\state_pregnant"
+  "7ae9598c": "\\state_pregnant",
+  "c0372a57": "\\no{\\state_pregnant}",
+  "26be8467": "\\no{\\state_breastfeeding}"
 }
