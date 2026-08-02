@@ -21,6 +21,18 @@ class Component:
     category: str
     description: str
     slot: Optional[Tuple[float, float, float, float]] = None
+    #: 이 형태소가 **혼자 설 수 있는가**.
+    #:
+    #: 원칙은 "수식어는 홀로 설 수 없다" 이고, 그 원칙에는 이유가 있다 — 땅콩 그림
+    #: 하나는 "들어 있음" 인지 "먹지 말 것" 인지 말하지 않는다. 무엇을 꾸미는지가
+    #: 있어야 뜻이 정해진다.
+    #:
+    #: 그런데 시각은 다르다. 해가 뜨는 그림은 그 자체로 아침이고, 무엇을 꾸미든
+    #: 아침이다. 꾸밈이 필요 없는 형태소를 억지로 머리 안에 넣으면 어떻게 되는지는
+    #: 실제로 봤다: `\tablet_blister{\time_morning}` 을 앱 크기(88px)로 줄이면 아침과
+    #: 밤이 **구별되지 않는다.** 블리스터의 구멍 여섯 개가 화면을 차지하고, 뜻을 지는
+    #: 그림은 한가운데 20px 창에 갇힌다.
+    standalone: bool = False
 
 
 @dataclass(frozen=True)
@@ -56,7 +68,8 @@ class Manifest:
         c = Component(name=spec["name"], role=role,
                       category=spec["category"],
                       description=spec.get("description", ""),
-                      slot=slot)
+                      slot=slot,
+                      standalone=bool(spec.get("standalone", False)))
         if c.name in self.components:
             raise ValueError(f"duplicate component: {c.name}")
         self.components[c.name] = c
@@ -187,7 +200,7 @@ class _Parser:
             return Node(name=name, kind=NodeKind.HEAD, children=children)
 
         if self.m.is_modifier(name):
-            if not in_slot:
+            if not in_slot and not self.m.get(name).standalone:
                 raise ParseError(
                     f"\\{name} is a modifier; must appear inside a head's slot"
                 )
@@ -466,6 +479,29 @@ def _render_head(manifest: Manifest, node: Node, size: int, framed: bool = True)
     return panel
 
 
+def _render_alone(manifest: Manifest, node: Node, size: int,
+                  framed: bool = True) -> Image.Image:
+    """혼자 서는 형태소를 한 칸 가득 그린다.
+
+    머리와 똑같이 그린다 — 칸을 채우고, 안쪽 여백만 준다. 머리가 아닌 것을 머리처럼
+    그리는 셈인데, 화면에서 이것이 하는 일이 정확히 머리가 하는 일이다. 이 칸이 말하는
+    것은 '아침' 하나뿐이고 그것을 꾸미는 것은 없다.
+    """
+    panel = _blank(size)
+    fk = manifest.frame_kwargs()
+    if framed:
+        _draw_frame(panel, **fk)
+    cx0, cy0, cx1, cy1 = _content_box(size, fk["pad_ratio"] if framed else 0.0)
+    inset = int(min(cx1 - cx0, cy1 - cy0) * HEAD_INSET) if framed else 0
+    box = (cx0 + inset, cy0 + inset, cx1 - inset, cy1 - inset)
+
+    comp = manifest.get(node.name)
+    img, _ = _trim(_load(manifest, comp, size))
+    resized, origin = _fit(img, box)
+    panel.alpha_composite(resized, origin)
+    return panel
+
+
 def _render_cadence(manifest: Manifest, op: Operator, child: Node,
                     size: int, gap: int) -> Image.Image:
     n = max(1, op.panels)
@@ -514,6 +550,8 @@ def render_pictogram(node: Node, manifest: Manifest,
                      framed: bool = True) -> Image.Image:
     if node.kind == NodeKind.HEAD:
         return _render_head(manifest, node, size, framed=framed)
+    if node.kind == NodeKind.MODIFIER:
+        return _render_alone(manifest, node, size, framed=framed)
     op = manifest.operators[node.name]
     if op.kind == "cadence":
         return _render_cadence(manifest, op, node.children[0], size, gap)

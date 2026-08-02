@@ -175,9 +175,21 @@ function medicineLabels(item: ScanItem, avoid: boolean): string[] {
   // 개수가 하나 붙어서, 그 개수가 하루치인지 한 번치인지가 그림만으로는 갈리지 않는다.
   if (rx?.doseCount && QTY[rx.doseCount]) labels.push(`\\${head}{\\${QTY[rx.doseCount]}}`);
 
+  /*
+    시각은 **자기 칸**을 갖는다.
+
+    예전에는 약 그림 안에 넣었다(`\tablet_blister{\time_morning}`). 문법으로는 맞는데
+    화면에서 무너졌다 — 앱이 그리는 크기(88px)로 줄이면 블리스터의 구멍 여섯 개가 칸을
+    채우고 해는 한가운데 20px 창에 갇혀, **아침과 밤이 구별되지 않는다.** 2026년 8월
+    전문가 조사에서 아이콘을 키우라고 지적된 자리가 정확히 여기다.
+
+    그래서 그림을 키운 것이 아니라 칸을 줬다. 시각 형태소는 꾸밈이 없어도 뜻이 정해지는
+    몇 안 되는 형태소다 — 해 뜨는 그림은 무엇에 붙든 아침이다. 앞 칸이 이미 무슨 약인지
+    말했으므로, 이 칸이 다시 말할 필요도 없다.
+  */
   for (const s of rx?.schedule ?? []) {
     const tm = TIME_MOD[s.label];
-    if (tm) labels.push(`\\${head}{\\${tm}}`);
+    if (tm) labels.push(`\\${tm}`);
   }
 
   // 보관. 냉장이라고 적힌 처방전이 그림에는 나오지 않고 있었다 —

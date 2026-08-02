@@ -111,10 +111,19 @@
   "42460d7f": "\\no{\\food_salt}",
   "a6d9615c": "\\food_oil",
   "afbd8f37": "\\no{\\food_oil}",
+  "cedbcbd1": "\\time_morning",
+  "e6abb9c8": "\\no{\\time_morning}",
+  "453a21e5": "\\time_noon",
+  "c6d6a24c": "\\no{\\time_noon}",
+  "786ff675": "\\time_evening",
+  "b4074054": "\\no{\\time_evening}",
+  "05c7cfdf": "\\time_night",
+  "348aa7aa": "\\no{\\time_night}",
   "c0372a57": "\\no{\\state_pregnant}",
   "7ae9598c": "\\state_pregnant",
   "26be8467": "\\no{\\state_breastfeeding}",
   "080b438c": "\\state_breastfeeding",
   "cb8461a1": "\\no{\\contact_lens}",
-  "__assets": "7802af68e75cce2d"
+  "__assets": "cb0390a635e8aab9",
+  "d98407b9": "\\three_times_daily{\\capsule_strip{\\food_bowl}}"
 }

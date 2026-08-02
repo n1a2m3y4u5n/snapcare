@@ -148,3 +148,23 @@ test('음식에는 복약 지시를 붙이지 않는다', () => {
   const out = lines(item({ kind: 'food', rx: undefined, flags: ['peanut'] }), false);
   assert.deepEqual(out, ['\\allergen_peanut']);
 });
+
+test('시각은 자기 칸을 갖는다 — 약 그림 안에 넣지 않는다', () => {
+  // 2026년 8월 전문가 조사: 아침·점심·저녁 아이콘을 키우라는 지적.
+  //
+  // 그림을 키우는 것으로는 안 됐다. 약 그림의 슬롯 안에 있는 한 앱이 그리는 크기
+  // (88px)에서 해는 20px 창에 갇히고, 실제로 렌더해 보면 **아침과 밤이 구별되지
+  // 않는다.** 칸을 주는 것이 크기를 주는 유일한 방법이다.
+  const out = lines(item({
+    rx: rx({
+      form: 'tablet',
+      schedule: [
+        { time: '08:00', label: 'Morning', emoji: '🌅' },
+        { time: '19:00', label: 'Evening', emoji: '🌙' },
+      ],
+    }),
+  }), false);
+  assert.ok(out.includes('\\time_morning'), out.join(' · '));
+  assert.ok(out.includes('\\time_evening'), out.join(' · '));
+  assert.ok(!out.some((l) => /\{\\time_/.test(l)), `시각이 아직 머리 안에 있다: ${out.join(' · ')}`);
+});
