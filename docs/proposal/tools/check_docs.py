@@ -15,6 +15,7 @@
   · 서식으로 뽑았을 때 마크다운이 새지 않는가
   · 기계가 쓴 티가 나는 상투구가 남아 있지 않은가
   · 두 판에서 그림이 같은 자리에 있는가
+  · 두 판이 절마다 비슷한 수의 상호 참조를 갖는가
 """
 import re
 import sys
@@ -125,6 +126,23 @@ def orphan_figs(f: str, fw: str) -> set:
     return out
 
 
+def sec_refs(f: str) -> dict:
+    """절마다 다른 절을 몇 번 가리키는지 센다.
+
+    두 판에서 이 수가 다르면 한쪽에만 넣은 것이다. 실제로 조사를 본문에
+    엮을 때 한글판에만 들어간 자리가 두 곳 있었다."""
+    s = (DOC / f).read_text()
+    s = s[:s.index('### 5.11')]
+    cur, out = None, {}
+    for ln in s.splitlines():
+        m = re.match(r'^### (\d+\.\d+)', ln)
+        if m:
+            cur = m.group(1)
+        if cur:
+            out[cur] = out.get(cur, 0) + len(re.findall(r'§\d+\.\d+', ln))
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -193,6 +211,12 @@ def main() -> int:
             note(f'{f}: 상투구 — {x}')
         for x in unattributed(f):
             note(f'{f}: 직책 없이 인용했다 — {x}')
+
+    ka, ea = sec_refs('proposal_ko.md'), sec_refs('proposal_en.md')
+    gap = [(k, ka.get(k, 0), ea.get(k, 0)) for k in set(ka) | set(ea)
+           if abs(ka.get(k, 0) - ea.get(k, 0)) > 1]
+    if gap:
+        note(f'절 참조 수가 두 판에서 다르다 {sorted(gap)}')
 
     ko_orph = orphan_figs('proposal_ko.md', '그림')
     en_orph = orphan_figs('proposal_en.md', 'Figure')

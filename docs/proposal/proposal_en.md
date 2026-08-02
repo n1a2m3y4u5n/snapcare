@@ -486,6 +486,13 @@ The only action the user performs is taking a photograph.
 
 **[Figure 14]** Home screen, cropped to exactly what is visible without scrolling. This is the screen actually met on opening the app. The largest element on it is a single capture button, and there is no menu and no search box. Having only one choice is the response to the hierarchy barrier established in §1.10.
 
+Two responses in §5.7 said opposite things about this principle. Professor Celia of the University of Pretoria wrote that a picture is the medium aligned to people who cannot read, without talking down to them.
+
+> "The picture is more aligned to people who cannot read without under estimating their intelligence."
+> (Professor Celia, University of Pretoria)
+
+The other side is Professor Heejung Seo of Dong-eui University, also in §5.7: to a non-literate person a picture too can feel like writing. Two responses say the opposite of each other about the same medium, and we do not know which is right. Of everything to confirm in the field evaluation of §5.10, this comes first. Measuring the comprehensibility of a picture without measuring whether it is recognised as a picture means scoring only the people who already passed.
+
 ### 2.2 SIGIL, the pictogram composition engine
 
 SIGIL (Symbol Intuitive Glyph Image Lab) is a pictogram composition engine the team designed and implemented itself. Where existing pictogram sets are lists of pictures, SIGIL is built from morphemes and a grammar.
@@ -525,6 +532,10 @@ The two categories in bold correspond directly to the top two errors in Table 4 
 ![Figure 15](fig/chart17_morpheme_map.png)
 
 The thickest category, conversely, is dosage form. The reason is in §2.3. Once the form is settled the verb and the body site are settled with it, so adding one form adds a whole instruction. The nine allergens follow the list of major allergens whose declaration is mandatory internationally.
+
+The constraint of the black-and-white silhouette was touched from two directions in §5.7. Professor Namsoo Park of Hyupsung University wrote that in black and white alone it is hard to tell that the egg allergy marking is an egg, and that icons need to be drawn as the real thing; Professor Myoungsoon You of Seoul National University named "the half picture" as a place likely to be misread. The first became the basis, among the fixes after the survey in §5.7, for redrawing `allergen_egg` as a cracked egg; the second says that the half drawn by the `half{}` operator may not read as meaning a half. We have not fixed the second.
+
+E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols, pointed at another layer. Our set is black and white, whereas the symbol systems AAC users are familiar with are usually coloured, and the two look different. It interlocks with the decision in §3.7 to use colour only for the verdict and keep morphemes black and white. Using colour loses users with colour vision deficiency; not using it loses users accustomed to coloured symbols. We chose the former, and we record the cost here.
 
 We record here that the set is not closed. Prescriptions keep producing things these 78 cannot draw, and what the app does at that moment is covered by the `\?concept` marker in §2.3 and the expansion path in §5.10.
 
@@ -635,6 +646,13 @@ Two forms speak the site and four draw it. This difference is not an oversight. 
 
 That leaves injection and suppository. For these two the verb cannot carry the site, and yet the site is neither spoken nor drawn. This is not economy but a gap we have not filled. A prescription often does not record where an injection goes, and the site varies by drug between arm, abdomen and buttock, so choosing one to draw would be inventing something the prescription does not contain. A suppository has a single site, but standing it up as a picture would require drawing the orientation of a human body, and that is outside what the 78 morphemes currently handle. Both are carried over to the unverified items in §5.9. For now, recording that the verb alone does not complete the instruction is all we can do.
 
+One response in §5.7 pointed at a layer this table does not cover. Niken Nur Widyakusuma, PhD and pharmacist at Universitas Gadjah Mada in Indonesia, wrote that "every 8 hours" is better than "three times a day".
+
+> "Instead of 3 times a day, better to say every 8 hours."
+> (Niken Nur Widyakusuma, PhD and pharmacist, Universitas Gadjah Mada)
+
+This sits on the boundary of our morpheme design. The four time morphemes of §2.2 are morning, midday, evening and night; they cannot draw "every so many hours". Table 8 records that time of day has only four because prescriptions do not ask for more, and this response says that what a prescription asks for may be a different axis altogether. Three times a day says when; every eight hours says the interval, and for a drug such as an antibiotic where blood concentration matters the latter is the clinically correct one. The engine cannot draw an interval, and drawing more morphemes does not fix it, because the axis itself is different. Carried over to stage 5 of §5.10.
+
 Design intent. The body site is not asked of the user. Asking means options have to be read, and making people read hierarchies and options is, as established in §1.10, exactly what this app sets out to remove. By the time OCR has read "ophthalmic solution" the site is already determined, so it is something to derive rather than to ask.
 
 There is judgement in how an unknown dosage form is handled as well. Previously a form absent from the table fell silently to a generic pill bottle picture. Inhaler or nebuliser, a pill bottle appeared on screen, and no record was left of how often that happened. Now a `\?form` marker is put in front. It means "we have no picture for this concept," and the online build composes a picture on the spot while the on-device build reports the absence rather than substituting a similar picture. For someone who cannot read, a wrong picture is worse than no picture. Absence falls through to speech, whereas a wrong picture is confidently wrong and the user has no way of knowing it is wrong.
@@ -682,6 +700,13 @@ Returning the `basis` string alongside is also deliberate. "1,800 kcal at age 70
 **[Figure 19]** The path by which the verdict threshold is derived. The user chooses only the two boxes at the top; the rest is computation. It is a derivation rather than a table because the WHO recommendation is itself written as a proportion of total energy, so when the recommendation changes one constant is edited instead of a table being rebuilt.
 
 ![Figure 19](fig/fig15_verdict_flow.png)
+
+The pharmacy segment of §5.7 twice pointed at a risk this derivation can create. Professor and pharmacist So-Young Lee of Chungnam National University wrote that an interaction warning can itself prompt unilateral discontinuation.
+
+> "For drug interactions too, even where the dose of the co-administered drug has been reduced in consideration of it, or the prescription has already been adjusted, seeing such a warning may lead the patient to stop the therapy on their own. In clinical situations a drug is sometimes used for the patient's treatment in full knowledge of an interaction."
+> (Professor and pharmacist So-Young Lee, Chungnam National University)
+
+Professor Katarina Vučićević of the University of Belgrade in Serbia offered one answer: attach an instruction to contact the doctor or pharmacist to the warning. As it stands this app says only what not to do on an avoid verdict and does not say whom to ask. The design of this section, which made the verdict a derivation, was treating the verdict as an endpoint.
 
 The user's conditions are then added. Diabetes narrows the sugar threshold, taking a blood thinner makes ibuprofen-class drugs something to avoid, and pregnancy or breastfeeding changes the contraindication list.
 
@@ -841,6 +866,15 @@ The list of household members sits on this same lock screen (§3.6). It has the 
 ![Figure 25](fig/panelC_onboarding.png)
 
 **[Figure 25]** First run. (a) Five guide cards. Each is a picture and one sentence, and on arrival the screen reads that sentence aloud by itself. (b) Profile setup. The age band is chosen through our morphemes and conditions through picture cards, with no input field on either. This step is needed because of the verdict method in §2.4. Since thresholds are derived from the user's energy requirement, no verdict is possible without knowing the age band.
+
+Two answers in §5.7 split exactly on this screen. Asked where a first run gets stuck, one of the two HCI respondents chose granting camera permission and the other chose that it does not get stuck. Myojung Choi, researcher at the Korea Disabled People's Development Institute, set down the reason for the first.
+
+> "A user who has difficulty reading may struggle with the subsequent steps if spoken guidance is not provided at the initial permission stage, and their actions may be constrained as a result."
+> (Myojung Choi, researcher, Korea Disabled People's Development Institute)
+
+The permission dialogue is drawn by the browser, so we cannot put speech inside it. Saying in advance what is about to be asked is all we can do, and the five guide screens occupy that place now. From the moment the dialogue appears after the guide, however, it is no longer our screen. It belongs to the unverified items in §5.9.
+
+Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, looked at it the other way. Someone who seeks this app out already knows roughly how it works, and if so a procedure of this length is perfectly possible with pictures and speech alongside. The two responses do not contradict each other. The first is about someone opening it for the first time, the second about someone who came looking. How this app reaches whom has not been settled, so both are possible conditions.
 
 ### 3.3 From capture to verdict
 
@@ -1013,6 +1047,15 @@ On the member list screen only the current person's conditions are shown and the
 
 Deleting takes two presses. One press raises a red outline, and a second deletes. No "are you sure?" dialogue is raised, because that sentence is not readable by this app's users. An unreadable confirmation dialogue is not a confirmation but merely one more press, so the procedure itself was made two-stage. The current person and the last remaining person cannot be deleted.
 
+What this section covers is several people sharing one device, not several people helping one person. Six of the nine in the nursing and public health segment of §5.7 answered that the patient and the carer should be designed for separately, and Foued Maaoui, researcher at the Institut Pasteur de Tunis, addressed the premise head on.
+
+> "The original assumption that the patient will use the app alone does not match common practice, especially among older adults, people with low literacy, cognitive impairment, or complex regimens."
+> (Foued Maaoui, researcher, Institut Pasteur de Tunis)
+
+Professor Minsun Song of Konyang University put the same thing differently: it should be built so that the patient and the carer can both understand it at once. There are dissenting views. Professor Celia of the University of Pretoria did not feel separate designs would be required, and Professor Namsoo Park of Hyupsung University answered that it depends on the age and condition of the target.
+
+This app is designed on the premise that the patient uses it alone. The checking step of §3.8, the per-person thresholds of §2.4 and the member separation of this section all assume one person in front of the screen. Split 6 to 2, this answer aims at that assumption rather than at any one feature. We have not changed it. Building a separate screen for the carer means rebuilding the step §2.1 set out to remove, and which is right can only be learned by asking people. It has been added as an item to confirm in the field evaluation of §5.10.
+
 ### 3.7 Channels other than colour
 
 Verdicts are displayed in three colours: green, amber and red. Red-green colour vision deficiency, however, affects about 8% of men and about 0.5% of women of northern European descent, and is estimated at around 300 million people worldwide (Colour Blind Awareness; MedlinePlus Genetics).
@@ -1161,6 +1204,8 @@ SnapCare therefore applies the same checks regardless of which route a value cam
 **[Figure 29]** Three paths pass through one gate (§4.2). The red line underneath is the reason the checks were gathered in one place rather than placed on each path. The third path arrived in this app later, and no additional validation code was written for it. It was simply routed through the gate that already existed.
 
 ![Figure 29](fig/fig17_gate.png)
+
+One response in §5.7 sums up why these checks sit ahead of the verdict. Associate Professor Hangil Lee of the College of Pharmacy, Ewha Womans University, withheld judgement on whether the app could fit a pharmacy workflow and pointed at the order: accuracy has to be secured before convenience. The gate in this section is that order written into code. Wherever a value came from, it is not used in a verdict unless it holds up physically, and the price is that sometimes no value is produced.
 
 The Atwater identity is particularly useful. It is a relation that must hold for values from any source, so the consistency of the values themselves can be checked without having to trust the source.
 
@@ -1517,6 +1562,16 @@ This work designed a procedure that inverts that order. Two gates are placed on 
 
 The form of the question at the second gate matters. Asking "is this a peanut" mostly gets a yes. No options are therefore given and a description is requested, and whether the answer matches the intent is judged separately. This is the same reason the ISO 9186 comprehension test presents no options.
 
+Whether this procedure is justified we asked directly in §5.7. Both respondents in the HCI and design segment answered "justified with conditions attached", and each wrote a different condition.
+
+> "For pre-screening rather than as a final conclusion, I think it can be used freely. Since it will ultimately be used with people, all that is needed is the resolve to discard the pre-screening result if testing with actual people shows it does not apply."
+> (Yonghan Lee, Senior Manager, Korea Craft and Design Foundation)
+
+> "If, in the process of screening information with a vision-language model, the researcher sets and understands the screening criteria clearly and those criteria can be shown valid on theoretical grounds, procedural justification can be secured."
+> (Myojung Choi, researcher, Korea Disabled People's Development Institute)
+
+The two conditions differ. The first asks whether the result can be thrown away; the second asks whether the criteria stand in advance. The second is answered to a degree by this section writing the criteria of both gates down beforehand, but the first cannot be answered because it has not been tested. If the field evaluation of §5.10 produces morphemes where the machine verdict and people's answers diverge, that is when this condition is tested. Being able to discard the machine's side at that point is what makes the procedure justified.
+
 The 512px original and the 32px reduction are also shown together, with the answer given against the reduction, because the reduction is the size actually seen in a list.
 
 
@@ -1627,6 +1682,10 @@ Second, the judgement wavers at the boundary. There were cases where the same pi
 Third, the scorer and the scored may share the same kind of failure. A vision language model is built by learning the world's pictures, so the more conventional and widespread a representation is, the better it recognises it. Yet it is exactly that convention which varies by culture (Table 6), and that is what concerns us. This check is therefore strong at measuring "did it follow common convention" and weak at measuring "does it work for someone who does not know this convention." No guarantee that the 54 symbols which passed will work as they are for older Moldovan users comes out of this.
 
 Putting the three together makes clear what the procedure in §5.2 is. It is a sieve for filtering obvious misreadings before asking people, not a substitute for asking them. The 24 it filtered out are ones that would have consumed testing time and returned the same answer had they been shown to people.
+
+§5.7 added a fourth to those three. Asked how the set should be tested with AAC users, E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols, answered that a trial is possible but that **the level at which failure occurs will never be known**, because there are too many variables.
+
+That lands directly on the procedure of §5.2. When a morpheme fails the semantic check we read it as the drawing being wrong. But whether it failed because of the drawing, because of the 32-pixel size, or because the judge does not know the concept is something this procedure cannot separate. The five judged unimprovable in §5.3 rest on the same limitation. Three attempts failing three times and a concept not standing up as a silhouette are different statements, and we looked at the first and wrote down the second.
 
 ### 5.5 Measured performance of the nutrition estimation model
 
@@ -2188,7 +2247,7 @@ If one person in three believes that, the course length written on the prescript
 
 We state what this proposal does not claim.
 
-First, no comprehension testing with people was carried out. The measurement in §5.2 concerns a machine, and whether the 67% criterion required by ISO 9186 is met has to be confirmed with people. Further, because misreading a dosing instruction leads directly to harm, we judge it appropriate to also apply the **critical confusion of 5% or less** required by ANSI Z535.3. The field evaluation plans to tally wrong answers separately as ordinary errors and as opposite-meaning errors.
+First, no comprehension testing with people was carried out. The expert survey in §5.7 is not that test: it asked people who deal with such patients daily, whereas a comprehension test has to ask the patients. The measurement in §5.2 concerns a machine, and whether the 67% criterion required by ISO 9186 is met has to be confirmed with people. Further, because misreading a dosing instruction leads directly to harm, we judge it appropriate to also apply the **critical confusion of 5% or less** required by ANSI Z535.3. The field evaluation plans to tally wrong answers separately as ordinary errors and as opposite-meaning errors.
 
 Second, cultural adaptation has not been verified. In the controlled comparison showing two sets to the same 46 people, 20 of 23 locally made pictograms passed the ANSI criterion while USP-DI managed 11 of 23 (Dowse & Ehlers, 2001). Pictogram comprehension therefore varies by culture. This set was designed in Korea and needs verification with Moldovan users.
 
