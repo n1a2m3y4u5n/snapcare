@@ -68,6 +68,26 @@ export interface ScanItem {
    * 대조할 대상 자체가 없으므로 'safe' 는 근거 없는 말이 된다.
    */
   unidentified?: boolean;
+  /**
+   * 지시가 **손으로 쓰여 있다.**
+   *
+   * 프리토리아 대학교 Celia 교수가 2026년 8월 조사에서 손글씨 처방전에서는 동작하지
+   * 않을 것이라고 적었다. 우리는 인쇄된 표본으로만 시험했었다. 그래서 실제로 넣어 봤다 —
+   * 라고스 안과 병원의 공개(CC0) 처방전 사진 한 장이다.
+   *
+   *   종이:  G. Azopt 8hrly / G. Combigan 12hrly / G. Xalatan nocte
+   *   앱:    G. Azopt 8mg  / G. Combigan 12mg  / G. Xalatan nocte
+   *          일정 = 아침·오후·밤, 판정 = 초록 "Take as prescribed"
+   *
+   * **빈도가 용량이 됐다.** 8시간마다가 8밀리그램으로, 12시간마다가 12밀리그램으로.
+   * 종이에 없는 시각 세 개를 지어냈고, 그 위에 초록불을 켰다. 못 읽는 것과 다르다 —
+   * 못 읽으면 사용자가 다시 묻지만, 이렇게 읽으면 사용자는 확신을 갖고 틀린다. 이 앱이
+   * 막으려는 실패가 정확히 그것이다(§2.1 의 거짓 확신).
+   *
+   * 그래서 손글씨는 **판정을 확신하지 않는다.** 그림과 문장은 그대로 보여주되, 사람에게
+   * 확인하라고 말하고 초록을 켜지 않는다. 알람도 자동으로 만들지 않는다.
+   */
+  handwritten?: boolean;
   flags: ItemFlag[];
   /** 음식/음료 영양 요약 (정성 가이드용) */
   nutrition?: { kcal?: number; protein?: string; sugar?: string; note?: string };

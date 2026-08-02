@@ -130,14 +130,23 @@ Return STRICT JSON only. No prose, no markdown fences.
   "portionGrams": number,         // your estimate of how much is in the photo, in grams
   "allergenTags": string[],       // OpenFoodFacts style: "en:peanuts","en:nuts","en:gluten","en:milk","en:eggs","en:soybeans","en:crustaceans"
   "rx": { "dosageText": string, "durationText": string,
-          "schedule": [{"time": string, "label": string, "emoji": string}] }  // only for medicine/prescription
+          "schedule": [{"time": string, "label": string, "emoji": string}] },  // only for medicine/prescription
+  "handwritten": boolean          // true if ANY of the medical instruction is handwritten
 }
 
 Rules:
 - per100 is DENSITY (per 100 g), never the amount on the plate. portionGrams carries the amount.
 - Energy must be consistent with the macros: energy ~= 4*carbohydrates + 4*protein + 9*fat. The app re-checks this and discards your answer if it does not hold.
 - Use typical composition for the dish you recognise. If you cannot recognise it, set confidence below 0.4.
-- Omit per100 and portionGrams entirely for medicine/prescription.`;
+- Omit per100 and portionGrams entirely for medicine/prescription.
+- handwritten: true when the drug names, doses or timings are written by hand, even if the
+  form around them is printed. A printed hospital letterhead with handwriting under it is
+  handwritten. This decides whether the app is allowed to sound certain, so do not guess it
+  as false: if the instruction is in a person's handwriting, say so.
+- Never convert a frequency into a strength. "8hrly" is every eight hours, not 8 mg; "od"
+  is once a day; "bd"/"bid" twice; "tds"/"tid" three times; "qds"/"qid" four; "nocte" at
+  night; "mane" in the morning; "prn" as needed. Put what is written in dosageText and
+  leave schedule empty rather than inventing clock times that are not on the paper.`;
 
 interface VisionResult {
   item: ScanItem;
@@ -214,6 +223,8 @@ async function analyzeWithClaude(image: string, key: string): Promise<VisionResu
       flags: [],
       profile,
       rx: parsed.rx,
+      // 손으로 쓴 지시는 확신하고 읽으면 안 된다. 왜인지는 lib/snapcare/types.ts 에 적었다.
+      handwritten: isRx ? parsed.handwritten === true : undefined,
     },
   };
 }
@@ -227,6 +238,7 @@ interface VisionOut {
   portionGrams?: number;
   allergenTags?: string[];
   rx?: ScanItem['rx'];
+  handwritten?: boolean;
 }
 
 /**

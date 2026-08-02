@@ -7,7 +7,7 @@ import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip, OneGlyph } from '@/components/sc/PictogramStrip';
 import { TeachBack } from '@/components/sc/TeachBack';
 import { NutrientBars } from '@/components/sc/NutrientBars';
-import { Hear, Say, Speakable } from '@/components/sc/Say';
+import { Hear, Say, Speakable, sayable } from '@/components/sc/Say';
 import { doseSentence, storageSentence } from '@/lib/snapcare/say';
 import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
@@ -199,7 +199,7 @@ function FoodResult({
           떠도 땅콩 그림은 화면 어디에도 없었다 — 처방 화면에만 스트립이 있었다.
           플래그가 하나도 없으면 컴포넌트가 스스로 아무것도 그리지 않는다.
         */}
-        <PictogramStrip source={itemToDsl(item, verdict.level !== 'safe')} />
+        <PictogramStrip source={itemToDsl(item, verdict.level === 'avoid')} />
 
         {/* 영양 엔진 — 바코드가 있으면 실제 수치를 구성원 기준치와 대조해 보여준다 */}
         <NutrientBars barcode={item.barcode} profile={item.profile} member={member} />
@@ -279,6 +279,7 @@ function RxResult({
 }: {
   item: ScanItem; verdict: Verdict; onDone: () => void;
 }) {
+  const router = useRouter();
   const meta = LEVEL_META[verdict.level];
   const conflict = verdict.level !== 'safe';
   return (
@@ -303,6 +304,37 @@ function RxResult({
       </div>
 
       {/*
+        손으로 쓴 처방전.
+
+        읽은 것을 지우지 않는다 — 지우면 아무 도움이 안 되고, 대개는 대체로 맞다.
+        지우는 것은 **확신**이다. 실측에서 "8시간마다" 가 "8밀리그램" 으로 읽혔고 종이에
+        없는 시각 세 개가 붙었다. 그런 화면을 초록불과 함께 내보내면, 사용자는 확인할
+        길이 없는 채로 확신을 갖는다.
+
+        그래서 사람을 부르라고 말하고, 종이 서식이라는 **다른 길**을 같이 내민다.
+        의사가 칸을 채운 서식은 손글씨가 아니라 표시라서 기기가 정확히 읽는다.
+      */}
+      {item.handwritten && (
+        <button
+          onClick={() => router.push('/device')}
+          className="mt-3 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
+          style={{ background: 'var(--color-caution-bg)' }}
+          {...sayable('This is handwritten, so some of it may be read wrong. Ask a person to read it to you. Or ask the clinic to fill in the paper sheet, which this app reads exactly. Tap to open the sheet reader.')}
+        >
+          <span className="text-xl" aria-hidden>✍️</span>
+          <span className="flex-1">
+            <span className="block text-sm font-bold" style={{ color: 'var(--color-caution)' }}>
+              Handwritten — some of this may be wrong
+            </span>
+            <span className="block text-xs" style={{ color: 'var(--color-sc-ink)' }}>
+              Ask someone to read it, or use the clinic&apos;s paper sheet
+            </span>
+          </span>
+          <span style={{ color: 'var(--color-caution)' }}>›</span>
+        </button>
+      )}
+
+      {/*
         그림 줄을 여기로 올렸다.
 
         전에는 화면 맨 아래, 용량·보관·복용시각 세 덩어리 **뒤**에 있었다. 글을 읽는
@@ -315,7 +347,7 @@ function RxResult({
         새로 배울 것을 줄인다는 IKEA 의 원칙이 여기에도 그대로 걸린다.
       */}
       <div className="mt-5">
-        <PictogramStrip source={itemToDsl(item, verdict.level !== 'safe')} />
+        <PictogramStrip source={itemToDsl(item, verdict.level === 'avoid')} />
       </div>
 
       {/*
@@ -377,9 +409,18 @@ function RxResult({
       */}
       <TeachBack item={item} />
 
+      {/*
+        손글씨면 버튼도 초록이 아니다.
+
+        누르면 하는 일은 같다 — 막지 않는다. 다만 이 버튼이 만드는 것은 **읽어낸 시각의
+        알람**이고, 그 시각이 종이에 없던 것일 수 있다는 사실이 버튼 색과 말에 남아
+        있어야 한다. 초록 버튼은 "확인됐다" 로 읽힌다.
+      */}
       <div className="mt-auto pb-8 pt-6">
-        <PrimaryButton onClick={onDone} level="safe"
-                       say="Create reminders. The phone will tell you at each time on the list above.">
+        <PrimaryButton onClick={onDone} level={item.handwritten ? 'caution' : 'safe'}
+                       say={item.handwritten
+                         ? 'Create reminders from what we read. This was handwritten, so check the times with a person first.'
+                         : 'Create reminders. The phone will tell you at each time on the list above.'}>
           Create reminders
         </PrimaryButton>
       </div>

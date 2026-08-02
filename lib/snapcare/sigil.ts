@@ -211,6 +211,17 @@ function medicineLabels(item: ScanItem, avoid: boolean): string[] {
   return labels;
 }
 
+/**
+ * @param avoid **회피 판정일 때만** 참이다. 주의는 아니다.
+ *
+ * 부르는 쪽이 `verdict.level !== 'safe'` 를 넘기고 있었다. 그러면 주의가 전부 금지로
+ * 그려진다 — `\no{}` 는 사선이고, 사선은 "먹지 마세요" 다. 손글씨 처방전에 주의를
+ * 붙이자마자 드러났다: 녹내장 안약 화면에 금지 표시가 떴다. 읽기 어렵다는 이유로
+ * 약을 끊으라고 말한 셈이고, 그것은 이 앱이 막으려던 실패의 정확한 거울상이다.
+ *
+ * 주의는 "확인하고 드세요" 이고 회피는 "드시지 마세요" 다. 글을 못 읽는 사람에게
+ * 그 둘을 가르는 것은 사선 하나뿐이라, 사선은 회피에만 나가야 한다.
+ */
 export function itemToDsl(item: ScanItem, avoid: boolean): string {
   const isRx = item.kind === 'medicine' || item.kind === 'prescription';
   const labels = isRx
