@@ -278,6 +278,65 @@ def recognition_layers():
             fontsize=7.6, color=MUTED)
     save(fig, 'fig19_recognition')
 
+# ── 릴레이는 자기가 나르는 것을 읽지 못한다 ────────────────────────
+def relay_keys():
+    """§4.3. 인쇄된 열 글자에서 세 값이 갈라지고, 하나만 밖으로 나가지 않는다."""
+    fig, ax = canvas(6.0, 2.4)
+    TOP = 34.0
+
+    box(ax, 34, TOP - 7.0, 32, 6.8, T('기기에 인쇄된 열 글자'), [T('양쪽이 각자 가지고 있다')], GREY)
+
+    M = TOP - 11.4
+    outs = [(T('기기 표'), [T('릴레이의 주소')], GREY),
+            (T('접근 토큰'), [T('그 사서함의 권한')], GREY),
+            (T('사서함 열쇠'), [T('일정을 연다')], GREEN)]
+    w, gap = 30.0, 3.0
+    for i, (h, ls, c) in enumerate(outs):
+        x = 2 + i * (w + gap)
+        box(ax, x, M - 8.6, w, 8.4, h, ls, c)
+        arrow(ax, 50, TOP - 7.6, x + w / 2, M - 0.2)
+        if i != 1:                      # 가운데는 화살표가 수직이라 글자가 겹친다
+            ax.text(x + w / 2 + (-7 if i == 0 else 7), M + 1.4, 'HKDF',
+                    ha='center', fontsize=7.4, color=MUTED)
+    ax.text(50, TOP - 9.4, 'HKDF', ha='center', fontsize=7.4, color=MUTED,
+            bbox=dict(boxstyle='square,pad=0.15', fc='white', ec='none'))
+
+    ax.text(17, M - 10.6, T('릴레이가 본다'), ha='center', fontsize=7.8, color=MUTED)
+    ax.text(50, M - 10.6, T('릴레이가 본다'), ha='center', fontsize=7.8, color=MUTED)
+    ax.text(83, M - 10.6, T('릴레이가 절대 못 본다'), ha='center', fontsize=7.8,
+            color=GREEN, fontweight='bold')
+
+    ax.text(2, 5.0, T('오가는 것은 전부 AES-256-GCM 이고, 여는 열쇠를 어느 쪽도 보내지 않는다'),
+            fontsize=7.6, color=MUTED)
+    ax.text(2, 1.8, T('릴레이가 멎었든 닿지 않든, 일정은 이미 기기의 SD 카드에 있다 (§4.3)'),
+            fontsize=7.6, color=MUTED)
+    save(fig, 'fig20_relay_keys')
+
+
+# ── 서비스워커가 자원마다 다르게 다룬다 ────────────────────────────
+def sw_strategy():
+    """§4.5. 세 갈래가 각각 다른 판단이라는 것을 나란히 놓는다."""
+    fig, ax = canvas(6.0, 2.4)
+    TOP = 34.0
+    ax.text(2, TOP + 1.4, T('서비스워커가 요청을 가르는 세 갈래'),
+            fontsize=8.4, color=MUTED, fontweight='bold')
+    items = [(T('판정 API'), [T('가로채지 않는다'),
+                              T('오래된 답보다 실패가 낫다')], RED),
+             (T('화면 이동'), [T('네트워크 우선'),
+                              T('접속되면 늘 최신')], GREY),
+             (T('자산 · 모델 · OCR'), [T('캐시 우선'),
+                                      T('처음 쓸 때 받는다')], GREEN)]
+    w, gap = 31.0, 2.4
+    for i, (h, ls, c) in enumerate(items):
+        box(ax, 2 + i * (w + gap), TOP - 12.4, w, 12.2, h, ls, c)
+    ax.text(2, 15.0, T('실패는 사용자가 알아차리지만 오래된 성공은 알아차리지 못한다'),
+            fontsize=7.8, color=RED, fontweight='bold')
+    ax.text(2, 11.4, T('16 MB 를 첫 화면에서 요구하면 망이 느린 곳에서는 앱이 안 열린 것처럼 보인다'),
+            fontsize=7.6, color=MUTED)
+    ax.text(2, 7.8, T('캐시 이름에 자산 지문을 찍는다. 지문이 없으면 고친 그림이 옛 그림으로 계속 나간다'),
+            fontsize=7.6, color=MUTED)
+    save(fig, 'fig21_sw')
+
 
 if __name__ == '__main__':
     userflow()
@@ -286,3 +345,5 @@ if __name__ == '__main__':
     gate_flow()
     gate_pictogram()
     recognition_layers()
+    relay_keys()
+    sw_strategy()

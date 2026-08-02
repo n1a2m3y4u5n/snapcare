@@ -384,6 +384,34 @@ def chart_survey_who():
     fig.subplots_adjust(left=0.02, right=0.97, wspace=0.55)
     save(fig, 'chart15_survey_who')
 
+# ── 같은 기호가 나라를 옮기면 ───────────────────────────────────────
+def chart_symbol_country():
+    """94%와 8%. 국제 표준이라는 이름이 이해도를 보장하지 않는다."""
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.5))
+    title(fig, T('같은 국제 표준 기호를 네 나라에 시험한 결과 (Hermans 등, 2011)'),
+          note=T('왼쪽은 18종 중 ISO 기준을 넘긴 수, 오른쪽은 생물학적 위험 기호 하나의 정답률.'))
+
+    labs = [T('벨기에'), T('쿠바'), T('콩고민주공화국'), T('캄보디아')]
+    passed = [6, 6, 2, 1]
+    for i, v in enumerate(passed):
+        a1.barh(i, v, 0.58, color=GREY if v >= 6 else RED, zorder=2)
+        a1.text(v + 0.25, i, str(v), va='center', fontsize=9, fontweight='bold', color=INK)
+    a1.set_yticks(range(4)); a1.set_yticklabels(labs, fontsize=8)
+    a1.invert_yaxis(); a1.set_xlim(0, 9)
+    a1.set_xlabel(T('18종 중 통과한 수'), fontsize=8.4)
+    frame(a1)
+
+    two = [(T('쿠바'), 94.1, GREY), (T('콩고민주공화국'), 8.0, RED)]
+    for i, (k, v, c) in enumerate(two):
+        a2.bar(i, v, 0.5, color=c, zorder=2)
+        a2.text(i, v + 4, f'{v}%', ha='center', fontsize=10, fontweight='bold', color=c)
+    a2.set_xticks(range(2)); a2.set_xticklabels([k for k, _, _ in two], fontsize=8)
+    a2.set_ylim(0, 125)
+    a2.set_ylabel(T('정답률 (%)'), fontsize=8.4)
+    frame(a2)
+    fig.subplots_adjust(left=0.17, right=0.97, wspace=0.5)
+    save(fig, 'chart16_symbol_country')
+
 
 if __name__ == '__main__':
     chart_literacy()
@@ -401,3 +429,4 @@ if __name__ == '__main__':
     chart_three_layers()
     chart_amr_region()
     chart_survey_who()
+    chart_symbol_country()

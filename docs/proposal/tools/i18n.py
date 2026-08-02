@@ -310,6 +310,36 @@ EN = {
     '이 순서 덕분에 처방전과 성분표는 인터넷 없이 읽힌다 (§4.5)':
         'This order is why prescriptions and labels are read without a connection (§4.5)',
     '이 앱에서 가장 급한 두 가지가 그 둘이다': 'Those two are the most urgent things in this app',
+    '기기에 인쇄된 열 글자': 'Ten characters printed on the device',
+    '양쪽이 각자 가지고 있다': 'Both sides hold it independently',
+    '기기 표': 'Device id', '릴레이의 주소': "The relay's address",
+    '접근 토큰': 'Access token', '그 사서함의 권한': 'Rights to that mailbox',
+    '사서함 열쇠': 'Box key', '일정을 연다': 'Opens the schedule',
+    '릴레이가 본다': 'The relay sees it',
+    '릴레이가 절대 못 본다': 'The relay never sees it',
+    '오가는 것은 전부 AES-256-GCM 이고, 여는 열쇠를 어느 쪽도 보내지 않는다':
+        'Everything in transit is AES-256-GCM, and neither side ever sends the opening key',
+    '릴레이가 멎었든 닿지 않든, 일정은 이미 기기의 SD 카드에 있다 (§4.3)':
+        'Down or unreachable, the schedule is already on the device SD card (§4.3)',
+    '서비스워커가 요청을 가르는 세 갈래': 'Three ways the service worker splits requests',
+    '판정 API': 'Verdict API', '가로채지 않는다': 'Not intercepted',
+    '오래된 답보다 실패가 낫다': 'Failing beats a stale answer',
+    '화면 이동': 'Navigation', '네트워크 우선': 'Network first',
+    '접속되면 늘 최신': 'Always latest when connected',
+    '자산 · 모델 · OCR': 'Assets · model · OCR', '캐시 우선': 'Cache first',
+    '처음 쓸 때 받는다': 'Fetched on first use',
+    '실패는 사용자가 알아차리지만 오래된 성공은 알아차리지 못한다':
+        'A failure is noticed by the user. A stale success is not',
+    '16 MB 를 첫 화면에서 요구하면 망이 느린 곳에서는 앱이 안 열린 것처럼 보인다':
+        'Demanding 16 MB at the first screen makes the app look unopened where the network is slow',
+    '캐시 이름에 자산 지문을 찍는다. 지문이 없으면 고친 그림이 옛 그림으로 계속 나간다':
+        'Cache names carry an asset fingerprint. Without it a fixed picture keeps being served as the old one',
+    '같은 국제 표준 기호를 네 나라에 시험한 결과 (Hermans 등, 2011)':
+        'The same international-standard symbols tested in four countries (Hermans et al., 2011)',
+    '왼쪽은 18종 중 ISO 기준을 넘긴 수, 오른쪽은 생물학적 위험 기호 하나의 정답률.':
+        'Left: how many of 18 passed the ISO criterion. Right: the correct-response rate for one symbol, biological risk.',
+    '벨기에': 'Belgium', '쿠바': 'Cuba', '콩고민주공화국': 'DR Congo', '캄보디아': 'Cambodia',
+    '18종 중 통과한 수': 'Passed, of 18', '정답률 (%)': 'Correct responses (%)',
 }
 
 
