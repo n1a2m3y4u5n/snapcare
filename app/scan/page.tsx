@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip, OneGlyph } from '@/components/sc/PictogramStrip';
+import { TeachBack } from '@/components/sc/TeachBack';
 import { NutrientBars } from '@/components/sc/NutrientBars';
 import { Hear, Say, Speakable } from '@/components/sc/Say';
 import { doseSentence, storageSentence } from '@/lib/snapcare/say';
@@ -353,6 +354,17 @@ function RxResult({
           </div>
         </div>
       )}
+
+      {/*
+        되말하기.
+
+        설명이 다 끝난 자리에 둔다 — 그림, 용량, 보관, 시각을 지나온 뒤다. 앞에 두면
+        아직 말하지 않은 것을 묻게 되고, 알람을 만드는 버튼 뒤에 두면 아무도 보지 않는다.
+
+        건너뛸 수 있고, 틀려도 막지 않는다. 확인을 통과해야 정보를 주는 앱은 약을 못
+        먹게 하는 앱이다 — 이유는 lib/snapcare/teachBack.ts 에 적었다.
+      */}
+      <TeachBack item={item} />
 
       <div className="mt-auto pb-8 pt-6">
         <PrimaryButton onClick={onDone} level="safe"
