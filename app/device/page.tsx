@@ -4,6 +4,9 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { MobileScreen } from '@/components/sc/MobileScreen';
+import { DispenserPanel } from '@/components/sc/DispenserPanel';
+import { DoseRelease } from '@/components/sc/DoseRelease';
+import { useDispenser } from '@/lib/dispenser/useDispenser';
 import { Hint } from '@/components/sc/Hint';
 import { sayable, ask, Speakable } from '@/components/sc/Say';
 import { useReminders } from '@/stores/reminders';
@@ -47,6 +50,10 @@ export default function DevicePage() {
   const reminders = useReminders((s) => s.reminders);
   const addScan = useScans((s) => s.addScan);
   const member = useProfile((s) => s.profile);
+
+  // 클라우드 경로 — 같은 WiFi 가 아니어도 닿는다. 아래 LAN 경로는 인터넷이 없을
+  // 때의 대체로 남는다.
+  const box = useDispenser();
 
   const [host, setHost] = useState(DEFAULT_HOST);
   const [reading, setReading] = useState(false);
@@ -236,6 +243,16 @@ export default function DevicePage() {
                    className="mt-1 text-sm flex w-full items-center gap-2">
           <span className="flex-1">Same Wi-Fi — nothing else needed.</span>
         </Speakable>
+
+        {/*
+          지금 꺼내야 하는 약이 있으면 무엇보다 먼저다. 기기는 시간이 됐다고 약을
+          내보내지 않으므로, 이 버튼이 없으면 트레이는 닫힌 채로 유예가 지난다.
+        */}
+        <div className="mt-6 space-y-4">
+          <DoseRelease report={box.report} onRelease={box.release} />
+          <DispenserPanel paired={box.paired} report={box.report} stale={box.stale}
+                          loading={box.loading} error={box.error} onChanged={box.refresh} />
+        </div>
 
         {/* 폰 → 기기 (WiFi) */}
         <Speakable text="Send the schedule to the box."

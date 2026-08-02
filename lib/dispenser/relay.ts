@@ -113,6 +113,34 @@ export class DispenserClient {
     return new DispenserClient(base, keys, impl.bind(globalThis));
   }
 
+  /**
+   * 이미 파생해 둔 열쇠로 다시 붙는다 — **페어링 코드 없이.**
+   *
+   * 원본 키트에는 `pair()` 뿐이라, 다시 붙으려면 코드를 어딘가 들고 있어야 한다.
+   * 그 코드는 의료기기에 일정을 쓰는 권한이고, 문자열이라 우리 출처에서 스크립트를
+   * 돌릴 수 있는 무엇이든 읽어 갈 수 있다.
+   *
+   * 파생 결과만 남기면 상자 열쇠는 `extractable: false` 인 CryptoKey 로 IndexedDB 에
+   * 들어가 **우리 코드조차 값을 읽지 못한다**(deviceKey.ts 와 같은 자세). 기기 id 와
+   * 접근 토큰은 주소와 헤더라 문자열로 남을 수밖에 없지만, 그 둘만으로는 봉투를 만들
+   * 수 없다 — 릴레이에 쓰레기를 넣을 수는 있어도 기기가 열지 못해 무시한다.
+   *
+   * `claim` 은 파생이 끝나면 이 클래스가 다시 보지 않으므로 빈 문자열로 둔다.
+   */
+  static fromKeys(options: {
+    relayUrl: string;
+    keys: Omit<DeviceKeys, 'claim'>;
+    fetchImpl?: typeof fetch;
+  }): DispenserClient {
+    const impl = options.fetchImpl ?? globalThis.fetch;
+    if (!impl) throw new Error('no fetch available — pass fetchImpl');
+    return new DispenserClient(
+      options.relayUrl.replace(/\/+$/, ''),
+      { claim: '', ...options.keys },
+      impl.bind(globalThis),
+    );
+  }
+
   /** The relay's address for this device. Safe to store and to log. */
   get deviceId(): string {
     return this.keys.deviceId;

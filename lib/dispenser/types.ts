@@ -66,6 +66,20 @@ export interface DispenserStatus {
   clock: ClockStatus;
   /** Mirrors `clock.trusted`. False means nothing will be dispensed. */
   dispensing: boolean;
+  /**
+   * 왜 이 기기가 약을 내보내지 않는가 — **문장으로**. 내보내고 있으면 빈 문자열.
+   *
+   * NOTES-FOR-WEBAPP.md 는 이 필드를 안내하는데 키트의 타입에는 빠져 있었다. 실제
+   * 기기가 보낸다 — 모의 기기에서 "the clock has not been vouched for by NTP, the
+   * RTC or a phone" 을 받아 확인했다.
+   *
+   * 사람에게 그대로 읽어 줄 수 있는 유일한 진단이라 화면에 쓴다. servoUsable 이
+   * 거짓인 기기는 아무것도 내보내지 않으면서 **기록도 남기지 않으므로**, 조용한
+   * 이벤트 로그를 건강한 것으로 읽으면 안 된다.
+   */
+  blockedReason?: string;
+  /** GPIO 라이브러리가 아예 없으면 거짓 — 기기가 움직일 수 없다. */
+  servoUsable?: boolean;
   /** Where the loaded plan came from: `'cloud'`, `'api'`, `'save'`, `'sheet'`… */
   scheduleSource: string;
   /** The plan in SC1 form, or `''`. */

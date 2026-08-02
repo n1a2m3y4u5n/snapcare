@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
+import { DoseRelease } from '@/components/sc/DoseRelease';
+import { useDispenser } from '@/lib/dispenser/useDispenser';
 import { useScans, todayKey } from '@/stores/scans';
 import { useProfile, PROFILE_ID } from '@/stores/profile';
 import { useAnalysis } from '@/stores/analysis';
@@ -22,6 +24,9 @@ import { TimeGlyph } from '@/components/sc/TimeGlyph';
 
 export default function HomePage() {
   const router = useRouter();
+  // 약통이 짝지어져 있으면 걸린 약을 여기서 보여준다. 짝이 없으면 훅이 조용히
+  // 아무것도 안 하고, DoseRelease 는 걸린 약이 없으면 그리지 않는다.
+  const box = useDispenser();
   const scans = useScans((s) => s.scans);
   const profile = useProfile((s) => s.profile);
   const confirmed = useProfile((s) => s.confirmed);
@@ -81,6 +86,19 @@ export default function HomePage() {
             {...ask('SnapCare. Photograph food or medicine to check it. The big blue button takes a photograph.')}>
           SnapCare
         </h1>
+
+        {/*
+          지금 꺼내야 하는 약. 기기는 시간이 됐다고 내보내지 않으므로 이것이 화면에
+          뜨는 순간이 곧 사람이 움직여야 하는 순간이고, 그래서 홈의 맨 위다.
+
+          한 번 아래에 두어 봤다가 되돌렸다. "TRY IT" 예시 카드 밑으로 내려가 있었는데,
+          화면에서 **유예가 있는 것은 이것뿐**이다 — 한 시간이 지나면 트레이는 열리지
+          않고 '놓침' 이 기록된다. 글을 못 읽는 사람에게 스크롤을 시켜서 찾게 할 것이
+          아니다. 걸린 약이 없으면 아무것도 그리지 않으므로 평소에는 자리를 먹지 않는다.
+        */}
+        <div className="mt-4 empty:mt-0">
+          <DoseRelease report={box.report} onRelease={box.release} />
+        </div>
 
         {/*
           프로필을 한 번도 확인하지 않은 사람에게, 지금 무엇을 기준으로 판정하고
