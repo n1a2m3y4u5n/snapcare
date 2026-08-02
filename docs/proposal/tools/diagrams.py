@@ -337,6 +337,41 @@ def sw_strategy():
             fontsize=7.6, color=MUTED)
     save(fig, 'fig21_sw')
 
+# ── 판정 화면의 세로 순서 두 벌 ─────────────────────────────────────
+def verdict_order():
+    """§3.3. 처방전에서 픽토그램을 글 카드 위로 올린 자리가 이 그림의 핵심이다."""
+    fig, ax = canvas(6.0, 3.6)
+    TOP = 57.0
+
+    ax.text(25, TOP + 1.4, T('음식 · 음료'), ha='center', fontsize=9,
+            color=MUTED, fontweight='bold')
+    ax.text(75, TOP + 1.4, T('처방전 · 의약품'), ha='center', fontsize=9,
+            color=MUTED, fontweight='bold')
+
+    food = [(T('원형 그림과 판정 문장'), GREY), (T('색과 기호의 요약 띠'), GREEN),
+            (T('픽토그램 시퀀스'), BLUE), (T('영양소 막대 (최대 3)'), GREY),
+            (T('대안 제시 카드'), GREY), (T('확인 버튼'), GREY)]
+    rx = [(T('원형 그림'), GREY), (T('약 이름과 1회 용량'), GREY),
+          (T('색과 기호의 안전 띠'), GREEN), (T('픽토그램 시퀀스'), BLUE),
+          (T('용량 카드와 보관 카드'), GREY), (T('복용 시각 표'), GREY)]
+
+    h, gap = 6.6, 1.2
+    for i, ((f, cf), (r, cr)) in enumerate(zip(food, rx)):
+        y = TOP - 3.0 - i * (h + gap)
+        box(ax, 2, y - h, 46, h, f, (), cf, fs=8.4)
+        box(ax, 52, y - h, 46, h, r, (), cr, fs=8.4)
+
+    ax.text(50, TOP - 3.0 - 3 * (h + gap) - h / 2, '↑', ha='center',
+            fontsize=15, color=RED, fontweight='bold')
+    ax.text(50, TOP - 3.0 - 2 * (h + gap) - h / 2, '↑', ha='center',
+            fontsize=15, color=RED, fontweight='bold')
+
+    ax.text(2, 5.2, T('처방전에서는 픽토그램을 글 카드보다 위로 올렸다'),
+            fontsize=7.8, color=RED, fontweight='bold')
+    ax.text(2, 1.8, T('아래에 두었을 때, 글을 읽지 못하는 사람은 빈 카드 셋을 지나야 그림에 닿았다'),
+            fontsize=7.6, color=MUTED)
+    save(fig, 'fig22_verdict_order')
+
 
 if __name__ == '__main__':
     userflow()
@@ -347,3 +382,4 @@ if __name__ == '__main__':
     recognition_layers()
     relay_keys()
     sw_strategy()
+    verdict_order()

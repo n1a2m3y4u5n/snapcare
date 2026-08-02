@@ -366,6 +366,20 @@ EN = {
     '환자와 보호자를 각각 다르게': 'Design patient and carer separately',
     '복약순응도 도구로 재야 한다': 'Measure with an adherence instrument',
     '간호·보건 (9명)': 'Nursing / public health (9)',
+    '음식 · 음료': 'Food · drink', '처방전 · 의약품': 'Prescription · medicine',
+    '원형 그림과 판정 문장': 'Round picture and verdict sentence',
+    '색과 기호의 요약 띠': 'Summary bar with colour and symbol',
+    '픽토그램 시퀀스': 'Pictogram sequence',
+    '영양소 막대 (최대 3)': 'Nutrient bars (up to 3)',
+    '대안 제시 카드': 'Alternative suggestion card', '확인 버튼': 'Confirm button',
+    '원형 그림': 'Round picture', '약 이름과 1회 용량': 'Drug name and dose',
+    '색과 기호의 안전 띠': 'Safety bar with colour and symbol',
+    '용량 카드와 보관 카드': 'Dose card and storage card',
+    '복용 시각 표': 'Dosing schedule',
+    '처방전에서는 픽토그램을 글 카드보다 위로 올렸다':
+        'For prescriptions the pictograms were moved above the text cards',
+    '아래에 두었을 때, 글을 읽지 못하는 사람은 빈 카드 셋을 지나야 그림에 닿았다':
+        'With them below, someone who cannot read had to pass three empty cards to reach a picture',
 }
 
 
