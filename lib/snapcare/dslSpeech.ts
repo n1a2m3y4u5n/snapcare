@@ -1,3 +1,5 @@
+import { packFor } from '../i18n/index.ts';
+
 /**
  * 픽토그램 한 장을 한 문장으로.
  *
@@ -142,6 +144,24 @@ const CADENCE_SAY: Record<string, string> = {
   four_times_daily: 'four times a day',
 };
 
+/**
+ * 이어 붙이지 않고 **뒤에 따로 서는** 꾸밈말.
+ *
+ * 보관은 다른 꾸밈말과 성질이 다르다. "식사와 함께" 나 "눈에" 는 약을 **어떻게 쓰는지**
+ * 를 꾸미지만, "냉장고에 두세요" 는 약을 쓰는 방법이 아니라 **따로 하는 일**이다.
+ *
+ * 이어 붙이면 그 차이가 문장을 깨뜨린다. 한국어에서 실제로 이렇게 나왔다:
+ *
+ *   뜨거운 곳을 피해 마른 곳에 두세요 캡슐을 드세요.
+ *
+ * 서술어가 둘인 한 문장이다. 영어에서도 "A capsule, keep it dry" 는 어색했는데 쉼표가
+ * 가려 주고 있었을 뿐이다. 문장을 나누면 두 언어가 함께 나아진다:
+ *
+ *   캡슐을 드세요. 뜨거운 곳을 피해 마른 곳에 두세요.
+ *   A capsule. Keep it dry, away from heat.
+ */
+const SENTENCE_MODIFIERS = new Set(['storage_fridge', 'storage_dry']);
+
 /** 문장 끝을 마침표로 맞춘다 — 음성 합성이 여기서 숨을 쉰다. */
 function period(s: string): string {
   return /[.!?]$/.test(s) ? s : `${s}.`;
@@ -153,10 +173,21 @@ function period(s: string): string {
  * 모르는 것을 지어내지 않는 것이 요점이다. 틀린 설명은 거짓 확신을 만들고, 그것이
  * 이 그림들이 막으려는 바로 그 실패다.
  */
-export function dslSentence(line: string): string | null {
+export function dslSentence(line: string, lang = 'en'): string | null {
+  const pack = lang === 'en' ? null : packFor(lang);
+
+  /*
+    그 언어의 말을 먼저 찾고, 없으면 영어로 떨어진다.
+
+    떨어지는 것이 옳은 이유: 빠진 자리를 비슷한 말로 메우면 사용자가 알아듣고 **틀린
+    것을 한다.** 영어가 나오면 못 알아듣고 끝나는데, 복약 지시에서는 그쪽이 덜 나쁘다.
+  */
+  const t = (key: string, fallback: string): string =>
+    (pack?.phrases[key] ?? fallback);
+
   const p = parseDslLine(line);
   if (!p) return null;
-  if (p.missing) return 'We have no picture for this one.';
+  if (p.missing) return t('missing', 'We have no picture for this one.');
 
   const head = CONCEPT[p.head];
   if (!head) return null;
@@ -164,15 +195,41 @@ export function dslSentence(line: string): string | null {
   // 혼자 선 형태소는 자기 칸의 말을 통째로 한다. 꾸밈말로 쓰일 때(`\head{\mod}`)는
   // 아래 modifier 가지로 가므로 여기 오지 않는다.
   const base = p.negated
-    ? (head.no ?? `No ${head.yes.replace(/\.$/, '').toLowerCase()}.`)
-    : (head.alone ?? head.yes);
+    ? t(`${p.head}.no`, head.no ?? `No ${head.yes.replace(/\.$/, '').toLowerCase()}.`)
+    : t(`${p.head}.alone`, '') || t(`${p.head}.yes`, head.alone ?? head.yes);
 
-  const parts = [base.replace(/\.$/, '')];
+  const head_ = base.replace(/\.$/, '');
+  const extras: string[] = [];
+  /** 문장 뒤에 **따로 서는** 꾸밈말. 아래 SENTENCE_MODIFIERS 참고. */
+  let trailing = '';
   if (p.modifier) {
     const mod = CONCEPT[p.modifier];
-    if (mod) parts.push(mod.yes);
+    const said = t(`${p.modifier}.yes`, mod?.yes ?? '');
+    if (said && SENTENCE_MODIFIERS.has(p.modifier)) trailing = said;
+    else if (said) extras.push(said);
   }
-  if (p.cadence && CADENCE_SAY[p.cadence]) parts.push(CADENCE_SAY[p.cadence]);
+  if (p.cadence) {
+    const said = t(`cadence.${p.cadence}`, CADENCE_SAY[p.cadence] ?? '');
+    if (said) extras.push(said);
+  }
 
-  return period(parts.join(', '));
+  /*
+    조각을 잇는 순서는 언어가 정한다.
+
+    영어는 "캡슐을, 식사와 함께, 하루 세 번" 순으로 놓지만 한국어·우르두어·벵골어는
+    서술어가 끝에 와서 꾸밈말이 앞이다. 같은 순서로 이으면 그 언어의 문장이 아니라
+    영어 문장에 남의 낱말을 끼운 것이 되고, 소리로만 듣는 사람에게 그것은 못 알아듣는
+    소리와 같다. 왜 이 한 칸으로 충분한지는 lib/i18n/types.ts 에 적었다.
+  */
+  const joiner = pack?.join ?? ', ';
+  const ordered = pack?.order === 'mod-first'
+    ? [...extras.reverse(), head_]      // 빈도가 가장 앞: "하루 세 번, 식사와 함께 캡슐을"
+    : [head_, ...extras];
+
+  const sentence = period(ordered.join(joiner).replace(/,\s*$/, ''));
+  if (!trailing) return sentence;
+  // 뒤에 따로 세운다. 첫 글자를 올리는 것은 라틴 문자에만 해당하고, 한글·아랍·벵골
+  // 문자는 대소문자가 없어 아무 일도 일어나지 않는다.
+  const tail = trailing.charAt(0).toUpperCase() + trailing.slice(1);
+  return `${sentence} ${period(tail)}`;
 }

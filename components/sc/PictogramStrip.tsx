@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { splitDslLines, dslKey, cachedPictogramPath, type PictogramManifest } from '@/lib/snapcare/dsl';
 import { dslSentence } from '@/lib/snapcare/dslSpeech';
+import { usePreferences } from '@/stores/preferences';
 import { Speakable } from './Say';
 
 /**
@@ -120,7 +121,10 @@ export function PictogramStrip({ source }: { source: string }) {
  * 틀린 설명은 바로 그 거짓 확신을 굳혀 준다.
  */
 function Tile({ src, line }: { src: string; line?: string }) {
-  const say = line ? dslSentence(line) : null;
+  // 고른 언어로 말한다. 그림은 그대로다 — 그림에는 번역이 필요 없고, 그것이 그림을
+  // 쓰는 이유이기도 하다.
+  const sayLang = usePreferences((s) => s.sayLang);
+  const say = line ? dslSentence(line, sayLang) : null;
   // eslint-disable-next-line @next/next/no-img-element
   const img = <img src={src} alt={say ?? ''} className="h-24 w-24 rounded-2xl bg-white p-2 shadow-sm" />;
   if (!say) return <div className="shrink-0">{img}</div>;

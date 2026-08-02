@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
+import { LanguagePicker } from '@/components/sc/LanguagePicker';
 import { useProfile } from '@/stores/profile';
 import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
 import { sayable, ask, Speakable } from '@/components/sc/Say';
@@ -107,6 +108,8 @@ export default function SettingsPage() {
             />
           </span>
         </button>
+
+        <LanguagePicker />
 
         {/*
           말하기 속도.
