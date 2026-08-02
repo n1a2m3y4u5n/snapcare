@@ -170,6 +170,10 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 지시가 전달된 뒤에도 남는 간극이 있다. 만성 질환자의 복약 순응도는 선진국에서 평균 50%이며 개발도상국에서는 그보다 낮다 (World Health Organization, *Adherence to long-term therapies: evidence for action*, 2003). 이 수치는 글을 읽을 수 있고 진단도 받은 사람들을 포함해 잰 것이므로, 문해력만 해결하면 되는 문제가 아니라는 뜻이기도 하다.
 
+문해력과 순응도의 관계 자체를 잰 자료도 우리 편이 아니다. 여러 데이터베이스를 훑어 건강문해력과 복약 순응도의 직접적 관계를 잰 연구를 모은 메타분석에서, 둘 사이의 상관은 통계적으로 유의하지만 **약했다.** 가중 상관계수가 0.056에서 0.072 사이다 (Zhang, N. J., Terry, A. & McHorney, C. A., "Impact of health literacy on medication adherence: a systematic review and meta-analysis," *Annals of Pharmacotherapy*, 48(6):741–751, 2014, doi:10.1177/1060028014526562). 저자들은 건강문해력이 순응도를 직접 정하기보다 다른 결정 요인을 매개할 가능성을 제시한다.
+
+이 값을 그대로 읽으면 문해력을 해결해도 순응도는 조금 오른다는 뜻이 된다. 우리는 순응도를 개선하겠다고 주장하지 않으므로(§5.9) 이 결과가 이 연구의 주장을 무너뜨리지는 않지만, 읽을 수 있게 만드는 것과 먹게 만드는 것 사이의 거리를 이 수치가 보여 준다. §5.1 이 재는 것이 앞의 것이고 뒤의 것은 재지 않았다.
+
 저·중소득국만 따로 본 자료도 있다. 22편 92,443명을 종합한 결과 고혈압 약의 비순응은 측정 도구에 따라 25.45%(95% CI 17.23~33.76)에서 63.35%(38.78~87.91)까지 벌어졌고, 대부분의 연구가 그 원인을 세계보건기구 분류의 "사회·경제 요인" 에서 찾았다 (Nielsen, J. Ø., Shrestha, A. D., Neupane, D. & Kallestrup, P., "Non-adherence to anti-hypertensive medication in low- and middle-income countries: a systematic review and meta-analysis of 92443 subjects," *Journal of Human Hypertension*, 31(1):14–21, 2017, doi:10.1038/jhh.2016.31).
 
 같은 현상을 재는 데 도구에 따라 25%와 63%가 나온다는 것 자체가 이 지표의 성격을 말한다. 이 앱이 순응도를 올렸다고 주장하려면 어느 도구로 쟀는지를 함께 말해야 하며, §5.10 의 평가 설계에서 도구를 미리 정해 둔 이유가 그것이다.
@@ -219,6 +223,10 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 ![그림 7](fig/chart13_three_layers.png)
 
 **[그림 7]** 처방전을 읽지 못하는 세 갈래. 셋은 서로 겹치고 출처와 분모가 다르므로 크기를 견주려고 놓은 것이 아니다. 이 문서가 §1.1 부터 다루어 온 것은 가운데 막대이고, 위의 막대는 우리가 다루지 않은 층이다. 아래 줄은 분모가 달라 막대로 그리지 않았다.
+
+그 층에 무엇이 부족한지도 재어져 있다. 전 세계에서 25억 명 넘는 사람이 보조기기를 하나 이상 필요로 하며, 인구 고령화와 비감염성 질환의 증가로 2050년에는 35억 명에 이를 것으로 전망된다. 접근은 고르지 않다. **일부 저소득국에서는 필요한 보조기기에 닿는 사람이 3%인 반면 일부 고소득국에서는 90%다** (World Health Organization, *Assistive technology* fact sheet; WHO & UNICEF, *Global report on assistive technology*, 2022).
+
+이 격차가 우리가 대상으로 삼는 지역과 겹친다. 스마트폰은 §1.6 에서 본 대로 이미 퍼져 있으나 보조기기는 그렇지 않으므로, 손에 든 기기에서 도는 것과 별도의 장비가 필요한 것 사이에 실제 차이가 있다.
 
 이 앱은 시각장애를 대상으로 설계되지 않았다. 그림을 크게 그리고 음성을 붙였으나, 사진을 찍는 행위 자체가 앞을 보지 못하는 사람에게 장벽이 된다는 지적이 §5.7 에서 두 건 나왔다. 우리가 다루지 않은 층이며 §5.9 의 미검증 항목에 해당한다.
 
@@ -310,6 +318,10 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 그러나 같은 자리에서 반대 방향의 증거도 분명하다. 앞서 인용한 물약 시험(§1.3)은 무작위 대조시험이었고, 대조군과 갈린 것이 픽토그램이 들어간 지시였다. 픽토그램을 받은 보호자에서 20%를 넘는 용량 오차는 47.8%에서 **5.4%로 떨어졌고**(절대위험 감소 42.4%p), 복약을 지키지 않은 비율도 38.0%에서 9.3%로 낮아졌다 (Yin, H. S. et al., "Randomized controlled trial of a pictogram-based intervention to reduce liquid medication dosing errors and improve adherence among caregivers of young children," *Archives of Pediatrics & Adolescent Medicine*, 162(9):814–822, 2008).
 
 남아공에서 정규교육 7년 이하의 저문해 성인 60명을 대조군과 실험군으로 나눈 시험에서도, 그림을 함께 받은 쪽에서 약 라벨과 복약 안내문 **양쪽 모두 이해도 80%를 넘긴 참여자가 유의하게 많았다** (Mansoor, L. E. & Dowse, R., "Effect of pictograms on readability of patient information materials," *Annals of Pharmacotherapy*, 37:1003–1009, 2003).
+
+개별 시험을 넘어 전체를 모은 것도 있다. 4,160편을 훑어 무작위 대조시험 54편을 고르고 그중 42편을 메타분석한 결과, 그림을 곁들인 건강 정보는 지식·이해와 회상을 전반적으로 중간 정도 높였고, **건강문해력이 낮은 집단(13편)에서는 지식·이해가 크게 올랐다** (Schubbe, D., Scalia, P., Yen, R. W., Saunders, C. H., Cohen, S., Elwyn, G., van den Muijsenbergh, M. & Durand, M.-A., "Using pictures to convey health information: A systematic review and meta-analysis of the effects on patient and consumer health behaviors and outcomes," *Patient Education and Counseling*, 103(10):1935–1960, 2020, doi:10.1016/j.pec.2020.04.010).
+
+같은 논문이 우리 설계에 직접 걸리는 문장을 하나 더 남겼다. **낱말이 적은 아이콘이 가장 도움이 될 수 있다**는 것이다. §5.7 에서 세 나라의 응답자가 한 장에 요소가 너무 많다고 지적한 것과 독립적으로 같은 방향을 가리킨다. 다만 저자들이 결과의 이질성이 크므로 조심해 읽으라고 적어 두었고, 여기서도 그렇게 읽는다. 이 값들은 그림을 쓰라는 근거이지 어떤 그림이든 된다는 근거가 아니다.
 
 정리하면 이 분야는 두 가지를 함께 관찰해 왔다. 잘 만든 그림은 실제로 오류를 줄인다(Yin 등, 2008: 47.8% → 5.4%). 그리고 만들었다고 해서 잘 만들어지는 것은 아니다(Gutierrez 등, 2022: 108종 중 17종). 앞의 것이 이 접근을 택할 이유이고, 뒤의 것이 만든 뒤에 재야 할 이유다.
 
