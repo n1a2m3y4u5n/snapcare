@@ -255,6 +255,55 @@ def chart_survey():
     fig.subplots_adjust(left=0.30 if LANG != 'en' else 0.34)
     save(fig, 'chart10_survey')
 
+# ── 예방 가능한 약물 위해가 어느 단계에서 생기는가 ──────────────────
+def chart_harm_stage():
+    """우리 논지를 깎는 자료라 오히려 크게 그린다. 무게중심은 처방 쪽이다."""
+    fig, ax = plt.subplots(figsize=(6.0, 2.7))
+    title(fig, T('예방 가능한 약물 위해가 생기는 단계 (WHO, 2024)'),
+          note=T('저·중소득국에서 처방 단계로 더 쏠린다. 이 앱은 처방 단계에 개입하지 않는다.'))
+    labs = [T('처방·지시'), T('모니터링·보고'), T('그 밖')]
+    world = [53, 36, 11]
+    h = 0.36
+    for i, v in enumerate(world):
+        ax.barh(i - h / 2, v, h, color=GREY, zorder=2,
+                label=T('전 세계') if i == 0 else None)
+        ax.text(v + 1.5, i - h / 2, f'{v}%', va='center', fontsize=9,
+                fontweight='bold', color=INK)
+    ax.barh(h / 2, 80, h, color=RED, zorder=2, label=T('저·중소득국'))
+    ax.text(81.5, h / 2, '80%', va='center', fontsize=9, fontweight='bold', color=RED)
+    ax.set_yticks(range(len(labs)))
+    ax.set_yticklabels(labs)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 100)
+    ax.set_xlabel(T('예방 가능한 위해 중 비율 (%)'))
+    legend_in(ax, 'lower right')
+    frame(ax)
+    fig.subplots_adjust(left=0.24 if LANG != 'en' else 0.27)
+    save(fig, 'chart11_harm_stage')
+
+
+# ── 정책이 어디까지 내려와 있는가 ───────────────────────────────────
+def chart_policy_depth():
+    """승인에서 조직으로 갈수록 줄어드는 것이 이 그림의 논지다."""
+    fig, ax = plt.subplots(figsize=(6.0, 2.4))
+    title(fig, T('Medication Without Harm 이 국가 단위로 내려온 정도 (WHO, 2024)'),
+          note=T('받아들인 나라와 실제로 조직을 둔 나라 사이가 세 배 벌어진다.'))
+    labs = [T('과제를 승인하고 이행 중'), T('국가 전문가 조직을 둠'), T('감축 목표를 수로 세움')]
+    vals = [74, 24, 18]
+    cols = [GREY, ORANGE, RED]
+    for i, (v, c) in enumerate(zip(vals, cols)):
+        ax.barh(i, v, 0.55, color=c, zorder=2)
+        ax.text(v + 1.5, i, f'{v}%', va='center', fontsize=9.4,
+                fontweight='bold', color=c if c != GREY else INK)
+    ax.set_yticks(range(len(labs)))
+    ax.set_yticklabels(labs)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 100)
+    ax.set_xlabel(T('WHO 회원국 중 비율 (%)'))
+    frame(ax)
+    fig.subplots_adjust(left=0.30 if LANG != 'en' else 0.33)
+    save(fig, 'chart12_policy_depth')
+
 
 if __name__ == '__main__':
     chart_literacy()
@@ -267,3 +316,5 @@ if __name__ == '__main__':
     chart_model()
     chart_country()
     chart_survey()
+    chart_harm_stage()
+    chart_policy_depth()

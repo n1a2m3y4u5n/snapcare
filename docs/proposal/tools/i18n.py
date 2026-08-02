@@ -197,6 +197,20 @@ EN = {
     '예, 가능할 것 같다': 'Yes, probably',
     '판단할 근거가 없다': 'No basis to judge',
     '아니오': 'No',
+    '예방 가능한 약물 위해가 생기는 단계 (WHO, 2024)': 'Where preventable medication harm arises (WHO, 2024)',
+    '저·중소득국에서 처방 단계로 더 쏠린다. 이 앱은 처방 단계에 개입하지 않는다.':
+        'The concentration at prescribing is stronger in LMICs. This app does not intervene at the prescribing stage.',
+    '처방·지시': 'Prescribing / ordering', '모니터링·보고': 'Monitoring / reporting',
+    '전 세계': 'Worldwide', '저·중소득국': 'LMICs',
+    '예방 가능한 위해 중 비율 (%)': 'Share of preventable harm (%)',
+    'Medication Without Harm 이 국가 단위로 내려온 정도 (WHO, 2024)':
+        'How far Medication Without Harm has reached national level (WHO, 2024)',
+    '받아들인 나라와 실제로 조직을 둔 나라 사이가 세 배 벌어진다.':
+        'A threefold gap between countries that endorsed it and countries with a body for it.',
+    '과제를 승인하고 이행 중': 'Endorsed and implementing',
+    '국가 전문가 조직을 둠': 'Has a national expert group',
+    '감축 목표를 수로 세움': 'Has a numeric reduction target',
+    'WHO 회원국 중 비율 (%)': 'Share of WHO member states (%)',
 }
 
 
