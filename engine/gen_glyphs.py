@@ -847,10 +847,22 @@ TARGETS: list[Target] = [
     # ── 수식어: 보관 ────────────────────────────────────────────────────────
     Target(
         'storage_fridge', 'modifier', 'storage_fridge',
-        'a snowflake: six straight bold arms radiating from a common centre at even angles, each arm '
-        'with two short side branches, with wide white space between neighbouring arms',
-        'a star, an asterisk, a flower, a wheel',
-        means='snowflake',
+        # 눈송이를 맨몸으로 두었더니 해(time_noon)와 부딪혔다. 벨그라드 대학교
+        # Katarina Vučićević 교수가 2026년 8월 조사에서 "냉장 보관과 정오 형태소가
+        # 헷갈린다" 고 적었고, 실제로 나란히 놓고 보면 둘 다 **가운데에서 사방으로
+        # 뻗는 별 모양**이다. 실루엣이 같으면 크기를 키워도 갈리지 않는다.
+        #
+        # 교수의 제안은 색을 쓰라는 것이었다(검정+노랑은 낮에). 색은 두 번째 층으로는
+        # 좋지만 첫 번째 층이 될 수 없다 — 색을 못 보는 사람에게는 두 그림이 여전히
+        # 같고, 그 사람이 §3.7 이 지키기로 한 사람이다. 그래서 실루엣을 바꾼다.
+        #
+        # 눈송이는 버리지 않는다. 포장에 찍힌 냉장 표시로 이미 배운 그림이라, 상자
+        # **안에** 넣어 겉모양만 바꾼다 — 배운 것은 남고 부딪히는 것은 사라진다.
+        'a solid black upright rectangle with rounded corners filling most of the frame, with one '
+        'bold six-armed snowflake punched right through it as wide white channels so the snowflake '
+        'reads as empty space cut out of the box, and nothing at all outside the rectangle',
+        'a bare snowflake, a sun, a star, an asterisk, a flower, a wheel, a window, a door',
+        means='a box with a snowflake cut out of it',
     ),
     Target(
         'storage_dry', 'modifier', 'storage_dry',
