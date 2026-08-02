@@ -190,6 +190,13 @@ EN = {
     '영양 추정 모델의 항목별 오차 (n = 507)':
         'Per-item error of the nutrition estimation model (n = 507)',
     '열량': 'Energy', '질량': 'Mass', '지방': 'Fat', '탄수화물': 'Carbohydrate',
+    '전문가 판단 문항과 95% 신뢰구간 (n = 24)': 'Expert judgement with 95% confidence intervals (n = 24)',
+    '점이 비율, 가로선이 95% 신뢰구간이다. 선이 긴 것이 표본이 작다는 뜻이다.':
+        'Dot is the proportion, bar is the 95% confidence interval. A long bar means a small sample.',
+    '부분적으로': 'Partly',
+    '예, 가능할 것 같다': 'Yes, probably',
+    '판단할 근거가 없다': 'No basis to judge',
+    '아니오': 'No',
 }
 
 

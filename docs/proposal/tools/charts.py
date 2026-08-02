@@ -230,6 +230,32 @@ def chart_country():
     save(fig, 'chart09_country_literacy')
 
 
+# ── 전문가 조사. 판단 문항과 그 불확실성 ────────────────────────────
+def chart_survey():
+    """비율만 그리면 24명이라는 것이 보이지 않는다. 구간을 함께 그린다."""
+    fig, ax = plt.subplots(figsize=(6.0, 2.6))
+    title(fig, T('전문가 판단 문항과 95% 신뢰구간 (n = 24)'),
+          note=T('점이 비율, 가로선이 95% 신뢰구간이다. 선이 긴 것이 표본이 작다는 뜻이다.'))
+    rows = [(T('부분적으로'), 16, 66.7, 46.7, 82.0),
+            (T('예, 가능할 것 같다'), 7, 29.2, 14.9, 49.2),
+            (T('판단할 근거가 없다'), 1, 4.2, 0.7, 20.2),
+            (T('아니오'), 0, 0.0, 0.0, 13.8)]
+    ys = range(len(rows))
+    for y, (lab, k, v, lo, hi) in zip(ys, rows):
+        c = BLUE if k else GREY
+        ax.plot([lo, hi], [y, y], color=c, lw=3.0, solid_capstyle='butt', zorder=2)
+        ax.plot([v], [y], 'o', color=c, ms=7, zorder=3)
+        ax.text(hi + 2.0, y, f'{k}/24', va='center', fontsize=8.6, color=INK)
+    ax.set_yticks(list(ys))
+    ax.set_yticklabels([r[0] for r in rows])
+    ax.invert_yaxis()
+    ax.set_xlim(0, 100)
+    ax.set_xlabel(T('비율 (%)'))
+    frame(ax)
+    fig.subplots_adjust(left=0.30 if LANG != 'en' else 0.34)
+    save(fig, 'chart10_survey')
+
+
 if __name__ == '__main__':
     chart_literacy()
     chart_health_literacy()
@@ -240,3 +266,4 @@ if __name__ == '__main__':
     chart_glyphs()
     chart_model()
     chart_country()
+    chart_survey()
