@@ -1,5 +1,7 @@
 import type { Member, ScanItem, Verdict } from './types';
-import { spokenName } from '@/lib/tts/speakable';
+// 확장자를 붙인 상대 경로인 이유: 이 모듈을 node --test 로 번들러 없이 직접 돌린다.
+// (@/ 별칭은 그 자리에서 풀리지 않는다)
+import { spokenName } from '../tts/speakable.ts';
 
 /**
  * VOCA 음성 스크립트 — 결과를 짧고 핵심만 읽어준다 (접근성 코어).
@@ -24,8 +26,10 @@ export function itemVoiceScript(item: ScanItem, verdict: Verdict, member: Member
       // (Davis et al. 2006: 지시를 말할 수 있는 70.7% 중 실제 알약 수를 제시한 것은 34.7%).
       const dose = doseSentence(item.rx);
       if (dose) parts.push(dose);
-      if (item.rx?.dosageText) parts.push(item.rx.dosageText + '.');
-      parts.push('Take as prescribed.');
+      // 복용법 원문은 처방전에서 온 조각이라 소문자로 시작한다("after food"). 문장
+      // 사이에 그대로 끼우면 앞 문장의 꼬리처럼 읽힌다.
+      if (item.rx?.dosageText) parts.push(sentence(item.rx.dosageText));
+      parts.push(asPrescribed(item.rx));
       const storage = storageSentence(item.rx);
       if (storage) parts.push(storage);
     }
@@ -63,6 +67,24 @@ const DOSE_SITE: Record<string, string> = {
   eyedrop: ' in the eye',
   cream: ' on the skin',
 };
+
+/**
+ * 마무리 한 문장 — "처방대로 하세요".
+ *
+ * 이것도 제형을 봐야 한다. 위에서 동사를 갈라 놓고도 여기서는 늘 "Take as prescribed."
+ * 였다. 안약 하나에 "Put 2 drops in the eye each time." 과 "Take as prescribed." 가
+ * 함께 나가면, 동사를 가른 이유가 그 마지막 문장에서 무너진다 — 듣는 사람에게 남는
+ * 마지막 말이 "드세요" 다.
+ */
+function asPrescribed(rx: ScanItem['rx']): string {
+  return DOSE_VERB[rx?.form ?? ''] ? 'Use as prescribed.' : 'Take as prescribed.';
+}
+
+/** 처방전에서 온 조각을 한 문장으로 세운다. */
+function sentence(text: string): string {
+  const t = text.trim();
+  return t.charAt(0).toUpperCase() + t.slice(1) + (/[.!?]$/.test(t) ? '' : '.');
+}
 
 /**
  * 1회 복용량을 한 문장으로.

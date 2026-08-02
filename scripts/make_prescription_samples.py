@@ -101,7 +101,16 @@ SAMPLES = [
             "Morning, noon and evening.",
         ],
         days="For 7 days",
-        storage="Keep refrigerated (2-8 C)",
+        # 여기 "Keep refrigerated (2-8 C)" 라고 적혀 있었다. **임상적으로 틀린 값이다.**
+        #
+        # 말라야대 Sheron Sir Loon Goh 전임강사가 2026년 8월 조사에서 짚었다 — 아목시실린
+        # **캡슐**은 실온 25도 보관이고 냉장이 필요하지 않다. 냉장이 필요한 것은 물에 타서
+        # 만든 현탁액 쪽이다. 엔진의 결함이 아니라 우리가 만든 예시가 틀린 것이었고,
+        # 그것을 1,103명에게 보여주었다.
+        #
+        # 아래 점안액 표본은 냉장이 맞으므로 그대로 둔다 — 냉장 경로를 시연할 자리는
+        # 그쪽이다.
+        storage="Store below 25 C. Do not refrigerate.",
         warnings="Not for use in pregnancy. Caution if breastfeeding. No alcohol.",
     ),
     dict(

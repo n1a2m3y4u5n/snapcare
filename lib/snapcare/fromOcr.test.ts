@@ -38,3 +38,41 @@ test('관계 없는 처방전에는 아무 플래그도 붙이지 않는다', ()
     [],
   );
 });
+
+/**
+ * 보관 지시.
+ *
+ * 뒤집히면 그림(storage_fridge)과 음성("Keep it in the fridge.") 양쪽으로 그대로 나간다.
+ * 냉장이 필요한 약을 상온에 두면 며칠이면 못 쓰게 되고, 반대로 상온 약을 냉장에 두라고
+ * 하면 우리가 처방을 바꾼 것이 된다.
+ */
+const STORE = (line: string) =>
+  `PRESCRIPTION\nAmoxicillin Capsules 250 mg\nTake 1 capsule three times a day.\n${line}`;
+
+test('냉장 지시를 읽는다', () => {
+  assert.equal(ocrToScanItem(STORE('Keep refrigerated (2-8 C)')).item.rx?.storage, 'refrigerator');
+  assert.equal(ocrToScanItem(STORE('냉장보관')).item.rx?.storage, 'refrigerator');
+});
+
+test('"냉장하지 말 것" 을 냉장으로 읽지 않는다', () => {
+  // 'refrigerat' 만 보고 있어서 실온 보관 약이 냉장으로 읽혔다. 말라야대 전임강사가
+  // 우리 표본 처방전의 냉장 표기가 임상적으로 틀렸다고 지적해 표본을 고치는 과정에서
+  // 드러났다 — 고친 문구가 "Do not refrigerate" 였기 때문이다.
+  assert.equal(ocrToScanItem(STORE('Store below 25 C. Do not refrigerate.')).item.rx?.storage, 'room');
+  assert.equal(ocrToScanItem(STORE('Do not refrigerate')).item.rx?.storage, 'room');
+});
+
+test('냉동 금지는 냉장을 부정하지 않는다', () => {
+  // "Keep refrigerated. Do not freeze." 는 냉장이 필요한 제품에 거의 늘 함께 적힌다.
+  assert.equal(
+    ocrToScanItem(STORE('Keep refrigerated (2-8 C). Do not freeze.')).item.rx?.storage,
+    'refrigerator',
+  );
+});
+
+test('둘 다 적혀 있으면 냉장이 이긴다', () => {
+  assert.equal(
+    ocrToScanItem(STORE('Keep refrigerated. Do not refrigerate after opening.')).item.rx?.storage,
+    'refrigerator',
+  );
+});
