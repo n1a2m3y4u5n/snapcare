@@ -45,9 +45,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // 모델 추정은 클라이언트가 이미 끝내서 보낸다. 여기서는 Vision 만 기다린다.
   const modelTotals = body.modelTotals ?? null;
+  /*
+    부름이 실패한 것과 부를 수단이 없는 것을 갈라 둔다.
+
+    전에는 둘 다 null 이 되어 아래에서 "이 서버에는 사진 인식이 없습니다" 로 나갔다.
+    처방전 60장을 한 번에 보내며 재다가 드러났는데, 상류가 잠깐 밀린 열 장이 전부 그
+    문장을 받았다. **지나가는 일에 영구적인 말을 한 것**이고, 그 말을 들은 사람은 다시
+    찍어 보지 않는다 — 같은 사진을 혼자 보내면 멀쩡히 읽힌다.
+  */
+  let visionFailed = false;
   const vision = key
     ? await analyzeWithClaude(body.image, key).catch((err) => {
         console.error('[analyze] vision failed:', err);
+        visionFailed = true;
         return null;
       })
     : null;
@@ -107,6 +117,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: 422 },
     );
   }
+
+  /*
+    부름이 실패했다 — 이것은 **지나가는 일**이다.
+
+    상류가 밀렸거나 망이 한 번 끊긴 것이고, 같은 사진을 잠시 뒤에 다시 보내면 읽힌다.
+    아래 501 과 한 덩어리로 묶여 있던 것을 갈랐다. 묶여 있을 때는 잠깐 밀린 사람에게
+    "이 서버에는 사진 인식이 없습니다" 라고 말했는데, 그 말은 다시 시도할 이유를
+    지운다 — 고칠 수 없는 일로 들리기 때문이다.
+  */
+  if (visionFailed) {
+    return NextResponse.json(
+      { error: 'analysis_failed', message: 'Could not read it just now. Try again.' },
+      { status: 503 },
+    );
+  }
+
   return NextResponse.json(
     { error: 'analysis_unavailable', message: 'No photo recognition available on this server.' },
     { status: 501 },
@@ -170,7 +196,23 @@ async function analyzeWithClaude(image: string, key: string): Promise<VisionResu
     },
     body: JSON.stringify({
       model,
-      max_tokens: 700,
+      /*
+        700 이었다. 그 자리에서 **약이 많은 처방전이 통째로 실패하고 있었다.**
+
+        방글라데시 처방전 전장 60장으로 재다가 드러났다. 11장이 실패했는데 무작위가
+        아니었다 — 전부 약이 5~12가지 적힌 장이었고, 매번 같은 장이었다. 답이 700
+        토큰에서 잘리고(`stop_reason: max_tokens`), 잘린 JSON 은 파싱에 실패하고,
+        실패는 위에서 잡혀 화면에는 "읽지 못했습니다" 로 나갔다.
+        입원 지시서 한 장의 실제 끝부분: `…urinary catheterization. 20.` — 문장
+        중간에서 끊겼다.
+
+        **가장 필요한 사람이 못 쓰는 쪽으로 실패하고 있었다.** 약을 열 가지 먹는
+        사람이 이 앱을 가장 필요로 하고, 그 사람의 처방전이 정확히 안 읽히는 장이다.
+
+        영양 응답은 700 이면 충분하지만 복약 지시는 약 수에 비례해 길어진다. 넉넉히
+        준다 — 짧은 답은 어차피 짧게 끝나므로(end_turn) 이 값이 비용을 늘리지 않는다.
+      */
+      max_tokens: 3000,
       system: SYSTEM,
       messages: [
         {
@@ -184,8 +226,16 @@ async function analyzeWithClaude(image: string, key: string): Promise<VisionResu
     }),
   });
   if (!res.ok) throw new Error(`anthropic ${res.status}: ${await res.text()}`);
-  const json = (await res.json()) as { content?: { type: string; text?: string }[] };
+  const json = (await res.json()) as {
+    content?: { type: string; text?: string }[];
+    stop_reason?: string;
+  };
   const text = json.content?.find((c) => c.type === 'text')?.text ?? '';
+  // 잘려서 온 것을 "형식이 이상하다" 로 잡으면 원인을 찾는 데 오래 걸린다. 실제로
+  // 오래 걸렸다 — 약 많은 처방전이 왜 실패하는지 알아내는 데 60장을 재야 했다.
+  if (json.stop_reason === 'max_tokens') {
+    throw new Error('vision reply was cut off (max_tokens) — raise the limit');
+  }
   const parsed = JSON.parse(text.replace(/^```json\s*|\s*```$/g, '')) as VisionOut;
 
   const kind = (parsed.kind ?? 'food') as ScanItem['kind'];
