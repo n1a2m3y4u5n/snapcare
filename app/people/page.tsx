@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { sayable, ask, Speakable } from '@/components/sc/Say';
 import { useProfile } from '@/stores/profile';
+import { useIsClient } from '@/lib/hooks';
 import { forget } from '@/lib/snapcare/sync';
 import {
   activeAccountId, addAccount, freeFaces, listAccounts, removeAccount, switchTo,
@@ -30,16 +31,22 @@ import {
 export default function PeoplePage() {
   const router = useRouter();
   const profile = useProfile((s) => s.profile);
-  const [people, setPeople] = useState<Account[]>([]);
-  const [meId, setMeId] = useState('');
   const [adding, setAdding] = useState(false);
   /** 지우기 직전인 사람. 한 번 더 눌러야 실제로 지워진다. */
   const [armed, setArmed] = useState<string | null>(null);
 
-  useEffect(() => {
-    setPeople(listAccounts());
-    setMeId(activeAccountId());
-  }, []);
+  /*
+    명단은 브라우저에만 있다. 그릴 때 읽으면 서버가 그린 화면과 어긋나므로 붙은
+    뒤에만 읽는다 — 예전에는 이펙트에서 setState 로 했는데, 그리자마자 한 번 더
+    그리게 되고 React 19 규칙에도 걸린다.
+
+    지운 뒤에 다시 읽는 장치는 따로 두지 않는다. 그릴 때마다 읽고, 지우기가 끝나면
+    아래 `setArmed(null)` 이 이미 다시 그리게 한다. localStorage 를 몇 줄 읽는 일이라
+    캐시할 것도 없다.
+  */
+  const isClient = useIsClient();
+  const people: Account[] = isClient ? listAccounts() : [];
+  const meId = isClient ? activeAccountId() : '';
 
   function add(emoji: string) {
     const acc = addAccount(emoji);
@@ -57,7 +64,6 @@ export default function PeoplePage() {
       // 서버 사본에서도 지운다. 안 그러면 다음에 받아올 때 명단이 되살아난다 —
       // 지웠는데 다시 나타나는 것은 안 지워진 것보다 나쁘다.
       void forget(id);
-      setPeople(listAccounts());
     }
     setArmed(null);
   }

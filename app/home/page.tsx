@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { DoseRelease } from '@/components/sc/DoseRelease';
 import { useDispenser } from '@/lib/dispenser/useDispenser';
+import { useIsClient } from '@/lib/hooks';
 import { useDoseLog } from '@/lib/dispenser/useDoseLog';
 import { useDoseAlert } from '@/lib/dispenser/useDoseAlert';
 import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
@@ -57,11 +58,18 @@ export default function HomePage() {
   // 아니라, 약을 셋 먹는 사람에게 홈은 아무거나 하나를 "다음 복용" 이라고 보여줬다.
   //
   // 날짜·시각은 그릴 때 읽으면 안 된다 — 서버가 그린 화면과 어긋난다. 붙은 뒤에 읽는다.
-  const [now, setNow] = useState<{ day: string; hm: string } | null>(null);
-  useEffect(() => {
-    const d = new Date();
-    setNow({ day: todayKey(), hm: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` });
-  }, []);
+  //
+  // 붙은 뒤에 이펙트에서 setState 하던 것을 바꿨다. 결과는 같은데 두 가지가 낫다:
+  // 그리자마자 한 번 더 그리지 않고, 화면이 다시 그려질 때마다 시각을 새로 읽는다.
+  // 뒤쪽이 실제로 중요하다 — 예전에는 마운트 때 읽은 날짜를 계속 들고 있어서, 자정을
+  // 넘겨 앱을 켜 둔 사람에게 '오늘' 이 어제로 남았다.
+  const isClient = useIsClient();
+  const now = isClient
+    ? (() => {
+        const d = new Date();
+        return { day: todayKey(), hm: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` };
+      })()
+    : null;
 
   const live = now ? running(reminders, now.day) : [];
   const nextDose: Reminder | undefined = now ? nextDue(live, now.hm) : undefined;

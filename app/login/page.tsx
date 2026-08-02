@@ -9,7 +9,7 @@ import { useSession } from '@/stores/session';
 import { useProfile } from '@/stores/profile';
 import { seedDemoIfEmpty } from '@/stores/scans';
 import { setDemo } from '@/lib/snapcare/demo';
-import { useIsDemo } from '@/lib/hooks';
+import { useIsClient, useIsDemo } from '@/lib/hooks';
 import { activeAccountId, listAccounts, switchTo, type Account } from '@/lib/snapcare/accounts';
 
 /** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개 순서 (bcrypt로 실제 설정·검증). */
@@ -66,12 +66,11 @@ export default function LoginPage() {
    * 그릴 때 읽지 않고 붙은 뒤에 읽는다 — 명단은 브라우저에만 있어서, 서버가 그린
    * 화면과 어긋난다.
    */
-  const [people, setPeople] = useState<Account[]>([]);
-  const [meId, setMeId] = useState('');
-  useEffect(() => {
-    setPeople(listAccounts());
-    setMeId(activeAccountId());
-  }, []);
+  // 붙은 뒤에만 읽는다. 이펙트에서 setState 로 하던 것을 바꿨다 — 결과는 같고,
+  // 그리자마자 한 번 더 그리지 않는다.
+  const isClient = useIsClient();
+  const people: Account[] = isClient ? listAccounts() : [];
+  const meId = isClient ? activeAccountId() : '';
 
   async function complete(seq: number[]) {
     setBusy(true);

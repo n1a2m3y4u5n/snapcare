@@ -3,7 +3,7 @@
 import { useProfile } from '@/stores/profile';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NutrientBar } from '@/components/sc/NutrientBar';
-import { Hear, sayable, Speakable } from '@/components/sc/Say';
+import { Hear, Speakable } from '@/components/sc/Say';
 import type { ScanRecord } from '@/lib/snapcare/types';
 
 /**

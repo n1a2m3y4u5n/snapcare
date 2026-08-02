@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 import { useSession } from '@/stores/session';
 import { isDemo } from '@/lib/snapcare/demo';
 import { activeAccount } from '@/lib/snapcare/accounts';
@@ -39,9 +39,10 @@ export function useSessionHydrated(): boolean {
  * 두 화면이 어긋난다. 붙은 뒤에 한 번 알려주는 방식으로 그 어긋남을 없앤다.
  */
 export function useIsDemo(): boolean {
-  const [demo, setDemo] = useState(false);
-  useEffect(() => setDemo(isDemo()), []);
-  return demo;
+  // 위 useIsClient 와 같은 방식이다. useEffect + setState 로도 결과는 같은데, 그쪽은
+  // 붙은 직후에 한 번 더 그리게 하고 React 19 의 규칙에도 걸린다. 서버 스냅샷을
+  // 따로 주는 것이 이 상황을 위해 있는 도구다.
+  return useSyncExternalStore(noopSubscribe, isDemo, () => false);
 }
 
 /**
@@ -54,7 +55,5 @@ export function useIsDemo(): boolean {
  * 명단은 브라우저에만 있으므로 붙은 뒤에 읽는다.
  */
 export function useMyColor(fallback: string): string {
-  const [color, setColor] = useState(fallback);
-  useEffect(() => setColor(activeAccount().color), []);
-  return color;
+  return useSyncExternalStore(noopSubscribe, () => activeAccount().color, () => fallback);
 }
