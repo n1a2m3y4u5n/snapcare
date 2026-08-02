@@ -9,6 +9,7 @@
 """
 import matplotlib.pyplot as plt
 
+from survey_data import field_answers, judgement, survey_who
 from style import (BLUE, DARK, GREEN, GREY, INK, LIGHT, MUTED, ORANGE, RED,
                    frame, legend_in, line, note, save, title)
 from i18n import T, LANG
@@ -183,6 +184,17 @@ def chart_glyphs():
     save(fig, 'chart07_glyph_check')
 
 
+def _wilson(k: int, n: int, z: float = 1.959963985):
+    """Wilson 95% 신뢰구간. 표본이 작을 때 정규근사는 0 아래로 내려간다."""
+    if not n:
+        return 0.0, 0.0
+    ph = k / n
+    d = 1 + z * z / n
+    c = ph + z * z / (2 * n)
+    r = z * ((ph * (1 - ph) / n + z * z / (4 * n * n)) ** 0.5)
+    return max(0.0, (c - r) / d), min(1.0, (c + r) / d)
+
+
 # ── 고정 목록과 문법이 늘어나는 방식 ───────────────────────────────
 def chart_expressive():
     """§1.9. 개수의 차이가 아니라 종류의 차이라는 주장을 수로 잰다.
@@ -322,20 +334,28 @@ def chart_country():
 
 # ── 전문가 조사. 판단 문항과 그 불확실성 ────────────────────────────
 def chart_survey():
-    """비율만 그리면 24명이라는 것이 보이지 않는다. 구간을 함께 그린다."""
+    """비율만 그리면 분모가 작다는 것이 보이지 않는다. 구간을 함께 그린다.
+
+    수치와 구간을 엑셀에서 읽고 Wilson 으로 다시 센다. 표 43 과 같은
+    자료·같은 방법이어야 하므로 손으로 옮겨 적지 않는다."""
+    n, counts = judgement()
+    LAB = {'Partly — some of it, not all': '부분적으로',
+           'Yes, probably': '예, 가능할 것 같다',
+           'I have no basis to judge': '판단할 근거가 없다',
+           'No': '아니오'}
+    rows = []
+    for key, k in counts:
+        lo, hi = _wilson(k, n)
+        rows.append((T(LAB[key]), k, 100 * k / n, 100 * lo, 100 * hi))
     fig, ax = plt.subplots(figsize=(6.0, 2.6))
-    title(fig, T('전문가 판단 문항과 95% 신뢰구간 (n = 24)'),
+    title(fig, T('전문가 판단 문항과 95% 신뢰구간 (n = {n})').format(n=n),
           note=T('점이 비율, 가로선이 95% 신뢰구간이다. 선이 긴 것이 표본이 작다는 뜻이다.'))
-    rows = [(T('부분적으로'), 16, 66.7, 46.7, 82.0),
-            (T('예, 가능할 것 같다'), 7, 29.2, 14.9, 49.2),
-            (T('판단할 근거가 없다'), 1, 4.2, 0.7, 20.2),
-            (T('아니오'), 0, 0.0, 0.0, 13.8)]
     ys = range(len(rows))
     for y, (lab, k, v, lo, hi) in zip(ys, rows):
         c = BLUE if k else GREY
         ax.plot([lo, hi], [y, y], color=c, lw=3.0, solid_capstyle='butt', zorder=2)
         ax.plot([v], [y], 'o', color=c, ms=7, zorder=3)
-        ax.text(hi + 2.0, y, f'{k}/24', va='center', fontsize=8.6, color=INK)
+        ax.text(hi + 2.0, y, f'{k}/{n}', va='center', fontsize=8.6, color=INK)
     ax.set_yticks(list(ys))
     ax.set_yticklabels([r[0] for r in rows])
     ax.invert_yaxis()
@@ -444,13 +464,16 @@ def chart_amr_region():
 
 # ── 조사 응답자가 어디서 왔는가 ─────────────────────────────────────
 def chart_survey_who():
-    """직군과 대륙을 나란히. 34명이 어떤 사람들인지가 이 조사의 무게다."""
+    """직군과 대륙을 나란히. 누가 답했는지가 이 조사의 무게다.
+
+    수치는 엑셀에서 읽는다. 손으로 박아 두면 응답이 늘었을 때 charts.py 를
+    돌려도 그림이 그대로이고, 돌렸으니 됐다고 넘어가게 된다."""
+    total, raw_fields, raw_conts = survey_who()
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.6))
-    title(fig, T('전문가 조사 응답자 34명의 구성'),
+    title(fig, T('전문가 조사 응답자 {n}명의 구성').format(n=total),
           note=T('왼쪽은 응답자가 고른 분야, 오른쪽은 일한다고 적은 지역이다.'))
 
-    fields = [(T('약국·복약지도'), 11), (T('간호·보건'), 9), (T('그 밖'), 9),
-              (T('HCI·디자인'), 2), (T('그 외 셋'), 3)]
+    fields = [(T(k), v) for k, v in raw_fields]
     cols = [BLUE, GREEN, GREY, ORANGE, LIGHT]
     a1.pie([v for _, v in fields], labels=[f'{k}\n{v}' for k, v in fields],
            colors=cols, startangle=90, counterclock=False,
@@ -458,8 +481,7 @@ def chart_survey_who():
            textprops=dict(fontsize=7.8, color=INK))
     a1.set_title(T('분야'), fontsize=9, color=MUTED, pad=2)
 
-    conts = [(T('아시아'), 24), (T('유럽'), 5), (T('아프리카'), 3),
-             (T('북미'), 1), (T('오세아니아'), 1)]
+    conts = [(T(k), v) for k, v in raw_conts]
     y = range(len(conts))
     for i, (k, v) in enumerate(conts):
         a2.barh(i, v, 0.6, color=DARK if i == 0 else GREY, zorder=2)
@@ -534,22 +556,29 @@ def chart_morpheme_map():
 
 # ── 약국과 간호가 무엇을 답했는가 ───────────────────────────────────
 def chart_field_answers():
-    """분모가 11과 9 이므로 백분율 대신 사람 수로 그린다."""
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.2))
-    title(fig, T('약국 11명과 간호·보건 9명이 답한 것'),
-          note=T('분모가 작아 백분율 대신 사람 수로 적었다. 한 사람이 9%p 를 움직인다.'))
+    """분모가 작으므로 백분율 대신 사람 수로 그린다. 수치는 엑셀에서 읽는다."""
+    PH, NU = 'Pharmacy / medication counselling', 'Nursing / public health'
 
-    ph = [(T('약사가 매번 검토'), 8), (T('조제하면서 권할 수 있다'), 8),
-          (T('그림·음성만으로 안 되는 것이 있다'), 9),
-          (T('용량·횟수가 가장 중요'), 6)]
+    def one(field, q, want):
+        return sum(v for a, v in field_answers(field, q) if want(a))
+
+    n_ph = sum(v for _, v in field_answers(PH, 'b_field'))
+    n_nu = sum(v for _, v in field_answers(NU, 'b_field'))
+    ph = [(T('약사가 매번 검토'), one(PH, 'ph2_review', lambda a: a.startswith('Yes, every'))),
+          (T('조제하면서 권할 수 있다'), one(PH, 'ph8_workflow', lambda a: a.startswith('Yes, while'))),
+          (T('그림·음성만으로 안 되는 것이 있다'), one(PH, 'ph5_boundary', lambda a: a.startswith('Yes'))),
+          (T('용량·횟수가 가장 중요'), one(PH, 'ph4_medical', lambda a: a.startswith('Dose')))]
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.2))
+    title(fig, T('약국 {p}명과 간호·보건 {n}명이 답한 것').format(p=n_ph, n=n_nu),
+          note=T('분모가 작아 백분율 대신 사람 수로 적었다. 한 사람이 8%p 를 움직인다.'))
     for i, (k, v) in enumerate(ph):
         a1.barh(i, v, 0.58, color=BLUE, zorder=2)
-        a1.text(v + 0.2, i, f'{v}/11', va='center', fontsize=8.6,
+        a1.text(v + 0.2, i, f'{v}/{n_ph}', va='center', fontsize=8.6,
                 fontweight='bold', color=INK)
     a1.set_yticks(range(len(ph)))
     a1.set_yticklabels([k for k, _ in ph], fontsize=7.4)
     a1.invert_yaxis(); a1.set_xlim(0, 13)
-    a1.set_title(T('약국·복약지도 (11명)'), fontsize=9, color=MUTED, pad=3)
+    a1.set_title(T('약국·복약지도 ({n}명)').format(n=n_ph), fontsize=9, color=MUTED, pad=3)
     frame(a1)
 
     nu = [(T('조건이 갖춰지면 결과를 바꾼다'), 8),
@@ -563,7 +592,7 @@ def chart_field_answers():
     a2.set_yticks(range(len(nu)))
     a2.set_yticklabels([k for k, _ in nu], fontsize=7.4)
     a2.invert_yaxis(); a2.set_xlim(0, 11)
-    a2.set_title(T('간호·보건 (9명)'), fontsize=9, color=MUTED, pad=3)
+    a2.set_title(T('간호·보건 ({n}명)').format(n=n_nu), fontsize=9, color=MUTED, pad=3)
     frame(a2)
     fig.subplots_adjust(left=0.29, right=0.98, wspace=1.25)
     save(fig, 'chart18_field_answers')

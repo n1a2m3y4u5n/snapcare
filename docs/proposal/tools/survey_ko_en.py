@@ -9,6 +9,29 @@
 """
 
 TRANSLATION = {
+    '명백한 시각장애가 있는 환자를 제외하고 글을 읽지 못하는 여부를 바로 알기 어려운 경우도 있음 전맹이라 글을 보지 못하는 경우와 저시력자, 문해력이 부족한 경우는 구분되어야 함. 픽토그램은 문해력이 부족한 경우에 도움이 될 수 있다고 생각됨.':
+        'Apart from patients with obvious visual impairment, there are cases where it is '
+        'hard to tell straight away whether someone can read. Being totally blind and '
+        'therefore unable to see text, having low vision, and having low literacy have to '
+        'be distinguished. I think pictograms can help in the low-literacy case.',
+
+    '그림으로만 설명하기에는 복합적인 내용임 보기를 하나만 선택할 수 있도록 되어 있어서 병용금기를 선택하였으나, 부작용, 용량 조절 필요한 경우도 그림, 음성 외에 약사 설명이 필요한 부분으로 생각됨':
+        'It is compound content, too much to explain by picture alone. Only one option '
+        'could be selected so I chose contraindications, but side effects and cases '
+        'needing dose adjustment are also places where a pharmacist\'s explanation is '
+        'needed beyond the picture and the audio.',
+
+    '약학회지, 의약품 점자 표시 국내외 가이드라인의 비교분석 연구 식약처, 의약품(의약외품) 점자 및 음성･수어영상변환용 코드 표시 가이드라인':
+        'Yakhak Hoeji, a comparative analysis of domestic and international guidelines '
+        'for braille labelling on medicines; and the Ministry of Food and Drug Safety '
+        'guideline on braille and voice/sign-language conversion codes for medicines and '
+        'quasi-drugs.',
+
+    '앱의 편리성 보다 앱의 정확성이 먼저 담보되어야 현실에서 활용할 수 있으며, 약사의 보조적 도구로서 활용되어야 할 것으로 생각함.':
+        'The accuracy of the app has to be secured before its convenience for it to be '
+        'usable in practice, and I think it should be used as an auxiliary tool for the '
+        'pharmacist.',
+
     '- 픽토그램에 정의되어 있는 "단어"의 수가 78개인데 재조합을 한다고 해도 매우 많은 다양한 약의 종류와 복용법 등을 모두 포괄할 수 있을까요? - 음성과 함께 들으면 픽토그램을 이해하는데 도움이 되지만 다소 직관적이지 않은 것들도 있어 보입니다. - 부정적인 지시어가 있을 경우 픽토그램에도 "/" 또는 "X"와 같은 표시가 같이 있으면 좋겠습니다(일부는 그렇지만 알콜, 임산부 등의 경우에는 없음). - 푸시 알람 등과 연계되어 복약 시간을 알려주고 읽어주면 더 큰 도움이 될듯 합니다. - Supertonice TTS를 사용하시면 다국어 확장이 용이할 것으로 보입니다(https://huggingface.co/spaces/Supertone/supertonic-3).':
         '- The pictograms define 78 "words"; even with recombination, can they really cover the very wide range of medicines and regimens? - Hearing the audio alongside helps with understanding the pictograms, but some of them look less than intuitive. - Where the instruction is negative, it would be good for the pictogram to carry a "/" or "X" as well (some do, but alcohol, pregnancy and so on do not). - Linking it to push notifications so that dosing times are announced and read aloud would help a great deal more. - Using Supertonic TTS would make multilingual expansion easy (https://huggingface.co/spaces/Supertone/supertonic-3).',
 

@@ -46,9 +46,9 @@ SLOTS = {
 HEADER = {                             # 표 0 위쪽 정보칸
     (1, 1): '[H1] SnapCare',
     (1, 3): 'SnapCare',
-    (2, 1): '남윤수 (Yunsu NAM)',
-    (2, 3): 'Cristian RUDICO · Natalia SCHIȚCO',
-    (3, 1): '김도훈 (Dohun KIM)',
+    (2, 1): 'Yunsu NAM',
+    (2, 3): 'Cristian RUDICO',
+    (3, 1): 'Dohun KIM',
     (3, 3): 'Daniel STANCHEVICI',
     (4, 1): ('Target 3.4 Noncommunicable diseases · Target 3.8 Universal health coverage · '
              'Target 3.d Health risk management'),
@@ -57,10 +57,9 @@ HEADER = {                             # 표 0 위쪽 정보칸
 }
 
 # 영어판만 덮어쓰는 칸. 로마자를 앞에 둔다. 한글을 지우지는 않는다. 본인 이름이다.
-HEADER_EN = {
-    (2, 1): 'Yunsu NAM (남윤수)',
-    (3, 1): 'Dohun KIM (김도훈)',
-}
+# 이름은 이제 두 판이 같으므로 덮어쓸 것이 없다. 빈 사전을 남겨 두는 것은
+# 앞으로 영어판에서만 달라질 칸이 생길 자리이기 때문이다.
+HEADER_EN: dict = {}
 
 BODY_PT = 10        # 세리프는 같은 pt 에서 작아 보인다
 LINE = 1.15         # 논문 본문에 가까운 행간

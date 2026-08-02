@@ -2,7 +2,7 @@
 
     .venv-doc/bin/python docs/proposal/tools/survey_stats.py
 
-n = 34 이므로 대부분의 검정은 검출력이 없다. 그래도 돌리는 이유는 "차이가
+표본이 작으므로 대부분의 검정은 검출력이 없다. 그래도 돌리는 이유는 "차이가
 있다" 를 말하기 위해서가 아니라, 있는지 없는지 말할 수 없다는 것을 수치로
 적기 위해서다. 유의하지 않은 결과를 빼고 유의한 것만 싣는 것이 이 표본에서
 할 수 있는 가장 나쁜 일이다.
@@ -156,7 +156,7 @@ def main():
     print('  이 차이가 언어 때문인지 다른 것 때문인지 이 자료로는 가를 수 없다.')
 
     # ── 6. 접촉 빈도 분포 자체가 자료다 ────────────────────────────
-    line('6. 저문해 환자를 마주치는 빈도 (n = 34)')
+    line(f'6. 저문해 환자를 마주치는 빈도 (n = {len(rows)})')
     ce = collections.Counter(r['b_exposure'] for r in rows)
     for k in EXPOSURE_ORDER:
         if ce.get(k):

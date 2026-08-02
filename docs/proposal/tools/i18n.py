@@ -190,7 +190,7 @@ EN = {
     '영양 추정 모델의 항목별 오차 (n = 507)':
         'Per-item error of the nutrition estimation model (n = 507)',
     '열량': 'Energy', '질량': 'Mass', '지방': 'Fat', '탄수화물': 'Carbohydrate',
-    '전문가 판단 문항과 95% 신뢰구간 (n = 24)': 'Expert judgement with 95% confidence intervals (n = 24)',
+    '전문가 판단 문항과 95% 신뢰구간 (n = {n})': 'Expert judgement with 95% confidence intervals (n = 24)',
     '점이 비율, 가로선이 95% 신뢰구간이다. 선이 긴 것이 표본이 작다는 뜻이다.':
         'Dot is the proportion, bar is the 95% confidence interval. A long bar means a small sample.',
     '부분적으로': 'Partly',
@@ -270,7 +270,7 @@ EN = {
         'The third route arrived later, and no new verification code was written for it (§4.2)',
     '경로마다 검사를 두면 붙이는 것을 잊은 경로가 검증 없는 통로가 된다':
         'Per-route checks turn any route someone forgot to attach them to into an unverified channel',
-    '전문가 조사 응답자 34명의 구성': 'Composition of the 34 expert respondents',
+    '전문가 조사 응답자 {n}명의 구성': 'Composition of the {n} expert respondents',
     '왼쪽은 응답자가 고른 분야, 오른쪽은 일한다고 적은 지역이다.':
         'Left: the field each respondent chose. Right: the region they said they work in.',
     '약국·복약지도': 'Pharmacy', '간호·보건': 'Nursing / public health',
@@ -352,20 +352,20 @@ EN = {
     '얼마나 · 용량 오류 28.4%': 'How much · dose errors 28.4%',
     '언제 · 시각 오류 23.2%': 'When · timing errors 23.2%',
     '형태소 수 (합계 78)': 'Morphemes (78 in total)',
-    '약국 11명과 간호·보건 9명이 답한 것':
+    '약국 {p}명과 간호·보건 {n}명이 답한 것':
         'What the 11 pharmacy and 9 nursing respondents answered',
-    '분모가 작아 백분율 대신 사람 수로 적었다. 한 사람이 9%p 를 움직인다.':
+    '분모가 작아 백분율 대신 사람 수로 적었다. 한 사람이 8%p 를 움직인다.':
         'Counts rather than percentages, because the denominators are small. One person moves 9 points.',
     '약사가 매번 검토': 'Pharmacist reviews every time',
     '조제하면서 권할 수 있다': 'Can be recommended while dispensing',
     '그림·음성만으로 안 되는 것이 있다': 'Some things need more than picture and speech',
     '용량·횟수가 가장 중요': 'Dose and frequency matter most',
-    '약국·복약지도 (11명)': 'Pharmacy (11)',
+    '약국·복약지도 ({n}명)': 'Pharmacy ({n})',
     '조건이 갖춰지면 결과를 바꾼다': 'Can change outcomes given conditions',
     '그런 환자를 본 적이 있다': 'Have seen such patients',
     '환자와 보호자를 각각 다르게': 'Design patient and carer separately',
     '복약순응도 도구로 재야 한다': 'Measure with an adherence instrument',
-    '간호·보건 (9명)': 'Nursing / public health (9)',
+    '간호·보건 ({n}명)': 'Nursing / public health ({n})',
     '음식 · 음료': 'Food · drink', '처방전 · 의약품': 'Prescription · medicine',
     '원형 그림과 판정 문장': 'Round picture and verdict sentence',
     '색과 기호의 요약 띠': 'Summary bar with colour and symbol',
