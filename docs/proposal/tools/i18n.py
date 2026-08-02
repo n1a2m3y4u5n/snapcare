@@ -340,6 +340,32 @@ EN = {
         'Left: how many of 18 passed the ISO criterion. Right: the correct-response rate for one symbol, biological risk.',
     '벨기에': 'Belgium', '쿠바': 'Cuba', '콩고민주공화국': 'DR Congo', '캄보디아': 'Cambodia',
     '18종 중 통과한 수': 'Passed, of 18', '정답률 (%)': 'Correct responses (%)',
+    '형태소 78종의 갈래와 복약 오류 분포의 대응':
+        'The 78 morphemes by category, against the distribution of medication errors',
+    '진한 막대가 표 4 의 상위 세 오류에 곧바로 대응하는 갈래다.':
+        'The dark bars are the categories that map directly onto the top errors in Table 4.',
+    '제형·기기·행위': 'Form · device · action', '음식': 'Food', '알레르겐': 'Allergen',
+    '증상': 'Symptom', '상태': 'State', '부위': 'Body site',
+    '개수': 'Count', '시각': 'Time of day', '보관': 'Storage',
+    '무엇을': 'What', '무엇을 피하나': 'What to avoid', '무엇을 겪었나': 'What was experienced',
+    '누구인가': 'Who', '어디에': 'Where', '어떻게': 'How',
+    '얼마나 · 용량 오류 28.4%': 'How much · dose errors 28.4%',
+    '언제 · 시각 오류 23.2%': 'When · timing errors 23.2%',
+    '형태소 수 (합계 78)': 'Morphemes (78 in total)',
+    '약국 11명과 간호·보건 9명이 답한 것':
+        'What the 11 pharmacy and 9 nursing respondents answered',
+    '분모가 작아 백분율 대신 사람 수로 적었다. 한 사람이 9%p 를 움직인다.':
+        'Counts rather than percentages, because the denominators are small. One person moves 9 points.',
+    '약사가 매번 검토': 'Pharmacist reviews every time',
+    '조제하면서 권할 수 있다': 'Can be recommended while dispensing',
+    '그림·음성만으로 안 되는 것이 있다': 'Some things need more than picture and speech',
+    '용량·횟수가 가장 중요': 'Dose and frequency matter most',
+    '약국·복약지도 (11명)': 'Pharmacy (11)',
+    '조건이 갖춰지면 결과를 바꾼다': 'Can change outcomes given conditions',
+    '그런 환자를 본 적이 있다': 'Have seen such patients',
+    '환자와 보호자를 각각 다르게': 'Design patient and carer separately',
+    '복약순응도 도구로 재야 한다': 'Measure with an adherence instrument',
+    '간호·보건 (9명)': 'Nursing / public health (9)',
 }
 
 

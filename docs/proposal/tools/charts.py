@@ -334,7 +334,7 @@ def chart_amr_region():
     """§1.1 의 문해율이 가장 낮은 지역과 겹친다는 것이 이 그림의 논지다."""
     fig, ax = plt.subplots(figsize=(6.0, 2.6))
     title(fig, T('보고된 세균 감염 중 항생제 내성 비율 (WHO GLASS, 2025)'),
-          note=T('세계 평균은 여섯 중 하나다. 값이 높은 두 지역이 문해율이 가장 낮은 지역과 겹친다.'))
+          note=T('세계 평균은 여섯 중 하나다. 값이 높은 두 지역에 문해율이 가장 낮은 나라들이 있다.'))
     labs = [T('동남아시아 · 동지중해'), T('아프리카'), T('세계 평균'), T('아메리카')]
     vals = [33.3, 20.0, 16.7, 14.3]
     frac = [T('셋 중 하나'), T('다섯 중 하나'), T('여섯 중 하나'), T('일곱 중 하나')]
@@ -412,6 +412,72 @@ def chart_symbol_country():
     fig.subplots_adjust(left=0.17, right=0.97, wspace=0.5)
     save(fig, 'chart16_symbol_country')
 
+# ── 형태소를 오류 분포에서 거꾸로 내려왔다 ─────────────────────────
+def chart_morpheme_map():
+    """왼쪽이 §1.3 의 오류, 오른쪽이 §2.2 의 형태소. 두 축이 이어져 있다."""
+    fig, ax = plt.subplots(figsize=(6.0, 3.0))
+    title(fig, T('형태소 78종의 갈래와 복약 오류 분포의 대응'),
+          note=T('진한 막대가 표 4 의 상위 세 오류에 곧바로 대응하는 갈래다.'))
+    rows = [(T('제형·기기·행위'), 26, False, T('무엇을')),
+            (T('음식'), 10, False, T('무엇을')),
+            (T('알레르겐'), 9, False, T('무엇을 피하나')),
+            (T('증상'), 8, False, T('무엇을 겪었나')),
+            (T('상태'), 7, False, T('누구인가')),
+            (T('부위'), 6, False, T('어디에')),
+            (T('개수'), 5, True, T('얼마나 · 용량 오류 28.4%')),
+            (T('시각'), 4, True, T('언제 · 시각 오류 23.2%')),
+            (T('보관'), 3, False, T('어떻게'))]
+    for i, (lab, v, hot, note_) in enumerate(rows):
+        ax.barh(i, v, 0.62, color=RED if hot else GREY, zorder=2)
+        ax.text(v + 0.6, i, f'{v}', va='center', fontsize=9, fontweight='bold',
+                color=RED if hot else INK)
+        ax.text(v + 2.6, i, note_, va='center', fontsize=7.8,
+                color=RED if hot else MUTED)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([r[0] for r in rows], fontsize=8.4)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 34)
+    ax.set_xlabel(T('형태소 수 (합계 78)'))
+    frame(ax)
+    fig.subplots_adjust(left=0.22 if LANG != 'en' else 0.26)
+    save(fig, 'chart17_morpheme_map')
+
+# ── 약국과 간호가 무엇을 답했는가 ───────────────────────────────────
+def chart_field_answers():
+    """분모가 11과 9 이므로 백분율 대신 사람 수로 그린다."""
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.2))
+    title(fig, T('약국 11명과 간호·보건 9명이 답한 것'),
+          note=T('분모가 작아 백분율 대신 사람 수로 적었다. 한 사람이 9%p 를 움직인다.'))
+
+    ph = [(T('약사가 매번 검토'), 8), (T('조제하면서 권할 수 있다'), 8),
+          (T('그림·음성만으로 안 되는 것이 있다'), 9),
+          (T('용량·횟수가 가장 중요'), 6)]
+    for i, (k, v) in enumerate(ph):
+        a1.barh(i, v, 0.58, color=BLUE, zorder=2)
+        a1.text(v + 0.2, i, f'{v}/11', va='center', fontsize=8.6,
+                fontweight='bold', color=INK)
+    a1.set_yticks(range(len(ph)))
+    a1.set_yticklabels([k for k, _ in ph], fontsize=7.4)
+    a1.invert_yaxis(); a1.set_xlim(0, 13)
+    a1.set_title(T('약국·복약지도 (11명)'), fontsize=9, color=MUTED, pad=3)
+    frame(a1)
+
+    nu = [(T('조건이 갖춰지면 결과를 바꾼다'), 8),
+          (T('그런 환자를 본 적이 있다'), 8),
+          (T('환자와 보호자를 각각 다르게'), 6),
+          (T('복약순응도 도구로 재야 한다'), 6)]
+    for i, (k, v) in enumerate(nu):
+        a2.barh(i, v, 0.58, color=GREEN, zorder=2)
+        a2.text(v + 0.2, i, f'{v}/9', va='center', fontsize=8.6,
+                fontweight='bold', color=INK)
+    a2.set_yticks(range(len(nu)))
+    a2.set_yticklabels([k for k, _ in nu], fontsize=7.4)
+    a2.invert_yaxis(); a2.set_xlim(0, 11)
+    a2.set_title(T('간호·보건 (9명)'), fontsize=9, color=MUTED, pad=3)
+    frame(a2)
+    fig.subplots_adjust(left=0.29, right=0.98, wspace=1.25)
+    save(fig, 'chart18_field_answers')
+
 
 if __name__ == '__main__':
     chart_literacy()
@@ -430,3 +496,5 @@ if __name__ == '__main__':
     chart_amr_region()
     chart_survey_who()
     chart_symbol_country()
+    chart_morpheme_map()
+    chart_field_answers()
