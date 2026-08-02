@@ -95,6 +95,10 @@ def arrow(ax, x1, y1, x2, y2, label=None, color=MUTED):
                 fontsize=7.6, color=MUTED, zorder=4)
 
 
+# 파일 이름 앞의 번호는 **이 스크립트 안의 순번**이지 문서의 그림 번호가 아니다.
+# fig11_userflow.png 는 문서에서 그림 20 이다. 절을 넣으면 문서 번호만 밀리고
+# 파일 이름은 그대로 둔다. 새 도판은 이 순번의 다음 수를 쓴다 (같은 수를 두 번
+# 쓰면 fig15 가 둘이 되는데, 실제로 한 번 그랬다).
 def canvas(w, h):
     fig, ax = plt.subplots(figsize=(w, h))
     ax.set_xlim(0, 100)
@@ -537,7 +541,7 @@ def voca_rebuild():
             fontsize=7.6, color=MUTED)
     ax.text(2, 1.8, T('버린 여섯 줄은 환자가 할 일을 하나도 바꾸지 않는다. 읽어 주면 그만큼 앞의 넷이 묻힌다'),
             fontsize=7.6, color=RED, fontweight='bold')
-    save(fig, 'fig15_voca')
+    save(fig, 'fig26_voca')
 
 
 if __name__ == '__main__':
