@@ -333,13 +333,15 @@ There is also work that pools the individual trials. Screening 4,160 records pro
 
 The same paper left one sentence that bears directly on our design: **icons with few words may be most helpful** in conveying health information. It points the same way, independently, as the respondents in three countries who said in §5.7 that there are too many elements in one image. The authors note that heterogeneity across the outcomes was substantial and that the results should be read with caution, and we read them that way here. These figures are grounds for using pictures, not grounds for thinking any picture will do.
 
-To summarise, this field has observed two things together. Well-made pictures do in fact reduce errors (Yin et al., 2008: 47.8% to 5.4%). And making them does not mean making them well (Gutierrez et al., 2022: 17 of 108). The first is the reason to take this approach, and the second is the reason to measure afterwards.
+To summarise, this field has observed three things together. Well-made pictures do in fact reduce errors (Yin et al., 2008: 47.8% to 5.4%). Pictures work better with speech than alone (Kheir et al., 2014). And making them does not mean making them well (Gutierrez et al., 2022: 17 of 108). The first two are the reason to take this approach, and the third is the reason to measure afterwards.
 
-This is why the present work does not stop at making pictograms but designs a procedure for measuring their comprehensibility alongside.
+One thing the field has not answered attaches to that. Mourad et al. finding that the gain from pictures shrinks with age, and Schubbe et al. finding that icons with few words help most, both ask how much we should be showing an older person and in what form. Neither answers it for our set. That is what we have to measure in the field evaluation of §5.10.
 
 ![Figure 11](fig/chart05_pictogram_pass.png)
 
 **[Figure 11]** Share of pharmaceutical pictograms passing comprehension criteria. The criterion applied differs by bar and is noted underneath each. Sharing an axis does not make these values competitors. The middle two bars are the control and experimental arms of the same study, **the result of showing two sets carrying the same instructions to the same 46 people**. Where the pictures came from splits the pass rate almost twofold. Our own value (69.2%) is the machine-scored result from §5.2 and was not obtained by asking people, so it is not directly comparable with the rest. It is placed on the same panel not to claim superiority but to show that our value falls within the range this field has observed.
+
+This is why the present work does not stop at making pictograms but designs a procedure for measuring their comprehension alongside.
 
 
 ### 1.9 Structural constraints of the existing pictogram standard
@@ -619,11 +621,11 @@ There is judgement in `Math.min(1, energyRatio)` as well. Salt and fibre are rec
 
 Returning the `basis` string alongside is also deliberate. "1,800 kcal at age 70, free sugars under 10%" appears on screen exactly as written (Figure 21(b)). If the user cannot see where a verdict came from, there is no way for them to examine it.
 
-The user's conditions are then added. Diabetes narrows the sugar threshold, taking a blood thinner makes ibuprofen-class drugs something to avoid, and pregnancy or breastfeeding changes the contraindication list.
-
 **[Figure 19]** The path by which the verdict threshold is derived. The user chooses only the two boxes at the top; the rest is computation. It is a derivation rather than a table because the WHO recommendation is itself written as a proportion of total energy, so when the recommendation changes one constant is edited instead of a table being rebuilt.
 
 ![Figure 19](fig/fig15_verdict_flow.png)
+
+The user's conditions are then added. Diabetes narrows the sugar threshold, taking a blood thinner makes ibuprofen-class drugs something to avoid, and pregnancy or breastfeeding changes the contraindication list.
 
 ### 2.5 Collecting conditions and inferring allergies
 
@@ -638,6 +640,10 @@ The question "what are you allergic to" can therefore only be answered by someon
 | What you know now | Current state | Pregnant, breastfeeding |
 | What you have experienced | Experience | Ever felt unwell after eating something |
 | What you have been told | Diagnosis | Diabetes, hypertension |
+
+**[Figure 20]** "What are you allergic to" split into three. The width of the three boxes is the argument. The first two exist so that the people who cannot answer the third are not filtered out at the first screen.
+
+![Figure 20](fig/fig16_conditions.png)
 
 The app also infers allergies the user does not know about. It runs Fisher's exact test over the food diary to find ingredients recurring in meals after which the user felt unwell. A minimum evidence threshold and multiple-comparison correction (Bonferroni) are applied, and the result is presented as an observation rather than a diagnosis and is not written into the profile until the user confirms it.
 
@@ -679,10 +685,6 @@ The threshold on the second line is `ALPHA / number of ingredients tested`. Exam
 Narrowing the tested set to ingredients that actually appear in the log follows the same reasoning. Including ingredients never eaten only enlarges the denominator and pushes the real signal below the threshold. A device for being conservative, carried too far, becomes a device for finding nothing.
 
 Fisher's exact test was used because the samples are small. Chi-square cannot be used when expected frequencies fall below 5, and food diary tables always look like that. It is rare for a person to record eating one ingredient twenty times and how often trouble followed.
-
-**[Figure 20]** "What are you allergic to" split into three. The width of the three boxes is the argument. The first two exist so that the people who cannot answer the third are not filtered out at the first screen.
-
-![Figure 20](fig/fig16_conditions.png)
 
 ### 2.6 How this differs from existing approaches
 

@@ -14,6 +14,7 @@
   · 요약란이 서식의 2~3문장 제한을 지키는가
   · 서식으로 뽑았을 때 마크다운이 새지 않는가
   · 기계가 쓴 티가 나는 상투구가 남아 있지 않은가
+  · 두 판에서 그림이 같은 자리에 있는가
 """
 import re
 import sys
@@ -99,6 +100,31 @@ def slop(f: str) -> list:
     return out
 
 
+def orphan_figs(f: str, fw: str) -> set:
+    """절이 그림으로 끝나는 자리를 모은다.
+
+    그것 자체는 잘못이 아니다. 두 판에서 다르면 잘못이다. 한쪽에서만
+    그림이 절 끝으로 밀려 있으면 넣을 때 앵커를 다르게 잡은 것이고,
+    실제로 영어판 그림 19·20 이 그랬다."""
+    s = (DOC / f).read_text()
+    s = s[:s.index('### 5.11')]
+    lines = s.splitlines()
+    out = set()
+    for i, ln in enumerate(lines):
+        m = re.match(rf'^\*\*\[{fw} (\d+)\]', ln)
+        if not m:
+            continue
+        j, tail = i + 1, 0
+        while j < len(lines) and not lines[j].startswith(('### ', '## ')):
+            t = lines[j].strip()
+            if t and not t.startswith(('|', '[표', '[Table', '![', '**[', '```', '#')):
+                tail += 1
+            j += 1
+        if tail == 0:
+            out.add(int(m.group(1)))
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -167,6 +193,11 @@ def main() -> int:
             note(f'{f}: 상투구 — {x}')
         for x in unattributed(f):
             note(f'{f}: 직책 없이 인용했다 — {x}')
+
+    ko_orph = orphan_figs('proposal_ko.md', '그림')
+    en_orph = orphan_figs('proposal_en.md', 'Figure')
+    if ko_orph != en_orph:
+        note(f'두 판에서 그림 자리가 다르다 {sorted(ko_orph ^ en_orph)}')
 
     # 절마다 문단 수를 견준다. 영어판 §4.4 에서 세 문단이 통째로 빠진 적이 있다.
     kb, eb = blocks(DOC / 'proposal_ko.md'), blocks(DOC / 'proposal_en.md')
