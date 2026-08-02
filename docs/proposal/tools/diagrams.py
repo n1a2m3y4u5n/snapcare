@@ -372,6 +372,64 @@ def verdict_order():
             fontsize=7.6, color=MUTED)
     save(fig, 'fig22_verdict_order')
 
+# ── 종이 서식을 읽는 네 단계와, 값을 내지 않는 세 갈래 ─────────────
+def formsheet_flow():
+    """§4.4. 갈래 셋이 모두 값을 내지 않는 쪽으로 끝난다."""
+    fig, ax = canvas(6.0, 2.4)
+    TOP = 36.0
+
+    steps = [T('ArUco 네 귀퉁이'), T('적응형 이진화'), T('칸별 채움 비율'), T('값 정하기')]
+    w, gap = 22.0, 3.0
+    for i, h in enumerate(steps):
+        x = 2 + i * (w + gap)
+        box(ax, x, TOP - 6.6, w, 6.4, h, (), BLUE if i == 3 else GREY, fs=8.6)
+        if i:
+            arrow(ax, x - gap + 0.4, TOP - 3.4, x - 0.6, TOP - 3.4)
+    ax.text(13, TOP - 8.2, T('못 찾으면 값을 지어내지 않는다'), ha='center',
+            fontsize=7.4, color=RED)
+
+    M = TOP - 13.0
+    ax.text(2, M + 0.8, T('하나만 고르는 항목에서 값을 내지 않는 세 갈래'),
+            fontsize=8.4, color=MUTED, fontweight='bold')
+    outs = [(T('아무것도 안 칠했다'), [T('빈 종이')], RED),
+            (T('둘 다 제대로 칠했다'), [T('종이가 두 말을 한다')], RED),
+            (T('갈라지지 않는다'), [T('1등과 2등이 붙어 있다')], RED)]
+    w2 = 31.0
+    for i, (h, ls, c) in enumerate(outs):
+        box(ax, 2 + i * (w2 + 2.4), M - 10.4, w2, 10.2, h, ls, c, fs=8.6)
+
+    ax.text(2, 5.6, T('셋 다 값을 내지 않고 문제로 보고한다. 잘못 읽은 복용 시각은 못 읽은 것보다 위험하다'),
+            fontsize=7.6, color=RED, fontweight='bold')
+    ax.text(2, 2.4, T('이름이 붙은 문제는 사용자를 종이로 돌려보내며 되돌릴 수 있다. 확신에 찬 오독은 되돌릴 수 없다'),
+            fontsize=7.6, color=MUTED)
+    save(fig, 'fig23_formsheet')
+
+
+# ── 서명에 무엇이 들어가는가 ────────────────────────────────────────
+def sign_payload():
+    """§4.6. 셋 중 하나라도 빠지면 서명이 있으나 마나가 된다."""
+    fig, ax = canvas(6.0, 2.3)
+    TOP = 32.0
+
+    box(ax, 2, TOP - 8.0, 30, 7.8, T('기기가 만든 개인키'),
+        [T('extractable: false'), T('브라우저 밖으로 못 나간다')], GREEN)
+    arrow(ax, 32.6, TOP - 4.1, 37.4, TOP - 4.1)
+    box(ax, 38, TOP - 8.0, 60, 7.8, T('서명하는 대상'),
+        [T('시각 · 메서드 · 본문 해시')], BLUE)
+
+    M = TOP - 12.4
+    notes = [(T('시각'), T('가로챈 서명을 나중에 못 쓴다. 5분 넘으면 거절')),
+             (T('본문 해시'), T('서명만 떼어 다른 내용에 못 붙인다')),
+             (T('저장 위치'), T('공개키에서 유도한다. 남의 자료를 요청할 방법이 없다'))]
+    for i, (k, v) in enumerate(notes):
+        y = M - i * 4.2
+        ax.text(4, y, k, fontsize=8, color=INK, fontweight='bold')
+        ax.text(20, y, v, fontsize=7.6, color=MUTED)
+
+    ax.text(2, 2.0, T('셋 중 하나라도 빠지면 서명은 있으나 마나가 된다'),
+            fontsize=7.6, color=RED, fontweight='bold')
+    save(fig, 'fig24_sign')
+
 
 if __name__ == '__main__':
     userflow()
@@ -383,3 +441,5 @@ if __name__ == '__main__':
     relay_keys()
     sw_strategy()
     verdict_order()
+    formsheet_flow()
+    sign_payload()

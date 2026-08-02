@@ -380,6 +380,31 @@ EN = {
         'For prescriptions the pictograms were moved above the text cards',
     '아래에 두었을 때, 글을 읽지 못하는 사람은 빈 카드 셋을 지나야 그림에 닿았다':
         'With them below, someone who cannot read had to pass three empty cards to reach a picture',
+    'ArUco 네 귀퉁이': 'ArUco at four corners', '적응형 이진화': 'Adaptive threshold',
+    '칸별 채움 비율': 'Fill ratio per cell', '값 정하기': 'Deciding the value',
+    '못 찾으면 값을 지어내지 않는다': 'If not found, no value is invented',
+    '하나만 고르는 항목에서 값을 내지 않는 세 갈래':
+        'Three ways a single-choice item yields no value',
+    '아무것도 안 칠했다': 'Nothing filled in', '빈 종이': 'Blank',
+    '둘 다 제대로 칠했다': 'Both properly filled', '종이가 두 말을 한다': 'The paper says two things',
+    '갈라지지 않는다': 'Does not separate', '1등과 2등이 붙어 있다': 'First and second are too close',
+    '셋 다 값을 내지 않고 문제로 보고한다. 잘못 읽은 복용 시각은 못 읽은 것보다 위험하다':
+        'All three yield no value and report a problem. A misread dosing time is worse than none',
+    '이름이 붙은 문제는 사용자를 종이로 돌려보내며 되돌릴 수 있다. 확신에 찬 오독은 되돌릴 수 없다':
+        'A named problem sends the user back to the paper and is recoverable. A confident misreading is not',
+    '기기가 만든 개인키': 'Private key generated on the device',
+    '브라우저 밖으로 못 나간다': 'Cannot leave the browser',
+    '서명하는 대상': 'What is signed',
+    '시각 · 메서드 · 본문 해시': 'Timestamp · method · body hash',
+    '시각': 'Timestamp', '본문 해시': 'Body hash', '저장 위치': 'Storage location',
+    '가로챈 서명을 나중에 못 쓴다. 5분 넘으면 거절':
+        'An intercepted signature cannot be replayed. Older than five minutes is refused',
+    '서명만 떼어 다른 내용에 못 붙인다':
+        'A signature cannot be detached and attached to other content',
+    '공개키에서 유도한다. 남의 자료를 요청할 방법이 없다':
+        'Derived from the public key. There is no way to request another person\'s data',
+    '셋 중 하나라도 빠지면 서명은 있으나 마나가 된다':
+        'Missing any one of the three makes the signature worthless',
 }
 
 
