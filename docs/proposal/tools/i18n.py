@@ -406,6 +406,19 @@ EN = {
         'A signature cannot be detached and attached to other content',
     '둘 중 하나라도 빠지면 서명은 있으나 마나가 된다':
         'Missing either one makes the signature worthless',
+    # ── charts.py · chart_ageing (§1.7) ───────────────────────────
+    '고령 인구는 늘면서 저·중소득국으로 옮겨간다':
+        'The older population is growing and shifting to lower-income countries',
+    '왼쪽 WHO, 2024 · 오른쪽 65세 이상 · 질병관리청 2023, Lee 등 2021':
+        'Left: WHO, 2024 · Right: age 65+, KDCA 2023 and Lee et al. 2021',
+    '2020년': '2020', '2030년': '2030', '2050년': '2050',
+    '저·중소득국\n3분의 2': '2/3 in\nlower-income\ncountries',
+    '60세 이상 인구 (십억 명)': 'Population aged 60+ (billions)',
+    '스스로 약을 먹는다': 'Manage their own medicines',
+    '건강정보이해능력 적절': 'Adequate health literacy',
+    '복약 안전 교육 받음': 'Received medication-safety education',
+    '한국 고령자에서의 비율 (%)': 'Share among older adults in Korea (%)',
+
     # ── charts.py · chart_expressive (§1.9) ───────────────────────
     '고정 목록과 문법은 다른 속도로 늘어난다':
         'A fixed list and a grammar grow at different rates',

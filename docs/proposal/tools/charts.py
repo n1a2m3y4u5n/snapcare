@@ -225,6 +225,54 @@ def chart_expressive():
     save(fig, 'chart19_expressive')
 
 
+# ── 고령 인구가 어디서 늘어나는가 ───────────────────────────────────
+def chart_ageing():
+    """§1.7. 규모와 지리적 이동, 그리고 그 사람들이 처한 자리.
+
+    왼쪽 값은 WHO Ageing and health 자료 그대로다. 2050 년의 저·중소득국
+    3분의 2 만 출처가 밝힌 분포이므로 그 해에만 갈라 그린다. 앞의 두 해를
+    같은 비율로 갈라 그리면 자료에 없는 것을 그리게 된다."""
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.6))
+    title(fig, T('고령 인구는 늘면서 저·중소득국으로 옮겨간다'),
+          note=T('왼쪽 WHO, 2024 · 오른쪽 65세 이상 · 질병관리청 2023, Lee 등 2021'))
+    fig.subplots_adjust(left=0.132, right=0.975, wspace=0.16)
+
+    yrs = [T('2020년'), T('2030년'), T('2050년')]
+    tot = [1.0, 1.4, 2.1]
+    a1.bar(range(3), tot, width=0.56, color=LIGHT, zorder=2)
+    a1.bar([2], [1.4], width=0.56, color=DARK, zorder=3)
+    for i, v in enumerate(tot):
+        a1.text(i, v + 0.06, f'{v:.1f}', ha='center', fontsize=9.4,
+                fontweight='bold', color=INK)
+    # 막대 폭이 이 글보다 좁아 안에 넣으면 양쪽이 잘린다. 옆에 두고 선으로 잇는다.
+    a1.plot([2.3, 2.52], [0.7, 0.7], color=MUTED, lw=0.7, zorder=4)
+    a1.text(2.56, 0.7, T('저·중소득국\n3분의 2'), ha='left', va='center',
+            fontsize=8.0, color=INK, fontweight='bold', zorder=4)
+    a1.set_xticks(range(3))
+    a1.set_xticklabels(yrs)
+    a1.set_xlim(-0.62, 3.4)
+    a1.set_ylim(0, 2.5)
+    a1.set_ylabel(T('60세 이상 인구 (십억 명)'))
+    frame(a1, grid='y')
+
+    rows = [(T('스스로 약을 먹는다'), 79.4, DARK),
+            (T('건강정보이해능력 적절'), 40.3, LIGHT),
+            (T('복약 안전 교육 받음'), 28.2, LIGHT)]
+    # 이름을 눈금에 두면 왼쪽 판의 막대 위에 얹힌다. 막대 위로 올린다.
+    for i, (lab, v, c) in enumerate(rows):
+        a2.barh(i, v, height=0.34, color=c, zorder=2)
+        a2.text(v + 1.8, i, f'{v}%', va='center', fontsize=9.4,
+                fontweight='bold', color=INK)
+        a2.text(0.8, i - 0.36, lab, va='bottom', fontsize=8.2, color=INK)
+    a2.set_yticks([])
+    a2.invert_yaxis()
+    a2.set_xlim(0, 100)
+    a2.set_ylim(2.6, -0.75)
+    a2.set_xlabel(T('한국 고령자에서의 비율 (%)'))
+    frame(a2, grid='x')
+    save(fig, 'chart20_ageing')
+
+
 # ── 영양 추정 모델의 항목별 오차 ───────────────────────────────────
 def chart_model():
     rows = [(T('질량'), 16.61), (T('열량'), 22.75), (T('탄수화물'), 30.60),
@@ -530,6 +578,7 @@ if __name__ == '__main__':
     chart_eval()
     chart_glyphs()
     chart_expressive()
+    chart_ageing()
     chart_model()
     chart_country()
     chart_survey()
