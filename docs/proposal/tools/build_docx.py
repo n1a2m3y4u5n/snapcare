@@ -158,6 +158,12 @@ def blocks(md: str):
         ln = lines[i]
         if not ln.strip():
             i += 1
+        elif ln.startswith('> '):
+            j = i
+            while j < len(lines) and lines[j].startswith('> '):
+                j += 1
+            out.append(('quote', [x[2:].strip() for x in lines[i:j]]))
+            i = j
         elif ln.startswith('#### '):
             out.append(('h4', ln[5:].strip()))
             i += 1
@@ -227,6 +233,18 @@ def render(cell, md: str):
                     r.font.color.rgb = MUTED
             else:
                 write_inline(p, val)
+
+        elif kind == 'quote':
+            # 인용은 들여쓰고 회색으로. 우리 문장과 남의 문장이 구별되어야 한다.
+            for k, t in enumerate(val):
+                q = para()
+                q.paragraph_format.left_indent = Inches(0.28)
+                q.paragraph_format.space_after = Pt(9 if k == len(val) - 1 else 2)
+                q.paragraph_format.line_spacing = LINE
+                write_inline(q, t, size=BODY_PT - 0.5)
+                for r in q.runs:
+                    r.font.color.rgb = MUTED
+                    r.italic = not t.startswith('(')
 
         elif kind == 'code':
             p = para()
