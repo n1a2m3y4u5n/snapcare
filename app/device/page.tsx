@@ -7,6 +7,8 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { DispenserPanel } from '@/components/sc/DispenserPanel';
 import { DoseRelease } from '@/components/sc/DoseRelease';
 import { useDispenser } from '@/lib/dispenser/useDispenser';
+import { toCloudSlots } from '@/lib/dispenser/fromApp';
+import { useDoseLog } from '@/lib/dispenser/useDoseLog';
 import { Hint } from '@/components/sc/Hint';
 import { sayable, ask, Speakable } from '@/components/sc/Say';
 import { useReminders } from '@/stores/reminders';
@@ -58,6 +60,7 @@ export default function DevicePage() {
   const [host, setHost] = useState(DEFAULT_HOST);
   const [reading, setReading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [sending, setSending] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
   // 폼시트에서 읽어낸 일정 — 있으면 알람 대신 이것을 기기로 내보낸다.
   // 시트에서 온 일정은 요일·기간을 갖는다 (WeeklySlot). 앱 안에서 만든 알람은 안 갖는다.
   const [sheet, setSheet] = useState<{ schedule: WeeklySlot[]; summary: string } | null>(null);
@@ -84,8 +87,25 @@ export default function DevicePage() {
   // 달려 있는 트레이 수는 기기마다 다르다. 펌웨어는 8까지 다루지만 대회 출품 기기에는
   // 3개만 달려 있고, 없는 칸을 지정하면 펌웨어가 요청을 거절한다. HTTPS 페이지에서
   // 기기의 /api/status 를 물어볼 수는 없으므로(혼합 콘텐츠) 사람이 고른다.
-  const [trays, setTrays] = useState(FITTED_TRAYS);
+  const [traysPicked, setTrays] = useState(FITTED_TRAYS);
+
+  /*
+    짝지은 상자는 **자기 칸 수를 스스로 말한다** (`status.trayCount`). 위 주석은 물어볼
+    길이 없다고 적혀 있는데, 그것은 LAN 경로에서만 참이다 — 사서함으로 오는 보고에는
+    그 숫자가 들어 있다.
+    사람에게 고르게 하는 것보다 낫다. 기본값 8 을 그대로 둔 채 트레이 셋짜리 기기로
+    보내면 없는 칸을 지정한 복용이 조용히 사라지고, "안 들어간 복용" 경고도 뜨지 않는다.
+  */
+  const trays = box.report?.status.trayCount ?? traysPicked;
   const trayPlan = useMemo(() => planTrays(reminders, trays), [reminders, trays]);
+
+  // 어느 칸에 무슨 약이 들었는지. 상자가 남긴 기록에 이름을 붙이는 데 쓴다 —
+  // 모르면 "Compartment 3" 이 되고, 그것이 지어낸 이름보다 낫다.
+  const trayNames = useMemo(
+    () => Object.fromEntries(trayPlan.plan.map((t) => [t.tray, t.name])),
+    [trayPlan],
+  );
+  useDoseLog(box.report, trayNames);
 
   // 폼시트를 읽었으면 그것이 우선한다 — 의사가 직접 채워준 일정이기 때문이다.
   //
@@ -109,11 +129,44 @@ export default function DevicePage() {
   // 기기로 보낼 것. 시트를 읽었으면 그쪽이 우선이다 — 종이에는 요일과 기간이 적혀
   // 있고 `/save` 는 그 둘을 버리기 때문이다. 시트가 없으면 앱 안의 알람을 주간
   // 슬롯으로 바꿔 같은 무손실 경로로 보낸다.
-  const sendPayload = sheet?.schedule.length
-    ? encodeWeekly(sheet.schedule)
+  const sendSlots: WeeklySlot[] = sheet?.schedule.length
+    ? sheet.schedule
     : trayPlan.plan.length > 0
-      ? encodeWeekly(weeklyFrom(reminders, trays).slots)
-      : null;
+      ? weeklyFrom(reminders, trays).slots
+      : [];
+  const sendPayload = sendSlots.length > 0 ? encodeWeekly(sendSlots) : null;
+
+  /**
+   * 짝지은 상자로 일정을 보낸다 — 사서함을 거쳐서.
+   *
+   * 아래 LAN 링크와 하는 일은 같고 닿는 범위가 다르다. 링크는 폰과 상자가 같은 공유기
+   * 뒤에 있어야 하고, 이쪽은 상자가 켜져 있기만 하면 된다. 딸이 다른 도시에서 어머니의
+   * 상자에 일정을 넣는 것이 이 경로에서만 된다.
+   *
+   * 끝났다는 것은 **사서함에 놓였다**는 뜻이지 상자가 받았다는 뜻이 아니다. 확인은
+   * 다음 보고에 실려 오는 `status.payload` 이고, 위 상태판이 그것을 보여준다.
+   */
+  async function sendToBox() {
+    if (!box.paired || sendSlots.length === 0) return;
+    setSending('sending');
+    try {
+      await box.setSchedule(toCloudSlots(sendSlots));
+      setSending('sent');
+      const what = trayPlan.plan.length === 1
+        ? 'One dose time was sent to the box.'
+        : `${trayPlan.plan.length} dose times were sent to the box.`;
+      setResult(what);
+      speak(what, 'en-US');
+    } catch (err) {
+      console.error('[dispenser] 일정 전송 실패:', err);
+      setSending('failed');
+      // 조용히 실패하면 안 되는 자리다. 보냈다고 믿은 사람은 상자가 약을 내보낼
+      // 것이라고 믿고, 그 믿음은 아무 일도 일어나지 않는 아침에 깨진다.
+      const what = 'The schedule did not reach the box. Try again.';
+      setResult(what);
+      speak(what, 'en-US');
+    }
+  }
 
   /**
    * 의사가 준 종이 폼시트를 찍어 일정을 받는다.
@@ -239,9 +292,18 @@ export default function DevicePage() {
         </button>
         <h1 className="mt-2 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
             {...ask('Pill device. Send your dose times to the box, or read what it shows.')}>Pill device</h1>
-        <Speakable text="The phone and the box are on the same Wi-Fi. Nothing else is needed."
+        {/*
+          짝을 지으면 이 말이 더 이상 참이 아니다 — 사서함을 거치므로 같은 공유기 뒤에
+          있을 필요가 없다. 화면이 사실과 다른 말을 하고 있으면, 그 말을 믿고 상자 옆으로
+          걸어가는 사람이 생긴다.
+        */}
+        <Speakable text={box.paired
+          ? 'The box has its own mailbox. You can send from anywhere.'
+          : 'The phone and the box are on the same Wi-Fi. Nothing else is needed.'}
                    className="mt-1 text-sm flex w-full items-center gap-2">
-          <span className="flex-1">Same Wi-Fi — nothing else needed.</span>
+          <span className="flex-1">
+            {box.paired ? 'Anywhere — the box has its own mailbox.' : 'Same Wi-Fi — nothing else needed.'}
+          </span>
         </Speakable>
 
         {/*
@@ -307,21 +369,76 @@ export default function DevicePage() {
               <Speakable text={'How many trays does this device have?'} className="text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
           <span className="flex-1">TRAYS ON THIS DEVICE</span>
         </Speakable>
-              <div className="mt-2 flex gap-2">
-                {Array.from({ length: MAX_TRAYS }, (_, i) => i + 1).map((n) => (
-                  <button key={n} onClick={() => setTrays(n)}
-                    className="h-9 w-9 rounded-xl text-sm font-bold"
-                    style={{
-                      background: n <= trays ? 'var(--color-sc-primary)' : 'var(--color-sc-line)',
-                      color: n <= trays ? '#fff' : 'var(--color-sc-muted)',
-                    }}
-                    {...sayable(`${n} tray${n > 1 ? 's' : ''}`)}>
-                    {n}
-                  </button>
-                ))}
-              </div>
+              {/* 상자가 스스로 말해 준 숫자가 있으면 고르게 하지 않는다 — 고르면 틀릴 수 있다. */}
+              {box.report ? (
+                <Speakable text={`The box says it has ${trays} trays.`}
+                           className="mt-2 flex w-full items-center gap-2 text-sm font-semibold">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white"
+                        style={{ background: 'var(--color-sc-primary)' }}>{trays}</span>
+                  <span className="flex-1" style={{ color: 'var(--color-sc-muted)' }}>
+                    The box told us this
+                  </span>
+                </Speakable>
+              ) : (
+                <div className="mt-2 flex gap-2">
+                  {Array.from({ length: MAX_TRAYS }, (_, i) => i + 1).map((n) => (
+                    <button key={n} onClick={() => setTrays(n)}
+                      className="h-9 w-9 rounded-xl text-sm font-bold"
+                      style={{
+                        background: n <= trays ? 'var(--color-sc-primary)' : 'var(--color-sc-line)',
+                        color: n <= trays ? '#fff' : 'var(--color-sc-muted)',
+                      }}
+                      {...sayable(`${n} tray${n > 1 ? 's' : ''}`)}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
+            {/*
+              짝지은 상자가 있으면 사서함으로 보낸다.
+
+              LAN 링크와 무엇이 다른가: 링크는 폰과 상자가 **같은 공유기 뒤에** 있어야
+              하고 누르면 화면이 기기 페이지로 넘어간다. 이쪽은 상자가 켜져 있기만
+              하면 되고 이 화면에 머문다. 딸이 다른 도시에서 어머니의 상자에 일정을
+              넣는 것은 이 경로에서만 된다.
+
+              그래서 짝이 있으면 이쪽이 기본이고, 같은 Wi-Fi 경로는 아래로 접어 둔다 —
+              지우지는 않는다. 인터넷이 아예 없는 진료소에서는 그쪽만 남는다.
+            */}
+            {box.paired ? (
+              <>
+                <button
+                  onClick={sendToBox}
+                  disabled={sending === 'sending' || sendSlots.length === 0}
+                  className="mt-3 block w-full rounded-2xl py-3 text-center text-sm font-bold text-white disabled:opacity-60"
+                  style={{ background: 'var(--color-sc-primary)' }}
+                  {...sayable('Send the dose times to the box. It does not need to be on the same Wi-Fi.')}
+                >
+                  {sending === 'sending' ? 'Sending…' : sending === 'sent' ? 'Sent ✓' : 'Send to the box'}
+                </button>
+                <p className="mt-1 text-center text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
+                  {sending === 'sent'
+                    ? 'The box will show it at the top of this screen when it picks it up.'
+                    : 'Anywhere — the box does not have to be on this Wi-Fi.'}
+                  {sheet?.schedule.length ? ' Days of the week and course length are included.' : ''}
+                </p>
+                {sending === 'failed' && (
+                  <Speakable text="The schedule did not reach the box. Try again."
+                             className="mt-2 flex w-full items-center gap-2 text-xs font-semibold"
+                             style={{ color: 'var(--color-avoid)' }}>
+                    <span className="flex-1">It did not reach the box — try again.</span>
+                  </Speakable>
+                )}
+              </>
+            ) : null}
+
+            {/*
+              같은 Wi-Fi 경로. 짝이 있으면 접어 둔다 — 위쪽 하나로 끝나는데 주소 입력과
+              버튼 둘을 나란히 두면, 읽지 못하는 사람에게는 "보내기" 가 셋인 화면이 된다.
+            */}
+            <LanPath folded={!!box.paired}>
             {/* 주소는 이 앱에 남은 유일한 문자 입력이다. 기본값을 채워 두고 바꿀 수만 있게 한다. */}
             <label className="mt-3 flex items-center gap-2 rounded-2xl px-3 py-2"
                    style={{ background: 'var(--color-sc-bg)' }}>
@@ -389,6 +506,7 @@ export default function DevicePage() {
             <p className="mt-1 text-center text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
               Press when the box is lit and beeping — or press the button on the box itself.
             </p>
+            </LanPath>
           </div>
         ) : (
           <Speakable text="Photograph a prescription first. The dose times it finds are what the box needs."
@@ -499,5 +617,25 @@ export default function DevicePage() {
         )}
       </div>
     </MobileScreen>
+  );
+}
+
+/**
+ * 같은 Wi-Fi 로 보내는 옛 경로를 감싼다.
+ *
+ * 짝지은 상자가 있으면 접어 두고, 없으면 그대로 편다. 지우지 않는 이유는 이쪽이
+ * **인터넷이 없을 때 남는 유일한 길**이기 때문이다 — 릴레이도 클라우드도 못 쓰는
+ * 진료소에서, 폰과 상자가 같은 공유기 뒤에 있기만 하면 일정이 건너간다.
+ */
+function LanPath({ folded, children }: { folded: boolean; children: React.ReactNode }) {
+  if (!folded) return <>{children}</>;
+  return (
+    <details className="mt-3">
+      <summary className="cursor-pointer text-[11px] font-bold tracking-wide"
+               style={{ color: 'var(--color-sc-muted)' }}>
+        NO INTERNET? USE THE SAME WI-FI
+      </summary>
+      {children}
+    </details>
   );
 }

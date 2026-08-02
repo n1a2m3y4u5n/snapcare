@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { DoseRelease } from '@/components/sc/DoseRelease';
 import { useDispenser } from '@/lib/dispenser/useDispenser';
+import { useDoseLog } from '@/lib/dispenser/useDoseLog';
+import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
 import { useScans, todayKey } from '@/stores/scans';
 import { useProfile, PROFILE_ID } from '@/stores/profile';
 import { useAnalysis } from '@/stores/analysis';
@@ -33,6 +35,16 @@ export default function HomePage() {
   const setCurrent = useAnalysis((s) => s.setCurrent);
   const reminders = useReminders((s) => s.reminders);
   const dropMedicine = useReminders((s) => s.dropMedicine);
+
+  // 상자가 약을 내보내거나 놓친 것을 기록에 남긴다. 홈에서도 도는 이유는, 기기 화면을
+  // 한 번도 열지 않는 사람이 대부분이기 때문이다 — 짝은 한 번 짓고 나면 끝이다.
+  const trayNames = useMemo(
+    () => Object.fromEntries(
+      planTrays(reminders, box.report?.status.trayCount ?? FITTED_TRAYS).plan.map((t) => [t.tray, t.name]),
+    ),
+    [reminders, box.report?.status.trayCount],
+  );
+  useDoseLog(box.report, trayNames);
 
   // 처방을 스캔해 알람을 만들었을 때만 뜬다.
   // 예전에는 존재하지도 않는 Metformin 알람이 항상 박혀 있었다 —

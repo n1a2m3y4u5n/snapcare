@@ -127,7 +127,28 @@ has Pillow:
 # .env.local
 PICTOGRAM_PYTHON=/opt/homebrew/bin/python3
 ANTHROPIC_API_KEY=            # optional — meal-photo recognition only
+NEXT_PUBLIC_SNAPCARE_RELAY=   # optional — the pill box's mailbox; see below
 ```
+
+### The pill box
+
+The dispenser sits behind somebody's home router, so the phone cannot reach it directly.
+Both sides talk to a **relay** instead — a mailbox that holds three sealed slots and can
+read none of them. `NEXT_PUBLIC_SNAPCARE_RELAY` is its address.
+
+Leave it unset and the app still works: the device screen falls back to the same-Wi-Fi
+path, and the pairing screen asks for an address. Set it and pairing needs nothing but the
+ten characters on the label.
+
+To run one locally, with a mock dispenser and no Raspberry Pi:
+
+```bash
+make -C pill_dispenser/cloud_relay demo     # relay on :8088
+```
+
+The address is also what the Content-Security-Policy opens (`middleware.ts`). One origin,
+no more — an injected script can reach the mailbox, which cannot read what it holds, and
+nowhere else.
 
 Everything except meal-photo recognition works with no key and no network: OCR runs in the
 browser, pictograms render locally, and looked-up products and rendered pictograms are cached
@@ -196,9 +217,16 @@ Docker multi-stage build on **fly.io** (Tokyo). A mounted volume holds the house
 and the pictogram/product caches, so the app keeps answering when the network does not.
 
 ```bash
-fly deploy
-fly secrets set ANTHROPIC_API_KEY=… -a snapcare   # meal-photo recognition in production
+fly deploy --build-arg NEXT_PUBLIC_SNAPCARE_RELAY=https://…   # the pill box's mailbox
+fly secrets set ANTHROPIC_API_KEY=… -a snapcare               # meal-photo recognition in production
 ```
+
+The relay address goes in as a **build argument**, not a secret and not `fly.toml`'s
+`[env]`. Anything named `NEXT_PUBLIC_` is baked into the browser bundle when Next builds
+it, so a value supplied at run time never reaches the phone. Getting this wrong fails in a
+confusing way: the server knows the address and opens the CSP for it, while the page tries
+`localhost` and pairing fails as though the code on the label were wrong. The pairing
+screen says so when the build has no address at all.
 
 ## Data sources
 

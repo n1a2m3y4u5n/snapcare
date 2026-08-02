@@ -18,8 +18,18 @@ import type { DeviceReport } from '@/lib/dispenser/types';
  * 기기는 여기서 보면 건강한 것과 구별되지 않는다.
  */
 
-/** 릴레이 주소. 배포에서는 환경변수로 박고, 개발에서는 화면에서 바꾼다. */
-const DEFAULT_RELAY = process.env.NEXT_PUBLIC_SNAPCARE_RELAY || 'http://localhost:8088';
+/** 릴레이 주소. 배포에서는 빌드 때 박고(Dockerfile), 개발에서는 화면에서 바꾼다. */
+const CONFIGURED_RELAY = process.env.NEXT_PUBLIC_SNAPCARE_RELAY || '';
+const DEFAULT_RELAY = CONFIGURED_RELAY || 'http://localhost:8088';
+
+/**
+ * 배포본인데 주소가 없다.
+ *
+ * 이때 기본값 `localhost:8088` 은 **폰 자신**을 가리키므로 짝짓기가 반드시 실패한다.
+ * 그런데 실패하는 모습이 "코드가 틀렸습니다" 라서, 라벨을 다시 읽고 다시 찍는 사람이
+ * 생긴다. 원인은 코드가 아니라 이 빌드에 사서함 주소가 안 들어간 것이다.
+ */
+const RELAY_MISSING = !CONFIGURED_RELAY && process.env.NODE_ENV === 'production';
 
 function hhmm(text: string): string {
   return text.length === 4 ? `${text.slice(0, 2)}:${text.slice(2)}` : text;
@@ -137,7 +147,16 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
           </button>
         </div>
 
-        <details className="mt-3">
+        {RELAY_MISSING && (
+          <Speakable text="This app was built without a mailbox address, so the box cannot be reached from here. Ask for the address and type it below."
+                     className="mt-3 flex w-full items-center gap-2 rounded-2xl p-3 text-sm font-semibold"
+                     style={{ background: 'var(--color-sc-bg)', color: 'var(--color-caution)' }}>
+            <span aria-hidden className="text-xl">📭</span>
+            <span className="flex-1">No mailbox address in this build — type one below.</span>
+          </Speakable>
+        )}
+
+        <details className="mt-3" open={RELAY_MISSING}>
           <summary className="cursor-pointer text-[11px] font-bold tracking-wide"
                    style={{ color: 'var(--color-sc-muted)' }}>
             RELAY ADDRESS
@@ -208,8 +227,21 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
         </dl>
       )}
 
-      {/* 실려 오면서 무엇을 잃었는지 — 기기가 말한 그대로 보여준다. */}
-      {s?.notes?.length ? (
+      {/*
+        실려 오면서 무엇을 잃었는지.
+
+        기기가 말한 그대로 보여주되, **지금 실린 일정이 짧은 형식일 때만**이다.
+        펌웨어는 `loses_detail()` 을 조건 없이 붙이는데(device.py 의 status()), 그
+        함수가 답하는 질문은 "이 일정을 SC1*S* 로 보냈다면 무엇을 잃었겠는가" 이지
+        "지금 실린 일정이 무엇을 잃었는가" 가 아니다. dh 의 주석도 보내기 전에
+        확인하라고 적어 두었다.
+
+        그대로 내보냈더니 무손실 SC1*W* 로 보낸 월·수·금 7일 처방에 "요일을 실을 수
+        없어 매일 떨어집니다" 라는 경고가 붙었다. 일어나지 않은 손실을 알리는 경고이고,
+        글을 못 읽는 사람에게는 확인할 방법도 없다. 화면이 사실이 아닌 말을 하느니
+        아무 말도 안 하는 편이 낫다. (펌웨어 쪽도 고치도록 dh 에게 전한다.)
+      */}
+      {s?.payload?.toUpperCase().startsWith('SC1*S*') && s.notes?.length ? (
         <ul className="mt-3 space-y-1">
           {s.notes.map((n, i) => (
             <li key={i} {...sayable(n)} className="text-xs" style={{ color: 'var(--color-caution)' }}>⚠ {n}</li>
