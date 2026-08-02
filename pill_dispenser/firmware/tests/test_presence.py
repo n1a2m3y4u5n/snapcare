@@ -23,9 +23,14 @@ from snapcare_dispenser.display.health import Health
 from snapcare_dispenser.display.presence import Presence
 
 
+#: A machine that is up and has told us about itself. `known=True` matters:
+#: it defaults False, meaning "no snapshot has been taken yet", and the policy
+#: shows the boot frame until one has. A fixture without it is describing a
+#: device that has only just been plugged in.
 WELL = Health(dispensing=True, problem="", wifi="online", ssid="SNAPCARE-V5XH",
               address="192.168.1.42", next_tray=3, next_at="20:00",
-              now="12:34", waiting=0)
+              now="12:34", waiting=0, known=True, clock_source="ntp",
+              trays_loaded=2)
 
 
 @pytest.fixture
@@ -45,18 +50,22 @@ def screen_at(policy, clock, when: float, health=WELL):
     return plan.screen if plan else None
 
 
-def showing(policy, clock, when: float, health=WELL, _last=[None]):
+def showing(policy, clock, when: float, health=WELL):
     """What is *on the panel* at `when`, repaint or not.
 
-    Different from `screen_at` on purpose. `tick` legitimately returns a fresh
-    plan for the same screen — the brightness decays as attention fades, and the
-    burn-in offset drifts — so "did it repaint" and "what is it showing" are two
-    questions and only the second one is about behaviour.
+    Different from `screen_at` on purpose: `tick` answers "did anything change",
+    and returns None whenever the answer is no, so "what is on the panel" has to
+    be tracked by whoever is asking.
+
+    The last screen is kept on the `policy` rather than in a default argument.
+    It used to be `_last=[None]`, which is one list shared by every call in the
+    module — so a test's idea of what was on the panel leaked into the next
+    test, and whether a test passed depended on which ones ran before it.
     """
     screen = screen_at(policy, clock, when, health)
     if screen is not None:
-        _last[0] = screen
-    return _last[0]
+        policy._showing_in_test = screen  # noqa: SLF001 - test bookkeeping
+    return getattr(policy, "_showing_in_test", None)
 
 
 # ── a dose waiting outranks everything except a machine that cannot dispense ─
@@ -79,7 +88,9 @@ def test_a_waiting_dose_is_never_dimmed(policy, clock):
     clock[0] = 1000
     plan = policy.tick(night)
     assert plan.screen == "due"
-    assert plan.brightness == 255
+    # The one exception to the night palette, and the reason the device exists:
+    # a dose waiting at 3 a.m. is shown in full colour at any hour.
+    assert plan.night is False
 
 
 def test_a_machine_that_will_not_dispense_outranks_a_waiting_dose(policy, clock):
@@ -101,52 +112,21 @@ def test_a_standing_problem_does_not_dwell_and_then_hide(policy, clock):
 
 # ── the resting rotation, which is what carries everything else ─────────────
 
-def test_resting_rotates_so_the_other_screens_are_reachable_without_a_button(
-        policy, clock):
-    """Putting the network and the whole-machine status behind an interaction
-    would put them behind a skill this device may not assume."""
-    seen = []
-    for step in range(0, 40, 8):
-        screen = screen_at(policy, clock, 1000 + step)
-        if screen:
-            seen.append(screen)
-    assert seen == ["idle", "status", "idle", "status", "idle"]
+def test_the_resting_screen_is_the_only_resting_screen(policy, clock):
+    """The rotation is gone, and this is what replaced it.
 
+    `idle`, `status` and `wifi` used to take turns, which had two faults: the
+    fact you wanted was not there when you looked, and the row moved. The status
+    bar now carries permanently, in fixed positions, everything `status` showed,
+    and the hero's secondary line carries the address `wifi` showed — so there
+    is nothing left to rotate and no waiting for a card to come round.
 
-def test_the_wifi_card_joins_the_rotation_only_when_the_radio_has_something_to_say(
-        policy, clock):
-    """On a device that has been online for a month it reads "yes, still fine" —
-    true, and a waste of one of the few turns anybody will ever look at."""
-    offline = replace(WELL, wifi="offline")
-    seen = [screen_at(policy, clock, 1000 + step, offline)
-            for step in range(0, 24, 8)]
-    assert seen == ["idle", "status", "wifi"]
-
-
-def test_the_rotation_always_restarts_at_idle(clock):
-    """Anchored to when resting began, not to uptime.
-
-    Against absolute monotonic time the first frame somebody sees after walking
-    up is whatever the clock happens to be on — and `idle`, the one that answers
-    "is it alive and when is my next dose", is the one they most often wanted.
+    It was also broken: `rest_rotate_s` was 8 s while `tick` runs on the 15 s
+    scheduler loop, so the sequence aliased to `idle` about a tenth of the time
+    and `status` held for two minutes at a stretch.
     """
-    for start in (0.0, 3.5, 1234.5, 99999.0):
-        policy = Presence(monotonic=lambda: clock[0])
-        clock[0] = start
-        assert policy.tick(WELL).screen == "idle"
-
-
-def test_an_event_restarts_the_rotation(policy, clock):
-    """Somebody who has just been shown something and then looks back wants the
-    screen that answers the ordinary question, not whichever card was next."""
-    assert screen_at(policy, clock, 1000) == "idle"
-    assert screen_at(policy, clock, 1008) == "status"
-
-    policy.event("released", tray=3)
-    clock[0] = 1010
-    assert policy.tick(WELL).screen == "released"
-
-    assert screen_at(policy, clock, 1040) == "idle"
+    seen = {screen_at(policy, clock, 1000 + step) for step in range(0, 600, 15)}
+    assert seen <= {"idle", None}, f"something else took a turn: {seen}"
 
 
 # ── transients expire; nothing is left showing something that stopped being true
@@ -189,7 +169,11 @@ def test_the_setup_card_appears_on_the_event_not_a_tick_later(policy, clock):
     clock[0] = 1000
     plan = policy.tick(stale)
     assert plan.screen == "network"
-    assert plan.args == ("SNAPCARE-V5XH",)
+    # `args` now leads with the whole snapshot — the screens read what they need
+    # off it rather than being handed loose scalars that can disagree with it.
+    # What matters here is that the *event's* SSID is the one carried, not the
+    # stale snapshot's.
+    assert plan.args[0].ssid == "SNAPCARE-V5XH"
 
 
 # ── the cheap part, which is what keeps it off the tick's budget ────────────
@@ -222,7 +206,11 @@ def test_quiet_hours_dim_rather_than_blank(policy, clock):
     clock[0] = 1000
     plan = policy.tick(night)
     assert plan is not None
-    assert 0 < plan.brightness < 255, "the panel must be dim, not dark"
+    # A palette, not a brightness. This build's backlight is tied to 3V3 and
+    # there is no pin to dim, so "quiet" is a darker set of colours and the
+    # panel is never blanked — the invariant this test has always been about.
+    assert plan.night is True
+    assert plan.screen == "idle", "quiet hours must not take the screen away"
 
 
 def test_boot_shows_something_at_once(policy, clock):
@@ -232,4 +220,7 @@ def test_boot_shows_something_at_once(policy, clock):
     clock[0] = 1000
     plan = policy.tick(WELL)
     assert plan is not None
-    assert plan.brightness == 255
+    assert plan.screen == "boot"
+    # Never dimmed on the way up: somebody is standing over it having just
+    # plugged it in.
+    assert plan.night is False

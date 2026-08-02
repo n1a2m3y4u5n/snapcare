@@ -159,5 +159,11 @@ def _open(name: str):
             reset=config.DISPLAY_RESET_GPIO,
             rotation=config.DISPLAY_ROTATION,
             speed_hz=config.DISPLAY_SPI_HZ,
+            # None on the reference build, where LED is tied to 3V3. Passed at
+            # all because the alternative failure is silent: a module whose LED
+            # pin is on a GPIO nobody drives initialises perfectly, accepts
+            # every frame, and stays black — and nothing the firmware can check
+            # would disagree with it.
+            backlight=config.DISPLAY_BACKLIGHT_GPIO,
         )
     raise ValueError(f"unknown display backend {name!r}")

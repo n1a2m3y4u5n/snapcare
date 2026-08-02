@@ -332,7 +332,7 @@ def draw(canvas: Canvas, cx: int, cy: int, radius: int, shape: Shape,
     Unioning with the mirror costs a few hundred set operations per repaint and
     makes the shape symmetric by construction at every size.
     """
-    radius = max(radius, MIN_RADIUS[shape])
+    radius = max(radius, MIN_OUTLINE_RADIUS[shape])
     sink = _Sink()
     for step in range(max(1, thickness)):
         inner = radius - step
@@ -361,9 +361,33 @@ def draw(canvas: Canvas, cx: int, cy: int, radius: int, shape: Shape,
         canvas.pixel(x, y, value)
 
 
+#: Solid shapes, measured on the filled renderer.
 MIN_RADIUS.update({
     Shape.SAFE: 4,
     Shape.CAUTION: 6,
     Shape.AVOID: 6,
     Shape.PENDING: 3,
 })
+
+#: Outlines, which need more room than solids for the same job — and that is
+#: the whole reason there are two tables rather than one.
+#:
+#: A filled shape is distinguished by its *mass*, which keeps working all the
+#: way down: at r=6 a solid circle, triangle, square and octagon are 113, 52,
+#: 169 and 129 lit pixels, told apart by area alone. An outline has no mass; it
+#: is distinguished by where its edge goes, and a one-pixel edge on a small
+#: shape is quantised to the same staircase for a circle and an octagon —
+#: **identical pixel sets** at r=3, 5 and 6, verified by the test that guards
+#: this.
+#:
+#: That is not a cosmetic collision. An octagon that rasterises as a circle
+#: says *safe* on a machine that will not dispense, which is the one lie this
+#: vocabulary exists to prevent. So the outline path clamps harder, and it
+#: costs nothing: the only outlined shape left on the panel is the "nothing is
+#: known about this dose" square in the schedule band, drawn at r=10.
+MIN_OUTLINE_RADIUS: dict["Shape", int] = {
+    Shape.SAFE: 3,
+    Shape.CAUTION: 4,
+    Shape.AVOID: 7,
+    Shape.PENDING: 3,
+}

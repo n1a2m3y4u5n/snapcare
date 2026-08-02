@@ -171,18 +171,30 @@ class Router:
                       "movesHardware": backend.moves_hardware},
             "buzzer": {"backend": buzzer.backend if buzzer else "none",
                        "gpio": buzzer.gpio if buzzer else config.BUZZER_GPIO},
-            #: `backend` is the part worth reading, because the two panels are
-            #: not equivalent: `ili9341` has the colour that carries the whole
-            #: message, `ssd1306` has one ink and has to spend a treatment on
-            #: each state instead. A machine that quietly fell back to the OLED
-            #: is a working machine saying less than it should, and this line is
-            #: the only place that shows up. The geometry comes from the panel
-            #: rather than from config, so a driver that does not answer reports
-            #: nothing instead of inventing a size.
+            #: `fitted` is weaker evidence than it looks and this is the only
+            #: place that can say so. The ILI9341 is write-only — four-line SPI
+            #: has no MISO — so the driver comes up, accepts every frame and
+            #: reports a healthy 320x240 panel with nothing on the end of the
+            #: ribbon. `fitted: true` therefore means "a driver is loaded and
+            #: has not been dropped", never "there is a screen".
+            #:
+            #: `error` and `failures` are what turn that into something
+            #: actionable. Neither driver *raises* on a write failure — it logs
+            #: once and returns False — so a ribbon that works loose used to
+            #: leave this block reporting a perfectly healthy screen for ever.
+            #: A non-zero `failures` is a panel that is refusing frames right
+            #: now; three in a row and the indicator drops it and `fitted`
+            #: finally goes false.
+            #:
+            #: The geometry comes from the panel rather than from config, so a
+            #: driver that does not answer reports nothing instead of inventing
+            #: a size.
             "display": {"fitted": bool(display),
                         "backend": getattr(display, "backend", "none"),
                         "width": getattr(display, "width", 0),
-                        "height": getattr(display, "height", 0)},
+                        "height": getattr(display, "height", 0),
+                        "error": getattr(display, "error", ""),
+                        "failures": getattr(indicator, "_panel_strikes", 0)},
             "button": {"fitted": bool(button and button.backend != "none"),
                        "backend": button.backend if button else "none",
                        "gpio": button.gpio if button else config.BUTTON_GPIO,

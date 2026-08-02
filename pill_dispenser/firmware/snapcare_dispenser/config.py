@@ -236,6 +236,65 @@ DISPLAY_ROTATION = 90
 #: nothing here depends on the exact figure.
 DISPLAY_SPI_HZ = 32_000_000
 
+#: The GPIO driving the panel's backlight, or None when it is not switchable.
+#:
+#: The reference build ties the module's LED pin to 3V3, so the backlight is
+#: simply always on and there is nothing for the firmware to do. Plenty of
+#: modules are wired the other way, and that case used to fail in the most
+#: confusing way this driver has: LED on a GPIO nobody drives sits low, the
+#: panel initialises perfectly, every frame is accepted, and the glass stays
+#: black. Everything the firmware can check says the screen is fine, because
+#: from its side it is.
+#:
+#: So the pin is configurable, and when it is set the driver claims it and
+#: raises it once the first frame is in RAM — never before, or the first thing
+#: the person sees is the noise the panel powered up holding.
+#:
+#: On/off only. `Ili9341.backlight` explains why this is not PWM: lgpio times
+#: its PWM from an ordinary thread, and it is the same thread that times every
+#: servo pulse, so dimming the screen would put a few thousand extra edges a
+#: second through the loop that has to keep a tray steady.
+#: Unset or empty means "not switchable", which is the reference build. A
+#: value that is not a number is treated the same way rather than raising: this
+#: is read at import, and a typo in a systemd unit must not stop the dispenser
+#: starting over a backlight.
+DISPLAY_BACKLIGHT_GPIO: int | None
+try:
+    DISPLAY_BACKLIGHT_GPIO = int(os.environ["SNAPCARE_DISPLAY_BACKLIGHT"])
+except (KeyError, ValueError):
+    DISPLAY_BACKLIGHT_GPIO = None
+
+# ── the screen as the button ────────────────────────────────────────────────
+#
+# This build fits no physical button: the panel is the control, and a tap
+# anywhere on it releases whatever dose is waiting. `touch.py` argues why there
+# are no on-screen targets and why the kernel's own driver reads the controller
+# rather than this firmware talking to it over SPI.
+
+#: The event node to read, or "" to find the touch panel by name. Naming one is
+#: for a board with two input devices where the wrong one is being picked; the
+#: search covers every module anyone has shipped with these panels.
+TOUCH_DEVICE = os.environ.get("SNAPCARE_TOUCH_DEVICE", "").strip()
+
+#: The GPIO the module's T_IRQ pin is on. Not used by this firmware at all —
+#: the kernel driver owns the pin — but it is what has to go in the `dtoverlay`
+#: line, so it lives here where the rest of the pin map is and gets printed in
+#: the message somebody sees when no touch panel is found.
+#:
+#: 4 rather than something lower, because 2 and 3 have the board's fixed
+#: pull-ups on them and every other free pin is a servo, the buzzer, DC or
+#: RESET.
+TOUCH_PENIRQ_GPIO = 4
+
+#: How long after a touch a second one is ignored.
+#:
+#: Not cosmetic debouncing. A resistive panel under a finger that rolls even
+#: slightly reports several presses, and each one of those reaching `release()`
+#: is another tray sweep — one touch becoming two doses. Half a second is
+#: longer than any bounce and far shorter than the gap between two doses
+#: somebody genuinely means to take.
+TOUCH_SETTLE_S = float(os.environ.get("SNAPCARE_TOUCH_SETTLE_S", "0.5"))
+
 #: The hours the panel wears its night palette — start inclusive, end exclusive,
 #: whole hours, wrapping midnight.
 #:

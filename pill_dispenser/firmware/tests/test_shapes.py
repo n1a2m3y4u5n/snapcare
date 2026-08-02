@@ -149,7 +149,11 @@ def test_a_shape_asked_for_too_small_is_grown_rather_than_faked(shape):
     assert pixels, "a shape asked for at r=1 must still be drawn legibly"
 
     reference = Rgb565(64, 64)
-    shapes.draw(reference, 32, 32, shapes.MIN_RADIUS[shape], shape, 1)
+    # The *outline* table, because `draw` is the outline renderer. Solid shapes
+    # are told apart by mass and stay legible smaller, so `fill` clamps against
+    # its own, lower, minimum — see `shapes.MIN_OUTLINE_RADIUS` for why the two
+    # cannot be one number.
+    shapes.draw(reference, 32, 32, shapes.MIN_OUTLINE_RADIUS[shape], shape, 1)
     assert pixels == lit(reference)
 
 

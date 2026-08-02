@@ -598,11 +598,22 @@ class Presence:
             return Plan(screen=screen, args=args, key=key, level=level,
                         night=quiet and not attended and level is not Level.ALERT)
 
-        # 0. Nothing has told us anything yet, or the machine has just started.
-        #    Above everything, because every layer below reads fields that are
-        #    empty rather than false at this point, and a bar drawn from them is
-        #    a row of confident nothings.
-        if not _field(health, "known", False) or now - self._boot_at < self.boot_dwell_s:
+        # 0. The machine has just started and is still finding its feet.
+        #
+        #    Only for the dwell after `event("boot")`, and deliberately NOT for
+        #    "no snapshot has arrived yet". Those two look the same and are not:
+        #    a machine that has genuinely just been plugged in should say so,
+        #    but a machine that has something to *report* — a dose due, a tray
+        #    that will not open — must say that instead, whether or not a
+        #    snapshot has caught up with it yet.
+        #
+        #    Conflating them cost exactly that. `dose_due` firing before the
+        #    first snapshot was swallowed by the boot frame, so a dose that came
+        #    due in the seconds after a restart was announced by the chirp and
+        #    by nothing on the panel. The "nothing has told us anything" case
+        #    still has a frame; it sits at the bottom, where it belongs, as the
+        #    resting state of a machine with nothing yet to say.
+        if now - self._boot_at < self.boot_dwell_s:
             return plan("boot", (health,), (boot_stage(health),), Level.REST)
 
         # 1. Will not dispense. Above the dose prompt, for the reason in the
@@ -622,10 +633,12 @@ class Presence:
         waiting = _field(health, "waiting", 0)
         announced = now - self._due_seen < self.dwell_s
         if (isinstance(waiting, int) and waiting > 0) or announced:
+            health = self._with_latched_dose(health)
             return plan("due", (health,),
                         (_field(health, "waiting_tray", None),
                          _field(health, "waiting_at", ""),
-                         _field(health, "waiting_frac", 0), waiting),
+                         _field(health, "waiting_frac", 0),
+                         _field(health, "waiting", 0)),
                         Level.ALERT)
 
         # 3. Something happened recently.
@@ -642,6 +655,14 @@ class Presence:
                          _field(health, "passphrase", "")),
                         Level.STANDING)
 
+        # 5a. Nothing is happening and nothing has been read yet. The resting
+        #     frame would be drawn entirely from empty fields — a status bar of
+        #     confident nothings and a hero with no dose and no clock — so the
+        #     boot frame stands in, which is the honest picture of a machine
+        #     that is up and has not yet taken a reading of itself.
+        if not _field(health, "known", False):
+            return plan("boot", (health,), (boot_stage(health),), Level.REST)
+
         # 5. Nothing is happening, which is still worth a screen: the next dose,
         #    the day so far, and where to find this machine on the network.
         next_at = _field(health, "next_at", "")
@@ -656,6 +677,52 @@ class Presence:
                      _field(health, "address", ""),
                      _field(health, "trays_loaded", 0)),
                     Level.REST)
+
+
+    def _with_latched_dose(self, health):
+        """Fill in the dose the event named, when the snapshot has not caught up.
+
+        `dose_due` arrives the instant the scheduler offers a dose; the `Health`
+        that knows about it is taken on the *next* tick, up to fifteen seconds
+        later. Between those two the screen used to draw `health.waiting_tray`,
+        which was still None — so the loudest frame this device has said tray
+        `?` at `--:--` for a quarter of a minute, while the chirp was already
+        calling somebody to come and read it.
+
+        The latch has held the right answer the whole time; this is what lets it
+        reach the glass. The snapshot still wins wherever it has an opinion,
+        because it is the reading that saw `awaiting_release` and this is only a
+        record of what was announced.
+        """
+        if self._due_tray is None:
+            return health
+        if _field(health, "waiting_tray", None) is not None:
+            return health
+        try:
+            from dataclasses import replace  # noqa: PLC0415
+
+            return replace(
+                health,
+                waiting_tray=self._due_tray,
+                waiting_at=self._due_at or _field(health, "waiting_at", ""),
+                waiting=max(1, _field(health, "waiting", 0) or 0),
+            )
+        except Exception:  # noqa: BLE001 - a stub Health in a test or selftest
+            # Never onto the scheduler thread, and never worth losing the frame
+            # over: the unfilled snapshot still draws, it just says `?`.
+            return health
+
+
+    def _with_latched_ssid(self, health):
+        """Put the SSID the supervisor just announced onto the snapshot."""
+        if not self._ev_ssid or _field(health, "ssid", ""):
+            return health
+        try:
+            from dataclasses import replace  # noqa: PLC0415
+
+            return replace(health, ssid=self._ev_ssid)
+        except Exception:  # noqa: BLE001 - a stub Health in a test or selftest
+            return health
 
     def _dwell_for(self, kind: str) -> float:
         return self.missed_dwell_s if kind == "missed" else self.dwell_s
@@ -689,6 +756,13 @@ class Presence:
             # get the machine onto WiFi never appeared.
             if not self._ev_ssid and wifi not in ("hotspot", "failed", "joining"):
                 return None
+            # The event's SSID wins over the snapshot's, for the reason above —
+            # and it has to reach the *screen*, not just this decision. The
+            # setup frame prints the name somebody is about to type into a
+            # phone, so a frame drawn from a snapshot that has not caught up is
+            # a frame with a blank where the network should be, which sends
+            # them hunting through a WiFi list for something that is not there.
+            health = self._with_latched_ssid(health)
             return (health,), (wifi, _field(health, "ssid", ""),
                                _field(health, "passphrase", ""))
         return None

@@ -173,16 +173,45 @@ def cpu_serial(cpuinfo: Path | str = Path("/proc/cpuinfo")) -> str | None:
     rather than raising — the firmware has to be runnable off-Pi for anyone to
     develop against it.
     """
+    serial = ""
     try:
         text = Path(cpuinfo).read_text(encoding="utf-8", errors="replace")
     except OSError:
-        return None
+        text = ""
 
     match = re.search(r"^Serial\s*:\s*([0-9a-fA-F]+)\s*$", text, re.MULTILINE)
-    if not match:
+    if match:
+        serial = match.group(1)
+    else:
+        # `/proc/cpuinfo` is not the only place, and on newer boards and
+        # kernels it is not a place at all: the `Serial` line comes from the
+        # ARM-specific cpuinfo printer, and on a 64-bit kernel — and on the
+        # Pi 5 regardless — it is simply absent. The device tree carries the
+        # same number and has on every Pi ever made.
+        #
+        # This matters more than a missing field usually would. Without a
+        # serial the firmware falls all the way through to the *development*
+        # identity, so a real device quietly announces `SnapCare-DEV0` with a
+        # published passphrase and a pairing code that is the same on every
+        # such machine — and the printed label on the case says something else
+        # entirely. The failure is a device nobody can pair, reported as a
+        # working one.
+        for node in ("/proc/device-tree/serial-number",
+                     "/sys/firmware/devicetree/base/serial-number"):
+            try:
+                # NUL-terminated in the device tree, and not always hex-clean.
+                raw = Path(node).read_bytes().split(b"\x00", 1)[0]
+            except OSError:
+                continue
+            candidate = raw.decode("ascii", "ignore").strip()
+            if re.fullmatch(r"[0-9a-fA-F]+", candidate or ""):
+                serial = candidate
+                break
+
+    if not serial:
         return None
 
-    serial = match.group(1).lower().lstrip("0")
+    serial = serial.lower().lstrip("0")
     # Some board revisions report all zeros. That is not an identity — every
     # such device would derive the same SSID and passphrase, so two of them in
     # one house could not be told apart or joined separately.

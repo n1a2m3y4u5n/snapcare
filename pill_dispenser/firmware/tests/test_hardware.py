@@ -65,7 +65,10 @@ class SpyScreens:
         self.painted = []
 
     def __getattr__(self, name):
-        def screen(canvas, *args):
+        # `theme` is keyword-only and swallowed: every real screen takes the
+        # packed palette, and what this spy is here to record is which frame was
+        # asked for and with what facts, not what colour it came out.
+        def screen(canvas, *args, theme=None):
             self.painted.append((name, args))
         return screen
 
@@ -122,9 +125,16 @@ def test_the_screen_says_which_tray_and_when(screens):
     indicator.dose_released(2)
     indicator.dose_missed(3, "08:00")
 
-    assert screens.painted[0] == ("due", (2, "08:00"))
-    assert screens.painted[1] == ("released", (2,))
-    assert screens.painted[2] == ("missed", (3, "08:00"))
+    # Every screen now leads with the whole snapshot and reads what it needs off
+    # it, rather than being handed loose scalars that can disagree with it. The
+    # facts asserted are the same two the ring could never say.
+    name, args = screens.painted[0]
+    assert name == "due"
+    assert (args[0].waiting_tray, args[0].waiting_at) == (2, "08:00")
+    assert screens.painted[1][0] == "released"
+    assert screens.painted[1][1][1] == 2
+    assert screens.painted[2][0] == "missed"
+    assert screens.painted[2][1][1:] == (3, "08:00")
 
 
 def test_a_datetime_never_reaches_a_screen_as_one(screens):
@@ -135,7 +145,8 @@ def test_a_datetime_never_reaches_a_screen_as_one(screens):
     so the conversion happens here."""
     indicator = FittedIndicator(display=FakeDisplay(), buzzer=None)
     indicator.dose_due(1, datetime(2026, 8, 1, 20, 5))
-    assert screens.painted[0] == ("due", (1, "20:05"))
+    name, args = screens.painted[0]
+    assert (name, args[0].waiting_tray, args[0].waiting_at) == ("due", 1, "20:05")
 
 
 def test_a_caller_that_does_not_know_the_time_still_gets_a_screen(screens):
@@ -144,8 +155,9 @@ def test_a_caller_that_does_not_know_the_time_still_gets_a_screen(screens):
     indicator = FittedIndicator(display=FakeDisplay(), buzzer=None)
     indicator.dose_due(1)
 
-    name, (tray, when) = screens.painted[0]
-    assert (name, tray) == ("due", 1)
+    name, args = screens.painted[0]
+    assert (name, args[0].waiting_tray) == ("due", 1)
+    when = args[0].waiting_at
     assert isinstance(when, str) and len(when) == 5 and when[2] == ":"
 
 
@@ -170,13 +182,16 @@ def test_the_setup_screen_carries_the_network_to_join(screens):
     indicator = FittedIndicator(display=FakeDisplay(), buzzer=None)
 
     indicator.network_needs_setup("SNAPCARE-V5XH")
-    assert screens.painted == [("network", ("SNAPCARE-V5XH",))]
+    assert len(screens.painted) == 1
+    name, args = screens.painted[0]
+    assert name == "network"
+    assert args[0].ssid == "SNAPCARE-V5XH"
 
     # And with nothing passed, this device's own permanent SSID rather than a
     # blank — the caller in network.py does not supply one.
     indicator.network_online()
     indicator.network_needs_setup()
-    assert screens.painted[-1][1][0].startswith(config.AP_SSID_PREFIX)
+    assert screens.painted[-1][1][0].ssid.startswith(config.AP_SSID_PREFIX)
 
 
 def test_the_network_hint_never_sounds(monkeypatch):

@@ -68,7 +68,7 @@ import threading
 from datetime import datetime
 
 from . import config, gpiochip, provisioning
-from .display import make_display, screens
+from .display import bar, make_display, screens, strip, theme
 from .display.canvas import Tone
 from .display.health import Health
 from .display.presence import Presence
@@ -96,47 +96,6 @@ def hhmm(when=None) -> str:
     return when
 
 
-class _Shifted:
-    """A canvas seen a pixel or two over. Everything else about it is the same.
-
-    This is what turns `Presence`'s burn-in drift from a number in a plan into
-    something that actually moves. An OLED left showing one static frame for
-    months keeps a permanent ghost of it, and the resting screen is on the glass
-    for twenty-three hours a day — so the whole layout steps slowly around a
-    handful of pixels, which is invisible to a person and is the difference
-    between an even panel and a shadow of a clock face burnt into it.
-
-    A proxy rather than an offset argument threaded through every screen: the
-    screens are the part of this package most likely to be edited by somebody
-    who has never heard of burn-in, and an offset they have to remember to
-    honour is one they will forget.
-    """
-
-    __slots__ = ("_canvas", "_dx", "_dy")
-
-    def __init__(self, canvas, dx: int, dy: int):
-        self._canvas = canvas
-        self._dx = dx
-        self._dy = dy
-
-    def __getattr__(self, name):
-        return getattr(self._canvas, name)
-
-    def pixel(self, x: int, y: int, value: int) -> None:
-        self._canvas.pixel(x + self._dx, y + self._dy, value)
-
-    def rect(self, x: int, y: int, w: int, h: int, value: int,
-             fill: bool = True) -> None:
-        # Forwarded rather than inherited, so the fast slice-assignment path in
-        # `Rgb565.rect` is not lost — a full-screen fill through `pixel` is
-        # about a second on a Pi 3B.
-        self._canvas.rect(x + self._dx, y + self._dy, w, h, value, fill)
-
-    def blit(self, x: int, y: int, rows, span: int, value: int,
-             scale: int = 1) -> None:
-        self._canvas.blit(x + self._dx, y + self._dy, rows, span, value, scale)
-
-
 class Indicator:
     """No-op base. Every method must be safe to call from any thread."""
 
@@ -151,6 +110,7 @@ class Indicator:
     def network_online(self) -> None: ...
     def blocked(self, kind: str) -> None: ...
     def boot(self) -> None: ...
+    def attention(self) -> None: ...
     def silence(self) -> None: ...
     def clear(self, tray: int | None = None, at=None) -> None: ...
     def close(self) -> None: ...
@@ -189,6 +149,9 @@ class LogIndicator(Indicator):
 
     def boot(self) -> None:
         log.info("indicator: the machine is starting up")
+
+    def attention(self) -> None:
+        log.debug("indicator: somebody is at the machine")
 
     def silence(self) -> None:
         log.info("indicator: chirp silenced; the screen stands")
@@ -336,8 +299,24 @@ class FittedIndicator(Indicator):
         #: octagon on the panel for every event until the daemon's first tick —
         #: the screen inventing a fault out of its own ignorance, which is the
         #: one thing the severity vocabulary must never do.
-        self._health = Health(dispensing=True)
-        self._level = -1
+        # `known=True` alongside the optimistic `dispensing`, and for the same
+        # reason. `known` means "a snapshot was taken and it worked" — it is a
+        # statement about the *reading*, and its False is what stops a failed
+        # snapshot rendering as a row of confident nothings. But this object
+        # existing at all is evidence the machine is up, and before the daemon's
+        # first tick nothing has said otherwise. Leaving it False put the boot
+        # frame under every event on a build that never calls `refresh` at all.
+        self._health = Health(dispensing=True, known=True)
+        #: The persistent surface and the three keys that decide how much of it
+        #: actually goes down the bus. See `_decide`.
+        self._canvas = None
+        self._bar_key = None
+        self._strip_key = None
+        self._night = False
+        self._panel_strikes = 0
+        #: The last plan painted, so a palette change can redraw the frame that
+        #: is up rather than dropping to the resting one.
+        self._last_plan = None
         self._alerting = threading.Event()
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -453,65 +432,131 @@ class FittedIndicator(Indicator):
         self._decide()
 
     def _decide(self) -> None:
-        plan = self.presence.tick(self._health)
-        if plan is None:
+        """Ask the policy what belongs on the panel, and push the least of it.
+
+        Three regions, three keys. The bar changes when a subsystem does, the
+        strip when the day does, and the hero when the machine's *state* does —
+        and those move at wildly different rates. A whole frame is 153,600 bytes
+        and 38 ms of bus; the bar's rows alone are 5.8 ms and the strip's 9.0.
+        On a machine sitting idle the overwhelmingly common event is that the
+        minute rolled over and nothing else, and that must not cost a full frame
+        on the loop that also has to hit a scheduled minute.
+        """
+        health = self._health
+        plan = self.presence.tick(health)
+        night = bool(getattr(plan, "night", self._night)) if plan else self._night
+
+        if not self.display:
             return
+        palette = theme.pack(self._surface(), night=night)
+        bar_key, strip_key = bar.key(health), strip.key(health)
+
+        if plan is None:
+            if night != self._night:
+                # Quiet hours began or ended, or somebody pressed something.
+                # The palette moved under every band, so this is one of about
+                # four full repaints a day.
+                self._repaint_last(health, palette, night)
+                return
+            if bar_key != self._bar_key:
+                self._partial(bar.draw, health, palette, 0, bar.BAR_H)
+                self._bar_key = bar_key
+            if strip_key != self._strip_key:
+                self._partial(strip.draw, health, palette,
+                              strip.STRIP_Y, strip.STRIP_H)
+                self._strip_key = strip_key
+            return
+
         screen_fn = getattr(screens, plan.screen, None)
         if screen_fn is None:
             log.error("the display policy asked for a screen that does not "
                       "exist: %r", plan.screen)
             return
-        self._brightness(plan.brightness)
-        self._paint(screen_fn, *plan.args, offset=plan.offset)
+        self._last_plan = plan
+        self._paint(screen_fn, *plan.args, palette=palette)
+        self._bar_key, self._strip_key, self._night = bar_key, strip_key, night
 
-    def _brightness(self, level: int) -> None:
-        """Map the policy's 0..255 onto whatever this panel can actually do.
+    def _repaint_last(self, health, palette, night: bool) -> None:
+        """Redraw whatever is up, in the palette it should now be in."""
+        plan = self._last_plan
+        screen_fn = getattr(screens, plan.screen, None) if plan else None
+        if screen_fn is not None:
+            self._paint(screen_fn, *plan.args, palette=palette)
+        self._bar_key, self._strip_key = bar.key(health), strip.key(health)
+        self._night = night
 
-        The OLED dims properly. The LCD's backlight is a bare GPIO on this
-        build, so it has two settings and the threshold is deliberately low: at
-        3 a.m. the question is whether somebody can see there is a dose waiting,
-        not whether the panel is comfortable to read a paragraph from.
+    def _surface(self):
+        """The canvas everything is drawn on, built once and kept.
+
+        Persistent rather than one per paint, and that is precisely what makes a
+        partial update legal: the rows a band repaint does not touch still hold
+        the last full frame, so pushing the bar's rows on their own leaves a
+        coherent picture on the glass instead of a strip floating over whatever
+        the panel's memory happened to contain.
         """
-        panel = self.display
-        if not panel or level == self._level:
-            return
-        self._level = level
-        try:
-            if hasattr(panel, "contrast"):
-                panel.contrast(level)
-            elif hasattr(panel, "backlight"):
-                panel.backlight(level > 0)
-        except Exception:  # noqa: BLE001 - a dim panel is not worth a traceback
-            log.debug("could not set the panel brightness")
+        if self._canvas is None:
+            self._canvas = self.display.new_canvas()
+        return self._canvas
 
-    def _paint(self, screen_fn, *args, offset: tuple[int, int] = (0, 0)) -> None:
-        """Draw one screen onto a fresh canvas and push it to the panel.
+    def _partial(self, band_fn, health, palette, y: int, height: int) -> None:
+        """Redraw one band and send only its rows."""
+        with self._panel:
+            if not self.display:
+                return
+            try:
+                canvas = self._surface()
+                band_fn(canvas, health, palette)
+                pusher = getattr(self.display, "show_rect", None)
+                ok = (pusher(canvas, 0, y, canvas.width, height) if pusher
+                      else self.display.show(canvas))
+            except Exception:  # noqa: BLE001 - never onto the scheduler tick
+                log.exception("the screen failed; carrying on without it")
+                self.display = None
+                return
+            self._strike(ok)
 
-        Every state goes through here, and the whole frame is redrawn each time
-        rather than patched. That is the cheap option on both panels — a full
-        repaint is about 12 ms of drawing against a transfer that dominates it —
-        and it removes the failure where a screen keeps a stale corner of the
-        previous state, which on this device would be last night's tray number
-        under this morning's colour.
+    def _paint(self, screen_fn, *args, palette=None) -> None:
+        """Draw a whole frame and push it.
 
-        A panel that fails is dropped, not retried. Whatever went wrong with an
-        SPI write or an I2C address is not going to be different in twenty
-        seconds, and a repaint that raises on every scheduler tick would turn a
-        cosmetic fault into a device that stops dispensing. The pills still come
-        out; the machine just goes quiet in the room, and says so on its status
-        page.
+        Redrawn rather than patched: the drawing is a few milliseconds against a
+        transfer that dominates it, and it removes the failure where a frame
+        keeps a stale corner of the previous one — which on this device would be
+        last night's tray number under this morning's colour.
         """
         with self._panel:
             if not self.display:
                 return
             try:
-                canvas = self.display.new_canvas()
-                screen_fn(_Shifted(canvas, *offset) if any(offset) else canvas,
-                          *args)
-                self.display.show(canvas)
+                canvas = self._surface()
+                screen_fn(canvas, *args, theme=palette)
+                ok = self.display.show(canvas)
             except Exception:  # noqa: BLE001
                 log.exception("the screen failed; carrying on without it")
                 self.display = None
+                return
+            self._strike(ok)
+
+    #: Consecutive refused frames before the panel is given up on.
+    #:
+    #: Neither driver *raises* on a write failure — `Ili9341.show` catches the
+    #: OSError, complains once and returns False — so before this existed a
+    #: panel whose ribbon had worked loose was never dropped, and `/api/status`
+    #: went on listing a screen that had not taken a pixel in a week. Three
+    #: rather than one, so that re-seating a header mid-run can still recover.
+    _PANEL_STRIKES = 3
+
+    def _strike(self, ok) -> None:
+        if ok is False:
+            self._panel_strikes += 1
+            if self._panel_strikes >= self._PANEL_STRIKES:
+                log.error(
+                    "the panel has refused %d frames in a row — dropping it. "
+                    "Doses will keep being offered and released with the screen "
+                    "dark; check the SPI header and the DC/RESET jumpers on "
+                    "pins 22 and 12.", self._panel_strikes)
+                self.display = None
+            return
+        self._panel_strikes = 0
 
     def dose_due(self, tray: int, when=None) -> None:
         log.info("indicator: green + chirp — tray %d is due, waiting for a release", tray)
@@ -604,6 +649,17 @@ class FittedIndicator(Indicator):
         """
         log.info("indicator: starting up")
         self._signal("boot")
+    def attention(self) -> None:
+        """Somebody is standing at the machine — touched it, or pressed it.
+
+        Wakes the panel to the day palette for `dim_after_s` and changes nothing
+        else. Deliberately not a screen of its own: a tap while a dose is due
+        must not replace the prompt with anything, and a tap when nothing is due
+        is somebody asking "are you alive, when is my next one" — which the
+        resting frame already answers, brightly, for free.
+        """
+        self._signal("touch")
+
     def silence(self) -> None:
         """Stop the chirp; leave the screen showing whatever it was showing.
 

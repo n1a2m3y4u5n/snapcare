@@ -1,378 +1,127 @@
 """One frame per state. This is the interface, and the rest is plumbing.
 
-What this file is for
----------------------
-The dispenser has five things to say about a dose, inherited from the LED ring
-it replaced, and a screen is only allowed to replace a ring if it keeps saying
-them the same way:
-
-    green   a dose is due — press the button, or release it in the app
-    blue    released — the pills are in the cup
-    amber   the dose went untaken, or its window closed
-    violet  a new schedule was accepted
-    cyan    put me on a WiFi network
-
-It also has three things to say about *itself* — is it alive, is it alright, is
-it reachable — which the ring could never say at all and which somebody walking
-over to the machine is usually there to ask. `idle`, `status` and `wifi` answer
-those, and between them they are what is on the panel for twenty-three hours of
-every day.
-
-The person these screens are drawn for cannot be assumed to read. So the colour
-carries the state, a shape carries the severity, a picture carries the subject,
-and the only text anywhere is a tray number, a clock, an SSID and an IP address.
-
-The temptation this file exists to resist is turning that into a text display.
-There is now a 320x240 panel with room for a paragraph, and a paragraph would be
-easier to write than `glyphs.PRESS`. It would also be invisible to the one
-person the whole project is built around. Nothing here renders a sentence.
-
-Where the shape goes, and why it is the frame
----------------------------------------------
-`shapes.py` gives every state a circle, a triangle or an octagon. On the OLED
-that shape is the *only* thing separating "fine" from "fetch somebody" from
-"nothing is coming out"; on the LCD it is redundant with the colour, and being
-redundant is the entire point — it is what keeps the machine legible to the one
-man in twelve who cannot use the colour.
-
-There were three places to put it: around the picture, beside it, or as a badge
-in a corner. It goes **around the picture**, and the picture shrinks to fit
-inside it. Three reasons, in order of weight:
-
-  A road sign is one object, not two. Everybody in front of this machine has
-  spent their life reading circles, triangles and octagons with a pictogram
-  inside them, and none of them has ever seen a stop sign with a small stop sign
-  in the corner. Severity and subject are one fact and the eye should collect
-  them in one saccade.
-
-  A badge is the first thing to disappear. From the far side of a room the
-  panel is a silhouette, and at that distance a corner badge sized to not crowd
-  anything is a smudge, while a frame around the picture is the outline of the
-  whole screen. Severity is exactly the thing that must survive being far away.
-
-  It costs the pictogram and that is the right way for the trade to cut. A hand
-  inside a circle is smaller than a hand alone. But if the pictogram is legible
-  and the severity is not, somebody reads "press the button" off a machine that
-  has stopped dispensing — and the octagon means the button will not do
-  anything.
-
-Two screens break the rule, and both breakages are arguments for it.
-
-  `network` puts the triangle *beside* the arcs rather than around them,
-  standing in the empty column the centred glyph leaves. That screen exists so
-  somebody can copy an SSID into a phone, the name owns the full width, and a
-  frame would have taken a third of it. The shape here is talking to whoever
-  walks past — "this is not finished" — not to the person typing.
-
-  When a sign is too small to hold its pictogram at scale 1, the pictogram steps
-  *outside* and stands next to it rather than the sign shrinking to accommodate
-  it. That is what happens on the 128x32 strip, where a triangle big enough to
-  read is a triangle with no room inside it. The sign never gives up size; the
-  picture moves.
-
-`blocked` is the one screen where the shape gets the whole panel. There is
-nothing else worth saying on it.
-
-Sizing, and why nothing is a constant
--------------------------------------
-The same code lays out 72x40, 128x32, 128x64 and 320x240, so every dimension is
-derived from `canvas.width` and `canvas.height`. Glyphs are 16x16 scaled by
-whole numbers; text is 5x7 scaled by whole numbers; the layout picks the largest
-scale that fits and centres what is left over. A hardcoded pixel here is a
-screen that is correct on the OLED on the bench and wrong on the LCD.
-
-Two things branch, and only these two:
-
-  `canvas.width` and `canvas.height` decide how much room there is, which is
-  arithmetic.
-
-  `canvas.colour` decides how much of the width the *picture* gets. On the
-  ILI9341 the background is already green or amber, so the sign is a caption for
-  a message the panel has delivered; on the SSD1306 there is one ink and the
-  sign **is** the message, so it gets an extra eighth of the width.
-
-Nothing branches on which panel is fitted, and nothing may: the drivers are
-interchangeable and a screen that knows which one it is on will be wrong the
-first time somebody swaps a panel.
-
-What 72x40 does not get
+The frame is three bands
 -----------------------
-A 72x40 OLED has 2,880 pixels and a 16x16 glyph is a tenth of them, so a screen
-that tries to show everything there shows nothing. What is dropped is written at
-each screen, but the rule behind every one of those decisions is the same: the
-shape stays, the number stays, the *reassurance* goes. A healthy subsystem is
-the first thing off the panel, because a row of ticks tells nobody anything they
-could not have assumed.
+Every screen in this file draws the whole panel, and it draws it in the same
+three pieces:
+
+    bar     y   0..35    what the machine is        `bar.py`
+    hero    y  36..183   the one thing that matters  here
+    strip   y 184..239   the whole day              `strip.py`
+
+Only the hero belongs to this file. That split is the design: the bar and the
+strip are *permanent* and say the same kind of thing on every frame, so a person
+learns where to look once, and the hero is the only part that changes shape. A
+frame is then read in one saccade — the hero says what is happening, and the two
+bands are there when you want them and ignorable when you do not.
+
+What replaced the pictograms, and why
+-------------------------------------
+The old frames drew a picture inside a shape: a hand pressing a button inside a
+circle, a cup, a cross inside a triangle. Rendered on the actual panel they did
+not work. A 16x16 glyph scaled to fit inside a triangle's usable area is a
+smudge at any distance worth designing for, and the two that mattered most —
+a hand and a cup — were routinely read as a face and a skull.
+
+So the picture is gone and the shape is **solid**. A filled circle at r=29 is
+2629 lit pixels against a triangle's 1127; that mass difference survives being
+across a room and survives being unable to see colour at all, which a 2 px
+outline never did. What the pictogram was carrying — *which* subsystem, *which*
+dose — is now carried by the numbers beside it, which are legible because
+`numerals.py` draws them rather than scaling a 5x7 bitmap eight times.
+
+The hero's large numerals are always a time
+-------------------------------------------
+In every resting state, the biggest thing on the panel is a clock. That is the
+invariant this file is built on and it is also the empty-state answer: there is
+no frame where the largest element is not a time, so there is never a moment
+where the panel looks like it has nothing to say.
+
+The wall clock lives in the **bar** and the dose lives in the **hero**. They are
+told apart by position, permanently, which is why the resting hero shows the
+next dose's time rather than the current time — the old firmware made the
+current time the large element, which was right when there was nowhere else to
+put it and is wrong now that there is.
+
+Two screens lead with a number instead of a time, and both are deliberate:
+`released` shows the tray, because "which cup" is the entire message once the
+pills are out; `schedule` shows the tray count, because that is the one fact
+that tells whoever sent the plan that the plan that landed is the plan they
+meant.
+
+Text
+----
+Still almost none, and the rule has not moved: the person in front of this
+machine cannot be assumed to read. The whole device's word inventory is
+`SNAPCARE`, `PASSWORD`, an SSID, a passphrase, an IPv4 address and a `DD-MM` —
+and every one of those is a thing somebody is about to type or dial, never a
+sentence explaining the machine to them. `tests/test_display.py` enforces it by
+spying on `font.draw`, and that test is meant to stay exactly as it is.
 
 Failure
 -------
-These functions are total. Any `tray`, `when`, `ssid` or `health` — including
-`None`, an empty string, an int, or a value the app should never have sent —
-lands on a frame rather than an exception, because these are called from the
-scheduler's own thread and a dispenser that stops dispensing because an SSID had
-an emoji in it is a worse bug than an ugly screen. Where something genuinely
-does not fit, the picture wins and the text is dropped: the picture is what the
-person reads.
+These functions are total. Any `health`, any tray, any time — including `None`,
+an empty string, a 40-character SSID and values the app should never have sent —
+lands on a frame rather than an exception. They are called from the scheduler's
+own thread, and a dispenser that stops dispensing because an SSID had an emoji
+in it is a far worse bug than an ugly screen.
 """
 from __future__ import annotations
 
-from typing import NamedTuple
-
-from . import font, glyphs, shapes
-from .canvas import Canvas, Paint, Tone
-from .health import Health, shape_for
+from . import (PANEL_HEIGHT, PANEL_WIDTH, bar, font, numerals, qr_art, shapes,
+               strip, theme as theme_mod)
+from .canvas import Canvas, Tone
+from .health import Health
 from .shapes import Shape
 
-__all__ = ["due", "released", "missed", "schedule", "network", "idle",
-           "status", "wifi", "blocked"]
+__all__ = ["due", "released", "missed", "schedule", "network", "blocked",
+           "idle", "boot"]
 
+W = PANEL_WIDTH
+H = PANEL_HEIGHT
 
-class _Box(NamedTuple):
-    """A rectangle to lay something out inside. Absolute canvas coordinates."""
+#: The universal margin. A twentieth of the short side — the panel sits behind a
+#: bezel in the printed case and ink that runs to the framebuffer's edge is ink
+#: with a slice missing once it is screwed down.
+PAD = H // 20                                   # 12
 
-    x: int
-    y: int
-    w: int
-    h: int
+HERO_Y = bar.BAR_H                              # 36
+HERO_H = strip.STRIP_Y - bar.BAR_H              # 148
 
+#: Where the hero's left column (severity, tray) ends and its right column
+#: (the time) begins. Three tenths: enough for a 59 px shape with air, and it
+#: leaves the time the two thirds it needs to be read from a doorway.
+SPLIT = W * 3 // 10                             # 96
 
-#: Which of three shapes outranks which. Used in exactly one place — see
-#: `_worst` — and it is worth naming rather than inlining, because getting the
-#: order wrong is a screen that shows a circle on a machine that will not open a
-#: tray.
-_SEVERITY = {Shape.SAFE: 0, Shape.CAUTION: 1, Shape.AVOID: 2}
+#: The severity shape's radius, and the tray digit's height under it. Sized so
+#: that shape + gap + digit is centred in the band with the margin intact.
+HERO_R = (HERO_H - 2 * PAD - PAD // 2) // 4     # 29
+TRAY_H = 2 * HERO_R                             # 58
 
+HERO_RX = SPLIT                                 # 96
+HERO_RW = W - PAD - SPLIT                       # 212
 
-def _worst(*candidates: Shape) -> Shape:
-    """The most severe of several shapes.
-
-    **No screen may show a shape gentler than the machine's own.** The `wifi`
-    screen has a local opinion — the radio is associated, so a circle — and the
-    machine may still be refusing to dispense for a reason that has nothing to
-    do with the radio. Showing the local opinion there would put a circle in
-    front of somebody standing at a device that will not give them their
-    medication, which is the one lie this vocabulary must never tell.
-    """
-    return max(candidates, key=_SEVERITY.__getitem__)
-
-
-# ── measurement ─────────────────────────────────────────────────────────────
-
-def _margin(canvas: Canvas) -> int:
-    """Border kept clear on all four sides.
-
-    A sixteenth of the short side, which is 4 px on the 128x64 OLED and 15 px on
-    the LCD. It is not only taste: both panels are mounted behind a bezel in the
-    printed case, and a glyph that runs to the edge of the framebuffer is a
-    glyph with a slice missing once it is screwed down.
-    """
-    return max(1, min(canvas.width, canvas.height) // 16)
-
-
-def _gap(canvas: Canvas) -> int:
-    """Space between two things that are not the same thing."""
-    return max(1, min(canvas.width, canvas.height) // 24)
-
-
-def _inner(canvas: Canvas) -> _Box:
-    margin = _margin(canvas)
-    return _Box(margin, margin, canvas.width - 2 * margin, canvas.height - 2 * margin)
-
-
-def _fit(width: int, height: int, unit_w: int, unit_h: int) -> int:
-    """Largest whole-number scale at which `unit_w` x `unit_h` fits.
-
-    Returns 0 when it does not fit even once, which every caller treats as
-    "draw nothing" rather than "draw it anyway and let it spill". Clipping is
-    silent on both surfaces — `Canvas.pixel` discards out-of-range writes — so a
-    layout that overflows produces a plausible-looking screen with a corner
-    sliced off, and that is exactly the class of bug nobody reports.
-    """
-    if unit_w <= 0 or unit_h <= 0:
-        return 0
-    return max(0, min(width // unit_w, height // unit_h))
-
-
-# ── the sign: a shape with a picture inside it ──────────────────────────────
-
-def _sign_plan(canvas: Canvas, height: int, avail_w: int, shape: Shape,
-               art: tuple[int, ...] | None) -> tuple[int, int, int]:
-    """`(side, inside scale, outside scale)` — the arithmetic a sign is laid out by.
-
-    Split out from `_sign` because two callers need the width *before* anything
-    is drawn, to centre the sign on a screen that is not built in columns. Doing
-    the sums twice in two places is how a sign ends up half a pixel off centre
-    on one panel and nobody can say why.
-    """
-    side = min(height, avail_w)
-    radius = (side - 1) // 2
-    # Under seven pixels across there is no shape left to tell apart — a circle,
-    # a triangle and an octagon are the same smudge — so nothing is drawn at all.
-    # A blank corner is honest; a smudge that could be any of the three is not.
-    if radius < 3:
-        return 0, 0, 0
-    if art is None:
-        return side, 0, 0
-
-    # `fill_hint` is the shape's own answer to "how much of my bounding box can
-    # something live in", and it is deliberately not shaded down by the outline
-    # thickness here. Doing that costs a whole scale step at several panel sizes
-    # — a 32 px hand becomes a 16 px hand on the 128x64 OLED — and buys a one
-    # pixel gap nobody can see. The glyphs are drawn with light corners so the
-    # small overlap lands on empty rows.
-    room = shapes.fill_hint(shape) * 2 * radius // 100
-    inside = _fit(room, room, glyphs.SPAN, glyphs.ROWS)
-    if inside:
-        return side, inside, 0
-    # It will not go in. The sign keeps its size and the picture steps outside —
-    # see the module docstring. On a panel with no room beside it either, the
-    # picture is simply gone and the shape stands alone, which still says the
-    # only thing that must survive.
-    return side, 0, _fit(avail_w - side - _gap(canvas), height,
-                         glyphs.SPAN, glyphs.ROWS)
-
-
-def _sign_width(canvas: Canvas, height: int, avail_w: int, shape: Shape,
-                art: tuple[int, ...] | None) -> int:
-    """What `_sign` will take, without drawing it. For centring a sign on a
-    screen that has no data column to push it against."""
-    side, _inside, outside = _sign_plan(canvas, height, avail_w, shape, art)
-    if not side:
-        return 0
-    return side + (_gap(canvas) + glyphs.SPAN * outside if outside else 0)
-
-
-def _sign(canvas: Canvas, x: int, y: int, height: int, avail_w: int,
-          shape: Shape, art: tuple[int, ...] | None, paint: Paint,
-          struck: bool = False) -> int:
-    """Draw the road sign at `(x, y)`, `height` tall. Returns the width it took.
-
-    The sign is always square and always as large as the shorter of the height
-    it was given and the width it was allowed. It never shrinks to accommodate
-    what is drawn inside it, which is the whole discipline here: given the
-    choice between a smaller triangle with a cross in it and a full-size
-    triangle with the cross beside it, the second is the one somebody can read
-    from a doorway.
-    """
-    side, inside, outside = _sign_plan(canvas, height, avail_w, shape, art)
-    if not side:
-        return 0
-
-    radius = (side - 1) // 2
-    # One-pixel outlines on the OLED, two or three on the LCD. A thick outline on
-    # a 128x64 panel eats the space the tray number needs; a thin one at r=90 on
-    # the LCD is a hairline that vanishes across a room.
-    thickness = max(1, radius // 24)
-    cx, cy = x + side // 2, y + height // 2
-    shapes.draw(canvas, cx, cy, radius, shape, paint.fg, thickness)
-
-    if inside:
-        # A triangle's usable area sits below its centre, and `shapes.draw` has
-        # already nudged the triangle itself down by an eighth of its radius.
-        # Without matching that here the pictogram floats up into the apex and
-        # its top corners cross the sloping sides.
-        drop = radius // 5 if shape is Shape.CAUTION else 0
-        _stamp(canvas, cx - glyphs.SPAN * inside // 2,
-               cy + drop - glyphs.ROWS * inside // 2, art, paint, inside, struck)
-        return side
-    if outside:
-        _stamp(canvas, x + side + _gap(canvas),
-               y + (height - glyphs.ROWS * outside) // 2, art, paint,
-               outside, struck)
-        return side + _gap(canvas) + glyphs.SPAN * outside
-    return side
-
-
-def _stamp(canvas: Canvas, x: int, y: int, art: tuple[int, ...], paint: Paint,
-           scale: int, struck: bool = False) -> None:
-    """One glyph, optionally negated by a bar drawn across it.
-
-    The bar is two blits and not one. Drawing it in the ink alone lands it on
-    pixels that are already lit wherever the glyph is solid — over `CLOUD` or
-    `BATTERY` it disappears entirely, and the screen then shows a clean picture
-    meaning the opposite of what it says. `SLASH_MASK` cuts a gutter in the
-    background colour first, so the bar reads on any glyph and on either
-    polarity, including the inverted `due` frame where the background is lit.
-    """
-    canvas.blit(x, y, art, glyphs.SPAN, paint.fg, scale)
-    if struck:
-        canvas.blit(x, y, glyphs.SLASH_MASK, glyphs.SPAN, paint.bg, scale)
-        canvas.blit(x, y, glyphs.SLASH, glyphs.SPAN, paint.fg, scale)
-
-
-def _sign_column(canvas: Canvas, eighths: int, shape: Shape,
-                 art: tuple[int, ...] | None, paint: Paint) -> tuple[_Box, int]:
-    """Sign on the left, everything else on the right. `(data box, sign width)`.
-
-    `eighths` is the sign's share of the width on a colour panel; a monochrome
-    panel gives it one more eighth, for the reason in the module docstring. What
-    the sign does not use goes to the numbers rather than sitting empty — on a
-    128x32 strip that slack is half the panel.
-    """
-    inner = _inner(canvas)
-    gap = _gap(canvas)
-    share = eighths if canvas.colour else eighths + 1
-    avail = max(0, inner.w * share // 8 - gap)
-    used = _sign(canvas, inner.x, inner.y, inner.h, avail, shape, art, paint)
-    return (_Box(inner.x + used + gap, inner.y, inner.w - used - gap, inner.h),
-            used)
-
-
-# ── the things that put ink down ────────────────────────────────────────────
-
-def _frame(canvas: Canvas, tone: Tone) -> Paint:
-    """Clear the canvas to the tone's background and hand back its ink.
-
-    On the LCD this is the colour of the state. On the OLED it is usually black
-    — except for DUE, where `Mono1` asks for an inverted frame, and the whole
-    panel lights up with the sign and the tray number cut out of it. That is the
-    only way one bit can be shouted, and a dose being due is the one thing worth
-    shouting about.
-    """
-    paint = canvas.tone(tone)
-    canvas.fill(paint.bg)
-    return paint
-
-
-def _glyph(canvas: Canvas, box: _Box, art: tuple[int, ...], value: int,
-           scale: int = 0) -> int:
-    """Centre a glyph in `box` as large as whole-number scaling allows."""
-    scale = scale or _fit(box.w, box.h, glyphs.SPAN, glyphs.ROWS)
-    if scale < 1:
-        return 0
-    width, height = glyphs.SPAN * scale, glyphs.ROWS * scale
-    canvas.blit(box.x + (box.w - width) // 2, box.y + (box.h - height) // 2,
-                art, glyphs.SPAN, value, scale)
-    return scale
-
-
-def _line(canvas: Canvas, box: _Box, y: int, text: str, value: int,
-          scale: int) -> None:
-    """One line of text, centred across `box`, at an absolute `y`."""
-    font.draw(canvas, box.x + (box.w - font.text_width(text, scale)) // 2, y,
-              text, value, scale)
+#: The secondary line under the time: an address, or a date. Two rows of the
+#: 5x7 face, which is an arm's-length element and is honest about it.
+SEC_H = 2 * font.HEIGHT                         # 14
 
 
 # ── turning whatever the caller had into something drawable ─────────────────
+#
+# These four are unchanged from the frames this file replaced. They were the
+# part that was already right: every one of them exists because a screen that
+# nobody can read must never be *wrong*, and each has a specific wrong answer it
+# was written to refuse.
 
 def _tray_text(tray: object) -> str:
     """A tray number, at most two characters.
 
-    Two, not more: the firmware tops out at eight trays and the number has to be
-    the largest thing on the screen. Anything unexpected becomes `?`, which is
-    in the font and is honest — better a question mark than a screen that says
-    with total confidence that tray `None` is due.
+    Anything unexpected is `?`, which is in both faces and is honest.
+    Truncating instead — which is what `str(tray)[:2]` did — turns tray 123 into
+    a confident, unmissable `12`, and somebody opens hopper 12.
     """
     if isinstance(tray, int) and not isinstance(tray, bool) and 0 <= tray <= 99:
         return str(tray)
-    # Everything else is `?`, including an int outside the range and a string
-    # that happens to look like a number.
-    #
-    # Truncating instead — which is what `str(tray)[:2]` did — turns tray 123
-    # into a confident, unmissable "12" and tray -1 into "-1". The point of this
-    # function is that a screen nobody can read must not be *wrong*, and a
-    # plausible wrong number is worse than a question mark: somebody takes the
-    # pills out of hopper 12.
     return "?"
 
 
@@ -380,8 +129,8 @@ def _clock_text(when: object) -> str:
     """A time of day as `HH:MM`, from any of the shapes this project uses.
 
     `sc1` carries times as `'0800'` on the wire and as minutes-since-midnight in
-    the scheduler, the web API hands back `'08:00'`, and a caller with nothing to
-    say passes `None`. All four arrive here and none of them may raise.
+    the scheduler, the web API hands back `'08:00'`, and a caller with nothing
+    to say passes `None`. All four arrive here and none of them may raise.
     """
     if when is None:
         return ""
@@ -394,695 +143,537 @@ def _clock_text(when: object) -> str:
 
 
 def _name_text(value: object) -> str:
-    """An SSID or an IP address, cleaned up. Empty when there is nothing to say.
-
-    Capped at twenty-one characters, which is the longest run the 5x7 font will
-    put across the LCD at a size worth reading. Longer than that and the choice
-    is between a smear and a truncation; a truncation at least keeps the front
-    of the string, and whoever set a thirty-character SSID can read the rest off
-    the router.
-    """
+    """An SSID or an address, cleaned up. Empty when there is nothing to say."""
     return "" if value is None else str(value).strip().upper()[:21]
 
 
-def _wrap(text: str, width: int) -> tuple[list[str], int]:
-    """Break a name or an address into at most two lines, and pick a scale.
+def _field(health: object, name: str, default=""):
+    """One field off the snapshot, tolerating its absence.
 
-    Broken at its own separator where it has one, so `SNAPCARE-V5XH` becomes
-    `SNAPCARE-` and `V5XH` and `192.168.1.42` becomes `192.168.` and `1.42`,
-    rather than being sliced mid-token. Somebody copying either of those into a
-    phone has to be able to see that the hyphen or the dot is there.
-    """
-    if not text:
-        return [], 1
-    per_line = max(1, (width + 1) // font.ADVANCE)
-    if len(text) <= per_line:
-        return [text], max(1, width // font.text_width(text, 1))
-
-    # As close to the middle as a separator allows, and where two breaks are
-    # equally central the longer first line wins — `192.168.` over `192.` puts
-    # more of the address where somebody's eye starts.
-    best: tuple[tuple[int, int], str, str] | None = None
-    for index, character in enumerate(text):
-        if character not in "-_ .":
-            continue
-        head, tail = text[:index + 1], text[index + 1:]
-        if not tail or len(head) > per_line or len(tail) > per_line:
-            continue
-        rank = (abs(2 * len(head) - len(text)), -len(head))
-        if best is None or rank < best[0]:
-            best = (rank, head, tail)
-    if best is not None:
-        return [best[1], best[2]], 1
-
-    half = (len(text) + 1) // 2
-    return [text[:half][:per_line], text[half:][:per_line]], 1
-
-
-def _text_block(text: str, width: int, max_h: int) -> tuple[list[str], int, int, int]:
-    """`(lines, scale, leading, height)` for a name laid out `width` wide."""
-    lines, scale = _wrap(text, width)
-    if not lines:
-        return [], 0, 0, 0
-    # Capped, because a short name would otherwise be scaled until it filled the
-    # panel on its own and left no room for the picture beside it.
-    scale = max(1, min(scale, max_h // (len(lines) * font.HEIGHT)))
-    lead = max(1, scale) if len(lines) > 1 else 0
-    return (lines, scale, lead,
-            len(lines) * font.HEIGHT * scale + (len(lines) - 1) * lead)
-
-
-def _draw_text_block(canvas: Canvas, box: _Box, y: int, lines: list[str],
-                     scale: int, lead: int, value: int) -> None:
-    for line in lines:
-        _line(canvas, box, y, line, value, scale)
-        y += font.HEIGHT * scale + lead
-
-
-def _dose(canvas: Canvas, box: _Box, tray: object, when: object, value: int,
-          cap_h: int = 0) -> None:
-    """The tray number, as big as the box allows, with its time underneath.
-
-    One invariant decides this layout: **the tray number is never narrower than
-    the time under it.** Sizing each to its own box is arithmetically correct
-    and visually backwards, because `08:00` at scale 1 is 29 px wide against 5
-    for a single digit — fit them independently and the biggest thing on a
-    screen whose whole job is to say which drawer to open turns out to be the
-    clock. So the time starts as large as a third of the height allows and is
-    given up a step at a time until the number outweighs it.
-
-    It is given up down to scale 1 and no further. A panel too cramped to
-    satisfy the invariant — the 128x32 strip is one — keeps a small time next to
-    a small number rather than a large number and nothing, because both facts
-    badly presented beat one fact well presented on a screen somebody is
-    standing right in front of. The time only disappears when it will not fit at
-    all.
-
-    `cap_h` caps the number's height in pixels, for the screens where the sign
-    is the message and the number is the footnote.
-    """
-    number = _tray_text(tray)
-    time_text = _clock_text(when)
-    number_w = font.text_width(number, 1)
-    time_w = font.text_width(time_text, 1)
-    gap = _gap(canvas)
-
-    time_scale = _fit(box.w, box.h // 3, time_w, font.HEIGHT)
-    while True:
-        lead = gap if time_scale else 0
-        number_scale = _fit(box.w, box.h - font.HEIGHT * time_scale - lead,
-                            number_w, font.HEIGHT)
-        if cap_h:
-            number_scale = min(number_scale, cap_h // font.HEIGHT)
-        if time_scale <= 1 or number_scale * number_w >= time_scale * time_w:
-            break
-        time_scale -= 1
-
-    number_h = font.HEIGHT * number_scale
-    time_h = font.HEIGHT * time_scale
-    top = box.y + (box.h - number_h - lead - time_h) // 2
-    if number_scale:
-        _line(canvas, box, top, number, value, number_scale)
-    if time_scale:
-        _line(canvas, box, top + number_h + lead, time_text, value, time_scale)
-
-
-# ── reading a Health without ever trusting it ───────────────────────────────
-
-#: The canonical problem slugs, and the spellings that mean each of them. Health
-#: is built by another module and read here, and matching loosely means a caller
-#: that says `untrusted_clock` where the contract says `clock` gets the right
-#: picture instead of a silent fallback to the prohibition sign.
-_PROBLEMS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("clock", ("clock", "time", "rtc")),
-    ("gpio", ("gpio", "pigpio", "lgpio", "chip")),
-    ("wifi", ("wifi", "network", "wlan")),
-    ("relay", ("relay", "cloud", "server")),
-    ("cell", ("cell", "battery", "coin")),
-    ("trays", ("tray", "hopper")),
-)
-
-#: What picture stands for each problem, and whether it is struck through. The
-#: empty slug — nothing wrong — is a plain clock, because the resting question a
-#: machine has to answer is "are you awake and do you know what time it is";
-#: `clock` is the same picture with a bar across it, which is the difference
-#: between a device that is keeping time and one that is guessing.
-#:
-#: `gpio` is the prohibition sign rather than a struck-through anything: there
-#: is no picture of "the chip this board talks to its motors through" that
-#: anybody would recognise, and inventing one would be worse than admitting the
-#: machine has simply stopped.
-_STANDING: dict[str, tuple[tuple[int, ...], bool]] = {
-    "": (glyphs.CLOCK, False),
-    "clock": (glyphs.CLOCK, True),
-    "gpio": (glyphs.BARRED, False),
-    "wifi": (glyphs.WIFI, True),
-    "relay": (glyphs.CLOUD, True),
-    "cell": (glyphs.BATTERY, True),
-    "trays": (glyphs.PILL, True),
-}
-
-#: The four WiFi states, as a picture. `hotspot` is struck through rather than
-#: shown as a healthy link, which is the judgement call in this table: a machine
-#: sitting on its own setup network is *not on a network*, and the honest thing
-#: for the status row to say is that the link is missing. It costs the row the
-#: ability to distinguish "on my own hotspot" from "off the air entirely" — the
-#: `wifi` screen is where those two separate, because one of them has an SSID
-#: under it and the other has nothing.
-_WIFI_ART: dict[str, tuple[tuple[int, ...], bool]] = {
-    "online": (glyphs.WIFI, False),
-    "joining": (glyphs.WIFI_LOW, False),
-    "hotspot": (glyphs.WIFI, True),
-    "offline": (glyphs.WIFI, True),
-}
-
-#: And as a shape. Only `online` is a circle: `joining` and `hotspot` both mean
-#: somebody still has something to do, which is what `shapes.FOR_TONE` already
-#: says about `Tone.NETWORK`, and this table is deliberately consistent with it
-#: rather than inventing a second opinion about the same fact.
-_WIFI_SHAPE: dict[str, Shape] = {
-    "online": Shape.SAFE,
-    "joining": Shape.CAUTION,
-    "hotspot": Shape.CAUTION,
-    "offline": Shape.CAUTION,
-}
-
-
-def _problem(health: Health) -> str:
-    slug = str(getattr(health, "problem", "") or "").strip().lower()
-    if not slug:
-        return ""
-    for canonical, needles in _PROBLEMS:
-        if any(needle in slug for needle in needles):
-            return canonical
-    return slug
-
-
-def _wifi_state(health: Health) -> str:
-    """One of the four states, or `''` when the field says something else.
-
-    An unrecognised value is treated as offline everywhere below rather than as
-    online. That is the direction the error has to point: claiming a link that
-    is not there sends somebody looking for the dispenser at an address nothing
-    answers on, and they blame their router.
-    """
-    state = str(getattr(health, "wifi", "") or "").strip().lower()
-    return state if state in _WIFI_ART else ""
-
-
-def _shape_of(health: Health) -> Shape:
-    """The machine's own shape, from the contract in `health.py`.
-
-    Wrapped because this is called on the scheduler's thread, from a screen, on
-    a `Health` that a selftest or a stub may have built by hand with a field
-    missing. `shape_for` is not the risk; the snapshot handed to it is. A
-    dispenser that stops dispensing because a status screen could not decide
-    what shape to draw would be the worst bug in this file.
+    Not defensiveness for its own sake: these run on the scheduler's thread, and
+    a `Health` that gains or loses a field in a refactor has to produce a
+    slightly wrong screen rather than a device that stops dispensing.
     """
     try:
-        return shape_for(health)
-    except Exception:  # noqa: BLE001 - a screen may not reach the tick
-        return Shape.CAUTION
+        value = getattr(health, name, default)
+    except Exception:  # noqa: BLE001 - a foreign object with a __getattr__
+        return default
+    return default if value is None and default != "" else value
 
 
-def _standing(health: Health) -> tuple[tuple[int, ...], bool]:
-    """The picture for whatever is standing. Unknown slugs get the barred sign,
-    which claims nothing beyond "stopped" and is therefore never wrong."""
-    return _STANDING.get(_problem(health), (glyphs.BARRED, False))
+
+def _palette(canvas: Canvas, theme: dict | None) -> dict:
+    """The palette to draw with.
+
+    Every screen takes `theme` as a keyword and every screen can be called
+    without it. `indicators` passes the packed palette it already holds — which
+    is how the night substitution reaches the glass — and a test, a selftest or
+    a bench script that just wants to see a frame gets the day palette without
+    having to know that `theme` exists.
+    """
+    return theme_mod.pack(canvas) if theme is None else theme
 
 
-def _next_dose_text(health: Health) -> str:
-    tray = getattr(health, "next_tray", None)
-    when = _clock_text(getattr(health, "next_at", ""))
-    if tray is None or not when:
-        return ""
-    return f"{_tray_text(tray)} {when}"
+# ── the hero ────────────────────────────────────────────────────────────────
+
+def _flood(canvas: Canvas, theme: dict, colour: str) -> None:
+    """Fill the hero band, and only the hero band.
+
+    The bar and the strip keep their own dark surfaces on every alert frame.
+    Flooding the whole panel would be louder, and it would cost the two things
+    the person needs *while* the panel is shouting: which subsystem is at fault,
+    and what else is owed today.
+    """
+    canvas.rect(0, HERO_Y, W, HERO_H, theme[colour])
 
 
-def _footer_plan(canvas: Canvas, inner: _Box, text: str) -> tuple[int, int, int]:
-    """`(height, pill scale, text scale)` for the next-dose line, or zeroes.
+def _hero_shape(canvas: Canvas, shape: Shape, value: int, *,
+                with_tray: bool) -> None:
+    """The solid severity shape in the left column.
 
-    A third of the panel at most, and it gives up its pill before it gives up
-    its numbers: on a 128x32 strip there is no room for a 16 px glyph without
-    pushing the clock off the panel, and the tray and the time are the facts.
+    Centred on the band when it stands alone, and lifted to make room when a
+    tray number is stacked under it — so a frame with no tray does not leave a
+    hole where the digit would have been.
+    """
+    stack = (2 * HERO_R + 1) + PAD + TRAY_H if with_tray else 2 * HERO_R + 1
+    top = HERO_Y + (HERO_H - stack) // 2
+    shapes.fill(canvas, SPLIT // 2, top + HERO_R, HERO_R, shape, value)
+
+
+def _hero_tray(canvas: Canvas, tray: object, value: int) -> None:
+    stack = (2 * HERO_R + 1) + PAD + TRAY_H
+    top = HERO_Y + (HERO_H - stack) // 2 + 2 * HERO_R + 1 + PAD
+    text = _tray_text(tray)
+    numerals.draw(canvas, SPLIT // 2 - numerals.text_width(text, TRAY_H) // 2,
+                  top, TRAY_H, text, value)
+
+
+def _hero_time(canvas: Canvas, text: str, value: int, *,
+               secondary: str = "", secondary_value: int | None = None) -> None:
+    """The right column: a time as large as it will go, and an optional line.
+
+    The size is fitted rather than fixed. A hardcoded height is a clock that is
+    correct for `08:00` and clipped for a caller that hands over something
+    longer — and clipping is silent on this surface, so the bug ships as a
+    plausible-looking screen with a digit sliced off.
     """
     if not text:
-        return 0, 0, 0
-    gap = _gap(canvas)
-    width = font.text_width(text, 1)
-    pill = _fit(inner.w - gap, inner.h // 3, glyphs.SPAN + width, glyphs.ROWS)
-    text_scale = pill or _fit(inner.w, inner.h // 3, width, font.HEIGHT)
-    return (glyphs.ROWS * pill if pill else font.HEIGHT * text_scale,
-            pill, text_scale)
-
-
-def _draw_footer(canvas: Canvas, inner: _Box, text: str, plan: tuple[int, int, int],
-                 paint: Paint) -> None:
-    height, pill, text_scale = plan
-    if not height:
         return
-    gap = _gap(canvas)
-    y = inner.y + inner.h - height
-    span = font.text_width(text, text_scale)
-    span += glyphs.SPAN * pill + gap if pill else 0
-    x = inner.x + (inner.w - span) // 2
-    if pill:
-        canvas.blit(x, y, glyphs.PILL, glyphs.SPAN, paint.fg, pill)
-        x += glyphs.SPAN * pill + gap
-    font.draw(canvas, x, y + (height - font.HEIGHT * text_scale) // 2,
-              text, paint.fg, text_scale)
+    size = numerals.fit(text, HERO_RW, HERO_H // 2, floor=24)
+    block = size + (PAD // 2 + SEC_H if secondary else 0)
+    top = HERO_Y + (HERO_H - block) // 2
+    numerals.draw_centred(canvas, HERO_RX, top, HERO_RW, size, text, value)
+    if secondary:
+        _small_centred(canvas, HERO_RX, top + size + PAD // 2, HERO_RW,
+                       secondary,
+                       value if secondary_value is None else secondary_value, 2)
+
+
+def _small_centred(canvas: Canvas, x: int, y: int, width: int, text: str,
+                   value: int, scale: int) -> None:
+    font.draw(canvas, x + (width - font.text_width(text, scale)) // 2, y,
+              text, value, scale)
+
+
+def _wrapped(canvas: Canvas, x: int, y: int, width: int, text: str, value: int,
+             scale: int, lines: int = 2) -> int:
+    """Lay `text` into `width`, breaking at its own separators. Returns the y
+    it ended at.
+
+    Sized to the column rather than to a character count, because the column's
+    width depends on how many modules this device's QR happens to need — and a
+    string laid out against an assumed width is a string sliced off at the
+    bezel. Broken at a hyphen or a dot where there is one, so somebody copying
+    `SNAPCARE-V5XH` into a phone can see that the hyphen is there.
+    """
+    per_line = max(1, (width + scale) // (font.ADVANCE * scale))
+    remaining = text
+    for index in range(lines):
+        if not remaining:
+            break
+        if len(remaining) <= per_line:
+            head, remaining = remaining, ""
+        else:
+            cut = max((remaining.rfind(sep, 1, per_line + 1)
+                       for sep in "-_. "), default=-1)
+            cut = cut + 1 if cut > 0 else per_line
+            head, remaining = remaining[:cut], remaining[cut:]
+        _small_centred(canvas, x, y + index * (font.HEIGHT * scale + scale),
+                       width, head, value, scale)
+    return y + lines * (font.HEIGHT * scale + scale)
+
+
+def _fit_scale(text: str, width: int, ceiling: int, lines: int = 1) -> int:
+    """The largest whole scale at which `text` fits `width` over `lines` rows.
+
+    Wrapping is part of the fit, not something done afterwards. Sizing the
+    string as though it had to be one line and then wrapping it anyway is how
+    `SNAPCARE-V5XH` ended up at scale 1 in a column with room for two
+    comfortable rows at scale 2 — legible on a bench under a lamp, and not at
+    all at arm's length in a hallway, which is where this screen is read.
+    """
+    # A string with no separator in it has no token a break could hide, so the
+    # clean-break preference below simply does not apply to it — a passphrase
+    # is twelve characters of noise and breaking it at character seven costs
+    # nothing. Without this the rule fired on the one scale small enough to put
+    # it on a single line, and a passphrase somebody has to read off the glass
+    # came out three times smaller than it needed to be.
+    separable = any(sep in text for sep in "-_. ")
+
+    fits = clean = 0
+    for scale in range(max(1, ceiling), 0, -1):
+        per_line = max(1, (width + scale) // (font.ADVANCE * scale))
+        if len(text) > per_line * lines:
+            continue
+        fits = fits or scale
+        if separable and not clean and (len(text) <= per_line
+                                        or _breaks_cleanly(text, per_line, lines)):
+            clean = scale
+
+    # A clean break beats a larger character, but only when there is one to
+    # have. A passphrase is twelve characters with no separator in it and can
+    # never break cleanly, so it takes the largest size that fits and breaks
+    # wherever it must — which is right: there is no token there to hide.
+    return clean or fits or 1
+
+
+def _breaks_cleanly(text: str, per_line: int, lines: int) -> bool:
+    """Whether `text` wraps into `lines` rows breaking only at separators."""
+    remaining = text
+    for _ in range(lines):
+        if not remaining:
+            return True
+        if len(remaining) <= per_line:
+            return True
+        cut = max((remaining.rfind(sep, 1, per_line + 1) for sep in "-_. "),
+                  default=-1)
+        if cut <= 0:
+            return False
+        remaining = remaining[cut + 1:]
+    return not remaining
+
+
+def _big_number(canvas: Canvas, text: str, value: int) -> None:
+    """One number given the whole right column — `released` and `schedule`.
+
+    These two are the frames where a *count* is the message rather than a time,
+    so the number gets the height a clock would have had and there is no clock
+    on the frame to be confused with it.
+    """
+    size = numerals.fit(text, HERO_RW, HERO_H - 2 * PAD, floor=40)
+    numerals.draw_centred(canvas, HERO_RX, HERO_Y + (HERO_H - size) // 2,
+                          HERO_RW, size, text, value)
+
+
+def _frame(canvas: Canvas, health: Health, theme: dict, *,
+           focal: object = None) -> None:
+    """The two permanent bands. Every screen but `network` starts here."""
+    bar.draw(canvas, health, theme)
+    strip.draw(canvas, health, theme, focal=focal)
 
 
 # ── the dose states ─────────────────────────────────────────────────────────
 
-def due(canvas: Canvas, tray: object, when: object) -> None:
-    """A dose is due. Green, a circle, and on the OLED the whole panel is lit.
+def due(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
+    """A dose is waiting on a press. Green, a solid circle, black ink.
 
-    This is the screen that has to be identifiable from the other side of a
-    room, before anything on it can be resolved: a lit rectangle with a dark
-    circle at the left and one enormous digit in the middle. Every other screen
-    in this file is dark-on-light on the OLED and has either no digit or a
-    smaller one, so the silhouette alone is the signal.
+    The ink is black and that is a measurement, not a preference: white on the
+    green this screen used to use is 2.25:1, which is below even the large-text
+    floor, on the single most important frame the product has. Black on the
+    green it uses now is 10.79:1.
 
-    The shape is a circle and that is `shapes.FOR_TONE`'s judgement, not this
-    file's: a dose waiting for you is the machine doing its job, and spending
-    the caution level on the most ordinary event in the device's life would
-    teach somebody to ignore triangles.
+    The shape is a circle — `shapes.FOR_TONE`'s judgement, not this file's. A
+    dose waiting for you is the machine doing its job, and spending the caution
+    level on the most ordinary event in the device's life would teach somebody
+    to ignore triangles three times a day forever.
 
-    The picture is a finger coming down onto a button, not a pill. "There are
-    pills" is not an instruction; "press this" is, and the button it draws is
-    the one physically on the front of the machine, ten centimetres from the
-    panel. The app's release button does the same job for whoever is not in the
-    room, and needs no picture here.
+    Nothing is passed in. Everything on this frame comes off `health`, which is
+    what fixes a real bug: the old screen took a loose tray and time, and
+    releasing one of two waiting doses painted a green panel naming the tray of
+    a dose twelve hours away.
     """
-    paint = _frame(canvas, Tone.DUE)
-    data, _used = _sign_column(canvas, 3, shapes.FOR_TONE[Tone.DUE],
-                               glyphs.PRESS, paint)
-    _dose(canvas, data, tray, when, paint.fg)
+    theme = _palette(canvas, theme)
+    _flood(canvas, theme, "DUE")
+    ink = theme["BLACK"]
+    _hero_shape(canvas, Shape.SAFE, ink, with_tray=True)
+    _hero_tray(canvas, _field(health, "waiting_tray", None), ink)
+
+    when = _clock_text(_field(health, "waiting_at"))
+    _hero_time(canvas, when or "--:--", ink)
+    _window_bar(canvas, health, theme, ink)
+
+    # Two doses owed reads as a stacked silhouette rather than a count. A digit
+    # here would be the third number on the frame and the one nobody needs: the
+    # instruction is the same either way, and the strip already shows both.
+    waiting = _field(health, "waiting", 0)
+    if isinstance(waiting, int) and waiting >= 2:
+        stack = (2 * HERO_R + 1) + PAD + TRAY_H
+        top = HERO_Y + (HERO_H - stack) // 2
+        shapes.fill(canvas, SPLIT // 2 - HERO_R // 4, top + HERO_R - HERO_R // 4,
+                    HERO_R, Shape.SAFE,
+                    canvas.mix(theme["DUE"], theme["BLACK"], 45))
+        shapes.fill(canvas, SPLIT // 2, top + HERO_R, HERO_R, Shape.SAFE, ink)
+        _hero_tray(canvas, _field(health, "waiting_tray", None), ink)
+
+    _frame(canvas, health, theme, focal=when)
 
 
-def released(canvas: Canvas, tray: object) -> None:
-    """The pills are in the cup. Blue, and a circle.
+def _window_bar(canvas: Canvas, health: Health, theme: dict, ink: int) -> None:
+    """How much of the release window is left, as a bar rather than a number.
 
-    Here the picture is the message and the number is the footnote, which is why
-    the cup gets an extra eighth of the width on the panels wide enough to
-    notice. The person does not need to be told to do anything — the doing is
-    already done — they need to be told where to look, and that is a cup.
+    This is the first time the deadline has ever reached the panel. It matters
+    because the offer is not open-ended — an untapped dose is recorded missed
+    when the hour runs out — and until now the only place that hour existed was
+    in the log afterwards.
 
-    No time. The dose is on the table now; the minute it was scheduled for is of
-    no use to anyone standing in front of it, and a time on this screen is one
-    more thing to mistake for the due screen.
+    Quantised to tenths on purpose. A bar driven by the real remainder would
+    change on every tick and force a 38 ms repaint four times a minute for a
+    difference nobody can see; ten steps in an hour is a bar that visibly moves
+    and costs ten frames.
     """
-    paint = _frame(canvas, Tone.RELEASED)
-    data, used = _sign_column(canvas, 4, shapes.FOR_TONE[Tone.RELEASED],
-                              glyphs.CUP, paint)
-    # Capped to the sign's own size, so the footnote cannot end up taller than
-    # the thing it is a footnote to — which is what happens if the number is
-    # allowed to fill a column with no time line to share it with.
-    _dose(canvas, data, tray, None, paint.fg, cap_h=used)
+    frac = _field(health, "waiting_frac", 0)
+    if not isinstance(frac, int) or not 0 < frac <= 10:
+        return
+    top = HERO_Y + HERO_H - PAD - SEC_H // 2
+    used = HERO_RW * (10 - frac) // 10
+    canvas.rect(HERO_RX, top, HERO_RW, SEC_H // 2, ink)
+    canvas.rect(HERO_RX + used + 1, top + 1, HERO_RW - used - 2, SEC_H // 2 - 2,
+                theme["DUE"])
 
 
-def missed(canvas: Canvas, tray: object, when: object) -> None:
-    """The dose went untaken, or its window closed. Amber, and a triangle.
+def released(canvas: Canvas, health: Health, tray: object = None, *,
+             theme: dict | None = None) -> None:
+    """The pills are in the cup. Blue, a solid circle, and the tray number huge.
 
-    Deliberately the same skeleton as `due` — sign left, tray number and time
-    right, in the same places — so that the eye lands on the same spot and finds
-    the same two facts. What changed is the colour, the shape and the picture,
-    and on the OLED the change from a lit panel with a circle on it to a dark one
-    with a triangle is about as loud as one bit gets.
+    The one frame that leads with a tray rather than a time. The person does not
+    need to be told to do anything — the doing is done — they need to be told
+    *which drawer to open*, and on an eight-hopper machine that is the whole
+    message. A time here would be one more thing to mistake for the due screen.
 
-    A triangle large enough to read has less than half the usable area of a
-    circle the same size, so below about 128x64 the cross will not go inside it.
-    On the 128x32 strip it steps out and stands beside the triangle, which is the
-    general rule in `_sign`; at 72x40 there is no room beside it either and the
-    cross is simply gone. That is the honest loss at that size, and it is the
-    right one — amber and a triangle beside a tray number is still unambiguous,
-    and a triangle shrunk until a cross fits in it is not a triangle.
-
-    The time is the one it was due at, not the time now. This screen is a record
-    of something that did not happen, and the useful question it answers for
-    whoever walks in later is "which one did I miss".
+    No tick glyph, and none is wanted: the strip in this same frame has already
+    turned that dose's mark blue, which is a better acknowledgement than a
+    symbol because it is the memory the person will consult tomorrow appearing
+    at the moment it becomes true.
     """
-    paint = _frame(canvas, Tone.MISSED)
-    data, _used = _sign_column(canvas, 3, shapes.FOR_TONE[Tone.MISSED],
-                               glyphs.CROSS, paint)
-    _dose(canvas, data, tray, when, paint.fg)
+    theme = _palette(canvas, theme)
+    _flood(canvas, theme, "RELEASED")
+    ink = theme["TEXT"]
+    _hero_shape(canvas, Shape.SAFE, ink, with_tray=False)
+    _big_number(canvas, _tray_text(tray), ink)
+    _frame(canvas, health, theme)
 
 
-def schedule(canvas: Canvas, tray_count: object) -> None:
-    """A new schedule was accepted. Violet, and a circle.
+def missed(canvas: Canvas, health: Health, tray: object = None,
+           when: object = None, *, theme: dict | None = None) -> None:
+    """A dose went untaken, or its window closed. Amber, a solid triangle.
 
-    The tick is for the person: something arrived and the machine took it. The
-    count is for whoever is holding the phone that sent it, and it is the one
-    number that tells them the schedule they meant is the schedule that landed —
-    a QR that half-decoded is a QR that programs half the trays, and this is
-    where that shows up.
+    Deliberately the same skeleton as `due` — shape left, tray under it, time
+    right — so the eye lands in the same places and finds the same two facts.
+    What changed is the colour, the shape and the lightness: the two are 2.16x
+    apart in luminance now, where the frames this replaced were 1.12x apart and
+    therefore all but identical to somebody who cannot use the red-green
+    difference.
 
-    The small pill above the count exists so the number is read as "this many
-    drawers of pills" rather than as a tray number. Without it, a violet screen
-    with a large `3` on it is one glance away from the green screen with a large
-    `3` on it. On a panel too short for both, the pill goes and the count stays;
-    the tick has already carried the meaning.
+    The time is the one it was *due* at, not the time now. This frame is a
+    record of something that did not happen, and the useful question it answers
+    for whoever walks in later is "which one did I miss".
     """
-    paint = _frame(canvas, Tone.SCHEDULE)
-    data, _used = _sign_column(canvas, 4, shapes.FOR_TONE[Tone.SCHEDULE],
-                               glyphs.TICK, paint)
-
-    gap = _gap(canvas)
-    pill_scale = _fit(data.w, data.h // 3, glyphs.SPAN, glyphs.ROWS)
-    head = glyphs.ROWS * pill_scale + gap if pill_scale else 0
-    if pill_scale:
-        _glyph(canvas, _Box(data.x, data.y, data.w, head - gap),
-               glyphs.PILL, paint.fg, pill_scale)
-    _dose(canvas, _Box(data.x, data.y + head, data.w, data.h - head),
-          tray_count, None, paint.fg)
+    theme = _palette(canvas, theme)
+    _flood(canvas, theme, "MISSED")
+    ink = theme["BLACK"]
+    _hero_shape(canvas, Shape.CAUTION, ink, with_tray=True)
+    _hero_tray(canvas, tray, ink)
+    _hero_time(canvas, _clock_text(when) or "--:--", ink)
+    _frame(canvas, health, theme, focal=_clock_text(when))
 
 
-def network(canvas: Canvas, ssid: object) -> None:
-    """Waiting to be put on a WiFi network. Cyan, and a triangle to one side.
+def schedule(canvas: Canvas, health: Health, count: object = None, *,
+             theme: dict | None = None) -> None:
+    """A new plan was accepted. Violet, a solid circle, and the tray count.
 
-    The one screen where somebody genuinely has to read, so it is the one screen
-    laid out for reading: the SSID gets the full width and the largest whole
-    scale that keeps it on one line, and the arcs take whatever height is left
-    over. Stacked rather than side by side for exactly that reason — a picture in
-    a left-hand column would cost the name a third of its width, and the name is
-    about to be typed into a phone by somebody who cannot afford to guess a
-    character.
+    The count is for whoever is holding the phone that sent it: it is the one
+    number that says the schedule they meant is the schedule that landed, and a
+    QR that half-decoded is a QR that programs half the trays.
 
-    So this is the one screen where the shape is not a frame. It stands in the
-    empty column the centred arcs leave on the left, at whatever size that column
-    allows. It is talking to somebody who is walking past and is not the person
-    typing: *this machine is not finished yet.* Framing the arcs instead would
-    have shrunk them to a sixteenth of the panel to buy a shape that nobody in
-    the middle of typing a password is looking at anyway.
-
-    A name too long for one line is broken at its own separator where it has one,
-    so `SNAPCARE-V5XH` becomes `SNAPCARE-` and `V5XH` rather than being sliced
-    mid-token. A name too long even for two lines is truncated, which loses
-    information and is still better than an unreadable smear.
+    The stronger acknowledgement is underneath, in the strip, which has already
+    been rebuilt from the new plan — every mark a pending square at its new
+    time. Showing the plan beats counting it, and the count is still there.
     """
-    paint = _frame(canvas, Tone.NETWORK)
-    inner = _inner(canvas)
-    gap = _gap(canvas)
-
-    # `?` rather than nothing when the caller has no name: a setup screen with a
-    # blank where the network should be is a person hunting through a phone's
-    # WiFi list for something that is not there.
-    lines, scale, lead, text_h = _text_block(_name_text(ssid) or "?",
-                                             inner.w, inner.h // 3)
-    glyph_scale = _fit(inner.w, inner.h - text_h, glyphs.SPAN, glyphs.ROWS)
-    glyph_h = glyphs.ROWS * glyph_scale
-    space = max(0, min(gap, inner.h - glyph_h - text_h))
-
-    # Never above the margin, even on a panel too short for two lines of name:
-    # the top of an SSID is worth more than its bottom to somebody typing it.
-    top = max(inner.y, inner.y + (inner.h - glyph_h - space - text_h) // 2)
-    if glyph_scale:
-        _glyph(canvas, _Box(inner.x, top, inner.w, glyph_h), glyphs.WIFI,
-               paint.fg, glyph_scale)
-        flank = (inner.w - glyphs.SPAN * glyph_scale) // 2 - gap
-        _sign(canvas, inner.x, top, glyph_h, min(flank, glyph_h),
-              shapes.FOR_TONE[Tone.NETWORK], None, paint)
-    _draw_text_block(canvas, inner, top + glyph_h + space, lines, scale, lead,
-                     paint.fg)
-
-
-def blocked(canvas: Canvas, reason_kind: object) -> None:
-    """The device will not dispense. Amber, and an octagon across the panel.
-
-    This is the only screen where the shape gets everything, and it should be:
-    there is nothing else worth saying. No pills are coming out and no tray will
-    open until somebody fixes something, so a tray number would be a lie and a
-    time would be an irrelevance. An octagon as wide as the panel with one
-    picture in the middle of it is the whole message.
-
-    Two audiences, one frame. For the person in the room the octagon is the
-    message: fetch somebody. For whoever they fetch, the picture inside it says
-    which refusal this is — a clock nothing can vouch for, or a machine that
-    cannot reach its GPIO.
-
-    `reason_kind` is a slug and it is deliberately not rendered. Printing
-    `UNTRUSTED-CLOCK` across a panel would be the first sentence in this
-    firmware and it would be read by nobody who needed it. Slugs this does not
-    recognise get the prohibition sign, which claims nothing beyond "stopped".
-
-    The picture inside is *not* struck through the way the status screen strikes
-    it. The octagon has already negated everything on the screen, and a bar
-    across the clock as well reads as two refusals rather than one.
-
-    Amber is reused from `missed` rather than invented, because the five-colour
-    vocabulary is the thing the person already knows and a sixth colour would
-    have to be taught. The shape is what separates them now, which is exactly
-    what the shape is for.
-    """
-    paint = _frame(canvas, Tone.MISSED)
-    inner = _inner(canvas)
-    side = min(inner.w, inner.h)
-    _sign(canvas, inner.x + (inner.w - side) // 2, inner.y, inner.h, side,
-          Shape.AVOID, _cause(reason_kind), paint)
-
-
-def _cause(reason_kind: object) -> tuple[int, ...]:
-    """Which picture explains a refusal. Substring matched, so that
-    `clock`, `untrusted_clock` and `clock-untrusted` all land in the same place —
-    the caller of a status screen should not have to know the exact spelling to
-    get the right icon, and getting it wrong here is silent.
-    """
-    slug = str(reason_kind).strip().lower() if reason_kind is not None else ""
-    if "clock" in slug or "time" in slug or "rtc" in slug:
-        return glyphs.CLOCK
-    return glyphs.BARRED
+    theme = _palette(canvas, theme)
+    _flood(canvas, theme, "SCHEDULE")
+    ink = theme["BLACK"]
+    _hero_shape(canvas, Shape.SAFE, ink, with_tray=False)
+    _big_number(canvas, _tray_text(count), ink)
+    _frame(canvas, health, theme)
 
 
 # ── the machine's own states ────────────────────────────────────────────────
 
-def idle(canvas: Canvas, health: Health) -> None:
-    """Nothing is happening. What goes here is a real decision, so:
+def idle(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
+    """Nothing is happening, which is still worth a frame.
 
-    The obvious answer is a blank panel — it saves power and it is the only
-    thing that cannot burn into an OLED. It is the wrong answer. A dark panel is
-    indistinguishable from a dead device, and this project has already decided
-    once that that trade is unacceptable: the cyan "put me on a network" light
-    exists precisely because a dispenser sitting silently on its own hotspot
-    looked identical to one that was switched off. Making the resting state
-    invisible would reintroduce that, permanently, for the other twenty-three
-    hours of the day.
+    A blank panel would save power and is the only thing that cannot age a
+    screen, and it is the wrong answer: a dark panel is indistinguishable from a
+    dead device, and this project has already decided once that that trade is
+    unacceptable. So the resting frame answers the three questions somebody has
+    when they walk past and nothing is flashing — is it alive, is it all right,
+    and when is the next one — and it answers all three without them touching
+    anything.
 
-    So the resting screen answers the three questions somebody has when they
-    walk past and nothing is flashing: **is it alive, is it alright, and when is
-    the next one.**
+    The hero shows the **next dose**, not the current time. The bar has the wall
+    clock; putting a second clock in the hero would be two renderings of one
+    fact, and the dose is the thing the machine knows that the wall does not.
 
-    The sign answers the second, and it is why this screen now takes a `Health`
-    instead of three loose strings. Everything this machine can be wrong about
-    is silent — an untrusted clock, a dead backup cell, a relay it has not
-    reached in a week — and every one of them is a state in which the device
-    looks perfectly healthy and quietly gives somebody the wrong medication at
-    the wrong time. A circle on this screen twenty-three hours a day is what
-    makes a triangle worth noticing on the twenty-fourth.
-
-    The clock answers the first, and it answers it better than a heartbeat dot
-    would, because a wrong clock is the single most dangerous state this device
-    can be in — every dose it will ever give is scheduled against it. A time on
-    the wall that disagrees with the time on the panel is a fault anybody can
-    spot without knowing anything about the device. That is also why the current
-    time is the large element and the next dose is not: making the next dose
-    large would give the resting screen the same silhouette as the due screen,
-    and those two must never be confused.
-
-    The footer — a pill, a tray and a time — is for whoever is reading. It says
-    nothing to somebody who is not, which is correct: there is nothing for them
-    to do. When there is no next dose it is simply absent. An empty schedule is
-    not worth a sentence, and there is no sentence to write.
-
-    At 72x40 everything stays and nothing is large. That is the honest answer
-    there: a 68-pixel-wide drawable area holds a five-character clock at one
-    scale and no other, so shrinking the sign to grow the clock would buy
-    nothing at all.
+    The secondary line is the device's address whenever it has one, and it is
+    permanent. That is a fix rather than a decoration: Chrome on Android does no
+    mDNS, so those four numbers are the only way into the device's own page for
+    about half of everybody who tries — and the frame that used to show them was
+    part of a rotation that dropped it exactly when there was an address to
+    show.
     """
-    paint = _frame(canvas, Tone.IDLE)
-    inner = _inner(canvas)
-    gap = _gap(canvas)
+    theme = _palette(canvas, theme)
+    canvas.rect(0, HERO_Y, W, HERO_H, theme["INK"])
+    address = _name_text(_field(health, "address"))
 
-    footer_text = _next_dose_text(health)
-    plan = _footer_plan(canvas, inner, footer_text)
-    body_h = inner.h - (plan[0] + gap if plan[0] else 0)
-
-    art, struck = _standing(health)
-    used = _sign(canvas, inner.x, inner.y, body_h, inner.w * 2 // 5,
-                 _shape_of(health), art, paint, struck)
-    data = _Box(inner.x + used + gap, inner.y, inner.w - used - gap, body_h)
-
-    now = _clock_text(getattr(health, "now", ""))
-    scale = _fit(data.w, data.h, font.text_width(now, 1), font.HEIGHT) if now else 0
-    if scale:
-        _line(canvas, data, data.y + (data.h - font.HEIGHT * scale) // 2,
-              now, paint.fg, scale)
-
-    _draw_footer(canvas, inner, footer_text, plan, paint)
-
-
-def status(canvas: Canvas, health: Health) -> None:
-    """The whole machine, on one frame. What somebody walks over to look at.
-
-    `idle` says *something* is standing. This says *what*, without a word of
-    text: a row of the machine's three silent subsystems — the radio, the clock,
-    the relay — each of them a picture with a bar through it when it is not
-    working. A struck-through clock is the only way anybody has found to say
-    "nothing has vouched for the time" on a panel with one ink, and it is a
-    thing this device genuinely needs to be able to say, because a dispenser
-    running on a clock it invented at boot will hand out a Friday compartment on
-    a Tuesday and look perfectly healthy doing it.
-
-    The big sign is not redundant with that row. The row says which subsystem;
-    the sign says whether any of it stops the machine dispensing. Those are
-    different questions and people ask them in that order — "is it broken" then
-    "what is broken" — so the sign is on the left where the eye lands first.
-
-    A healthy machine puts a tick in the sign rather than the clock face `idle`
-    uses. The clock would be the third rendering of the clock on one frame —
-    inside the sign, in the row, and struck or not — and three copies of one
-    subject is how somebody ends up reading the wrong one. The tick is not in
-    the row and cannot be confused with anything in it.
-
-    Faults sort to the front of the row and the reassurance falls off the end.
-    On a 72x40 panel there is room for two pictures beside the sign and on a
-    128x32 strip there is room for three, so which two or three survive has to
-    be decided by something: it is decided by which ones are complaining. A row
-    of healthy pictures is the least informative thing that could occupy that
-    space, and it is the first thing dropped.
-
-    No current time here, deliberately. `idle` has the clock and this screen has
-    the clock *glyph*, and two different renderings of the same subject on one
-    frame is how somebody ends up reading the wrong one.
-    """
-    paint = _frame(canvas, Tone.IDLE)
-    inner = _inner(canvas)
-    gap = _gap(canvas)
-
-    footer_text = _next_dose_text(health)
-    plan = _footer_plan(canvas, inner, footer_text)
-    body_h = inner.h - (plan[0] + gap if plan[0] else 0)
-
-    art, struck = ((glyphs.TICK, False) if not _problem(health)
-                   else _standing(health))
-    used = _sign(canvas, inner.x, inner.y, body_h, inner.w * 2 // 5,
-                 _shape_of(health), art, paint, struck)
-    row = _Box(inner.x + used + gap, inner.y, inner.w - used - gap, body_h)
-
-    cells = _subsystems(health)
-    scale = _fit(row.w, row.h, glyphs.SPAN, glyphs.ROWS)
-    # Shrink until the whole row fits rather than showing two large pictures out
-    # of four — the value of this row is the comparison, and half a comparison
-    # is worse than none.
-    while scale > 1 and (row.w + gap) // (glyphs.SPAN * scale + gap) < len(cells):
-        scale -= 1
-    if scale:
-        step = glyphs.SPAN * scale + gap
-        shown = cells[:max(0, (row.w + gap) // step)]
-        if shown:
-            x = row.x + (row.w - (len(shown) * step - gap)) // 2
-            y = row.y + (row.h - glyphs.ROWS * scale) // 2
-            for cell_art, cell_struck in shown:
-                _stamp(canvas, x, y, cell_art, paint, scale, cell_struck)
-                x += step
-
-    _draw_footer(canvas, inner, footer_text, plan, paint)
-
-
-def _subsystems(health: Health) -> list[tuple[tuple[int, ...], bool]]:
-    """The row on the status screen: the radio, the clock, the relay, in that
-    order, with whatever else is standing appended and everything struck sorted
-    to the front."""
-    problem = _problem(health)
-    cells = [
-        _WIFI_ART.get(_wifi_state(health), (glyphs.WIFI, True)),
-        (glyphs.CLOCK, problem == "clock"),
-        (glyphs.CLOUD, problem == "relay"),
-    ]
-    if problem and problem not in ("clock", "relay", "wifi"):
-        cells.append(_STANDING.get(problem, (glyphs.BARRED, False)))
-    # Stable, so the three keep their order among themselves. Sorting on "not
-    # struck" puts the complaints first and lets the reassurance fall off the
-    # end of a narrow panel.
-    return sorted(cells, key=lambda cell: not cell[1])
-
-
-def wifi(canvas: Canvas, health: Health) -> None:
-    """Where the machine is on the network, and how to reach it.
-
-    The address is the reason this screen exists. Chrome on Android does no
-    mDNS, so `pilldispenser.local` fails for something like half of everybody
-    who tries it, and the four numbers on this panel are then the only way into
-    the device's own web page. That makes this the second screen in the file
-    that somebody genuinely has to read, and it is laid out for reading: the
-    address gets the full width on a panel tall enough to stack, and a column
-    two fifths of the way across on a strip that is not.
-
-    The sign is the state and the picture inside it is the same state again in
-    the other channel — full arcs for a joined network, one bar while it is
-    trying, arcs with a bar through them when there is nothing. On the OLED that
-    picture is all there is; on the LCD the cyan says it a third time. Somebody
-    who cannot see the difference between the pictures can still see the
-    difference between a circle and a triangle, which is the whole argument for
-    `shapes.py` in one screen.
-
-    A machine sitting on its own setup hotspot has no address, so this screen
-    shows the SSID instead — the same string `network` is showing, for the same
-    reason, to somebody who has arrived at this screen by pressing through the
-    menu rather than by plugging the machine in for the first time.
-
-    At 72x40 the address does not fit on one line — a full IPv4 address is 89
-    pixels of 5x7 font and the drawable width is 68 — so it is broken at a dot,
-    and the second line costs the sign enough height that the arcs no longer fit
-    inside it and end up beside it instead. The address wins that trade every
-    time: half an IP address is worth nothing at all, and this is the screen
-    somebody is looking at precisely because they are trying to type it.
-    """
-    state = _wifi_state(health)
-    # Cyan still means "the network wants something from you", so a joined
-    # machine is not cyan. Reusing the tone for the healthy case would spend the
-    # one colour this product has for "come and do something" on a screen where
-    # there is nothing to do.
-    paint = _frame(canvas, Tone.IDLE if state == "online" else Tone.NETWORK)
-    inner = _inner(canvas)
-    gap = _gap(canvas)
-
-    art, struck = _WIFI_ART.get(state, (glyphs.WIFI, True))
-    shape = _worst(_WIFI_SHAPE.get(state, Shape.CAUTION), _shape_of(health))
-    text = _reachable_text(health)
-
-    # Stack when the panel is tall enough for a picture above a line of text;
-    # otherwise columns. The 128x32 strip is the whole reason for the branch —
-    # stacked, its sign comes out twenty pixels across and holds nothing.
-    if inner.h * 5 >= inner.w * 2:
-        lines, scale, lead, text_h = _text_block(text, inner.w, inner.h // 3)
-        sign_h = inner.h - (text_h + gap if text_h else 0)
-        width = _sign_width(canvas, sign_h, inner.w, shape, art)
-        _sign(canvas, inner.x + (inner.w - width) // 2, inner.y, sign_h,
-              inner.w, shape, art, paint, struck)
-        _draw_text_block(canvas, inner, inner.y + sign_h + gap, lines, scale,
-                         lead, paint.fg)
+    upcoming = _next_upcoming(health)
+    if upcoming is not None:
+        _hero_shape(canvas, Shape.PENDING, theme["MARK_PENDING"], with_tray=True)
+        _hero_tray(canvas, upcoming.tray, theme["TEXT"])
+        _hero_time(canvas, _clock_text(upcoming.at), theme["TEXT"],
+                   secondary=address, secondary_value=theme["TEXT_DIM"])
+        _frame(canvas, health, theme, focal=upcoming.at)
         return
 
-    used = _sign(canvas, inner.x, inner.y, inner.h, inner.w * 2 // 5,
-                 shape, art, paint, struck)
-    box = _Box(inner.x + used + gap, inner.y, inner.w - used - gap, inner.h)
-    lines, scale, lead, text_h = _text_block(text, box.w, box.h)
-    _draw_text_block(canvas, box, box.y + (box.h - text_h) // 2, lines, scale,
-                     lead, paint.fg)
+    # Nothing left today. The shape loses its tray and re-centres, and the hero
+    # falls back to the wall clock — the panel still has a large time on it, and
+    # the strip underneath says whether the day is done or was never planned.
+    loaded = _field(health, "trays_loaded", 0)
+    if loaded:
+        _hero_shape(canvas, Shape.PENDING, theme["TEXT_MUTE"], with_tray=False)
+    else:
+        # No prescription at all: an outline, because solid means "we know" and
+        # this machine has nothing to know yet.
+        stack = 2 * HERO_R + 1
+        top = HERO_Y + (HERO_H - stack) // 2
+        shapes.draw(canvas, SPLIT // 2, top + HERO_R, HERO_R, Shape.PENDING,
+                    theme["TEXT_MUTE"], 2)
+    _hero_time(canvas, _clock_text(_field(health, "now")) or "--:--",
+               theme["TEXT"], secondary=address,
+               secondary_value=theme["TEXT_DIM"])
+    _frame(canvas, health, theme)
 
 
-def _reachable_text(health: Health) -> str:
-    """The address, or the setup network's name, or nothing.
+def _next_upcoming(health: Health):
+    """The next dose still to come today, off `health.day`.
 
-    Nothing is a real answer and is left blank rather than filled with a `?`.
-    An offline machine has no address, saying so with a punctuation mark would
-    invite somebody to try typing it, and the struck-through arcs above have
-    already said everything there is to say.
+    Read from the day rather than from `next_tray`/`next_at` so that the hero
+    and the strip cannot disagree about which dose is next — they are drawn from
+    one list, in one frame, and a panel that contradicts itself is worse than
+    one that says less.
     """
-    address = _name_text(getattr(health, "address", ""))
-    if address:
-        return address
-    if _wifi_state(health) == "hotspot":
-        return _name_text(getattr(health, "ssid", ""))
-    return ""
+    try:
+        for dose in health.day:
+            if dose.state == "upcoming":
+                return dose
+    except Exception:  # noqa: BLE001 - a hand-built Health in a test or selftest
+        return None
+    return None
+
+
+def blocked(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
+    """The machine will not open a tray. Red, and one octagon across the hero.
+
+    Red rather than the amber `missed` uses, and that is the one colour this
+    redesign adds. Amber used to mean both "a dose was missed" and "the machine
+    is stopped" — the two states the severity grammar exists to separate — and
+    the only thing telling them apart was a 2 px outline nobody can resolve
+    across a room. Red for stopped is the road-sign convention and it separates
+    the pair by hue *and* by lightness, with the triangle-against-octagon
+    silhouette as the third channel.
+
+    The bar stays, in full, and that is the point of making this a band takeover
+    rather than a screen takeover: the fix for every one of these faults is at
+    the other end of a browser, so a blocked machine must still be able to tell
+    somebody its address and whether it is on the network. The bar's forced-
+    fault chip names the subsystem, so the hero needs no caption and gets none.
+    """
+    theme = _palette(canvas, theme)
+    _flood(canvas, theme, "BLOCKED")
+    ink = theme["TEXT"]
+    radius = (HERO_H - 2 * PAD - SEC_H - PAD // 2) // 2
+    stack = (2 * radius + 1) + PAD // 2 + SEC_H
+    top = HERO_Y + (HERO_H - stack) // 2
+    shapes.fill(canvas, W // 2, top + radius, radius, Shape.AVOID, ink)
+
+    route = _name_text(_field(health, "address")) or _name_text(_field(health, "ssid"))
+    if route:
+        _small_centred(canvas, 0, top + 2 * radius + 1 + PAD // 2, W, route, ink, 2)
+    _frame(canvas, health, theme)
+
+
+def boot(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
+    """The machine has just come up, and says so before it knows anything.
+
+    The three things that follow this in the daemon — the web server, the radio,
+    the cloud link — take tens of seconds between them, and a person who has
+    just plugged the device in and is looking at a black panel concludes it is
+    dead and pulls the plug back out. This is the frame that stops that, and it
+    is also what a hard-restarted machine owes whoever is standing there: a
+    device that starts deliberately rather than one that flickers.
+
+    The bar is drawn normally and every field on it is empty, which is the
+    truth: seven dim icons and `--:--`. Nothing here is conditional on "are we
+    booting", so there is no second rendering of the machine's state to keep in
+    step with the first.
+    """
+    theme = _palette(canvas, theme)
+    canvas.rect(0, HERO_Y, W, HERO_H, theme["INK"])
+    _small_centred(canvas, 0, HERO_Y + HERO_H // 2 - 40, W, "SNAPCARE",
+                   theme["TEXT"], 4)
+
+    # Three squares that fill in as the machine gets its bearings. Wordless, and
+    # the only progress indication a device with no reader can give.
+    side, pitch = 20, 34
+    left = (W - (3 * pitch - (pitch - side))) // 2
+    stages = (bool(_field(health, "known", False)),
+              bool(_field(health, "now")),
+              str(_field(health, "wifi")) not in ("", "offline"))
+    for index, done in enumerate(stages):
+        canvas.rect(left + index * pitch, HERO_Y + HERO_H // 2 + 12, side, side,
+                    theme["OK"] if done else theme["RULE"])
+    _frame(canvas, health, theme)
+
+
+def network(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
+    """Put me on a WiFi network. The one frame that takes the whole panel.
+
+    Everything else here keeps the bar, and this does not, for one reason: a QR
+    that does not scan is a device that cannot be set up, and the 36 rows the
+    bar would take are the difference between a comfortable module size and a
+    marginal one. At this moment the radio's state is not a status item anyway —
+    it is the entire screen.
+
+    The passphrase is on the panel, which it never used to be. Without it the
+    frame names a network the person cannot join, which is a setup screen that
+    politely wastes their time. It protects a hotspot that only exists during
+    setup and is derived from the board's serial, so it is not a secret worth
+    trading a failed installation for.
+
+    A **failed join** turns the field red and puts the word `PASSWORD` on it.
+    That is the one place in this firmware where a word earns its cost: today a
+    wrong password and a device nobody has ever configured look identical in the
+    room, and the corrective action is specific and unguessable. Cyan there
+    would be the machine saying "nobody has set me up yet" to somebody who just
+    did.
+    """
+    theme = _palette(canvas, theme)
+    failed = str(_field(health, "wifi")).strip().lower() == "failed"
+    tone = "BLOCKED" if failed else "NETWORK"
+    ink = theme["TEXT"] if failed else theme["BLACK"]
+    canvas.rect(0, 0, W, H, theme[tone])
+
+    ssid = _name_text(_field(health, "ssid")) or "?"
+    passphrase = str(_field(health, "passphrase") or "").strip().upper()[:21]
+
+    matrix = qr_art.wifi_matrix(_field(health, "ssid"), _field(health, "passphrase"))
+    if matrix is None:
+        # No encoder on this card — `segno` is an optional apt package. The
+        # names alone still get somebody onto the network; they just have to
+        # type them.
+        _small_centred(canvas, 0, H // 2 - 44, W, ssid, ink, 3)
+        canvas.rect(PAD * 4, H // 2 - 8, W - PAD * 8, 2, ink)
+        if passphrase:
+            _small_centred(canvas, 0, H // 2 + 12, W, passphrase, ink, 3)
+        return
+
+    modules = len(matrix)
+    # The QR gets the height it can have, but never so much width that the
+    # names beside it stop fitting: a code nobody can read the password for is
+    # as useless as one that will not scan.
+    scale = max(qr_art.MIN_MODULE,
+                min((H - 2 * PAD) // modules, (W // 2) // modules))
+    size = modules * scale
+    qr_art.paint(canvas, PAD, (H - size) // 2, matrix, scale,
+                 theme["BLACK"], theme["WHITE"])
+
+    left = PAD + size + PAD
+    width = W - left - PAD
+    name_scale = _fit_scale(ssid, width, 3, lines=2)
+    y = _wrapped(canvas, left, PAD + 8, width, ssid, ink, name_scale)
+    canvas.rect(left + width // 6, y + 4, width - width // 3, 2, ink)
+    if passphrase:
+        pass_scale = _fit_scale(passphrase, width, 3, lines=2)
+        y = _wrapped(canvas, left, y + 14, width, passphrase, ink, pass_scale)
+    if failed:
+        # Sized to the column it has, not to a scale chosen on the bench. This
+        # is the one word on the frame that has to be read, and a clipped
+        # `PASSWORI` would be worse than no word at all.
+        word_scale = _fit_scale("PASSWORD", width, 3)
+        _small_centred(canvas, left, H - PAD - font.HEIGHT * word_scale, width,
+                       "PASSWORD", ink, word_scale)
+
+
+#: `Tone` is re-exported because `indicators.py` still speaks in tones when it
+#: decides who owns the screen, and importing it from here keeps that module
+#: from reaching into `canvas` for one enum.
+_ = Tone

@@ -55,6 +55,7 @@ from .network import Supervisor
 from .server import serve_forever
 from .servo import TrayServos, make_backend, servo_backends
 from .store import Store
+from .touch import TouchRelease
 
 log = logging.getLogger("snapcare")
 
@@ -94,6 +95,13 @@ class Daemon:
         # `headless` covers `make run` on a laptop, where claiming GPIO 24 would
         # fail anyway and the log line about it is noise.
         self.button = None if headless else TakeDoseButton(self._button_pressed)
+        # The screen, as the control. This build fits no physical switch, so a
+        # tap anywhere on the glass is the take-dose action — the same
+        # `_button_pressed` and therefore the same `Dispenser.release`, because
+        # there is one path by which a tray opens and one set of rules around
+        # it, whether the tap came from a phone in another country, a thumb on
+        # a button, or a finger on the panel.
+        self.touch = None if headless else TouchRelease(self._touch_pressed)
         # Which mode the radio is in, and the whole of the join flow. Given the
         # indicator so that the room can say "I am not on a network yet", and
         # given the cloud link so that coming back onto the WiFi collapses a
@@ -149,6 +157,23 @@ class Daemon:
         for event in released:
             log.info("button: tray %d released for the %s dose",
                      event["tray"], event["time"])
+
+    def _touch_pressed(self) -> None:
+        """Somebody tapped the screen. Release what is due, and wake the panel.
+
+        The wake is the difference from the button, and it is why this is not
+        simply `self._button_pressed`. A tap is also how a person asks the
+        machine to be readable — at three in the morning, standing over it —
+        so the panel comes out of its night palette for a while whether or not
+        there was a dose to release. Pressing it when nothing is owed is not a
+        mistake to be corrected; it is somebody asking "are you alive, when is
+        my next one", which the resting screen already answers.
+        """
+        try:
+            self.dispenser.indicator.attention()
+        except Exception:  # noqa: BLE001 - a palette is never worth a traceback
+            log.debug("could not wake the panel on a touch")
+        self._button_pressed()
 
     def _show(self) -> None:
         """Hand the panel a fresh view of the whole machine.
@@ -322,6 +347,8 @@ class Daemon:
         # reach a half-closed servo.
         if self.button:
             self.button.close()
+        if self.touch:
+            self.touch.close()
         self.dispenser.close()
         # The DS1302 holds its three lines for the life of the process — it is a
         # singleton precisely so that nothing closes them mid-transfer — so this
@@ -365,6 +392,19 @@ def main(argv: list[str] | None = None) -> int:
                         help="print the label values as JSON and exit")
     parser.add_argument("--drop", type=int, metavar="TRAY",
                         help="sweep one tray once and exit — for checking wiring")
+    parser.add_argument("--display-test", action="store_true",
+                        help="drive the panel through a visible sequence and say "
+                             "what a dark screen means — for a display that will "
+                             "not come up")
+    parser.add_argument("--display-hz", type=int, default=None, metavar="HZ",
+                        help="with --display-test, try a different SPI clock "
+                             "(halving it is the first thing to try on a "
+                             "speckled or dead panel)")
+    parser.add_argument("--display-backlight", type=int, default=None,
+                        metavar="GPIO",
+                        help="with --display-test, drive the panel's LED pin "
+                             "from this BCM GPIO instead of assuming it is "
+                             "tied to 3V3")
     parser.add_argument("--selftest", action="store_true",
                         help="commission an assembled machine: check what can be "
                              "checked, ask about what only eyes and ears can "
@@ -402,6 +442,13 @@ def main(argv: list[str] | None = None) -> int:
         print("(for the app, once the device is on the home WiFi. "
               "It is derived from this board and never changes.)")
         return 0
+
+    if args.display_test:
+        from .display.bench import run as run_display_test  # noqa: PLC0415
+
+        return run_display_test(interactive=not args.auto_only,
+                                speed_hz=args.display_hz,
+                                backlight=args.display_backlight)
 
     if args.selftest:
         from .selftest import run as run_selftest  # noqa: PLC0415

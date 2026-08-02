@@ -463,9 +463,9 @@ def _ask_shape(report: Report, name: str, expected: Shape, lead: str) -> None:
         return
     if _blank(answer):
         report.add(name, FAIL, "no shape at all",
-                   "the shape is the only severity channel the mono panel has, "
-                   "and it is half of what the colour panel says — a screen "
-                   "without one leaves a person guessing how bad this is")
+                   "the shape is half the severity channel and the half that "
+                   "survives colour blindness — a screen without one leaves "
+                   "roughly one man in twelve guessing how bad this is")
         return
     said = _shape_said(answer)
     if said is expected:
@@ -482,59 +482,37 @@ def _ask_shape(report: Report, name: str, expected: Shape, lead: str) -> None:
                    f"so the screen says {_SHAPE_MEANS[said]!r} when it means "
                    f"{_SHAPE_MEANS[expected]!r}",
                    "check FOR_TONE in display/shapes.py against what this state "
-                   "paints — the shape and the state have come apart, and on the "
-                   "OLED that is the whole message")
+                   "paints — the shape and the state have come apart, and the "
+                   "shape is what a person who cannot use the colour is reading")
 
 
-def _report_detection(report: Report, display, answered: int | None) -> None:
-    """Whether anything at all established that this panel is really there.
+def _report_detection(report: Report, display) -> None:
+    """Say, unconditionally, that nothing here has established a screen exists.
 
-    This is the finding the self-test used to have no way of stating, and it is
-    the reason the check was reported as "only testing the LCD". Four-line SPI
-    has no MISO: the ILI9341 driver opens `/dev/spidev0.0`, claims DC and RESET,
-    writes a full initialisation sequence and reports a healthy 320x240 panel
-    with nothing whatever on the end of the ribbon. The OLED cannot do that — it
-    has to acknowledge 0x3C or 0x3D before a byte moves — so on a build running
-    the write-only panel with nothing answering on I2C, **no evidence of a
-    screen exists anywhere in this program**, and every answer below is the only
-    evidence there will ever be.
+    This is the finding the self-test used to have no way of stating, and with
+    one panel left it is no longer conditional on anything. Four-line SPI has no
+    MISO: the driver opens the device node, claims DC and RESET, writes a full
+    initialisation sequence and reports a healthy 320x240 panel with nothing
+    whatever on the end of the ribbon. Every frame after that is accepted just
+    as cheerfully.
 
-    Reported as a WARN rather than a FAIL because an LCD-only machine is a
-    perfectly good machine and this is its normal state. What must not happen
-    again is it going unsaid.
+    So there is no probe to run and no evidence to gather, and inventing one
+    would be worse than admitting it — the questions below, asked of somebody
+    looking at the glass, are the only evidence that will ever exist.
+
+    A WARN rather than a FAIL: this is the normal state of a working machine,
+    and what must not happen again is it going unsaid.
     """
     backend = getattr(display, "backend", "?")
-    name = "the panel that came up is really there"
-
-    if backend not in WRITE_ONLY:
-        where = (f"it acknowledged 0x{answered:02X} on /dev/i2c-{config.DISPLAY_I2C_BUS}"
-                 if answered is not None else
-                 "its driver bound an address before it would send a byte")
-        report.add(name, PASS,
-                   f"{backend}: {where}, which an absent panel cannot do")
-        return
-
-    if answered is None:
-        report.add(
-            name, WARN,
-            f"{backend} is write-only — four-line SPI has no MISO — so opening "
-            f"{config.DISPLAY_SPI_DEVICE} and writing its init sequence succeeds "
-            "whether or not a panel is attached. Nothing answered on I2C either, "
-            "so nothing here has established that a screen exists at all",
-            "if this machine has the OLED fitted, it is not answering: check SD "
-            f"to GPIO 2 (pin 3), CL to GPIO 3 (pin 5), V to 3V3, and run "
-            f"`i2cdetect -y {config.DISPLAY_I2C_BUS}`. If it has the LCD, the "
-            "questions below are the test — look at the glass while you answer")
-        return
-
     report.add(
-        name, WARN,
-        f"the {backend} came up, but an OLED answered at 0x{answered:02X} on "
-        f"/dev/i2c-{config.DISPLAY_I2C_BUS}. Only one panel is driven, and the "
-        "one that can prove it is there is not the one being driven",
-        f"if the LCD is what is mounted, nothing needs doing. Otherwise set "
-        "SNAPCARE_DISPLAY=ssd1306 — `auto` only reaches the LCD when the I2C bus "
-        "is silent, so something has named it")
+        "the panel that came up is really there", WARN,
+        f"{backend} is write-only — four-line SPI has no MISO — so opening "
+        f"{config.DISPLAY_SPI_DEVICE} and writing its init sequence succeeds "
+        "whether or not a panel is attached, and nothing in this program can "
+        "tell the two apart",
+        "the questions below are the test: look at the glass while you answer "
+        "them. If it is dark, `--display-test` walks the same sequence one "
+        "stage at a time and says what each failure means")
 
 
 def check_display(report: Report, indicator, interactive: bool) -> None:
@@ -560,8 +538,7 @@ def check_display(report: Report, indicator, interactive: bool) -> None:
     panel too — the roughly one man in twelve with deuteranopia gets the shape
     and nothing else. Nothing else in this program looks at them.
 
-    **Which colour** is asked only where `canvas.colour` says there is a colour
-    to see. The failure it catches is the ILI9341's MADCTL BGR bit: get it wrong
+    **Which colour** catches the ILI9341's MADCTL BGR bit: get it wrong
     and the panel is alive, sharp, and swapping red for blue — so "released" and
     "missed" trade places, which is a machine telling somebody their pills are
     in the cup when the window has closed.
@@ -572,64 +549,37 @@ def check_display(report: Report, indicator, interactive: bool) -> None:
     and a build where it paints nothing is a device that looks dead between
     doses and gets unplugged.
 
-    **The glance question** is asked of the mono panel alone, because it is the
-    one thing that panel can answer and the LCD cannot: whether "a dose is due"
-    and "a dose was missed" are unmistakably different from a doorway, with no
-    colour to tell them apart.
     """
     display = getattr(indicator, "display", None)
-    # Asked whether or not a panel came up, and asked here rather than inside
-    # the branches below, because "no panel came up" and "nothing is on the I2C
-    # bus" are the two halves of the same sentence when the LCD is the backend.
-    answered = probe_i2c()
-
-    if not display and answered is not None:
-        # The one case where a dead screen has a precise cause. Something
-        # acknowledged an OLED address, so the panel is there and powered and
-        # the bus works — and the driver still could not bring it up, which
-        # puts the fault in the initialisation and not in the wiring.
-        strap = "" if answered == config.DISPLAY_I2C_ADDRESS else (
-            f" It answered at {answered:#04x} while config.py names "
-            f"{config.DISPLAY_I2C_ADDRESS:#04x} — this module has the other "
-            "address strap fitted.")
-        report.add("the screen shows the right thing", FAIL,
-                   f"no panel came up, but something acknowledged "
-                   f"{answered:#04x} on /dev/i2c-{config.DISPLAY_I2C_BUS} — the "
-                   "OLED is there and answering, and it was still not opened",
-                   "the reason is in the log above, at WARNING: an address held "
-                   "by a kernel driver is not an OLED, and a panel that "
-                   "acknowledges but will not initialise is usually a lead long "
-                   "enough to lose the bus at speed." + strap)
-        return
 
     if not display:
         report.add("the screen shows the right thing", FAIL,
-                   "no panel came up, and nothing answered on the I2C bus either",
-                   "for the OLED — the one that can be detected: "
-                   f"`i2cdetect -y {config.DISPLAY_I2C_BUS}` must show "
-                   f"{config.DISPLAY_I2C_ADDRESS:#04x}. For the LCD, which cannot "
-                   f"be detected at all: check {config.DISPLAY_SPI_DEVICE} exists "
-                   "(dtparam=spi=on in /boot/firmware/config.txt, then reboot), "
-                   f"and that DC is on GPIO {config.DISPLAY_DC_GPIO} and RESET on "
-                   f"GPIO {config.DISPLAY_RESET_GPIO}")
+                   "no panel came up at all — the driver could not open the bus "
+                   "or claim its two pins, which is a fault this side of the "
+                   "ribbon and the one kind of screen failure that *can* be "
+                   "detected",
+                   f"check that {config.DISPLAY_SPI_DEVICE} exists (`dtparam="
+                   "spi=on` in /boot/firmware/config.txt, then reboot), that "
+                   f"nothing else holds GPIO {config.DISPLAY_DC_GPIO} or "
+                   f"{config.DISPLAY_RESET_GPIO}, and that python3-lgpio is "
+                   "installed. The reason is in the log above, at WARNING")
         return
 
     width = getattr(display, "width", 0)
     height = getattr(display, "height", 0)
     report.add("the screen came up", PASS,
                f"{display.backend} backend, {width}x{height}")
-    _report_detection(report, display, answered)
+    _report_detection(report, display)
 
     if not interactive:
         report.add("the screen shows the right thing", SKIP, "not asked")
         return
 
     # Asked of the canvas rather than assumed from the backend name: it is the
-    # canvas that decides whether a tone can be a colour at all, and a build
-    # that quietly fell back to the mono panel must not be asked a question it
-    # has no way to answer.
+    # Asked for a canvas before anything is drawn, so a panel that cannot give
+    # one fails here with a reason rather than midway through a frame.
     try:
-        colour = bool(display.new_canvas().colour)
+        display.new_canvas()
     except Exception as exc:  # noqa: BLE001
         report.add("the screen shows the right thing", FAIL,
                    f"the panel would not give us a canvas to draw on: {exc}")
@@ -743,61 +693,24 @@ def check_display(report: Report, indicator, interactive: bool) -> None:
                    "phone and cannot find — check that the name fits this panel's "
                    "width in screens.py")
 
-    if colour:
-        # Green first because it is the one that matters, and because it is the
-        # one colour the BGR bit leaves alone — so a person who reads back
-        # green, then red where amber should be, has named the fault exactly.
-        # Blue and amber are the pair the bit actually swaps, and they are the
-        # pair this device can least afford to confuse.
-        for tone, name, paint in (
-                ("due", "green", (screens.due, 3, due_at)),
-                ("released", "blue", (screens.released, 3)),
-                ("missed", "amber", (screens.missed, 3, due_at)),
-                ("setup", "cyan", (screens.wifi, joining))):
-            if not _show(report, indicator, *paint):
-                return
-            answer = _ask(f"the screen should be {name}. What colour is it?", "colour")
-            if not answer:
-                report.add(f"the screen shows {tone} as {name}", SKIP, "not answered")
-            elif answer.strip().lower().startswith(name[:3]):
-                report.add(f"the screen shows {tone} as {name}", PASS)
-            else:
-                report.add(f"the screen shows {tone} as {name}", FAIL,
-                           f"it showed {answer!r}",
-                           "red where amber belongs, or blue and red swapped "
-                           "anywhere, is the panel's MADCTL BGR bit set the "
-                           "wrong way — the colours are right and the order is "
-                           "not, so 'released' and 'missed' trade places")
-    else:
-        # The mono panel spends a treatment on each state instead of a colour —
-        # `Mono1` inverts the whole panel for a due dose. That is the one pair
-        # that must never be confused: a dose you can still take, and a dose that
-        # has gone. If those two look alike here, every other state does too.
-        #
-        # This is the question the OLED can answer and the LCD cannot. On the
-        # colour panel it would be asking whether green looks like amber, which
-        # nobody has ever said no to.
-        if not _show(report, indicator, screens.due, 3, due_at):
+    # Green first because it is the one that matters, and because it is the
+    # one colour the BGR bit leaves alone — so a person who reads back
+    # green, then red where amber should be, has named the fault exactly.
+    # Blue and amber are the pair the bit actually swaps, and they are the
+    # pair this device can least afford to confuse.
+    for tone, name, paint in (
+            ("due", "green", (screens.due, 3, due_at)),
+            ("released", "blue", (screens.released, 3)),
+            ("missed", "amber", (screens.missed, 3, due_at)),
+            ("setup", "cyan", (screens.network, joining))):
+        if not _show(report, indicator, *paint):
             return
-        _ask("look at the screen — a dose is due. Press Enter", "")
-        if not _show(report, indicator, screens.missed, 3, due_at):
-            return
-        answer = _ask("that was the same dose, missed. Are those two "
-                      "unmistakable from a doorway — not 'different if you go "
-                      "and look'?", "y/n")
+        answer = _ask(f"the screen should be {name}. What colour is it?", "colour")
         if not answer:
-            report.add("the mono panel tells a due dose from a missed one", SKIP,
-                       "not answered")
-        elif answer.startswith("y"):
-            report.add("the mono panel tells a due dose from a missed one", PASS,
-                       "the due screen inverts; the missed one does not")
-        else:
-            report.add("the mono panel tells a due dose from a missed one", FAIL,
-                       "the two states are not distinguishable at a glance",
-                       "on a panel with one ink the colour cannot carry the "
-                       "message, so the treatment has to — fit the LCD if this "
-                       "device is going to somebody who will only ever see it "
-                       "from across a room")
+            report.add(f"the screen shows {tone} as {name}", SKIP, "not answered")
+        elif answer.strip().lower().startswith(name[:3]):
+            report.add(f"the screen shows {tone} as {name}", PASS)
+    
 
     indicator.clear()
 

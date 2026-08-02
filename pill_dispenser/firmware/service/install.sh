@@ -297,6 +297,21 @@ say "Creating $STATE_DIR"
 mkdir -p "$STATE_DIR"
 chmod 750 "$STATE_DIR"
 
+say "Enabling the touch panel"
+# The screen is the only control this build has: there is no physical button,
+# and a tap anywhere on the glass releases a waiting dose. The XPT2046 on these
+# 2.8" modules is a clone of the ADS7846, which Raspberry Pi OS already has a
+# driver for — so this is one overlay line rather than a second SPI protocol in
+# the firmware. cs=1 is the second chip select; the display owns the first.
+BOOT_CONFIG=/boot/firmware/config.txt
+[ -f "$BOOT_CONFIG" ] || BOOT_CONFIG=/boot/config.txt
+if [ -f "$BOOT_CONFIG" ] && ! grep -q '^dtoverlay=ads7846' "$BOOT_CONFIG"; then
+  printf '\n# SnapCare: the LCD touch panel, read as the take-dose button\ndtoverlay=ads7846,cs=1,penirq=4,penirq_pull=2,speed=50000,keep_vref_on=1,swapxy=0,pmax=255,xohms=150\n' >> "$BOOT_CONFIG"
+  echo "  added dtoverlay=ads7846 to $BOOT_CONFIG (takes effect on the next reboot)"
+else
+  echo "  already present, or no config.txt on this machine"
+fi
+
 say "Installing the snapcare-dispenser command"
 # Without this, every command in the guide and the README fails after a reboot.
 #
