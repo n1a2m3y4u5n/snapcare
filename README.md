@@ -217,16 +217,22 @@ Docker multi-stage build on **fly.io** (Tokyo). A mounted volume holds the house
 and the pictogram/product caches, so the app keeps answering when the network does not.
 
 ```bash
-fly deploy --build-arg NEXT_PUBLIC_SNAPCARE_RELAY=https://…   # the pill box's mailbox
-fly secrets set ANTHROPIC_API_KEY=… -a snapcare               # meal-photo recognition in production
+fly deploy
+fly secrets set ANTHROPIC_API_KEY=… -a snapcare   # meal-photo recognition in production
 ```
 
-The relay address goes in as a **build argument**, not a secret and not `fly.toml`'s
-`[env]`. Anything named `NEXT_PUBLIC_` is baked into the browser bundle when Next builds
-it, so a value supplied at run time never reaches the phone. Getting this wrong fails in a
-confusing way: the server knows the address and opens the CSP for it, while the page tries
-`localhost` and pairing fails as though the code on the label were wrong. The pairing
-screen says so when the build has no address at all.
+The relay lives at **https://snapcare-relay.fly.dev** as its own fly app, deployed from
+`pill_dispenser/cloud_relay` (`fly deploy -a snapcare-relay` from that directory). It holds
+a 1 GB volume for the mailboxes and one always-on machine, because a dispenser holding a
+long poll is by design a connection that never goes idle.
+
+Its address reaches the browser as a **build argument**, recorded in `fly.toml` under
+`[build.args]` so a plain `fly deploy` carries it. It is not a secret and it cannot go in
+`fly.toml`'s `[env]`: anything named `NEXT_PUBLIC_` is baked into the bundle when Next
+builds it, so a value supplied at run time never reaches the phone. Getting this wrong
+fails in a confusing way — the server knows the address and opens the CSP for it, while the
+page tries `localhost` and pairing fails as though the code on the label were wrong. The
+pairing screen says so when the build has no address at all.
 
 ## Data sources
 
