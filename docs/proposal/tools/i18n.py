@@ -230,6 +230,46 @@ EN = {
     '셋 중 하나': '1 in 3', '다섯 중 하나': '1 in 5', '여섯 중 하나': '1 in 6', '일곱 중 하나': '1 in 7',
     '내성을 보인 감염의 비율 (%)': 'Share of infections showing resistance (%)',
     '그 밖': 'Other',
+    '사용자가 고른 것': 'What the user picked',
+    '나이 구간': 'Age band', '그림 넷 중 하나': 'One of four pictures',
+    '조건': 'Conditions', '그림 카드': 'Picture cards',
+    '대표 나이': 'Representative age', '유발 성분': 'Trigger ingredients',
+    '조건마다 다름': 'Varies by condition',
+    '하루 에너지': 'Daily energy', '1,200~2,400 kcal': '1,200–2,400 kcal',
+    '이 사람의 하루 기준치': "This person's daily reference",
+    '유리당 10%E · 포화지방 10%E · 소금 5 g × 비율':
+        'Free sugars 10%E · sat fat 10%E · salt 5 g × ratio',
+    'WHO 권고가 비율로 쓰여 있으므로 표가 아니라 유도로 푼다 (§2.4)':
+        'WHO guidance is written as proportions, so this is derived rather than tabulated (§2.4)',
+    '같은 음료 한 캔이 7세에게는 경고, 성인에게는 무해가 되는 이유가 이 경로다':
+        'This path is why the same can of drink warns a 7-year-old and not an adult',
+    '"무슨 알레르기가 있습니까" 를 셋으로 나눈다':
+        '"What are you allergic to" split three ways',
+    '지금 아는 것': 'What you know now', '임신 중 · 수유 중': 'Pregnant · breastfeeding',
+    '누구나 답할 수 있다': 'Anyone can answer',
+    '겪은 것': 'What you have experienced',
+    '먹고 속이 안 좋았던 적': 'Ever felt unwell after eating',
+    '진단 없이도 답할 수 있다': 'Answerable without a diagnosis',
+    '진단받은 것': 'What you were told', '당뇨 · 고혈압': 'Diabetes · hypertension',
+    '검사를 받은 사람만': 'Only those who were tested',
+    '당뇨 성인의 43%, 고혈압 성인의 44% 는 셋째 칸에 답할 수 없다 (§1.5)':
+        '43% of adults with diabetes and 44% with hypertension cannot answer the third box (§1.5)',
+    '앞의 두 칸이 있어야 그 사람들이 첫 화면에서 걸러지지 않는다':
+        'The first two boxes are what keep those people from being filtered out at the first screen',
+    '영양 정보가 들어오는 세 경로': 'Three routes nutrition information arrives by',
+    '영양성분표 OCR': 'Nutrition label OCR', '기기 안': 'On device',
+    '제품 데이터베이스': 'Product database', '서버 경유': 'Via server',
+    '음식 사진 추정': 'Estimation from a food photo',
+    '기기 안 · 나중에 추가': 'On device · added later',
+    '물리 검사 한 곳': 'One place for the physical checks',
+    '범위 · 부분집합 · 질량 보존 · Atwater 항등식':
+        'Range · subset · mass balance · Atwater identity',
+    '어느 경로로 들어왔는지 묻지 않는다': 'It does not ask which route the value came by',
+    '이 사람의 하루 기준치와 대조': "Compared against this person's daily reference",
+    '셋째 경로는 나중에 들어왔고, 그때 새로 쓴 검증 코드는 없다 (§4.2)':
+        'The third route arrived later, and no new verification code was written for it (§4.2)',
+    '경로마다 검사를 두면 붙이는 것을 잊은 경로가 검증 없는 통로가 된다':
+        'Per-route checks turn any route someone forgot to attach them to into an unverified channel',
 }
 
 

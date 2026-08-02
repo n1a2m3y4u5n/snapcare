@@ -130,6 +130,93 @@ def userflow():
         ax.text(12, 8.4 - i * 2.6, '· ' + t, fontsize=7.4, color=MUTED, va='center')
     save(fig, 'fig11_userflow')
 
+# ── 판정 기준이 어디서 나오는가 ─────────────────────────────────────
+def verdict_flow():
+    """§2.4 의 유도를 그림으로. 표에서 가져오지 않는다는 것이 논지다."""
+    fig, ax = canvas(6.0, 2.9)
+    TOP = 44.0
+
+    ax.text(2, TOP + 1.2, T('사용자가 고른 것'), fontsize=8, color=MUTED)
+    box(ax, 2, TOP - 7.4, 22, 7.2, T('나이 구간'), [T('그림 넷 중 하나')], BLUE)
+    box(ax, 26, TOP - 7.4, 22, 7.2, T('조건'), [T('그림 카드')], BLUE)
+
+    arrow(ax, 13, TOP - 8.0, 13, TOP - 12.4)
+    arrow(ax, 37, TOP - 8.0, 37, TOP - 12.4)
+
+    M = TOP - 12.6
+    box(ax, 2, M - 7.2, 22, 7.0, T('대표 나이'), [T('7 · 15 · 35 · 70')], GREY)
+    box(ax, 26, M - 7.2, 22, 7.0, T('유발 성분'), [T('조건마다 다름')], GREY)
+
+    arrow(ax, 13, M - 7.8, 13, M - 12.2)
+    B = M - 12.4
+    box(ax, 2, B - 7.4, 22, 7.2, T('하루 에너지'), [T('1,200~2,400 kcal')], GREY)
+
+    arrow(ax, 24.6, B - 3.8, 51.4, B - 3.8)
+    box(ax, 52, B - 7.4, 46, 7.2, T('이 사람의 하루 기준치'),
+        [T('유리당 10%E · 포화지방 10%E · 소금 5 g × 비율')], GREEN)
+
+    arrow(ax, 37, M - 7.8, 37, B - 1.2)
+
+    ax.text(2, 6.6, T('WHO 권고가 비율로 쓰여 있으므로 표가 아니라 유도로 푼다 (§2.4)'),
+            fontsize=7.6, color=MUTED)
+    ax.text(2, 3.4, T('같은 음료 한 캔이 7세에게는 경고, 성인에게는 무해가 되는 이유가 이 경로다'),
+            fontsize=7.6, color=MUTED)
+    save(fig, 'fig15_verdict_flow')
+
+
+# ── 조건을 세 갈래로 묻는다 ─────────────────────────────────────────
+def condition_branches():
+    """§2.5. 진단명을 묻지 않는 이유가 세 상자의 폭 차이에 있다."""
+    fig, ax = canvas(6.0, 2.2)
+    TOP = 30.0
+    ax.text(2, TOP + 1.4, T('"무슨 알레르기가 있습니까" 를 셋으로 나눈다'),
+            fontsize=8.4, color=MUTED, fontweight='bold')
+    items = [(T('지금 아는 것'), [T('임신 중 · 수유 중'), T('누구나 답할 수 있다')], GREEN),
+             (T('겪은 것'), [T('먹고 속이 안 좋았던 적'), T('진단 없이도 답할 수 있다')], BLUE),
+             (T('진단받은 것'), [T('당뇨 · 고혈압'), T('검사를 받은 사람만')], GREY)]
+    w, gap = 31.0, 2.4
+    for i, (h, ls, c) in enumerate(items):
+        box(ax, 2 + i * (w + gap), TOP - 11.0, w, 10.8, h, ls, c)
+    ax.text(2, 12.0, T('당뇨 성인의 43%, 고혈압 성인의 44% 는 셋째 칸에 답할 수 없다 (§1.5)'),
+            fontsize=7.6, color=RED, fontweight='bold')
+    ax.text(2, 8.4, T('앞의 두 칸이 있어야 그 사람들이 첫 화면에서 걸러지지 않는다'),
+            fontsize=7.6, color=MUTED)
+    save(fig, 'fig16_conditions')
+
+# ── 세 경로가 하나의 관문을 지난다 ──────────────────────────────────
+def gate_flow():
+    """§4.2. 검사를 경로마다 두지 않고 한 곳에 모은 것이 이 그림의 요지다."""
+    fig, ax = canvas(6.0, 3.4)
+    TOP = 53.0
+
+    ax.text(2, TOP + 1.4, T('영양 정보가 들어오는 세 경로'), fontsize=8.4,
+            color=MUTED, fontweight='bold')
+    srcs = [(T('영양성분표 OCR'), [T('기기 안')], GREY),
+            (T('제품 데이터베이스'), [T('서버 경유')], GREY),
+            (T('음식 사진 추정'), [T('기기 안 · 나중에 추가')], ORANGE)]
+    w, gap = 30.0, 3.0
+    for i, (h, ls, c) in enumerate(srcs):
+        x = 2 + i * (w + gap)
+        box(ax, x, TOP - 8.6, w, 8.4, h, ls, c)
+        arrow(ax, x + w / 2, TOP - 9.2, 50, TOP - 14.0)
+
+    M = TOP - 14.2
+    box(ax, 12, M - 12.4, 76, 12.2, T('물리 검사 한 곳'),
+        [T('범위 · 부분집합 · 질량 보존 · Atwater 항등식'),
+         T('어느 경로로 들어왔는지 묻지 않는다')], BLUE)
+
+    arrow(ax, 50, M - 13.0, 50, M - 17.4)
+    box(ax, 24, M - 25.6, 52, 8.0, T('판정'), [T('이 사람의 하루 기준치와 대조')], GREEN)
+
+    ax.text(2, 6.0, T('셋째 경로는 나중에 들어왔고, 그때 새로 쓴 검증 코드는 없다 (§4.2)'),
+            fontsize=7.6, color=RED, fontweight='bold')
+    ax.text(2, 2.6, T('경로마다 검사를 두면 붙이는 것을 잊은 경로가 검증 없는 통로가 된다'),
+            fontsize=7.6, color=MUTED)
+    save(fig, 'fig17_gate')
+
 
 if __name__ == '__main__':
     userflow()
+    verdict_flow()
+    condition_branches()
+    gate_flow()
