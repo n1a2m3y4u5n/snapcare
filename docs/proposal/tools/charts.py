@@ -304,6 +304,31 @@ def chart_policy_depth():
     fig.subplots_adjust(left=0.30 if LANG != 'en' else 0.33)
     save(fig, 'chart12_policy_depth')
 
+# ── "읽지 못한다" 는 세 갈래로 갈린다 ───────────────────────────────
+def chart_three_layers():
+    """세 수치는 서로 겹치고 분모도 다르다. 그림에 그대로 적는다."""
+    fig, ax = plt.subplots(figsize=(6.0, 2.5))
+    title(fig, T('처방전을 읽지 못하는 세 갈래'),
+          note=T('셋은 서로 겹치며 출처와 분모가 다르다. 크기를 견주려고 놓은 것이 아니다.'))
+    labs = [T('시력 손상 (WHO)'), T('비문해 성인 (UNESCO)'), T('선진국 최저 문해 수준 (PIAAC)')]
+    vals = [2200, 739, None]
+    cols = [ORANGE, DARK, GREY]
+    for i, (v, c) in enumerate(zip(vals[:2], cols[:2])):
+        ax.barh(i, v, 0.5, color=c, zorder=2)
+        ax.text(v + 45, i, T('{v}억 명').format(v=f'{v/100:.0f}'),
+                va='center', fontsize=9.4, fontweight='bold', color=c)
+    ax.text(45, 2, T('31개국 성인의 18% · 분모가 달라 막대로 그리지 않는다'),
+            va='center', fontsize=8.4, color=MUTED, zorder=4,
+            bbox=dict(boxstyle='square,pad=0.25', fc='white', ec='none'))
+    ax.set_yticks(range(3))
+    ax.set_yticklabels(labs)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 2600)
+    ax.set_xlabel(T('사람 수 (백만 명)'))
+    frame(ax)
+    fig.subplots_adjust(left=0.32 if LANG != 'en' else 0.36)
+    save(fig, 'chart13_three_layers')
+
 
 if __name__ == '__main__':
     chart_literacy()
@@ -318,3 +343,4 @@ if __name__ == '__main__':
     chart_survey()
     chart_harm_stage()
     chart_policy_depth()
+    chart_three_layers()

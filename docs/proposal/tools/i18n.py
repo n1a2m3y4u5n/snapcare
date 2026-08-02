@@ -211,6 +211,16 @@ EN = {
     '국가 전문가 조직을 둠': 'Has a national expert group',
     '감축 목표를 수로 세움': 'Has a numeric reduction target',
     'WHO 회원국 중 비율 (%)': 'Share of WHO member states (%)',
+    '처방전을 읽지 못하는 세 갈래': 'Three ways a prescription goes unread',
+    '셋은 서로 겹치며 출처와 분모가 다르다. 크기를 견주려고 놓은 것이 아니다.':
+        'The three overlap and come from different sources and denominators. They are not placed here to be ranked.',
+    '시력 손상 (WHO)': 'Vision impairment (WHO)',
+    '비문해 성인 (UNESCO)': 'Non-literate adults (UNESCO)',
+    '선진국 최저 문해 수준 (PIAAC)': 'Below the lowest literacy level, 31 countries (PIAAC)',
+    '{v}억 명': '{v}00 million',
+    '31개국 성인의 18% · 분모가 달라 막대로 그리지 않는다':
+        '18% of adults across 31 countries. A different denominator, so no bar is drawn',
+    '사람 수 (백만 명)': 'People (millions)',
 }
 
 
