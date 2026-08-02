@@ -724,7 +724,7 @@ The question "what are you allergic to" can therefore only be answered by someon
 | What you have experienced | Experience | Ever felt unwell after eating something |
 | What you have been told | Diagnosis | Diabetes, hypertension |
 
-**[Figure 20]** "What are you allergic to" split into three. The width of the three boxes is the argument. The first two exist so that the people who cannot answer the third are not filtered out at the first screen.
+**[Figure 20]** The three ways of asking about conditions (§2.5). The further right, the fewer people can answer. Existing apps ask only the third column, and as established in §1.5, 43% of adults with diabetes and 44% of adults with hypertension cannot answer it. That is why the first two columns are there.
 
 ![Figure 20](fig/fig16_conditions.png)
 
