@@ -13,6 +13,7 @@
   · § 참조가 실재하는 절인가
   · 요약란이 서식의 2~3문장 제한을 지키는가
   · 서식으로 뽑았을 때 마크다운이 새지 않는가
+  · 기계가 쓴 티가 나는 상투구가 남아 있지 않은가
 """
 import re
 import sys
@@ -57,6 +58,44 @@ def unattributed(f: str) -> list:
                 seg = ln[max(0, m.start() - 45):m.end() + 60]
                 if not any(t in seg for t in TITLE_WORDS[f]):
                     out.append(f'{n}: …{seg.strip()[:70]}…')
+    return out
+
+# 기계가 쓴 티가 나는 상투구. 산문에서만 찾는다. 표·인용·코드·부록은 뺀다.
+# 부록은 응답 원문이고, 인용문은 그 사람이 한 말이라 우리가 고칠 것이 아니다.
+SLOP = {
+    'proposal_ko.md': ((r'되어지', '이중피동'), (r'~?함에 있어', '번역투'),
+                       (r'~?로 사료된다', '문어투'), (r'~?에 다름 아니다', '번역투'),
+                       (r'~?라 할 수 있을 것이다', '과한 헤지')),
+    'proposal_en.md': ((r'\b(crucial|pivotal|delve|showcase|testament|vibrant|tapestry'
+                        r'|underscore|foster|intricate|interplay|seamless|holistic)\b',
+                        'AI 어휘'),
+                       (r'\bin order to\b', '군더더기'),
+                       (r'\bIt is important to note\b|\bIt should be noted\b', '군더더기'),
+                       (r'\b(serves|stands) as\b', 'copula 회피'),
+                       (r'\bnot only\b.{0,40}\bbut\b', '부정 병렬'),
+                       (r'\bthe real question\b|\bat its core\b', '권위 상투구'),
+                       (r', (highlighting|underscoring|emphasizing|showcasing|fostering) ',
+                        '-ing 꼬리')),
+}
+
+
+def slop(f: str) -> list:
+    s = (DOC / f).read_text()
+    s = s[:s.index('### 5.11')]
+    inb, keep = False, []
+    for ln in s.splitlines():
+        if ln.startswith('```'):
+            inb = not inb
+            continue
+        if inb or ln.startswith(('|', '[표', '[Table', '![', '> ', '**[', '#')):
+            continue
+        keep.append(ln)
+    body = '\n'.join(keep)
+    out = []
+    for pat, tag in SLOP[f]:
+        for m in re.finditer(pat, body):
+            seg = body[max(0, m.start() - 40):m.end() + 40].replace('\n', ' ')
+            out.append(f'{tag}: …{seg.strip()[:78]}…')
     return out
 
 
@@ -124,6 +163,8 @@ def main() -> int:
         note(f'두 판의 본문 그림 참조가 다르다 {sorted(a[4] ^ b[4])}')
 
     for f, _, _ in PAIR:
+        for x in slop(f):
+            note(f'{f}: 상투구 — {x}')
         for x in unattributed(f):
             note(f'{f}: 직책 없이 인용했다 — {x}')
 

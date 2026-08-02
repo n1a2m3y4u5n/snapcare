@@ -140,7 +140,7 @@ The distribution above is a record from the dispensing side. What happens on the
 
 In a study at three primary care clinics in the United States in which 395 adults were shown five actual pill bottle labels and asked whether they understood the instruction, correct understanding ranged from **67.1% to 91.1%** depending on the label. The sharpest result of that study lies elsewhere. Among low-literacy patients, **70.7% correctly restated the instruction "take two tablets twice daily" in words, but only 34.7% could actually demonstrate how many tablets to take in a day** (Davis, T. C. et al., "Literacy and misunderstanding prescription drug labels," *Annals of Internal Medicine*, 145(12):887–894, 2006).
 
-Restating an instruction and acting on it are separate abilities, and reading the text aloud does not by itself close that gap. This is why SnapCare delivers not only speech but pictures that depict the action.
+Restating an instruction and acting on it are separate abilities, and reading the text aloud does not by itself close that gap. This is why SnapCare sends a picture of the action alongside the speech.
 
 With liquid medicines the error appears as a visible quantity. In a randomised trial of caregivers giving liquid medicine to young children, **47.8% of the control group, who received standard counselling only, administered a dose more than 20% away from the one prescribed** (40.0% for as-needed medicines). Twenty percent is not a small number. For a medicine taken three times a day, three days is enough to be off by a full day's dose.
 
@@ -352,7 +352,7 @@ Research on interfaces for low-literate users shows that removing text is a nece
 
 Medhi et al. built a text-free interface through ethnographic design with non-literate domestic workers in a Bangalore slum, with the criterion that it be "usable without anyone's intervention" (Medhi, I., Sagar, A. & Toyama, K., "Text-Free User Interfaces for Illiterate and Semi-Literate Users," *Information Technologies and International Development*, 4(1):37–50, 2007). That criterion means creating no step that requires explanation.
 
-Follow-up work surveying 400 low-literate, low-income people in India, the Philippines and South Africa confirmed that the barriers involve not only literacy but cognitive difficulty, cultural etiquette, prior exposure, intimidation, mediation, motivation, cost, power relations and social standing (Medhi, I., Cutrell, E. & Toyama, K., "It's not just illiteracy," *Proc. International Conference on Interaction Design & International Development*, 2010).
+Follow-up work surveying 400 low-literate, low-income people in India, the Philippines and South Africa found the barriers to include cognitive difficulty, cultural etiquette, prior exposure, intimidation, mediation, motivation, cost, power relations and social standing as well as literacy (Medhi, I., Cutrell, E. & Toyama, K., "It's not just illiteracy," *Proc. International Conference on Interaction Design & International Development*, 2010).
 
 A structural problem was confirmed as well. In an experiment asking 20 non-literate adults in a Bangalore slum to find 5 items out of 40 on a touchscreen phone, a multi-page list spread over 7 pages took 25 seconds on average while a hierarchy 4 levels deep took 65.5 seconds (*t*(18) = 4.6, *p* < 0.001). Accuracy also split, at 100% for the list against 80% for the hierarchy (*t*(18) = −3, *p* = 0.0077) (Medhi, I., Toyama, K., Joshi, A., Athavankar, U. & Cutrell, E., "A Comparison of List vs. Hierarchical UIs on Mobile Phones for Non-literate Users," *INTERACT 2013*, LNCS 8118:497–504, doi:10.1007/978-3-642-40480-1_33).
 
@@ -440,7 +440,7 @@ The two categories in bold correspond directly to the top two errors in Table 4 
 
 The thickest category, conversely, is dosage form. The reason is in §2.3. Once the form is settled the verb and the body site are settled with it, so adding one form adds a whole instruction. The nine allergens follow the list of major allergens whose declaration is mandatory internationally.
 
-It should be noted here that the set is not closed. Prescriptions keep producing things these 78 cannot draw, and what the app does at that moment is covered by the `\?concept` marker in §2.3 and the expansion path in §5.10.
+We record here that the set is not closed. Prescriptions keep producing things these 78 cannot draw, and what the app does at that moment is covered by the `\?concept` marker in §2.3 and the expansion path in §5.10.
 
 Why this structure is needed becomes clear in contrast with the USP standard from the previous section. A single instruction reading "three times a day, after meals, keep refrigerated, contraindicated in pregnancy" can only be conveyed in USP by listing five or six symbols, and will remain so because the licence prohibits combination (USP Pictogram Library License Agreement). In SIGIL it is expressed as follows.
 
@@ -511,7 +511,7 @@ There is a reason for the order in which what remains is spoken. The dose per in
 
 The verb also changes with the dosage form. A tablet is "take," but eye drops are "put in," an ointment is "apply" and an inhaler is "breathe in." The single word "administer" points to completely different physical actions.
 
-It is not only the verb that changes but the body site. That eye drops go into the eye is half the instruction, and if the picture has only the bottle and no eye, that half disappears. The body site is therefore derived from the dosage form.
+The verb is not the only thing that changes. The body site changes too. That eye drops go into the eye is half the instruction, and if the picture has only the bottle and no eye, that half disappears. The body site is therefore derived from the dosage form.
 
 ```ts
 /**
@@ -744,7 +744,7 @@ Opening the app for the first time leads through five guide cards to profile set
 
 Age is not entered as a number. Four bands (child, teenager, adult, older adult) are chosen through our own morphemes (`state_child`, `state_teen`, `state_adult`, `state_elderly`). There is a reason emoji were not used. Emoji are drawn differently on every device, and the emoji that might stand for a teenager (🧑‍🎓) actually means "graduate," which means nothing at all to a child who does not attend school. The four morphemes are drawn as one family, so placed side by side the difference in age is visible as form. Conditions are likewise offered as picture cards along the three branches of §2.5 (what you know now, what you have experienced, what you have been told).
 
-Originally this screen asked the user to choose a face first. It was a step of picking one of eight person pictures, and after testing it was removed from the first run. A face is only a marker with no bearing on the verdict (it indicates who someone is), yet it was the first thing demanded on screen, which made the first demand met by a new user a choice with no value attached. That in turn makes the real questions that follow, age and conditions, read with the same weight. The face was moved to the settings screen.
+Originally this screen asked the user to choose a face first. It was a step of picking one of eight person pictures, and after testing it was removed from the first run. A face is only a marker with no bearing on the verdict (it indicates who someone is), yet it was the first thing demanded on screen, which made the first demand met by a new user a choice with no value attached. That in turn makes the questions after it, age and conditions, read with the same weight, and those two do carry weight. The face was moved to the settings screen.
 
 The step can be skipped, but if it is, the home screen keeps displaying "showing adult thresholds." This is to prevent a default from being applied silently. The reason for this indicator connects directly to the claim in §2.4 that the verdict differs per person. A verdict produced without knowing the age still appears in the same greens and reds on screen, and if the screen does not say whom the verdict was computed for, the user reads it as an answer computed for them.
 
@@ -760,7 +760,7 @@ The list of household members sits on this same lock screen (§3.6). It has the 
 
 #### Getting to the shutter
 
-Pressing the blue circle on the home screen moves to the capture screen. At the very top is one line, "Point at something," and the screen reads that sentence aloud the moment it arrives. Nothing has to be pressed in order to learn what to do.
+Pressing the blue circle on the home screen moves to the capture screen. At the very top is one line, "Point at something," and the screen reads that sentence aloud the moment it arrives. You do not have to press anything to find out what to do.
 
 In the middle is a preview area, and below it a single 64-pixel white circle. That circle is the shutter. It is the only pressable thing on the screen, and there is no step for choosing what is being photographed. Prescription mode, label mode and food mode were not created because that choice would itself reintroduce the cost of hierarchy cited in §1.10. The user is already holding whatever they are photographing, so there is no reason to make them tell the app a second time.
 
@@ -976,7 +976,7 @@ These are values the eye cannot hold, so they were locked with a test. The earli
 
 The second is target size. SC 2.5.8 requires a minimum of 24 pixels. The large controls were already 44 pixels, but secondary controls such as the read-again row and the row back to settings were between 16 and 20. A thin row to scan and tap is particularly bad in this app, because tapping that row is how someone who cannot read reads the screen. A 24-pixel floor was applied.
 
-What was already correct should be recorded too. The path by which a scanning device reaches the audio (SC 2.1.1, keyboard operation), the absence of unnamed controls (SC 4.1.2), no horizontal scrolling at 375 pixels (SC 1.4.10) and no obscured focus (SC 2.4.11) were all confirmed to hold. These four are listed not to claim credit for passing but because stating the scope of the sweep is what separates "passed" from "not checked".
+What was already correct should be recorded too. The path by which a scanning device reaches the audio (SC 2.1.1, keyboard operation), the absence of unnamed controls (SC 4.1.2), no horizontal scrolling at 375 pixels (SC 1.4.10) and no obscured focus (SC 2.4.11) were all confirmed to hold. These four are listed not to claim credit for passing but because stating how far we looked is what separates "passed" from "not checked".
 
 ---
 
@@ -1000,7 +1000,7 @@ This is where the reason for using morphemes rather than a line of DSL as the an
 
 Count was put first. Of the 155 dispensing errors found by pharmacists in Table 4, 28.4% were dose errors, and Professor Atif Usman's remark in §5.7 that the dose per intake and the times per day are not distinguished points at the same place. At most two of the three are asked rather than all three. A check that drags on becomes another step in itself, and steps are what this app set out to remove.
 
-Three things were not conceded in the design.
+There are three things we did not concede in the design.
 
 First, it does not block. A wrong answer moves on, the check can be skipped, and the medicine information stays on the screen below throughout. An app that withholds information until a check is passed is an app that stops people taking their medicine. This is a check, not a test.
 
@@ -1008,7 +1008,7 @@ Second, it asks only what the prescription said. Asking about something not writ
 
 Third, when the answer is wrong it says the right thing again on the spot. The correct picture is lit and read aloud once more, using **the same sentence** as when the answer was right. Whichever way the user pointed, the last thing they hear has to be the correct instruction. The point of the check is not a score but a second chance.
 
-What was decided not to ask should also be recorded. The distractors for the time question have to be times absent from that prescription. Offering an actual dosing time as a distractor would mean telling someone who pointed correctly that they were wrong. For a medicine taken three times a day only one time remains, so the answer set would be two, and a fifty-fifty guess is not a check. It is a question that fails to separate those who understood from those who did not while leaving behind the fact that a question was asked, so it is not asked at all. A medicine taken three times a day already has count and meal context worth asking about.
+What we decided not to ask should be recorded too. The distractors for the time question have to be times absent from that prescription. Offering an actual dosing time as a distractor would mean telling someone who pointed correctly that they were wrong. For a medicine taken three times a day only one time remains, so the answer set would be two, and a fifty-fifty guess is not a check. It is a question that fails to separate those who understood from those who did not while leaving behind the fact that a question was asked, so it is not asked at all. A medicine taken three times a day already has count and meal context worth asking about.
 
 The answer order is shuffled, but always the same way. If the answer moves around each time it is seen, someone who remembered the position they tapped the first time is lost the second. What is needed here is not randomness but only that the correct answer is not always in the first slot, so the shuffle is derived from the item identifier.
 
@@ -1153,9 +1153,9 @@ The screen was therefore removed and replaced with a paper form. A doctor or pha
 
 The reader was first built in Python with OpenCV on the server and then moved into the browser. The reason for moving it is that this was the only path still requiring the internet. Text recognition, the nutrition estimation model, the verdict engine and the pictograms are all on the device (§4.1), and yet the feature one would most want in a clinic without internet was calling a server.
 
-Rather than shipping opencv.js whole, only the functions used were transcribed: Gaussian blur, adaptive thresholding, Laplacian variance, perspective warp and Otsu thresholding. Making the user fetch another 8 MB runs against the judgement in §4.5 that the 16 MB model is fetched on first use. ArUco detection was written directly as well. Only four markers are printed on the paper, so there is no reason to port a dictionary of 50, and the path by which a candidate could be "corrected" into one of the other 46 disappears with it.
+Rather than shipping opencv.js whole, only the functions used were transcribed: Gaussian blur, adaptive thresholding, Laplacian variance, perspective warp and Otsu thresholding. Making the user fetch another 8 MB runs against the judgement in §4.5 that the 16 MB model is fetched on first use. We wrote the ArUco detection ourselves as well. Only four markers are printed on the paper, so there is no reason to port a dictionary of 50, and the path by which a candidate could be "corrected" into one of the other 46 disappears with it.
 
-The Python version was kept rather than deleted, because whether the two implementations give the same answer is the only way to judge whether the move was correct.
+We kept the Python version rather than deleting it, because whether the two implementations give the same answer is the only way to judge whether the move was correct.
 
 Reading has four stages. ArUco markers at the four corners of the form are located and the perspective corrected (flattened to 1000×1000), adaptive thresholding is applied, the fill ratio of each bubble is measured at coordinates given in a configuration file, and what has been marked is decided from those ratios. If the markers are not found, no value is invented and an error meaning "the whole sheet is not in frame" is returned.
 
@@ -1651,7 +1651,7 @@ The initial list leaned towards Korea and the English-speaking world. Since this
 
 Moldova was a judgement call. Thirty-one addresses were obtained from the Ministry of Health directory and only three were used. Thirty-one messages leaving for one ministry at once reads as spam in itself, and we judged it would not serve the team's Moldovan working relationships either.
 
-Rules for handling the list were written down separately. Taking Article 50-2 of the Korean Act on Promotion of Information and Communications Network Utilisation (prohibition of unauthorised collection of email addresses) as the basis, we set out that messages would be sent individually rather than with several recipients on one message, that the list would not leave the team, that addresses obtained from pages posting a refusal of collection would be excluded from sending, and that no one would be contacted a second time if they did not reply. That no address from the two institutions confirmed to have posted such a refusal remained among the recipients was verified against both the domain and the affiliation string, and the count was zero.
+We wrote down separate rules for handling the list. Taking Article 50-2 of the Korean Act on Promotion of Information and Communications Network Utilisation (prohibition of unauthorised collection of email addresses) as the basis, we set out that messages would be sent individually rather than with several recipients on one message, that the list would not leave the team, that addresses obtained from pages posting a refusal of collection would be excluded from sending, and that no one would be contacted a second time if they did not reply. That no address from the two institutions confirmed to have posted such a refusal remained among the recipients was verified against both the domain and the affiliation string, and the count was zero.
 
 Each recipient was assigned a ten-character token derived from their email address. The token alone identifies no one, and the table linking tokens to people exists only in a spreadsheet in our own hands. The response server stores only tokens, and because the folder holding the list was excluded when the Docker image was built, the server does not hold the list at all. That the deployed image contains no list was verified by connecting to it.
 
@@ -1665,7 +1665,7 @@ The daily sending limit was not guessed at, because it is not published. Instead
 
 The 41 people with the clearest selection basis were put at the front of the sending order. The list is not ordered by rank, so sending it as it stood would have scattered them across three hours, and an account blocked partway would have meant some of them never receiving it. Changing only the order removes that risk. All 41 were in fact sent within the first seven minutes.
 
-Language was decided from the email top-level domain alone. Searching the affiliation string for a country name was not used. If the selection-reason field contains "Moldova", WHO and a Portuguese researcher are caught as Moldovan too; tested that way it caught 30 people, a good number of them misclassified. By domain alone it yields 34, all of them genuinely Romanian-language institutions.
+We decided the language from the email top-level domain alone. Searching the affiliation string for a country name was not used. If the selection-reason field contains "Moldova", WHO and a Portuguese researcher are caught as Moldovan too; tested that way it caught 30 people, a good number of them misclassified. By domain alone it yields 34, all of them genuinely Romanian-language institutions.
 
 The subject line was revised three times. It began with `SnapCare`, but that name means nothing to the recipient, and a subject beginning with an unfamiliar name reads as advertising. The next version put a ministry name in square brackets at the front, which was worse. It reads as an official letter from an institution rather than a student asking for advice, and gives the impression of borrowing that authority. The final version drops the brackets and leads with the name of the contest alone.
 
@@ -1679,7 +1679,7 @@ The survey is three screens: consent, a screen showing what we built, and the qu
 
 The answer options always kept a choice that is unfavourable to us: "there is nowhere to put it", "it is fundamentally wrong-headed", and "that there is no validation". We judged that having those answers come back was better than learning it after the contest.
 
-A morpheme comprehension test was left out of the survey. A professor reading our pictograms does not mean a low-literate patient reads them, and writing that number down as meeting the ISO 67% criterion would state something untrue.
+We left a morpheme comprehension test out of the survey. A professor reading our pictograms does not mean a low-literate patient reads them, and writing that number down as meeting the ISO 67% criterion would state something untrue.
 
 #### Who answered
 
@@ -1841,7 +1841,7 @@ Professor Celia of the University of Pretoria judged that it would not work on h
 
 Professor Atif Usman noted that **the dose per intake and the number of times a day are not distinguished**. In the amoxicillin example the first picture represents three times a day but cannot represent one capsule at a time, and the morning, midday and evening pictures that follow create confusion. This corresponds directly to the dose errors that make up 28.4% of the total in Table 4.
 
-E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols and the University of Southampton, wrote that AAC users frequently have visual difficulties as well, which makes an audio button hard to reach by scanning, and that since a user's communication-aid interface may differ from this app, the **WCAG 2.2 mobile criteria** should be checked. There was also a point that the morning, midday and evening icons are small and need magnification. Both were addressed. The result of the WCAG 2.2 sweep and what was changed are in §3.7, and the icon size was resolved not by magnification but by giving the time morphemes a cell of their own. The account of that is below.
+E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols and the University of Southampton, wrote that AAC users frequently have visual difficulties as well, which makes an audio button hard to reach by scanning, and that since a user's communication-aid interface may differ from this app, the **WCAG 2.2 mobile criteria** should be checked. There was also a point that the morning, midday and evening icons are small and need magnification. Both were addressed. What working through WCAG 2.2 found, and what we changed, are in §3.7, and the icon size was resolved not by magnification but by giving the time morphemes a cell of their own. The account of that is below.
 
 Professor Katarina Vučićević of the University of Belgrade wrote that the refrigerated-storage and midday morphemes are confusable and proposed at least two colours: black and red for warnings, black and yellow for daytime. It is a request to revisit the decision in §3.7 to use colour only for the verdict and keep morphemes in black and white.
 
@@ -1863,7 +1863,7 @@ All four errors are of one character. When making the samples we filled the warn
 
 We record this here because the heaviest finding in §5.7 stands on this sample. The point raised independently in four countries, that a prohibition is not read as a prohibition, was about the pregnancy picture carrying no slash, and the engine defect it pointed at was real and has been fixed. But the prescription that demonstrated the defect was itself a faulty example that attached a pregnancy contraindication to amoxicillin. The finding about the engine stands; that the place it was shown was wrong has to be recorded alongside it.
 
-The samples were corrected. The amoxicillin warnings were changed to penicillin allergy and finishing the course, and the eye drops to not wearing contact lenses and not sharing the bottle. Finishing the course is the very thing the `finish_course` morpheme is said to aim at in the SDG 3.d discussion of §5.8, and the demonstration of a pregnancy contraindication was moved to the ibuprofen sample, an NSAID. Contraindication of NSAIDs in the third trimester is a real contraindication.
+We corrected the samples. The amoxicillin warnings were changed to penicillin allergy and finishing the course, and the eye drops to not wearing contact lenses and not sharing the bottle. Finishing the course is the very thing the `finish_course` morpheme is said to aim at in the SDG 3.d discussion of §5.8, and the demonstration of a pregnancy contraindication was moved to the ibuprofen sample, an NSAID. Contraindication of NSAIDs in the third trimester is a real contraindication.
 
 That all three are problems with the example we made rather than with the engine is the same as the refrigeration error before them. And it says the same thing this section leaves in §5.9. Not one sample in this document has been reviewed by a pharmacist.
 
@@ -1996,7 +1996,7 @@ Asked what breaks first in operation, the industry-practice respondent chose "us
 
 #### What was fixed after the survey
 
-This survey was carried out in order to fix things rather than to record results and stop, so what was fixed and what further came to light in the fixing is set down here. All of it took place after the survey in August 2026.
+This survey was carried out to fix things rather than to record results and stop, so what was fixed and what further came to light in the fixing is set down here. All of it took place after the survey in August 2026.
 
 The contraindication marking was fixed. `contentLabels` had handled every flag through a single `avoid`, and it was split into three according to the nature of the flag. Flags that say what is contained (`peanut`, `high_salt`) gain and lose the slash according to the verdict, while flags that say what not to do (`unsafe_pregnancy`) are always drawn as prohibited regardless of the verdict.
 
@@ -2008,7 +2008,7 @@ This revealed why the semantic check of §5.2 had passed it. The expected value 
 
 The set was made to use itself as its own list. When Professor Katarina Vučićević wrote that refrigerated storage and midday are confusable, opening the confusion list for the two morphemes showed that neither recorded the other. Each had been asked whether it is confusable with a star; no one had asked whether they are confusable with each other. Writing a longer list does not close this. With 78 morphemes there are 3,003 pairs. So if a picture reads as the meaning of another morpheme, it counts as a collision whether or not we wrote it down in advance.
 
-A pixel-level check for similar pairs was added too. Installed morphemes are reduced to the 32 pixels at which they are actually seen and the distance between them measured, because being distinguishable at 512 pixels is not this app's problem. Recorded honestly, this check does not catch the pair the expert named (refrigeration against midday). It ranks 944th of 3,003. That confusion is a structural overlap of radial forms rather than a pixel one, a different kind, and that side is the semantic check's job.
+We added a pixel-level check for similar pairs as well. Installed morphemes are reduced to the 32 pixels at which they are actually seen and the distance between them measured, because being distinguishable at 512 pixels is not this app's problem. Recorded honestly, this check does not catch the pair the expert named (refrigeration against midday). It ranks 944th of 3,003. That confusion is a structural overlap of radial forms rather than a pixel one, a different kind, and that side is the semantic check's job.
 
 So it was fixed by looking rather than by the metric. A snowflake and a sun are both star shapes radiating from a centre, and if the silhouettes are the same, enlarging them does not separate them. The professor's proposal was colour: black and red for warnings, black and yellow for daytime. Colour is good as a second layer but cannot be the first. To someone who cannot see colour the two pictures are still the same, and that person is the one §3.7 undertook to protect. A composed cell is a single PNG, so there is no way to tint only the morpheme inside it either; adding colour would require the engine to emit colour, and that changes the black-and-white-silhouette rule itself. The silhouette was changed instead. The snowflake was not discarded, because it is a picture people have already learned from the refrigeration mark printed on packaging; it was cut into a box as a hole. What was learned stays and what collides disappears. The outline is now a filled rectangle, so there is nowhere left for it to overlap with the sun.
 
@@ -2018,7 +2018,7 @@ Part of it was resolved by changing the position rather than redrawing the pictu
 
 So the dictionary was given a way to record whether a morpheme can stand alone. The principle stays: a modifier cannot stand alone, because a peanut on its own does not say whether it means "contains" or "do not eat". Time of day is the exception to that principle. A sunrise is morning whatever it is attached to, and the preceding cell has already said what the medicine is. Time of day now fills a whole cell the way a head does. A line now reads as one capsule · sunrise · midday · sunset · to the end · with food, and since each cell has come down to one element it also reaches the too-many-elements finding raised in the same survey.
 
-The wording for standing alone was kept separate. Hearing only "In the morning." leaves the sentence unfinished as to what should happen in the morning, so a time morpheme standing alone is read as "Take it in the morning." What remains is exactly as §5.3 judged. That sunrise and sunset differ only in direction does not change when the cell grows, and that side is carried over to the field evaluation in §5.10.
+We kept the wording for a morpheme standing alone separate. Hearing only "In the morning." leaves the sentence unfinished as to what should happen in the morning, so a time morpheme standing alone is read as "Take it in the morning." What remains is exactly as §5.3 judged. That sunrise and sunset differ only in direction does not change when the cell grows, and that side is carried over to the field evaluation in §5.10.
 
 There were inversions in the speech as well. `say.ts` had no tests at all. A pictogram at least looks odd when it is wrong, but speech cannot be seen, so it flows out wrong and the listener has no way of knowing. Adding 12 tests caught one. Having split the administration verb by dosage form (§2.3), this file was still ending every closing sentence with "Take as prescribed." Sending out "Put 2 drops in the eye" and "Take as prescribed." together for one eye drop collapses, in that last sentence, the reason the verbs were split.
 
@@ -2026,7 +2026,7 @@ The same kind appeared in the storage instruction. The positive check was lookin
 
 Two morphemes were redrawn. `allergen_egg` followed the point made by Professor Namsoo Park of Hyupsung University. A fried egg seen from above loses its white in the silhouette because the white is white, leaving a single yolk circle that reads like a target or a button. In a set drawn as filled silhouettes, a picture whose meaning is carried by the white part never stood up in the first place, so it was changed to a cracked egg. That `tree_nut` was read as "cracked egg" in §5.2 is the evidence that this form reads as an egg. `hand_wash` followed the instruction given by Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, exactly: a hand under a running tap.
 
-The accessibility criteria were swept. Checking WCAG 2.2 item by item, as E. A. Draffan, retired speech and language therapist and visiting accessibility researcher, had asked, found all five verdict colours below the contrast criterion and the target size of secondary controls between 16 and 20 pixels. The colours looked perfectly fine on screen, and that is in fact how they survived this long. They are values the eye cannot hold, so they were locked with a test, and the numbers and the judgement are carried as Table 19 in §3.7. What should be recorded here is that this sweep is something we would not have done without the survey. In §3.7 we had five channels standing in for colour and had not measured whether the colour itself could be read.
+We went through the accessibility criteria. Checking WCAG 2.2 item by item, as E. A. Draffan, retired speech and language therapist and visiting accessibility researcher, had asked, found all five verdict colours below the contrast criterion and the target size of secondary controls between 16 and 20 pixels. The colours looked perfectly fine on screen, and that is in fact how they survived this long. They are values the eye cannot hold, so they were locked with a test, and the numbers and the judgement are carried as Table 19 in §3.7. What should be recorded here is that we would not have done this without the survey. In §3.7 we had five channels standing in for colour and had not measured whether the colour itself could be read.
 
 A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Institut Pasteur de Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
 
@@ -2110,7 +2110,7 @@ Eighth, whether people keep using it was not measured. The formative evaluation 
 
 Stage 2 matters most. Every measurement in this work confirmed whether information reaches the screen, and whether it is read by a person can only be learned by asking people.
 
-How that evaluation will be run is already settled. The method follows ISO 9186-1. One picture is shown with no options given, the person says what it looks like, and whether the answer matches the intent is judged separately. That this is the same form of question as the mechanical check in §5.2 is not a coincidence. The mechanical check was built in that form precisely in order to measure the same thing a test with people measures.
+How that evaluation will be run is already settled. The method follows ISO 9186-1. One picture is shown with no options given, the person says what it looks like, and whether the answer matches the intent is judged separately. That this is the same form of question as the mechanical check in §5.2 is not a coincidence. The mechanical check was built in that form precisely to measure the same thing a test with people measures.
 
 The tally is split two ways. Ordinary wrong answers and opposite-meaning wrong answers are counted separately. ANSI Z535.3 requiring critical confusion of 5% or less alongside an 85% correct-response rate comes from the same judgement. For dosing instructions the latter matters more. Reading a picture wrapped in `no{}` as "take this" is worse than having no picture.
 
