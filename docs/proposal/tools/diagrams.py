@@ -47,6 +47,26 @@ def _wrap(s: str, em_budget: float) -> list:
     return out
 
 
+def _wrap_any(s: str, em_budget: float) -> list:
+    """언어를 가리지 않고 접는다.
+
+    _wrap 은 한국어를 접지 않는다. 이미 검토를 마친 도판의 줄을 조용히
+    바꾸지 않으려는 것이다. 그 보호가 필요 없는 새 도판은 이쪽을 쓴다."""
+    if _em(s) <= em_budget:
+        return [s]
+    out, cur = [], ''
+    for word in s.split(' '):
+        cand = f'{cur} {word}'.strip()
+        if cur and _em(cand) > em_budget:
+            out.append(cur)
+            cur = word
+        else:
+            cur = cand
+    if cur:
+        out.append(cur)
+    return out
+
+
 def box(ax, x, y, w, h, head, lines=(), color=GREY, lw=1.6, fs=9.2):
     """상자 하나. 글 간격은 **상자 높이에 비례**해서 잡는다 — 절대 단위로 잡으면
     축 범위가 바뀔 때 전부 겹친다."""
@@ -252,8 +272,8 @@ def gate_pictogram():
 # ── 인식이 두 층으로 갈린다 ─────────────────────────────────────────
 def recognition_layers():
     """§3.3. 글자가 있는 것은 기기에서 끝내고 통신이 필요한 것만 내보낸다."""
-    fig, ax = canvas(6.0, 2.8)
-    TOP = 42.0
+    fig, ax = canvas(6.0, 3.0)
+    TOP = 46.0
 
     box(ax, 34, TOP - 7.4, 32, 7.2, T('사진 한 장'), [T('무엇을 찍었는지 고르지 않는다')], GREY)
     arrow(ax, 50, TOP - 8.0, 50, TOP - 12.0)
@@ -272,9 +292,9 @@ def recognition_layers():
     box(ax, 62, B - 9.4, 36, 9.2, T('서버의 시각 모형'),
         [T('음식 · 음료'), T('인터넷이 필요하다')], ORANGE)
 
-    ax.text(2, 5.0, T('이 순서 덕분에 처방전과 성분표는 인터넷 없이 읽힌다 (§4.5)'),
+    ax.text(2, 6.0, T('이 순서 덕분에 처방전과 성분표는 인터넷 없이 읽힌다 (§4.5)'),
             fontsize=7.8, color=MUTED, fontweight='bold')
-    ax.text(2, 1.8, T('이 앱에서 가장 급한 두 가지가 그 둘이다'),
+    ax.text(2, 2.4, T('이 앱에서 가장 급한 두 가지가 그 둘이다'),
             fontsize=7.6, color=MUTED)
     save(fig, 'fig19_recognition')
 
@@ -407,7 +427,7 @@ def formsheet_flow():
 
 # ── 서명에 무엇이 들어가는가 ────────────────────────────────────────
 def sign_payload():
-    """§4.6. 셋 중 하나라도 빠지면 서명이 있으나 마나가 된다."""
+    """§4.6. 서명에 들어가는 것은 시각과 본문 해시 둘이다. 저장 위치는 서명이 아니라 접근 통제다."""
     fig, ax = canvas(6.0, 2.3)
     TOP = 32.0
 
@@ -419,15 +439,20 @@ def sign_payload():
 
     M = TOP - 12.4
     notes = [(T('시각'), T('가로챈 서명을 나중에 못 쓴다. 5분 넘으면 거절')),
-             (T('본문 해시'), T('서명만 떼어 다른 내용에 못 붙인다')),
-             (T('저장 위치'), T('공개키에서 유도한다. 남의 자료를 요청할 방법이 없다'))]
+             (T('본문 해시'), T('서명만 떼어 다른 내용에 못 붙인다'))]
     for i, (k, v) in enumerate(notes):
         y = M - i * 4.2
         ax.text(4, y, k, fontsize=8, color=INK, fontweight='bold')
         ax.text(20, y, v, fontsize=7.6, color=MUTED)
 
-    ax.text(2, 2.0, T('셋 중 하나라도 빠지면 서명은 있으나 마나가 된다'),
+    ax.text(4, M - 8.6, T('둘 중 하나라도 빠지면 서명은 있으나 마나가 된다'),
             fontsize=7.6, color=RED, fontweight='bold')
+
+    ax.plot([4, 96], [M - 11.6, M - 11.6], color=MUTED, lw=0.6, alpha=0.5)
+    tail = _wrap(T('접근 통제는 서명과 별개다. 저장 위치를 공개키에서 유도하므로 남의 자료를 요청할 방법이 없다'),
+                 92 / 100 * 6.0 / (7.6 / 72))
+    for i, ln in enumerate(tail):
+        ax.text(4, M - 14.4 - i * 2.9, ln, fontsize=7.6, color=MUTED)
     save(fig, 'fig24_sign')
 
 # ── 실패했을 때 무엇을 보이는가 ─────────────────────────────────────
@@ -454,6 +479,66 @@ def failure_paths():
             fontsize=7.4, color=RED)
     save(fig, 'fig25_failure')
 
+# ── 처방전 한 줄이 문장 넷이 되는 과정 ──────────────────────────────
+def voca_rebuild():
+    """§2.3. VOCA 가 무엇을 버리고 무엇을 어떤 순서로 남기는가."""
+    fig, ax = canvas(6.0, 3.3)
+    TOP = 52.0   # ylim = 55.0
+
+    def panel(x, w, title, items, color, y0, h):
+        ax.add_patch(mp.FancyBboxPatch((x, y0), w, h,
+                                       boxstyle='round,pad=0,rounding_size=0.6',
+                                       linewidth=1.6, edgecolor=color,
+                                       facecolor=FILL[color], zorder=2))
+        ax.text(x + w / 2, y0 + h - 2.6, title, ha='center', va='center',
+                fontsize=8.8, fontweight='bold', color=INK, zorder=3)
+        for i, t in enumerate(items):
+            ax.text(x + 2.6, y0 + h - 6.4 - i * 2.9, '· ' + t, fontsize=7.6,
+                    color=MUTED, va='center', zorder=3)
+
+    ax.text(2, TOP + 1.4, T('처방전 한 장에 적혀 있는 것'), fontsize=8.4,
+            color=MUTED, fontweight='bold')
+
+    H = 22.0
+    panel(2, 46, T('읽지 않고 버린다'),
+          [T('환자 등록번호'), T('의료기관명'), T('처방 코드'),
+           T('의사 면허번호'), T('교부 일자'), T('약품 코드')], GREY, TOP - H, H)
+    panel(52, 46, T('남긴다'),
+          [T('약 이름'), T('1회 용량'), T('복용법'),
+           T('보관 방법'), T('제형 (문장이 되지 않는다)')], BLUE, TOP - H, H)
+
+    M = TOP - H - 5.0
+    ax.text(2, M + 1.0, T('남긴 것을 이 순서로 말한다. 듣는 사람은 되감을 수 없다'),
+            fontsize=8.4, color=MUTED, fontweight='bold')
+
+    steps = [(T('약 이름'), T('무엇에 대한 말인지 세운다')),
+             (T('1회 용량'), T('형성 평가 첫 측정에서 음성까지 도달하지 않던 항목')),
+             (T('복용법'), T('언제 · 얼마나 자주')),
+             (T('보관'), T('냉장일 때만 말한다'))]
+    w, gap, bh = 22.6, 2.2, 7.0
+    for i, (h_, sub) in enumerate(steps):
+        x = 2 + i * (w + gap)
+        c = BLUE if i == 1 else GREY
+        ax.add_patch(mp.FancyBboxPatch((x, M - bh), w, bh,
+                                       boxstyle='round,pad=0,rounding_size=0.6',
+                                       linewidth=1.6, edgecolor=c,
+                                       facecolor=FILL[c], zorder=2))
+        ax.text(x + w / 2, M - bh / 2, h_, ha='center', va='center',
+                fontsize=8.8, fontweight='bold', color=INK, zorder=3)
+        for j, ln in enumerate(_wrap_any(sub, (w - 1.0) / 100 * 6.0 / (7.4 / 72))):
+            ax.text(x + w / 2, M - bh - 2.6 - j * 2.6, ln, ha='center',
+                    fontsize=7.4, color=MUTED, zorder=3)
+        if i:
+            arrow(ax, x - gap + 0.3, M - bh / 2, x - 0.5, M - bh / 2)
+
+    ax.text(2, 9.0, T('제형은 읽히지 않는다. 동사와 부위를 정하고 사라진다 (표 9)'),
+            fontsize=7.6, color=MUTED)
+    ax.text(2, 5.4, T('안약에 "Take as prescribed." 를 붙이면 동사를 가른 이유가 마지막 문장에서 무너진다'),
+            fontsize=7.6, color=MUTED)
+    ax.text(2, 1.8, T('버린 여섯 줄은 환자가 할 일을 하나도 바꾸지 않는다. 읽어 주면 그만큼 앞의 넷이 묻힌다'),
+            fontsize=7.6, color=RED, fontweight='bold')
+    save(fig, 'fig15_voca')
+
 
 if __name__ == '__main__':
     userflow()
@@ -468,3 +553,4 @@ if __name__ == '__main__':
     formsheet_flow()
     sign_payload()
     failure_paths()
+    voca_rebuild()

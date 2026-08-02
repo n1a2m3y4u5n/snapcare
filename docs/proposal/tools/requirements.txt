@@ -12,6 +12,7 @@ openpyxl==3.1.5         # build_xlsx.py  — 도표 원자료 워크북
 matplotlib==3.11.1      # charts.py, diagrams.py, panels.py
 pillow==12.3.0          # fig10.py       — 디스펜서 도판 합성
 numpy==2.5.1            # matplotlib 이 쓰고, score_model.py 도 쓴다
+scipy==1.18.0           # survey_stats.py — Fisher 정확검정 · Mann-Whitney U · Spearman
 
 # score_model.py 로 모델을 다시 채점할 때만 추가로 필요하다.
 # Nutrition5k 테스트 세트를 따로 내려받아야 하므로 기본에서 뺀다.

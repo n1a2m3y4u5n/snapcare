@@ -392,19 +392,51 @@ EN = {
         'All three yield no value and report a problem. A misread dosing time is worse than none',
     '이름이 붙은 문제는 사용자를 종이로 돌려보내며 되돌릴 수 있다. 확신에 찬 오독은 되돌릴 수 없다':
         'A named problem sends the user back to the paper and is recoverable. A confident misreading is not',
-    '기기가 만든 개인키': 'Private key generated on the device',
+    '기기가 만든 개인키': 'Device-generated key',
     '브라우저 밖으로 못 나간다': 'Cannot leave the browser',
     '서명하는 대상': 'What is signed',
     '시각 · 메서드 · 본문 해시': 'Timestamp · method · body hash',
-    '시각': 'Timestamp', '본문 해시': 'Body hash', '저장 위치': 'Storage location',
+    '시각': 'Timestamp', '본문 해시': 'Body hash',
+    '접근 통제는 서명과 별개다. 저장 위치를 공개키에서 유도하므로 남의 자료를 요청할 방법이 없다':
+        'Access control is separate from the signature. The storage location is derived from the '
+        'public key, so there is no way to request another person\'s data',
     '가로챈 서명을 나중에 못 쓴다. 5분 넘으면 거절':
         'An intercepted signature cannot be replayed. Older than five minutes is refused',
     '서명만 떼어 다른 내용에 못 붙인다':
         'A signature cannot be detached and attached to other content',
-    '공개키에서 유도한다. 남의 자료를 요청할 방법이 없다':
-        'Derived from the public key. There is no way to request another person\'s data',
-    '셋 중 하나라도 빠지면 서명은 있으나 마나가 된다':
-        'Missing any one of the three makes the signature worthless',
+    '둘 중 하나라도 빠지면 서명은 있으나 마나가 된다':
+        'Missing either one makes the signature worthless',
+    # ── diagrams.py · voca_rebuild (§2.3) ─────────────────────────
+    '처방전 한 장에 적혀 있는 것': 'What one prescription sheet carries',
+    '읽지 않고 버린다': 'Dropped, never read aloud',
+    '환자 등록번호': 'Patient record number',
+    '의료기관명': 'Name of the institution',
+    '처방 코드': 'Prescription code',
+    '의사 면허번호': 'Prescriber licence number',
+    '교부 일자': 'Date of issue',
+    '약품 코드': 'Drug code',
+    '남긴다': 'Kept',
+    '약 이름': 'Drug name',
+    '1회 용량': 'Dose per intake',
+    '복용법': 'How to take it',
+    '보관 방법': 'Storage',
+    '제형 (문장이 되지 않는다)': 'Dosage form (never becomes a sentence)',
+    '남긴 것을 이 순서로 말한다. 듣는 사람은 되감을 수 없다':
+        'What is kept is spoken in this order. The listener cannot rewind',
+    '무엇에 대한 말인지 세운다': 'Establishes what this is about',
+    '형성 평가 첫 측정에서 음성까지 도달하지 않던 항목':
+        'Did not reach the speech channel in the first formative measurement',
+    '언제 · 얼마나 자주': 'When and how often',
+    '냉장일 때만 말한다': 'Spoken only when refrigeration is required',
+    '제형은 읽히지 않는다. 동사와 부위를 정하고 사라진다 (표 9)':
+        'The dosage form is never spoken. It fixes the verb and the site, then disappears (Table 9)',
+    '안약에 "Take as prescribed." 를 붙이면 동사를 가른 이유가 마지막 문장에서 무너진다':
+        'Ending an eye drop with "Take as prescribed." undoes, in the last sentence, '
+        'the reason the verbs were split at all',
+    '버린 여섯 줄은 환자가 할 일을 하나도 바꾸지 않는다. 읽어 주면 그만큼 앞의 넷이 묻힌다':
+        'None of the six dropped lines changes what the patient has to do. '
+        'Reading them aloud only buries the four that do',
+
     '읽지 못했다': 'Could not read it',
     '다시 찍으면 된다': 'Another photograph will do',
     '422 · 못 알아봄': '422 · not recognised',
