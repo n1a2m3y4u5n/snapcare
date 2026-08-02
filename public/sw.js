@@ -53,6 +53,32 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+/**
+ * 알림을 누르면 앱으로 데려온다.
+ *
+ * 이것이 없으면 알림은 눌러도 아무 일이 없거나 새 탭이 하나 더 열린다. 알림이 하는
+ * 말은 "약이 나왔으니 버튼을 누르세요" 인데, 눌렀더니 그 버튼이 없는 화면이 뜨면
+ * 부른 의미가 없다.
+ *
+ * 이미 열려 있는 창이 있으면 그 창을 앞으로 가져온다 — 새로 열면 긴 폴링이 하나 더
+ * 돌고, 사용자는 같은 앱 두 개를 갖게 된다.
+ */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of all) {
+      if (new URL(client.url).origin === self.location.origin) {
+        await client.focus();
+        // 홈이 배출 카드를 맨 위에 그린다. 어디에 있었든 그 화면으로 보낸다.
+        if ('navigate' in client) await client.navigate('/home');
+        return;
+      }
+    }
+    await self.clients.openWindow('/home');
+  })());
+});
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;

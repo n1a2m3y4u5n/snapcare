@@ -6,6 +6,7 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { DoseRelease } from '@/components/sc/DoseRelease';
 import { useDispenser } from '@/lib/dispenser/useDispenser';
 import { useDoseLog } from '@/lib/dispenser/useDoseLog';
+import { useDoseAlert } from '@/lib/dispenser/useDoseAlert';
 import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
 import { useScans, todayKey } from '@/stores/scans';
 import { useProfile, PROFILE_ID } from '@/stores/profile';
@@ -45,6 +46,8 @@ export default function HomePage() {
     [reminders, box.report?.status.trayCount],
   );
   useDoseLog(box.report, trayNames);
+  // 앱을 보고 있지 않을 때는 알림이 부른다 — 배출 버튼은 화면을 봐야 보인다.
+  useDoseAlert(box.report);
 
   // 처방을 스캔해 알람을 만들었을 때만 뜬다.
   // 예전에는 존재하지도 않는 Metformin 알람이 항상 박혀 있었다 —

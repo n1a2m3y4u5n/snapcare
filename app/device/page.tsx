@@ -9,6 +9,7 @@ import { DoseRelease } from '@/components/sc/DoseRelease';
 import { useDispenser } from '@/lib/dispenser/useDispenser';
 import { toCloudSlots } from '@/lib/dispenser/fromApp';
 import { useDoseLog } from '@/lib/dispenser/useDoseLog';
+import { useDoseAlert } from '@/lib/dispenser/useDoseAlert';
 import { Hint } from '@/components/sc/Hint';
 import { sayable, ask, Speakable } from '@/components/sc/Say';
 import { useReminders } from '@/stores/reminders';
@@ -106,6 +107,8 @@ export default function DevicePage() {
     [trayPlan],
   );
   useDoseLog(box.report, trayNames);
+  // 앱을 보고 있지 않을 때는 알림이 부른다 — 배출 버튼은 화면을 봐야 보인다.
+  useDoseAlert(box.report);
 
   // 폼시트를 읽었으면 그것이 우선한다 — 의사가 직접 채워준 일정이기 때문이다.
   //

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clockFace, dayPart, parseClock, speakTime } from './clock.ts';
+import { clockFace, dayPart, msUntil, parseClock, speakTime } from './clock.ts';
 
 test('앱 안에 섞여 있는 세 가지 시각 표기를 모두 읽는다', () => {
   assert.deepEqual(parseClock('Today · 2:14 PM'), { hour: 14, minute: 14 });
@@ -51,4 +51,20 @@ test('시각도 소리로 들린다', () => {
   assert.equal(speakTime(20, 30), '8 30 at night');
   assert.equal(speakTime(14, 5), '2 oh 5 in the middle of the day');
   assert.equal(speakTime(0, 0), "12 o'clock at night");
+});
+
+test('msUntil 은 오늘 남은 시각까지', () => {
+  const now = new Date('2026-08-02T07:00:00');
+  assert.equal(msUntil('8:00 AM', now), 60 * 60 * 1000);
+});
+
+test('이미 지난 시각이면 내일까지 — 음수를 돌려주지 않는다', () => {
+  // 저녁 7시에 아침 8시 약을 찍은 사람이 있다. 음수를 주면 예약이 조용히 취소되거나
+  // 즉시 뜨고, 둘 다 사용자에게는 "알림이 이상하다" 로만 보인다.
+  const now = new Date('2026-08-02T19:00:00');
+  assert.equal(msUntil('8:00 AM', now), 13 * 60 * 60 * 1000);
+});
+
+test('읽을 수 없는 시각은 예약하지 않는다', () => {
+  assert.ok(msUntil('sometime', new Date('2026-08-02T07:00:00')) < 0);
 });

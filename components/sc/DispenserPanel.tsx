@@ -5,6 +5,7 @@ import { Speakable, sayable } from '@/components/sc/Say';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
 import { claimFromPairUrl, formatClaim, isValidClaim } from '@/lib/dispenser/claim';
 import { forgetPaired, pairWith, type PairedDevice } from '@/lib/dispenser/paired';
+import { requestPermission } from '@/lib/notifications';
 import type { DeviceReport } from '@/lib/dispenser/types';
 
 /**
@@ -69,6 +70,16 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
       setCode('');
       setNote('Paired. Waiting for the box to say hello…');
       onChanged();
+      /*
+        알림 권한은 **여기서** 묻는다.
+
+        상자를 방금 자기 것이라고 말한 사람에게 "약이 나오면 알려 드릴까요" 를 묻는
+        것은 이어지는 말이다. 앱을 처음 열자마자 묻는 창은 무엇에 쓰는지 모르는 채로
+        거절당하고, 한 번 거절하면 브라우저가 다시 묻지 못하게 막는다.
+
+        거절해도 아무것도 잃지 않는다 — 화면의 배출 카드는 그대로다.
+      */
+      void requestPermission();
     } catch (err) {
       console.error('[dispenser] 페어링 실패:', err);
       setNote('That code did not work. Ten characters, exactly as printed.');
