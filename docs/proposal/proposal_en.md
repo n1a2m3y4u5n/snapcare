@@ -956,7 +956,7 @@ The line currently being read gains an outline. Where the audio has reached has 
 
 #### Whether the colours themselves can be read was measured separately
 
-If everything so far concerns the layers that substitute for colour, whether the colour itself can be read is a separate question. In §5.7, E. A. Draffan of Global Symbols wrote that the WCAG 2.2 mobile criteria should be checked. The reason given was that AAC users frequently have visual difficulties as well and operate by scanning, which makes an audio button hard to reach. Working through the criteria, two items failed.
+If everything so far concerns the layers that substitute for colour, whether the colour itself can be read is a separate question. In §5.7, E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols and the University of Southampton, wrote that the WCAG 2.2 mobile criteria should be checked. The reason given was that AAC users frequently have visual difficulties as well and operate by scanning, which makes an audio button hard to reach. Working through the criteria, two items failed.
 
 The first is contrast. All five verdict colours fell short. SC 1.4.3 of WCAG 2.2 requires 4.5:1 for body text, and these colours are not decoration but the colour of the verdict sentence itself. It is not that one of the five channels in Table 18 dims but that the sentence does not read.
 
@@ -1802,7 +1802,7 @@ Five tests were run, so the Bonferroni-corrected threshold is 0.010. Only the la
 
 The fourth and fifth rows are interesting but are not made into claims. That not one of the ten who answered in Korean answered "possible" while half of the fourteen who answered in English did, and that Korean respondents stayed far more briefly than English respondents, are significant before correction and not after. And language is entangled with the respondent's country and occupation, so even if a difference exists, this data cannot separate whether it is due to language or to something else.
 
-The sixth row is worth reading on its own. A rank correlation of 0.717 between time taken and free-text volume means that people who stayed longer did in fact write more, and it can serve as a proxy for the care taken over a response. The median time taken is 10.3 minutes, with quartiles at 6.0 and 40.5 minutes. E. A. Draffan noted separately that they were interrupted partway and that their own time should not be read as time actually spent.
+The sixth row is worth reading on its own. A rank correlation of 0.717 between time taken and free-text volume means that people who stayed longer did in fact write more, and it can serve as a proxy for the care taken over a response. The median time taken is 10.3 minutes, with quartiles at 6.0 and 40.5 minutes. E. A. Draffan, retired speech and language therapist and visiting accessibility researcher, noted separately that they were interrupted partway and that their own time should not be read as time actually spent.
 
 Free text was written by 29 of the 34 respondents, 113 items in all. Counting by keyword how many people independently raised the same point gives 6 on the absence of validation, 5 on too many elements in one image, 5 on blind users, 4 on the prohibition marking and 3 on referring to existing sets. That count is by words we chose, however, so the body text uses the counts a person read and confirmed.
 
@@ -1816,20 +1816,20 @@ The heaviest finding was that a prohibition is not read as a prohibition. The mo
 > "Putting in the pregnancy symbol alone does not convey that it is unsafe, so an X mark should be added."
 > (Sheron Sir Loon Goh, Pharmacy Lecturer, Department of Clinical Pharmacy and Pharmacy Practice)
 
-Raisa Kravchenko, Deputy Director in Ukraine, wrote that "with no danger marking it can be understood as being recommended for pregnant women", and Professor Eun-Kyoung Kim of Kongju National University noted that "'you must do this' and 'you must not' are not properly distinguished; the 'must not' in particular ought to be emphasised." The same statement came from four different countries.
+Raisa Kravchenko, Deputy Director of the All Ukrainian NGO Coalition for Persons with Intellectual Disabilities in Ukraine, wrote that "with no danger marking it can be understood as being recommended for pregnant women", and Professor Eun-Kyoung Kim of Kongju National University noted that "'you must do this' and 'you must not' are not properly distinguished; the 'must not' in particular ought to be emphasised." The same statement came from four different countries.
 
 **This is exactly the critical confusion that ANSI Z535.3, cited in §1.8, is about.** And as described in §2.2 the engine already has the `\no{}` operator and can draw the prohibition circle and slash. `\no{\contact_lens}` in the same demonstration comes out with the slash on it. The code emitting contraindications simply was not calling it. It is a defect caused by not calling a capability that exists rather than by a capability being absent, which is the same kind as the 0 of 28 in §5.1.
 
 The same kind of inversion was raised for the finish-the-course morpheme.
 
 > "As the black dots are not filled to the end, to me it reads as meaning I do not have to finish the course."
-> (Sheron Sir Loon Goh)
+> (Sheron Sir Loon Goh, Pharmacy Lecturer, Department of Clinical Pharmacy and Pharmacy Practice)
 
 `finish_course` is the very morpheme named in the SDG 3.d contribution of §5.8 as what this app aims at. The finding is that it reads as the exact opposite.
 
-Too many elements in one image was raised in three countries. Myojung Choi, a researcher at the Korea Disabled People's Development Institute, wrote that "if additional information is presented as small images inside the eye-drop bottle pictogram, the information overlaps and legibility falls, so present the dosage form early and separate the details", and Yonghan Lee of the Korea Craft and Design Foundation proposed splitting the explanation into two or three. The structure of SIGIL, designed in §2.2 to place modifiers in a slot inside the head, is what is caught here.
+Too many elements in one image was raised in three countries. Myojung Choi, a researcher at the Korea Disabled People's Development Institute, wrote that "if additional information is presented as small images inside the eye-drop bottle pictogram, the information overlaps and legibility falls, so present the dosage form early and separate the details", and Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, proposed splitting the explanation into two or three. The structure of SIGIL, designed in §2.2 to place modifiers in a slot inside the head, is what is caught here.
 
-The target population differs from our premise was raised five times. Yonghan Lee said that "the largest group of people who cannot read is likely to be blind people rather than non-literate people, and for a blind person the act of taking a photograph is itself a barrier." Niken Nur Widyakusuma, a pharmacist in Indonesia, also answered that she sees far more patients with visual impairment, and Professor Hwi-Yeol Yun of Chungnam National University College of Pharmacy answered that in Korea it is mainly foreign patients. It runs in the same direction as what we wrote in §1.5, that even someone who can read has no guarantee the text is in their own language, and it means we defined the target too narrowly.
+The target population differs from our premise was raised five times. Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, said that "the largest group of people who cannot read is likely to be blind people rather than non-literate people, and for a blind person the act of taking a photograph is itself a barrier." Niken Nur Widyakusuma, a pharmacist in Indonesia, also answered that she sees far more patients with visual impairment, and Professor Hwi-Yeol Yun of Chungnam National University College of Pharmacy answered that in Korea it is mainly foreign patients. It runs in the same direction as what we wrote in §1.5, that even someone who can read has no guarantee the text is in their own language, and it means we defined the target too narrowly.
 
 #### Individual findings
 
@@ -1841,7 +1841,7 @@ Professor Celia of the University of Pretoria judged that it would not work on h
 
 Professor Atif Usman noted that **the dose per intake and the number of times a day are not distinguished**. In the amoxicillin example the first picture represents three times a day but cannot represent one capsule at a time, and the morning, midday and evening pictures that follow create confusion. This corresponds directly to the dose errors that make up 28.4% of the total in Table 4.
 
-E. A. Draffan of Global Symbols wrote that AAC users frequently have visual difficulties as well, which makes an audio button hard to reach by scanning, and that since a user's communication-aid interface may differ from this app, the **WCAG 2.2 mobile criteria** should be checked. There was also a point that the morning, midday and evening icons are small and need magnification. Both were addressed. The result of the WCAG 2.2 sweep and what was changed are in §3.7, and the icon size was resolved not by magnification but by giving the time morphemes a cell of their own. The account of that is below.
+E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols and the University of Southampton, wrote that AAC users frequently have visual difficulties as well, which makes an audio button hard to reach by scanning, and that since a user's communication-aid interface may differ from this app, the **WCAG 2.2 mobile criteria** should be checked. There was also a point that the morning, midday and evening icons are small and need magnification. Both were addressed. The result of the WCAG 2.2 sweep and what was changed are in §3.7, and the icon size was resolved not by magnification but by giving the time morphemes a cell of their own. The account of that is below.
 
 Professor Katarina Vučićević of the University of Belgrade wrote that the refrigerated-storage and midday morphemes are confusable and proposed at least two colours: black and red for warnings, black and yellow for daytime. It is a request to revisit the decision in §3.7 to use colour only for the verdict and keep morphemes in black and white.
 
@@ -1849,13 +1849,13 @@ Professor Kyogu Lee of Seoul National University raised three things by email re
 
 Aliya Naheed, Senior Scientist at icddr,b in Bangladesh, pointed at a different layer: for this app to change health outcomes the patient has to be able to buy the full course they were prescribed. What the `finish_course` morpheme sets out to convey is completing the course, and if there is no money for the medicine, completing it does not happen however well the picture arrives.
 
-Kyungseo Park of the Korea Disabled People's Development Institute wrote that being unable to read arises from a range of circumstances including old age, childhood, blindness and low vision, and added that the same institute has run a typeface development project for legibility.
+Kyungseo Park, Assistant Manager at the Korea Disabled People's Development Institute, wrote that being unable to read arises from a range of circumstances including old age, childhood, blindness and low vision, and added that the same institute has run a typeface development project for legibility.
 
-Niken Nur Widyakusuma of Universitas Gadjah Mada in Indonesia proposed adding markings that can be identified by touch, such as tearing the packaging slightly, for patients with visual impairment. It is a solution outside the screen, and a layer this app does not address.
+Niken Nur Widyakusuma, PhD and pharmacist at Universitas Gadjah Mada in Indonesia, proposed adding markings that can be identified by touch, such as tearing the packaging slightly, for patients with visual impairment. It is a solution outside the screen, and a layer this app does not address.
 
 Professor Atif Usman and Professor Hwi-Yeol Yun both recommended referring to existing pictogram sets, the former naming the USP pictograms and the latter the health.kr pictograms of the Korea Pharmaceutical Information Center. This interlocks with the licence clause prohibiting composition described in §1.9, and it is where the differentiation claimed in §2.6 is directly tested.
 
-Our sample prescription contained a clinical error. Sheron Sir Loon Goh noted that amoxicillin capsules are normally stored at room temperature, 25 degrees, and do not require refrigeration at 2–8 degrees. The sample prescription we made was wrong, and we showed it to 1,103 people. The refrigeration morpheme was not misattached; the prescription itself was wrong, so it is not an engine defect, but sending an unvalidated example to experts was our error.
+Our sample prescription contained a clinical error. Sheron Sir Loon Goh, Pharmacy Lecturer, noted that amoxicillin capsules are normally stored at room temperature, 25 degrees, and do not require refrigeration at 2–8 degrees. The sample prescription we made was wrong, and we showed it to 1,103 people. The refrigeration morpheme was not misattached; the prescription itself was wrong, so it is not an engine defect, but sending an unvalidated example to experts was our error.
 
 Prompted by that point we checked all four samples again from the beginning, and four more came out that nobody had raised. The warnings box of the same amoxicillin sample read "Not for use in pregnancy. Caution if breastfeeding. No alcohol." **All three are wrong.** Amoxicillin is an antibiotic widely used in pregnancy (the NHS writes "It is safe to take amoxicillin during pregnancy"), the amount reaching breast milk is on the order of 0.1 mg/kg a day so it is acceptable while breastfeeding (StatPearls, NBK482250), and it has no clinically significant interaction with alcohol. "Caution if breastfeeding" on the paracetamol sample is the same kind of error. Paracetamol is the analgesic of choice while breastfeeding. "Not for use in pregnancy" on the eye-drop sample is wrong too. The NHS writes that "Chloramphenicol eye treatments and ear drops can be used in pregnancy" and treats them as first choice for an eye infection in pregnancy, because systemic absorption is minimal.
 
@@ -1907,11 +1907,11 @@ This runs directly into the differentiator we put forward in §2.6, that the ver
 
 The field evaluation design in §5.10 was revised in line with the responses. Advice came from four places.
 
-Foued Maaoui of the Institut Pasteur de Tunis asked for low-literate participants rather than educated volunteers, predefined scoring criteria and blinded assessors, separate testing of pictogram-only, audio-only and both, real prescriptions rather than a clean demonstration, and audio in a language matching the participants'.
+Foued Maaoui, researcher at the Institut Pasteur de Tunis, asked for low-literate participants rather than educated volunteers, predefined scoring criteria and blinded assessors, separate testing of pictogram-only, audio-only and both, real prescriptions rather than a clean demonstration, and audio in a language matching the participants'.
 
-Myojung Choi of the Korea Disabled People's Development Institute cited Nielsen and Landauer (1993) to the effect that a small sample of around 15 can secure the validity of a usability evaluation, and that a small sample in fact allows user behaviour and reactions to be grasped in detail, recommending behavioural analysis alongside the survey responses.
+Myojung Choi, researcher at the Korea Disabled People's Development Institute, cited Nielsen and Landauer (1993) to the effect that a small sample of around 15 can secure the validity of a usability evaluation, and that a small sample in fact allows user behaviour and reactions to be grasped in detail, recommending behavioural analysis alongside the survey responses.
 
-Yonghan Lee of the Korea Craft and Design Foundation wrote that the sample should be balanced by age, level of schooling and sex, that participants should have no prior knowledge of the pictograms in question, and that the method should have them describe the meaning. He added that multiple choice looks meaningless, which is the same judgement behind our decision in §5.2 not to offer options.
+Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, wrote that the sample should be balanced by age, level of schooling and sex, that participants should have no prior knowledge of the pictograms in question, and that the method should have them describe the meaning. He added that multiple choice looks meaningless, which is the same judgement behind our decision in §5.2 not to offer options.
 
 Professor Celia of the University of Pretoria recommended using an adherence instrument together with the K-HLAT-8 and HLS family of instruments. Professor Namsoo Park of Hyupsung University judged that since the purpose of this app is comprehension of medication instructions, measuring user satisfaction, intention to continue using it and the degree of improvement in convenience fits better than a health-literacy instrument.
 
@@ -2002,7 +2002,7 @@ The contraindication marking was fixed. `contentLabels` had handled every flag t
 
 Fixing it found one more of the same accident running the other way. An avoid verdict was wrapping `\no{}` around every flag, so the no-alcohol morpheme `no_alcohol` became `\no{\no_alcohol}` and the no-alcohol marking was getting a slash through it. Putting a slash through a picture saying do not drink means it is fine to drink. The bleeding warning `warn_bleeding` was likewise becoming a picture that does not say "do not bleed". What the survey caught was contraindications not being marked, and on the other side of the same function there was a path where contraindications were marked inverted.
 
-`finish_course` was redrawn. The problem was filling three of five cells and leaving two empty. It was meant to draw a number of days, but drawing a state in progress says "not finished yet" rather than "finish it". Using the directional arrow proposed by Sheron Sir Loon Goh, all five cells are now filled with an arrow beneath pointing to the last one.
+`finish_course` was redrawn. The problem was filling three of five cells and leaving two empty. It was meant to draw a number of days, but drawing a state in progress says "not finished yet" rather than "finish it". Using the directional arrow proposed by Sheron Sir Loon Goh, Pharmacy Lecturer, all five cells are now filled with an arrow beneath pointing to the last one.
 
 This revealed why the semantic check of §5.2 had passed it. The expected value of the check was `row of boxes`. Because it asked only about appearance, a picture meaning the opposite passes too. The expected value was changed to `arrow pointing to the end of a row of boxes`, so that looking merely like a row of boxes now fails. What we recorded as the third limitation of that procedure in §5.4 is confirmed here as an actual case. The semantic check is an instrument for asking what a picture looks like, not for asking whether its meaning stands the right way up.
 
@@ -2022,13 +2022,13 @@ The wording for standing alone was kept separate. Hearing only "In the morning."
 
 There were inversions in the speech as well. `say.ts` had no tests at all. A pictogram at least looks odd when it is wrong, but speech cannot be seen, so it flows out wrong and the listener has no way of knowing. Adding 12 tests caught one. Having split the administration verb by dosage form (§2.3), this file was still ending every closing sentence with "Take as prescribed." Sending out "Put 2 drops in the eye" and "Take as prescribed." together for one eye drop collapses, in that last sentence, the reason the verbs were split.
 
-The same kind appeared in the storage instruction. The positive check was looking only for `refrigerat`, so "Do not refrigerate" was read as refrigerated. A medicine to be kept at room temperature reads as refrigerated, and that inversion goes out through both the picture and the speech. This came to light while fixing the clinical error in the sample prescription that Sheron Sir Loon Goh identified. The corrected wording happened to be "Do not refrigerate".
+The same kind appeared in the storage instruction. The positive check was looking only for `refrigerat`, so "Do not refrigerate" was read as refrigerated. A medicine to be kept at room temperature reads as refrigerated, and that inversion goes out through both the picture and the speech. This came to light while fixing the clinical error in the sample prescription that Sheron Sir Loon Goh, Pharmacy Lecturer, identified. The corrected wording happened to be "Do not refrigerate".
 
-Two morphemes were redrawn. `allergen_egg` followed the point made by Professor Namsoo Park of Hyupsung University. A fried egg seen from above loses its white in the silhouette because the white is white, leaving a single yolk circle that reads like a target or a button. In a set drawn as filled silhouettes, a picture whose meaning is carried by the white part never stood up in the first place, so it was changed to a cracked egg. That `tree_nut` was read as "cracked egg" in §5.2 is the evidence that this form reads as an egg. `hand_wash` followed the instruction given by Yonghan Lee of the Korea Craft and Design Foundation exactly: a hand under a running tap.
+Two morphemes were redrawn. `allergen_egg` followed the point made by Professor Namsoo Park of Hyupsung University. A fried egg seen from above loses its white in the silhouette because the white is white, leaving a single yolk circle that reads like a target or a button. In a set drawn as filled silhouettes, a picture whose meaning is carried by the white part never stood up in the first place, so it was changed to a cracked egg. That `tree_nut` was read as "cracked egg" in §5.2 is the evidence that this form reads as an egg. `hand_wash` followed the instruction given by Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, exactly: a hand under a running tap.
 
-The accessibility criteria were swept. Checking WCAG 2.2 item by item, as E. A. Draffan had asked, found all five verdict colours below the contrast criterion and the target size of secondary controls between 16 and 20 pixels. The colours looked perfectly fine on screen, and that is in fact how they survived this long. They are values the eye cannot hold, so they were locked with a test, and the numbers and the judgement are carried as Table 19 in §3.7. What should be recorded here is that this sweep is something we would not have done without the survey. In §3.7 we had five channels standing in for colour and had not measured whether the colour itself could be read.
+The accessibility criteria were swept. Checking WCAG 2.2 item by item, as E. A. Draffan, retired speech and language therapist and visiting accessibility researcher, had asked, found all five verdict colours below the contrast criterion and the target size of secondary controls between 16 and 20 pixels. The colours looked perfectly fine on screen, and that is in fact how they survived this long. They are values the eye cannot hold, so they were locked with a test, and the numbers and the judgement are carried as Table 19 in §3.7. What should be recorded here is that this sweep is something we would not have done without the survey. In §3.7 we had five channels standing in for colour and had not measured whether the colour itself could be read.
 
-A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
+A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Institut Pasteur de Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
 
 The test count went from 231 to 311.
 
@@ -2126,321 +2126,321 @@ It should also be recorded that we may not obtain it. That the pass rates in Tab
 
 **Anything you would add that we did not ask** (14)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Kyogu Lee | Seoul National University | - The pictograms define 78 "words"; even with recombination, can they really cover the very wide range of medicines and regimens? - Hearing the audio alongside helps with understanding the pictograms, but some of them look less than intuitive. - Where the instruction is negative, it would be good for the pictogram to carry a "/" or "X" as well (some do, but alcohol, pregnancy and so on do not). - Linking it to push notifications so that dosing times are announced and read aloud would help a great deal more. - Using Supertonic TTS would make multilingual expansion easy (https://huggingface.co/spaces/Supertone/supertonic-3). |
-| (name withheld) | GC Medi-AI, Uisarang Service Centre | 1. Korean prescriptions carry a barcode, and only the barcode needs reading, so scanning the whole sheet is inefficient. 2. Apps that read the barcode and can guide people with disabilities already exist. 3. Medication counselling is the duty of the pharmacist, and of the doctor for in-hospital prescribing, and there are already many solutions for it. 4. For a business model aimed at people who cannot read, the market is too small relative to the investment. 5. Electronic prescriptions are already being prepared. Once they are electronic this is useless. |
-| Kyungseo Park | Korea Disabled People's Development Institute | Being in a position of not being able to read comes from a range of individual circumstances: old age, childhood, blindness, low vision. It is certainly needed, and our own institute has run projects such as typeface development for legibility. |
-| Yonghan Lee | Korea Craft and Design Foundation | From this survey alone it is clear that you may be thinking about this far harder than people currently in the field, and since that thinking and effort is towards making a better world, you have my support. |
-| Heejung Seo | Dong-eui University | I think this is a practical idea that can help with the difficulties people who cannot read may feel. I do not know much about implementing algorithms from an engineering standpoint so I have no technical advice, but I have some thoughts from the position of the non-literate user. Pictograms are a good medium for conveying information intuitively, but to a non-literate person these too can feel like letters. As the saying goes, 'the black is the writing and the white is the paper,' so it would be good to implement this with a design and colouring that can be perceived from a non-literate person's point of view. The same applies to the spoken explanation. It would be good if the information and explanation were accurate and pitched at their level of perception, so that a well-built function can actually be used by them. |
-| Kyunghwa Lee | Soongsil University | It is systematically put together. The level of the target group ought to be considered as well, though. Whether the pictures will be fully understood depends on whether this is simply a literacy problem or also involves age and the level of information comprehension, and I am a little concerned about that. If the prescription is not merely at the level of eye drops but for a condition requiring more expertise, it would need more consideration. |
-| Sung-il Cho | Seoul National University | A plan is needed to reflect the fact that circumstances differ by country. |
-| Niken Nur Widyakusuma | Universitas Gadjah Mada | There is not much patient who can not read without visual impairment (children, adults); i see more patients with visual impairment (therefore thay cant read). It is important for them to tell each medicine apart. It would be hard for them to take picture |
-| Atif Usman | The Islamia University of Bahawalpur | Kindly allow multiple responses in all the sections. Also, refer to USP pictograms instead of developing a new set. You can definitely develop your own when and if these are not available elsewhere to suit your local context. |
-| Afonso Cavaco | Universidade de Lisboa | Nothing. Good look! |
-| Mustapha Taibi | Western Sydney University | N/A |
-| E. A. Draffan | Global Symbols · Univ. of Southampton | I was interrupted during this survey so the time it took should not be taken as being the actual time taken.  I did not realise there was a back button to look at the 78 symbols until I got to the bottom of the page!  I think the idea of this app is good but may suit many people and not just AAC or those with literacy difficulties but it is hard to judge how easy it would be to actually use the app with a some of the complex disabilities that arise due to brain damage such as stroke even though it sounds ideal - taking photos of smally prescription notes is not that physically easy |
-| Sheron Sir Loon Goh | Dept. of Clinical Pharmacy and Pharmacy Practice | 1) you can add symbols for special instructions:  like 1) shake the medication before use. 2) Please keep it away from children. Examples of special instruction: https://wisconsinliteracy.org/health-literacy/programs/health-literacy-programs/lets-talk-about-medicines/lets-talk-about-medicines-workbooks/special-instructions.html 2) amoxicillin capsule we normally keep at room temperature 25 celcius. No need to keep refrigerated at 2-8 celcius |
-| Namsoo Park | Hyupsung University | I hope the idea is developed well and that the result comes to be used meaningfully in the field. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Kyogu Lee | Professor | Seoul National University | - The pictograms define 78 "words"; even with recombination, can they really cover the very wide range of medicines and regimens? - Hearing the audio alongside helps with understanding the pictograms, but some of them look less than intuitive. - Where the instruction is negative, it would be good for the pictogram to carry a "/" or "X" as well (some do, but alcohol, pregnancy and so on do not). - Linking it to push notifications so that dosing times are announced and read aloud would help a great deal more. - Using Supertonic TTS would make multilingual expansion easy (https://huggingface.co/spaces/Supertone/supertonic-3). |
+| (name withheld) | Team Leader | GC Medi-AI, Uisarang Service Centre | 1. Korean prescriptions carry a barcode, and only the barcode needs reading, so scanning the whole sheet is inefficient. 2. Apps that read the barcode and can guide people with disabilities already exist. 3. Medication counselling is the duty of the pharmacist, and of the doctor for in-hospital prescribing, and there are already many solutions for it. 4. For a business model aimed at people who cannot read, the market is too small relative to the investment. 5. Electronic prescriptions are already being prepared. Once they are electronic this is useless. |
+| Kyungseo Park | Assistant Manager | Korea Disabled People's Development Institute | Being in a position of not being able to read comes from a range of individual circumstances: old age, childhood, blindness, low vision. It is certainly needed, and our own institute has run projects such as typeface development for legibility. |
+| Yonghan Lee | Senior Manager | Korea Craft and Design Foundation | From this survey alone it is clear that you may be thinking about this far harder than people currently in the field, and since that thinking and effort is towards making a better world, you have my support. |
+| Heejung Seo | Professor | Dong-eui University | I think this is a practical idea that can help with the difficulties people who cannot read may feel. I do not know much about implementing algorithms from an engineering standpoint so I have no technical advice, but I have some thoughts from the position of the non-literate user. Pictograms are a good medium for conveying information intuitively, but to a non-literate person these too can feel like letters. As the saying goes, 'the black is the writing and the white is the paper,' so it would be good to implement this with a design and colouring that can be perceived from a non-literate person's point of view. The same applies to the spoken explanation. It would be good if the information and explanation were accurate and pitched at their level of perception, so that a well-built function can actually be used by them. |
+| Kyunghwa Lee | Professor | Soongsil University | It is systematically put together. The level of the target group ought to be considered as well, though. Whether the pictures will be fully understood depends on whether this is simply a literacy problem or also involves age and the level of information comprehension, and I am a little concerned about that. If the prescription is not merely at the level of eye drops but for a condition requiring more expertise, it would need more consideration. |
+| Sung-il Cho | Professor | Seoul National University | A plan is needed to reflect the fact that circumstances differ by country. |
+| Niken Nur Widyakusuma | PhD, pharmacist | Universitas Gadjah Mada | There is not much patient who can not read without visual impairment (children, adults); i see more patients with visual impairment (therefore thay cant read). It is important for them to tell each medicine apart. It would be hard for them to take picture |
+| Atif Usman | Professor | The Islamia University of Bahawalpur | Kindly allow multiple responses in all the sections. Also, refer to USP pictograms instead of developing a new set. You can definitely develop your own when and if these are not available elsewhere to suit your local context. |
+| Afonso Cavaco | Professor | Universidade de Lisboa | Nothing. Good look! |
+| Mustapha Taibi | 번역·통역학 교수 | Western Sydney University | N/A |
+| E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · Univ. of Southampton | I was interrupted during this survey so the time it took should not be taken as being the actual time taken.  I did not realise there was a back button to look at the 78 symbols until I got to the bottom of the page!  I think the idea of this app is good but may suit many people and not just AAC or those with literacy difficulties but it is hard to judge how easy it would be to actually use the app with a some of the complex disabilities that arise due to brain damage such as stroke even though it sounds ideal - taking photos of smally prescription notes is not that physically easy |
+| Sheron Sir Loon Goh | 약학 전임강사 | Dept. of Clinical Pharmacy and Pharmacy Practice | 1) you can add symbols for special instructions:  like 1) shake the medication before use. 2) Please keep it away from children. Examples of special instruction: https://wisconsinliteracy.org/health-literacy/programs/health-literacy-programs/lets-talk-about-medicines/lets-talk-about-medicines-workbooks/special-instructions.html 2) amoxicillin capsule we normally keep at room temperature 25 celcius. No need to keep refrigerated at 2-8 celcius |
+| Namsoo Park | Professor | Hyupsung University | I hope the idea is developed well and that the result comes to be used meaningfully in the field. |
 
 **Could they take it alone, and why** (13)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Yonghan Lee | Korea Craft and Design Foundation | As noted above, there are several types of people who cannot read, and in fact the largest group is likely to be blind people rather than the 'illiterate'. I do not know whether blind users were considered from the outset, but if you want to include them, for a blind person the very act of taking a photograph can be a barrier. Smartphone use by blind people is not impossible today, so it would be good to consider connecting to that as well. |
-| Rahul Malhotra | Duke-NUS Medical School | Pictograms need to validated for understanding before use |
-| Sung-il Cho | Seoul National University | They may not know what the picture means, or may interpret it wrongly. |
-| So-Young Lee | Chungnam National University | For someone who cannot read and is also elderly, even pressing to hear the audio may be difficult. In that case it would be good to refine the pictures further so that the meaning shows from the picture alone. |
-| Myojung Choi | Korea Disabled People's Development Institute | Presenting information on a multi-channel cognitive basis, combining pictogram and sound, seems the right direction. Where one pictogram contains a lot of information, however, clarity of perception can fall, so it needs simplifying around the core information. |
-| Celia | University of Pretoria | It is clear and concise |
-| Foued Maaoui | Pasteur Institute of Tunis | Although the demonstration screens are visually clear, several critical limitations remain. Many individual pictograms are highly abstract, including symbols representing treatment completion, dosage quantity, administration timing, and warning or prohibition messages. Without prior training or accompanying text, patients may misinterpret the prescribed dose, the timing of medication in relation to meals, or the intended meaning of specific warning icons. The project itself acknowledges that the pictograms have not yet undergone formal comprehension testing. In addition, the speech component is currently available only in English. While the rewritten audio represents a significant improvement over conventional text-to-speech, patients who cannot read the accompanying text and do not understand spoken English must rely exclusively on pictograms. Furthermore, clinically important information may still be lost or inaccurately conveyed through a purely visual and limited audio approach. Distinctions such as "30 minutes after meals" versus "with food," "wash hands before use" as a required sequence of actions, "contraindicated during pregnancy" versus "use with caution while breastfeeding," or whether refrigeration is mandatory or merely recommended are essential for safe medication use but are not guaranteed to be communicated accurately by pictograms alone. The system lacks a teach-back or confirmation mechanism that would allow patients to verify that they have correctly understood the instructions. From a patient safety perspective, the absence of such a feedback loop represents a significant risk, particularly for individuals with limited literacy. |
-| Atif Usman | The Islamia University of Bahawalpur | In second example, the prescription read not to use the eyedrops in pregnancy while the pictogram showed a pregnant woman making the patient assume it is safe to use in pregnancy. |
-| Srikanth Malavalli Siddalingegwod | JSS College of Pharmacy | it will be a so much helpful lot of patient with disabilities and illiterate. |
-| E. A. Draffan | Global Symbols · Univ. of Southampton | I am assuming you are expecting the person to use this on a tablet /phone, however the user's communication aid may have a very different interface so your app may not be totally accessible to them - make sure you have checked all W3C WCAG 2.2. criteria for mobile devices https://www.w3.org/TR/wcag2mobile-22/ |
-| Katarina Vučićević | University of Belgrade | Based on what I have just seen, I think that the provided information are sufficient/detailed enough so the patient can that the medicine correctly. |
-| Sheron Sir Loon Goh | Dept. of Clinical Pharmacy and Pharmacy Practice | Some symbols need to be improvise to make it self explanatory. Once a day dose, I dont see the relationship by just looking at the capsule symbol with 1 dot means once a day without hearing the audio for explanation. Putting a pregnant mother symbol does not explains that it is not safe for pregnant mother to consume the meds. Perhaps you will need to add a "X" symbol somewhere in the picture |
-| Namsoo Park | Hyupsung University | Differences between individuals are likely to arise from health literacy, digital literacy and variation in individual health status. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Yonghan Lee | Senior Manager | Korea Craft and Design Foundation | As noted above, there are several types of people who cannot read, and in fact the largest group is likely to be blind people rather than the 'illiterate'. I do not know whether blind users were considered from the outset, but if you want to include them, for a blind person the very act of taking a photograph can be a barrier. Smartphone use by blind people is not impossible today, so it would be good to consider connecting to that as well. |
+| Rahul Malhotra | 부교수 | Duke-NUS Medical School | Pictograms need to validated for understanding before use |
+| Sung-il Cho | Professor | Seoul National University | They may not know what the picture means, or may interpret it wrongly. |
+| So-Young Lee | Professor and pharmacist | Chungnam National University | For someone who cannot read and is also elderly, even pressing to hear the audio may be difficult. In that case it would be good to refine the pictures further so that the meaning shows from the picture alone. |
+| Myojung Choi | Researcher | Korea Disabled People's Development Institute | Presenting information on a multi-channel cognitive basis, combining pictogram and sound, seems the right direction. Where one pictogram contains a lot of information, however, clarity of perception can fall, so it needs simplifying around the core information. |
+| Celia | Professor | University of Pretoria | It is clear and concise |
+| Foued Maaoui | Researcher | Pasteur Institute of Tunis | Although the demonstration screens are visually clear, several critical limitations remain. Many individual pictograms are highly abstract, including symbols representing treatment completion, dosage quantity, administration timing, and warning or prohibition messages. Without prior training or accompanying text, patients may misinterpret the prescribed dose, the timing of medication in relation to meals, or the intended meaning of specific warning icons. The project itself acknowledges that the pictograms have not yet undergone formal comprehension testing. In addition, the speech component is currently available only in English. While the rewritten audio represents a significant improvement over conventional text-to-speech, patients who cannot read the accompanying text and do not understand spoken English must rely exclusively on pictograms. Furthermore, clinically important information may still be lost or inaccurately conveyed through a purely visual and limited audio approach. Distinctions such as "30 minutes after meals" versus "with food," "wash hands before use" as a required sequence of actions, "contraindicated during pregnancy" versus "use with caution while breastfeeding," or whether refrigeration is mandatory or merely recommended are essential for safe medication use but are not guaranteed to be communicated accurately by pictograms alone. The system lacks a teach-back or confirmation mechanism that would allow patients to verify that they have correctly understood the instructions. From a patient safety perspective, the absence of such a feedback loop represents a significant risk, particularly for individuals with limited literacy. |
+| Atif Usman | Professor | The Islamia University of Bahawalpur | In second example, the prescription read not to use the eyedrops in pregnancy while the pictogram showed a pregnant woman making the patient assume it is safe to use in pregnancy. |
+| Srikanth Malavalli Siddalingegwod | 조교수 | JSS College of Pharmacy | it will be a so much helpful lot of patient with disabilities and illiterate. |
+| E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · Univ. of Southampton | I am assuming you are expecting the person to use this on a tablet /phone, however the user's communication aid may have a very different interface so your app may not be totally accessible to them - make sure you have checked all W3C WCAG 2.2. criteria for mobile devices https://www.w3.org/TR/wcag2mobile-22/ |
+| Katarina Vučićević | Professor | University of Belgrade | Based on what I have just seen, I think that the provided information are sufficient/detailed enough so the patient can that the medicine correctly. |
+| Sheron Sir Loon Goh | 약학 전임강사 | Dept. of Clinical Pharmacy and Pharmacy Practice | Some symbols need to be improvise to make it self explanatory. Once a day dose, I dont see the relationship by just looking at the capsule symbol with 1 dot means once a day without hearing the audio for explanation. Putting a pregnant mother symbol does not explains that it is not safe for pregnant mother to consume the meds. Perhaps you will need to add a "X" symbol somewhere in the picture |
+| Namsoo Park | Professor | Hyupsung University | Differences between individuals are likely to arise from health literacy, digital literacy and variation in individual health status. |
 
 **Places likely to be misread** (9)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Eun-Kyoung Kim | Kongju National University | The markings for 'you must do this' and 'you must not' do not seem properly distinguished. The 'must not' in particular ought to be emphasised, I think. |
-| Yonghan Lee | Korea Craft and Design Foundation | Going deeper, an image database for every medicine would probably be needed. It is rare to be prescribed a single tablet alone, and when several medicines are prescribed the instructions for each may differ, so you may have to start from telling the medicines apart. The images clearly reflect a lot of thought, but they need to land more intuitively. The image for washing your hands before taking it, for instance, is not intuitive. A hand under a running tap would come across far better. In fact many pictograms of this kind have already been developed, so it would be good to consult and borrow from them. If the meaning is conveyed to some degree by the picture before any spoken explanation, the meaning of the prescription would come across far more easily. |
-| Myojung Choi | Korea Disabled People's Development Institute | If additional information is presented as small images inside the eye-drop bottle pictogram, the information overlaps and legibility can fall. Presenting 'eye drops' or 'tablet' early and separating details such as morning and evening use or two drops per dose from the bottle image would be clearer. |
-| Celia | University of Pretoria | The picture is more aligned to people who cannot read without under estimating their intelligence |
-| E. A. Draffan | Global Symbols · Univ. of Southampton | I think the size of the icons with dawn, midday and sun down may be a problem so you may want to offer magnification if possible.  Also the complexity of some may require some learning which can be hard for those with lower IQ and comprehension or even audio or visual perceptual difficulties. |
-| Katarina Vučićević | University of Belgrade | fridge vs at mid-day Maybe at least two colours would be beneficial to some patients - black + red (warnings), black+yellow (for day); ... |
-| Sheron Sir Loon Goh | Dept. of Clinical Pharmacy and Pharmacy Practice | Yes. |
-| Myoungsoon You | Seoul National University | The half picture. |
-| Namsoo Park | Hyupsung University | For the black icons: when the egg allergy marking is presented in black and white only, it is hard to tell clearly that it is an egg. Icons need to be drawn as images matching the real thing. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Eun-Kyoung Kim | Professor | Kongju National University | The markings for 'you must do this' and 'you must not' do not seem properly distinguished. The 'must not' in particular ought to be emphasised, I think. |
+| Yonghan Lee | Senior Manager | Korea Craft and Design Foundation | Going deeper, an image database for every medicine would probably be needed. It is rare to be prescribed a single tablet alone, and when several medicines are prescribed the instructions for each may differ, so you may have to start from telling the medicines apart. The images clearly reflect a lot of thought, but they need to land more intuitively. The image for washing your hands before taking it, for instance, is not intuitive. A hand under a running tap would come across far better. In fact many pictograms of this kind have already been developed, so it would be good to consult and borrow from them. If the meaning is conveyed to some degree by the picture before any spoken explanation, the meaning of the prescription would come across far more easily. |
+| Myojung Choi | Researcher | Korea Disabled People's Development Institute | If additional information is presented as small images inside the eye-drop bottle pictogram, the information overlaps and legibility can fall. Presenting 'eye drops' or 'tablet' early and separating details such as morning and evening use or two drops per dose from the bottle image would be clearer. |
+| Celia | Professor | University of Pretoria | The picture is more aligned to people who cannot read without under estimating their intelligence |
+| E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · Univ. of Southampton | I think the size of the icons with dawn, midday and sun down may be a problem so you may want to offer magnification if possible.  Also the complexity of some may require some learning which can be hard for those with lower IQ and comprehension or even audio or visual perceptual difficulties. |
+| Katarina Vučićević | Professor | University of Belgrade | fridge vs at mid-day Maybe at least two colours would be beneficial to some patients - black + red (warnings), black+yellow (for day); ... |
+| Sheron Sir Loon Goh | 약학 전임강사 | Dept. of Clinical Pharmacy and Pharmacy Practice | Yes. |
+| Myoungsoon You | Professor | Seoul National University | The half picture. |
+| Namsoo Park | Professor | Hyupsung University | For the black icons: when the egg allergy marking is presented in black and white only, it is hard to tell clearly that it is an egg. Icons need to be drawn as images matching the real thing. |
 
 **What you consider to be wrong with it** (3)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Raisa Kravchenko | All Ukrainian NGO Coalition | The soulds are perfect. But the way the pictogram are depicted should be improved and tested with persons with intellectual disfunctions |
-| Afonso Cavaco | Universidade de Lisboa | The design needs robust testing. It looks to me that interpretation errors may happen, especially in cross-cultural practice. |
-| Mustapha Taibi | Western Sydney University | N/A |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Raisa Kravchenko | 부대표 | All Ukrainian NGO Coalition | The soulds are perfect. But the way the pictogram are depicted should be improved and tested with persons with intellectual disfunctions |
+| Afonso Cavaco | Professor | Universidade de Lisboa | The design needs robust testing. It looks to me that interpretation errors may happen, especially in cross-cultural practice. |
+| Mustapha Taibi | 번역·통역학 교수 | Western Sydney University | N/A |
 
 **How you see the project as a whole** (3)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Raisa Kravchenko | All Ukrainian NGO Coalition | It is OK with problem framing and 2 ways of presentation of the medicine intake solutions. |
-| Afonso Cavaco | Universidade de Lisboa | The pictograms need to be tested in the real world to ascertain their utility in patient information and medication use. |
-| Mustapha Taibi | Western Sydney University | The project is likely to solve an issue for people who are unable to read healthcare information. From my perspective, it looks straightforward and effective, but feedback needs to be sought from potential users. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Raisa Kravchenko | 부대표 | All Ukrainian NGO Coalition | It is OK with problem framing and 2 ways of presentation of the medicine intake solutions. |
+| Afonso Cavaco | Professor | Universidade de Lisboa | The pictograms need to be tested in the real world to ascertain their utility in patient information and medication use. |
+| Mustapha Taibi | 번역·통역학 교수 | Western Sydney University | The project is likely to solve an issue for people who are unable to read healthcare information. From my perspective, it looks straightforward and effective, but feedback needs to be sought from potential users. |
 
 **References worth consulting** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Afonso Cavaco | Universidade de Lisboa | Maybe you can consult the "International Organization for Standardization. ISO 9186-1:2014. Graphical symbols – Test methods – Part 1: Method for testing comprehensibility. Geneva: ISO; 2014." Additionally, there is a recent paper: https://pubmed.ncbi.nlm.nih.gov/37214531/. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Afonso Cavaco | Professor | Universidade de Lisboa | Maybe you can consult the "International Organization for Standardization. ISO 9186-1:2014. Graphical symbols – Test methods – Part 1: Method for testing comprehensibility. Geneva: ISO; 2014." Additionally, there is a recent paper: https://pubmed.ncbi.nlm.nih.gov/37214531/. |
 
 **How you see it as a whole, from a pharmacy standpoint** (4)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| So-Young Lee | Chungnam National University | It seems necessary to prevent situations where a patient discontinues medication on their own because of wrong information. For example, even a medicine that carries risk for pregnant women is sometimes prescribed after considering the patient's overall condition, and where the patient checks alone without any clinician's mediation, they may end up not receiving the drug therapy. |
-| Srikanth Malavalli Siddalingegwod | JSS College of Pharmacy | Moreover, it will help to achieve proper medication adherence and to get desired therapeutic outcome |
-| Katarina Vučićević | University of Belgrade | I believe that the information from App should pass pharmacist during dispensing to ensure that patients do not receive conflicting information. |
-| Sheron Sir Loon Goh | Dept. of Clinical Pharmacy and Pharmacy Practice | The symbols need to be self explanatory even can be use for the deaf and to minimise potential risk for being misinterpreted. Perhaps your team can check out the symbols used from other sources as well. e.g : https://www.sciencedirect.com/science/article/pii/S2213398425002040 Tumkur, A., Ingle, P., Ning, Q. L. S., Bustamin, N. A., Heng, T. K., Leen, C. T., & Hatware, K. (2025). Evaluation of designed pharmaceutical pictograms among the Malaysian population. Clinical Epidemiology and Global Health, 34, 102115. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| So-Young Lee | Professor and pharmacist | Chungnam National University | It seems necessary to prevent situations where a patient discontinues medication on their own because of wrong information. For example, even a medicine that carries risk for pregnant women is sometimes prescribed after considering the patient's overall condition, and where the patient checks alone without any clinician's mediation, they may end up not receiving the drug therapy. |
+| Srikanth Malavalli Siddalingegwod | 조교수 | JSS College of Pharmacy | Moreover, it will help to achieve proper medication adherence and to get desired therapeutic outcome |
+| Katarina Vučićević | Professor | University of Belgrade | I believe that the information from App should pass pharmacist during dispensing to ensure that patients do not receive conflicting information. |
+| Sheron Sir Loon Goh | 약학 전임강사 | Dept. of Clinical Pharmacy and Pharmacy Practice | The symbols need to be self explanatory even can be use for the deaf and to minimise potential risk for being misinterpreted. Perhaps your team can check out the symbols used from other sources as well. e.g : https://www.sciencedirect.com/science/article/pii/S2213398425002040 Tumkur, A., Ingle, P., Ning, Q. L. S., Bustamin, N. A., Heng, T. K., Leen, C. T., & Hatware, K. (2025). Evaluation of designed pharmaceutical pictograms among the Malaysian population. Clinical Epidemiology and Global Health, 34, 102115. |
 
 **Why pharmacist review is needed** (3)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| So-Young Lee | Chungnam National University | There could also be cases of drug therapy being stopped because unnecessary information was given to the patient. |
-| Atif Usman | The Islamia University of Bahawalpur | Because the instructions have to be standardized/ validated for public use. |
-| Katarina Vučićević | University of Belgrade | The pharmacist is the last healthcare professional to interact with the patient before the medication reaches their hands and therefore has a crucial responsibility to ensure that appropriate and consistent information is provided |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| So-Young Lee | Professor and pharmacist | Chungnam National University | There could also be cases of drug therapy being stopped because unnecessary information was given to the patient. |
+| Atif Usman | Professor | The Islamia University of Bahawalpur | Because the instructions have to be standardized/ validated for public use. |
+| Katarina Vučićević | Professor | University of Belgrade | The pharmacist is the last healthcare professional to interact with the patient before the medication reaches their hands and therefore has a crucial responsibility to ensure that appropriate and consistent information is provided |
 
 **How this is handled in practice today** (6)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Hwi-Yeol Yun | Chungnam National University College of Pharmacy | Among Koreans the rate of not being able to read is close to zero, so it is mainly foreign patients. We therefore explain in English. |
-| Niken Nur Widyakusuma | Universitas Gadjah Mada | Simplify the regimen. Embed something that can be feel by patient with visual impairment, such as  tearing the packages a bit. |
-| Samirah Abdu-Aguye | Ahmadu Bello University, Zaria | Carefully explain to the patient, and have them repeat after me. Also talk to some other relative/caregiver of the patient |
-| Atif Usman | The Islamia University of Bahawalpur | The patient is thoroughly explained/ counselled about the medication. However, it is only the dose that is written on the label which the patient can refer to when taking the medication. |
-| Katarina Vučićević | University of Belgrade | Explain verbally, and ensure the patient understands how to use it correctly. |
-| Sheron Sir Loon Goh | Dept. of Clinical Pharmacy and Pharmacy Practice | Draw pictures. Show them pictures from internet at dispensing counter |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Hwi-Yeol Yun | Professor | Chungnam National University College of Pharmacy | Among Koreans the rate of not being able to read is close to zero, so it is mainly foreign patients. We therefore explain in English. |
+| Niken Nur Widyakusuma | PhD, pharmacist | Universitas Gadjah Mada | Simplify the regimen. Embed something that can be feel by patient with visual impairment, such as  tearing the packages a bit. |
+| Samirah Abdu-Aguye | Professor | Ahmadu Bello University, Zaria | Carefully explain to the patient, and have them repeat after me. Also talk to some other relative/caregiver of the patient |
+| Atif Usman | Professor | The Islamia University of Bahawalpur | The patient is thoroughly explained/ counselled about the medication. However, it is only the dose that is written on the label which the patient can refer to when taking the medication. |
+| Katarina Vučićević | Professor | University of Belgrade | Explain verbally, and ensure the patient understands how to use it correctly. |
+| Sheron Sir Loon Goh | 약학 전임강사 | Dept. of Clinical Pharmacy and Pharmacy Practice | Draw pictures. Show them pictures from internet at dispensing counter |
 
 **What must not be wrong medically** (4)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Niken Nur Widyakusuma | Universitas Gadjah Mada | To tell the medicines apart (when a patient receive many medicines at the same time). It still hard for the patients to tell which medicine is 3 times a day, which medicine should be stopped when symptoms gone, etc |
-| Atif Usman | The Islamia University of Bahawalpur | Plenty of things. In first example, the amoxicillin capsule is given in three times a day. First pictogram is although correct, but does not depict that patient has to take ONLY ONE capsule three times daily. It is followed by three separate pictograms depicting morning, evening and night. Such confusions shall be dealt beforehand. Similarly, drug disease interactions are also missing. And etc... |
-| Katarina Vučićević | University of Belgrade | Interactions with other medicines/OTC/dietary supplements/health-care condition that may be clinically significant. |
-| Sheron Sir Loon Goh | Dept. of Clinical Pharmacy and Pharmacy Practice | The symbol do not show what it means. For me it means I do not need to finish the course as your black dots did not complete the fully. you may want to add a arrow symbol for direction so that its clearer? |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Niken Nur Widyakusuma | PhD, pharmacist | Universitas Gadjah Mada | To tell the medicines apart (when a patient receive many medicines at the same time). It still hard for the patients to tell which medicine is 3 times a day, which medicine should be stopped when symptoms gone, etc |
+| Atif Usman | Professor | The Islamia University of Bahawalpur | Plenty of things. In first example, the amoxicillin capsule is given in three times a day. First pictogram is although correct, but does not depict that patient has to take ONLY ONE capsule three times daily. It is followed by three separate pictograms depicting morning, evening and night. Such confusions shall be dealt beforehand. Similarly, drug disease interactions are also missing. And etc... |
+| Katarina Vučićević | Professor | University of Belgrade | Interactions with other medicines/OTC/dietary supplements/health-care condition that may be clinically significant. |
+| Sheron Sir Loon Goh | 약학 전임강사 | Dept. of Clinical Pharmacy and Pharmacy Practice | The symbol do not show what it means. For me it means I do not need to finish the course as your black dots did not complete the fully. you may want to add a arrow symbol for direction so that its clearer? |
 
 **What must not be conveyed by picture and speech alone** (4)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Niken Nur Widyakusuma | Universitas Gadjah Mada | Instead of 3 times a day, better to say every 8 hours |
-| So-Young Lee | Chungnam National University | For drug interactions too, even where the dose of the co-administered drug has been reduced in consideration of it, or the prescription has already been adjusted, seeing such a warning may lead the patient to stop the therapy on their own. In clinical situations a drug is sometimes used for the patient's treatment in full knowledge of an interaction. |
-| Atif Usman | The Islamia University of Bahawalpur | Except first, actually all of the above because the pictograms can be used as a reference by the patient at home to recall the message that was given by the pharmacist. |
-| Katarina Vučićević | University of Belgrade | Instruction to contact MD or pharmacist. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Niken Nur Widyakusuma | PhD, pharmacist | Universitas Gadjah Mada | Instead of 3 times a day, better to say every 8 hours |
+| So-Young Lee | Professor and pharmacist | Chungnam National University | For drug interactions too, even where the dose of the co-administered drug has been reduced in consideration of it, or the prescription has already been adjusted, seeing such a warning may lead the patient to stop the therapy on their own. In clinical situations a drug is sometimes used for the patient's treatment in full knowledge of an interaction. |
+| Atif Usman | Professor | The Islamia University of Bahawalpur | Except first, actually all of the above because the pictograms can be used as a reference by the patient at home to recall the message that was given by the pharmacist. |
+| Katarina Vučićević | Professor | University of Belgrade | Instruction to contact MD or pharmacist. |
 
 **References worth consulting (pharmacy)** (3)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Hwi-Yeol Yun | Chungnam National University College of Pharmacy | https://health.kr/mediCounsel/pictogram.asp — pictogram information for pharmacists worldwide can be found here. |
-| Atif Usman | The Islamia University of Bahawalpur | Yes, USP pictograms. |
-| Sheron Sir Loon Goh | Dept. of Clinical Pharmacy and Pharmacy Practice | Tumkur, A., Ingle, P., Ning, Q. L. S., Bustamin, N. A., Heng, T. K., Leen, C. T., & Hatware, K. (2025). Evaluation of designed pharmaceutical pictograms among the Malaysian population. Clinical Epidemiology and Global Health, 34, 102115. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Hwi-Yeol Yun | Professor | Chungnam National University College of Pharmacy | https://health.kr/mediCounsel/pictogram.asp — pictogram information for pharmacists worldwide can be found here. |
+| Atif Usman | Professor | The Islamia University of Bahawalpur | Yes, USP pictograms. |
+| Sheron Sir Loon Goh | 약학 전임강사 | Dept. of Clinical Pharmacy and Pharmacy Practice | Tumkur, A., Ingle, P., Ning, Q. L. S., Bustamin, N. A., Heng, T. K., Leen, C. T., & Hatware, K. (2025). Evaluation of designed pharmaceutical pictograms among the Malaysian population. Clinical Epidemiology and Global Health, 34, 102115. |
 
 **Whether it can fit the pharmacy workflow** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Sheron Sir Loon Goh | Dept. of Clinical Pharmacy and Pharmacy Practice | however, please get professional advice especially from your local pharmacists on the appropriateness of the symbols in local contexts before you launch your apps |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Sheron Sir Loon Goh | 약학 전임강사 | Dept. of Clinical Pharmacy and Pharmacy Practice | however, please get professional advice especially from your local pharmacists on the appropriateness of the symbols in local contexts before you launch your apps |
 
 **Whether it can change health outcomes** (5)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Celia | University of Pretoria | This will only work for typed text |
-| Foued Maaoui | Pasteur Institute of Tunis | The project currently includes a well-defined problem diagnosis, a privacy-preserving technical architecture, a scalable pictogram composition method, and a rewritten speech system that provides conceptually richer communication than conventional text-to-speech approaches. However, many essential components are still missing before it can be considered an evidence-based public health intervention. In particular, the system has not yet demonstrated measured comprehension, quantified error rates, performance in real prescription settings, cultural validation, multilingual clinical accuracy, clearly defined safety boundaries, or any evidence of improving medication adherence or clinical outcomes. A major priority is the cultural, visual, and cognitive validation of the 78-morpheme pictogram set. This validation should involve testing across diverse populations differing in age, educational level, cultural background, and visual abilities to ensure broad interpretability. It is also necessary to verify that abstract pictograms, such as those representing treatment completion, alcohol consumption, or pregnancy, are consistently understood as intended and do not generate potentially harmful misunderstandings. Furthermore, accessibility must be evaluated for individuals with colour blindness, low vision, and cognitive impairments. Such validation is particularly important because pictograms that perform well among young, highly educated participants in Korea may not be equally effective or intuitive for the populations that stand to benefit most from this technology. |
-| Minsun Song | Konyang University | For older people with many chronic conditions, health outcomes can change if adherence improves. |
-| Namsoo Park | Hyupsung University | The conditions need to be met from a digital-literacy standpoint. How well people who cannot read understand and use mobile and digital devices has to be examined in advance, and with that in mind the app has to be built so that instructions are conveyed by speech or picture as simply as possible. (There is an instruction reading "select any that apply to you", for instance; if that instruction cannot be read, how is the app to be used well?) A good deal of the time people also fail to understand because the wording of medication instructions is difficult. Instructions conveyed by picture or recording will likewise have to be reconstructed in the plainest possible terms while still covering the medical meaning. Examining, from the same standpoint, whether vulnerable groups such as blind and deaf users can use it without difficulty would give a better project outcome. |
-| Aliya Naheed | icddr,b | Affordability of the patient to purchase the medicines as per prescription for the full course. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Celia | Professor | University of Pretoria | This will only work for typed text |
+| Foued Maaoui | Researcher | Pasteur Institute of Tunis | The project currently includes a well-defined problem diagnosis, a privacy-preserving technical architecture, a scalable pictogram composition method, and a rewritten speech system that provides conceptually richer communication than conventional text-to-speech approaches. However, many essential components are still missing before it can be considered an evidence-based public health intervention. In particular, the system has not yet demonstrated measured comprehension, quantified error rates, performance in real prescription settings, cultural validation, multilingual clinical accuracy, clearly defined safety boundaries, or any evidence of improving medication adherence or clinical outcomes. A major priority is the cultural, visual, and cognitive validation of the 78-morpheme pictogram set. This validation should involve testing across diverse populations differing in age, educational level, cultural background, and visual abilities to ensure broad interpretability. It is also necessary to verify that abstract pictograms, such as those representing treatment completion, alcohol consumption, or pregnancy, are consistently understood as intended and do not generate potentially harmful misunderstandings. Furthermore, accessibility must be evaluated for individuals with colour blindness, low vision, and cognitive impairments. Such validation is particularly important because pictograms that perform well among young, highly educated participants in Korea may not be equally effective or intuitive for the populations that stand to benefit most from this technology. |
+| Minsun Song | Professor | Konyang University | For older people with many chronic conditions, health outcomes can change if adherence improves. |
+| Namsoo Park | Professor | Hyupsung University | The conditions need to be met from a digital-literacy standpoint. How well people who cannot read understand and use mobile and digital devices has to be examined in advance, and with that in mind the app has to be built so that instructions are conveyed by speech or picture as simply as possible. (There is an instruction reading "select any that apply to you", for instance; if that instruction cannot be read, how is the app to be used well?) A good deal of the time people also fail to understand because the wording of medication instructions is difficult. Instructions conveyed by picture or recording will likewise have to be reconstructed in the plainest possible terms while still covering the medical meaning. Examining, from the same standpoint, whether vulnerable groups such as blind and deaf users can use it without difficulty would give a better project outcome. |
+| Aliya Naheed | 수석연구원 | icddr,b | Affordability of the patient to purchase the medicines as per prescription for the full course. |
 
 **How the effect should be measured** (4)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Sung-il Cho | Seoul National University | All of 1, 2 and 3 above are possible. |
-| Celia | University of Pretoria | I suggest two instruments should be used the medication adherence and the K-HLAT-*, HLS Family |
-| Foued Maaoui | Pasteur Institute of Tunis | Yes, counting dosing errors is the right method, but only under certain conditions. Testing must be done with people who truly have low or no literacy, not with educated volunteers. A pre-defined scoring rubric is required, with blinded raters, and the pictograms alone, the speech alone, and both together must be tested separately. The prescriptions used must be realistic, not just the clean demo examples. Even a low error rate only shows that the information is understood in the moment; it does not prove that the patient will take the medicine correctly over time or that health outcomes will improve. The language of the speech synthesis must match the participant’s language, otherwise the audio channel is effectively unusable. |
-| Namsoo Park | Hyupsung University | I answered health literacy, but since the purpose of this app is for a patient who cannot read to understand the medication instruction properly, what needs measuring is user satisfaction, users' perception of continued use, and the degree of improvement in convenience. An e-health literacy instrument looks like a tool to be used in advance, at the development stage. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Sung-il Cho | Professor | Seoul National University | All of 1, 2 and 3 above are possible. |
+| Celia | Professor | University of Pretoria | I suggest two instruments should be used the medication adherence and the K-HLAT-*, HLS Family |
+| Foued Maaoui | Researcher | Pasteur Institute of Tunis | Yes, counting dosing errors is the right method, but only under certain conditions. Testing must be done with people who truly have low or no literacy, not with educated volunteers. A pre-defined scoring rubric is required, with blinded raters, and the pictograms alone, the speech alone, and both together must be tested separately. The prescriptions used must be realistic, not just the clean demo examples. Even a low error rate only shows that the information is understood in the moment; it does not prove that the patient will take the medicine correctly over time or that health outcomes will improve. The language of the speech synthesis must match the participant’s language, otherwise the audio channel is effectively unusable. |
+| Namsoo Park | Professor | Hyupsung University | I answered health literacy, but since the purpose of this app is for a patient who cannot read to understand the medication instruction properly, what needs measuring is user satisfaction, users' perception of continued use, and the degree of improvement in convenience. An e-health literacy instrument looks like a tool to be used in advance, at the development stage. |
 
 **Where it fails first for an older patient living alone** (2)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Celia | University of Pretoria | The app should be introduced and facilitated by human contact first with older adults - i am also feeling if could be used for people who cannot see so well |
-| Namsoo Park | Hyupsung University | Only one answer is allowed, but I think operating the screen, managing the device and trust in the app (given the characteristics of older people) can all be causes. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Celia | Professor | University of Pretoria | The app should be introduced and facilitated by human contact first with older adults - i am also feeling if could be used for people who cannot see so well |
+| Namsoo Park | Professor | Hyupsung University | Only one answer is allowed, but I think operating the screen, managing the device and trust in the app (given the characteristics of older people) can all be causes. |
 
 **Whether causation can be claimed** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Celia | University of Pretoria | No |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Celia | Professor | University of Pretoria | No |
 
 **Whether you have seen patients missing medication information** (2)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Celia | University of Pretoria | I am not convinced anybody actually gets proper medication information |
-| Namsoo Park | Hyupsung University | I have not had many such occasions, but there are also many people who, even knowing how to read, are not receiving proper medication guidance. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Celia | Professor | University of Pretoria | I am not convinced anybody actually gets proper medication information |
+| Namsoo Park | Professor | Hyupsung University | I have not had many such occasions, but there are also many people who, even knowing how to read, are not receiving proper medication guidance. |
 
 **References worth consulting (nursing and public health)** (2)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Celia | University of Pretoria | Not that i know off |
-| Minsun Song | Konyang University | Consult research on literacy among older adults and on medication adherence in older adults. I would particularly suggest designing with a focus on who exactly the non-reading target group is to be. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Celia | Professor | University of Pretoria | Not that i know off |
+| Minsun Song | Professor | Konyang University | Consult research on literacy among older adults and on medication adherence in older adults. I would particularly suggest designing with a focus on who exactly the non-reading target group is to be. |
 
 **Whether to design for the patient or the carer** (4)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Celia | University of Pretoria | Although i do not feel  separate designs will be required |
-| Foued Maaoui | Pasteur Institute of Tunis | The original assumption that the patient will use the app alone does not match common practice, especially among older adults, people with low literacy, cognitive impairment, or complex regimens. In those situations a carer (family member or paid helper) frequently handles the medicines. Designing solely for the patient therefore risks low real-world use. Designing solely for the carer, however, can sideline the patient and reduce their understanding and agency. The practical solution is to support both pathways: a direct patient mode that remains as simple and accessible as possible, and a distinct carer mode that allows the helper to capture the prescription, generate the pictograms and speech, and then share or explain the output with the patient. Without that dual approach the tool will miss a large part of the population it aims to help. |
-| Minsun Song | Konyang University | It should be built so that the patient and the carer can both understand it at the same time. |
-| Namsoo Park | Hyupsung University | It may differ according to the age of the app's main target user and the patient's condition. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Celia | Professor | University of Pretoria | Although i do not feel  separate designs will be required |
+| Foued Maaoui | Researcher | Pasteur Institute of Tunis | The original assumption that the patient will use the app alone does not match common practice, especially among older adults, people with low literacy, cognitive impairment, or complex regimens. In those situations a carer (family member or paid helper) frequently handles the medicines. Designing solely for the patient therefore risks low real-world use. Designing solely for the carer, however, can sideline the patient and reduce their understanding and agency. The practical solution is to support both pathways: a direct patient mode that remains as simple and accessible as possible, and a distinct carer mode that allows the helper to capture the prescription, generate the pictograms and speech, and then share or explain the output with the patient. Without that dual approach the tool will miss a large part of the population it aims to help. |
+| Minsun Song | Professor | Konyang University | It should be built so that the patient and the carer can both understand it at the same time. |
+| Namsoo Park | Professor | Hyupsung University | It may differ according to the age of the app's main target user and the patient's condition. |
 
 **What to resolve first, from an HCI standpoint** (2)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Yonghan Lee | Korea Craft and Design Foundation | An earlier question asked how often one has seen prescriptions for people who genuinely cannot read; taken together with the answer 'almost never', it appears that validation with such people has not been carried out. Validation with real users seems essential, because however much research is done from the user's position, unless you experience the difficulty yourself there are bound to be things omitted or missed. Illiterate people may not be common around you, but you could readily find validation subjects among blind people or people of another nationality (a foreigner receiving a Korean-language prescription, or a Korean receiving one in a foreign language). To add something slightly preachy about that earlier question: you said the question of how many prescriptions for people who cannot read one has seen connects to the premise of the experiment, and most people will probably answer almost none. I hope you will not therefore conclude that this project means little. If even one person can take their medicine properly because of this project, that is a large change for that person, and development for the socially vulnerable fundamentally cannot be explained by the logic of majority benefit. |
-| Myojung Choi | Korea Disabled People's Development Institute | At present this looks like a draft-presentation stage with user evaluation not yet carried out, but usability evaluation can be reflected throughout the development process and can contribute to the effectiveness of the result. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Yonghan Lee | Senior Manager | Korea Craft and Design Foundation | An earlier question asked how often one has seen prescriptions for people who genuinely cannot read; taken together with the answer 'almost never', it appears that validation with such people has not been carried out. Validation with real users seems essential, because however much research is done from the user's position, unless you experience the difficulty yourself there are bound to be things omitted or missed. Illiterate people may not be common around you, but you could readily find validation subjects among blind people or people of another nationality (a foreigner receiving a Korean-language prescription, or a Korean receiving one in a foreign language). To add something slightly preachy about that earlier question: you said the question of how many prescriptions for people who cannot read one has seen connects to the premise of the experiment, and most people will probably answer almost none. I hope you will not therefore conclude that this project means little. If even one person can take their medicine properly because of this project, that is a large change for that person, and development for the socially vulnerable fundamentally cannot be explained by the logic of majority benefit. |
+| Myojung Choi | Researcher | Korea Disabled People's Development Institute | At present this looks like a draft-presentation stage with user evaluation not yet carried out, but usability evaluation can be reflected throughout the development process and can contribute to the effectiveness of the result. |
 
 **What a small sample can establish** (2)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Yonghan Lee | Korea Craft and Design Foundation | I do not know how small "small" is here, but if the size makes it hard to attach meaning, it matters to make the sample as even as possible across factors such as age, level of schooling and sex. Participants should have no prior knowledge of the pictograms in question, and the survey should proceed either by having them choose the pictogram from a description or by having them describe the meaning of the pictogram (in which case multiple choice looks meaningless). |
-| Myojung Choi | Korea Disabled People's Development Institute | Prior work such as Nielsen and Landauer (1993) provides grounds that the validity of usability-evaluation results can be secured with a small sample of around 15. A small-sample evaluation also has the advantage over a large survey of allowing user behaviour and reactions to be grasped in detail, so running behavioural analysis during the actual evaluation alongside the survey responses would raise the validity of the findings. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Yonghan Lee | Senior Manager | Korea Craft and Design Foundation | I do not know how small "small" is here, but if the size makes it hard to attach meaning, it matters to make the sample as even as possible across factors such as age, level of schooling and sex. Participants should have no prior knowledge of the pictograms in question, and the survey should proceed either by having them choose the pictogram from a description or by having them describe the meaning of the pictogram (in which case multiple choice looks meaningless). |
+| Myojung Choi | Researcher | Korea Disabled People's Development Institute | Prior work such as Nielsen and Landauer (1993) provides grounds that the validity of usability-evaluation results can be secured with a small sample of around 15. A small-sample evaluation also has the advantage over a large survey of allowing user behaviour and reactions to be grasped in detail, so running behavioural analysis during the actual evaluation alongside the survey responses would raise the validity of the findings. |
 
 **Whether machine pre-screening is justified** (2)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Yonghan Lee | Korea Craft and Design Foundation | For pre-screening rather than as a final conclusion, I think it can be used freely. Since it will ultimately be used with people, all that is needed is the resolve to discard the pre-screening result if testing with actual people shows it does not apply. |
-| Myojung Choi | Korea Disabled People's Development Institute | If, in the process of screening information with a vision-language model, the researcher sets and understands the screening criteria clearly and those criteria can be shown valid on theoretical grounds, procedural justification can be secured. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Yonghan Lee | Senior Manager | Korea Craft and Design Foundation | For pre-screening rather than as a final conclusion, I think it can be used freely. Since it will ultimately be used with people, all that is needed is the resolve to discard the pre-screening result if testing with actual people shows it does not apply. |
+| Myojung Choi | Researcher | Korea Disabled People's Development Institute | If, in the process of screening information with a vision-language model, the researcher sets and understands the screening criteria clearly and those criteria can be shown valid on theoretical grounds, procedural justification can be secured. |
 
 **How many elements in one image before it breaks down** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Yonghan Lee | Korea Craft and Design Foundation | Since these are pictograms for medicines, accurate conveyance of meaning is ultimately what matters most. The more elements, the more information can be held, but where the person interpreting is illiterate, blind or foreign, their interpretive capacity cannot be assumed high. Even for information that could ordinarily be explained at once, it would be good to consider splitting the elements and explaining across two or three pictograms. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Yonghan Lee | Senior Manager | Korea Craft and Design Foundation | Since these are pictograms for medicines, accurate conveyance of meaning is ultimately what matters most. The more elements, the more information can be held, but where the person interpreting is illiterate, blind or foreign, their interpretive capacity cannot be assumed high. Even for information that could ordinarily be explained at once, it would be good to consider splitting the elements and explaining across two or three pictograms. |
 
 **Where a first run gets stuck** (2)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Yonghan Lee | Korea Craft and Design Foundation | The question is a little hard to answer, in that someone seeking out this app probably comes to it already knowing roughly how it works. If so, a procedure of this length should be perfectly possible with the pictures and spoken explanation alongside. |
-| Myojung Choi | Korea Disabled People's Development Institute | A user who has difficulty reading may struggle with the subsequent steps if spoken guidance is not provided at the initial permission stage, and their actions may be constrained as a result. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Yonghan Lee | Senior Manager | Korea Craft and Design Foundation | The question is a little hard to answer, in that someone seeking out this app probably comes to it already knowing roughly how it works. If so, a procedure of this length should be perfectly possible with the pictures and spoken explanation alongside. |
+| Myojung Choi | Researcher | Korea Disabled People's Development Institute | A user who has difficulty reading may struggle with the subsequent steps if spoken guidance is not provided at the initial permission stage, and their actions may be constrained as a result. |
 
 **How you see it from an adult-literacy standpoint** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Eun-Kyoung Kim | Kongju National University | Given that the target group is older people, the design needs to be more concrete and should make active use of images they routinely see. Even to me, in my forties, it was hard to grasp at once what the images were saying. I would expect older people unfamiliar with images of this kind to find it harder still. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Eun-Kyoung Kim | Professor | Kongju National University | Given that the target group is older people, the design needs to be more concrete and should make active use of images they routinely see. Even to me, in my forties, it was hard to grasp at once what the images were saying. I would expect older people unfamiliar with images of this kind to find it harder still. |
 
 **What learners do at present** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Eun-Kyoung Kim | Kongju National University | This is second-hand. The person concerned relies on the explanation of the pharmacist or of the family member who collected the medicine. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Eun-Kyoung Kim | Professor | Kongju National University | This is second-hand. The person concerned relies on the explanation of the pharmacist or of the family member who collected the medicine. |
 
 **Whether it could be trialled in class** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Eun-Kyoung Kim | Kongju National University | You have to communicate with the institution (and the literacy teacher) first and explain the purpose, the intent and the benefit from the learners' point of view. With their cooperation you could use part of a class period to explain it to learners directly and hear what needs changing. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Eun-Kyoung Kim | Professor | Kongju National University | You have to communicate with the institution (and the literacy teacher) first and explain the purpose, the intent and the benefit from the learners' point of view. With their cooperation you could use part of a class period to explain it to learners directly and hear what needs changing. |
 
 **References worth consulting (adult literacy)** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Eun-Kyoung Kim | Kongju National University | There are adult literacy materials produced by the Ministry of Education. It would also be worth meeting people such as Principal Youngdo Park of Suwon Jeil Lifelong School, who has devoted his life to literacy education and is still active. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Eun-Kyoung Kim | Professor | Kongju National University | There are adult literacy materials produced by the Ministry of Education. It would also be worth meeting people such as Principal Youngdo Park of Suwon Jeil Lifelong School, who has devoted his life to literacy education and is still active. |
 
 **Whether it reduces the motivation to learn to read** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Eun-Kyoung Kim | Kongju National University | The motivation to learn to read is more than simply acquiring a skill. I therefore do not think a tool like this would reduce the motivation to learn. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Eun-Kyoung Kim | Professor | Kongju National University | The motivation to learn to read is more than simply acquiring a skill. I therefore do not think a tool like this would reduce the motivation to learn. |
 
 **How you see it as a whole, from an AAC standpoint** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| E. A. Draffan | Global Symbols · Univ. of Southampton | I think there are so many variables involved - many AAC users also have visual difficulties and 'scanning' can make access to all the icons difficult so actually reaching the audio buttons may not be easy. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · Univ. of Southampton | I think there are so many variables involved - many AAC users also have visual difficulties and 'scanning' can make access to all the icons difficult so actually reaching the audio buttons may not be easy. |
 
 **Whether a combinatorial grammar holds up** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| E. A. Draffan | Global Symbols · Univ. of Southampton | See above and also the black and white symbols are different compared to the coloured ones |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · Univ. of Southampton | See above and also the black and white symbols are different compared to the coloured ones |
 
 **Which morphemes will fail** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| E. A. Draffan | Global Symbols · Univ. of Southampton | I cannot go back in this survey  to look at the black and white symbols so I would say the astract symbols. - you need to have a link to the morphemes as a reminder! |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · Univ. of Southampton | I cannot go back in this survey  to look at the black and white symbols so I would say the astract symbols. - you need to have a link to the morphemes as a reminder! |
 
 **How to test it with AAC users** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| E. A. Draffan | Global Symbols · Univ. of Southampton | Offer the AAC user a trial as long as they appear capable and willing to take part.  The problem is that you will never know the level at which failure occurs as again too many variables.  It may be an off day, you may offer too many symbols, the person tires easily or they cannot demonstrate their understanding in the way you are presenting the options and gesture and facial expression may show you they understand, but they cannot access the app - think physical difficulties such as athetoid cerebral palsy and switch access where you scan across and down a grid or app. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · Univ. of Southampton | Offer the AAC user a trial as long as they appear capable and willing to take part.  The problem is that you will never know the level at which failure occurs as again too many variables.  It may be an off day, you may offer too many symbols, the person tires easily or they cannot demonstrate their understanding in the way you are presenting the options and gesture and facial expression may show you they understand, but they cannot access the app - think physical difficulties such as athetoid cerebral palsy and switch access where you scan across and down a grid or app. |
 
 **Whether you have seen users of this kind** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| E. A. Draffan | Global Symbols · Univ. of Southampton | I have in the past met people who miss medication information through lack of literacy skills but they are not necessarily AAC users so this app could help those who have severe dyslexia or have never learnt to read or require the perscription to be auto translated and the audio in their language of choice. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · Univ. of Southampton | I have in the past met people who miss medication information through lack of literacy skills but they are not necessarily AAC users so this app could help those who have severe dyslexia or have never learnt to read or require the perscription to be auto translated and the audio in their language of choice. |
 
 **References worth consulting (AAC)** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| E. A. Draffan | Global Symbols · Univ. of Southampton | There are many studies about the need for symbol transparency, but once again it will depend on the user as to which symbol set best suits their needs so perferences will vary hugely. Cultural settings and availability of suitable symbols for this type of interactive app will also need to be considered. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · Univ. of Southampton | There are many studies about the need for symbol transparency, but once again it will depend on the user as to which symbol set best suits their needs so perferences will vary hugely. Cultural settings and availability of suitable symbols for this type of interactive app will also need to be considered. |
 
 **Whether learning is required** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| E. A. Draffan | Global Symbols · Univ. of Southampton | Again that depends on the user and their ability to learnt just the symbols or to listen to the audio, but generally being able to navigate the app's features which seemed quite complex. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · Univ. of Southampton | Again that depends on the user and their ability to learnt just the symbols or to listen to the audio, but generally being able to navigate the app's features which seemed quite complex. |
 
 **What to resolve first, from an industry standpoint** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Cheolhyeon Park | VOICEYE | If commercialisation is planned, the level of finish needs raising, and beyond that policy, recognition, a proposal to bodies such as the Korean Pharmaceutical Association, whether they would accept it and the price all need settling. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Cheolhyeon Park | Team Leader | VOICEYE | If commercialisation is planned, the level of finish needs raising, and beyond that policy, recognition, a proposal to bodies such as the Korean Pharmaceutical Association, whether they would accept it and the price all need settling. |
 
 **Where users drop off** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Cheolhyeon Park | VOICEYE | From a blind user's standpoint, accessibility and convenience are lacking, and there is no particular app or guideline. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Cheolhyeon Park | Team Leader | VOICEYE | From a blind user's standpoint, accessibility and convenience are lacking, and there is no particular app or guideline. |
 
 **Conditions for diffusion** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Cheolhyeon Park | VOICEYE | However good a product or piece of software is, without recognition at the client or operator level there is no diffusion. Good development and a good idea need a good sales or proposal partner alongside. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Cheolhyeon Park | Team Leader | VOICEYE | However good a product or piece of software is, without recognition at the client or operator level there is no diffusion. Good development and a good idea need a good sales or proposal partner alongside. |
 
 **A sustainable form of operation** (1)
 
-| Respondent | Affiliation | Response |
-|---|---|---|
-| Cheolhyeon Park | VOICEYE | An operating body and a partnership are essential, though if there is certainty about capital or investment, preparing it as a startup is one direction and one option. |
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Cheolhyeon Park | Team Leader | VOICEYE | An operating body and a partnership are essential, though if there is certainty about capital or investment, preparing it as a startup is one direction and one option. |
 
 ### 5.12 Appendix. Every multiple-choice response
 

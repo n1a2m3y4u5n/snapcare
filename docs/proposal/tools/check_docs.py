@@ -28,6 +28,37 @@ def note(msg: str) -> None:
     fail.append(msg)
     print(f'  !! {msg}')
 
+# 응답자를 인용할 때 이름만 적고 직책을 빠뜨린 자리를 찾는다. 어느 자리에서
+# 한 말인지가 빠지면 그 말의 무게를 읽을 수 없다.
+QUOTED = ('Foued Maaoui', 'Atif Usman', 'Sheron Sir Loon Goh', 'Katarina Vučićević',
+          'E. A. Draffan', 'Niken Nur Widyakusuma', 'Samirah Abdu-Aguye', 'Celia',
+          'Aliya Naheed', 'Raisa Kravchenko', 'Rahul Malhotra', 'Maria Stefanova',
+          '이교구', '이경화', '서희정', '이영미', '박경서', '박남수', '김은경',
+          '이용한', '최묘정', '박철현', '윤휘열', '이소영', '하동문', '조성일',
+          '유명순', '송민선')
+TITLE_WORDS = {
+    'proposal_ko.md': ('교수', '약사', '연구원', '선임', '대리', '팀장', '전임강사',
+                       '부대표', '수석연구원', '조교수', '부교수', '치료사', '강사'),
+    'proposal_en.md': ('Professor', 'professor', 'Researcher', 'researcher', 'Lecturer',
+                       'Director', 'Scientist', 'Manager', 'Leader', 'therapist',
+                       'pharmacist', 'PhD'),
+}
+
+
+def unattributed(f: str) -> list:
+    s = (DOC / f).read_text()
+    body = s[:s.index('### 5.11')]        # 부록은 표에 직책 열이 따로 있다
+    out = []
+    for ln in body.splitlines():
+        if ln.startswith('|'):
+            continue
+        for n in QUOTED:
+            for m in re.finditer(re.escape(n), ln):
+                seg = ln[max(0, m.start() - 45):m.end() + 60]
+                if not any(t in seg for t in TITLE_WORDS[f]):
+                    out.append(f'{n}: …{seg.strip()[:70]}…')
+    return out
+
 
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
@@ -91,6 +122,10 @@ def main() -> int:
         note(f'두 판의 본문 표 참조가 다르다 {sorted(a[3] ^ b[3])}')
     if a[4] != b[4]:
         note(f'두 판의 본문 그림 참조가 다르다 {sorted(a[4] ^ b[4])}')
+
+    for f, _, _ in PAIR:
+        for x in unattributed(f):
+            note(f'{f}: 직책 없이 인용했다 — {x}')
 
     # 절마다 문단 수를 견준다. 영어판 §4.4 에서 세 문단이 통째로 빠진 적이 있다.
     kb, eb = blocks(DOC / 'proposal_ko.md'), blocks(DOC / 'proposal_en.md')

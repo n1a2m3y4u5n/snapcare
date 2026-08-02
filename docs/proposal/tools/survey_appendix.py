@@ -53,8 +53,8 @@ T = {
     'h_free_en': '### 5.11 Appendix. Every free-text response',
     'h_choice': '### 5.12 부록. 선택형 응답 전수',
     'h_choice_en': '### 5.12 Appendix. Every multiple-choice response',
-    'th': '| 응답자 | 소속 | 내용 |',
-    'th_en': '| Respondent | Affiliation | Response |',
+    'th': '| 응답자 | 직책 | 소속 | 내용 |',
+    'th_en': '| Respondent | Position | Affiliation | Response |',
     'th2': '| 선택지 | 응답 | 비율 |',
     'th2_en': '| Option | Responses | Share |',
     'n': '건', 'n_en': '',
@@ -170,6 +170,36 @@ QUESTION_CHOICE = {
 }
 
 
+# 직함 표기가 응답자마다 다르다(professor · Prof · Professor). 표 41 과 같은
+# 표기로 맞춘다. 사전에 없으면 적힌 그대로 나간다.
+TITLE = {
+    'professor': '교수', 'Prof': '교수', 'Professor': '교수',
+    '교수/약사': '교수 · 약사',
+    'researcher': '연구원', 'Researcher': '연구원',
+    'Dr., pharmacist': '박사 · 약사',
+    'Associate Professor': '부교수',
+    'Assistant Professor': '조교수',
+    'Assistant Professor of Clinical Pharmacy': '임상약학 조교수',
+    'Professor of Translation and Interpreting': '번역·통역학 교수',
+    'Pharmacy Lecturer': '약학 전임강사',
+    'Senior Scientist': '수석연구원',
+    'Deputy Director': '부대표',
+    'Retired Speech and Language Therapist / Visiting Researcher for accessibility '
+    'and disability at University of Southampton': '은퇴 언어치료사 · 접근성 객원연구원',
+}
+
+TITLE_EN = {
+    '교수': 'Professor', '팀장': 'Team Leader', '대리': 'Assistant Manager',
+    '선임': 'Senior Manager', '연구원': 'Researcher',
+    '교수/약사': 'Professor and pharmacist',
+    'Dr., pharmacist': 'PhD, pharmacist',
+    'professor': 'Professor', 'Prof': 'Professor',
+    'researcher': 'Researcher',
+    'Retired Speech and Language Therapist / Visiting Researcher for accessibility '
+    'and disability at University of Southampton':
+        'Retired speech and language therapist · visiting accessibility researcher',
+}
+
 QUESTION_EN = {
     'd1_more': 'Anything you would add that we did not ask',
     's1_alone__why': 'Could they take it alone, and why',
@@ -269,9 +299,12 @@ def main():
     for r in rows:
         n = NICK.get((r['b_name'] or '').strip(), (r['b_name'] or '').strip())
         a = AFF.get((r['b_affil'] or '').strip(), (r['b_affil'] or '').strip())
+        raw = (r['b_title'] or '').strip()
+        t = TITLE.get(raw, raw)
         if LANG == 'en':
             n, a = NICK_EN.get(n, n), AFF_EN.get(a, a)
-        meta[r['응답ID']] = (n, a)
+            t = TITLE_EN.get(raw, TITLE_EN.get(t, t))
+        meta[r['응답ID']] = (n, t, a)
 
     by_q = {}
     total = 0
@@ -279,7 +312,7 @@ def main():
         if not txt:
             continue
         total += 1
-        by_q.setdefault(q, []).append((meta.get(rid, ('?', '?')), cell(txt)))
+        by_q.setdefault(q, []).append((meta.get(rid, ('?', '?', '?')), cell(txt)))
 
     if LANG == 'en':
         intro = (f'§5.7 quotes only the responses we selected. Selecting can tilt '
@@ -302,9 +335,9 @@ def main():
             continue
         label = QUESTION_EN.get(q, QUESTION.get(q, q)) if LANG == 'en' else QUESTION.get(q, q)
         out += [f'**{label}** ({len(items)}{L("n")})', '',
-                L('th'), '|---|---|---|']
-        for (n, a), t in items:
-            out.append(f'| {n} | {a} | {t} |')
+                L('th'), '|---|---|---|---|']
+        for (n, ti, a), t in items:
+            out.append(f'| {n} | {ti} | {a} | {t} |')
         out.append('')
 
     # ── 부록 B. 선택형 응답 전수 ──────────────────────────────────
