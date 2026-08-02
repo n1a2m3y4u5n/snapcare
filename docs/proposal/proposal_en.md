@@ -332,8 +332,6 @@ The second of those clauses is what forbids composition. As long as the standard
 
 The first clause, by contrast, is on our side. Telling implementers not to use pictograms as the sole means of conveying information is the standard's own authors recording that one picture is not enough, and it is the same judgement behind SnapCare overlaying three layers of picture, speech and colour in §2.1. We agree with the clause and differ only in having made the secondary means something other than text.
 
-The same licence carries a further clause: do not use the pictograms as the sole means of conveying information to patients. The body that created the standard has written down that a picture alone is not enough, and this is the same judgement as the design in §2.1, where SnapCare layers picture, speech and colour. We agree with the clause and differ only in making the supporting means something other than text.
-
 The difference between a fixed list and a grammar is a difference of kind rather than of count. Expanding 81 symbols to 810 does not help, because the combinations of prescription instructions grow faster still, and sooner or later an instruction appears that is not on the list. A grammar moves the other way. SIGIL consists of 78 morphemes and five operators, and adding one more morpheme also creates the positions where it can combine with every existing operator and modifier. What grows is a layer of combinations rather than a single entry.
 
 This difference can be counted. Each of the 57 heads has one slot for a modifier, and the dictionary carries no list restricting which modifiers may enter which slot. Head-and-modifier cells therefore number 57 × 21 = 1,197, and adding the 57 cells of a bare head and the four time morphemes that can stand alone gives 1,258. No negation, daily-cadence or half operator has been applied to that count. The rate of growth is plainer still. Drawing one more symbol for the USP set adds one expression; drawing one more modifier for SIGIL creates a slot alongside all 57 heads at once and adds 57. Drawing one more head adds 21.
@@ -1152,6 +1150,12 @@ This is one more channel rather than a dependency. The schedule is already on th
 The original open-source design for the dispenser performs all configuration through a 2.8-inch touchscreen. This collides head-on with SnapCare's premise. A screen with a text menu that has to be read is the very thing we are removing.
 
 The screen was therefore removed and replaced with a paper form. A doctor or pharmacist marks the form, and the patient only has to photograph it. Reading is performed by an OpenCV parser the team built.
+
+The reader was first built in Python with OpenCV on the server and then moved into the browser. The reason for moving it is that this was the only path still requiring the internet. Text recognition, the nutrition estimation model, the verdict engine and the pictograms are all on the device (§4.1), and yet the feature one would most want in a clinic without internet was calling a server.
+
+Rather than shipping opencv.js whole, only the functions used were transcribed: Gaussian blur, adaptive thresholding, Laplacian variance, perspective warp and Otsu thresholding. Making the user fetch another 8 MB runs against the judgement in §4.5 that the 16 MB model is fetched on first use. ArUco detection was written directly as well. Only four markers are printed on the paper, so there is no reason to port a dictionary of 50, and the path by which a candidate could be "corrected" into one of the other 46 disappears with it.
+
+The Python version was kept rather than deleted, because whether the two implementations give the same answer is the only way to judge whether the move was correct.
 
 Reading has four stages. ArUco markers at the four corners of the form are located and the perspective corrected (flattened to 1000×1000), adaptive thresholding is applied, the fill ratio of each bubble is measured at coordinates given in a configuration file, and what has been marked is decided from those ratios. If the markers are not found, no value is invented and an error meaning "the whole sheet is not in frame" is returned.
 
