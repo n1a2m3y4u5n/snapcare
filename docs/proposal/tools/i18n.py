@@ -406,6 +406,33 @@ EN = {
         'A signature cannot be detached and attached to other content',
     '둘 중 하나라도 빠지면 서명은 있으나 마나가 된다':
         'Missing either one makes the signature worthless',
+    # ── diagrams.py · problem_synthesis (§1.11) ───────────────────
+    '1장이 댄 것': 'What chapter 1 established',
+    '그래서 필요한 것': 'What that calls for',
+    '규모': 'Scale', '대가': 'Cost', '시각적 방법': 'The visual route',
+    '표준의 제약': 'The standard\'s constraint', '열린 경로': 'An open channel',
+    '비문해 성인 7억 3,900만 명 · 한국 65세 이상 59.7%':
+        '739 million non-literate adults; 59.7% of Koreans aged 65+',
+    '내성 사망 127만 명 · 복약 오류 연 420억 달러':
+        '1.27 million deaths from resistance; USD 42 billion a year in medication error',
+    '기억에는 남지만 108종 중 17종만 기준 통과':
+        'Better remembered, yet only 17 of 108 symbols met the criterion',
+    'USP 81종은 결합이 라이선스로 금지되어 있다':
+        'The USP set of 81 is barred by licence from being combined',
+    '65세 이상의 78%가 이미 손전화를 가지고 있다':
+        '78% of adults aged 65+ already carry a smartphone',
+    '조합': 'Composition', '배포 전 측정': 'Measured before release',
+    '문자 없는 전달': 'Delivery without text',
+    '처방 지시 하나를 그림 하나로 세울 것':
+        'One prescription instruction should stand as one picture',
+    '읽히는지를 사람에게 내보내기 전에 잴 것':
+        'Whether it reads should be measured before it reaches anyone',
+    '보조 수단까지 읽기를 요구하지 않을 것':
+        'The fallback must not demand reading either',
+    '우리가 찾은 범위에서 이 셋을 함께 갖춘 것은 없었다. 없다가 아니라 찾지 못했다로 읽어야 한다':
+        'Within what we searched, nothing held all three. Read that as '
+        '"we did not find it", not as "it does not exist"',
+
     # ── charts.py · chart_ageing (§1.7) ───────────────────────────
     '고령 인구는 늘면서 저·중소득국으로 옮겨간다':
         'The older population is growing and shifting to lower-income countries',

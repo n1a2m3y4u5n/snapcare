@@ -544,6 +544,73 @@ def voca_rebuild():
     save(fig, 'fig26_voca')
 
 
+# ── 1장의 다섯 갈래가 셋으로 모인다 ─────────────────────────────────
+def problem_synthesis():
+    """§1.11. 앞 절들이 각각 무엇을 대고 무엇으로 모이는가.
+
+    왼쪽 다섯의 수는 모두 앞 절에서 인용한 그대로다. 여기서 새로
+    주장하는 것은 없고, 다섯이 같은 곳을 가리킨다는 것만 그린다."""
+    fig, ax = canvas(6.0, 3.8)   # ylim = 63.3
+    TOP = 60.0
+
+    ax.text(2, TOP + 1.6, T('1장이 댄 것'), fontsize=8.4,
+            color=MUTED, fontweight='bold')
+    ax.text(62, TOP + 1.6, T('그래서 필요한 것'), fontsize=8.4,
+            color=MUTED, fontweight='bold')
+
+    left = [(T('규모'), T('비문해 성인 7억 3,900만 명 · 한국 65세 이상 59.7%')),
+            (T('대가'), T('내성 사망 127만 명 · 복약 오류 연 420억 달러')),
+            (T('시각적 방법'), T('기억에는 남지만 108종 중 17종만 기준 통과')),
+            (T('표준의 제약'), T('USP 81종은 결합이 라이선스로 금지되어 있다')),
+            (T('열린 경로'), T('65세 이상의 78%가 이미 손전화를 가지고 있다'))]
+
+    H, GAP = 9.4, 1.6
+    y0 = TOP - H
+    for i, (h, sub) in enumerate(left):
+        y = y0 - i * (H + GAP)
+        c = ORANGE if i == 1 else (GREEN if i == 4 else GREY)
+        ax.add_patch(mp.FancyBboxPatch((2, y), 52, H,
+                                       boxstyle='round,pad=0,rounding_size=0.6',
+                                       linewidth=1.5, edgecolor=c,
+                                       facecolor=FILL[c], zorder=2))
+        ax.text(4.4, y + H - 2.8, h, fontsize=8.6, fontweight='bold',
+                color=INK, zorder=3)
+        for j, ln in enumerate(_wrap_any(sub, (52 - 3.4) / 100 * 6.0 / (7.4 / 72))):
+            ax.text(4.4, y + H - 5.9 - j * 2.6, ln, fontsize=7.4,
+                    color=MUTED, zorder=3)
+
+    mid = y0 + H / 2 - 2 * (H + GAP)
+    for i in range(5):
+        y = y0 - i * (H + GAP) + H / 2
+        ax.annotate('', xy=(59.4, mid), xytext=(54.6, y),
+                    arrowprops=dict(arrowstyle='-', color=MUTED, lw=0.8,
+                                    alpha=0.75, shrinkA=1, shrinkB=1), zorder=1)
+
+    ax.annotate('', xy=(59.6, mid), xytext=(58.2, mid),
+                arrowprops=dict(arrowstyle='-|>', color=MUTED, lw=1.3,
+                                shrinkA=0, shrinkB=0), zorder=4)
+
+    right = [(T('조합'), T('처방 지시 하나를 그림 하나로 세울 것')),
+             (T('배포 전 측정'), T('읽히는지를 사람에게 내보내기 전에 잴 것')),
+             (T('문자 없는 전달'), T('보조 수단까지 읽기를 요구하지 않을 것'))]
+    H2 = 13.0
+    for i, (h, sub) in enumerate(right):
+        y = TOP - H2 - i * (H2 + 4.0)
+        ax.add_patch(mp.FancyBboxPatch((60, y), 38, H2,
+                                       boxstyle='round,pad=0,rounding_size=0.6',
+                                       linewidth=1.6, edgecolor=BLUE,
+                                       facecolor=FILL[BLUE], zorder=2))
+        ax.text(79, y + H2 - 3.6, h, ha='center', fontsize=9.0,
+                fontweight='bold', color=INK, zorder=3)
+        for j, ln in enumerate(_wrap_any(sub, (38 - 3.4) / 100 * 6.0 / (7.4 / 72))):
+            ax.text(79, y + H2 - 7.4 - j * 2.8, ln, ha='center', fontsize=7.4,
+                    color=MUTED, zorder=3)
+
+    ax.text(2, 2.4, T('우리가 찾은 범위에서 이 셋을 함께 갖춘 것은 없었다. 없다가 아니라 찾지 못했다로 읽어야 한다'),
+            fontsize=7.6, color=RED, fontweight='bold')
+    save(fig, 'fig27_synthesis')
+
+
 if __name__ == '__main__':
     userflow()
     verdict_flow()
@@ -558,3 +625,4 @@ if __name__ == '__main__':
     sign_payload()
     failure_paths()
     voca_rebuild()
+    problem_synthesis()
