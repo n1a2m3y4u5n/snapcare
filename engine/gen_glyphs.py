@@ -525,12 +525,26 @@ TARGETS: list[Target] = [
     ),
     Target(
         'finish_course', 'head', 'finish_course',
-        # "며칠간" — 먹은 날과 남은 날이 한 줄에 같이 보여야 한다.
-        'a row of five square boxes side by side with clear white gaps between them, the first three '
-        'boxes filled solid black and the last two drawn as bold empty outlines, all five the same '
-        'size and in a straight line',
+        # 이 그림은 **뜻이 뒤집혀 있었다.**
+        #
+        # 전에는 "먹은 날과 남은 날이 한 줄에 같이 보여야 한다" 는 생각으로 다섯 칸 중
+        # 셋을 채우고 둘을 비웠다. 2026년 8월 전문가 조사에서 말라야대 Sheron Sir Loon
+        # Goh 전임강사가 그것을 읽은 그대로 적었다 — "검은 점이 끝까지 차 있지 않으므로
+        # 나에게는 완주하지 않아도 된다는 뜻으로 읽힌다."
+        #
+        # 맞는 말이다. 진행 중인 상태를 그리면 그림은 **아직 안 끝났다**를 말하지,
+        # 끝내라를 말하지 않는다. 항생제를 끝까지 먹으라는 지시가 정반대로 읽히면
+        # 이것은 SDG 3.d 기여가 아니라 해다.
+        #
+        # 뜻 검사가 이것을 못 잡은 이유도 함께 적어 둔다. means 가 'row of boxes' 였다 —
+        # 생김새만 물었으니 방향이 반대인 그림도 통과한다. 그림이 아니라 **읽히는 방향**을
+        # 기대값에 넣어야 검사가 일을 한다. 같은 응답자가 제안한 화살표를 그 자리에 쓴다.
+        'a row of five square boxes side by side with clear white gaps between them, all five '
+        'filled solid black and the same size, and directly below them one bold thick horizontal '
+        'arrow spanning the whole row from the first box to the last with a large solid triangular '
+        'head pointing right at the last box',
         'a bar chart, a calendar grid, a barcode, a ruler',
-        means='row of boxes',
+        means='arrow pointing to the end of a row of boxes',
     ),
 
     # ── 증상 ────────────────────────────────────────────────────────────────
