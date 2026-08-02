@@ -67,6 +67,13 @@ This distinction affects the design. Where the rate is high the app is dealing w
 
 The distribution is also uneven within a single country. In some sub-Saharan African countries **the literacy rate among older women is 31% against 55% among older men**, while among men in parts of Europe and North America it is 99% (UNESCO, 2025).
 
+We record here that the experts we asked answered in a direction that cuts against this statistic. Of the 35 respondents in §5.7, 15 answered that they "almost never" encounter someone unable to read a written medication instruction, and 4 that they encounter such a person almost daily. Half the respondents work in Korea, so this answer reflects the within-country distribution seen in §1.2 rather than contradicting the world figures of §1.1. Professor Hwi-Yeol Yun of Chungnam National University College of Pharmacy set down the circumstance directly.
+
+> "Among Koreans the rate of not being able to read is close to zero, so it is mainly foreign patients. We therefore explain in English."
+> (Professor Hwi-Yeol Yun, College of Pharmacy, Chungnam National University)
+
+In a country with high literacy the problem does not disappear; it appears with a different face. Instead of people who cannot read there are people handed a paper that is not in their language, and the pharmacist fills the gap in a third language.
+
 What this distribution indicates is not that the target should be narrowed but where the need is greatest. SnapCare does not require reading, so people who can read are free to use it as well, and missing a prescription instruction in fact happens independently of literacy (§1.3). If one asks where the same app makes the largest difference, though, it is where gaps like these exist, and that is why field evaluation is part of the plan (§5.10).
 
 ![Figure 1](fig/chart09_country_literacy.png)
@@ -108,6 +115,16 @@ That the figure is one third matters because it speaks to a different layer than
 
 This gap carries through to clinical outcomes. A systematic review synthesising 96 studies reported that low health literacy is consistently associated with increased hospitalisation, greater use of emergency care, lower uptake of mammography and influenza vaccination, poorer ability to demonstrate taking medications appropriately, and poorer ability to interpret labels and health messages (Berkman, N. D., Sheridan, S. L., Donahue, K. E., Halpern, D. J. & Crotty, K., "Low health literacy and health outcomes: an updated systematic review," *Annals of Internal Medicine*, 155(2):97–107, 2011). For mortality, the association was confirmed among older adults.
 
+Observation in the field points at the same place as this literature. Of the nine respondents in the nursing and public health segment of §5.7, eight answered that people who cannot read are not receiving medication information properly (3 "yes", 5 "partly"). And two respondents widened the scope beyond literacy.
+
+> "I have not had many such occasions, but there are also many people who, even knowing how to read, are not receiving proper medication guidance."
+> (Professor Namsoo Park, Hyupsung University)
+
+> "I am not convinced anybody actually gets proper medication information."
+> (Professor Celia, University of Pretoria)
+
+The second is a broader claim than the premise this document sets out. We wrote that people who cannot read miss the information; this response says that people who can read miss it too. If that is right, the population this app addresses is wider than we defined, and at the same time it is not a problem this app alone resolves.
+
 The two items in that list that overlap directly with our problem are the last two, the ability to demonstrate taking medications appropriately and the ability to interpret labels and health messages. If the earlier items are problems of access to care, these two are problems at the point where information is transferred, and they occur outside the consulting room. The policy blind spot taken up in §1.4 is exactly here.
 
 ### 1.3 The types of medication error and what they cost
@@ -126,6 +143,15 @@ Looking at which types medication errors cluster into narrows down what has to b
 Based on 155 dispensing errors found by pharmacists (Anacleto et al., 2007).
 
 Table 4 shows that most errors cluster into three things: what, how much and when. All three are information that can be carried in a picture, and SnapCare's morpheme design follows exactly this distribution.
+
+Because that distribution is now close to twenty years old, we asked the same thing again in §5.7. Asked what must not be wrong medically, the twelve pharmacy respondents chose dose and frequency most often at 7, with contraindications and interactions at 3 and route of administration and not stopping early at 1 each. The 28.4% dose errors in the 2007 dispensing record and twelve pharmacists in 2026 naming dose and frequency first point at the same place.
+
+One respondent set down the reason as well. The explanation is given in speech, but what the patient can go back to afterwards is only the dose written on the label.
+
+> "The patient is thoroughly explained/counselled about the medication. However, it is only the dose that is written on the label which the patient can refer to when taking the medication."
+> (Professor Atif Usman, The Islamia University of Bahawalpur)
+
+A spoken explanation disappears the moment the patient leaves the pharmacy and only the paper remains. If they cannot read that paper, nothing remains.
 
 One qualification is needed here. This distribution covers errors made on the dispensing side, not errors patients make at home, and the two stages cannot be treated as the same. The reason for grounding the design in these figures anyway is that if these three go wrong often at the dispensing stage, then these three are the information most easily lost in transfer. If trained pharmacists miss them in a controlled environment, there is no reason to expect a patient handed the same information in text alone to keep hold of it. We did not find data measuring the distribution at the patient stage directly, and this is recorded among the unverified items in §5.9.
 
@@ -179,6 +205,21 @@ There is evidence for low- and middle-income countries taken on their own. Pooli
 That measuring the same phenomenon yields 25% with one instrument and 63% with another says something about the nature of this indicator. Any claim that this app improved adherence would have to state which instrument produced the number, and that is why the evaluation design in §5.10 fixes the instrument in advance.
 
 This work does not claim to address that whole half. Many factors depress adherence, and several of them, such as the price of medicines and side effects, are beyond anything an app can touch. Among those factors, though, "could not read the instruction" is the kind an app can touch, and for someone who cannot read it is the first factor in the sequence. It has to be resolved before the remaining factors can even be weighed.
+
+What happens inside the consulting room and the pharmacy we asked about directly in §5.7. The answers to what they do now when they meet a patient who cannot read show what this section is arguing.
+
+> "Carefully explain to the patient, and have them repeat after me. Also talk to some other relative/caregiver of the patient."
+> (Professor Samirah Abdu-Aguye, Ahmadu Bello University, Zaria)
+
+> "Draw pictures. Show them pictures from internet at dispensing counter."
+> (Sheron Sir Loon Goh, Pharmacy Lecturer, Department of Clinical Pharmacy and Pharmacy Practice)
+
+Teach-back, telling the carer as well, finding pictures on the internet. None of the three was instructed by any system; each was invented by the person standing there. Professor Eun-Kyoung Kim of Kongju National University recorded the same scene from the patient's side.
+
+> "The person concerned relies on the explanation of the pharmacist or of the family member who collected the medicine."
+> (Professor Eun-Kyoung Kim, Kongju National University)
+
+This is what the blind spot of this section actually looks like. As far as the system reaches, people are filling it in, and what is empty begins where those people are not. The picture a pharmacist drew exists only inside the pharmacy; by the time the patient is home it is gone.
 
 This gap does not exist because the problem has gone unrecognised. National policy and health systems reach as far as the clinic and the pharmacy, and the moment a patient opens the medicine packet at home lies outside that reach. The point at which SnapCare intervenes is exactly that last step.
 
@@ -251,6 +292,13 @@ What Table 5 says is that people are not failing to use these tools for want of 
 **[Figure 8]** Smartphone ownership by age group (United States, 2025). The gap between those 65 and over and those under 50 is 19 percentage points, already too narrow for "device availability" to explain the problem. The remaining gap lies on the side of the screen.
 
 Having a device and reaching the internet are different things, however. As of 2024, 5.5 billion people use the internet (68% of the world population), while 2.6 billion still do not. That is 32% of the world population, one person in three (International Telecommunication Union, *Measuring digital development: Facts and Figures 2024*, 2024).
+
+Owning a device and being able to keep using it are also different things. Asked in §5.7 where this app would fail first for an older patient living alone, the nine nursing and public health respondents split between not being able to operate the screen (4) and not being able to manage the device (4). The latter is charging and loss, and lies outside our design. Professor Namsoo Park of Hyupsung University objected to the single-choice design of the question itself and wrote that the three arrive together.
+
+> "Only one answer is allowed, but I think operating the screen, managing the device and trust in the app (given the characteristics of older people) can all be causes."
+> (Professor Namsoo Park, Hyupsung University)
+
+The offline operation of §4.5 handles a connection being cut; it does not handle the device being off. The ownership rates in Table 5 are the ceiling on who this app can reach, not the number it actually reaches.
 
 Those 2.6 billion split SnapCare's design at one point. The verdict has to be produced on the device in the user's hand, because a structure that yields an answer only by asking a server is, for these people, the same as no app at all. The offline operation described in §4.5 and §5.6 is therefore not a convenience but a premise. Regions with low literacy and regions where people do not use the internet are largely the same places, so this app has to work where the two conditions overlap.
 
@@ -384,6 +432,10 @@ Another group found the same failure on a different task. In a study asking 10 p
 
 Different task, different group, same reason for failing. The screen asked the user to hold something in their head. In the earlier study it was how far down they had gone; here it is which dimension they had already measured. SnapCare removed the steps not to reduce the number of screens but to remove that demand.
 
+If those two studies concern structure inside the screen, one response in §5.7 points at what happens before the screen is reached. Professor Namsoo Park of Hyupsung University wrote that how well people who cannot read handle a mobile device has to be examined first, giving as an example that this app's profile-setup screen carries the instruction "select any that apply to you". Anyone who cannot read that instruction is stopped at that screen.
+
+The opening sentence of this section, that removing text is a necessary condition, is confirmed once more here. We wrote that text had been removed from the path to a verdict (§2.1), and text was still sitting on the setup screen before it. The survey found for us that what we decided to remove and what we actually removed were different.
+
 The authors locate the cause in the understanding of nesting itself. Some participants did not grasp that a higher-level picture in the hierarchy stood for a bundle of items beneath it, and some could not remember how to return upward after entering the wrong branch. Turning pages was not itself the problem. The problem is having to hold in mind how far down one has gone.
 
 ### 1.11 The problem in summary
@@ -405,6 +457,12 @@ Fifth, an open delivery channel. Seventy-eight percent of United States adults a
 ![Figure 13](fig/fig27_synthesis.png)
 
 These five point to one conclusion. What is needed is an integrated pipeline that runs automatically from a prescription through to pictograms and speech, that measures whether the result is actually read, and that never requires text.
+
+Having set out these five strands, we put them to the field. The survey in §5.7 is that, and the result broadly confirmed the five. What differed was how they were confirmed.
+
+Scale, the first, the respondents rated lower rather than higher: 15 of 35 answered that they almost never meet such a patient. The visual route, the third, was supported but with a condition attached, namely that pictures help in the low-literacy case and that total blindness and low vision are different layers. On the constraint of the standard, the fourth, two respondents recommended consulting existing sets, which are the very sets §1.9 records as unusable by us. The delivery channel, the fifth, was said to fail at managing the device rather than at owning one.
+
+What came up most often was not in the five strands at all. Six respondents independently raised the absence of validation with people, and four of the five who answered the broad question across the five segments chose it as the first thing to resolve. The five strands we used to define the problem all come from the literature, and this finding says that between that literature and our set there is still nothing.
 
 Within the range we searched, no system had all three. Pictogram sets exist but do not combine (§1.9), work addressing combination does not measure comprehension before release, and the studies that did measure comprehension (Table 4) assembled people and measured after the fact once the set was built. This is an observation from the range we looked over while preparing this work rather than the result of a systematic review, so it should be read as "we did not find one" rather than "there is none." This is SnapCare's starting point.
 
