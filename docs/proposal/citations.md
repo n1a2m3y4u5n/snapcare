@@ -304,6 +304,28 @@ PMC8544505 한국 고령자 79.4%/28.2% · PMC7532569 몰도바 건강문해력 
 | U.S. Pharmacopeia, *USP Pictograms* | 공식 페이지 | 확인. 81종, 라이선스 네 조항 |
 | Dowse, R. et al., *Health SA Gesondheid* 28:2192 | PMC 전문 | 확인. n=90, 7.9±1.8, r=0.34 (p=0.001), p=0.002 |
 
+### 표본 처방전을 대조한 것
+
+Sheron Sir Loon Goh 전임강사가 아목시실린 캡슐의 냉장 표기를 지적한 뒤 표본 넷의
+임상 내용을 모두 대조했다. 인용을 대조하는 것과 같은 절차이며, 결과도 같았다.
+그럴듯한 것과 맞는 것이 달랐다.
+
+| 표본 · 문구 | 무엇으로 대조했나 | 결과 |
+|---|---|---|
+| 아목시실린 · 냉장 2~8도 | 응답자 지적 → 제형별 보관 조건 | **틀림.** 캡슐은 실온 25도. 냉장은 현탁액 쪽 |
+| 아목시실린 · 임신 중 사용 금지 | NHS 의약품 페이지 + StatPearls NBK482250 | **틀림.** "It is safe to take amoxicillin during pregnancy". FDA 분류 B |
+| 아목시실린 · 수유 시 주의 | 같은 두 곳 | **틀림.** 모유 이행량 0.1 mg/kg/day. NHS "It's OK to take amoxicillin while breastfeeding" |
+| 아목시실린 · 금주 | StatPearls NBK482250 | **틀림.** 알코올 상호작용 언급 없음. 그것은 메트로니다졸 |
+| 파라세타몰 · 수유 시 주의 | NHS 의약품 페이지 | **틀림.** "Paracetamol is usually the best painkiller to take if you're breastfeeding" |
+| 클로람페니콜 점안액 · 임신 중 사용 금지 | NHS 의약품 페이지 | **틀림.** "Chloramphenicol eye treatments and ear drops can be used in pregnancy" |
+| 클로람페니콜 점안액 · 냉장 2~8도 | NHS 의약품 페이지 | 맞음. "Store the eye drops in a fridge" |
+| 이부프로펜 · 임신 중 사용 금지 | NHS + SPS 임신 통증 치료 | 맞음. 임신 중 회피, 3분기 금기 |
+| 이부프로펜 · 혈액희석제 병용 금지 | NSAID 출혈 위험 | 맞음 |
+
+여섯 가운데 셋이 임신 금기였다. 경고란에 넣기 가장 쉬운 문구이고, 우리가 그것을
+시연하고 싶었기 때문에 더 그랬다. 지금 문구도 공개 자료를 대조해 고친 것이지
+약사의 검토를 받은 것이 아니며, 그 사실은 §5.9 에 적었다.
+
 ### 쓰지 않기로 한 것
 
 | 자료 | 왜 쓰지 않았나 |

@@ -140,7 +140,13 @@ SAMPLES = [
         ],
         days="For 5 days",
         storage="Keep refrigerated (2-8 C)",
-        warnings="Do not wear contact lenses during treatment. Not for use in pregnancy.",
+        # "Not for use in pregnancy" 도 틀렸다. NHS 는 "Chloramphenicol eye treatments
+        # and ear drops can be used in pregnancy" 라고 적으며, 눈 감염에서 임신 중
+        # 일차 선택으로 본다. 전신 흡수량이 극히 적기 때문이다.
+        #
+        # 넷째 오류이며 앞의 셋과 같은 방식으로 나왔다. 표본을 만들 때 경고란을
+        # "그럴듯한 것" 으로 채운 것이 원인이다. 그럴듯한 것과 맞는 것은 다르다.
+        warnings="Do not wear contact lenses during treatment. Do not share this bottle.",
     ),
     dict(
         # 상호작용 엔진을 실제로 건드리는 샘플. 'ibuprofen' 이 nsaid_bleed 플래그를
