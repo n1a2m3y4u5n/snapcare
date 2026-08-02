@@ -52,3 +52,14 @@ test('중첩을 끝까지 벗긴다', () => {
     cadence: 'three_times_daily', negated: true,
   });
 });
+
+test('혼자 선 시각은 문장이 끝난다', () => {
+  // 칸을 하나 차지한 그림은 그 칸이 하는 말 전체여야 한다. "아침에." 만 들리면
+  // 무엇을 아침에 하라는 것인지 문장이 끝나지 않는다.
+  assert.equal(dslSentence('\\time_morning'), 'Take it in the morning.');
+  assert.equal(dslSentence('\\time_night'), 'Take it at night.');
+});
+
+test('약 그림 안에 들어간 시각은 꾸밈말로 남는다', () => {
+  assert.equal(dslSentence('\\capsule_strip{\\time_morning}'), 'A capsule, in the morning.');
+});

@@ -74,7 +74,14 @@ export function parseDslLine(line: string): Parsed | null {
  * 있지 않은 것을 고르세요" 지만, 약은 "이 약을 드시지 마세요" 다. 한쪽은 고르는
  * 기준이고 한쪽은 금지라, 같은 틀로 찍으면 둘 중 하나가 반드시 어색해진다.
  */
-const CONCEPT: Record<string, { yes: string; no?: string }> = {
+/**
+ * `alone` 은 그 형태소가 **혼자 한 칸을 차지할 때** 하는 말이다.
+ *
+ * 시각 형태소가 그렇다. 약 그림 안에 들어가 있을 때는 "아침에" 라는 꾸밈말이지만,
+ * 자기 칸을 얻고 나면 그 칸이 하는 말 전체가 되어야 한다 — "아침에." 만 들리면
+ * 무엇을 아침에 하라는 것인지 문장이 끝나지 않는다.
+ */
+const CONCEPT: Record<string, { yes: string; no?: string; alone?: string }> = {
   // 무엇이 들어 있는가
   allergen_peanut: { yes: 'It has peanuts.', no: 'Do not eat this. It has peanuts.' },
   allergen_tree_nut: { yes: 'It has nuts.', no: 'Do not eat this. It has nuts.' },
@@ -111,10 +118,10 @@ const CONCEPT: Record<string, { yes: string; no?: string }> = {
   body_mouth: { yes: 'in the mouth' },
   food_bowl: { yes: 'with food' },
   food_empty_bowl: { yes: 'on an empty stomach' },
-  time_morning: { yes: 'in the morning' },
-  time_noon: { yes: 'at midday' },
-  time_evening: { yes: 'in the evening' },
-  time_night: { yes: 'at night' },
+  time_morning: { yes: 'in the morning', alone: 'Take it in the morning.' },
+  time_noon: { yes: 'at midday', alone: 'Take it at midday.' },
+  time_evening: { yes: 'in the evening', alone: 'Take it in the evening.' },
+  time_night: { yes: 'at night', alone: 'Take it at night.' },
   storage_fridge: { yes: 'keep it in the fridge' },
   storage_dry: { yes: 'keep it dry, away from heat' },
   qty_one: { yes: 'one at a time' },
@@ -154,7 +161,11 @@ export function dslSentence(line: string): string | null {
   const head = CONCEPT[p.head];
   if (!head) return null;
 
-  const base = p.negated ? (head.no ?? `No ${head.yes.replace(/\.$/, '').toLowerCase()}.`) : head.yes;
+  // 혼자 선 형태소는 자기 칸의 말을 통째로 한다. 꾸밈말로 쓰일 때(`\head{\mod}`)는
+  // 아래 modifier 가지로 가므로 여기 오지 않는다.
+  const base = p.negated
+    ? (head.no ?? `No ${head.yes.replace(/\.$/, '').toLowerCase()}.`)
+    : (head.alone ?? head.yes);
 
   const parts = [base.replace(/\.$/, '')];
   if (p.modifier) {

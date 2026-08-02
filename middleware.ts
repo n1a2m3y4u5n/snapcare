@@ -15,7 +15,36 @@ import { NextResponse } from 'next/server';
  * **바깥으로 보낼 수 없다.** 확인해보니 이 앱의 클라이언트는 자기 자신하고만 통신한다 —
  * OpenFoodFacts 와 Anthropic 은 서버에서만 부른다.
  */
+/**
+ * 릴레이 한 곳. 여기 적힌 출처로만 나갈 수 있다.
+ *
+ * `connect-src 'self'` 는 이 파일에서 가장 값이 나가는 한 줄인데, 클라우드 경로가
+ * 들어오면서 처음으로 예외가 필요해졌다 — 디스펜서는 남의 집 공유기 뒤에 있어서
+ * 사서함을 거치지 않으면 닿을 방법이 없다.
+ *
+ * 그래도 성질은 거의 그대로 남는다. 여는 것은 **주소 하나**이고, 그 한 곳은 암호문만
+ * 보관하며 열지 못한다(상자 열쇠를 주지 않는다). 끼어든 스크립트가 자료를 보낼 수 있는
+ * 곳이 '아무 데나' 에서 '읽지 못하는 사서함 하나' 로 늘어난 것이다.
+ *
+ * 주소 전체가 아니라 **출처만** 넣는다. 경로까지 적으면 CSP 가 무시한다.
+ */
+function relayOrigin(): string {
+  const configured = process.env.NEXT_PUBLIC_SNAPCARE_RELAY;
+  if (!configured) return '';
+  try {
+    return new URL(configured).origin;
+  } catch {
+    // 설정이 잘못됐다고 앱이 못 뜨면 안 된다 — 그 경우 클라우드 경로만 막힌다.
+    return '';
+  }
+}
+
 function csp(dev: boolean): string {
+  // 개발에서는 데모 릴레이(`make -C pill_dispenser/cloud_relay demo`)도 함께 연다.
+  const relays = [relayOrigin(), dev ? 'http://localhost:8088' : '']
+    .filter(Boolean)
+    .join(' ');
+
   return [
     "default-src 'self'",
     // 원래는 nonce + 'strict-dynamic' 으로 잠그려 했다. 배포본으로 빌드해 실제 브라우저에서
@@ -37,14 +66,18 @@ function csp(dev: boolean): string {
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
     // 이 한 줄이 요점 — 스크립트가 끼어도 자료를 밖으로 못 보낸다.
-    "connect-src 'self'",
+    // 예외는 릴레이 하나뿐이고, 그 이유는 relayOrigin() 에 적었다.
+    `connect-src 'self'${relays ? ` ${relays}` : ''}`,
     "worker-src 'self' blob:",
     "media-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    'upgrade-insecure-requests',
+    // 개발에서는 붙이지 않는다. 로컬 릴레이가 http 라 이 지시자가 https 로 올려
+    // 버리면 붙을 수 없는 주소가 되고, 증상은 원인을 짐작하기 어려운 "Failed to
+    // fetch" 하나뿐이다. 배포는 전부 https 라 잃는 것이 없다.
+    ...(dev ? [] : ['upgrade-insecure-requests']),
   ].join('; ');
 }
 

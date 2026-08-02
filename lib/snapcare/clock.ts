@@ -74,3 +74,19 @@ export function speakTime(hour24: number, minute: number): string {
   const mm = minute === 0 ? "o'clock" : minute < 10 ? `oh ${minute}` : String(minute);
   return `${h12} ${mm} ${dayPart(hour24).label}`;
 }
+
+/**
+ * 지금부터 그 시각까지 몇 밀리초인가. 이미 지났으면 **내일 같은 시각**까지.
+ *
+ * 알림을 예약하는 데 쓴다. 저녁 7시에 아침 8시 약을 찍은 사람에게 오늘 아침으로
+ * 계산한 음수를 주면, 예약이 조용히 취소되거나(음수는 예약하지 않는다) 즉시 뜬다.
+ * 둘 다 사용자에게는 "알림이 이상하다" 로만 보인다.
+ */
+export function msUntil(text: string, now = new Date()): number {
+  const t = parseClock(text);
+  if (!t) return -1;
+  const at = new Date(now);
+  at.setHours(t.hour, t.minute, 0, 0);
+  if (at.getTime() <= now.getTime()) at.setDate(at.getDate() + 1);
+  return at.getTime() - now.getTime();
+}

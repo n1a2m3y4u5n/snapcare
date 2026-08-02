@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip, OneGlyph } from '@/components/sc/PictogramStrip';
+import { TeachBack } from '@/components/sc/TeachBack';
 import { NutrientBars } from '@/components/sc/NutrientBars';
 import { Hear, Say, Speakable } from '@/components/sc/Say';
 import { doseSentence, storageSentence } from '@/lib/snapcare/say';
@@ -18,6 +19,7 @@ import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
 import { usePreferences } from '@/stores/preferences';
 import { requestPermission, scheduleNotification } from '@/lib/notifications';
+import { msUntil } from '@/lib/snapcare/clock';
 import { computeVerdict, LEVEL_META } from '@/lib/snapcare/verdict';
 import { checkInteractions } from '@/lib/medication/interactions';
 import { itemToDsl } from '@/lib/snapcare/sigil';
@@ -127,15 +129,25 @@ export default function ScanResultPage() {
           days: durationDays(scanned!.rx?.durationText),
         })),
       );
-      // 권한이 있으면 데모용으로 첫 알림을 8초 뒤 실제로 띄운다 (없으면 앱 안에서만 동작)
+      /*
+        첫 복용 시각에 알린다.
+
+        전에는 **8초 뒤**에 띄웠다. 시연으로는 그럴듯한데, 뜨는 알림에는 "아침 8시"
+        라고 적혀 있었다 — 사람에게 하는 거짓말이고, 하필 복약 시각을 두고 하는
+        거짓말이다. 지금은 그 시각까지 기다린다.
+
+        탭이 닫히면 오지 않는다. 그것이 지금의 한계이고 lib/notifications.ts 에 적어
+        두었다. 상자와 짝지은 사람에게는 이것 말고 다른 길이 있다 — 상자가 약을 내밀면
+        useDoseAlert 가 알린다.
+      */
       void requestPermission().then((granted) => {
-        if (granted) {
-          scheduleNotification(
-            'SnapCare · Dose reminder',
-            `${scanned!.name} — ${sched[0].label} (${sched[0].time})`,
-            8000,
-          );
-        }
+        if (!granted) return;
+        const delay = msUntil(sched[0].time);
+        scheduleNotification(
+          'SnapCare · Dose reminder',
+          `${scanned!.name} — ${sched[0].label} (${sched[0].time})`,
+          delay,
+        );
       });
     }
     finish();
@@ -353,6 +365,17 @@ function RxResult({
           </div>
         </div>
       )}
+
+      {/*
+        되말하기.
+
+        설명이 다 끝난 자리에 둔다 — 그림, 용량, 보관, 시각을 지나온 뒤다. 앞에 두면
+        아직 말하지 않은 것을 묻게 되고, 알람을 만드는 버튼 뒤에 두면 아무도 보지 않는다.
+
+        건너뛸 수 있고, 틀려도 막지 않는다. 확인을 통과해야 정보를 주는 앱은 약을 못
+        먹게 하는 앱이다 — 이유는 lib/snapcare/teachBack.ts 에 적었다.
+      */}
+      <TeachBack item={item} />
 
       <div className="mt-auto pb-8 pt-6">
         <PrimaryButton onClick={onDone} level="safe"

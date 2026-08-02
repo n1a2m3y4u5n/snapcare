@@ -183,6 +183,96 @@ def chart_glyphs():
     save(fig, 'chart07_glyph_check')
 
 
+# ── 고정 목록과 문법이 늘어나는 방식 ───────────────────────────────
+def chart_expressive():
+    """§1.9. 개수의 차이가 아니라 종류의 차이라는 주장을 수로 잰다.
+
+    수는 engine/dictionary.json 에서 그대로 나온다. 머리 57 종에 슬롯이
+    하나씩 있고 어느 수식어가 들어갈지 제한하는 목록이 없으므로,
+    머리 하나를 더 만들면 수식어 21 종과 짝지을 자리가 함께 생긴다."""
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.5))
+    title(fig, T('고정 목록과 문법은 다른 속도로 늘어난다'),
+          note=T('연산자(금지 · 하루 횟수 · 반쪽)를 적용하기 전의 수'))
+    # 판이 둘이라 title() 의 기본 여백으로는 오른쪽 판의 눈금 이름이
+    # 왼쪽 판의 막대 위에 얹힌다.
+    fig.subplots_adjust(left=0.155, right=0.975, wspace=0.62)
+
+    rows = [(T('USP 세트'), 81, LIGHT), (T('SIGIL 문법'), 1258, DARK)]
+    for i, (lab, v, c) in enumerate(rows):
+        a1.barh(i, v, height=0.5, color=c, zorder=2)
+        a1.text(v + 30, i, f'{v:,}', va='center', fontsize=9.4,
+                fontweight='bold', color=INK)
+    a1.set_yticks(range(len(rows)))
+    a1.set_yticklabels([r[0] for r in rows])
+    a1.set_xlim(0, 1560)
+    a1.set_ylim(-0.6, 1.6)
+    a1.set_xlabel(T('지금 낼 수 있는 칸 수'))
+    frame(a1, grid='x')
+
+    rows2 = [(T('USP 심볼'), 1, LIGHT),
+             (T('SIGIL 머리'), 21, BLUE),
+             (T('SIGIL 수식어'), 57, DARK)]
+    for i, (lab, v, c) in enumerate(rows2):
+        a2.barh(i, v, height=0.5, color=c, zorder=2)
+        a2.text(v + 1.4, i, f'+{v}', va='center', fontsize=9.4,
+                fontweight='bold', color=INK)
+    a2.set_yticks(range(len(rows2)))
+    a2.set_yticklabels([r[0] for r in rows2])
+    a2.set_xlim(0, 72)
+    a2.set_ylim(-0.6, 2.6)
+    a2.set_xlabel(T('하나를 더 만들 때 늘어나는 칸 수'))
+    frame(a2, grid='x')
+    save(fig, 'chart19_expressive')
+
+
+# ── 고령 인구가 어디서 늘어나는가 ───────────────────────────────────
+def chart_ageing():
+    """§1.7. 규모와 지리적 이동, 그리고 그 사람들이 처한 자리.
+
+    왼쪽 값은 WHO Ageing and health 자료 그대로다. 2050 년의 저·중소득국
+    3분의 2 만 출처가 밝힌 분포이므로 그 해에만 갈라 그린다. 앞의 두 해를
+    같은 비율로 갈라 그리면 자료에 없는 것을 그리게 된다."""
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.6))
+    title(fig, T('고령 인구는 늘면서 저·중소득국으로 옮겨간다'),
+          note=T('왼쪽 WHO, 2024 · 오른쪽 65세 이상 · 질병관리청 2023, Lee 등 2021'))
+    fig.subplots_adjust(left=0.132, right=0.975, wspace=0.16)
+
+    yrs = [T('2020년'), T('2030년'), T('2050년')]
+    tot = [1.0, 1.4, 2.1]
+    a1.bar(range(3), tot, width=0.56, color=LIGHT, zorder=2)
+    a1.bar([2], [1.4], width=0.56, color=DARK, zorder=3)
+    for i, v in enumerate(tot):
+        a1.text(i, v + 0.06, f'{v:.1f}', ha='center', fontsize=9.4,
+                fontweight='bold', color=INK)
+    # 막대 폭이 이 글보다 좁아 안에 넣으면 양쪽이 잘린다. 옆에 두고 선으로 잇는다.
+    a1.plot([2.3, 2.52], [0.7, 0.7], color=MUTED, lw=0.7, zorder=4)
+    a1.text(2.56, 0.7, T('저·중소득국\n3분의 2'), ha='left', va='center',
+            fontsize=8.0, color=INK, fontweight='bold', zorder=4)
+    a1.set_xticks(range(3))
+    a1.set_xticklabels(yrs)
+    a1.set_xlim(-0.62, 3.4)
+    a1.set_ylim(0, 2.5)
+    a1.set_ylabel(T('60세 이상 인구 (십억 명)'))
+    frame(a1, grid='y')
+
+    rows = [(T('스스로 약을 먹는다'), 79.4, DARK),
+            (T('건강정보이해능력 적절'), 40.3, LIGHT),
+            (T('복약 안전 교육 받음'), 28.2, LIGHT)]
+    # 이름을 눈금에 두면 왼쪽 판의 막대 위에 얹힌다. 막대 위로 올린다.
+    for i, (lab, v, c) in enumerate(rows):
+        a2.barh(i, v, height=0.34, color=c, zorder=2)
+        a2.text(v + 1.8, i, f'{v}%', va='center', fontsize=9.4,
+                fontweight='bold', color=INK)
+        a2.text(0.8, i - 0.36, lab, va='bottom', fontsize=8.2, color=INK)
+    a2.set_yticks([])
+    a2.invert_yaxis()
+    a2.set_xlim(0, 100)
+    a2.set_ylim(2.6, -0.75)
+    a2.set_xlabel(T('한국 고령자에서의 비율 (%)'))
+    frame(a2, grid='x')
+    save(fig, 'chart20_ageing')
+
+
 # ── 영양 추정 모델의 항목별 오차 ───────────────────────────────────
 def chart_model():
     rows = [(T('질량'), 16.61), (T('열량'), 22.75), (T('탄수화물'), 30.60),
@@ -230,6 +320,255 @@ def chart_country():
     save(fig, 'chart09_country_literacy')
 
 
+# ── 전문가 조사. 판단 문항과 그 불확실성 ────────────────────────────
+def chart_survey():
+    """비율만 그리면 24명이라는 것이 보이지 않는다. 구간을 함께 그린다."""
+    fig, ax = plt.subplots(figsize=(6.0, 2.6))
+    title(fig, T('전문가 판단 문항과 95% 신뢰구간 (n = 24)'),
+          note=T('점이 비율, 가로선이 95% 신뢰구간이다. 선이 긴 것이 표본이 작다는 뜻이다.'))
+    rows = [(T('부분적으로'), 16, 66.7, 46.7, 82.0),
+            (T('예, 가능할 것 같다'), 7, 29.2, 14.9, 49.2),
+            (T('판단할 근거가 없다'), 1, 4.2, 0.7, 20.2),
+            (T('아니오'), 0, 0.0, 0.0, 13.8)]
+    ys = range(len(rows))
+    for y, (lab, k, v, lo, hi) in zip(ys, rows):
+        c = BLUE if k else GREY
+        ax.plot([lo, hi], [y, y], color=c, lw=3.0, solid_capstyle='butt', zorder=2)
+        ax.plot([v], [y], 'o', color=c, ms=7, zorder=3)
+        ax.text(hi + 2.0, y, f'{k}/24', va='center', fontsize=8.6, color=INK)
+    ax.set_yticks(list(ys))
+    ax.set_yticklabels([r[0] for r in rows])
+    ax.invert_yaxis()
+    ax.set_xlim(0, 100)
+    ax.set_xlabel(T('비율 (%)'))
+    frame(ax)
+    fig.subplots_adjust(left=0.30 if LANG != 'en' else 0.34)
+    save(fig, 'chart10_survey')
+
+# ── 예방 가능한 약물 위해가 어느 단계에서 생기는가 ──────────────────
+def chart_harm_stage():
+    """우리 논지를 깎는 자료라 오히려 크게 그린다. 무게중심은 처방 쪽이다."""
+    fig, ax = plt.subplots(figsize=(6.0, 2.7))
+    title(fig, T('예방 가능한 약물 위해가 생기는 단계 (WHO, 2024)'),
+          note=T('저·중소득국에서 처방 단계로 더 쏠린다. 이 앱은 처방 단계에 개입하지 않는다.'))
+    labs = [T('처방·지시'), T('모니터링·보고'), T('그 밖')]
+    world = [53, 36, 11]
+    h = 0.36
+    for i, v in enumerate(world):
+        ax.barh(i - h / 2, v, h, color=GREY, zorder=2,
+                label=T('전 세계') if i == 0 else None)
+        ax.text(v + 1.5, i - h / 2, f'{v}%', va='center', fontsize=9,
+                fontweight='bold', color=INK)
+    ax.barh(h / 2, 80, h, color=RED, zorder=2, label=T('저·중소득국'))
+    ax.text(81.5, h / 2, '80%', va='center', fontsize=9, fontweight='bold', color=RED)
+    ax.set_yticks(range(len(labs)))
+    ax.set_yticklabels(labs)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 100)
+    ax.set_xlabel(T('예방 가능한 위해 중 비율 (%)'))
+    legend_in(ax, 'lower right')
+    frame(ax)
+    fig.subplots_adjust(left=0.24 if LANG != 'en' else 0.27)
+    save(fig, 'chart11_harm_stage')
+
+
+# ── 정책이 어디까지 내려와 있는가 ───────────────────────────────────
+def chart_policy_depth():
+    """승인에서 조직으로 갈수록 줄어드는 것이 이 그림의 논지다."""
+    fig, ax = plt.subplots(figsize=(6.0, 2.4))
+    title(fig, T('Medication Without Harm 이 국가 단위로 내려온 정도 (WHO, 2024)'),
+          note=T('받아들인 나라와 실제로 조직을 둔 나라 사이가 세 배 벌어진다.'))
+    labs = [T('과제를 승인하고 이행 중'), T('국가 전문가 조직을 둠'), T('감축 목표를 수로 세움')]
+    vals = [74, 24, 18]
+    cols = [GREY, ORANGE, RED]
+    for i, (v, c) in enumerate(zip(vals, cols)):
+        ax.barh(i, v, 0.55, color=c, zorder=2)
+        ax.text(v + 1.5, i, f'{v}%', va='center', fontsize=9.4,
+                fontweight='bold', color=c if c != GREY else INK)
+    ax.set_yticks(range(len(labs)))
+    ax.set_yticklabels(labs)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 100)
+    ax.set_xlabel(T('WHO 회원국 중 비율 (%)'))
+    frame(ax)
+    fig.subplots_adjust(left=0.30 if LANG != 'en' else 0.33)
+    save(fig, 'chart12_policy_depth')
+
+# ── "읽지 못한다" 는 세 갈래로 갈린다 ───────────────────────────────
+def chart_three_layers():
+    """세 수치는 서로 겹치고 분모도 다르다. 그림에 그대로 적는다."""
+    fig, ax = plt.subplots(figsize=(6.0, 2.5))
+    title(fig, T('처방전을 읽지 못하는 세 갈래'),
+          note=T('셋은 서로 겹치며 출처와 분모가 다르다. 크기를 견주려고 놓은 것이 아니다.'))
+    labs = [T('시력 손상 (WHO)'), T('비문해 성인 (UNESCO)'), T('선진국 최저 문해 수준 (PIAAC)')]
+    vals = [2200, 739, None]
+    cols = [ORANGE, DARK, GREY]
+    for i, (v, c) in enumerate(zip(vals[:2], cols[:2])):
+        ax.barh(i, v, 0.5, color=c, zorder=2)
+        ax.text(v + 45, i, T('{v}억 명').format(v=f'{v/100:.0f}'),
+                va='center', fontsize=9.4, fontweight='bold', color=c)
+    ax.text(45, 2, T('31개국 성인의 18% · 분모가 달라 막대로 그리지 않는다'),
+            va='center', fontsize=8.4, color=MUTED, zorder=4,
+            bbox=dict(boxstyle='square,pad=0.25', fc='white', ec='none'))
+    ax.set_yticks(range(3))
+    ax.set_yticklabels(labs)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 2600)
+    ax.set_xlabel(T('사람 수 (백만 명)'))
+    frame(ax)
+    fig.subplots_adjust(left=0.32 if LANG != 'en' else 0.36)
+    save(fig, 'chart13_three_layers')
+
+# ── 항생제 내성이 지역별로 어디에 몰리는가 ─────────────────────────
+def chart_amr_region():
+    """§1.1 의 문해율이 가장 낮은 지역과 겹친다는 것이 이 그림의 논지다."""
+    fig, ax = plt.subplots(figsize=(6.0, 2.6))
+    title(fig, T('보고된 세균 감염 중 항생제 내성 비율 (WHO GLASS, 2025)'),
+          note=T('세계 평균은 여섯 중 하나다. 값이 높은 두 지역에 문해율이 가장 낮은 나라들이 있다.'))
+    labs = [T('동남아시아 · 동지중해'), T('아프리카'), T('세계 평균'), T('아메리카')]
+    vals = [33.3, 20.0, 16.7, 14.3]
+    frac = [T('셋 중 하나'), T('다섯 중 하나'), T('여섯 중 하나'), T('일곱 중 하나')]
+    cols = [RED, ORANGE, DARK, GREY]
+    for i, (v, c, f) in enumerate(zip(vals, cols, frac)):
+        ax.barh(i, v, 0.55, color=c, zorder=2)
+        ax.text(v + 0.7, i, f, va='center', fontsize=9, fontweight='bold',
+                color=c if c != GREY else INK)
+    ax.set_yticks(range(len(labs)))
+    ax.set_yticklabels(labs)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 45)
+    ax.set_xlabel(T('내성을 보인 감염의 비율 (%)'))
+    frame(ax)
+    fig.subplots_adjust(left=0.29 if LANG != 'en' else 0.32)
+    save(fig, 'chart14_amr_region')
+
+# ── 조사 응답자가 어디서 왔는가 ─────────────────────────────────────
+def chart_survey_who():
+    """직군과 대륙을 나란히. 34명이 어떤 사람들인지가 이 조사의 무게다."""
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.6))
+    title(fig, T('전문가 조사 응답자 34명의 구성'),
+          note=T('왼쪽은 응답자가 고른 분야, 오른쪽은 일한다고 적은 지역이다.'))
+
+    fields = [(T('약국·복약지도'), 11), (T('간호·보건'), 9), (T('그 밖'), 9),
+              (T('HCI·디자인'), 2), (T('그 외 셋'), 3)]
+    cols = [BLUE, GREEN, GREY, ORANGE, LIGHT]
+    a1.pie([v for _, v in fields], labels=[f'{k}\n{v}' for k, v in fields],
+           colors=cols, startangle=90, counterclock=False,
+           wedgeprops=dict(width=0.42, edgecolor='white', linewidth=1.4),
+           textprops=dict(fontsize=7.8, color=INK))
+    a1.set_title(T('분야'), fontsize=9, color=MUTED, pad=2)
+
+    conts = [(T('아시아'), 24), (T('유럽'), 5), (T('아프리카'), 3),
+             (T('북미'), 1), (T('오세아니아'), 1)]
+    y = range(len(conts))
+    for i, (k, v) in enumerate(conts):
+        a2.barh(i, v, 0.6, color=DARK if i == 0 else GREY, zorder=2)
+        a2.text(v + 0.5, i, str(v), va='center', fontsize=8.6,
+                fontweight='bold', color=INK)
+    a2.set_yticks(list(y))
+    a2.set_yticklabels([k for k, _ in conts], fontsize=8)
+    a2.invert_yaxis()
+    a2.set_xlim(0, 30)
+    a2.set_title(T('대륙'), fontsize=9, color=MUTED, pad=2)
+    frame(a2)
+    fig.subplots_adjust(left=0.02, right=0.97, wspace=0.55)
+    save(fig, 'chart15_survey_who')
+
+# ── 같은 기호가 나라를 옮기면 ───────────────────────────────────────
+def chart_symbol_country():
+    """94%와 8%. 국제 표준이라는 이름이 이해도를 보장하지 않는다."""
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.5))
+    title(fig, T('같은 국제 표준 기호를 네 나라에 시험한 결과 (Hermans 등, 2011)'),
+          note=T('왼쪽은 18종 중 ISO 기준을 넘긴 수, 오른쪽은 생물학적 위험 기호 하나의 정답률.'))
+
+    labs = [T('벨기에'), T('쿠바'), T('콩고민주공화국'), T('캄보디아')]
+    passed = [6, 6, 2, 1]
+    for i, v in enumerate(passed):
+        a1.barh(i, v, 0.58, color=GREY if v >= 6 else RED, zorder=2)
+        a1.text(v + 0.25, i, str(v), va='center', fontsize=9, fontweight='bold', color=INK)
+    a1.set_yticks(range(4)); a1.set_yticklabels(labs, fontsize=8)
+    a1.invert_yaxis(); a1.set_xlim(0, 9)
+    a1.set_xlabel(T('18종 중 통과한 수'), fontsize=8.4)
+    frame(a1)
+
+    two = [(T('쿠바'), 94.1, GREY), (T('콩고민주공화국'), 8.0, RED)]
+    for i, (k, v, c) in enumerate(two):
+        a2.bar(i, v, 0.5, color=c, zorder=2)
+        a2.text(i, v + 4, f'{v}%', ha='center', fontsize=10, fontweight='bold', color=c)
+    a2.set_xticks(range(2)); a2.set_xticklabels([k for k, _, _ in two], fontsize=8)
+    a2.set_ylim(0, 125)
+    a2.set_ylabel(T('정답률 (%)'), fontsize=8.4)
+    frame(a2)
+    fig.subplots_adjust(left=0.17, right=0.97, wspace=0.5)
+    save(fig, 'chart16_symbol_country')
+
+# ── 형태소를 오류 분포에서 거꾸로 내려왔다 ─────────────────────────
+def chart_morpheme_map():
+    """왼쪽이 §1.3 의 오류, 오른쪽이 §2.2 의 형태소. 두 축이 이어져 있다."""
+    fig, ax = plt.subplots(figsize=(6.0, 3.0))
+    title(fig, T('형태소 78종의 갈래와 복약 오류 분포의 대응'),
+          note=T('진한 막대가 표 4 의 상위 세 오류에 곧바로 대응하는 갈래다.'))
+    rows = [(T('제형·기기·행위'), 26, False, T('무엇을')),
+            (T('음식'), 10, False, T('무엇을')),
+            (T('알레르겐'), 9, False, T('무엇을 피하나')),
+            (T('증상'), 8, False, T('무엇을 겪었나')),
+            (T('상태'), 7, False, T('누구인가')),
+            (T('부위'), 6, False, T('어디에')),
+            (T('개수'), 5, True, T('얼마나 · 용량 오류 28.4%')),
+            (T('시각'), 4, True, T('언제 · 시각 오류 23.2%')),
+            (T('보관'), 3, False, T('어떻게'))]
+    for i, (lab, v, hot, note_) in enumerate(rows):
+        ax.barh(i, v, 0.62, color=RED if hot else GREY, zorder=2)
+        ax.text(v + 0.6, i, f'{v}', va='center', fontsize=9, fontweight='bold',
+                color=RED if hot else INK)
+        ax.text(v + 2.6, i, note_, va='center', fontsize=7.8,
+                color=RED if hot else MUTED)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([r[0] for r in rows], fontsize=8.4)
+    ax.invert_yaxis()
+    ax.set_xlim(0, 34)
+    ax.set_xlabel(T('형태소 수 (합계 78)'))
+    frame(ax)
+    fig.subplots_adjust(left=0.22 if LANG != 'en' else 0.26)
+    save(fig, 'chart17_morpheme_map')
+
+# ── 약국과 간호가 무엇을 답했는가 ───────────────────────────────────
+def chart_field_answers():
+    """분모가 11과 9 이므로 백분율 대신 사람 수로 그린다."""
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.0, 2.2))
+    title(fig, T('약국 11명과 간호·보건 9명이 답한 것'),
+          note=T('분모가 작아 백분율 대신 사람 수로 적었다. 한 사람이 9%p 를 움직인다.'))
+
+    ph = [(T('약사가 매번 검토'), 8), (T('조제하면서 권할 수 있다'), 8),
+          (T('그림·음성만으로 안 되는 것이 있다'), 9),
+          (T('용량·횟수가 가장 중요'), 6)]
+    for i, (k, v) in enumerate(ph):
+        a1.barh(i, v, 0.58, color=BLUE, zorder=2)
+        a1.text(v + 0.2, i, f'{v}/11', va='center', fontsize=8.6,
+                fontweight='bold', color=INK)
+    a1.set_yticks(range(len(ph)))
+    a1.set_yticklabels([k for k, _ in ph], fontsize=7.4)
+    a1.invert_yaxis(); a1.set_xlim(0, 13)
+    a1.set_title(T('약국·복약지도 (11명)'), fontsize=9, color=MUTED, pad=3)
+    frame(a1)
+
+    nu = [(T('조건이 갖춰지면 결과를 바꾼다'), 8),
+          (T('그런 환자를 본 적이 있다'), 8),
+          (T('환자와 보호자를 각각 다르게'), 6),
+          (T('복약순응도 도구로 재야 한다'), 6)]
+    for i, (k, v) in enumerate(nu):
+        a2.barh(i, v, 0.58, color=GREEN, zorder=2)
+        a2.text(v + 0.2, i, f'{v}/9', va='center', fontsize=8.6,
+                fontweight='bold', color=INK)
+    a2.set_yticks(range(len(nu)))
+    a2.set_yticklabels([k for k, _ in nu], fontsize=7.4)
+    a2.invert_yaxis(); a2.set_xlim(0, 11)
+    a2.set_title(T('간호·보건 (9명)'), fontsize=9, color=MUTED, pad=3)
+    frame(a2)
+    fig.subplots_adjust(left=0.29, right=0.98, wspace=1.25)
+    save(fig, 'chart18_field_answers')
+
+
 if __name__ == '__main__':
     chart_literacy()
     chart_health_literacy()
@@ -238,5 +577,16 @@ if __name__ == '__main__':
     chart_pictogram()
     chart_eval()
     chart_glyphs()
+    chart_expressive()
+    chart_ageing()
     chart_model()
     chart_country()
+    chart_survey()
+    chart_harm_stage()
+    chart_policy_depth()
+    chart_three_layers()
+    chart_amr_region()
+    chart_survey_who()
+    chart_symbol_country()
+    chart_morpheme_map()
+    chart_field_answers()

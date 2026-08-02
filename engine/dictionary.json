@@ -512,22 +512,26 @@
     {
       "name": "time_morning",
       "category": "time",
-      "description": "Time-of-day: morning (sunrise)."
+      "description": "Time-of-day: morning (sunrise).",
+      "standalone": true
     },
     {
       "name": "time_noon",
       "category": "time",
-      "description": "Time-of-day: noon (full sun)."
+      "description": "Time-of-day: noon (full sun).",
+      "standalone": true
     },
     {
       "name": "time_evening",
       "category": "time",
-      "description": "Time-of-day: evening (sunset)."
+      "description": "Time-of-day: evening (sunset).",
+      "standalone": true
     },
     {
       "name": "time_night",
       "category": "time",
-      "description": "Time-of-day: night (moon and stars)."
+      "description": "Time-of-day: night (moon and stars).",
+      "standalone": true
     },
     {
       "name": "qty_one",

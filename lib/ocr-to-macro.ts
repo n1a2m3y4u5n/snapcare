@@ -143,13 +143,28 @@ export function extractRxInfo(rawText: string): StructuredRxInfo {
   // ── 보관 방법 ────────────────────────────────────────────────────────────
   let storageType: StructuredRxInfo['storageType'] = null;
   let storageText = '';
+  /**
+   * "Do not refrigerate" 는 냉장 지시가 아니라 **그 반대다.**
+   *
+   * 아래 긍정 검사가 'refrigerat' 만 보고 있어서, 실온 보관 약이 냉장으로 읽혔다.
+   * 보관 지시가 통째로 뒤집히는 것이고, 그 뒤집힘은 그림(storage_fridge)과 음성
+   * ("Keep it in the fridge.") 양쪽으로 그대로 나간다.
+   *
+   * 냉동 금지는 다르다 — "Keep refrigerated. Do not freeze." 는 냉장이 맞고, 냉장이
+   * 필요한 제품에 거의 늘 함께 적힌다. 그래서 부정하는 것은 refrigerate 하나뿐이다.
+   */
+  const NO_FRIDGE = /(?:do\s*not|don'?t|never)\s+refrigerate|냉장\s*(?:하지|금지)/i;
+  const noFridge = NO_FRIDGE.test(t);
+  // 부정된 구절을 지운 뒤에 긍정 검사를 돌린다. 둘 다 적힌 처방전에서는 냉장이 이긴다.
+  const tStorage = t.replace(new RegExp(NO_FRIDGE.source, 'gi'), ' ');
+
   const storageMatch = t.match(/(냉장보관|실온보관|상온보관)[^a-z가-힣]*([\(（][^)\）]+[\)）])?/i);
   if (storageMatch) {
     storageText = (storageMatch[0] ?? '').trim();
     storageType = /냉장/.test(storageText) ? 'refrigerator' : 'room';
-  } else if (/냉장|refrigerat|keep\s+cold|2\s*[-–~]\s*8\s*°?C/i.test(t)) {
+  } else if (/냉장|refrigerat|keep\s+cold|2\s*[-–~]\s*8\s*°?C/i.test(tStorage)) {
     storageType = 'refrigerator'; storageText = 'Keep refrigerated';
-  } else if (/실온|상온|room\s*temperature/i.test(t)) {
+  } else if (noFridge || /실온|상온|room\s*temperature|(?:store|keep)\s+below\s*\d+\s*°?\s*C/i.test(t)) {
     storageType = 'room'; storageText = 'Store at room temperature';
   }
 

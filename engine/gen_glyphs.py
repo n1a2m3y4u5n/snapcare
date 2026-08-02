@@ -144,11 +144,21 @@ TARGETS: list[Target] = [
     ),
     Target(
         'egg', 'head', 'allergen_egg',
-        'a fried egg seen from above: a wide rounded blob of white with one large solid black yolk '
-        'circle in the middle, the yolk separated from the rim by a broad white ring so the two read '
-        'as clearly different parts',
-        'a peanut, a target, a button, a plain circle',
-        means='fried egg',
+        # 협성대 박남수 교수(2026년 8월 조사): "계란 알러지를 표시할 때 흑백으로만
+        # 제시되었을 때는 그게 계란인지 명확하게 알기 어렵다."
+        #
+        # 위에서 본 프라이는 흰자가 흰색이라 실루엣에서 **사라진다.** 남는 것은 가운데
+        # 노른자 원 하나뿐이고, 그것은 과녁이나 단추와 같은 그림이다. 채운 실루엣으로
+        # 그리는 세트에서 '흰 부분이 뜻을 지는 그림' 은 처음부터 성립하지 않았다.
+        #
+        # 깨진 달걀로 바꾼다. 껍데기 두 쪽이라는 윤곽이 뜻을 지므로 흰색에 기대지 않고,
+        # §5.2 에서 tree_nut 이 "깨진 달걀" 로 읽혔던 것이 곧 그 형태가 달걀로 읽힌다는
+        # 증거이기도 하다.
+        'a cracking egg seen from the side: one solid black egg shape split across the middle by a '
+        'wide zigzag white gap, so the top shell cap and the bottom shell read as two separate '
+        'pieces with a jagged edge facing each other',
+        'a peanut, a target, a button, a plain circle, a walnut',
+        means='cracked egg',
     ),
     Target(
         'fish', 'head', 'allergen_fish',
@@ -500,11 +510,17 @@ TARGETS: list[Target] = [
     Target(
         'hand_wash', 'head', 'hand_wash',
         # 손 전체를 곡선 덩어리로 그리면 불꽃이 된다 — 손가락 사이 틈이 손을 만든다.
-        'an open human hand seen palm on, fingers spread wide apart with deep white gaps between every '
-        'finger so the outline is strongly toothed, with three round water drops falling above it '
-        'clearly separated from the hand',
-        'a flame, a leaf, a glove, a star, a tree',
-        means='hand',
+        #
+        # 한국공예디자인문화진흥원 이용한 선임(2026년 8월 조사)이 구체적인 지시를 줬다:
+        # "물 나오는 수도꼭지 아래에 손이 있는 그림이 훨씬 잘 와닿을 것." 떨어지는 물방울
+        # 셋만으로는 무엇이 물을 내보내는지가 그림에 없어서, 손 위의 점 세 개로 남는다.
+        # 수도꼭지가 들어오면 장면이 성립하고 '씻는다' 가 손 모양이 아니라 배치에서 나온다.
+        'a tap above an open hand: a bold angled faucet spout entering from the top left, a short '
+        'straight stream of water falling from its mouth, and below it one open human hand seen palm '
+        'up with fingers spread wide apart and deep white gaps between every finger, the hand clearly '
+        'separated from the spout by white space',
+        'a flame, a leaf, a glove, a star, a tree, a watering can',
+        means='hand under a tap',
     ),
     Target(
         'call_help', 'head', 'call_help',
@@ -525,12 +541,26 @@ TARGETS: list[Target] = [
     ),
     Target(
         'finish_course', 'head', 'finish_course',
-        # "며칠간" — 먹은 날과 남은 날이 한 줄에 같이 보여야 한다.
-        'a row of five square boxes side by side with clear white gaps between them, the first three '
-        'boxes filled solid black and the last two drawn as bold empty outlines, all five the same '
-        'size and in a straight line',
+        # 이 그림은 **뜻이 뒤집혀 있었다.**
+        #
+        # 전에는 "먹은 날과 남은 날이 한 줄에 같이 보여야 한다" 는 생각으로 다섯 칸 중
+        # 셋을 채우고 둘을 비웠다. 2026년 8월 전문가 조사에서 말라야대 Sheron Sir Loon
+        # Goh 전임강사가 그것을 읽은 그대로 적었다 — "검은 점이 끝까지 차 있지 않으므로
+        # 나에게는 완주하지 않아도 된다는 뜻으로 읽힌다."
+        #
+        # 맞는 말이다. 진행 중인 상태를 그리면 그림은 **아직 안 끝났다**를 말하지,
+        # 끝내라를 말하지 않는다. 항생제를 끝까지 먹으라는 지시가 정반대로 읽히면
+        # 이것은 SDG 3.d 기여가 아니라 해다.
+        #
+        # 뜻 검사가 이것을 못 잡은 이유도 함께 적어 둔다. means 가 'row of boxes' 였다 —
+        # 생김새만 물었으니 방향이 반대인 그림도 통과한다. 그림이 아니라 **읽히는 방향**을
+        # 기대값에 넣어야 검사가 일을 한다. 같은 응답자가 제안한 화살표를 그 자리에 쓴다.
+        'a row of five square boxes side by side with clear white gaps between them, all five '
+        'filled solid black and the same size, and directly below them one bold thick horizontal '
+        'arrow spanning the whole row from the first box to the last with a large solid triangular '
+        'head pointing right at the last box',
         'a bar chart, a calendar grid, a barcode, a ruler',
-        means='row of boxes',
+        means='arrow pointing to the end of a row of boxes',
     ),
 
     # ── 증상 ────────────────────────────────────────────────────────────────
@@ -817,10 +847,22 @@ TARGETS: list[Target] = [
     # ── 수식어: 보관 ────────────────────────────────────────────────────────
     Target(
         'storage_fridge', 'modifier', 'storage_fridge',
-        'a snowflake: six straight bold arms radiating from a common centre at even angles, each arm '
-        'with two short side branches, with wide white space between neighbouring arms',
-        'a star, an asterisk, a flower, a wheel',
-        means='snowflake',
+        # 눈송이를 맨몸으로 두었더니 해(time_noon)와 부딪혔다. 벨그라드 대학교
+        # Katarina Vučićević 교수가 2026년 8월 조사에서 "냉장 보관과 정오 형태소가
+        # 헷갈린다" 고 적었고, 실제로 나란히 놓고 보면 둘 다 **가운데에서 사방으로
+        # 뻗는 별 모양**이다. 실루엣이 같으면 크기를 키워도 갈리지 않는다.
+        #
+        # 교수의 제안은 색을 쓰라는 것이었다(검정+노랑은 낮에). 색은 두 번째 층으로는
+        # 좋지만 첫 번째 층이 될 수 없다 — 색을 못 보는 사람에게는 두 그림이 여전히
+        # 같고, 그 사람이 §3.7 이 지키기로 한 사람이다. 그래서 실루엣을 바꾼다.
+        #
+        # 눈송이는 버리지 않는다. 포장에 찍힌 냉장 표시로 이미 배운 그림이라, 상자
+        # **안에** 넣어 겉모양만 바꾼다 — 배운 것은 남고 부딪히는 것은 사라진다.
+        'a solid black upright rectangle with rounded corners filling most of the frame, with one '
+        'bold six-armed snowflake punched right through it as wide white channels so the snowflake '
+        'reads as empty space cut out of the box, and nothing at all outside the rectangle',
+        'a bare snowflake, a sun, a star, an asterisk, a flower, a wheel, a window, a door',
+        means='a box with a snowflake cut out of it',
     ),
     Target(
         'storage_dry', 'modifier', 'storage_dry',
@@ -976,8 +1018,47 @@ def same_idea(got: str, expect: str, key: str) -> bool:
         return True     # 판정할 수 없는 것을 실패로 세지 않는다
 
 
+def rival_meanings(t: 'Target') -> list[str]:
+    """세트 안의 **다른** 형태소들이 뜻하는 것.
+
+    not_like 는 손으로 적는 목록이라 우리가 이미 아는 충돌만 담는다. 2026년 8월 전문가
+    조사에서 베오그라드대 Katarina Vučićević 교수가 냉장 보관과 정오가 헷갈린다고 적었을 때,
+    두 Target 의 not_like 를 열어 보니 **서로를 적어 두지 않았다** — storage_fridge 는
+    'a star, an asterisk, a flower, a wheel', time_noon 은 'a rising sun, a flower, a star,
+    a gear'. 둘 다 'star' 를 적었으니 각자 별과 헷갈리지 않는지는 봤지만, 서로와
+    헷갈리는지는 아무도 묻지 않았다.
+
+    목록을 더 길게 적는 것으로는 이 문제가 닫히지 않는다 — 78개면 짝이 3003개이고,
+    그것을 손으로 적을 수는 없다. 대신 **세트가 자기 자신을 목록으로 쓴다.** 어떤 그림이
+    다른 형태소의 뜻으로 헷갈린다면, 그것을 우리가 미리 적어 두었든 아니든 충돌이다.
+
+    낱말로 쪼개지 않고 **뜻 구절 전체**로 맞춘다. 쪼개면 'the'·'one'·'row' 같은 조각이
+    남의 답에 걸려 멀쩡한 그림을 떨어뜨린다. 통째로 맞추면 'sun'·'snowflake' 처럼 한
+    낱말짜리 뜻이 정확히 그 자리에서 잡히고, 'row of boxes with an arrow…' 같은 긴 뜻은
+    애초에 짧은 답에 통째로 나타나지 않으므로 조용히 넘어간다 — 그런 것은 손으로 적은
+    not_like 가 계속 맡는다.
+    """
+    return sorted({expected_meaning(o).lower().strip()
+                   for o in TARGETS if o.name != t.name and len(expected_meaning(o)) >= 3})
+
+
+def clashes(conf: str, not_like: str, rivals: list[str] | None = None) -> str | None:
+    """헷갈린다고 답한 것이 우리 세트 안의 무언가인가. 맞으면 그 낱말을 돌려준다.
+
+    각각은 잘 그렸는데 서로 구별되지 않으면 세트로서는 못 쓴다.
+    """
+    low = conf.lower()
+    for bad in not_like.lower().split(','):
+        if bad.strip() and bad.strip() in low:
+            return bad.strip()
+    for r in rivals or []:
+        if re.search(rf'\b{re.escape(r)}\b', low):
+            return r
+    return None
+
+
 def verify_meaning(im: Image.Image, expect: str, not_like: str,
-                   strict: bool = False) -> tuple[bool, str]:
+                   strict: bool = False, rivals: list[str] | None = None) -> tuple[bool, str]:
     """이 그림이 무엇으로 보이는지 묻는다. 답이 기대와 다르면 통과시키지 않는다.
 
     기계 검사가 못 잡는 자리가 여기다. qty_one 이 속 빈 고리로 나온 날, 잉크량도
@@ -1046,12 +1127,13 @@ def verify_meaning(im: Image.Image, expect: str, not_like: str,
         return fail[0], f'{fail[1]} (답을 읽지 못함)'
     hit = same_idea(got, expect, key)
     # 우리 세트 안의 다른 것으로 헷갈린다면 그것도 실패다 — 각각은 잘 그렸는데
-    # 서로 구별되지 않으면 세트로서는 못 쓴다.
-    clash = any(bad.strip() and bad.strip() in conf for bad in not_like.lower().split(','))
+    # 서로 구별되지 않으면 세트로서는 못 쓴다. 손으로 적은 not_like 뿐 아니라 세트의
+    # 다른 형태소가 뜻하는 것까지 본다 (rival_meanings 참고).
+    clash = clashes(conf, not_like, rivals)
     if not hit:
         return False, f'"{got}" 로 보인다 (기대: {expect})'
     if clash:
-        return False, f'"{conf}" 와 헷갈린다'
+        return False, f'"{conf}" 와 헷갈린다 (세트 안의 "{clash}")'
     return True, got
 
 
@@ -1322,6 +1404,75 @@ def score(im: Image.Image, c: Check) -> float:
 
 # ── 실행 ────────────────────────────────────────────────────────────────────
 
+def pairs(top: int = 15, size: int = SMALL) -> int:
+    """세트 안에서 **서로 닮은 짝**을 찾아 가까운 순으로 보고한다.
+
+    왜 이것이 필요한가
+    ------------------
+    verify_meaning 은 그림 하나를 놓고 "무엇으로 보이나" 를 묻는다. 그 물음은 각각이
+    잘 그려졌는지는 알려주지만 **둘이 서로 구별되는지는 알려주지 않는다.** 지금까지는
+    Target 마다 손으로 적어 둔 not_like 로 그것을 막았는데, 손으로 적는 목록은 우리가
+    이미 아는 충돌만 담는다.
+
+    2026년 8월 전문가 조사에서 베오그라드대 Katarina Vučićević 교수가 냉장 보관과 정오가
+    헷갈린다고 적었다. 둘의 not_like 를 열어 보면 storage_fridge 는 'a star, an asterisk,
+    a flower, a wheel', time_noon 은 'a rising sun, a flower, a star, a gear' 다 — **서로를
+    적어 두지 않았다.** 눈사람 여섯 팔과 해 여덟 살은 우리에게는 다른 그림이지만 32px
+    에서는 같은 방사형 얼룩이고, 그것을 알아채려면 사람이 그 둘을 나란히 놓아야 했다.
+
+    이 검사는 나란히 놓는 일을 기계가 한다. 목록에 무엇을 적어 둘지 미리 알 필요가 없다.
+
+    어떻게 재는가
+    -------------
+    설치된 형태소를 **실제로 보이는 크기(32px)로** 줄여 화소 차이를 잰다. 512px 에서
+    구별되는 것은 우리 문제가 아니다 — 목록에서 34px 로 보일 때 구별되는 것이 문제다.
+    API 를 부르지 않으므로 언제든 돌릴 수 있고 답이 늘 같다.
+
+    거리는 정규화된 RMS 다. 0 이면 같은 그림이고, 값이 작을수록 헷갈린다. 절대적인
+    합격선을 두지 않는 이유는 그 선을 정할 근거가 아직 없어서다 — 순위를 보여주고
+    사람이 판단한다. 이미 서로의 not_like 에 적혀 있는 짝은 '알고 있음' 으로 표시해,
+    새로 드러난 것과 가른다.
+    """
+    import math
+
+    loaded: list[tuple[str, list[float]]] = []
+    for t in TARGETS:
+        p = ASSETS / t.role / f'{t.asset}.png'
+        if not p.exists():
+            continue
+        im = Image.open(p).convert('RGBA')
+        flat = Image.new('L', im.size, 255)
+        flat.paste(im.convert('L'), (0, 0), im)
+        small = flat.resize((size, size), Image.LANCZOS)
+        px = [v / 255.0 for v in small.tobytes()]
+        loaded.append((t.name, px))
+
+    by_name = {t.name: t for t in TARGETS}
+
+    def declared(a: str, b: str) -> bool:
+        """둘 중 하나라도 상대를 not_like 에 적어 두었는가 (낱말 겹침으로 느슨하게 본다)."""
+        for x, y in ((a, b), (b, a)):
+            words = {w for w in by_name[y].name.split('_') if len(w) > 3}
+            if any(w in by_name[x].not_like.lower() for w in words):
+                return True
+        return False
+
+    scored: list[tuple[float, str, str]] = []
+    for i in range(len(loaded)):
+        for j in range(i + 1, len(loaded)):
+            a, b = loaded[i], loaded[j]
+            rms = math.sqrt(sum((x - y) ** 2 for x, y in zip(a[1], b[1])) / len(a[1]))
+            scored.append((rms, a[0], b[0]))
+    scored.sort()
+
+    print(f'{len(loaded)}개 형태소를 {size}px 로 줄여 비교했다. 가까운 순:\n')
+    for rms, a, b in scored[:top]:
+        mark = '알고 있음' if declared(a, b) else '←  새로 드러남'
+        print(f'  {rms:.4f}  {a:22} {b:22} {mark}')
+    print(f'\n중앙값 {scored[len(scored) // 2][0]:.4f} · 가장 먼 짝 {scored[-1][0]:.4f}')
+    return 0
+
+
 def sheet(path: Path, per_row: int = 8) -> None:
     """생성물과 현재 자산을 나란히 놓은 검토표를 만든다.
 
@@ -1444,7 +1595,8 @@ def one(concept: str, out: Path, tries: int = 3) -> dict:
         if c.ok:
             # 실행 중이라 막는 쪽으로 넘어진다 — 검증되지 않은 그림을 보여주느니
             # "맞는 그림 없음" 이 낫다.
-            ok, note = verify_meaning(im, expected_meaning(t), t.not_like, strict=True)
+            ok, note = verify_meaning(im, expected_meaning(t), t.not_like, strict=True,
+                                      rivals=rival_meanings(t))
             if not ok:
                 c = Check(False, [f'뜻이 안 맞는다 — {note}'], c.ink, c.small_ink, c.keeps_holes)
         notes.append(f'{attempt + 1}: ' + ('통과' if c.ok else ' · '.join(c.reasons)))
@@ -1472,7 +1624,13 @@ def main() -> None:
                          '(ANTHROPIC_API_KEY 필요)')
     ap.add_argument('--sheet', metavar='PATH',
                     help='생성하지 않고, 현재 자산과 생성물을 나란히 놓은 검토표만 만든다')
+    ap.add_argument('--pairs', action='store_true',
+                    help='세트 안에서 서로 닮은 짝을 작은 크기로 재어 가까운 순으로 보고한다 '
+                         '(API 를 부르지 않는다)')
     args = ap.parse_args()
+
+    if args.pairs:
+        raise SystemExit(pairs())
 
     if args.one:
         if not args.out:
@@ -1525,7 +1683,8 @@ def main() -> None:
             # 의미 검증은 기계 검사를 통과한 것에만 묻는다. 굵기도 안 맞는 그림에
             # "무엇으로 보이나" 를 묻는 것은 답이 뻔하고 요금만 나간다.
             if c.ok and args.verify:
-                ok, note = verify_meaning(im, expected_meaning(t), t.not_like)
+                ok, note = verify_meaning(im, expected_meaning(t), t.not_like,
+                                          rivals=rival_meanings(t))
                 print(f'{t.name:11}   의미: {note}')
                 if not ok:
                     c = Check(False, [f'뜻이 안 맞는다 — {note}'], c.ink, c.small_ink, c.keeps_holes)

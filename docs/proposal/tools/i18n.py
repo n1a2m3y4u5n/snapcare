@@ -190,6 +190,318 @@ EN = {
     '영양 추정 모델의 항목별 오차 (n = 507)':
         'Per-item error of the nutrition estimation model (n = 507)',
     '열량': 'Energy', '질량': 'Mass', '지방': 'Fat', '탄수화물': 'Carbohydrate',
+    '전문가 판단 문항과 95% 신뢰구간 (n = 24)': 'Expert judgement with 95% confidence intervals (n = 24)',
+    '점이 비율, 가로선이 95% 신뢰구간이다. 선이 긴 것이 표본이 작다는 뜻이다.':
+        'Dot is the proportion, bar is the 95% confidence interval. A long bar means a small sample.',
+    '부분적으로': 'Partly',
+    '예, 가능할 것 같다': 'Yes, probably',
+    '판단할 근거가 없다': 'No basis to judge',
+    '아니오': 'No',
+    '예방 가능한 약물 위해가 생기는 단계 (WHO, 2024)': 'Where preventable medication harm arises (WHO, 2024)',
+    '저·중소득국에서 처방 단계로 더 쏠린다. 이 앱은 처방 단계에 개입하지 않는다.':
+        'The concentration at prescribing is stronger in LMICs. This app does not intervene at the prescribing stage.',
+    '처방·지시': 'Prescribing / ordering', '모니터링·보고': 'Monitoring / reporting',
+    '전 세계': 'Worldwide', '저·중소득국': 'LMICs',
+    '예방 가능한 위해 중 비율 (%)': 'Share of preventable harm (%)',
+    'Medication Without Harm 이 국가 단위로 내려온 정도 (WHO, 2024)':
+        'How far Medication Without Harm has reached national level (WHO, 2024)',
+    '받아들인 나라와 실제로 조직을 둔 나라 사이가 세 배 벌어진다.':
+        'A threefold gap between countries that endorsed it and countries with a body for it.',
+    '과제를 승인하고 이행 중': 'Endorsed and implementing',
+    '국가 전문가 조직을 둠': 'Has a national expert group',
+    '감축 목표를 수로 세움': 'Has a numeric reduction target',
+    'WHO 회원국 중 비율 (%)': 'Share of WHO member states (%)',
+    '처방전을 읽지 못하는 세 갈래': 'Three ways a prescription goes unread',
+    '셋은 서로 겹치며 출처와 분모가 다르다. 크기를 견주려고 놓은 것이 아니다.':
+        'The three overlap and come from different sources and denominators. They are not placed here to be ranked.',
+    '시력 손상 (WHO)': 'Vision impairment (WHO)',
+    '비문해 성인 (UNESCO)': 'Non-literate adults (UNESCO)',
+    '선진국 최저 문해 수준 (PIAAC)': 'Below the lowest literacy level, 31 countries (PIAAC)',
+    '{v}억 명': '{v}00 million',
+    '31개국 성인의 18% · 분모가 달라 막대로 그리지 않는다':
+        '18% of adults across 31 countries. A different denominator, so no bar is drawn',
+    '사람 수 (백만 명)': 'People (millions)',
+    '보고된 세균 감염 중 항생제 내성 비율 (WHO GLASS, 2025)':
+        'Share of reported bacterial infections resistant to antibiotics (WHO GLASS, 2025)',
+    '세계 평균은 여섯 중 하나다. 값이 높은 두 지역에 문해율이 가장 낮은 나라들이 있다.':
+        'The world average is one in six. The two highest regions overlap with those of lowest literacy.',
+    '동남아시아 · 동지중해': 'South-East Asia · Eastern Mediterranean',
+    '아프리카': 'Africa', '세계 평균': 'World average', '아메리카': 'Americas',
+    '셋 중 하나': '1 in 3', '다섯 중 하나': '1 in 5', '여섯 중 하나': '1 in 6', '일곱 중 하나': '1 in 7',
+    '내성을 보인 감염의 비율 (%)': 'Share of infections showing resistance (%)',
+    '그 밖': 'Other',
+    '사용자가 고른 것': 'What the user picked',
+    '나이 구간': 'Age band', '그림 넷 중 하나': 'One of four pictures',
+    '조건': 'Conditions', '그림 카드': 'Picture cards',
+    '대표 나이': 'Representative age', '유발 성분': 'Trigger ingredients',
+    '조건마다 다름': 'Varies by condition',
+    '하루 에너지': 'Daily energy', '1,200~2,400 kcal': '1,200–2,400 kcal',
+    '이 사람의 하루 기준치': "This person's daily reference",
+    '유리당 10%E · 포화지방 10%E · 소금 5 g × 비율':
+        'Free sugars 10%E · sat fat 10%E · salt 5 g × ratio',
+    'WHO 권고가 비율로 쓰여 있으므로 표가 아니라 유도로 푼다 (§2.4)':
+        'WHO guidance is written as proportions, so this is derived rather than tabulated (§2.4)',
+    '같은 음료 한 캔이 7세에게는 경고, 성인에게는 무해가 되는 이유가 이 경로다':
+        'This path is why the same can of drink warns a 7-year-old and not an adult',
+    '"무슨 알레르기가 있습니까" 를 셋으로 나눈다':
+        '"What are you allergic to" split three ways',
+    '지금 아는 것': 'What you know now', '임신 중 · 수유 중': 'Pregnant · breastfeeding',
+    '누구나 답할 수 있다': 'Anyone can answer',
+    '겪은 것': 'What you have experienced',
+    '먹고 속이 안 좋았던 적': 'Ever felt unwell after eating',
+    '진단 없이도 답할 수 있다': 'Answerable without a diagnosis',
+    '진단받은 것': 'What you were told', '당뇨 · 고혈압': 'Diabetes · hypertension',
+    '검사를 받은 사람만': 'Only those who were tested',
+    '당뇨 성인의 43%, 고혈압 성인의 44% 는 셋째 칸에 답할 수 없다 (§1.5)':
+        '43% of adults with diabetes and 44% with hypertension cannot answer the third box (§1.5)',
+    '앞의 두 칸이 있어야 그 사람들이 첫 화면에서 걸러지지 않는다':
+        'The first two boxes are what keep those people from being filtered out at the first screen',
+    '영양 정보가 들어오는 세 경로': 'Three routes nutrition information arrives by',
+    '영양성분표 OCR': 'Nutrition label OCR', '기기 안': 'On device',
+    '제품 데이터베이스': 'Product database', '서버 경유': 'Via server',
+    '음식 사진 추정': 'Estimation from a food photo',
+    '기기 안 · 나중에 추가': 'On device · added later',
+    '물리 검사 한 곳': 'One place for the physical checks',
+    '범위 · 부분집합 · 질량 보존 · Atwater 항등식':
+        'Range · subset · mass balance · Atwater identity',
+    '어느 경로로 들어왔는지 묻지 않는다': 'It does not ask which route the value came by',
+    '이 사람의 하루 기준치와 대조': "Compared against this person's daily reference",
+    '셋째 경로는 나중에 들어왔고, 그때 새로 쓴 검증 코드는 없다 (§4.2)':
+        'The third route arrived later, and no new verification code was written for it (§4.2)',
+    '경로마다 검사를 두면 붙이는 것을 잊은 경로가 검증 없는 통로가 된다':
+        'Per-route checks turn any route someone forgot to attach them to into an unverified channel',
+    '전문가 조사 응답자 34명의 구성': 'Composition of the 34 expert respondents',
+    '왼쪽은 응답자가 고른 분야, 오른쪽은 일한다고 적은 지역이다.':
+        'Left: the field each respondent chose. Right: the region they said they work in.',
+    '약국·복약지도': 'Pharmacy', '간호·보건': 'Nursing / public health',
+    'HCI·디자인': 'HCI / design', '그 외 셋': 'Three others',
+    '분야': 'Field', '대륙': 'Continent',
+    '아시아': 'Asia', '유럽': 'Europe', '아프리카': 'Africa',
+    '북미': 'N. America', '오세아니아': 'Oceania',
+    '그림 생성': 'Generate the picture', '형태소 하나': 'One morpheme',
+    '관문 1. 기계 검사': 'Gate 1. Mechanical check',
+    '잉크 비율 · 32px 생존': 'Ink ratio · survival at 32px',
+    '덩어리 개수': 'Number of blobs',
+    '관문 2. 의미 검사': 'Gate 2. Semantic check',
+    '"무엇으로 보이는가"': '"What does this look like"',
+    '보기를 주지 않는다': 'No options are given',
+    '통과하면 설치': 'Installed if it passes',
+    '떨어지면 사유에 맞춰 다시 그린다': 'On failure it is redrawn according to the reason',
+    '뭉쳤다': 'Too clotted', '더 작게 · 구멍을 뚫어': 'Smaller · punch holes',
+    '가늘다': 'Too thin', '더 두껍게 · 채워': 'Thicker · fill more',
+    '개수가 다르다': 'Wrong count', '정확히 그 수만큼': 'Exactly that many',
+    '뜻이 안 맞는다': 'Meaning is wrong',
+    '형태를 바꿔 · 무게는 그대로': 'Change the shape · not the weight',
+    '처음에는 시도 횟수로 사다리를 올렸다. 둘째 칸이 "더 두껍게" 였고,':
+        'At first the ladder was climbed by attempt count. The second rung was "thicker",',
+    '뭉쳐서 떨어진 그림에 그 지시를 주면 실패한 방향으로 더 민다.':
+        'and giving that to a picture that failed for being clotted pushes it further the way it failed.',
+    '마지막 칸이 중요하다. 뜻이 어긋난 것은 형태의 문제이지 무게의 문제가 아니다.':
+        'The last rung matters. A wrong meaning is a problem of shape, not of weight.',
+    '사진 한 장': 'One photograph',
+    '무엇을 찍었는지 고르지 않는다': 'The subject is not chosen',
+    '층 1. 기기 안에서 글자를 읽는다': 'Layer 1. Text is read on the device',
+    '표지와 영양소 이름을 센다': 'Markers and nutrient names are counted',
+    '표지가 맞으면': 'markers match', '글자가 없거나 안 맞으면': 'no text, or no match',
+    '전용 해석기': 'Dedicated parser', '성분표 · 처방전': 'Label · prescription',
+    '서버를 부르지 않는다': 'No server is called',
+    '서버의 시각 모형': 'Vision model on the server',
+    '음식 · 음료': 'Food · drink', '인터넷이 필요하다': 'Needs a connection',
+    '이 순서 덕분에 처방전과 성분표는 인터넷 없이 읽힌다 (§4.5)':
+        'This order is why prescriptions and labels are read without a connection (§4.5)',
+    '이 앱에서 가장 급한 두 가지가 그 둘이다': 'Those two are the most urgent things in this app',
+    '기기에 인쇄된 열 글자': 'Ten characters printed on the device',
+    '양쪽이 각자 가지고 있다': 'Both sides hold it independently',
+    '기기 표': 'Device id', '릴레이의 주소': "The relay's address",
+    '접근 토큰': 'Access token', '그 사서함의 권한': 'Rights to that mailbox',
+    '사서함 열쇠': 'Box key', '일정을 연다': 'Opens the schedule',
+    '릴레이가 본다': 'The relay sees it',
+    '릴레이가 절대 못 본다': 'The relay never sees it',
+    '오가는 것은 전부 AES-256-GCM 이고, 여는 열쇠를 어느 쪽도 보내지 않는다':
+        'Everything in transit is AES-256-GCM, and neither side ever sends the opening key',
+    '릴레이가 멎었든 닿지 않든, 일정은 이미 기기의 SD 카드에 있다 (§4.3)':
+        'Down or unreachable, the schedule is already on the device SD card (§4.3)',
+    '서비스워커가 요청을 가르는 세 갈래': 'Three ways the service worker splits requests',
+    '판정 API': 'Verdict API', '가로채지 않는다': 'Not intercepted',
+    '오래된 답보다 실패가 낫다': 'Failing beats a stale answer',
+    '화면 이동': 'Navigation', '네트워크 우선': 'Network first',
+    '접속되면 늘 최신': 'Always latest when connected',
+    '자산 · 모델 · OCR': 'Assets · model · OCR', '캐시 우선': 'Cache first',
+    '처음 쓸 때 받는다': 'Fetched on first use',
+    '실패는 사용자가 알아차리지만 오래된 성공은 알아차리지 못한다':
+        'A failure is noticed by the user. A stale success is not',
+    '16 MB 를 첫 화면에서 요구하면 망이 느린 곳에서는 앱이 안 열린 것처럼 보인다':
+        'Demanding 16 MB at the first screen makes the app look unopened where the network is slow',
+    '캐시 이름에 자산 지문을 찍는다. 지문이 없으면 고친 그림이 옛 그림으로 계속 나간다':
+        'Cache names carry an asset fingerprint. Without it a fixed picture keeps being served as the old one',
+    '같은 국제 표준 기호를 네 나라에 시험한 결과 (Hermans 등, 2011)':
+        'The same international-standard symbols tested in four countries (Hermans et al., 2011)',
+    '왼쪽은 18종 중 ISO 기준을 넘긴 수, 오른쪽은 생물학적 위험 기호 하나의 정답률.':
+        'Left: how many of 18 passed the ISO criterion. Right: the correct-response rate for one symbol, biological risk.',
+    '벨기에': 'Belgium', '쿠바': 'Cuba', '콩고민주공화국': 'DR Congo', '캄보디아': 'Cambodia',
+    '18종 중 통과한 수': 'Passed, of 18', '정답률 (%)': 'Correct responses (%)',
+    '형태소 78종의 갈래와 복약 오류 분포의 대응':
+        'The 78 morphemes by category, against the distribution of medication errors',
+    '진한 막대가 표 4 의 상위 세 오류에 곧바로 대응하는 갈래다.':
+        'The dark bars are the categories that map directly onto the top errors in Table 4.',
+    '제형·기기·행위': 'Form · device · action', '음식': 'Food', '알레르겐': 'Allergen',
+    '증상': 'Symptom', '상태': 'State', '부위': 'Body site',
+    '개수': 'Count', '시각': 'Time of day', '보관': 'Storage',
+    '무엇을': 'What', '무엇을 피하나': 'What to avoid', '무엇을 겪었나': 'What was experienced',
+    '누구인가': 'Who', '어디에': 'Where', '어떻게': 'How',
+    '얼마나 · 용량 오류 28.4%': 'How much · dose errors 28.4%',
+    '언제 · 시각 오류 23.2%': 'When · timing errors 23.2%',
+    '형태소 수 (합계 78)': 'Morphemes (78 in total)',
+    '약국 11명과 간호·보건 9명이 답한 것':
+        'What the 11 pharmacy and 9 nursing respondents answered',
+    '분모가 작아 백분율 대신 사람 수로 적었다. 한 사람이 9%p 를 움직인다.':
+        'Counts rather than percentages, because the denominators are small. One person moves 9 points.',
+    '약사가 매번 검토': 'Pharmacist reviews every time',
+    '조제하면서 권할 수 있다': 'Can be recommended while dispensing',
+    '그림·음성만으로 안 되는 것이 있다': 'Some things need more than picture and speech',
+    '용량·횟수가 가장 중요': 'Dose and frequency matter most',
+    '약국·복약지도 (11명)': 'Pharmacy (11)',
+    '조건이 갖춰지면 결과를 바꾼다': 'Can change outcomes given conditions',
+    '그런 환자를 본 적이 있다': 'Have seen such patients',
+    '환자와 보호자를 각각 다르게': 'Design patient and carer separately',
+    '복약순응도 도구로 재야 한다': 'Measure with an adherence instrument',
+    '간호·보건 (9명)': 'Nursing / public health (9)',
+    '음식 · 음료': 'Food · drink', '처방전 · 의약품': 'Prescription · medicine',
+    '원형 그림과 판정 문장': 'Round picture and verdict sentence',
+    '색과 기호의 요약 띠': 'Summary bar with colour and symbol',
+    '픽토그램 시퀀스': 'Pictogram sequence',
+    '영양소 막대 (최대 3)': 'Nutrient bars (up to 3)',
+    '대안 제시 카드': 'Alternative suggestion card', '확인 버튼': 'Confirm button',
+    '원형 그림': 'Round picture', '약 이름과 1회 용량': 'Drug name and dose',
+    '색과 기호의 안전 띠': 'Safety bar with colour and symbol',
+    '용량 카드와 보관 카드': 'Dose card and storage card',
+    '복용 시각 표': 'Dosing schedule',
+    '처방전에서는 픽토그램을 글 카드보다 위로 올렸다':
+        'For prescriptions the pictograms were moved above the text cards',
+    '아래에 두었을 때, 글을 읽지 못하는 사람은 빈 카드 셋을 지나야 그림에 닿았다':
+        'With them below, someone who cannot read had to pass three empty cards to reach a picture',
+    'ArUco 네 귀퉁이': 'ArUco at four corners', '적응형 이진화': 'Adaptive threshold',
+    '칸별 채움 비율': 'Fill ratio per cell', '값 정하기': 'Deciding the value',
+    '못 찾으면 값을 지어내지 않는다': 'If not found, no value is invented',
+    '하나만 고르는 항목에서 값을 내지 않는 세 갈래':
+        'Three ways a single-choice item yields no value',
+    '아무것도 안 칠했다': 'Nothing filled in', '빈 종이': 'Blank',
+    '둘 다 제대로 칠했다': 'Both properly filled', '종이가 두 말을 한다': 'The paper says two things',
+    '갈라지지 않는다': 'Does not separate', '1등과 2등이 붙어 있다': 'First and second are too close',
+    '셋 다 값을 내지 않고 문제로 보고한다. 잘못 읽은 복용 시각은 못 읽은 것보다 위험하다':
+        'All three yield no value and report a problem. A misread dosing time is worse than none',
+    '이름이 붙은 문제는 사용자를 종이로 돌려보내며 되돌릴 수 있다. 확신에 찬 오독은 되돌릴 수 없다':
+        'A named problem sends the user back to the paper and is recoverable. A confident misreading is not',
+    '기기가 만든 개인키': 'Device-generated key',
+    '브라우저 밖으로 못 나간다': 'Cannot leave the browser',
+    '서명하는 대상': 'What is signed',
+    '시각 · 메서드 · 본문 해시': 'Timestamp · method · body hash',
+    '시각': 'Timestamp', '본문 해시': 'Body hash',
+    '접근 통제는 서명과 별개다. 저장 위치를 공개키에서 유도하므로 남의 자료를 요청할 방법이 없다':
+        'Access control is separate from the signature. The storage location is derived from the '
+        'public key, so there is no way to request another person\'s data',
+    '가로챈 서명을 나중에 못 쓴다. 5분 넘으면 거절':
+        'An intercepted signature cannot be replayed. Older than five minutes is refused',
+    '서명만 떼어 다른 내용에 못 붙인다':
+        'A signature cannot be detached and attached to other content',
+    '둘 중 하나라도 빠지면 서명은 있으나 마나가 된다':
+        'Missing either one makes the signature worthless',
+    # ── diagrams.py · problem_synthesis (§1.11) ───────────────────
+    '1장이 댄 것': 'What chapter 1 established',
+    '그래서 필요한 것': 'What that calls for',
+    '규모': 'Scale', '대가': 'Cost', '시각적 방법': 'The visual route',
+    '표준의 제약': 'The standard\'s constraint', '열린 경로': 'An open channel',
+    '비문해 성인 7억 3,900만 명 · 한국 65세 이상 59.7%':
+        '739 million non-literate adults; 59.7% of Koreans aged 65+',
+    '내성 사망 127만 명 · 복약 오류 연 420억 달러':
+        '1.27 million deaths from resistance; USD 42 billion a year in medication error',
+    '기억에는 남지만 108종 중 17종만 기준 통과':
+        'Better remembered, yet only 17 of 108 symbols met the criterion',
+    'USP 81종은 결합이 라이선스로 금지되어 있다':
+        'The USP set of 81 is barred by licence from being combined',
+    '65세 이상의 78%가 이미 손전화를 가지고 있다':
+        '78% of adults aged 65+ already carry a smartphone',
+    '조합': 'Composition', '배포 전 측정': 'Measured before release',
+    '문자 없는 전달': 'Delivery without text',
+    '처방 지시 하나를 그림 하나로 세울 것':
+        'One prescription instruction should stand as one picture',
+    '읽히는지를 사람에게 내보내기 전에 잴 것':
+        'Whether it reads should be measured before it reaches anyone',
+    '보조 수단까지 읽기를 요구하지 않을 것':
+        'The fallback must not demand reading either',
+    '우리가 찾은 범위에서 이 셋을 함께 갖춘 것은 없었다. 없다가 아니라 찾지 못했다로 읽어야 한다':
+        'Within what we searched, nothing held all three. Read that as '
+        '"we did not find it", not as "it does not exist"',
+
+    # ── charts.py · chart_ageing (§1.7) ───────────────────────────
+    '고령 인구는 늘면서 저·중소득국으로 옮겨간다':
+        'The older population is growing and shifting to lower-income countries',
+    '왼쪽 WHO, 2024 · 오른쪽 65세 이상 · 질병관리청 2023, Lee 등 2021':
+        'Left: WHO, 2024 · Right: age 65+, KDCA 2023 and Lee et al. 2021',
+    '2020년': '2020', '2030년': '2030', '2050년': '2050',
+    '저·중소득국\n3분의 2': '2/3 in\nlower-income\ncountries',
+    '60세 이상 인구 (십억 명)': 'Population aged 60+ (billions)',
+    '스스로 약을 먹는다': 'Manage their own medicines',
+    '건강정보이해능력 적절': 'Adequate health literacy',
+    '복약 안전 교육 받음': 'Received medication-safety education',
+    '한국 고령자에서의 비율 (%)': 'Share among older adults in Korea (%)',
+
+    # ── charts.py · chart_expressive (§1.9) ───────────────────────
+    '고정 목록과 문법은 다른 속도로 늘어난다':
+        'A fixed list and a grammar grow at different rates',
+    '연산자(금지 · 하루 횟수 · 반쪽)를 적용하기 전의 수':
+        'Counted before any operator (negation, daily cadence, half) is applied',
+    'USP 세트': 'USP set', 'SIGIL 문법': 'SIGIL grammar',
+    'USP 심볼': 'One USP symbol', 'SIGIL 머리': 'One SIGIL head',
+    'SIGIL 수식어': 'One SIGIL modifier',
+    '지금 낼 수 있는 칸 수': 'Cells the set can render today',
+    '하나를 더 만들 때 늘어나는 칸 수': 'Cells gained by drawing one more',
+
+    # ── diagrams.py · voca_rebuild (§2.3) ─────────────────────────
+    '처방전 한 장에 적혀 있는 것': 'What one prescription sheet carries',
+    '읽지 않고 버린다': 'Dropped, never read aloud',
+    '환자 등록번호': 'Patient record number',
+    '의료기관명': 'Name of the institution',
+    '처방 코드': 'Prescription code',
+    '의사 면허번호': 'Prescriber licence number',
+    '교부 일자': 'Date of issue',
+    '약품 코드': 'Drug code',
+    '남긴다': 'Kept',
+    '약 이름': 'Drug name',
+    '1회 용량': 'Dose per intake',
+    '복용법': 'How to take it',
+    '보관 방법': 'Storage',
+    '제형 (문장이 되지 않는다)': 'Dosage form (never becomes a sentence)',
+    '남긴 것을 이 순서로 말한다. 듣는 사람은 되감을 수 없다':
+        'What is kept is spoken in this order. The listener cannot rewind',
+    '무엇에 대한 말인지 세운다': 'Establishes what this is about',
+    '형성 평가 첫 측정에서 음성까지 도달하지 않던 항목':
+        'Did not reach the speech channel in the first formative measurement',
+    '언제 · 얼마나 자주': 'When and how often',
+    '냉장일 때만 말한다': 'Spoken only when refrigeration is required',
+    '제형은 읽히지 않는다. 동사와 부위를 정하고 사라진다 (표 9)':
+        'The dosage form is never spoken. It fixes the verb and the site, then disappears (Table 9)',
+    '안약에 "Take as prescribed." 를 붙이면 동사를 가른 이유가 마지막 문장에서 무너진다':
+        'Ending an eye drop with "Take as prescribed." undoes, in the last sentence, '
+        'the reason the verbs were split at all',
+    '버린 여섯 줄은 환자가 할 일을 하나도 바꾸지 않는다. 읽어 주면 그만큼 앞의 넷이 묻힌다':
+        'None of the six dropped lines changes what the patient has to do. '
+        'Reading them aloud only buries the four that do',
+
+    '읽지 못했다': 'Could not read it',
+    '다시 찍으면 된다': 'Another photograph will do',
+    '422 · 못 알아봄': '422 · not recognised',
+    '더 가까이 · 평평하게 · 손을 멈추고':
+        'Move closer · lay it flat · hold steady',
+    '다시 찍어도 소용없다': 'Retrying will not help',
+    '501 · 수단 없음': '501 · no means available',
+    '성분표를 찍거나 예시를 고른다': 'Photograph a label or pick a sample',
+    '실패 문장은 화면에 뜨는 동시에 스스로 소리 내어 읽힌다':
+        'The failure sentence is spoken aloud as it appears',
+    '앱의 다른 화면은 모두 그림과 음성으로 말하는데, 실패했을 때만 글자 한 줄이 조용히 떠 있었다':
+        'Every other screen speaks in pictures and speech; on failure alone a line of text sat there silently',
+    '가장 도움이 필요한 순간에만 유일하게 글을 요구하고 있었던 셈이다':
+        'The one moment that most needed help was the only one demanding text',
 }
 
 

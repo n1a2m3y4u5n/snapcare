@@ -101,8 +101,34 @@ SAMPLES = [
             "Morning, noon and evening.",
         ],
         days="For 7 days",
-        storage="Keep refrigerated (2-8 C)",
-        warnings="Not for use in pregnancy. Caution if breastfeeding. No alcohol.",
+        # 여기 "Keep refrigerated (2-8 C)" 라고 적혀 있었다. **임상적으로 틀린 값이다.**
+        #
+        # 말라야대 Sheron Sir Loon Goh 전임강사가 2026년 8월 조사에서 짚었다 — 아목시실린
+        # **캡슐**은 실온 25도 보관이고 냉장이 필요하지 않다. 냉장이 필요한 것은 물에 타서
+        # 만든 현탁액 쪽이다. 엔진의 결함이 아니라 우리가 만든 예시가 틀린 것이었고,
+        # 그것을 1,103명에게 보여주었다.
+        #
+        # 아래 점안액 표본은 냉장이 맞으므로 그대로 둔다 — 냉장 경로를 시연할 자리는
+        # 그쪽이다.
+        storage="Store below 25 C. Do not refrigerate.",
+        # 여기 "Not for use in pregnancy. Caution if breastfeeding. No alcohol." 이라고
+        # 적혀 있었다. **셋 다 임상적으로 틀렸다.**
+        #
+        #   임신    아목시실린은 임신 중 널리 쓰이는 항생제다. FDA 분류 B 이며 NHS 는
+        #           "It is safe to take amoxicillin during pregnancy" 라고 적는다.
+        #   수유    "It's OK to take amoxicillin while breastfeeding because only tiny
+        #           amounts of it get into breast milk" (NHS). 모유로 넘어가는 양이
+        #           0.1 mg/kg/day 수준이다 (StatPearls, NBK482250).
+        #   금주    아목시실린과 알코올 사이에 임상적으로 유의한 상호작용은 없다.
+        #           그것은 메트로니다졸 쪽이다.
+        #
+        # 냉장 오류와 같은 경로로 드러났다. 조사 표본을 다시 읽다 나왔고, 이번에는
+        # 아무도 지적하지 않았다. 1,103명이 본 것이 이 문구다.
+        #
+        # 임신 금기를 시연할 자리는 이부프로펜 쪽이다. NSAID 는 임신 3분기에 금기이며
+        # 그 표본이 이미 같은 경고를 달고 있다. 항생제 표본은 완주로 바꾼다 —
+        # finish_course 형태소가 §5.8 의 SDG 3.d 에서 겨냥한다고 적은 바로 그것이다.
+        warnings="Do not take if allergic to penicillin. Finish the whole course.",
     ),
     dict(
         name="prescription-eyedrop.png",
@@ -114,7 +140,13 @@ SAMPLES = [
         ],
         days="For 5 days",
         storage="Keep refrigerated (2-8 C)",
-        warnings="Do not wear contact lenses during treatment. Not for use in pregnancy.",
+        # "Not for use in pregnancy" 도 틀렸다. NHS 는 "Chloramphenicol eye treatments
+        # and ear drops can be used in pregnancy" 라고 적으며, 눈 감염에서 임신 중
+        # 일차 선택으로 본다. 전신 흡수량이 극히 적기 때문이다.
+        #
+        # 넷째 오류이며 앞의 셋과 같은 방식으로 나왔다. 표본을 만들 때 경고란을
+        # "그럴듯한 것" 으로 채운 것이 원인이다. 그럴듯한 것과 맞는 것은 다르다.
+        warnings="Do not wear contact lenses during treatment. Do not share this bottle.",
     ),
     dict(
         # 상호작용 엔진을 실제로 건드리는 샘플. 'ibuprofen' 이 nsaid_bleed 플래그를
@@ -141,7 +173,10 @@ SAMPLES = [
         ],
         days="For 3 days",
         storage="Store at room temperature",
-        warnings="Caution if breastfeeding. Do not exceed the stated dose.",
+        # "Caution if breastfeeding" 도 틀렸다. 파라세타몰은 수유 중 권장되는
+        # 진통제다 — "Paracetamol is usually the best painkiller to take if you're
+        # breastfeeding" (NHS). 주의를 붙일 자리가 아니라 오히려 반대다.
+        warnings="Do not exceed the stated dose. Do not give with other paracetamol.",
     ),
 ]
 

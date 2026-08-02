@@ -41,8 +41,28 @@ const SLOTS = ['time_morning', 'time_noon', 'time_evening', 'time_night',
   'food_bowl', 'food_empty_bowl'];
 const ALLERGENS = ['allergen_peanut', 'allergen_tree_nut', 'allergen_milk', 'allergen_egg',
   'allergen_gluten', 'allergen_soy', 'allergen_shellfish', 'allergen_sesame'];
+/**
+ * 혼자 서는 그림.
+ *
+ * 시각 넷이 여기 있는 이유: 이제 약 그림 안이 아니라 **자기 칸**에 그려진다. 안에
+ * 넣으면 88px 에서 아침과 밤이 구별되지 않았다(lib/snapcare/sigil.ts 에 적어 두었다).
+ * 처방을 찍으면 거의 반드시 나오는 그림이라, 여기 없으면 데우는 의미가 없다.
+ * 머리 안에 든 형태(SLOTS)도 그대로 둔다 — 저장된 옛 판정이 그 라벨을 들고 있다.
+ */
 const PLAIN = ['finish_course', 'hand_wash', 'no_alcohol', 'caffeine', 'warn_bleeding',
-  'food_sugar', 'food_salt', 'food_oil'];
+  'food_sugar', 'food_salt', 'food_oil',
+  'time_morning', 'time_noon', 'time_evening', 'time_night'];
+/**
+ * 금기 상태. **이 둘은 목록에 아예 없었다.**
+ *
+ * 임신·수유 금기는 이 앱이 내보내는 것 중 틀렸을 때 가장 위험한 그림인데, 그것만
+ * 캐시가 비어 있어서 늘 서버를 타고 있었다 — 오프라인에서는 나오지 않는다는 뜻이다.
+ *
+ * itemToDsl 은 언제나 `\no{}` 로 감싸 내보낸다(lib/snapcare/sigil.ts). 맨 그림은
+ * 임신부 한 장이라 "임신부용" 으로 읽히기 때문이다. 그래도 맨 형태까지 함께 데우는
+ * 것은 설문 데모(lib/survey/demo.ts)가 응답자들이 실제로 본 화면을 그대로 들고 있어서다.
+ */
+const STATES = ['state_pregnant', 'state_breastfeeding'];
 
 function labels() {
   const out = new Set();
@@ -57,6 +77,10 @@ function labels() {
   for (const p of PLAIN) {
     out.add(`\\${p}`);
     out.add(`\\no{\\${p}}`);
+  }
+  for (const s of STATES) {
+    out.add(`\\no{\\${s}}`);   // 엔진이 실제로 내보내는 형태
+    out.add(`\\${s}`);         // 설문 데모가 들고 있는 형태
   }
   out.add('\\no{\\contact_lens}');
   return [...out];
