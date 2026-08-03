@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, type ChangeEvent } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Speakable, sayable } from '@/components/sc/Say';
-import { decodeQrFromImage } from '@/lib/hardware/qr';
-import { claimFromPairUrl, formatClaim, isValidClaim } from '@/lib/dispenser/claim';
+import { formatClaim, isValidClaim } from '@/lib/dispenser/claim';
 import { forgetPaired, pairWith, type PairedDevice } from '@/lib/dispenser/paired';
 import { DEFAULT_RELAY, RELAY_MISSING } from '@/lib/dispenser/relayUrl';
 import { requestPermission } from '@/lib/notifications';
@@ -45,6 +45,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
   error: Error | null;
   onChanged: () => void;
 }) {
+  const router = useRouter();
   const [code, setCode] = useState('');
   const [relay, setRelay] = useState(DEFAULT_RELAY);
   const [busy, setBusy] = useState(false);
@@ -76,25 +77,6 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
     }
   }
 
-  /** 라벨의 네 번째 QR — 코드는 조각(fragment)에 있어서 서버 로그에 남지 않는다. */
-  async function scan(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setBusy(true);
-    setNote(null);
-    try {
-      const text = await decodeQrFromImage(file);
-      const claim = text ? claimFromPairUrl(text) : '';
-      if (!claim) {
-        setNote('That is not a SnapCare pairing code.');
-        return;
-      }
-      await pair(claim);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function unpair() {
     await forgetPaired();
     setNote(null);
@@ -106,26 +88,50 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
     const typed = formatClaim(code);
     return (
       <section className="rounded-3xl bg-white p-4 shadow-sm">
-        <Speakable text="Connect the pill box. Scan the pairing code on its label, or type the ten characters printed on it."
+        <Speakable text="Connect the pill box. Photograph it with the camera — its screen is showing a code."
                    className="flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
                    style={{ color: 'var(--color-sc-muted)' }}>
           <span className="flex-1">CONNECT THE PILL BOX</span>
         </Speakable>
 
-        <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl p-3"
-               style={{ background: 'var(--color-sc-bg)' }}>
-          <span className="text-3xl" aria-hidden>📷</span>
-          <span className="flex-1">
-            <span className="block font-semibold">Scan the code on the label</span>
-            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-              The fourth square on the sticker
-            </span>
-          </span>
-          <input type="file" accept="image/*" capture="environment" className="hidden"
-                 onChange={scan} disabled={busy} />
-        </label>
+        {/*
+          짝을 맺는 길은 **하나**다 — 상자를 찍는 것.
 
-        <div className="mt-3">
+          전에는 여기 세 가지가 나란히 있었다: 라벨 QR 을 읽는 사진 입력, 열 글자를
+          치는 칸, 그리고 릴레이 주소. 메인 카메라가 QR 을 알아보게 되면서 첫 번째는
+          같은 일을 하는 두 번째 자리가 됐고, 두 자리는 두 가지 결과를 낳는다 —
+          하나가 고쳐질 때 다른 하나는 안 고쳐진다. 실제로 `SNAPCARE-PAIR:` 형식을
+          못 읽던 버그가 이 화면에만 있었다.
+
+          그래서 이 자리는 **상태를 보는 곳**으로 두고, 하는 일은 카메라로 보낸다.
+          이 앱의 다른 모든 것이 이미 그 한 손짓이다.
+        */}
+        <button
+          onClick={() => router.push('/camera')}
+          className="sc-row mt-3 flex w-full items-center rounded-2xl py-3 text-left"
+          style={{ background: 'var(--color-sc-primary)', color: '#fff' }}
+        >
+          <span className="sc-icon" aria-hidden>📷</span>
+          <span className="flex-1">
+            <Speakable text="Photograph the box. Its screen is showing a code — point the camera at it."
+                       className="block font-semibold" bare>
+              Photograph the box
+            </Speakable>
+            <span className="block text-xs opacity-80">Its screen is showing a code</span>
+          </span>
+        </button>
+
+        {/*
+          글자로 치는 길은 남기되 접어 둔다. 사진이 안 읽히는 경우가 실제로 있고
+          (어두운 방, 화면 반사, 초점), 그때 이것이 없으면 상자를 못 붙인다. 카메라
+          화면이 자기 대안들을 감춰 두는 것과 같은 방식이다 — 주된 동작은 하나이되
+          막혔을 때 빠져나갈 곳은 있다.
+        */}
+        <details className="mt-3">
+          <summary className="cursor-pointer text-xs underline underline-offset-4"
+                   style={{ color: 'var(--color-sc-muted)' }}>
+            Can&apos;t photograph it? Type the code instead
+          </summary>
           <input
             value={typed}
             onChange={(e) => setCode(e.target.value)}
@@ -133,7 +139,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
             inputMode="text"
             autoCapitalize="characters"
             aria-label="Pairing code from the label"
-            className="w-full rounded-2xl px-4 py-3 text-center text-lg font-bold tracking-widest"
+            className="mt-2 w-full rounded-2xl px-4 py-3 text-center text-lg font-bold tracking-widest"
             style={{ background: 'var(--color-sc-bg)' }}
           />
           <button
@@ -149,7 +155,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
             <span aria-hidden className="text-lg leading-none">🔗</span>
             Connect
           </button>
-        </div>
+        </details>
 
         {RELAY_MISSING && (
           <Speakable text="This app was built without a mailbox address, so the box cannot be reached from here. Ask for the address and type it below."

@@ -375,3 +375,25 @@ def test_the_panel_uses_the_short_pairing_payload():
         modules = len(matrix)
         assert (240 - 2 * screens.PAD) // modules >= 6, \
             f"{modules} modules leaves less than 6 px a module"
+
+
+def test_the_full_panel_frames_never_get_a_bar_painted_over_them():
+    """`network` and `pair` have no status bar, and nothing may draw one on them.
+
+    `indicators` repaints the bar on its own when only its contents changed — a
+    minute, a chip going amber — which is right for every frame that has one. On
+    these two it painted a strip of status across the top of a QR code somebody
+    was holding a phone up to, and left the code showing underneath: a screen
+    that reads as half stuck.
+
+    The pairing frame is the one that finds this, because it stands until a
+    prescription arrives and is therefore the frame most likely to be up when
+    something in the bar changes.
+    """
+    assert screens.FULL_PANEL == {"network", "pair"}
+    from snapcare_dispenser import indicators
+    import inspect
+
+    source = inspect.getsource(indicators)
+    assert "screens.FULL_PANEL" in source, \
+        "the partial-repaint path stopped asking whether the frame has a bar"

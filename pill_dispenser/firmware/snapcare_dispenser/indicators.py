@@ -469,6 +469,16 @@ class FittedIndicator(Indicator):
                 # four full repaints a day.
                 self._repaint_last(health, palette, night)
                 return
+            # Not onto a frame that has no bar. `network` and `pair` take the
+            # whole panel — the 36 rows a bar would occupy are the difference
+            # between a QR that scans and one that does not — so painting a bar
+            # there puts a strip of status across a code somebody is holding a
+            # phone up to. The keys are still tracked, so the next full repaint
+            # starts from the truth.
+            standing = self._last_plan.screen if self._last_plan else ""
+            if standing in screens.FULL_PANEL:
+                self._bar_key, self._strip_key = bar_key, strip_key
+                return
             if bar_key != self._bar_key:
                 self._partial(bar.draw, health, palette, 0, bar.BAR_H)
                 self._bar_key = bar_key

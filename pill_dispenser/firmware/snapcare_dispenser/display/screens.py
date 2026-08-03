@@ -756,6 +756,21 @@ def pair(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
     _wrapped(canvas, left, (H - block) // 2, width, code, ink, code_scale)
 
 
+#: The frames that take the whole panel, with no status bar and no schedule band.
+#:
+#: `indicators` repaints the bar and the strip **on their own** when only their
+#: contents changed — a clock minute, a chip going amber — because a full repaint
+#: is 38 ms of SPI and those happen every minute. That is right for every frame
+#: that has a bar. On these two it draws a bar onto a frame that does not have
+#: one, over the top of a QR code somebody is standing there trying to scan.
+#:
+#: Seen on the bench: the pairing frame stands until a prescription arrives,
+#: which can be minutes, so it is the frame most likely to be up when a chip
+#: changes — and a bar appeared across the top of it while the code stayed
+#: underneath, which reads as a screen that is half stuck.
+FULL_PANEL = frozenset({"network", "pair"})
+
+
 #: `Tone` is re-exported because `indicators.py` still speaks in tones when it
 #: decides who owns the screen, and importing it from here keeps that module
 #: from reaching into `canvas` for one enum.
