@@ -37,7 +37,7 @@ html, body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
-.sheet { padding: 9mm 13mm 7mm; height: 1189mm; display: flex; flex-direction: column; }
+.sheet { padding: 8mm 9mm 6mm; height: 1189mm; display: flex; flex-direction: column; }
 
 /* ── 머리 ── */
 header { text-align: center; padding: 0 0 6mm; }
@@ -51,11 +51,12 @@ h1 .b { color: var(--blue); }
 
 /* ── 3단 ── */
 .cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6mm; flex: 1; min-height: 0; }
-.col { min-width: 0; display: flex; flex-direction: column; gap: 4mm; justify-content: space-between; }
+.col { min-width: 0; display: flex; flex-direction: column; gap: 4mm; justify-content: flex-start; }
 
 /* ── 카드 ── */
 .card { background: var(--card); border-radius: 2.4mm; padding: 10mm 5.5mm 4mm;
         border: 0.7mm solid var(--navy); position: relative; }
+.col > .card:last-child { flex: 1 1 auto; }
 .card.blue  { border-color: var(--blue); }
 .card.green { border-color: var(--green); }
 .card.red   { border-color: var(--red); }
@@ -70,10 +71,10 @@ h1 .b { color: var(--blue); }
 .card.green > h2 { background: var(--green); }
 .card.red > h2   { background: var(--red); }
 
-h3 { font-size: 23pt; font-weight: 800; margin: 3mm 0 1.6mm; color: var(--navy); }
+h3 { font-size: 21.5pt; font-weight: 800; margin: 3mm 0 1.6mm; color: var(--navy); }
 h3:first-of-type { margin-top: 0; }
 
-p { font-size: 20.5pt; line-height: 1.3; margin: 0 0 2mm; text-align: justify; hyphens: auto; }
+p { font-size: 18.5pt; line-height: 1.29; margin: 0 0 2mm; text-align: justify; hyphens: auto; }
 p:last-child { margin-bottom: 0; }
 .small { font-size: 16pt; color: var(--muted); line-height: 1.26; }
 mark { background: var(--mark); padding: 0 0.6mm; }
@@ -81,7 +82,7 @@ mark { background: var(--mark); padding: 0 0.6mm; }
 .hlb { color: var(--blue); font-weight: 700; }
 
 ul { margin: 0 0 2.3mm; padding-left: 0; list-style: none; }
-li { font-size: 20pt; line-height: 1.3; margin-bottom: 1.5mm; position: relative; padding-left: 6mm; }
+li { font-size: 18pt; line-height: 1.3; margin-bottom: 1.5mm; position: relative; padding-left: 6mm; }
 li::before { content: "▸"; position: absolute; left: 0; color: var(--blue); }
 
 /* ── 숫자 상자 ── */
@@ -94,7 +95,7 @@ li::before { content: "▸"; position: absolute; left: 0; color: var(--blue); }
 
 /* ── 단계 ── */
 ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
-ol.steps > li { counter-increment: s; padding-left: 12mm; margin-bottom: 2.4mm; font-size: 20pt; line-height: 1.28; }
+ol.steps > li { counter-increment: s; padding-left: 12mm; margin-bottom: 2.1mm; font-size: 18pt; line-height: 1.28; }
 ol.steps > li::before {
   content: counter(s); left: 0; top: 0; width: 8.6mm; height: 8.6mm; border-radius: 50%;
   background: var(--blue); color: #fff; font-size: 20pt; font-weight: 700;
@@ -112,6 +113,46 @@ figcaption b { color: var(--ink); }
 .shots figure { margin: 0; }
 .shots figcaption { font-size: 14pt; margin-top: 1mm; }
 
+/* ── 작은 수치 줄 ── */
+.mini { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.8mm; margin: 2.2mm 0 2mm; }
+.mini div { border: 0.4mm solid var(--edge); border-radius: 1.6mm; padding: 1.8mm 0.8mm; text-align: center;
+            background: #f2f7fa; }
+.mini b { display: block; font-size: 21pt; color: var(--navy); line-height: 1; }
+.mini span { display: block; font-size: 13pt; color: var(--muted); line-height: 1.15; margin-top: 0.9mm; }
+
+/* ── 배지 ── */
+.badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.4mm; margin: 2.4mm 0 0; }
+.badge { border: 0.5mm solid var(--green); border-radius: 1.6mm; padding: 2.2mm 2mm; text-align: center;
+         background: #f2faf4; }
+.badge b { display: block; font-size: 20pt; color: var(--green); line-height: 1.1; }
+.badge span { display: block; font-size: 14.5pt; color: var(--muted); line-height: 1.18; margin-top: 1mm; }
+
+/* ── 형태소 갤러리 ── */
+.glyphs { display: grid; grid-template-columns: repeat(16, 1fr); gap: 1.1mm; margin: 0 0 1.6mm; }
+.glyphs img { width: 100%; display: block; border: 0.3mm solid var(--edge); border-radius: 1mm; background: #fff; }
+.glyphs img.mod { border-color: #f0a24b; border-width: 0.6mm; }
+.glyphs img.op  { border-color: var(--red); border-width: 0.6mm; }
+.legend { display: flex; gap: 4mm; margin-top: 0.4mm; font-size: 14pt; color: var(--muted); margin: 0 0 1.6mm; }
+.legend i { font-style: normal; }
+.legend i::before { content: ""; display: inline-block; width: 3.4mm; height: 3.4mm; margin-right: 1.2mm;
+  border: 0.6mm solid var(--edge); border-radius: 0.8mm; vertical-align: -0.5mm; }
+.legend i.m::before { border-color: #f0a24b; } .legend i.o::before { border-color: var(--red); }
+
+/* ── 응답자 아이콘 ── */
+.iso { margin: 0 0 2mm; }
+.iso svg { width: 100%; display: block; }
+.iso .lg { font-size: 14pt; color: var(--muted); margin-top: 1mm; display: flex; flex-wrap: wrap; gap: 1mm 3.4mm; }
+.iso .lg b { color: var(--ink); }
+.iso .lg span::before { content: ""; display: inline-block; width: 2.8mm; height: 2.8mm; border-radius: 50%;
+  margin-right: 1mm; vertical-align: -0.3mm; background: currentColor; }
+
+/* ── 말풍선 ── */
+blockquote.bub { position: relative; background: #f2f7fa; border: 0.5mm solid var(--edge);
+  border-left: 1.4mm solid var(--blue); border-radius: 1.6mm; margin-bottom: 4.2mm; }
+blockquote.bub::after { content: ""; position: absolute; left: 9mm; bottom: -3.1mm;
+  width: 0; height: 0; border-left: 3.2mm solid transparent; border-right: 3.2mm solid transparent;
+  border-top: 3.1mm solid #f2f7fa; filter: drop-shadow(0 0.5mm 0 var(--edge)); }
+
 /* ── 도넛 ── */
 .donuts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.6mm; margin: 0 0 2.4mm; }
 .donuts figure { margin: 0; }
@@ -122,7 +163,7 @@ figcaption b { color: var(--ink); }
 .donuts figcaption .small { font-size: 12pt; display: block; }
 
 /* ── 표 ── */
-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 0 0 2mm; font-size: 19pt;
+table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 0 0 2mm; font-size: 17.5pt;
         border-radius: 1.6mm; overflow: hidden; border: 0.4mm solid var(--edge); }
 th, td { padding: 1.6mm 2.1mm; text-align: left; vertical-align: top; border-bottom: 0.3mm solid #e6eef1; }
 tr:last-child td { border-bottom: 0; }
@@ -134,11 +175,12 @@ td .small { display: block; }
 /* ── 인용 ── */
 blockquote { margin: 0 0 2.3mm; padding: 2.3mm 3mm; background: #f2f7fa;
              border-left: 1.4mm solid var(--blue); border-radius: 0 1.6mm 1.6mm 0;
-             font-size: 19.5pt; line-height: 1.28; font-style: italic; }
+             font-size: 17.5pt; line-height: 1.26; font-style: italic; }
 blockquote .who { display: block; font-size: 16.5pt; color: var(--muted); margin-top: 1.3mm; font-style: normal; }
 
 /* ── DSL ── */
-.dsl { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 16pt; line-height: 1.36;
+.dsl.two { columns: 2; column-gap: 5mm; font-size: 12.4pt; line-height: 1.5; margin-top: -2.3mm; border-top: 0; border-radius: 0 0 1.6mm 1.6mm; }
+.dsl { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 16pt; line-height: 1.34;
        display: block; background: #f5f8fa; border: 0.4mm solid var(--edge); border-radius: 1.6mm;
        padding: 2.5mm 3mm; margin: 0 0 2.3mm; white-space: pre; color: #1d3a52; }
 code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em;
@@ -255,6 +297,13 @@ code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em;
       <figcaption><b>Figure 4.</b> Setup happens once; every later use is one button. The three
       delivery layers overlap rather than replace one another.</figcaption>
     </figure>
+    <p style="margin-top:2.4mm">Nothing on this path needs a server. Recognition, composition and the verdict
+    run in the page, so the photograph never leaves the device.</p>
+    <div class="badges">
+      <div class="badge"><b>No account</b><span>nothing to register</span></div>
+      <div class="badge"><b>No upload</b><span>the photograph stays put</span></div>
+      <div class="badge"><b>Offline</b><span>verified, server off</span></div>
+    </div>
   </div>
 
 </div>
@@ -264,9 +313,8 @@ code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em;
 
   <div class="card blue">
     <h2><span class="n">05</span>SIGIL — pictogram engine</h2>
-    <p>SIGIL is built from <b>morphemes and a grammar</b> rather than from a list of drawings. A
-    head stands on its own; a modifier cannot and goes into a slot inside a head. Five operators
-    apply on top.</p>
+    <p>SIGIL is built from <b>morphemes and a grammar</b>, not from a list of drawings. A head stands
+    on its own; a modifier cannot and goes into a slot inside a head. Five operators apply on top.</p>
     <table>
       <tr><th>Element</th><th class="num">n</th><th>Examples</th></tr>
       <tr><td>Head</td><td class="num">57</td><td>pill_bottle, dropper_bottle, allergen_peanut</td></tr>
@@ -276,6 +324,10 @@ code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em;
     </table>
     <p>The 78 were derived <mark><b>backwards from the distribution of medication error</b></mark>:
     dosage form and device 26, food 10, allergen 9, symptom 8, state 7, body site 6.</p>
+    <div class="glyphs"><img src="../../public/glyphs/allergen_egg.png" alt="allergen_egg"><img src="../../public/glyphs/allergen_fish.png" alt="allergen_fish"><img src="../../public/glyphs/allergen_gluten.png" alt="allergen_gluten"><img src="../../public/glyphs/allergen_milk.png" alt="allergen_milk"><img src="../../public/glyphs/allergen_peanut.png" alt="allergen_peanut"><img src="../../public/glyphs/allergen_sesame.png" alt="allergen_sesame"><img src="../../public/glyphs/allergen_shellfish.png" alt="allergen_shellfish"><img src="../../public/glyphs/allergen_soy.png" alt="allergen_soy"><img src="../../public/glyphs/allergen_tree_nut.png" alt="allergen_tree_nut"><img src="../../public/glyphs/body_ear.png" alt="body_ear" class="mod"><img src="../../public/glyphs/body_eye.png" alt="body_eye" class="mod"><img src="../../public/glyphs/body_mouth.png" alt="body_mouth"><img src="../../public/glyphs/body_nose.png" alt="body_nose"><img src="../../public/glyphs/body_skin.png" alt="body_skin"><img src="../../public/glyphs/body_stomach.png" alt="body_stomach"><img src="../../public/glyphs/bp_monitor.png" alt="bp_monitor"><img src="../../public/glyphs/caffeine.png" alt="caffeine"><img src="../../public/glyphs/call_help.png" alt="call_help"><img src="../../public/glyphs/capsule_strip.png" alt="capsule_strip"><img src="../../public/glyphs/contact_lens.png" alt="contact_lens"><img src="../../public/glyphs/cream_tube.png" alt="cream_tube"><img src="../../public/glyphs/dropper_bottle.png" alt="dropper_bottle"><img src="../../public/glyphs/finish_course.png" alt="finish_course" class="op"><img src="../../public/glyphs/food_bowl.png" alt="food_bowl"><img src="../../public/glyphs/food_bread.png" alt="food_bread"><img src="../../public/glyphs/food_empty_bowl.png" alt="food_empty_bowl"><img src="../../public/glyphs/food_fruit.png" alt="food_fruit"><img src="../../public/glyphs/food_meat.png" alt="food_meat"><img src="../../public/glyphs/food_oil.png" alt="food_oil"><img src="../../public/glyphs/food_rice.png" alt="food_rice"><img src="../../public/glyphs/food_salt.png" alt="food_salt"><img src="../../public/glyphs/food_sugar.png" alt="food_sugar"><img src="../../public/glyphs/food_vegetable.png" alt="food_vegetable"><img src="../../public/glyphs/glucometer.png" alt="glucometer"><img src="../../public/glyphs/hand_wash.png" alt="hand_wash"><img src="../../public/glyphs/inhaler.png" alt="inhaler"><img src="../../public/glyphs/liquid_bottle.png" alt="liquid_bottle"><img src="../../public/glyphs/no_alcohol.png" alt="no_alcohol" class="op"><img src="../../public/glyphs/patch.png" alt="patch"><img src="../../public/glyphs/pill_bottle.png" alt="pill_bottle"><img src="../../public/glyphs/qty_five.png" alt="qty_five" class="mod"><img src="../../public/glyphs/qty_four.png" alt="qty_four" class="mod"><img src="../../public/glyphs/qty_one.png" alt="qty_one" class="mod"><img src="../../public/glyphs/qty_three.png" alt="qty_three" class="mod"><img src="../../public/glyphs/qty_two.png" alt="qty_two" class="mod"><img src="../../public/glyphs/sachet.png" alt="sachet"><img src="../../public/glyphs/shake_bottle.png" alt="shake_bottle"><img src="../../public/glyphs/spray.png" alt="spray"><img src="../../public/glyphs/state_adult.png" alt="state_adult" class="mod"><img src="../../public/glyphs/state_breastfeeding.png" alt="state_breastfeeding" class="mod"><img src="../../public/glyphs/state_child.png" alt="state_child" class="mod"><img src="../../public/glyphs/state_elderly.png" alt="state_elderly" class="mod"><img src="../../public/glyphs/state_infant.png" alt="state_infant" class="mod"><img src="../../public/glyphs/state_pregnant.png" alt="state_pregnant" class="mod"><img src="../../public/glyphs/state_teen.png" alt="state_teen" class="mod"><img src="../../public/glyphs/storage_dark.png" alt="storage_dark" class="mod"><img src="../../public/glyphs/storage_dry.png" alt="storage_dry" class="mod"><img src="../../public/glyphs/storage_fridge.png" alt="storage_fridge" class="mod"><img src="../../public/glyphs/suppository.png" alt="suppository"><img src="../../public/glyphs/symptom_breath.png" alt="symptom_breath"><img src="../../public/glyphs/symptom_cough.png" alt="symptom_cough"><img src="../../public/glyphs/symptom_dizzy.png" alt="symptom_dizzy"><img src="../../public/glyphs/symptom_fever.png" alt="symptom_fever"><img src="../../public/glyphs/symptom_gut.png" alt="symptom_gut"><img src="../../public/glyphs/symptom_mouth.png" alt="symptom_mouth"><img src="../../public/glyphs/symptom_skin.png" alt="symptom_skin"><img src="../../public/glyphs/symptom_vomit.png" alt="symptom_vomit"><img src="../../public/glyphs/syringe.png" alt="syringe"><img src="../../public/glyphs/tablet_blister.png" alt="tablet_blister"><img src="../../public/glyphs/tablet_split.png" alt="tablet_split"><img src="../../public/glyphs/thermometer.png" alt="thermometer"><img src="../../public/glyphs/time_evening.png" alt="time_evening" class="mod"><img src="../../public/glyphs/time_morning.png" alt="time_morning" class="mod"><img src="../../public/glyphs/time_night.png" alt="time_night" class="mod"><img src="../../public/glyphs/time_noon.png" alt="time_noon" class="mod"><img src="../../public/glyphs/vehicle.png" alt="vehicle"><img src="../../public/glyphs/warn_bleeding.png" alt="warn_bleeding"><img src="../../public/glyphs/water_glass.png" alt="water_glass"></div>
+    <div class="legend"><i>head, 57</i><i class="m">modifier, 21</i><i class="o">operator applies on top</i></div>
+    <p class="small" style="margin-bottom:2mm">Figure 4. Every morpheme the engine holds. A frame is
+    one head with modifiers slotted into it; nothing here was drawn for a particular prescription.</p>
     <figure><img src="../proposal/fig_en/chart03_error_types.png" alt="Distribution of medication error types">
       <figcaption><b>Figure 5.</b> The error distribution the morpheme set was derived from. Each
       band is answered by a specific morpheme rather than by a general picture.</figcaption></figure>
@@ -287,9 +339,7 @@ code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em;
     through the same path the camera uses and the resulting DSL is reproduced verbatim.</p>
     <span class="dsl">Amoxicillin capsules 250 mg — three times a
 day, 30 min after meals, 1 capsule, 7 days,
-refrigerate, not in pregnancy, no alcohol
-
- \three_times_daily{\capsule_strip{\food_bowl}}
+refrigerate, not in pregnancy, no alcohol </span><span class="dsl two">\three_times_daily{\capsule_strip{\food_bowl}}
  \capsule_strip{\time_morning}
  \capsule_strip{\time_noon}
  \capsule_strip{\time_evening}
@@ -350,9 +400,9 @@ refrigerate, not in pregnancy, no alcohol
       <tr><td>Offline with the server shut down</td>
           <td><span class="hlb">Normal</span><span class="small">a missing service-worker cache entry was found and fixed</span></td></tr>
     </table>
-    <p class="small">The formative score is kept per item rather than reduced to one number.
-    "27/28" alone leaves no way of knowing what failed. The single failure was item D5 under one
-    condition and was left uncorrected rather than adjusting the scoring to fit.</p>
+    <p class="small">The formative score is kept per item, not reduced to one number: "27/28" alone
+    leaves no way of knowing what failed. The single failure was item D5 under one condition,
+    left uncorrected.</p>
     <div class="duo">
       <figure><img src="../proposal/fig_en/chart06_formative.png" alt="Formative evaluation before and after">
         <figcaption><b>Figure 7.</b> Before and after the fix. <b>The cause was a missing
@@ -362,8 +412,7 @@ refrigerate, not in pregnancy, no alcohol
         official Nutrition5k test split.</figcaption></figure>
     </div>
     <figure style="margin-bottom:0"><img src="../proposal/fig_en/chart07_glyph_check.png" alt="Semantic check of the 78 morphemes">
-      <figcaption><b>Figure 9.</b> The 24 morphemes read differently are split rather than pooled:
-      7 are on screen and had to be reworked, 17 exist only in the dictionary.</figcaption></figure>
+      <figcaption><b>Figure 9.</b> The 24 read differently are split, not pooled: 7 on screen, reworked; 17 in the dictionary only.</figcaption></figure>
   </div>
 
   
@@ -398,10 +447,24 @@ refrigerate, not in pregnancy, no alcohol
       <div class="stat b"><span class="v">39</span><span class="k">responded<br>(3.5%)</span></div>
       <div class="stat"><span class="v">22</span><span class="k">countries on<br>five continents</span></div>
     </div>
+    <div class="iso">
+      <svg viewBox="0 0 100 22" role="img" aria-label="39 respondents by field">
+        <defs><g id="pp"><circle cx="1.6" cy="1.5" r="1.5"/><path d="M0 8.6c0-1.9 .7-4.6 1.6-4.6s1.6 2.7 1.6 4.6z"/></g></defs>
+        <use href="#pp" x="0.90" y="1.00" fill="#123a5f"/><use href="#pp" x="5.90" y="1.00" fill="#123a5f"/><use href="#pp" x="10.90" y="1.00" fill="#123a5f"/><use href="#pp" x="15.90" y="1.00" fill="#123a5f"/><use href="#pp" x="20.90" y="1.00" fill="#123a5f"/><use href="#pp" x="25.90" y="1.00" fill="#123a5f"/><use href="#pp" x="30.90" y="1.00" fill="#123a5f"/><use href="#pp" x="35.90" y="1.00" fill="#123a5f"/><use href="#pp" x="40.90" y="1.00" fill="#123a5f"/><use href="#pp" x="45.90" y="1.00" fill="#123a5f"/><use href="#pp" x="50.90" y="1.00" fill="#123a5f"/><use href="#pp" x="55.90" y="1.00" fill="#123a5f"/><use href="#pp" x="60.90" y="1.00" fill="#123a5f"/><use href="#pp" x="65.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="70.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="75.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="80.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="85.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="90.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="95.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="0.90" y="11.50" fill="#7fb0d4"/><use href="#pp" x="5.90" y="11.50" fill="#7fb0d4"/><use href="#pp" x="10.90" y="11.50" fill="#7fb0d4"/><use href="#pp" x="15.90" y="11.50" fill="#15803d"/><use href="#pp" x="20.90" y="11.50" fill="#15803d"/><use href="#pp" x="25.90" y="11.50" fill="#15803d"/><use href="#pp" x="30.90" y="11.50" fill="#15803d"/><use href="#pp" x="35.90" y="11.50" fill="#15803d"/><use href="#pp" x="40.90" y="11.50" fill="#15803d"/><use href="#pp" x="45.90" y="11.50" fill="#15803d"/><use href="#pp" x="50.90" y="11.50" fill="#15803d"/><use href="#pp" x="55.90" y="11.50" fill="#15803d"/><use href="#pp" x="60.90" y="11.50" fill="#e07b20"/><use href="#pp" x="65.90" y="11.50" fill="#e07b20"/><use href="#pp" x="70.90" y="11.50" fill="#e07b20"/><use href="#pp" x="75.90" y="11.50" fill="#e07b20"/><use href="#pp" x="80.90" y="11.50" fill="#9aa9b4"/><use href="#pp" x="85.90" y="11.50" fill="#9aa9b4"/><use href="#pp" x="90.90" y="11.50" fill="#9aa9b4"/>
+      </svg>
+      <div class="lg"><span style="color:#123a5f"><b>13</b> Pharmacy</span><span style="color:#7fb0d4"><b>10</b> Other</span><span style="color:#15803d"><b>9</b> Nursing</span><span style="color:#e07b20"><b>4</b> HCI / design</span><span style="color:#9aa9b4"><b>1</b> Literacy</span><span style="color:#9aa9b4"><b>1</b> AAC</span><span style="color:#9aa9b4"><b>1</b> Industry</span></div>
+    </div>
     <p>The list was built by surveying eight domains in parallel, recording a source URL for every
     entry and <mark>never inventing an address</mark>. Each person received a separate letter
     carrying an opaque token, so the server stores the token and only our own spreadsheet can say
     who answered.</p>
+    <div class="mini">
+      <div><b>599</b><span>source URLs<br>recorded</span></div>
+      <div><b>296</b><span>unique<br>sources</span></div>
+      <div><b>169</b><span>separate<br>hosts</span></div>
+      <div><b>182</b><span>minutes to<br>send them all</span></div>
+      <div><b>0</b><span>refused<br>by a server</span></div>
+    </div>
 
     <svg class="chart" viewBox="0 0 600 250" role="img" aria-label="Respondents by field and continent">
       <text x="0" y="13" font-size="17" font-weight="800" fill="#123a5f">Field</text>
@@ -435,7 +498,7 @@ refrigerate, not in pregnancy, no alcohol
     <h3>A prohibition is not read as a prohibition</h3>
     <p>Three respondents on three continents independently reported the same defect in the live
     demonstration.</p>
-    <blockquote>
+    <blockquote class="bub">
       The prescription read not to use the eyedrops in pregnancy while the pictogram showed a
       pregnant woman, <mark>making the patient assume it is safe to use in pregnancy</mark>.
       <span class="who">Prof. Atif Usman, The Islamia University of Bahawalpur, Pakistan</span>
@@ -446,7 +509,7 @@ refrigerate, not in pregnancy, no alcohol
     <span class="hl">a slash through "do not drink" says that drinking is fine</span>.</p>
 
     <h3>The premise itself was questioned</h3>
-    <blockquote>
+    <blockquote class="bub">
       To a non-literate person pictograms too can feel like letters. As the saying goes, "the black
       is the writing and the white is the paper."
       <span class="who">Prof. Heejung Seo, Dong-eui University, Korea</span>
@@ -456,7 +519,7 @@ refrigerate, not in pregnancy, no alcohol
     measured.</mark></p>
 
     <h3>Our design could create a new risk</h3>
-    <blockquote>
+    <blockquote class="bub">
       Even a medicine that carries risk for pregnant women is sometimes prescribed after considering
       the patient's overall condition, and where the patient checks alone they may end up not
       receiving the drug therapy.
@@ -543,6 +606,12 @@ refrigerate, not in pregnancy, no alcohol
     <p>[3] Dowse, R. &amp; Ehlers, M. S. The evaluation of pharmaceutical pictograms in a low-literate South African population. <i>Patient Educ. Couns.</i> 45:87–99 (2001).</p>
     <p>[4] Miller, D. I. et al. Improving older adults' experience with interactive voice response systems. <i>Telemed. e-Health</i> 17(6):452–455 (2011).</p>
     <p>[5] Korea Disease Control and Prevention Agency. <i>KNHANES</i>, 9th cycle year 2 (2023). &nbsp; [6] ISO 9186-1:2014; ANSI Z535.3.</p>
+    <p class="small" style="margin-top:2.4mm"><b>Reproduction.</b> Every figure on this poster is
+    produced from the repository by one script; the roster, the letter, the item definitions and the
+    response export are held with it, so a reader can rebuild the numbers rather than take them.</p>
+    <p class="small" style="margin-top:2mm"><b>Acknowledgement.</b> Thirty-nine experts in twenty-two
+    countries answered without compensation, and several of them reported a defect in the survey
+    itself. Their answers are recorded as given, including the two points we cannot answer.</p>
   </div>
 
 </div>
