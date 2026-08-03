@@ -472,6 +472,8 @@ EN = {
         'Literacy and adherence correlate significantly but weakly (§1.4)',
     '난이도를 낮추고 음성을 붙여도 순응도는 그대로 (§1.4)':
         'Lower reading level plus audio left adherence unchanged (§1.4)',
+    '저문해 사용자는 실루엣보다 사진에 가까운 그림을 선호한다 (§1.10)':
+        'Low-literacy users prefer photorealistic images to silhouettes (§1.10)',
     '위해의 무게중심은 환자가 아니라 처방 단계 (§1.4)':
         'Harm centres on prescribing, not on the patient (§1.4)',
     '불리한 쪽이 더 길다. 그것을 줄이지 않는 것이 이 장의 방식이다':

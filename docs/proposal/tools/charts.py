@@ -311,20 +311,33 @@ def chart_evidence():
                T('나이가 많을수록 그림으로 얻는 이득이 작다 (§1.8)'),
                T('문해력과 순응도의 상관은 유의하나 약하다 (§1.4)'),
                T('난이도를 낮추고 음성을 붙여도 순응도는 그대로 (§1.4)'),
-               T('위해의 무게중심은 환자가 아니라 처방 단계 (§1.4)')]
+               T('위해의 무게중심은 환자가 아니라 처방 단계 (§1.4)'),
+               T('저문해 사용자는 실루엣보다 사진에 가까운 그림을 선호한다 (§1.10)')]
 
+    # 자리는 항목 수에서 잡는다. 간격을 고정해 두었더니 한쪽에 항목이
+    # 하나 늘었을 때 마지막 줄이 캔버스를 넘고 아래 주석과 겹쳤다.
+    # 자리를 항목마다 그 항목의 줄 수로 잡는다. 간격을 고정하면 두 줄짜리가
+    # 많은 쪽에서 넘치고, 항목 수로만 나누면 두 줄짜리끼리 붙어 구분이 사라진다.
+    wrapped = {id(t): _wrap_txt(t, 44) for t in FOR + AGAINST}
+    LH, GAP = 5.0, 3.4
+    need = max(sum(LH * len(wrapped[id(t)]) + GAP for t in col)
+               for col in (FOR, AGAINST))
+    scale = min(1.0, 78.0 / need)
     for col, (head, items, edge) in enumerate((
             (T('받친다'), FOR, DARK), (T('깎는다'), AGAINST, RED))):
         x = 2 + col * 50
         ax.text(x, 95, head, fontsize=9.6, fontweight='bold', color=INK)
         ax.plot([x, x + 46], [92.5, 92.5], color=edge, lw=1.2)
-        for i, t in enumerate(items):
-            y = 86 - i * 13.5
-            ax.plot([x + 0.6, x + 0.6], [y - 8.4, y + 3.0], color=edge, lw=2.2,
-                    solid_capstyle='butt')
-            for j, ln in enumerate(_wrap_txt(t, 44)):
-                ax.text(x + 3.2, y - j * 5.2, ln, fontsize=7.6, color=MUTED,
-                        va='top')
+        y = 87.0
+        for t in items:
+            lines = wrapped[id(t)]
+            block = LH * len(lines) * scale
+            ax.plot([x + 0.6, x + 0.6], [y - block + 1.6, y + 2.4],
+                    color=edge, lw=2.2, solid_capstyle='butt')
+            for j, ln in enumerate(lines):
+                ax.text(x + 3.2, y - j * LH * scale, ln, fontsize=7.6,
+                        color=MUTED, va='top')
+            y -= block + GAP * scale
 
     ax.text(2, 4, T('불리한 쪽이 더 길다. 그것을 줄이지 않는 것이 이 장의 방식이다'),
             fontsize=7.8, color=INK, fontweight='bold')
