@@ -508,80 +508,48 @@ regulator, which is most of them. It costs thirty seconds to know which you have
 \end{center}
 
 \vspace{4mm}
-\noindent\textbf{\sffamily The panel needs nothing else; the touch half needs one
-line.} \code{install.sh} already turned on SPI and \iic{}, so the picture works
-as soon as it is wired. The touch controller does not: the kernel has to be told
-which chip is on the bus, and until it is, \code{/dev/i2c-1} has a device on it
-that nothing is driving \textemdash{} the screen paints perfectly and a tap does
+\noindent\textbf{\sffamily The panel needs nothing else; the touch half needs a
+driver.} \code{install.sh} already turned on SPI and \iic{}, so the picture works
+as soon as it is wired. The controller does not: the kernel has to be told which
+chip is on the bus, and until it is, the screen paints perfectly and a tap does
 nothing.
 
 \vspace{2mm}
-\noindent Ask the bus what is there:
+\noindent One command finds it and writes the line:
 
 \begin{shell}
-sudo i2cdetect -y 1
+sudo snapcare-dispenser --touch-setup
+sudo reboot
 \end{shell}
 
 \vspace{1mm}
-\noindent One address answers, and it names the part:
-
-\begin{center}
-\small
-\begin{tabular}{@{}l l l@{}}
-\toprule
-\hdr{Address} & \hdr{Part} & \hdr{Overlay} \\
-\midrule
-\code{0x38}            & FT6206 / FT6236 & \code{edt-ft5406} \\
-\code{0x5d} or \code{0x14} & GT911       & \code{goodix} \\
-\code{0x48}            & NS2009          & \code{ns2009} \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-\vspace{2mm}
-\noindent Overlays take their pin numbers as parameters and the names differ
-between them, so read the one you need before you write the line \textemdash{}
-\code{dtoverlay -h goodix} prints its parameters, and \code{dtoverlay -a} lists
-every overlay this kernel has. Both \code{CTP\_INT} (GPIO 4) and \code{CTP\_RST}
-(GPIO 12) go in it. Then add the line to \code{/boot/firmware/config.txt} and
-reboot.
-
-\vspace{2mm}
-\begin{dangerbox}
-\dangertitle{Delete the \code{ads7846} line the installer wrote}
-\code{install.sh} adds \code{dtoverlay=ads7846} to \code{/boot/firmware/config.txt}.
-That is a driver for a resistive controller on SPI, and this module does not have
-one. Take the line out.
-
-\vspace{1ex}
-Leaving it is worse than useless. The driver can bind and publish an input
-device for a chip that is not there, and the firmware takes the first touch
-device it finds \textemdash{} so it reads the empty one, reports a touch panel
-fitted, and no tap ever releases a dose. A screen that says it is working and a
-tray that never opens is exactly the failure this guide exists to prevent.
-\end{dangerbox}
+\noindent It probes the bus, names what answered, and keeps a copy of the file
+it edits. It also takes out any \code{dtoverlay=ads7846} line, which is a driver
+for a resistive controller on SPI: nothing on an SPI chip select has to
+acknowledge, so that driver can publish an input device for a chip that is not
+there. Of the two ways this can fail, a machine reporting a touch panel fitted
+and never releasing a dose is the worse.
 
 \begin{provebox}
 \provetitle
-After the reboot, one of these must name your controller:
-\begin{shell}
-cat /sys/class/input/event*/device/name
-\end{shell}
-Nothing listed means the overlay did not bind: wrong overlay, or wrong pin
-numbers in it. A build with no touch is a working build \textemdash{} the chirp
-still fetches somebody and the app still releases the dose \textemdash{} but
-the glass is then not a control, and Stage~4 is no longer optional.
+Run it a second time after the reboot. \textbf{``A touch panel is already
+live''} is the pass.
+
+\vspace{1.5ex}
+\begin{tabular}{@{}>{\bfseries}l >{\raggedright\arraybackslash}p{92mm}@{}}
+nothing answered & the four \code{CTP\_} wires. Swapped SDA and SCL look exactly
+like this \\
+no overlay for this part & the chip is there and the wiring is right; what is
+missing is a driver nobody ships \\
+a driver bound & it printed the input devices. Name yours with
+\code{SNAPCARE\_TOUCH\_DEVICE} \\
+\end{tabular}
+
+\vspace{1.5ex}
+A build with no touch still works \textemdash{} the chirp fetches somebody and
+the app releases the dose \textemdash{} but the glass is then not a control, and
+Stage~4 stops being optional.
 \end{provebox}
-
-\vspace{2mm}
-\noindent If the device is there and a tap still does nothing, the firmware did
-not recognise its name. Point it straight at the node:
-
-\begin{shell}
-sudo systemctl edit snapcare-dispenser
-# add: Environment=SNAPCARE_TOUCH_DEVICE=/dev/input/event0
-sudo systemctl restart snapcare-dispenser
-\end{shell}
 
 \vspace{2mm}
 \noindent\textbf{\sffamily Colour is only half of it.} Roughly one man in twelve
@@ -1011,15 +979,12 @@ Backlight dark, not the picture &
 LED is on a GPIO nobody drives. Set \code{SNAPCARE\_DISPLAY\_BACKLIGHT} to its
 BCM pin; until then it sits low \\
 A tap on the screen does nothing &
-No touch overlay in \code{/boot/firmware/config.txt}, or no reboot since. The log
-says so at startup. \code{i2cdetect -y 1} first: no address means the four
-\code{CTP\_} wires, not the overlay \\
-A tap does nothing, and \code{ads7846} is in the input device names &
-The installer's line is still there, and the firmware bound to it instead of your
-panel. Delete \code{dtoverlay=ads7846} and reboot \\
-The touch device is listed and taps still do nothing &
-The firmware does not know that name. Set \code{SNAPCARE\_TOUCH\_DEVICE} to the
-event node \\
+\code{sudo snapcare-dispenser -{}-touch-setup}. It says which of the four things
+this is, and fixes the two it can \\
+The log says it is ignoring an \code{ads7846} device &
+A \code{dtoverlay=ads7846} line is still in \code{config.txt}. The firmware
+refuses it rather than reading a panel that is not there; take the line out and
+reboot \\
 LCD: lit but blank &
 The backlight is independent of the data lines, so a lit panel proves only that
 LED has power. Check LCD\_RS (pin 22) and LCD\_RST (pin 12) \\

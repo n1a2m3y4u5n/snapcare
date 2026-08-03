@@ -33,16 +33,25 @@
 #   dtparam=spi=on   the ILI9341 LCD, which is a four-line SPI panel. No
 #                    package: the firmware writes the pixels to /dev/spidev0.0
 #                    itself, and draws them with a bytearray rather than Pillow.
-#   dtoverlay=ads7846
-#                    the LCD's touch controller, which is the only control this
-#                    build has: there is no physical button, and a tap anywhere
-#                    on the glass releases a waiting dose. The XPT2046 on these
-#                    modules is a clone of the ADS7846, so Raspberry Pi OS
-#                    already has the driver and the firmware reads an ordinary
-#                    input device rather than speaking SPI to it.
 #   dtparam=i2c_arm=on
-#                    the DS3231, on GPIO 2/3, on the builds that fit one. It
-#                    used to be here for the OLED as well; that panel is gone.
+#                    the screen's touch controller, on GPIO 2/3 — a separate
+#                    chip from the panel, on a separate bus. The same two pins
+#                    carry the DS3231 on the builds that fit one.
+#   i2c-tools        so the bus can be asked what is on it. `i2cdetect -y 1` is
+#                    the first step of every touch problem, and the only real
+#                    presence test this screen has: an I2C address acknowledges
+#                    or it does not, while the LCD half is write-only and
+#                    initialises just as well with nothing on the ribbon.
+#
+# Deliberately NOT done here — the touch controller's device-tree line. Which
+# line is right depends on which chip answers, and this script runs at Stage 0
+# while the panel is not wired until Stage 3, so there is nothing on the bus to
+# find yet. `snapcare-dispenser --touch-setup` does it afterwards, and re-running
+# it is the check as well as the fix. What this script does do is take out a
+# `dtoverlay=ads7846` line if it finds one: that driver is for a resistive panel
+# this build does not have, and because nothing on an SPI chip select has to
+# acknowledge, it can bind against an empty bus and publish an input device that
+# never reports a press.
 #   fake-hwclock     left alone on a DS1302 build (nothing competes with it —
 #                    the firmware sets the clock from the chip at startup) and
 #                    disabled on a DS3231 one, where it would overwrite a good
@@ -146,10 +155,13 @@ apt_get update
 # suite must not abort an otherwise good install.
 apt_get install -y avahi-daemon python3
 
-# Only a DS3231 build speaks I2C. On the DS1302 the firmware bit-bangs three
-# GPIOs itself, so these two packages would sit there unused.
+# The screen's touch controller is on I2C whatever clock chip is fitted, and
+# i2cdetect is how anybody finds out whether it is answering — so this is no
+# longer conditional. smbus2 still is: only the DS3231 path reads a register
+# through it, and `--touch-setup` probes the bus with a plain ioctl.
+apt_get install -y i2c-tools
 if [[ $RTC_KIND == ds3231 ]]; then
-  apt_get install -y i2c-tools python3-smbus2
+  apt_get install -y python3-smbus2
 fi
 
 # The GPIO library. This is the one that actually matters: without some way to
@@ -234,15 +246,14 @@ add_config_line() {
   NEEDS_REBOOT=1
 }
 
-say "Enabling SPI and I2C (the two panels)"
-# /dev/spidev0.0 is the whole dependency for the LCD. SCK is GPIO 11, MOSI
+say "Enabling SPI and I2C (the screen's two halves)"
+# /dev/spidev0.0 is the whole dependency for the LCD. SCK is GPIO 11, SDI(MOSI)
 # GPIO 10 and CE0 GPIO 8, none of which is a free choice — they are the pins the
-# peripheral shifts out of. DC and RESET are ordinary GPIOs, 25 and 18.
+# peripheral shifts out of. LCD_RS (the DC line) and LCD_RST are ordinary GPIOs,
+# 25 and 18.
 add_config_line "dtparam=spi=on"
-# And /dev/i2c-1 on GPIO 2/3. Left unconditional even though only a DS3231 build
-# now needs it: the two pins have permanent pull-ups and nothing else on this
-# machine can use them, so the line costs nothing and means a clock chip fitted
-# later is one overlay away rather than a reinstall.
+# And /dev/i2c-1 on GPIO 2/3, which is where CTP_SDA and CTP_SCL go. The touch
+# controller needs this bus on every build, and a DS3231 shares it.
 add_config_line "dtparam=i2c_arm=on"
 # A no-op on a board whose core clock does not scale, and insurance on one that
 # does: the SPI baud rate is divided down from the core clock, so a core clock
@@ -301,20 +312,36 @@ say "Creating $STATE_DIR"
 mkdir -p "$STATE_DIR"
 chmod 750 "$STATE_DIR"
 
-say "Enabling the touch panel"
+say "Checking the touch panel's configuration"
 # The screen is the only control this build has: there is no physical button,
-# and a tap anywhere on the glass releases a waiting dose. The XPT2046 on these
-# 2.8" modules is a clone of the ADS7846, which Raspberry Pi OS already has a
-# driver for — so this is one overlay line rather than a second SPI protocol in
-# the firmware. cs=1 is the second chip select; the display owns the first.
-BOOT_CONFIG=/boot/firmware/config.txt
-[ -f "$BOOT_CONFIG" ] || BOOT_CONFIG=/boot/config.txt
-if [ -f "$BOOT_CONFIG" ] && ! grep -q '^dtoverlay=ads7846' "$BOOT_CONFIG"; then
-  printf '\n# SnapCare: the LCD touch panel, read as the take-dose button\ndtoverlay=ads7846,cs=1,penirq=4,penirq_pull=2,speed=50000,keep_vref_on=1,swapxy=0,pmax=255,xohms=150\n' >> "$BOOT_CONFIG"
-  echo "  added dtoverlay=ads7846 to $BOOT_CONFIG (takes effect on the next reboot)"
+# and a tap anywhere on the glass releases a waiting dose. That makes the touch
+# controller worth more care than a peripheral usually gets.
+#
+# No overlay is written here, on purpose. The controller is on I2C and which
+# driver it needs depends on which chip answers — and this script runs at
+# Stage 0, several stages before the panel is wired, so the bus has nothing on
+# it yet. `--touch-setup` does that part, with the panel in front of it.
+#
+# What is done here is the removal, because it is the one that cannot wait: a
+# `dtoverlay=ads7846` line left by an install written for a resistive panel is
+# actively harmful. Nothing on an SPI chip select has to acknowledge, so that
+# driver can bind against an empty bus and publish an input device that never
+# reports a press — and a machine that says a touch panel is fitted and never
+# releases a dose is a worse failure than one that says it has none.
+if [ -f "$CONFIG_TXT" ] && grep -q '^[[:space:]]*dtoverlay=ads7846' "$CONFIG_TXT"; then
+  cp "$CONFIG_TXT" "$CONFIG_TXT.snapcare-bak"
+  # Take the line and the comment this project wrote above it, and nothing else.
+  sed -i '/^[[:space:]]*# SnapCare: the LCD touch panel/d; /^[[:space:]]*dtoverlay=ads7846/d' \
+    "$CONFIG_TXT"
+  echo "  removed dtoverlay=ads7846 from $CONFIG_TXT"
+  echo "  (a driver for a resistive panel this build does not have;"
+  echo "   the previous file is at $CONFIG_TXT.snapcare-bak)"
+  NEEDS_REBOOT=1
 else
-  echo "  already present, or no config.txt on this machine"
+  echo "  nothing to remove"
 fi
+echo "  the touch controller's own line is written later, with the panel wired:"
+echo "      sudo snapcare-dispenser --touch-setup"
 
 say "Installing the snapcare-dispenser command"
 # Without this, every command in the guide and the README fails after a reboot.
@@ -395,9 +422,15 @@ if [[ -n "${NEEDS_REBOOT:-}" ]]; then
   echo "  Lines were added to $CONFIG_TXT and the kernel only reads it at boot."
   echo "      sudo reboot"
   echo
-  echo "  After rebooting, check the panel's bus and its touch device:"
-  echo "      ls -l /dev/spidev0.0"
-  echo "      ls -l /dev/input/event*        # ads7846 appears as one of these"
+  echo "  After rebooting, check the panel's two buses:"
+  echo "      ls -l /dev/spidev0.0          # the LCD"
+  echo "      sudo i2cdetect -y 1           # the touch controller answers at"
+  echo "                                    # 0x38, 0x5d, 0x14 or 0x48"
+  echo
+  echo "  Once the panel is wired, give the touch controller its driver. It"
+  echo "  finds the chip and writes the line; run it again after the reboot"
+  echo "  and it says whether the driver bound:"
+  echo "      sudo snapcare-dispenser --touch-setup"
   echo
   echo "  If the glass stays dark, walk it one stage at a time — a write-only"
   echo "  panel cannot be diagnosed by asking the firmware:"

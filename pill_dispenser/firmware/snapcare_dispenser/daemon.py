@@ -491,6 +491,11 @@ def main(argv: list[str] | None = None) -> int:
                         help="with --display-test, drive the panel's LED pin "
                              "from this BCM GPIO instead of assuming it is "
                              "tied to 3V3")
+    parser.add_argument("--touch-setup", action="store_true",
+                        help="find the screen's touch controller on the I2C bus "
+                             "and write the device-tree line that drives it — "
+                             "run it once with the panel wired, and again after "
+                             "the reboot to check")
     parser.add_argument("--selftest", action="store_true",
                         help="commission an assembled machine: check what can be "
                              "checked, ask about what only eyes and ears can "
@@ -535,6 +540,11 @@ def main(argv: list[str] | None = None) -> int:
         return run_display_test(interactive=not args.auto_only,
                                 speed_hz=args.display_hz,
                                 backlight=args.display_backlight)
+
+    if args.touch_setup:
+        from . import touch  # noqa: PLC0415
+
+        return touch.setup()
 
     if args.selftest:
         from .selftest import run as run_selftest  # noqa: PLC0415
