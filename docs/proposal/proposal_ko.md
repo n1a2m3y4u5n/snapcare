@@ -1242,10 +1242,10 @@ SnapCare 의 사용자 흐름은 한 번의 촬영에서 판정까지 분기 없
 
 지우기는 두 번 눌러야 한다. 한 번 누르면 빨간 테두리가 서고, 다시 눌러야 지워진다. "정말 지울까요?" 를 띄우지 않은 것은 그 문장이 이 앱의 사용자에게 읽히지 않기 때문이다. 읽히지 않는 확인 창은 확인이 아니라 한 번 더 누르는 절차일 뿐이므로, 절차 자체를 두 단계로 만들었다. 지금 쓰고 있는 사람과 마지막 한 사람은 지워지지 않는다.
 
-이 절이 다루는 것은 한 기기를 여럿이 쓰는 경우이지 한 사람을 여럿이 돕는 경우가 아니다. §5.7 의 간호·보건 구획 9명 가운데 6명이 환자와 보호자를 각각 다르게 설계해야 한다고 답했고, 튀니지 파스퇴르연구소 Foued Maaoui 연구원이 그 전제를 정면으로 지적했다.
+이 절이 다루는 것은 한 기기를 여럿이 쓰는 경우이지 한 사람을 여럿이 돕는 경우가 아니다. §5.7 의 간호·보건 구획 9명 가운데 6명이 환자와 보호자를 각각 다르게 설계해야 한다고 답했고, Pasteur Institute of Tunis 의 Foued Maaoui 연구원이 그 전제를 정면으로 지적했다.
 
 > "The original assumption that the patient will use the app alone does not match common practice, especially among older adults, people with low literacy, cognitive impairment, or complex regimens."
-> (Foued Maaoui 연구원, 파스퇴르연구소)
+> (Foued Maaoui 연구원, Pasteur Institute of Tunis)
 
 건양대학교 송민선 교수는 같은 것을 다른 말로 적었다. 환자와 보호자가 동시에 이해할 수 있도록 구성해야 한다는 것이다. 반대 의견도 있다. University of Pretoria 의 Celia 교수는 따로 설계할 필요는 없다고 보았고, 협성대학교 박남수 교수는 대상자의 연령과 상태에 따라 달라진다고 답했다.
 
@@ -1311,7 +1311,12 @@ WCAG 1.4.1 은 색만으로 뜻을 전달하지 말 것을 요구하며, 색상 
 
 ### 3.8 알아들었는지 되짚는 단계
 
-판정 화면이 떴다고 해서 전달이 끝난 것은 아니다. §5.7 에서 Foued Maaoui 파스퇴르연구소(튀니지) 연구원이 지적한 것이 이 지점이다. 화면이 아무리 명확해도 그것을 본 사람이 알아들었는지 확인할 절차가 없으면 되돌아오는 신호가 없는 것이고, 환자 안전의 관점에서 이 고리의 부재는 중대한 위험이다.
+판정 화면이 떴다고 해서 전달이 끝난 것은 아니다. 이 절이 있는 이유가 조사의 한 문장이므로 요약하지 않고 그대로 옮긴다. Pasteur Institute of Tunis 의 Foued Maaoui 연구원이 "글을 읽지 못하는 환자가 이 화면만으로 혼자 약을 제대로 먹을 수 있겠는가" 에 답하며 이렇게 적었다.
+
+> "The system lacks a teach-back or confirmation mechanism that would allow patients to verify that they have correctly understood the instructions. From a patient safety perspective, the absence of such a feedback loop represents a significant risk, particularly for individuals with limited literacy."
+> (Foued Maaoui 연구원, Pasteur Institute of Tunis)
+
+화면이 아무리 명확해도 그것을 본 사람이 알아들었는지 확인할 절차가 없으면 되돌아오는 신호가 없다. 이 절의 되짚기 단계는 이 응답을 받고 만든 것이며, 조사가 설계를 바꾼 자리 가운데 화면 하나를 통째로 더한 유일한 경우다.
 
 임상에서 쓰는 되말하기는 이렇게 한다. 설명이 끝나면 집에 가서 어떻게 드실 것인지 말해 달라고 청하고, 돌아온 말에서 빠진 것을 다시 설명한다. 전제는 고개를 끄덕이는 것이 이해의 증거가 아니라는 것이다. §5.7 에서 인용한 체계적 문헌고찰 20편 중 19편이 이 절차의 긍정적 결과를 보고했다.
 
@@ -2244,7 +2249,7 @@ MAE% 는 공식 정의를 따랐다. 절대오차의 평균을 정답의 평균�
 
 #### 5.7.7 개별 지적
 
-Foued Maaoui 파스퇴르연구소(튀니지) 연구원은 되말하기(teach-back)의 부재를 지적했다. 환자가 제대로 이해했는지 확인할 절차가 없으며 환자 안전 관점에서 이 피드백 고리의 부재는 중대한 위험이라는 것이다.
+Pasteur Institute of Tunis 의 Foued Maaoui 연구원은 되말하기(teach-back)의 부재를 지적했다. 환자가 제대로 이해했는지 확인할 절차가 없으며 환자 안전 관점에서 이 피드백 고리의 부재는 중대한 위험이라는 것이다.
 
 이 지적에는 근거가 있다. 되말하기를 다룬 20편을 종합한 체계적 문헌고찰에서 19편이 긍정적 결과를 보고했으며, 제2형 당뇨 환자에서 복약 순응도와 식이 개선이 유의하게 나타났다 (Talevski, J., Wong Shee, A., Rasmussen, B., Kemp, G. & Beauchamp, A., "Teach-back: A systematic review of implementation and impacts," *PLOS ONE*, 15(4):e0231350, 2020). 나이지리아 Ahmadu Bello University 의 Samirah Abdu-Aguye 교수가 현재 실무에서 하고 있다고 답한 것이 바로 이 절차다. 이 지적을 받아 되짚기 단계를 만들었고 §3.8 에 서술했다. 말로 되받게 하는 대신 그림을 짚게 하는데, 그 대체가 같은 확인 효과를 내는지는 아직 사람에게 묻지 않았다. 같은 응답자는 검증 설계도 제시했다. 저문해자를 대상으로 하되 교육받은 자원자로 대체하지 말 것, 사전에 정의된 채점 기준과 눈가림 평가자를 둘 것, 픽토그램만·음성만·둘 다를 따로 시험할 것, 깨끗한 데모가 아닌 실제 처방전을 쓸 것. §5.10 의 평가 설계를 이에 맞추어 고쳤다.
 
@@ -2392,7 +2397,7 @@ Atif Usman 교수와 윤휘열 교수는 기존 픽토그램 세트를 참조하
 
 §5.10 의 현지 평가 설계를 응답에 맞추어 고쳤다. 조언은 네 곳에서 왔다.
 
-튀니지 파스퇴르연구소 Foued Maaoui 연구원은 저문해자를 대상으로 하되 교육받은 자원자로 대체하지 말 것, 사전에 정의된 채점 기준과 눈가림 평가자를 둘 것, 픽토그램만·음성만·둘 다를 따로 시험할 것, 깨끗한 데모가 아닌 실제 처방전을 쓸 것, 음성 언어가 참가자의 언어와 맞을 것을 요구했다.
+Pasteur Institute of Tunis 의 Foued Maaoui 연구원은 저문해자를 대상으로 하되 교육받은 자원자로 대체하지 말 것, 사전에 정의된 채점 기준과 눈가림 평가자를 둘 것, 픽토그램만·음성만·둘 다를 따로 시험할 것, 깨끗한 데모가 아닌 실제 처방전을 쓸 것, 음성 언어가 참가자의 언어와 맞을 것을 요구했다.
 
 한국장애인개발원 최묘정 연구원은 Nielsen, J. & Landauer, T. K., "A mathematical model of the finding of usability problems," *Proc. INTERCHI '93*, 206–213, 1993 을 들어 15명 내외의 소규모 표본으로도 사용성 평가의 타당성을 확보할 수 있으며, 소규모 표본은 오히려 사용자 행동과 반응을 세부적으로 파악할 수 있으므로 설문 응답과 함께 행동 분석을 병행하라고 권했다.
 

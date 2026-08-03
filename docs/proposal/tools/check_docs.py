@@ -1024,6 +1024,55 @@ def table_no(title_part: str, f: str = 'proposal_ko.md') -> int | None:
     return None
 
 
+def affil_drift() -> list:
+    """한 응답자의 소속이 문서 안에서 한 가지로 적혀 있는가.
+
+    Foued Maaoui 의 소속이 "Pasteur Institute of Tunis" 와
+    "파스퇴르연구소" 와 "Institut Pasteur de Tunis" 로 갈려 있었다.
+    같은 사람이 세 기관에 있는 것처럼 보인다.
+
+    표 42 의 소속을 정본으로 삼고, 본문이 그 사람을 부르면서 다른
+    기관 이름을 붙였는지 본다. 이름 둘레 60자만 본다 — 문단 전체를
+    보면 다른 응답자의 소속까지 걸린다."""
+    out = []
+    for f, roster_key in (('proposal_ko.md', '전원이 실명'),
+                          ('proposal_en.md', 'The 39 respondents')):
+        s = (DOC / f).read_text()
+        mark = '### 5.11'
+        if mark not in s:
+            continue
+        body = s[:s.index(mark)]
+        i = s.find(f'[표 {table_no(roster_key) or 42}]')
+        if i < 0:
+            i = s.find('[Table 42]')
+        if i < 0:
+            continue
+        roster = {}
+        for ln in s[i:].splitlines()[1:]:
+            if not ln.startswith('|'):
+                if roster:
+                    break
+                continue
+            c = [x.strip() for x in ln.strip('|').split('|')]
+            if len(c) >= 4 and c[0] and c[0] not in ('성함', 'Name') \
+                    and '---' not in c[0] and not c[0].startswith('**'):
+                roster[c[0]] = c[2]
+        # 소속 이름의 다른 판을 찾는다 — 같은 기관을 가리키는 낱말이
+        # 본문에 있는데 표 42 의 표기와 다르면 잡는다.
+        VARIANT = {
+            'Pasteur Institute of Tunis': ('파스퇴르연구소', 'Institut Pasteur'),
+        }
+        for name, aff in roster.items():
+            for canon, alts in VARIANT.items():
+                if canon not in aff:
+                    continue
+                for alt in alts:
+                    if alt in body:
+                        out.append(f'{f}: {name} 의 소속이 표 42 에서는 '
+                                   f'"{canon}" 인데 본문에 "{alt}" 가 있다')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -1148,6 +1197,9 @@ def main() -> int:
         note(t)
 
     for t in title_drift():
+        note(t)
+
+    for t in affil_drift():
         note(t)
 
     for t in links_live():

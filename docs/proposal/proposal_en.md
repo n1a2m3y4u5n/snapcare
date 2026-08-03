@@ -1247,10 +1247,10 @@ On the member list screen only the current person's conditions are shown and the
 
 Deleting takes two presses. One press raises a red outline, and a second deletes. No "are you sure?" dialogue is raised, because that sentence is not readable by this app's users. An unreadable confirmation dialogue is not a confirmation but merely one more press, so the procedure itself was made two-stage. The current person and the last remaining person cannot be deleted.
 
-What this section covers is several people sharing one device, not several people helping one person. Six of the nine in the nursing and public health segment of §5.7 answered that the patient and the carer should be designed for separately, and Foued Maaoui, researcher at the Institut Pasteur de Tunis, addressed the premise head on.
+What this section covers is several people sharing one device, not several people helping one person. Six of the nine in the nursing and public health segment of §5.7 answered that the patient and the carer should be designed for separately, and Foued Maaoui, researcher at the Pasteur Institute of Tunis, addressed the premise head on.
 
 > "The original assumption that the patient will use the app alone does not match common practice, especially among older adults, people with low literacy, cognitive impairment, or complex regimens."
-> (Foued Maaoui, researcher, Institut Pasteur de Tunis)
+> (Foued Maaoui, Researcher, Pasteur Institute of Tunis)
 
 Professor Minsun Song of Konyang University put the same thing differently: it should be built so that the patient and the carer can both understand it at once. There are dissenting views. Professor Celia of the University of Pretoria did not feel separate designs would be required, and Professor Namsoo Park of Hyupsung University answered that it depends on the age and condition of the target.
 
@@ -1317,7 +1317,12 @@ What was already correct should be recorded too. The path by which a scanning de
 
 ### 3.8 Checking that it was understood
 
-A verdict screen having appeared does not mean the delivery is finished. This is the point Foued Maaoui, a researcher at the Institut Pasteur de Tunis, raised in §5.7. However clear the screen, without a procedure for confirming that the person who saw it understood it there is no returning signal, and from a patient-safety standpoint the absence of that loop is a serious risk.
+A verdict screen having appeared does not mean the delivery is finished. This section exists because of one sentence in the survey, so it is carried over rather than summarised. Answering "could a patient who cannot read take their medicine correctly, alone, with only these screens", Foued Maaoui, Researcher at the Pasteur Institute of Tunis, wrote:
+
+> "The system lacks a teach-back or confirmation mechanism that would allow patients to verify that they have correctly understood the instructions. From a patient safety perspective, the absence of such a feedback loop represents a significant risk, particularly for individuals with limited literacy."
+> (Foued Maaoui, Researcher, Pasteur Institute of Tunis)
+
+However clear the screen, without a procedure for confirming that the person who saw it understood it there is no returning signal. The checking step in this section was built on receiving that answer, and it is the one case where the survey changed the design by adding a whole screen.
 
 Teach-back as used in clinical practice runs like this. When the explanation is finished, the clinician asks the patient to say how they will take the medicine at home, and re-explains whatever is missing from the answer. The premise is that nodding is not evidence of understanding. The systematic review cited in §5.7 found positive results in 19 of 20 studies of this procedure.
 
@@ -2126,7 +2131,7 @@ The countries respondents recorded as working in span 22 countries across five c
 | Rahul Malhotra | Associate Professor | Duke-NUS Medical School | Singapore |
 | Raghupathy Anchala | Professor | Public Health Foundation of India | India |
 | Celia | Professor | University of Pretoria | South Africa |
-| Foued Maaoui | Researcher | Institut Pasteur de Tunis | Tunisia |
+| Foued Maaoui | Researcher | Pasteur Institute of Tunis | Tunisia |
 | Aliya Naheed | Senior Scientist | International Centre for Diarrhoeal Disease Research (icddr,b) | Bangladesh |
 | **AAC and special education · adult literacy · HCI and design · industry practice (7)** | | | |
 | E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · University of Southampton | United Kingdom |
@@ -2253,7 +2258,7 @@ The same respondent pointed at institutional material we did not know about: a c
 
 #### 5.7.7 Individual findings
 
-Foued Maaoui, a researcher at the Institut Pasteur de Tunis, noted the absence of teach-back. There is no procedure for confirming that the patient understood correctly, and from a patient-safety standpoint the absence of this feedback loop is a serious risk.
+Foued Maaoui, a researcher at the Pasteur Institute of Tunis, noted the absence of teach-back. There is no procedure for confirming that the patient understood correctly, and from a patient-safety standpoint the absence of this feedback loop is a serious risk.
 
 There is evidence behind that point. A systematic review synthesising 20 studies of teach-back found positive results in 19, with significant improvement in medication adherence and diet among patients with type 2 diabetes (Talevski, J., Wong Shee, A., Rasmussen, B., Kemp, G. & Beauchamp, A., "Teach-back: A systematic review of implementation and impacts," *PLOS ONE*, 15(4):e0231350, 2020). It is exactly the procedure that Professor Samirah Abdu-Aguye of Ahmadu Bello University in Nigeria answered she currently uses in practice. Acting on this point we built a checking step, described in §3.8. Instead of speaking back, the user points at pictures; whether that substitution produces the same confirming effect has not yet been put to people. The same respondent also set out a validation design: work with low-literate participants and do not substitute educated volunteers; use predefined scoring criteria and blinded assessors; test pictogram-only, audio-only and both separately; and use real prescriptions rather than a clean demonstration. The evaluation design in §5.10 was revised accordingly.
 
@@ -2405,7 +2410,7 @@ The same respondent left a line about what must not be conveyed by picture and s
 
 The field evaluation design in §5.10 was revised in line with the responses. Advice came from four places.
 
-Foued Maaoui, researcher at the Institut Pasteur de Tunis, asked for low-literate participants rather than educated volunteers, predefined scoring criteria and blinded assessors, separate testing of pictogram-only, audio-only and both, real prescriptions rather than a clean demonstration, and audio in a language matching the participants'.
+Foued Maaoui, researcher at the Pasteur Institute of Tunis, asked for low-literate participants rather than educated volunteers, predefined scoring criteria and blinded assessors, separate testing of pictogram-only, audio-only and both, real prescriptions rather than a clean demonstration, and audio in a language matching the participants'.
 
 Myojung Choi, researcher at the Korea Disabled People's Development Institute, cited Nielsen, J. & Landauer, T. K., "A mathematical model of the finding of usability problems," *Proc. INTERCHI '93*, 206–213, 1993, to the effect that a small sample of around 15 can secure the validity of a usability evaluation, and that a small sample in fact allows user behaviour and reactions to be grasped in detail, recommending behavioural analysis alongside the survey responses.
 
@@ -2550,7 +2555,7 @@ One more thing should be read from it. The disclosure sits below the red line, w
 
 The dispenser now calls the phone when it presents a dose. The same respondent proposed dosing-time notifications. The release button is visible only while the app is open, so without a place that calls, this feature works only for whoever happens to have the app open. It does not call while you are watching, it does not disappear until touched, and permission is asked right after pairing the box: to someone who has just claimed the box, "shall we tell you when a dose is ready" is a continuation, whereas a dialogue at first launch gets refused before its purpose is known.
 
-A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Institut Pasteur de Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
+A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Pasteur Institute of Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
 
 The web app test count went from 231 to 360 (Table 29).
 
