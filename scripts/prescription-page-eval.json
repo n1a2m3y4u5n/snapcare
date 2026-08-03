@@ -7,15 +7,15 @@
   "failed": 0,
   "seenAsPrescription": 200,
   "seenAsPrescriptionPct": 100,
-  "flaggedHandwritten": 190,
-  "flaggedHandwrittenPct": 95,
+  "flaggedHandwritten": 189,
+  "flaggedHandwrittenPct": 94.5,
   "medicinesAnnotated": 1086,
-  "medicinesFound": 946,
-  "recallPct": 87.1,
-  "pagesWithSchedule": 17,
-  "pagesWhereItSaidIllegible": 23,
-  "pagesFoundFewerThanAnnotated": 58,
-  "pagesFoundMoreThanAnnotated": 45
+  "medicinesFound": 944,
+  "recallPct": 86.9,
+  "pagesWithSchedule": 14,
+  "pagesWhereItSaidIllegible": 16,
+  "pagesFoundFewerThanAnnotated": 52,
+  "pagesFoundMoreThanAnnotated": 37
  },
  "results": [
   {
@@ -27,8 +27,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Psoriasis/Diabetes management",
-   "dosageText": "Tab. Fodesil 1500 2tots; Tab. Methotrex 15mg 0tot; Tab. Folitc 0tot; Tab. Meurotene 2tots; Emolnt cream; Tab. Aceet 0tot",
+   "name": "Handwritten prescription - Psoriasis with Diabetes (Methotrexate regimen)",
+   "dosageText": "Cap. Fodesil 1500 - 2 tabs; Tab. Methotrexate 15mg - as directed; Tab. Folitrac - as directed; Tab. Muvorene - 2 tabs; Emolint cream - topical; Tab. Alcet - as directed",
    "scheduleCount": 0
   },
   {
@@ -39,9 +39,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 3,
-   "admitsIllegible": true,
-   "name": "Handwritten prescription: Azomax, Alex, Nutizen",
-   "dosageText": "Cap. Azomax (100mg); Tab. Alex; Nutizen (details partly illegible)",
+   "admitsIllegible": false,
+   "name": "Handwritten prescription - Cap. Azomax (100mg), Tab. Alex, Nutlizer chew",
+   "dosageText": "Cap. Azomax (100mg); Tab. Alex; Nutlizer chew - handwritten dosage/frequency notations not clearly legible",
    "scheduleCount": 0
   },
   {
@@ -54,7 +54,7 @@
    "found": 4,
    "admitsIllegible": false,
    "name": "Handwritten prescription for Pulpitis",
-   "dosageText": "Tab. Flacort (6mg) 2+0+0; Tab. Maxima (20mg) 2+0+2; Tab. Alcet 0+0+2; Xerosoft Ointment + Ezex Cream (1:1) applied locally",
+   "dosageText": "Tab. Flacort (6mg) 2-0-0; Tab. Maxima (20mg) 2-0-1; Tab. Alert 0-0-1; Xerosoft Ointment + Ezex Cream (mixed) applied locally",
    "scheduleCount": 0
   },
   {
@@ -64,10 +64,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 4,
+   "found": 2,
    "admitsIllegible": false,
-   "name": "Handwritten medical examination/prescription form",
-   "dosageText": "Fixocard (medication noted); BP-120/70mmHg; weight-67kg; DM(+ve), Asthma(-ve), HTN(+ve)",
+   "name": "Handwritten eye clinic examination/prescription note",
+   "dosageText": "Medication: Fixocard (as written); advise per notes",
    "scheduleCount": 0
   },
   {
@@ -79,8 +79,8 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Tab Rifax, Cap Rostor, Tab Fibzo, Tab Flexon",
-   "dosageText": "Tab Rifax 550mg 1+0+1 - 20/50; Cap Rostor 1 tab - 2 tabs; Tab Fibzo 20mg 1+0+1 - 2 tabs; Tab Flexon 0+1+1 - 2 tabs",
+   "name": "Handwritten prescription - Tab Rifax, Cap Rostor, Tab Firex, Tab Flexon",
+   "dosageText": "Tab Rifax 550mg 1+0+1 - 20/50; Cap Rostor 1 - 20nos - 2 tabs; Tab Firex 200mg 1+0+1 - 2 tabs; Tab Flexon 0+1+1 - 2 tabs",
    "scheduleCount": 0
   },
   {
@@ -90,10 +90,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 5,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten medical prescription",
-   "dosageText": "Tab. Itrayen 100mg 2tots->2mcf; Tab. Neer 2tots->2mcy 2tots; Tab. Durunt ->18/6yr 2toto; Lecifart ono ->2mgl; King-Z Soap - use after bath",
+   "name": "Handwritten prescription - DM/skin condition",
+   "dosageText": "Tab. Itrayen (100mg) 2 tab OD -> 2 times, Tab. Neer 2 tab OD, Tab. Durant 1 tab OD, Lecifart cream, King-Z Soap - apply before/after bath",
    "scheduleCount": 0
   },
   {
@@ -105,8 +105,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription: Zimax, Itra, Progut Mups, Alben-DS, Dancel Shampoo, Xyrcil",
-   "dosageText": "Tab. Zimax (500mg) 1+0+0 (3 din); Cap. Itra (100mg) 1+0+1 (22 din); Tab. Progut Mups (20mg) 1+0+1 (khabar 30 min age) (2 mash); Tab. Alben-DS: 1 ti tablet khaben, 7 din por abar punoray 1 ti tablet khaben; Dancel Shampoo: gosoler age sara gaye makhe 20 minute apeksha kore gosol korben, ei vabe soptahe 3/4 din (2 mash); Tab. Xyrcil (25mg) 0+0+1 (21 din)",
+   "name": "Handwritten prescription (Bengali) - multiple medicines",
+   "dosageText": "Tab. Zimax 500mg 1+0+0 (5 days); Cap. Itra 100mg 1+0+1 (22 days); Tab. Progut Mups 20mg 1+0+1 before meal 30 min (2 months); Tab. Alben-DS 1 tablet, after 7 days again 1 tablet; Dancel Shampoo apply on whole body 20 min before bath, weekly 3/4 days (1 month); Tab. Xytril 25mg 0+0+1 (21 days)",
    "scheduleCount": 0
   },
   {
@@ -119,8 +119,8 @@
    "found": 3,
    "admitsIllegible": false,
    "name": "Handwritten prescription for Migraine",
-   "dosageText": "Cap BETACAP TK 40mg - 1+0+0; Tab VALEX 200mg - 1+0+0; If headache: Tab MIGREX 200mg, Tab DEFLUX 10mg, Tab MAXPRO 20mg (as needed)",
-   "scheduleCount": 2
+   "dosageText": "Cap BETACAP TK 40mg - 1+0+0; Tab VALEX 200mg - 1+0+0; if headache persists: Tab MIGREX 200mg, Tab DEFLUX 10mg, Tab MAXPRO 20mg",
+   "scheduleCount": 0
   },
   {
    "img": "9.jpeg",
@@ -131,8 +131,8 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Alopecia",
-   "dosageText": "Cap. Urodart (0.5mg) 0-0-1 (2mg); Tab. Floriz (5mg) 0-0-1 (2mg); Cap. D-Rise 40,000IU/20,000IU or Tab. D-Rise 2,000IU - 1 after food (frequency: weekly/monthly/daily - as marked); Tab. Metricol -> 2 tabs, 2 times a day; Velkin Shampoo - apply to scalp 5-10 min before bath, wash off, use 2-3 days/week",
+   "name": "Handwritten prescription - Alopecia treatment",
+   "dosageText": "Cap. Urodart (0.5mg) 0-0-1; Tab. Floriz (5mg) 0-0-1; Cap. D-Rise 40,000IU/20,000IU or Tab. D-Rise 2,000IU - 1 tablet after food per week/month/day; Tab. Methicol 2-0-1; Velkin Shampoo - apply on scalp 5-10 min before bath, 2-3 days/week",
    "scheduleCount": 0
   },
   {
@@ -144,8 +144,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Tab. Nabumet, Rb. Omeka, Rb. Joints TS",
-   "dosageText": "Tab. Nabumet (500mg) 2tds q1m; Rb. Omeka (20mg) 1ors mv1qm; Rb. Joints TS 1ors q1m",
+   "name": "Handwritten prescription - Nabumet, Ometa, Joinix TS",
+   "dosageText": "Tab. Nabumet (500mg) 2 tab OD/1 om; Tab. Ometa (20mg) 1 tab OM/1am; Tab. Joinix TS 1 tab OD/1am",
    "scheduleCount": 0
   },
   {
@@ -157,8 +157,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten prescription: Trego ointment, Napcodol, Amrit-10",
-   "dosageText": "Trego ointment - apply 2 times daily for 28 days; Tab. Napcodol (500mg) - 1-1-1 for 20 days; Tab. Amrit-10 - 0-1-0 for 10 days",
+   "name": "Handwritten prescription: Trego ointment, Napa DS, Amit-40",
+   "dosageText": "Trego ointment - apply 2 times daily for 28 days; Tab. Napa DS (500mg) - 1+1+1 for 20 days; Tab. Amit-40 - 0+0+1 for 10 days",
    "scheduleCount": 0
   },
   {
@@ -171,7 +171,7 @@
    "found": 6,
    "admitsIllegible": false,
    "name": "Handwritten prescription - Rosuva, Epitra, Vit E, Nexcital, Reef-D",
-   "dosageText": "1) Tab Rosuva-10; 2) Tab Epitra 5; 3) Tab/Cap Vit E 2u; 4) Tab (crossed out); 5) Tab Nexcital 5mg; 6) Reef-D",
+   "dosageText": "1) Tab Rosuva-10; 2) Tab Epitra-5; 3) Tab/Cap Vit E 400 (2u); 4) Tab Zopnat-80 (crossed out); 5) Tab Nexcital 5mg; 6) Tab Reef-D",
    "scheduleCount": 0
   },
   {
@@ -183,9 +183,9 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - multiple joint pain (right wrist)",
-   "dosageText": "Tab. Solivo (375mg/20mg) - 7am and 9pm; Tab. Coral D3-DX - 7am and 2pm; Tab. B-12G - 7am and 2pm; Inj. Calcirol 200000 IU - mix with one spoon of water, once every 7 days (as advised)",
-   "scheduleCount": 7
+   "name": "Handwritten prescription - multiple joint pains (both wrist pain)",
+   "dosageText": "Tab. Solivo (375mg/20mg) - 7am, 9am; Tab. Coral 1gb-DX - 7am ---- 2pm; Tab. B-126 (7pm) ---- 2pm; Inj. Calcirol 200000 IU - one capsule dissolved in water, to be taken every 21 days ---- 2 doses",
+   "scheduleCount": 0
   },
   {
    "img": "14.jpeg",
@@ -194,10 +194,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 5,
+   "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription with 4 medicines",
-   "dosageText": "Tab. Axiced Plus (250mg) - 1-0-1; Tab. Timabil Rey - 1-0-0; Tab. Trilock (Rey) - 1-0-1; Tab. Doxoven (200mg) - 1-0-1; Adv: CXR P/A view",
+   "name": "Handwritten prescription: Axiced Plus, Tinabil, Trilock, Doxoven",
+   "dosageText": "Tab. Axiced Plus (250mg) 1-0-1; Tab. Tinabil Reg 1-0-0; Tab. Trilock 1-0-1; Tab. Doxoven (200mg) 1-0-1",
    "scheduleCount": 0
   },
   {
@@ -209,8 +209,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Clinical note re: secondaries in liver, primary unknown",
-   "dosageText": "Secondaries in the liver. Primary? Endoscopy - Colonoscopy: Primary not detected. Refd h",
+   "name": "Clinical note: liver secondaries, primary unknown",
+   "dosageText": "Secondaries in the liver. Primary? Endoscopy - Colonoscopy: Primary not detected. Refd to ...",
    "scheduleCount": 0
   },
   {
@@ -223,7 +223,7 @@
    "found": 4,
    "admitsIllegible": false,
    "name": "Handwritten prescription (Zimax, Informet, Pomlo, Olonix)",
-   "dosageText": "Tab Zimax 500 - 1+0+1+0; Informet - 1+0+1+0; Pomlo 60 - 1+0+1+0; Olonix 5",
+   "dosageText": "Tab Zimax 500 - 1+0+1; Informet 1+0+1 (before meal); Pomlo 1+0+1 (before meal); Olonix 5 - 1 (as noted)",
    "scheduleCount": 0
   },
   {
@@ -233,10 +233,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 4,
+   "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten prescription (Kilnex, Histacin, Diprosa)",
-   "dosageText": "Tab. Kilnex 250; 1+0+1 (as noted); Histacin 1+0+1; Diprosa lotion - apply as directed",
+   "name": "Handwritten prescription (Kilmex, Histacin, Diprosa)",
+   "dosageText": "Tab. Kilmex 250; Tab. Histacin; Diprosa lotion - as noted on paper",
    "scheduleCount": 0
   },
   {
@@ -248,8 +248,8 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription (Bengali) - Cephalexin, Pantoprazole, Fexo, Sucralfate",
-   "dosageText": "Cap. Cephalexin 500 - 1-0-1; Tab. Pantomax 20 - 1-0-1; Tab. Fexo 120mg - 0-0-1; Tab. Sucro 6ml - 0-0-1 / 0-0-1",
+   "name": "Handwritten prescription (Bengali) - Cephalexin, Pantoprazole, Fexo, Scabo",
+   "dosageText": "Cap. Cephalexin 500 - 1+1+1 (three times daily); Tab. Pantomax 20 - 1+0+1 (twice daily); Tab. Fexo 120mg - 0+0+1 (once daily, night); Tab. Scabo 6mg - 0+0+2 (twice, as noted)",
    "scheduleCount": 0
   },
   {
@@ -259,10 +259,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 2,
+   "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten prescription (Bengali script)",
-   "dosageText": "Tab. Xitrc-B, Tab. Calcium, Tab. Dorros 10mg - dosage schedule handwritten in Bengali, partially legible; also lab tests listed: CBC, RBS/RFT, RA, S. creatinine, FT3, FT4, TSH",
+   "name": "Handwritten prescription - Xtrc-B, Calcium, Domin",
+   "dosageText": "Tab. Xtrc-B 1+0+1 - 2 months; Tab. Calcium 1+0+1 - 2 months; Tab. Domin 10mg 1+1+1",
    "scheduleCount": 0
   },
   {
@@ -274,8 +274,8 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Prescription for vertigo with hypertension workup",
-   "dosageText": "1. Tab. Abetis 20 mg - 1+0+0 (crossed: Tab. Amdocal 10 mg 0+0+1, replaced with Cildip 10 mg); 3. Tab. Indever 10 mg - 1+1+1; 4. Tab. Menaril 8 mg - 1+0+1 for 1 month; 5. Tab. Revert 20 mg+40 mg - 1+0+1 for 1 month",
+   "name": "Prescription - Vertigo/Hypertension workup",
+   "dosageText": "1. Tab. Abetis 20 mg - 1+0+0 (crossed: 2. Tab. Amdocal 10 mg - 0+0+1, replaced with Tab. Cildip 10 mg); 3. Tab. Indever 10 mg - 1+1+1; 4. Tab. Menaril 8 mg - 1+0+1 for 1 month; 5. Tab. Revert 20 mg+40 mg - 1+0+1 for 1 month",
    "scheduleCount": 0
   },
   {
@@ -288,7 +288,7 @@
    "found": 4,
    "admitsIllegible": false,
    "name": "Handwritten prescription for chicken pox",
-   "dosageText": "Tab. AZ 500 - 1+0+1; Tab. P/C 500 - 1+1+1; Tab. Pantonix - 1+0+1; Tab. Fenadin 120 - 0+0+1",
+   "dosageText": "Tab. AZ 500 - 1+0+1; Tab. P/C 500 - 1+1+1; Tab. Pantonix 20 - 1+0+1; Tab. Fenadin 120 - 0+0+1",
    "scheduleCount": 0
   },
   {
@@ -301,7 +301,7 @@
    "found": 6,
    "admitsIllegible": false,
    "name": "Handwritten prescription for recurrent oral ulcers",
-   "dosageText": "1. Tab. XINC B - 1+0+1; 2. Tab. NAPA 500mg - 1+1+1; 3. Tab. VISET 50 - 1+0+1; 4. Cap. IMAX 20 - 1+0+1; 5. OROFRESH OS./MEO RAL OS - local application; 6. MYCON ORAL GEL - apply as directed",
+   "dosageText": "1. Tab. XINC B (1+0+1); 2. Tab. NAPA 500mg (1+1+1); 3. Tab. VISET 50 (1+0+1); 4. Cap. IMAX 20 (1+0+1); 5. OROFRESH OS./MEO RAL OS. (local application); 6. MYCON ORAL GEL",
    "scheduleCount": 0
   },
   {
@@ -311,10 +311,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 3,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Syp. Ace, Napa Suppository, Syp. Tinglate",
-   "dosageText": "1. Syp. Ace - 2 times a day; 2. Napa Suppository 500mg - if temp >100°F; 3. Syp. Tinglate - 2 times a day",
+   "name": "Handwritten prescription: Syp. Ace, Napa Suppository 500mg, Syp. Thyngla",
+   "dosageText": "1. Syp. Ace - 2 times x 10 days | 2. Napa Suppository 500mg - if temp >100°F | 3. Syp. Thyngla - 2 times x 2 days",
    "scheduleCount": 0
   },
   {
@@ -326,8 +326,8 @@
    "handwritten": true,
    "found": 2,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Tab Linzolid & Tab Pantld",
-   "dosageText": "TAB. LINZOLID (600mg) 2+0+1 for 2 days; TAB. PANTLD (20mg) 2+0+1 for 20 days",
+   "name": "Handwritten prescription - Tab. Linzolid & Tab. Pantld",
+   "dosageText": "TAB. LINZOLID (600mg): 2+0+1; TAB. PANTLD (40mg): 2+0+1 - 30",
    "scheduleCount": 0
   },
   {
@@ -339,7 +339,7 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten clinical note - Tab. Levipil (500) prescription",
+   "name": "Handwritten neurology note - Tab. Levipil (500)",
    "dosageText": "Tab. Levipil (500) - 1-0-1",
    "scheduleCount": 0
   },
@@ -353,7 +353,7 @@
    "found": 3,
    "admitsIllegible": false,
    "name": "Handwritten prescription - Refer to Hepatology",
-   "dosageText": "Tab. Solas 100 - 1+0+1, duration - 6 months; Tab. Alvc 60 - 1+0+1, duration - 3 months; Tab. Byzeral 20mg - 1+0+1, duration - 3 months",
+   "dosageText": "Tab. Solas 100 - once daily x 6 months; Tab. Alve 60 - once daily x 12 months; Tab. Byzeral 20mg - once daily x 12 months",
    "scheduleCount": 0
   },
   {
@@ -363,10 +363,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 2,
+   "found": 7,
    "admitsIllegible": false,
    "name": "Handwritten prescription with multiple medications",
-   "dosageText": "1) Floromox-D 2) Tearfresh clin gel 3) Tab-Ondever 10 4) Tab-Nordium 10 5) Tab-Omridon 10 6) Tab-Renova 7) Tab-Tofuil 20D; timings and frequencies handwritten in local script, not fully legible",
+   "dosageText": "1) Floromox-D; 2) Tearfresh clin gel; 3) Tab-Ondever 10; 4) Tab-Norexim 10; 5) Tab-Omridon 10; 6) Tab-Renova; 7) Tab-Tofuil 20",
    "scheduleCount": 0
   },
   {
@@ -377,9 +377,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 2,
-   "admitsIllegible": true,
-   "name": "Handwritten prescription - Cap Amoxicillin, Tab Fero",
-   "dosageText": "Cap Amoxicillin 150 (frequency unclear); Tab Fero-1 20 (frequency unclear)",
+   "admitsIllegible": false,
+   "name": "Handwritten prescription - Cap Amoxicillin, Tab Ferro",
+   "dosageText": "Cap Amoxicillin 500mg; Tab Ferro 120mg",
    "scheduleCount": 0
   },
   {
@@ -389,10 +389,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 4,
    "admitsIllegible": false,
-   "name": "Dengue Fever treatment order - Inf 5% DNS, Syrup Napa, Supp Napa",
-   "dosageText": "Diet: Normal with plenty of fluid. Inf 5% DNS (210ml) IV @ 35ml/min for 6 hours (1.5ml/kg/hr) - Syrup Napa 3 TSF x 6 hourly if Temp >/=100°F - Supp Napa (500mg) 2/3rd stick PR if temp >/=102°F. Please monitor vitals regularly. Later order: Inf 5% DNS (210ml) IV @ 35ml/min for 24 hours daily",
+   "name": "Dengue Fever treatment orders - Inf 5% DNS, Syrup Napa, Supp Napa",
+   "dosageText": "Inf 5% DNS (210ml) IV @ 35ml/min for 6 hours (1.5ml/kg/hr); Syrup Napa 3 TSF x 6 hourly if Temp >100°F; Supp Napa (500mg) 2/3rd stick PR if temp >102°F; Inf 5% DNS (210ml) IV @ 35ml/min for 24 hours daily",
    "scheduleCount": 0
   },
   {
@@ -404,9 +404,9 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient orders - Pulmonary TB (infant)",
-   "dosageText": "Diet: Breast feeding + NG feeding 40ml x 2hourly. Inj. Tazid (1g/10ml) 2.75ml+10ml IVF, IV stat slowly over 30min, 12hourly. ORS: 1 sachet mixed with 500ml water, 6 TSF every time after purging or stool passes. Syp Napa 1/2 TSF PO-SOS if temp>100, 6hourly. Syp Histal 1/2 TSF x 12hourly.",
-   "scheduleCount": 4
+   "name": "Handwritten inpatient orders - Pulmonary TB (Inj Tazid, ORS, Syp Napa, Syp Histal)",
+   "dosageText": "Diet: Breast feeding, NG feeding 40ml x 2hrly. Inj Tazid (1g/10ml) - 2.75ml + 10ml IVF, IV stat slowly over 30 min, 12 hourly. ORS: 1 sachet mixed with 500ml water, 6 tsf every time after purging or stool passes. Syp Napa 1/2 tsf PO - SOS (if temp >100), 6 hourly. Syp Histal 1/2 tsf x 12 hourly.",
+   "scheduleCount": 0
   },
   {
    "img": "31.jpeg",
@@ -415,10 +415,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 9,
+   "found": 5,
    "admitsIllegible": false,
-   "name": "NICU medical orders - preterm VLBW neonate with RDS/EONS",
-   "dosageText": "NPO/TFO; CPAP care; OG tube suction; Inf. 10% DA (102ml) IV @ 4.2ml/hr; Inj. Ceftazidime (250mg/2.5ml) 0.8ml+3.6ml IVF very slowly over 30min - 12hourly; Inj. Kacin (100mg/2ml) 24 unit IV stat - 12hourly; Inj. K-One 3/2 pump IV stat; Inj. Filin (125mg/5ml) 32 unit IV stat, then 16 unit IV - 12hourly; Monitor vitals regularly",
+   "name": "Neonatal ICU orders - preterm VLBW with RDS/EONS",
+   "dosageText": "Inf. 10% DA (102ml) IV @ 4.2ml/hr; Inj. Ceftazidime (250mg/2.5ml) 0.8ml+9.6ml IVF, very slowly over 30min - 12hourly; Inj. Kacin (100mg/2ml) 24 unit IV stat - 12hourly; Inj. K-One 3/2 pump IV stat; Inj. Filin (125mg/5ml) 32 unit IV stat, then 16 unit IV - 12hourly",
    "scheduleCount": 0
   },
   {
@@ -428,10 +428,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 3,
-   "admitsIllegible": false,
-   "name": "Handwritten inpatient prescription (Penvik, Furoclav, Inj Lasix)",
-   "dosageText": "Tab Penvik 250mg 1+1+1+1; Tab Furoclav 250mg 1+0+1; Inj Lasix 20mg/2ml 1 amp IV stat & SOS (after measuring BP)",
+   "found": 4,
+   "admitsIllegible": true,
+   "name": "Handwritten inpatient prescription with multiple medications",
+   "dosageText": "Tab Penvik (250mg) 1+1+1+1; Tab Furodav (250mg) 1+0+1; Tab (illegible, crossed out); Inj Lasix (20mg/2ml) 1 amp IV stat & SOS after measuring BP",
    "scheduleCount": 0
   },
   {
@@ -443,8 +443,8 @@
    "handwritten": true,
    "found": 10,
    "admitsIllegible": false,
-   "name": "Neonatal sepsis treatment orders",
-   "dosageText": "O2 inhalation 6L/min via face mask; OP-NP suction 6hrly; NPO/TFO; Inj. 10% DA 4ml IV stat; Inj. Electrodex-10 (@150mg) 3ml/hour via syringe pump; Inj. Ceftazidime 500mg (1ml+4ml IVF) IV over 10mins stat then 8hrly; Inj. Amikacin (100mcg/2ml) 0.3ml IV stat then 12hrly; Nebulisation with I-Prex (0.2ml+2.8ml N/S) stat then 8hrly; Solo nasal drops 2 drops each nostril 6hrly; P/O2 inhalation via HB @ 10L/min",
+   "name": "Neonatal sepsis treatment orders (O2, IV fluids, antibiotics, nebulisation)",
+   "dosageText": "O2 inhalation 6L/min via FM; OP-NP suction 6hrly; NPO+FO; Inj 10% DA (4ml) IV stat; Inj Electrodex-10 (@150mg) 5ml/hour syringe pump; Inj Ceftazidime (500mg/vial) 1ml+4ml IVF IV over 10mins start x 8hrly; Inj Amikacin (100mg/2ml) 0.3ml IV stat x 12hrly; Nebulisation with I-Prex 0.2ml+2.8ml N/S stat x 8hrly; Sole nasal drops 2 drops in each nostril x 6hrly; PLAN: O2 inhalation via HB @ 10L/min",
    "scheduleCount": 0
   },
   {
@@ -456,8 +456,8 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient chart - suspected Dengue fever (Wt 14kg)",
-   "dosageText": "Inf St. DNS 1200ml IV @ 20 microdrops/min over 6 hours upto 2:00AM; Syp Napa 1½ tsf SOS if temp≥100°F 6hourly; Nebulization with 3% NaCl 3ml 8hourly; Syp Histacin 1 tsp BD; Supp Napa (250mg) 2/3 stick P/R if fever >102°F",
+   "name": "Handwritten inpatient order sheet - ? Dengue fever / Viral fever, Wt 14kg",
+   "dosageText": "Inf Sy. DNS 1200ml IV @ 20 microdrops/min over 6 hours upto 2:00AM; Syp Napa 1½ TSF SOS if temp≥100°F 6hourly; Nebulization with 3% Nacl 3ml 8hourly; Syp Histacin 1 tsp x BD; Supp Napa (250mg) 2/3 stick P/R if fever >102°F",
    "scheduleCount": 0
   },
   {
@@ -469,8 +469,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient orders - Dengue Fever with warning signs",
-   "dosageText": "Inf. 5% DNS (410 mL) IV @ 68 mL/min over 6 hours upto 4 PM (3 mL/kg); Inj. Omeprazole (40 mg/10 mL) 5.7 mL IV - OD; Inj. Algin 1 amp IV stat & SOS",
+   "name": "Dengue fever - inpatient treatment orders",
+   "dosageText": "Inf. 5% DNS (410 mL) IV @ 68 mL/min over 6 hours upto 4 PM (3 mL/kg); Inj. Omeprazole (40mg/10mL) 5.7 mL IV - OD; Inj. Algin 1 amp IV stat & SOS",
    "scheduleCount": 0
   },
   {
@@ -480,10 +480,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten pediatric prescription for febrile seizure",
-   "dosageText": "Diet: NPO, TFO Normal. Inj. CEFTRIAXONE (1gm/10ml) (8ml+10ml IVF) IV slowly over 30mins - once daily. Syp. Napa (120mg/5ml) 1½ TSF x 6hourly [if temp ≥100°F]. Supp. Napa (250mg) 2/3rd stick P/R [if temp ≥102°F]. Tab. Sedil (5mg) 1/2+1/2+1/2. ORS advised.",
+   "name": "Prescription for febrile seizure (Inj. Ceftriaxone, Syp/Supp Napa, Tab Sedil)",
+   "dosageText": "Inj. Ceftriaxone 1gm/10ml (8ml+10ml IVF) IV slowly over 30 mins - once daily; Syp. Napa (120mg/5ml) 1.5 TSF 6hrly if temp ≥100°F; Supp. Napa 250mg, 2/3rd stick P/R if temp ≥102°F; Tab. Sedil 5mg 1/2+1/2+1/2; ORS",
    "scheduleCount": 0
   },
   {
@@ -495,8 +495,8 @@
    "handwritten": true,
    "found": 11,
    "admitsIllegible": false,
-   "name": "Handwritten pediatric prescription (NG tube feeding + multiple medications)",
-   "dosageText": "NG tube feeding F-75 40ml 2hrly (total k feed); Inj. Colistin 150mg/5ml (1.2ml+10ml IVF) IV very slowly over 30 min, 8hrly; Syp. Orastin 50mg/5ml, 1/2 tsf (2.5ml) P/O once daily; Syp. Ihacet 500mg/5ml, 0.5ml (08 drops) P/O 12hrly; Syp. Napa 120mg/5ml, 3ml P/O 6hrly if temp >100F; Syp. Bicozin 1 tsf P/O once daily; Syp. B6 1/2 tsf P/O once daily; Tab Trihexy 2mg, 1/4 to 1/4; Nystatin drop, 2 drops apply over tongue & oral cavity 12hrly; Micoral gel apply locally 8hrly; Monitor vitals regularly",
+   "name": "Handwritten inpatient medication chart - severe acute malnutrition with bronchopneumonia, meningitis, candida UTI",
+   "dosageText": "NG tube feeding F-75 40ml 2hourly (total feed); Inj. Colistin 150mg/5ml (1.2ml+10ml IVF) IV very slowly over 30min 8hourly; Syp. Orastin 50mg/5ml 1/2tsf (2.5ml) PO once daily; Syp. Ithacet 500mg/5ml 0.5ml (08 drops) PO 12hourly; Syp. Napa 120mg/5ml 3ml PO 6hourly if temp >100F; Syp. Bicozin 1tsf PO once daily; Syp. B6 1/2tsf PO once daily; Tab Trihexy 2mg 1/4 to 1/4; Nystatin drop 2drop apply over tongue and oral cavity 12hourly; Miconaz gel apply locally 8hourly; Monitor vitals regularly",
    "scheduleCount": 0
   },
   {
@@ -506,10 +506,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 9,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient prescription - Acute Gastroenteritis (No dehydration)",
-   "dosageText": "Facecto 5mg/mL, wt 5kg. Diet - Normal. Inf 5% DNS 700mL IV @ 30ml/min over 8hr. Inj Ciprofloxacin (800mg/100mL) 35ml+80ml IVF IV slowly stat, then 18hrly. Inj Emistat (8mg/4mL) 0.7ml IV 8hrly. ORS - N. Syp Nada 1 TSF x 8hrly. Nebulization c 3% NaCl (3mL) 6hrly. Nasool Nasal Drop 1 drop in each nostril x 6hrly. Monitor vitals.",
+   "name": "Handwritten inpatient prescription sheet - Acute Gastroenteritis (No dehydration)",
+   "dosageText": "Diet - Normal; Inf 5% DNS 700mL IV @ 30 gtt/min over 8hrs; Inj Ciprofloxacin 800mg/100mL, 35mL+80mL IVF IV slowly stat & 18hrly; Inj Zoniostat 8mg/4mL, 0.7mL IV 8hrly; ORS - N; Syp Nada 1 TSF x 8hrly; Nebulization with 3% NaCl (3mL) 6hrly; Nasool Nasal Drop, 1 drop in each nostril x 6hrly; Monitor vitals",
    "scheduleCount": 0
   },
   {
@@ -521,7 +521,7 @@
    "handwritten": true,
    "found": 2,
    "admitsIllegible": false,
-   "name": "Handwritten prescription for Enteric Fever",
+   "name": "Handwritten prescription - Enteric Fever",
    "dosageText": "Tab Napa 500mg 1+1+1 (if fever >100°C); Inj Ceftriaxone 1g/10ml (20ml+10ml IVF) - 12 hourly",
    "scheduleCount": 0
   },
@@ -532,10 +532,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 4,
    "admitsIllegible": false,
-   "name": "Enteric fever treatment orders",
-   "dosageText": "Diet - Normal. Inf 5% DNS (684ml) IV @ 28ml/min for 24 hours & daily. Inj Ceftriaxone 1g/10ml IV (7.5ml + 10ml NS) - BD slowly over 30 mins. Inj Emistat 8mg/4ml, 2ml IV stat & SOS. Inj Algin 1/2 amp IV stat & SOS.",
+   "name": "Fresh medication order - Enteric fever",
+   "dosageText": "Inf 5% DNS (684ml) IV @ 28ml/min for 24 hours & daily; Inj Ceftriaxone 1gm IV (in 10ml NS) BD slowly over 30 mins; Inj Emistat (8mg/4ml) 2ml IV stat & SOS; Inj Algin 1/2 amp IV stat & SOS",
    "scheduleCount": 0
   },
   {
@@ -548,8 +548,8 @@
    "found": 7,
    "admitsIllegible": false,
    "name": "Handwritten admission orders - AGE with some dehydration",
-   "dosageText": "Diet: Breast feeding + plenty fluid; Inf. Cholera saline (690mL) IV stat @ 115 microdrops/min; Syp. Zinc 1 TSF x 2 times daily; ORS 15 teaspoons after each stool; Inj. Emitat 1 mL IV stat & SOS; Syp. Napa 1 TSF x 3 times daily; Inf. Cholera saline (230mL) IV stat @ 35 microdrops/min",
-   "scheduleCount": 0
+   "dosageText": "Diet: Breast feeding + plenty fluid; Inf. Cholera saline (690mL) IV stat @ 115 microdrops/min; Syp. Zinc 1 tsf x 2 times daily; ORS 15 teaspoons after each stool; Inj. Emital 1 mL IV stat & SOS; Syp. Napa 1 tsf x 3 times daily; Inf. Cholera saline (230mL) IV stat @ 35 microdrops/min",
+   "scheduleCount": 4
   },
   {
    "img": "42.jpeg",
@@ -560,9 +560,9 @@
    "handwritten": true,
    "found": 9,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Nephrotic syndrome with Pneumonia",
-   "dosageText": "Inj. Moxaclav (1.2g/20ml): 2ml+10ml INF IV stat slowly & 8hrly; Inj. Lasix: 1 amp IV stat & BD (8am, 8pm after checking BP); Nebulization with Budecort 1ml+2ml N/S - 8hrly; Nebulization with Duolin/Sulprex 0.5ml+2.5ml N/S - 8hrly; Syp. Histacin 1 tsf BD; Tab. Telbo-D 1/2+0+1/2; Tab. B-complex 1+0+1; Tab. Cofran 20mg 2+0+0; Syp. Formotacil 1/2 tsf once daily",
-   "scheduleCount": 0
+   "name": "Handwritten pediatric prescription - Nephrotic Syndrome with Pneumonia",
+   "dosageText": "Inj. Moxaclav (1.2g/20ml) 8ml+10ml INF IV stat slowly & 8hrly; Inj. Lasix 1 amp IV stat & BD (8am/8pm after checking BP); Nebulization with Budecort 1ml+2ml N/S 8hrly; Nebulization with Sulprex 0.5ml+2.5ml N/S 8hrly; Syp. Hintacin 1 tsf BD; Tab. Telbo-D 1/2+0+1/2; Tab. B-complex 1+0+1; Tab. Cotarn 20mg 2+0+0; Syp. Fornotacc 1/2 tsf once daily",
+   "scheduleCount": 10
   },
   {
    "img": "43.jpeg",
@@ -571,11 +571,11 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 12,
+   "found": 11,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient medication chart (SRNS with steroid toxicity, Cushing syndrome, pleural effusion)",
-   "dosageText": "Inj. Ceftriaxone 2g/10ml - 1.0ml IV slowly x12hourly; Inj. Lasix 20mg/2ml - 1amp IV 8.00am-OD; Inj. Cotson 100mg/2ml - 0.4ml+30ml NS IV slowly x8hourly; Tab. Atova 20mg - 0+1+0; Tab. Nifin SR 20mg - 2+0+1 (8.00am/8.00pm); Tab. Alphapness 2mg - 2+2+2+2 (6am,12pm,6pm,12am); Tab. Enaril 5mg - 1+0+1 <10.00am; Tab. Histacin 4 - 1+0+1 10.00pm; Luli 20 1 cream - apply locally x12days; Elimate plus lotion - apply whole body except face x1, then 7days; Tab. Sandopa 250 - 1+0+1; Adv. CXR, MT",
-   "scheduleCount": 0
+   "name": "Handwritten inpatient medication chart - SDNS with steroid toxicity",
+   "dosageText": "Inj. Ceftriaxone 2g/10ml - 10ml IV slowly x12hourly; Inj. Lasix 20mg/2ml - 1amp IV, 8:00am-OD; Inj. Cotson 100mg/2ml - 0.4ml+30ml NS IV slowly x8hourly; Tab. Atova 10mg - 0+1+0; Tab. Nifin SR 20mg - 2+0+1; Tab. Alphapress 2mg - 2+2+2+2; Tab. Enaril 5mg - 1+0+1; Tab. Histacin 4 - 1+0+1; Tab. Sandopa 250 - 1+0+1; Luli 2% cream apply locally x12hrly; Elimate plus lotion apply whole body except face & scalp, often 7days",
+   "scheduleCount": 7
   },
   {
    "img": "44.jpeg",
@@ -584,11 +584,11 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 7,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Acute watery diarrhoea with some dehydration and MAM",
-   "dosageText": "Diet: Normal. Inj. Emistat (8mg/4ml) IV 0.5ml 8hourly; Syp. Napa (120mg/5ml) 1 TSF P/O 8hourly; Syp. Histacin 1/2 TSF SOS; Nasal drop Norsol 3 drops each nostril 8hourly; ORS 10 TSF after each loose stool; Inf. 5% DNS 500ml IV @ 20ml/hr over 24hrs by syringe pump with 0.5ml Inj. KT in each 100ml IVF; Syp. Xine 1 TSF BD",
-   "scheduleCount": 6
+   "name": "Handwritten fresh order for acute watery diarrhoea with dehydration",
+   "dosageText": "Diet: Normal. ORS. Inj. Emistat (8mg/4ml) IV 0.5ml, 8hourly. Syp. Napa (120mg/5ml) 1 TSF P/O, 8hourly. Syp. Histacin 1/2 TSF, SOS. Nasal drop Norsol 3 drops each nostril, 8hourly. ORS 10 TSF after each loose stool. Please monitor vitals. (P/A 2PM) Inf. 5% DNS (500ml) IV @ 20ml/hr - 24hrs by syringe pump + (0.5ml) inj. KT in each 100ml IVF. Syp. Xine 1 TSF x BD",
+   "scheduleCount": 0
   },
   {
    "img": "45.jpeg",
@@ -597,10 +597,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 11,
+   "found": 10,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient orders - Bronchopneumonia with CHD (VSD+ASD)",
-   "dosageText": "Diet: NPO; NP-OP suction SOS; O2 inhalation 5 L/min via face mask; Inf. 5% DNS (500ml) IV @ 20 ud/min; Inj. Ceftriaxone (3gm/10ml) 6ml + 10ml IVF very slowly over 30min - OD; Nebulization with 3% NaCl 3ml - 4 hourly; Normosol nasal drop 1 drop each nostril x 4 hourly; Adv: CBC, Ig/G/M for Dengue, CXR; Inj. Lasix 20mg/2ml 0.8ml IV stat; Suppository Napa 1/2 of 1 stick PR if temp>102F, stat & SOS; Syp. Napa 1/2 TSF if temp<102F, stat",
+   "name": "Handwritten inpatient medication orders - Bronchopneumonia with CHD (VSD+ASD)",
+   "dosageText": "Diet: NPO; NP-OP suction SOS; O2 inhalation 5 L/min via face mask; Inf. 5% DNS (500ml) IV @ 20 microdrop/min; Inj. Ceftriaxone (1gm/10ml) 6ml + 10ml IVF very slowly over 30 min - OD; Nebulization with 3% NaCl 3ml - 4hourly; Normal saline nasal drop 1 drop each nostril x 4hourly; Inj. Lasix 20mg/2ml, 0.8ml IV stat; Suppository Napa if temp >102°F, 1/2 of 1 stick PR stat & SOS; Syp. Napa 1/2 TSF if temp <102°F stat",
    "scheduleCount": 0
   },
   {
@@ -610,10 +610,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 3,
    "admitsIllegible": false,
    "name": "Handwritten prescription - Simple Febrile Seizure with Dengue Fever",
-   "dosageText": "Diet: Normal. Syp. NAPA (120mg/5ml) 1 tsp x 3 times [if Fever >100°F]. Supp. NAPA 250mg 2/3 stick PR [if Fever >102°F]. Tab. Sedil 1/2 + 1/2 + 1/2. Please maintain the temp chart & monitor vitals. Adv: CBC, SGOT",
+   "dosageText": "Syp. NAPA (120mg/5ml) 1 tsp x 3 times [if Fever >100°F]; Supp. NAPA 250mg 2/3 stick PR [if Fever >102°F]; Tab. Sedil 1/2+1/2+1/2",
    "scheduleCount": 0
   },
   {
@@ -625,8 +625,8 @@
    "handwritten": true,
    "found": 2,
    "admitsIllegible": false,
-   "name": "Neonatal jaundice prescription notes",
-   "dosageText": "Drop Vit D (400IU/mL) - 1 mL OD; Syp. DARBIT (20mg/5mL) - 2 mL every 12 hourly",
+   "name": "Handwritten neonatal prescription - Vit D drops & Syp Darolit",
+   "dosageText": "Drop Vit D (400IU/mL) 1mL OD; Syp. Darolit (20mg/5mL) 2mL 12 hourly",
    "scheduleCount": 0
   },
   {
@@ -638,8 +638,8 @@
    "handwritten": true,
    "found": 9,
    "admitsIllegible": false,
-   "name": "Dengue Shock Syndrome treatment sheet",
-   "dosageText": "Diet-1: Normal with plenty of fluid; O2 inhalation 24 min by face mask; Inf. 5% DNS (432ml) IV @ 36ml/hr over 12 hours; Inj. Meropenem (500mg/10ml) 9.6ml+20ml IV fluid, IV slowly over 30 mins, 8hourly; Inj. Vancomycin (500mg/10ml) 7.2ml+10ml IV fluid, IV slowly over 30 min, 8hourly; Inj. Omeprazole (40mg/10ml) 6ml IV - 12hourly; Tab PIC 500mg 1+1+1 (if temp >100°F); Nebulization with Windel plus 0.7ml+2.3ml N/S - 6hourly; Inj. Emisfat (8mg/4ml) 2ml IV & SOS",
+   "name": "Dengue Shock Syndrome treatment orders",
+   "dosageText": "Diet-1: Normal diet with plenty of fluid; O2 inhalation 24 min by face mask; Inf. 5% DNS (432ml) IV @ 36ml/hr over 12 hours; Inj. Meropenem (500mg/10ml) 9.6ml+20ml IV fluid, IV slowly over 30 mins, 8 hourly; Inj. Vancomycin (500mg/10ml) 7.2ml+10ml IV fluid, IV slowly over 30 min, 8 hourly; Inj. Omeprazole (40mg/10ml) 6ml IV - 12 hourly; Tab PLC 500mg 1+1+1 (if temp >100°F); Nebulization with Windel plus 0.7ml+2.3ml N/S - 6 hourly; Inj. Emisfat (8mg/4ml) 2ml IV & SOS",
    "scheduleCount": 0
   },
   {
@@ -651,8 +651,8 @@
    "handwritten": true,
    "found": 8,
    "admitsIllegible": false,
-   "name": "Handwritten pediatric prescription - Bronchiolitis/Bronchopneumonia",
-   "dosageText": "Inj. Ceftriaxone 1gm/10ml (4.8ml) + 10ml IV fluid, IV @ 30 ud/m stat - once daily; Inf. 5% DNS (480ml) IV @ 20 ud/m stat over 24 hrly; Solo nasal drop - 1 drop in each nostril 6 hrly; Drop. Ace (1.5ml) - 22 drops PIO QDS; OP-NP suction 6 hrly; O2 inhalation via nasal cannula 2L SOS; Nebulization with 3% NaCl 3ml stat & 4 hrly; Diet: Breast milk NG feed 40ml x 2 hrly - 12 feed",
+   "name": "Bronchiolitis with Bronchopneumonia - inpatient orders",
+   "dosageText": "OP-NP suction 6hrly; O2 inhalation via nasal cannula 2L SOS; IV Inf. 5% DNS (480ml) @ 20 ud/m stat over 24hrly; Inj. Ceftriaxone 1gm/10ml (4.8ml) + 10ml IV fluid @ 30 ud/m stat, once daily; Solo nasal drop 1 drop each nostril 6hrly; Drop Acc (1.5ml)-22 drops p/o QDS; 07.12.25: Nebulization with 3% NaCl 3ml stat & 4hrly; 08.12.25: Diet Breast milk, NG feed 40ml x 2hrly - 12 feed",
    "scheduleCount": 0
   },
   {
@@ -664,9 +664,9 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten pediatric prescription (ORS, antiemetic, zinc, antifungal cream & syrup)",
-   "dosageText": "ORS 50ml after each purging; Inj Emistat 0.7ml stat & SOS; Syp Zinc 1 tsf 12 hourly; Fungidal H/C cream apply locally 12 hourly; Syp Flugal 1 tsf at night",
-   "scheduleCount": 0
+   "name": "Handwritten pediatric prescription (ORS, Emistat, Zinc, Fungidal, Flugal)",
+   "dosageText": "ORS - 50ml after each purging; Inj Emistat 0.7ml stat & 8hourly SOS; Syp Zinc 1 tsf - 12hourly; Fungidal H/C cream apply locally - 12hourly; Syp Flugal 1 tsf at night",
+   "scheduleCount": 5
   },
   {
    "img": "51.jpeg",
@@ -675,10 +675,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 6,
+   "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient orders - Febrile convulsion / simple febrile seizure",
-   "dosageText": "Diet-NPO,TFO; Inj. 5% DNS (1000ml) IV @ 24 gtt/min; Tab. Sedil 5mg 1/3+1/3+1/3; Syp. Napa (120mg/5ml) 1½ tsf x 6hrly if temp ≥100°F; Napa suppo 125mg 1 stick P/R if temp ≥102°F; Inj. Emistat (8mg/4ml) 0.8ml IV slowly stat & TDS",
+   "name": "Handwritten inpatient orders - febrile convulsion",
+   "dosageText": "Inj. 5% DNS (1000mL) IV @ 29 gtt/min; Tab. Sedil 5mg 1/3+1/3+1/3; Syp. Napa (120mg/5mL) 1.5 tsf x 6hrly if temp ≥100°F; Napa suppo 125mg 1 stick P/R if temp ≥102°F; Inj. Emistat (8mg/4mL) 0.8mL IV slowly stat & TDS",
    "scheduleCount": 0
   },
   {
@@ -688,10 +688,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 7,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Bronchopneumonia treatment plan",
-   "dosageText": "Diet: NPO-TFO; OP-NP suction 6hrly; O2 inhalation via nasal cannula 2L SOS; IV 5% DNS (480ml) @20 ud/m stat over 24 hrly; Inj. Ceftriaxone 1gm/10ml (4.8ml) + 10ml IV fluid @30 ud/m stat, once daily; Solonasal drop 1 drop each nostril 6hrly; Drop Ace (1.5ml) 22 drops p/o QDS",
+   "name": "Handwritten inpatient orders for bronchopneumonia",
+   "dosageText": "Diet: NPO/TFO. OP-NP suction 6hrly. O2 inhalation via nasal cannula 2L SOS. Inf. 5% DNS (480ml) IV @20 ud/m stat over 24hrly. Inj. Ceftriaxone 1gm/10ml (4.8ml) + 10ml IV fluid @30 ud/m stat, once daily. Solonasal drop 1 drop in each nostril 6hrly. Drop Ace (1.5ml) 22 drops p/o QDS.",
    "scheduleCount": 0
   },
   {
@@ -703,8 +703,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient orders - Bronchiolitis / Bronchopneumonia",
-   "dosageText": "Diet: NPO-TFO. OP-NP suction 6hrly. O2 inhalation via nasal canula 2L-SOS. Inf. 5% DNS (480ml) IV @ 20 ud/m stat over 24hrly. Inj. Ceftriaxone 1gm/10ml (4.8ml) + 10ml IV fluid stat, @30 ud/m stat, Once daily. Solonasal drop: 1 drop in each nostril 6hrly. Drop Ace (1.5ml) - 22 drops p/o QDS. P/A 07.12.25 @10.00Am: Nebulization with 3% NaCl 3ml stat & 4hrly",
+   "name": "Handwritten inpatient orders for Bronchiolitis/Bronchopneumonia",
+   "dosageText": "Diet: NPO-TFO. OP-NP suction 6 hrly. O2 inhalation via nasal canula 2L - SOS. Inf. 5% DNS (480ml) IV @20 ud/m stat over 24 hrly. Inj. Ceftriaxone 1gm/10ml (4.8ml) + 10ml IV fluid stat @30 ud/m, once daily. Solonasal drop: 1 drop each nostril, 6 hrly. Drop. Ace (1.5ml) - 22 drops p/o, QDS. Nebulization with 3% NaCl 3ml - stat & 4hrly",
    "scheduleCount": 0
   },
   {
@@ -716,8 +716,8 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": false,
-   "name": "DSS Fresh Order - IV Fluids and Medications",
-   "dosageText": "Inf 5% DNS (234mL) IV @ 39 ud/min stat over 6hrs upto 9:40pm; Inj Emistat 8mg/4mL, 1mL IV OD-SOS; Syp Napa 120mg/5mL, 2 TSF x 6hrly [if temp>100F]; Supp Napa 250mg, 2/3 stick P/R - SOS [if temp>102F]; Monitor vital signs regularly & maintain temp chart",
+   "name": "Fresh Order - DSS (Fluids, Emistat, Napa)",
+   "dosageText": "Inf 5% DNS (234mL) IV @ 39ud/min stat over 6hrs upto 9:40pm; Inj Emistat (8mg/4mL) 1mL IV BD-SOS; Syp Napa (120mg/5mL) 2 TSF x 6hrly [if temp>100F]; Supp Napa (250mg) 2/3 stick P/R - SOS [if temp>102F]; O2 monitor vital signs regularly & maintain temp chart",
    "scheduleCount": 0
   },
   {
@@ -727,10 +727,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 10,
+   "found": 12,
    "admitsIllegible": false,
-   "name": "Handwritten hospital treatment chart - Bronchopneumonia",
-   "dosageText": "NPO for 6hrs; O2 inhalation to maintain SpO2; Inf. 5% DNS (264ml) IV @11ml/hr; Inj. Tazid 1.7ml IV slowly stat then 12hrly; Inj. Kacin 0.5ml IV slowly stat then 12hrly; Normsol nasal drops 2 drops each nostril 6hrly; Nebulization with 3% NaCl 3ml x 6hrly; Supp. Napa 60mg 2/3 stick PR if fever >102F; Syp P/C 1/3 tsf x 6hrly if temp>100F; Syp Napa 1/2 tsf 6hourly",
+   "name": "Handwritten inpatient orders for Broncho-pneumonia",
+   "dosageText": "Dx: Broncho-pneumonia. NPO for 6 hrs; O2 inhalation to maintain SpO2; IVF 5% DNS (264ml) IV @11ml/hr; Inj. Tazid 1.7ml IV slowly stat then 12hrly; Inj. Kacin 0.5ml IV slowly stat then 12hrly; Nomsol nasal drops 2 drops each nostril 6hrly; Nebulization with 3% NaCl 3ml x 6hrly; Supp. Napa (60mg) 2/3 stick PR if fever >102F; Syp P/C 1/3 tsf x 6hrly if temp >100F; Syp Napa 1/2 tsf 6hourly; advised CBC, CXR AP view, CRP, MT, stool for GeneXpert culture; Diet - Normal",
    "scheduleCount": 0
   },
   {
@@ -742,8 +742,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Dengue with warning signs - inpatient fluid & medication chart",
-   "dosageText": "Diet - Regular (fluid rich). Inf. 5% DNS (100ml) 50 microdrops/min IV over 2 hrs (5ml/kg/hr). Syp. Napa (120mg/5ml) 6ml x 4 times if Temp ≥100°F. Supp. Napa (250mg) 2/3 stick P/R if Temp ≥102°F. Multiple sequential IV 5% DNS infusions at varying rates (15 microdrops/min, 29 microdrops/min, 20 microdrops/min etc.) over different durations across 03/12/25-05/12/25 admission dates. Nebulization with Windel Plus 0.4ml + 2.6ml NS stat then 6 hourly.",
+   "name": "Dengue fever inpatient fluid/medication chart",
+   "dosageText": "Dengue with Warning sign. Diet - Regular (fluid + rich). Inf. 5% DNS various volumes/rates IV over stated hours (e.g., 5ml/kg/hr, 1.5ml/kg/hr, 1.5ml/kg/min doses per entries). Syp. Napa (120mg/5ml) 6ml x 4 times if Temp ≥100°F. Supp. Napa (250mg) 2/3 stick P/R if Temp ≥102°F. Nebulization with Windet Plus 0.4ml + 2.6ml NS stat then 6 hourly. Adv: CXR.",
    "scheduleCount": 0
   },
   {
@@ -753,10 +753,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 2,
+   "found": 14,
    "admitsIllegible": false,
-   "name": "Hospital admission drug orders (multiple medications)",
-   "dosageText": "Diet: soft, fluid restricted 1.2L/day. O2 inhalation 2-4L/min SOS to maintain SpO2>90%. Bed rest propped up. Tab Ecospirin 75mg 0+1+0. Tab Lopinel 75mg 0+1+0. Tab Atova 40mg 0+0+1. Inj Lasix 20mg - 2amp IV stat then 25mg undiluted @1ml/hr via syringe pump. Inj Cotson 100mg 1 vial IV 8 hourly. Inj Moxadov 1-2gm 1 vial IV slowly stat and 8 hourly. Tab Ivoprin 5mg 1+0+1. Tab Osartil 25mg 0+0+1. Tab Portmiz 20mg 1+0+1 (2hr before/meal). Nebulization with Windel plus stat and 4 hourly. Nebulization with Budicort stat and 12 hourly. Tab GTN SR 2.6mg 1+1+0. Maintain intake-output chart. Later: Inj Pethidine 100mg 1/2 amp IV slowly stat SOS; Inj Emistat 8mg 1 amp IV stat with Pethidine.",
+   "name": "Handwritten inpatient drug chart - multiple medications",
+   "dosageText": "Tab. Ecospirin 75mg 0+1+0; Tab. Lopinel 75mg 0+1+0; Tab. Atova 40mg 0+0+1; Inj. Lasix 20mg - 2 amp IV stat then 25mg undiluted @1ml/hour via syringe pump; Inj. Cotson 100mg 1 vial IV 8hrly; Inj. Moxadov 1.2gm 1 vial IV slowly stat and 8hrly; Tab. Ivoprin 5mg 1+0+1; Tab. Osartil 25mg 0+0+1; Tab. Pantriz 20mg 1+0+1 (1hr before meal); Nebulization with Windel plus - stat and 4hrly; Nebulization with Budicort - stat and 12hrly; Tab. GTN SR 2.6mg 1+1+0; PIA: Inj. Pethidine 100mg 1/2 amp IV slow stat SOS; Inj. Emistat 8mg 1 amp IV stat with Inj. Pethidine",
    "scheduleCount": 0
   },
   {
@@ -766,10 +766,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 9,
+   "found": 1,
    "admitsIllegible": false,
    "name": "Handwritten hospital medication order sheet",
-   "dosageText": "Tab. Naproxen 250mg 1+1+1 (A/N); Cap. Omeprazole 20mg 1+0+1 (B/M); Tab P/C 250mg 1+1+1 (if temp >100°F); Inj. Emistat 8mg/4ml, 1ml IV stat & TDS; Inj. Omeprazole 5ml IV stat & 8hourly; Inj. Algin 1amp IV stat & 8hourly; Syp. Avolac 1/2 tsf 3 times; Syp. Emistat 1 tsf 3 times; P/R monitor V/S routinely",
+   "dosageText": "Diet - Normal. Tab. Naproxen 250mg 1+1+1 (A/N). Cap Omeprazole 20mg 1+0+1 (B/M). PR monitor V/S routinely. Tab P/C 250mg 1+1+1 (if temp >100°F). Inj Emistat 8mg/1ml, 1ml IV stat & TDS. Inj Omeprazole 5ml IV stat & 8hrly. Inj Algin 1amp IV stat & 8hrly. Syp Avolac 1/2 tsf 3 times. Syp Emistat 1 tsf 3 times.",
    "scheduleCount": 0
   },
   {
@@ -780,9 +780,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 1,
-   "admitsIllegible": true,
+   "admitsIllegible": false,
    "name": "Handwritten prescription - Tab. Metril (0.5mg)",
-   "dosageText": "Tab. Metril (0.5mg) - dosing pattern 0+0+1, 0+0+0, 0+0+1/2 as per lines written (exact digits unclear due to handwriting)",
+   "dosageText": "0+0+8 (before food), 0+0+0 (after food), 0+0+2 (before food) - schedule pattern for Tab. Metril 0.5mg",
    "scheduleCount": 0
   },
   {
@@ -794,8 +794,8 @@
    "handwritten": true,
    "found": 13,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient medication chart (multiple drugs)",
-   "dosageText": "Diet: Liquid; O2 inhalation SOS; Complete bed rest. Tab. Ecosprin 75mg 0+1+0 (A/M); Tab. Clopid 75mg 0+1+0 (A/M); Tab. Tiginor 40mg 0+0+1 (B/M); Tab. Bislol 2.5mg 1+0+0; Tab. Nicorandil RTD 2.6mg 1+1+0; Tab. Ramace 2.5mg 0+0+1; Inj. Cardinex 60mg 1 PFS S/C stat & BD; Inj. Pethidine 100mg (50mg) I/V slowly stat & SOS; Inj. Emistat 8mg 1 amp I/V stat & SOS; Tab. Pantobex 20mg 1+0+1 (B/M); Tab. Pandurca 0.5mg 0+0+1",
+   "name": "Handwritten inpatient medication order sheet",
+   "dosageText": "Diet: Liquid; O2 inhalation SOS; Complete bed rest. Tab Ecosprin 75mg 0+1+0 (A/M); Tab Clopid 75mg 0+1+0 (A/M); Tab Tiginor 40mg 0+0+1 (B/M); Tab Bislol 2.5mg 1+0+0; Tab Nicorand RTD 2.6mg 1+1+0; Tab Ramace 2.5mg 0+0+1; Inj Cardinex 60mg 1 PFS S/C stat & BD; Inj Pethidine 100mg, 50mg IV slowly stat & SOS; Inj Emistat 8mg 1 amp IV stat & SOS; Tab Pantobex 20mg 1+0+1 (B/M); Tab Panduroa 0.5mg 0+0+1",
    "scheduleCount": 0
   },
   {
@@ -808,7 +808,7 @@
    "found": 8,
    "admitsIllegible": false,
    "name": "Inpatient admission orders - Bipolar Affective Disorder (Manic Phase)",
-   "dosageText": "Inj. Haloperidol 5mg 1amp IM x8, 12 hourly; Inj. Perkinil 10mg 1amp IM once daily; Inj. Sedil 10mg 1amp IM at night after monitoring vitals; Tab. Epilim Chrono 500mg 1+0+1; Tab. Multivitamin 0+0+1; Cap. Omeprazole 20mg 1+0+1 (before meal); Keep patient under restraint with soft ligature; Monitor vitals regularly",
+   "dosageText": "1) Inj. Haloperidol 5mg, 1 amp IM, 12 hourly; 2) Inj. Perkinil 10mg, 1 amp IM once daily; 3) Inj. Sedil 10mg, 1 amp IM at night after monitoring vitals; 4) Tab. Epilim Chrono 500mg, 1+0+1; 5) Tab. Multivitamin, 0+0+1; 6) Cap. Omeprazole 20mg, 1+0+1 (before meals); 7) Keep patient under restraint with soft ligature; 8) Monitor vitals regularly",
    "scheduleCount": 0
   },
   {
@@ -818,11 +818,11 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 8,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - schizophrenia medication chart",
-   "dosageText": "1) Tab. Penkinf 5mg 1+0+0; 2) Tab. Lozicum 1mg 0+0+2; 3) Tab. Motigut 10 1+1+1 (B/M); 4) Cap Omeprazole 20mg 1+0+1 (B/M); 5) Syp. Avolac 3756 X TDS; 6) Supp. Glysup 4 stick P/R SOS; Diet - Normal; Please monitor vitals routinely.",
-   "scheduleCount": 0
+   "name": "Handwritten prescription - multiple medications for schizophrenia patient",
+   "dosageText": "1) Diet - Normal. 2) Tab. Penkinf 5mg 1+0+0. 3) Tab. Lozicum 1mg 0+0+2. 4) Tab. Motigut 10 1+1+1 (B/M). 5) Cap Omeprazole 20mg 1+0+1 (B/M). 6) Syp. Avolac 3TSF TDS. 7) Supp. Glysup 4 stick P/R SOS. Please monitor vitals routinely.",
+   "scheduleCount": 9
   },
   {
    "img": "63.jpeg",
@@ -833,8 +833,8 @@
    "handwritten": true,
    "found": 2,
    "admitsIllegible": false,
-   "name": "Handwritten prescription",
-   "dosageText": "Tab Sizoril (5mg) 2+0+2-60 (?); Tab Tripan (2mg) 0+0+2",
+   "name": "Handwritten prescription - Tab Sizoril 5mg and Tab Tripan 2mg",
+   "dosageText": "Tab Sizoril (5mg) 2+0+2; Tab Tripan (2mg) 2+0+2",
    "scheduleCount": 0
   },
   {
@@ -846,8 +846,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Fresh order chart - Bipolar affective disorder (manic phase)",
-   "dosageText": "1) Diet: Normal. 2) Inj. Haloperidol 5mg/mL, 2 amp IM - 8 hourly. 3) Inj. Perkinil 10mg/2mL, 1 amp IM - 12 hourly. 4) Inj. Sedil 10mg/2mL, 1 amp IM - 12 hourly, after monitoring vitals. 5) Tab. Epilim Chrono 500mg, 1+0+1. 6) Tab. Multivitamin, 0+0+1. 7) Cap. Omeprazole 20mg, 1+0+1 (B/M). 8) Keep patient under restraint with soft ligature. 9) Monitor vitals regularly. Advice: CBC with ESR, S. creatinine, S. electrolyte, SGPT, RBS, FT4/TSH, Urine R/E, ECG.",
+   "name": "Fresh psychiatric admission orders - Bipolar affective disorder (manic phase)",
+   "dosageText": "1) Diet: Normal. 2) Inj. Haloped (Haloperidol 5mg/mL) 2 amp IM - 8 hourly. 3) Inj. Perinorm (10mg/2mL) 1 amp IM - 12 hourly. 4) Inj. Sedil (10mg/2mL) 1 amp IM - 12 hourly, after monitoring the vitals. 5) Tab. Epilim Chrono 500mg 1+0+1. 6) Tab. Multivitamin 0+0+1. 7) Cap. Omeprazole 20mg 1+0+1 (B/M). 8) Keep the patient under restraint with soft ligature. 9) Monitor the vitals regularly.",
    "scheduleCount": 0
   },
   {
@@ -859,8 +859,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Psychiatric fresh orders - Bipolar affective disorder (manic phase)",
-   "dosageText": "Diet: Normal. Inj. Halopid (5mg/mL) 2 amp IM - 8 hourly. Inj. Perkinil (10mg/2mL) 1 amp IM - 12 hourly. Inj. Sedil (10mg/2mL). Tab. Epilim Chrono (500mg) 1+0+1. Tab. Multivitamin 0+0+1. Cap. Omeprazole (20mg) 1+0+1 (B/M). Keep patient under restraint with soft ligature. Monitor vitals regularly. Advised: CBC with ESR, S. creatinine, S. electrolyte, SGPT, RBS, FT4/TSH, Urine R/E, ECG.",
+   "name": "Psychiatric inpatient fresh medication orders (Bipolar affective disorder - manic phase)",
+   "dosageText": "1) Diet: Normal. 2) Inj. Halopid (5mg/mL) 2 amp IM - 8 hourly. 3) Inj. Perhinil (10mg/2mL) 1 amp IM - 12 hourly. 4) Inj. Sedil (10mg/2mL). 5) Tab. Epilim Chrono (500mg) 1+0+1. 6) Tab. Multivitamin 0+0+1. 7) Cap. Omeprazole (20mg) 1+0+1 (B/M). 8) Keep patient under restraint with soft ligature. 9) Monitor vitals regularly. Advised investigations: CBC with ESR, S. creatinine, S. electrolyte, SGPT, RBS, FT4/TSH, Urine R/E, ECG. Plan: Start SGA.",
    "scheduleCount": 0
   },
   {
@@ -872,8 +872,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Tab Amiprex 2mg",
-   "dosageText": "Tab Amiprex (2mg) - 2/2 + 0 + 0, before food",
+   "name": "Handwritten prescription - Tab Amiprex",
+   "dosageText": "Tab Amiprex (2 mg) - 2/2 + 0 + 0, before food, continue for 22 days",
    "scheduleCount": 0
   },
   {
@@ -883,11 +883,11 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 2,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient medication orders - SLE with Lupus Nephritis & NPSLE",
-   "dosageText": "Fresh order (19.11.25): Diet - Renal + soft, 1 egg white daily, intake 750ml water/day. Inj. Ceftriaxone 1gm, 1 vial IV 12 hourly. Inj. Lasix 20mg/ml, 1 amp IV BD (8:00am, 4:00pm). Inj. Tracet 500mg, 1 vial mix with 60ml Normal Saline IV stat then 8 hourly. Inj. Los Emistat 8mg, 1 amp IV 8 hourly. Tab. Ramoril 2.5mg 0+0+1. Tab. Reconil 200mg 0+0+1. Tab. MMF 500mg 2+0+2. Tab. Atova 10mg 0+0+1 (B/M). Tab. Famotidine 20mg 1+0+1 (B/M). Tab. PIC 500mg 2+2+2. Supp. Anadol 100mg 1 stick P/R stat. Inf. Solupred 500mg + 100ml NS IV daily for 2 days. Advice: S.Cr, S.Ca, BUN, S.Osm, S.Electrolyte. Later orders: Inj. Cyclo 50 (held). Inj. Emistat 8mg 1 amp IV stat. Inj. Omeprazole 40mg 1 vial IV stat. Continue urinary catheterization.",
-   "scheduleCount": 3
+   "name": "Inpatient medication orders - SLE with Lupus Nephritis and NPSLE",
+   "dosageText": "Diet: Renal + soft protein diet, 1 egg white daily; fluid intake 750 mL water/day. Inj. Ceftriaxone 1gm - 1 vial IV, 12 hourly. Inj. Lasix 20mg/mL - 1 amp IV BD. Inj. Tracet 500mg - 1 vial mixed in 60mL normal saline IV stat, then 8 hourly. Inj. Los Emistat 8mg - 1 amp IV, 8 hourly. Tab. Ramoril 2.5mg - 0+0+1. Tab. Reconil 200mg - 0+0+1. Tab. MMF 500mg - 2+0+2. Tab. Atova 10mg - 0+0+1 (B/M). Tab. Famotidine 20mg - 1+0+1 (B/M). Tab. PIC 500mg - 2+2+2. Supp. Anadol 100mg - 1 stick P/R stat. Inf. Solupred 500mg + 100mL NS IV daily for 2 days. Later orders: Inj. Cyclo 5 (crossed out). Inj. Emistat 8mg 1 amp IV stat. Inj. Omeprazole 40mg 1 vial IV stat. Inj. Sedil 10mg/2mL + 8mL distilled water then 3cc IV stat. Continue urinary catheterization.",
+   "scheduleCount": 0
   },
   {
    "img": "68.jpeg",
@@ -896,10 +896,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - multiple medications",
-   "dosageText": "Tab Speric'd (1mg)/Frenia: 0+0+2 for 8 days, then 0+0+2¾ for 8 days, then 0+0+2 continued. Tab Trihexy (1mg): 2+0+0 continued. Tab Convules ER (200mg): 0+0+2 continued. Tab Clonipres ER (0.1mg): 0+0+2 continued.",
+   "name": "Handwritten prescription - Tab Speric'd/Frenia, Tab Trihexy, Tab Convules ER, Tab Clonipres ER",
+   "dosageText": "1) Tab Speric'd (1mg)/Frenia: 0+0+2 for 8 din, then 0+0+2¾ for 8 din, then 0+0+2 for 6 mash; 2) Tab Trihexy (1mg): 2+0+0 for 6 mash; 3) Tab Convules ER (200mg): 0+0+2 for 6 mash; 4) Tab Clonipres ER (0.1mg): 0+0+2 for 6 mash",
    "scheduleCount": 0
   },
   {
@@ -911,8 +911,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient medication orders",
-   "dosageText": "Diet: Renal + protein (4 egg white daily). Intake 750 mL water/day. Inj. Ceftriaxone 1gm, 1 vial IV - 12 hourly. Inj. Iracet 500mg, 1 vial mix with 20cc N/S IV - 8 hourly. Inj. Emistat 8mg, 1 amp IV - 8 hourly. Tab. Ramoril 2.5mg - 0+0+1. Inj. Omeprazole 40mg, 1 vial IV - 12 hourly. Tab. P/C 500mg - 2+2+2. Inf. Solupred 500mg + 100mL N/S IV daily for 2 days. Inj. Fosfen 2amp + 6cc N/S stat, then Inj. Fosfen 4amp + 1000mL N/S IV @ 10 d/min.",
+   "name": "Handwritten medical orders (F/O) - multiple medications",
+   "dosageText": "Diet: Renal + protein (4 egg white daily). Intake 750 mL water in a day. Inj. CEFTRIAXONE 1gm - 1 vial IV 12 hourly. Inj. IRACET 500mg - 1 vial mix with 20cc N/S IV 8 hourly. Inj. EMISTAT 8mg - 1 amp IV 8 hourly. Tab. RAMORIL 2.5mg - 0+0+1. Inj. OMEPRAZOLE 40mg - 1 vial IV 12 hourly. Tab. P/C 500mg - 2+2+2. Inf. Solupred 500mg + 100mL N/S IV daily for 2 days. Inj. FOSFEN 2amp + 6cc N/S stat, then Inj. FOSFEN 4amp + 1000mL N/S IV @ 10 d/min.",
    "scheduleCount": 0
   },
   {
@@ -922,10 +922,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 2,
+   "found": 12,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient medication orders (F/O sheet)",
-   "dosageText": "Diet: Renal + protein (4 egg white/day); Intake: 750 ml water/day. Inj. Ceftriaxone 1gm - 1 vial IV - 12 hourly. Inj. Iracet 500mg - 1 vial mix with 20cc N/S IV - 8 hourly. Inj. Emistat 8mg - 1 amp IV - 8 hourly. Inj. Omeprazole 40mg - 1 vial IV - 12 hourly. Tab. Reconil 200mg - 0+0+1. Tab. Ramoril 2.5mg - 0+0+1. [HOLD] Tab. MMF 500mg - 2+0+2. Tab. Atova 10mg - 0+0+1 (B/M). Tab. P/C 500mg - 2+2+2. Inf. Solupred 500mg + 100mL N/S IV daily.",
+   "name": "Handwritten inpatient medication orders (F/O 21.11.25)",
+   "dosageText": "Diet: Renal + protein (4 egg white/day); Intake: 750 mL water/day; Inj. Ceftriaxone 1gm, 1 vial IV - 12 hourly; Inj. Tracet 500mg, 1 vial mix with 20cc NS IV - 8 hourly; Inj. Emistat 8mg, 1 amp IV - 8 hourly; Inj. Omeprazole 40mg, 1 vial IV - 12 hourly; Tab. Reconil 200mg - 0+0+1; Tab. Ramoril 2.5mg - 0+0+1; (Hold) Tab. MMF 500mg - 2+0+2; Tab. Atova 10mg - 0+0+1 (B/M); Tab. P/C 500mg - 2+2+2; Inf. Solupred 500mg + 100mL NS IV daily",
    "scheduleCount": 0
   },
   {
@@ -935,11 +935,11 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 11,
+   "found": 12,
    "admitsIllegible": false,
-   "name": "Hospital admission drug orders (AKI on CKD, HTN)",
-   "dosageText": "Diet: Renal, salt & fruit restriction, water intake 1000ml/day. Inj. Meropenem 500mg 1 vial IV stat-TDS; Inj. Peptid 40mg/ml 1 amp IV stat-BD; Inj. Lasix 20mg/ml 2amp IV-BD (8:00am, 4:00pm); Tab. GTN 2.6mg 1+1+0; Tab. Sodichon 600mg 1+1+1; Tab. Nexovas 40mg 0+0+1; Tab. Bisoran 5mg 1+0+0; Tab. Ecosprin 75mg 0+1+0 (A/N); Tab. Atova 10mg 0+0+1 (D/N); Tab. Febus 40mg 0+0+1; maintain vital signs, I/O",
-   "scheduleCount": 2
+   "name": "Hospital admission orders - AUF with HTN and AKI on CKD",
+   "dosageText": "Diet: Renal; Salt & fruit restriction; Water intake 1000ml/day. Inj. Meropenem 500mg 1 vial IV stat-TDS; Inj. Peptid 40mg/ml 1 amp IV stat-BD; Inj. Lasix 20mg/ml 2 amp IV-BD; Tab. GTN 2.6mg 1+1+0; Tab. Sodichek 600mg 1+1+1; Tab. Nexovas 40mg 0+0+1; Tab. Bisoreen 5mg 1+0+0; Tab. Ecosprin 75mg 0+1+0 (A/N); Tab. Atova 10mg 0+0+1 (D/N); Tab. Febus 40mg 0+0+1. Maintain vital signs, I/O.",
+   "scheduleCount": 0
   },
   {
    "img": "72.jpeg",
@@ -948,10 +948,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 8,
+   "found": 7,
    "admitsIllegible": false,
-   "name": "Post-appendectomy prescription notes",
-   "dosageText": "Diet: Liquid. Tab. Turbocef-500 1-0-1; Tab. Renarmo 20 1-0-1; Tab. Rolac 10 1-0-1; Supp. Voltalin-50mg 1 stick P/R x BD; Tab. Perkinil 1/2-0-1/2; Tab. Sedil 1-0-1; DNS 1000ml 6ml/kg with IV Forms 20cc; Diazepam 10mg IV/IM",
+   "name": "Post-appendectomy medication chart",
+   "dosageText": "Tub. Turbocef-500 1+0+1; Tub. Renormo 20 1+0+1; Tab. Rolac 10 1+0+1; Supp. Voltalin-50mg 1 stick p/r BD; Tab. Perckinil 1/2+0+1/2; Tab. Sedil 1+0+1; Diazepam (Diazep) 9/10",
    "scheduleCount": 0
   },
   {
@@ -961,10 +961,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 14,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient prescription - meningo-encephalitis with cellulitis, DM, HTN, stroke history",
-   "dosageText": "1) Inj Ceftriaxone 2g - 1 vial IV stat and 12hrly. 2) Inj Vancomycin 1g mixed with 250ml N/S @10 drop/min IV stat and 12hrly. 3) Inj Virux (Acyclovir) 500mg - 1 vial IV stat and QDS. 4) Inj Roxadex 5mg - 1 vial IV stat and TDS. 5) Inj Emistat 8mg - 1 amp IV stat and SOS. 6) Tab Paracetamol 500mg - 1+1+1 (if temp above 100°F). 7) Tab Rosu 10mg - 0+0+1. 8) Tab Telmidip 40/5mg - 0+0+1. 9) Tab Ancor 5mg - 1+0+0. 10) Tab Linax Plus 2.5/500mg - 1+0+... 11) Cap Omeprazole 20mg - 1+0+1 (B/H)",
+   "name": "Handwritten hospital prescription - Meningo-encephalitis with cellulitis (multiple IV & oral medications)",
+   "dosageText": "Dx: Meningo-encephalitis c cellulitis of right leg, c DM c HTN, c H/O stroke 3 months back.\n1) INJ. CEFTRIAXONE 2g - 1 vial IV stat and 12hrly\n2) INJ. VANCOMYCIN 1g mixed c 250ml N/S @10 drop/min IV stat and 12hrly\n3) INJ. VIRUX 500mg - 1 vial IV stat and BD\n4) INJ. ROXADEX 5mg - 1 vial IV stat and TDS\n5) INJ. EMISTAT 8mg - 1 amp IV stat and SOS\n6) Tab. PARACETAMOL 500mg - 1+1+1 (if temp above 100°F)\n7) Tab. ROSU 10mg - 0+0+1\n8) Tab. Telmidip 40/5mg - 0+0+1\n9) Tab. ANCOR 5mg - 1+0+0\n10) Tab. LINAX PLUS 2.5/500mg - 1+0+_\n11) Cap. OMEPRAZOLE 20mg - 1+0+1 (B/H)\nAdvised: CBC c ESR, S. Electrolytes, S. Creatinine, Urine R/E, ECG, CXR, CT scan of brain.\nRBS - 11.1 mmol/L",
    "scheduleCount": 0
   },
   {
@@ -976,8 +976,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten prescription for suspected acute appendicitis",
-   "dosageText": "Tab. Neoflosein 500 - 1+0+1 before food; Tab. Filmet 400 - 1+1+1 before food; Tab. Algin - 1+1+1 before food",
+   "name": "Handwritten prescription - Acute Appendicitis",
+   "dosageText": "Tab. Neoflosein 500 - 1+0+1 (after food); Tab. Filmet 400 - 1+1+1 (after food); Tab. Algin - 1+1+1 (after food)",
    "scheduleCount": 0
   },
   {
@@ -987,10 +987,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 19,
+   "found": 18,
    "admitsIllegible": false,
-   "name": "Post-operative medication order sheet",
-   "dosageText": "NPO till further order; Inj. Hartmant 1000ml / Inj. DNS 1000ml / Inj. D/A 1000ml i.v 30 d/m; Inj. Nabulex 2 20mg/15mg i.m; Inj. Vergon 1amp i.m; Inj. Ceftriaxone 1gm i.v BD; Inj. Omeprazol 40mg 1amp i.v/1vial BD; Inj. Ketorolac 30mg 1amp i.v BD; Supp. Voltalin 50 BD; Tab. Napa 1+1+1; Tab. Domilin 2+2+2 (crossed out); Tab. Rivo 0.5 0+0+1; Diclofen Suppository 50mg 1টা করে মলদ্বারে ২ বার; Additional: Tab Perfinil 1/2+0+1/2; Tab Sedil 1 dose; Tab. Turbocef-500 1+0+1; Tab. Rennmo 20 1+0+1; Tab. Rolac 1, 1+0+1; Supp. Voltalin 50 BD; Tab. Cevit 250 1+0+1",
+   "name": "Post-operative order sheet",
+   "dosageText": "NPO till further order: Inj. Hartmant 1000ml / Inj. DNS 1000ml / Inj. D/A 1000ml i.v 30 d/m; Inj. Nabulex 2 20mg/15mg i.m; Inj. Vergon 1amp i.m (omit); Inj. Ceftriaxone 1gm/1gm i.v - BD; Inj. Omeprazol 40mg 1amp i.v/1vial - BD; Inj. Ketorolac 30mg 1amp i.v - BD; Supp. Voltalin 50 x BD; Tab. Napa 1+1+1; Tab. Domitin 2+2+2 (crossed out); Tab. Rivo 0.5 0+0+1; Diclofen Suppository 50mg 1টা করে মলদ্বারে ২ বার; Tab Perfinil 1/2+0+1/2; Tab Sedil 2/3 dose; Tab. Turbocef-500 1+0+1; Tab. Renova 20 1+0+1; Tab. Rolu D 1+0+1; Supp. Voltalin 50xBD; Tab. Cevit 250 1+0+1",
    "scheduleCount": 0
   },
   {
@@ -1002,8 +1002,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": true,
-   "name": "Handwritten prescription - Acute Appendicitis",
-   "dosageText": "1 Tab. Ciprox 500 - 1+0+1; 1 Tab. Nexezop - 1+0+1; 1 Tab. (illegible)",
+   "name": "Prescription for Acute Appendicitis - Ciprox 500 & Nexezop",
+   "dosageText": "1 Tab. Ciprox 500 - 1+0+1; 1 Tab. Nexezop - 1+0+1; 1 Tab. [illegible]",
    "scheduleCount": 0
   },
   {
@@ -1013,10 +1013,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 19,
+   "found": 17,
    "admitsIllegible": false,
-   "name": "Inpatient medication order sheet - multiple drugs",
-   "dosageText": "Inj. Ceftriaxone 2gm 1 vial IV BD (26/10/25); Inj. Moxquin 400mg IV OD (26/10/25); Inj. Clindamycin 600mg IV 8hrly (26/10/25); Inj. Omeprazole 40mg IV BD; Inj. Diasulin RSC as per sliding scale; Tab. Bislol 2.5mg 1+0+0, check BP/HR; Tab. Rosuva 10mg 0+0+1 before meal; Tab. Empa 25mg 1+0+0 before meal; Tab. Febus 40mg 0+0+1 (B/M); Syp. KCL 2 TSF TDS with half glass water; Inj. Nalepsin 1 bottle IV OD; Neb. Windel Plus TDS; Neb. Budicort 12hrly; Inf. NS 3000ml IV @ 40-60 ml/min; Tab. Amelog 75mg 0+1+0 (P/C); Gelora oral gel - apply over mouth ulcer TDS; Tab. Domperidone 1+1+1; Syp. Avolac 15ml BD; Tab. Mininin Melt 60mg 1 tab stat",
+   "name": "Inpatient medication order sheet - multiple IV/oral medications",
+   "dosageText": "Inj. Ceftriaxone 2gm (1 vial) IV BD; Inj. Moxquin 400mg IV OD; Inj. Clindamycin 600mg IV 8hrly; Inj. Omeprazole 40mg IV BD; Inj. Dianulin RSC per sliding scale; Tab. Bislol 2.5mg 1+0+0 (check BP/HR); Tab. Rosuva 10mg 0+0+1 before meal; Tab. Empa 25mg 1+0+0 before meal; Tab. Febus 40mg 0+0+1 (B/M); Syp. KCL 2 TSF TDS with half glass water; Inj. Nalepsin 1 bottle IV OD; Neb. Windel Plus TDS; Neb. Budicort 12hrly; Inf. NS 3000ml IV @ 40-60 ml/min; Tab. Amelog 75mg 0+1+0 (P/C); Gelora oral gel - apply over mouth TDS; Tab. Mininin Melt 60mg - 1 tab stat",
    "scheduleCount": 0
   },
   {
@@ -1028,8 +1028,8 @@
    "handwritten": true,
    "found": 20,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient medication order chart",
-   "dosageText": "Inf. NS (1L) + 1amp KT IV 10-15 drops/min stat & daily; Inj. Ceftriaxone 2gm 1 vial IV BD (26.10.2025 to 31.10.2025, continue); Inj. Moxquin 400mg IV OD (26.10.2025); Inj. Clindamycin 600mg IV 8hrly (26.10.2025); Inj. Omeprazole 40mg IV BD; Inj. Diasulin R SC according to sliding scale; Tab. Bisilet 2.5mg 1+0+0, check BP & HR; Tab. Rosuva 10mg 0+0+1 (B/M); Tab. Empta 25mg 1+0+0 (B/M); Tab. Febus 40mg 0+0+1 (B/M); Syp. KCL 2 TSF TDS with half glass of water; Nebulization with Windel Plus TDS; Nebulization with Budicort 12hrly; Tab. Anclog 75mg 0+1+0 (P/C); Tab. Domperidone 10mg 1+1+1; Syp. Avorac 15ml BD; Tab. Minirin Melt 60mg 1 tab stat; Glycerine oral gel apply over mouth TDS; Inj. Emistat 1amp IV TDS; Tab. Rivotril 0.5mg 0+0+1",
+   "name": "Handwritten inpatient medication order sheet",
+   "dosageText": "Inf. NS(1L)+1amp KCl IV 10-15 drops/min stat & daily; Inj. Ceftriaxone 2gm 1 vial IV BD; Inj. Moxquin 400mg IV OD; Inj. Elindamycin 600mg IV 8hrly; Inj. Omeprazole 40mg IV BD; Inj. Diasulin R subcutaneous per sliding scale; Tab. Cisleg 2.5mg 1+0+0 (check BP/HR); Tab. Rosuva 10mg 0+0+1 (B/M); Tab. Empta 25mg 1+0+0 (B/M); Tab. Febus 40mg 0+0+1 (B/M); Syp. KCL 2TSF TDS with half glass water; Nebulization with Windel Plus TDS; Nebulization with Budicort 12hrly; Tab. Anelog 7.5mg 0+1+0 (P/C); Tab. Domperidone 10mg 1+1+1; Syp. Aurotac 15ml BD; Tab. Minirin Melt 60mcg 1 tab stat; Glarosa oral gel apply over mouth TDS; Inj. Emistat 1amp IV TDS; Tab. Rivotril 0.5mg 0+0+1",
    "scheduleCount": 0
   },
   {
@@ -1042,7 +1042,7 @@
    "found": 12,
    "admitsIllegible": false,
    "name": "Handwritten inpatient medication order sheet",
-   "dosageText": "Inj. Maxima 40mg 1 vial IV BD; Inj. Tergolin (200mg); Inj. Moxquin 400mg 1 bottle IV daily; Inj. Nalepsin; Inj. Torm 3 (1-1/2 gm); Inj. Reset (1gm) 1 bottle IV SOS; Inj. Diasulin R (100 IU); Tab. Bislot (2.5mg) 0+1+0; Tab. Rosuva 10mg 0+0+1; Tab. Empa 25mg; Syp. KCl; Tab. Fabus 40mg",
+   "dosageText": "Inj. Maxima 40mg - 1 vial IV BD; Inj. Tergolin (200mg); Inj. Moxquin 400mg - 1 bottle IV daily; Inj. Nalepsin; Inj. Torm 3 (1-1.5 gm); Inj. Reset (1gm) - 1 bottle IV SOS; Inj. Diasulin R (100 IU); Tab. Bislot (2.5mg) 0+1+0; Tab. Rosuva 10mg 0+0+1; Tab. Empa 25mg; Syp. KCl; Tab. Fabus 40mg",
    "scheduleCount": 0
   },
   {
@@ -1052,10 +1052,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 14,
+   "found": 15,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient medication orders (multi-drug)",
-   "dosageText": "CEFTRIAXONE 2gm - 1 vial IV 12hrly; MOXQUIN 900mg - 1 vial IV daily; CLINDAMYCIN 600mg - 1 vial IV 8hrly with NS dilution 100mL; DIABULIN (100IU) - 6+6+4 (12) SK BIM; Tab Bisotol 2.5mg - 1+0+0; Tab ROSUVA 10mg - 0+0+1 BIM; Tab EMPA 1omg? - 1+0+0 BIM; Tab FEBUS 40mg - 0+0+1 BIM; Tab ANCLOGI 7.5mg - 0+1+0 AIM; Tab DOMIN 10mg - 1+1+1 ACM; Cap OMEP 20mg - 1+0+0 BIM; Syr KT/KCL - 2tsf in 1/2 glass of water; Nebulization with Windel plus 12hourly; Gieloma oral gel - apply over affected area 3-4 times daily",
+   "name": "Handwritten inpatient medication order sheet",
+   "dosageText": "Diet: Soft, Diabetic; Inj CEFTRIAXONE 2gm - 1 vial IV 12hourly; Inj MOXQUIN 900mg - 1 vial IV daily; Inj CLINDAMYCIN 600mg - 1 vial IV 8hourly with NS dilution 100mL; Inj DIASULIN 10IU - 6+6+4 (TZ) SK BIM; Tab Bisotol 2.5mg - 1+0+0; Tab ROSUVA 10mg - 0+0+1 (B/M); Tab EMPA 1mg - 1+0+0 (B/M); Tab FEBUS 40mg - 0+0+1 (B/M); Tab ANCLOGI 75mg - 0+1+0 (A/M); Tab DOMIN 10mg - 1+1+1 (A/M); Tab OMEP 20mg - 1+0+0 (B/M); Syr KT/KCL - 2tsf in 1/2 glass of water; Nebulization with Windel plus 12hourly; Gieloerg oral gel apply over affected area 3-4 times daily",
    "scheduleCount": 0
   },
   {
@@ -1067,8 +1067,8 @@
    "handwritten": true,
    "found": 13,
    "admitsIllegible": false,
-   "name": "Inpatient Medication Order Sheet",
-   "dosageText": "Inj. Dianulin RSC according to sliding scale; Tab. CEF-3 200mg 1+0+1; Tab. OMEP 20mg 1+0+1 (A/C); Tab. BISLOL 2.5mg 1+0+1 (Check BP); Tab. Rosuva 10mg 0+0+1 (B/M); Tab. EMPA 25mg 1+0+0 (B/M); Tab. FEBUS 40mg 0+0+1 (B/M); Syp. KCL 2TSF TDS c- Half glass water; Tab. ANCLUG 75mg 0+1+0 (P/C); Tab. Domperidone 10mg 1+1+1; Syp. AVOLAC 15ml BD; Neb. c- Windel Plus TDS; Xylocaine oral gel apply over mouth TDS",
+   "name": "Handwritten inpatient medication order sheet",
+   "dosageText": "Inj. Dianulin RSC as per sliding scale; Tab. CEF-3 200mg 1-0-1; Tab. OMEP 20mg 1-0-1 (A/C); Tab. BISLOL 2.5mg 1-0-1 (check BP); Tab. Rosuva 10mg 0-0-1 (B/M); Tab. EMPA 25mg 1-0-0 (B/M); Tab. FEBUS 40mg 0-0-1 (B/M); Syp. KCL 2TSF TDS with half glass water; Tab. ANCLUG 75mg 0-1-0 (P/C); Tab. Domperidone 10mg 1-1-1; Syp. AVOLAC 15ml BD; Neb. with Windel Plus TDS; Xelora oral gel apply over mouth TDS",
    "scheduleCount": 0
   },
   {
@@ -1080,8 +1080,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient medication orders (multiple drugs)",
-   "dosageText": "Diet: soft, diabetic. Inj DIASULIN 100IU - 6+6+4 (±2) SC BM. Tab BISLOL 2.5mg - 1+0+0. Tab ROSUVA 10mg - 0+0+1 BM. Tab EMPA 25mg - 1+0+0 BM. Tab FEBUS 40mg - 0+0+1 BM. Tab ANGLOG 75mg - 0+1+0 AM. Tab DOMIN 10mg - 1+1+1 AM. Cap OMEP 20mg - 1+0+1 BM. Cap Lyric 25mg - 1+0+1. Olive oil/commercial moisturizer apply all over body daily. Maintain temp chart, I/O chart, DM chart.",
+   "name": "Inpatient medication chart - multiple drugs (diabetic, hypercalcemia workup)",
+   "dosageText": "Diet: soft, diabetic. Inj. DIASULIN 100 IU - 6+6+4 (±2) (S/C, B/M). Tab. BISLOL 2.5mg -1+0+0. Tab. ROSUVA 10mg -0+0+1 (B/M). Tab. EMPA 25mg -1+0+0 (B/M). Tab. FEBUS 40mg -0+0+1 (B/M). Tab. ANGLOG 75mg -0+1+0 (A/M). Tab. DOMIN 10mg -1+1+1 (A/M). Cap. OMEP 20mg -1+0+1 (B/M). Cap. Lyric 25mg -1+0+1. Olive oil/commercial moisturizer apply all over body daily. Maintain temp chart, I/O chart, DM chart.",
    "scheduleCount": 0
   },
   {
@@ -1093,8 +1093,8 @@
    "handwritten": true,
    "found": 11,
    "admitsIllegible": false,
-   "name": "Hospital order sheet - IV fluids, antibiotics, insulin sliding scale, oxygen, NG feeding",
-   "dosageText": "O2 inhalation 5L/min via face mask; Diet NG tube feeding 150ml each feed 2hourly x10 feeds/day; Inf. N/S (2L) IV@30drops/min stat; Inj. Ceftriaxone (1gm) 2vial IV 12hourly; Inj. Optimax (400mg)/Moxibac(400mg) 1 bottle IV once daily; Inf. NS (500ml) + Inj. Actrapid R(100IU) 50IU IV@50 microdrops/min upto RBS 14.0mmol; if RBS <14mmol/L: Inf. 5% DA(500ml) + Inj. Actrapid R(100IU) 1ml IV@16microdrops/min stat; Inj. Omeprazole (40mg) 1vial IV 12hourly BD; Inj. Donaicum 1ampoule + 12mL NS then 3mL IV stat; Inj. NS 2(L) IV @30d/min stat; Inj. Lasix 1amp IV stat",
+   "name": "Handwritten inpatient drug chart - multiple IV medications",
+   "dosageText": "O2 inhalation 5L/min via face mask; Diet NG tube feeding 150ml each feed 2hrly x10 feeds/day; Inf. N/S 2L IV @ 30 drops/min stat; Inj. Ceftriaxone 1gm 2 vial IV 12hourly; Inj. Optimax 400mg/Moxibac 400mg 1 bottle IV once daily; Inf. NS 500ml + Inj. Actrapid R 50IU IV @ 50 microdrops/min upto RBS 140mmol; if RBS <14mmol/L then Inf. 5% DA 500ml + Inj. Actrapid R 1ml IV @16 microdrops/min stat; Inj. Omeprazole 40mg 1 vial IV 12hourly BD; Inj. Doxaicum 1 ampoule + 12mL NS then 3mL IV stat; Inj. NS 2L IV @30 drops/min stat; Inj. Lasix 1amp IV stat",
    "scheduleCount": 0
   },
   {
@@ -1104,10 +1104,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 2,
+   "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - multiple tablets (CEF-3, Dicaltrol Plus, Famotid, Cortan, Cotson, Atova)",
-   "dosageText": "1) Tab. CEF-3 (200mg) 2+0+2 for 6 days (after food). 2) Tab. Dicaltrol Plus 0+0+2 for 5 months. 3) Tab. Famotid (20mg) 2+0+2 for 2 months (after meal, at night). 4) Tab. Cortan (5mg): 2+0+0 for 2 weeks, then 2.5+0+0 for 2 weeks, then 2+0+0 for 1 week; OR Tab. Cotson (10mg): 2+0+0 for 2 weeks, then 2.5+0+0 for 2 weeks, then 2+0+0 (crossed out)/6 months. 5) Tab. Atova (10mg) 0+0+2 at night for 3 months.",
+   "name": "Handwritten prescription (CEF-3, Dicaltrol Plus, Famotid, Cortan/Cotson taper, Atova)",
+   "dosageText": "1) Tab. CEF-3 (200mg) 2+0+2 — 6 days (আহারের পরে); 2) Tab. Dicaltrol Plus 0+0+2 — 6 মাস; 3) Tab. Famotid (20mg) 2+0+2 — 2 মাস (সকাল/রাত); 4) Tab. Cortan (5mg) 2+0+0 for 2 সপ্তাহ, then 2½+0+0 for 2 সপ্তাহ, then 2+0+0 for 2 সপ্তাহ — tapering; then switch to Tab. Cotson (10mg) 2+0+0 for 2 সপ্তাহ, 2½+0+0 for 2 সপ্তাহ, 2+0+0 for 6 মাস (tapering continued); 5) Tab. Atova (10mg) 0+0+2 — শুরুর পরে ৩ মাস",
    "scheduleCount": 0
   },
   {
@@ -1117,10 +1117,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 14,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Hospital admission prescription sheet - multiple medications",
-   "dosageText": "Tab. Telmisip 5/40mg 1 tab stat and omit; Inf. NS(1L)+5%DNS(1L) IV @20 drops/min; Inj. Emistat 8mg 1amp IV stat & 12hourly; Inj. Ceftriaxone 1g IV 1 vial stat & 12hourly; Inj. Ciprofloxacin; Cap. Omep 20mg 1+0+1; Inj. Omeprazole 40mg 1 vial IV stat & BD; Inj. Anadol 1amp IM stat & SOS; Syp. Urikal 2 tsf in 1/2 glass water TDS; ORS 3 packets daily, each packet with 500ml water; Tab. Paracetamol 500mg 1+1+1 if temp >100F; Supp. Voltalin 50mg 1 stick P/R stat (omit); Supp. Anadol 1 stick P/R stat; Cap. Poxidap 100mg 1+0+1 (1hr A/M with 1 glass of water, stay upright for 30 minutes)",
+   "name": "Handwritten hospital admission orders/prescription",
+   "dosageText": "IV fluids: NS 1L + 5% DNS 1L @ 20 drops/min. Inj. Emistat 8mg 1 amp IV stat & 12 hourly. Inj. Ceftriaxone 1g IV 1 vial stat & 12 hourly. Inj. Ciprofloxacin. Cap. Omep 20mg 1+0+1. Inj. Omeprazole 40mg 1 vial IV stat & BD. Inj. Anadol 1 amp IM stat & SOS. Supp. Urikal 2 tsf in 1/2 glass water TDS. ORS 3 packets daily, each packet with 500ml water. Tab. Paracetamol 500mg 1+1+1 if temp >100°F. Supp. Anadol 1 stick P/R stat. Cap. Doxicap 100mg 1+0+1 (1hr AM with 1 glass water, stay upright 30 min). Tab. Telmisip 40mg 1 tab stat then omit. Supp. Voltalin 50mg 1 stick P/R stat (omitted).",
    "scheduleCount": 0
   },
   {
@@ -1130,10 +1130,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten inpatient prescription orders",
-   "dosageText": "Diet: Diabetic. Inf. N/S (1L) IV @500ml running, then IV @20 drops/min stat. Inf. N/S (99ml) + Inj. Actrapid (100IU) 1ml in drip, IV @15 microdrops/min stat. Inj. Emistar (8) 1amp IV stat & SOS. Inj. Ceftriaxone (1gm) 1 vial IV stat & BD. Inj. Omep (40) 1 vial IV stat & BD. Continuous catheter.",
+   "name": "Handwritten inpatient drug chart (IV fluids, insulin, antiemetic, antibiotic, PPI)",
+   "dosageText": "Inf. N/S 1L IV @ 500ml running then 20 drops/min stat; Inf. N/S 99ml + Inj. Actrapid 100IU 1ml in drip IV @ 15 microdrops/min stat; Inj. Emistar 8 1 amp IV stat & SOS; Inj. Ceftriaxone 1gm 1 vial IV stat & BD; Inj. Omep 40 1 vial IV stat & BD; continuous monitor",
    "scheduleCount": 0
   },
   {
@@ -1145,7 +1145,7 @@
    "handwritten": false,
    "found": 2,
    "admitsIllegible": false,
-   "name": "Eye clinic prescription - Protear Eye Drop & Tab Napa Extend",
+   "name": "Eye prescription: Protear Eye Drop & Tab Napa Extend",
    "dosageText": "Protear Eye Drop: 1 drop 4 times daily both eyes; Tab Napa Extend: 1 Tab if pain occurs",
    "scheduleCount": 0
   },
@@ -1158,8 +1158,8 @@
    "handwritten": true,
    "found": 2,
    "admitsIllegible": false,
-   "name": "Handwritten antenatal prescription (Tab Kindical D3, Tab Feup)",
-   "dosageText": "Tab Kindical D3 - 1 tab OD (once daily); Tab Feup - OD",
+   "name": "Handwritten antenatal prescription",
+   "dosageText": "Tab Rindical DS 1 tab OD once weekly; Tab Feup OD once weekly",
    "scheduleCount": 0
   },
   {
@@ -1171,8 +1171,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": false,
-   "name": "Antenatal prescription - Candeal D, Solwit B, Freeplus tablets",
-   "dosageText": "Tab Candeal D 0-1-0; Tab Solwit B 1-0-1; Tab Freeplus 0-0-1",
+   "name": "Antenatal prescription - Cancelcal D, Solvit B, Iprep Plus",
+   "dosageText": "Tab. Cancelcal D 0-1-0; Tab. Solvit B 1-0-1; Tab. Iprep Plus 0-1-0",
    "scheduleCount": 4
   },
   {
@@ -1184,8 +1184,8 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prenatal prescription",
-   "dosageText": "Tab. Abdolax 10mg 0-0-2; Cap. Ferty Plus 0-0-2; Tab. Coralcal-DV 0-0-2; Sergel caps",
+   "name": "Handwritten prenatal prescription (Tab. Abdolax, Cap. Ferrus Plus, Tab. Coralcal-DV, Serpel)",
+   "dosageText": "Tab. Abdolax 10mg 0-0-1; Cap. Ferrus Plus 0-0-1; Tab. Coralcal-DV 0-1-0; Serpel as advised",
    "scheduleCount": 0
   },
   {
@@ -1197,8 +1197,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten prescription with multiple medications",
-   "dosageText": "Tab. Naprosyn 500 (20), Cap. Sergel 20 (30), Tab. Relaxo 25 (15), Tab. Melprod 8 (10), Cap. Prelica 50 (20) - doses as written, frequencies in Bengali handwriting",
+   "name": "Handwritten prescription (Bengali/English mixed)",
+   "dosageText": "Tab. Naprosyn 5W (20), Sergel 20 (20), Rebko 25 (15), Melpred 8 cap (10), Prelica 50 (20) - as noted",
    "scheduleCount": 0
   },
   {
@@ -1210,8 +1210,8 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription for Pelvic Abscess (post-abortal admission)",
-   "dosageText": "Inj. Ceftriaxone 1gm - 1 vial IV, start & BD for 72 hrs; Inj. Metronidazole 100ml - 1 bottle IV, start & TDS for 24 hrs; Tab. Rolac 10mg 1+0+1 (A/M); Tab. Paracetamol drops 2g 1+0+1 (B/M)",
+   "name": "Handwritten prescription for Pelvic Abscess",
+   "dosageText": "Inj. Ceftriaxone 1gm, 1 vial IV - stat & BD for 72 hrs; Inj. Metronidazole 100ml, 1 bottle IV - stat & TDS for 24 hrs; Tab. Rolac 10mg 1+0+1 (A/M); Tab. Perinorm drops 2g 1+0+1 (B/M)",
    "scheduleCount": 0
   },
   {
@@ -1223,8 +1223,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Cipnocim, Metro, Cytomis, Terrilla, Esmix-M, Avolac syrup",
-   "dosageText": "Tab. Cipnocim 500 (1+0+1); Tab. Metro 400 (1+1+1); Tab. Cytomis 200 (1+0+1); Tab. Terrilla 100 (1+0+1); Tab. Esmix-M 20 (1+0+1); Syp. Avolac 2 tsp x tid",
+   "name": "Handwritten prescription - multiple tablets and syrup",
+   "dosageText": "Tab. Cipnocim 500 (1+0+1); Tab. Metro 400 (1+1+1); Tab. Cytomis 200 (1+0+1); Tab. Terrilla 100 (1+0+1); Tab. Esmix-M 20 (1+0+1); Syp. Avolac 2 tbsp x 3 times",
    "scheduleCount": 0
   },
   {
@@ -1234,10 +1234,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 5,
-   "admitsIllegible": false,
+   "found": 6,
+   "admitsIllegible": true,
    "name": "Handwritten prescription with multiple medications",
-   "dosageText": "1) Susp. Linidel - as directed; 2) Susp. Simamiro - as directed; 3) Susp. Xiclav (Tone) - as directed; 4) Oxynex Nasal Drop 0.05/0.025% - 2 drops each nostril, 2 times daily for 9 days; 5) Freid HC Cream / Lorix Plus Lotion - as directed, apply for 3 days",
+   "dosageText": "1) Syp. Lindel - dosage/frequency partially illegible; 2) Syp. Sinamiro - dosage/frequency partially illegible; 3) Syp. Xiclav (Tune) - dosage/frequency partially illegible; 4) Oxynex Nasal Drop 0.05/0.025% - 2 drops each nostril, 2 times a day for 9 days; 5) Freid HC Cream - apply as directed; also LORIX Plus Lotion mentioned",
    "scheduleCount": 0
   },
   {
@@ -1248,9 +1248,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 7,
-   "admitsIllegible": false,
+   "admitsIllegible": true,
    "name": "Handwritten prescription - antenatal medications",
-   "dosageText": "Tab Zincov (100M) 0+1+0 x 4days; Tab Sicaronix(10M) 1+0+1 x 4days; Tab X PE XR 1+1+1 x 4days; Cap Nimonizom 1+0+1 x 4days; Tab Cifofor(210M) 0+1+0 x 2days; Tab Nacored Dx 1+0+1 x 2days; Tab A to Z 0+1+0 x 2days",
+   "dosageText": "Tab Rincy(1000): 0+1+0 x 5 days; Tab Sicaonix(500): 1+0+1 x 5 days; Tab XPE XR: 1+1+1 x 5 days; Cap Nimonimon: 1+0+1 x (duration unclear); Tab Cifotor(200mg): 0+1+0 x 2 days; Tab Nacomax DX: 1+0+1 x 2 days; Tab A to Z: 0+1+0 x (duration unclear)",
    "scheduleCount": 0
   },
   {
@@ -1262,8 +1262,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": true,
-   "name": "Handwritten prescription with lab tests and medications",
-   "dosageText": "Adv: SGPT, SGOT, CBC, Urea, Creatinine, LFT, CXR; Tab Prontin/similar; Tab Pan/similar - dosage as handwritten (illegible)",
+   "name": "Handwritten prescription note with lab tests and medication list",
+   "dosageText": "Adv: SGPT, SGOT, CBC, Urea, Creatinine, Lipid profile, CXR; Tab Prograft Mups (unclear strength); Tab Pan (unclear strength)",
    "scheduleCount": 0
   },
   {
@@ -1276,7 +1276,7 @@
    "found": 2,
    "admitsIllegible": true,
    "name": "Handwritten medical prescription notes",
-   "dosageText": "Illegible handwritten prescription; unable to reliably determine drug names, doses or frequencies",
+   "dosageText": "Illegible handwritten prescription; unable to reliably determine drug names, doses, or frequencies. Includes BP: 130/80mmHg and mentions of tablets and other medications.",
    "scheduleCount": 0
   },
   {
@@ -1287,9 +1287,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 5,
-   "admitsIllegible": true,
-   "name": "Handwritten pediatric prescription",
-   "dosageText": "Syp. Zinc (100ml) 2ml x 2 — 20 days; Syp. Alinix (30ml) 2ml x 2 — 6 days; Syp. Grodbar-L 2/3ml x 2 — 26 days; Tetrasol Lotion (printed: apply 1 part lotion with 3 parts water, 1st-3rd day then again after 3 days, for whole family); Syp. Renova (100ml) 2ml x 8 — days unclear",
+   "admitsIllegible": false,
+   "name": "Handwritten pediatric prescription (syrups and lotion)",
+   "dosageText": "Syp. Xinc (100ml) 2ml x 2 times/day; Syp. Alinix (30ml) 2ml x 2 times/day; Syp. Grodbar-L 1.5ml x 2 times/day; Tetrasol Lotion - mix 1 part lotion with 1 part water, apply days 1-3, stop 3 days, repeat 3 days, all family members to use; Syp. Renova (100ml) 2ml x 3 times/day",
    "scheduleCount": 0
   },
   {
@@ -1301,8 +1301,8 @@
    "handwritten": true,
    "found": 9,
    "admitsIllegible": false,
-   "name": "Handwritten prescription (multiple medications)",
-   "dosageText": "1. T. Clopid 75 - 1-0-0 (empty stomach/ভরাপেটে); 2. T. Rosu 5 - 0-0-1; 3. T. Olmesar 40 - 1-0-1; 4. T. Metolar 2.5 - 1-0-0; 5. T. Osteocia 1-0-1; 6. T. Dexlar 30 - 1-0-1; T. Rensir 0-0-1; T. Ivacet 500 1-0-1; T. Cereras 5 0-0-1",
+   "name": "Handwritten medication prescription",
+   "dosageText": "1. Clopid 75 - 1-0-0 (empty stomach/ভরাপেটে); 2. Rosu 5 - 0-0-1; 3. Olmesar 40 - 1-0-1/2; 4. Metolar 2.5 - 1-0-0; 5. Osteocia/4 - 1-0-1/2; 6. Dexter 30 - 1-0-1/2; 7. Rensir - 1-0-0; 8. Iracet 500 - 1-0-1/2; 9. Cereras 5 - 1-0-1/2",
    "scheduleCount": 0
   },
   {
@@ -1312,10 +1312,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 8,
+   "found": 7,
    "admitsIllegible": false,
-   "name": "Handwritten prescription",
-   "dosageText": "T. Alphagress-2: 2-1-2-2; T. Olmesam-40: 1-0-1; Clopid 75 (on full stomach): 1-0-0; T. Rosu 5: 0-0-1; T. Rensir: 1-0-1; T. Iraeet 250: 1-0-1; T. Dextil 30 (half hr before food): 1-0-1; BP-240/140",
+   "name": "Handwritten prescription - multiple medications",
+   "dosageText": "T. Alphapras-2: 2-1-2-2; T. Olmesan-40: 1-0-1; Clopid 75 (bharapete/full stomach): 1-0-0; T. Rosu 5: 0-0-1; T. Rernir: 1-0-1; T. Iracet 250: 1-0-1; T. Dexta L30 (khabar adha ghonta purbe/half hour before food): 1-0-1",
    "scheduleCount": 0
   },
   {
@@ -1327,8 +1327,8 @@
    "handwritten": true,
    "found": 7,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - multiple medications",
-   "dosageText": "Tab Neprosyn 500mg 2doses/day (5days); Tab Myolgo 500mg 2doses/day (7days); Tab Roleco Plus 20mg 2doses/day (20days); Tab Kindcal-D 1 tab 2doses/day (30days); Tab Frenxit 2doses/day (20days); Tab Nora Rapid 500 2doses/day (6days); Tab Efodio Long 2doses/day (6days)",
+   "name": "Handwritten prescription with multiple medications",
+   "dosageText": "Tab Neprosyn 500mg 2 tot 1; Tab Myolgo 500mg 2 tot 1; Tab Pelosec Plus 20mg 2 tot 1; Kindfcal-D tot 1; Tab Frenxit 2 tot 1; Rx Nora Rapid 500 2 tot 1; Tab Bfodio Long 2 tot 1",
    "scheduleCount": 0
   },
   {
@@ -1340,8 +1340,8 @@
    "handwritten": true,
    "found": 7,
    "admitsIllegible": false,
-   "name": "Handwritten medical prescription",
-   "dosageText": "1. Clopid 75 - 1-0-0; 2. Cifiket 100 - 0-0-1; 3. Alphapres-2 - 2-2-2; 4. Olmesm 40 - 1-0-1; 5. Indelib SR - 1-0-0; 6. Maysmo 40 - 1-1-2; Syp: Maxicon - 3 chamach 3 bar bhora pete",
+   "name": "Handwritten medication prescription",
+   "dosageText": "1. Clopid 75 - 1-0-0; 2. Cifixet 100 - 0-0-1; 3. Alphapres-2 - 2-2-2; 4. Olmesm 40 - 1-0-1; 5. Indelib SR - 1-0-0; 6. Maypro 40 - 1-0-1; Syp: Maxicon - 3 chamach 3 bar bhora pete (3x/day, full stomach)",
    "scheduleCount": 0
   },
   {
@@ -1353,8 +1353,8 @@
    "handwritten": true,
    "found": 7,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - multiple medications (Alphapress, Olmesar, Clopid, Rosu, Torsid, Rennuo, Renir)",
-   "dosageText": "Tab. Alphapress-2: 2+2+2; Tab. Olmesar 40: 1+0+1; Tab. Clopid 75: 1+0+0; Tab. Rosu: 0+0+1 (crossed out); Tab. Torsid 20: 1+0+0; Tab. Rennuo 20: 1+?+1; Tab. Renir: 1+0+0",
+   "name": "Handwritten prescription with multiple medications",
+   "dosageText": "Alphapress-2: 2+2+2; Olmesar 40: 1-0-1; Clopid 75: 1-0-0; Rosu (crossed out): 0-0-1; Torsid 20: 1-0+0-1; Remuo 20: 1-1/2; Remir: 1-0-0",
    "scheduleCount": 0
   },
   {
@@ -1364,10 +1364,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 3,
+   "found": 2,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Nifin SR-20, Cifiget 100",
-   "dosageText": "Tab. Nifin SR-20: 1-0-1; Tab. Cifiget 100: 0-0-1; Previous medicines to continue",
+   "name": "Handwritten prescription: Nifine SR-20, Cifiget 100",
+   "dosageText": "T. Nifine SR-20 1+0-1; T. Cifiget 100 0+0-1 (previous medicines to continue)",
    "scheduleCount": 0
   },
   {
@@ -1379,8 +1379,8 @@
    "handwritten": true,
    "found": 10,
    "admitsIllegible": false,
-   "name": "Prescription for cough, breathlessness, bronchial asthma",
-   "dosageText": "Baxitrol-F Baxicap 50/500 - 1+0+1 for 5 days; Indica-G Rotacap 110/50 - 1 capsule 0+0+1 (with Easyhaler) for 5 days; Tab. Provair 10 - 0+0+1 for 5 days; Tab. Doniva 20 - 1+0+0 for 5 days; Tab. Tinabil 20 - 0+0+1 for 7 days; Tab. Moxaclar 625 - 1+0+1 for 5 days; Nebulization with Windel Plus 1 ampoule 2/3/8 hourly; Nebulization with Budicort 0.25/0.5 1 ampoule x 2 times/day; Gelona oral gel; Rufno 8 mg",
+   "name": "Handwritten prescription for cough, bronchial asthma with multiple medications",
+   "dosageText": "Baxitrol-F Baxicap 50/500 - 1+0+1 (5 days); Indica-G Rotacap 110/50 - 1 capsule twice daily via Easyhaler; Tab. Provair 10 - 0+0+1 (5 days); Tab. Doniva 20 - 1+0+0 (5 days); Tab. Tinabil 20 - 0+0+1 (7 days); Tab. Moxaclav 625 - 1+1+1 (7 days); Nebulization with Windel Plus 1 ampoule 2-3 times/day; Nebulization with Budicort 0.25/0.5 1 ampoule 2 times/day; Gelona oral gel; Zufno 8 mg",
    "scheduleCount": 0
   },
   {
@@ -1392,8 +1392,8 @@
    "handwritten": true,
    "found": 7,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - multiple tablets",
-   "dosageText": "Tb. Alphapress 2: 2+2+2; Tb. Olmesan 20: 2+0+2; Tb. Clopid 75: 1+0+0; Tb. Rosuvo 40: 1+0+1; Tb. Cifibet 100: 0+0+1; Tb. Renuxit: 1+0+0; Tb. Imigran: 1+0+1",
+   "name": "Handwritten prescription - multiple medications",
+   "dosageText": "Tb. Alphapress 2: 2+2+2 (5 days); Tb. Olmesan 20: 2+0+2 (5 days); Tb. Clopid 75: 1+0+0 (5 days); Tb. Rosuvo 40: 1+0+1 (half hour before dinner, 1 month); Tb. Cifibet 500: 0+0+1 (5 days? / 10 days); Tb. Rexit: 1+0+0 (1 month); Tb. Imigran: 1+0+1 (1 month)",
    "scheduleCount": 0
   },
   {
@@ -1406,7 +1406,7 @@
    "found": 4,
    "admitsIllegible": false,
    "name": "Handwritten prescription - Lumbar Spondylosis",
-   "dosageText": "Tab. LORNO (4mg): 0+0+1 - 2 days; Tab. PANTOMIA (20mg): 1+0+1 - 2 days; Tab. LYSIVIN (4mg): 2+0+1 - 2 days; Tab. ARZENTUS (2mg): 2+0+1 - 2 days",
+   "dosageText": "Tab. LORNO (4mg): 0+0+1 - 22 days; Tab. PANTOMIRA (20mg): 1+0+1 - 22 days; Tab. LYSIVIN (4mg): 2+0+1 - 22 days; Tab. ARZENTUS (2mg): 2+0+1 - 22 days",
    "scheduleCount": 0
   },
   {
@@ -1419,7 +1419,7 @@
    "found": 3,
    "admitsIllegible": false,
    "name": "Handwritten prescription for backache",
-   "dosageText": "Tab. Flexi-SR 1+1+2; Tab. Beklo 10mg 1+1+2; Cap. Pregut 40mg 1+0+2",
+   "dosageText": "Tab. Flexi-SR: 1+1+1; Tab. Beklo 10mg: 1+1+1; Cap. Progut 40mg: 1+1+1",
    "scheduleCount": 0
   },
   {
@@ -1429,10 +1429,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 2,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Losectil powder, Acid-plus syrup",
-   "dosageText": "1. Losectil powder - before food morning-evening (2 to 2 doses). 2. Syp. Acid-plus - 2 to 2.5 x, after food",
+   "name": "Handwritten prescription - Losectil powder, Antacid plus, Upper GIT Endoscopy advised",
+   "dosageText": "1. Losectil powder - 2 to 3 times daily; 2. Sup/Tab Antacid plus - 2 to 3 times daily",
    "scheduleCount": 0
   },
   {
@@ -1444,8 +1444,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Tab. Ciprocine, Tab. Urcolют, Tab. Zabral",
-   "dosageText": "Tab. Ciprocine (750mg) 1-1-1 x 9 days; Tab. Urcolют (10mg) 1-1-1 x 20 days; Tab. Zabral (10mg) 0-0-1 x 8 days",
+   "name": "Handwritten prescription: Ciprocine, Urcolet, Zatral",
+   "dosageText": "Tab. Ciprocine (750mg) 1-1-1 for 9 days; Tab. Urcolet (600mg) 1-1-1 for 20 days; Tab. Zatral (10mg) 0-0-1 for 28 days",
    "scheduleCount": 0
   },
   {
@@ -1457,8 +1457,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten prescription for left loin pain",
-   "dosageText": "Tab. Viaet (50) - 1+1+1; Tab. Napa one - 1+1+1; Tab. Alfumax ER - 0+0+1",
+   "name": "Handwritten prescription - loin pain / epididymo-orchitis",
+   "dosageText": "Tab. Viaet (50) 1-1-1; Tab. Napa one 1-1-1; Tab. Alfumax ER 0-0-1",
    "scheduleCount": 0
   },
   {
@@ -1471,7 +1471,7 @@
    "found": 2,
    "admitsIllegible": true,
    "name": "Handwritten medical prescription",
-   "dosageText": "Illegible handwritten prescription with multiple medications listed; specific drug names/doses not clearly legible",
+   "dosageText": "Illegible handwritten prescription with multiple medicines and instructions (mixed Bengali/English script); exact drug names and doses not clearly legible.",
    "scheduleCount": 0
   },
   {
@@ -1483,8 +1483,8 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - BOO with LT renal calculi",
-   "dosageText": "Tab. Alfumax ER - 0-0-1; Tab. Vizet (50) - 1-0-1; Tab. Funotil PM (250) - 1-0-1; Tab. Cifran-K - 1-0-1",
+   "name": "Handwritten prescription - Alfumax ER, Vizat, Uronorm P/M, Cifran-K",
+   "dosageText": "Tab. Alfumax ER - 0-0-1; Tab. Vizat (50) - 1-0-1; Tab. Funorm/Uronorm P/M (250) - 1-0-1; Tab. Cifran-K - 1-0-1",
    "scheduleCount": 0
   },
   {
@@ -1494,10 +1494,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription for schizoaffective disorder",
-   "dosageText": "Encorate 200 (1-1-1/2), Alexcital 5 (1-0-2), Rivotril 0.5 (1-0-2), Bentix 5 (1-1-1/2)",
+   "name": "Handwritten prescription - Schizoaffective disorder",
+   "dosageText": "Encorate 200: 1-0-1; Alexcital 5: 0-0-1; Rivotril 0.5: 1-0-1; Bentix 5: 1-0-1",
    "scheduleCount": 0
   },
   {
@@ -1510,7 +1510,7 @@
    "found": 2,
    "admitsIllegible": false,
    "name": "Handwritten prescription (Bengali script)",
-   "dosageText": "Multiple medicines listed in Bengali handwriting with instructions relating to food timing and frequency; exact drug names/doses not reliably readable",
+   "dosageText": "Multiple handwritten medications with Bengali instructions; exact drug names/doses not machine-readable due to handwriting and language script",
    "scheduleCount": 0
   },
   {
@@ -1522,8 +1522,8 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Tab Emeset, Tab Metsul, Tab Maxpro, Tab Nap",
-   "dosageText": "Tab Emeset 4mg 1-0-1; Tab Metsul 10mg 1-0-1; Tab Maxpro 20mg 1-0-1; Tab Nap Extend 1-0-1",
+   "name": "Handwritten prescription - multiple tablets",
+   "dosageText": "Tab. Emrstat 5mg 1-0-1; Tab. Mansul 10mg 1-0-1; Tab. Maxpreo 20mg 1-0-1; Tab. Nap extend 1-0-1",
    "scheduleCount": 0
   },
   {
@@ -1535,9 +1535,9 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Cetaclor, Etonix, Finix, Cevit",
-   "dosageText": "Tab Cetaclor 250mg 1+0+1 for 7 days; Tab Etonix 90mg 1+0+1 for 3 days; Tab Finix 20mg 1+0+1 for 3 days; Tab Cevit 250 1+0+1 for 10 days",
-   "scheduleCount": 4
+   "name": "Handwritten prescription - 4 medications",
+   "dosageText": "Tab Cetaclor 250mg 1+0+1 for 7 days; Tab Etonix 90mg 1+0+1 for 3 days; Tab Finix 20mg 1+0+1 for 3 months; Tab Cevit 250 1+0+1 for 10 days",
+   "scheduleCount": 0
   },
   {
    "img": "118.jpeg",
@@ -1548,8 +1548,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - USG neck, biopsy, CBC, blood sugar, CXR, Cap. Ceftid 200mg",
-   "dosageText": "Cap. Ceftid 200mg - bd (twice daily)",
+   "name": "Handwritten prescription - USG neck, Cap Ceftid 200mg",
+   "dosageText": "Cap. Ceftid (200mg) - bid",
    "scheduleCount": 0
   },
   {
@@ -1562,7 +1562,7 @@
    "found": 1,
    "admitsIllegible": false,
    "name": "Nepado Eye Drop prescription (both eyes)",
-   "dosageText": "Nepado Eye Drop: 1 drop 3 times daily in both eyes",
+   "dosageText": "Nepado Eye Drop: 1 drop 3 times a day in both eyes (RE & LE)",
    "scheduleCount": 0
   },
   {
@@ -1574,8 +1574,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription for fertility medications",
-   "dosageText": "Tab Thyrox (50µg) - 1; Tab Fertility tablet; Tab Letrol (2.5mg) day2 to day6; Tab Ovadrion (5mg) day0 to day2; Tab Valuta (8mg) day2 to day10; D10 - TVS for follicular monitoring on day 10",
+   "name": "Handwritten prescription - fertility medications",
+   "dosageText": "Tab Thyrox (50µ) - as noted; Tab Fertility tablet noted; Tab Letrod (2.5mg) 2 to 2 - on (D2-D6); Tab Ovaluton (5mg) 0 to 2 - on (D2-D6); Tab Valifor (8mg) 2 to 2 - on (D8-D2); D10 - TVS for follicular monitoring",
    "scheduleCount": 0
   },
   {
@@ -1587,8 +1587,8 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Momelo nasal spray, Tab Arlin, Tab Bilan, Tab Monocast, Nasovap",
-   "dosageText": "Momelo nasal spray 2 sprays; Tab Arlin (400mg); Tab Bilan (2mg); Tab Monocast (com); Nasovap suspension for inhalation - 2 times a day",
+   "name": "Handwritten prescription - cough, headache, throat pain",
+   "dosageText": "Momelo nasal spray 2 spray; Tab Arlin (400mg); Tab Bilan (2mg); Tab Monocast (com); Nasovap suspension for inhalation - 2 times a day, mix 400-600ml hot water with 5ml Nasovap, cover nose and mouth to inhale steam",
    "scheduleCount": 0
   },
   {
@@ -1601,7 +1601,7 @@
    "found": 1,
    "admitsIllegible": false,
    "name": "Handwritten prescription with multiple medications",
-   "dosageText": "Multiple items listed (partially legible): 1) Tab. Dexrocotinine 9m, 2) Sulpro ... 2 doses, 3) Inj. Alsartrol, 4) Mycomel, 5) Cef. Pilragon 5, 6) Tab. Pentro, 7) B. Rentro 5 — exact doses and frequencies not clearly legible",
+   "dosageText": "Multiple items listed, handwriting difficult to fully decipher: 1) Tab. Dexrocamin(?) 9am, 2) Sulpro dobuta(?), 3) Inj. Alertrol(?), 4) Mycomet(?), 5) Cn. Ritragen 5, 6) Tab. Prunto(?), 7) B. Rentroil 5 - includes references to timings and 'Free breath' device",
    "scheduleCount": 0
   },
   {
@@ -1611,10 +1611,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 4,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten prescription: Prolacto, Mave 135, Rifaxin 200, Olium 0.25",
-   "dosageText": "Prolacto 2+0+2; Mave 135 1/2+0+1/2; Rifaxin 200 1+0+1, 3 din por por; Olium 0.25 0+0+2",
+   "name": "Handwritten prescription (4 medicines)",
+   "dosageText": "1) Prolacto 32: 2+0+2 (after meal). 2) Mave 135: 1/2+0+1/2 (after lunch). 3) Rifaxin 200: 1+0+1, 3 days on-off pattern. 4) Olium 0.25: 0+0+2 (after meal).",
    "scheduleCount": 0
   },
   {
@@ -1626,8 +1626,8 @@
    "handwritten": true,
    "found": 2,
    "admitsIllegible": false,
-   "name": "Handwritten prescription note",
-   "dosageText": "Cap - Adarca 500mg 1-1-1 for 5 days; Tab - Naga Later-D 1-1-1 8pm for 2 weeks",
+   "name": "Handwritten prescription (Rx)",
+   "dosageText": "Cap - Adorca mmg 1-1-1 for 5 days; Tab - Naga (?) 1-1-1 syrup 2 tsp",
    "scheduleCount": 0
   },
   {
@@ -1640,7 +1640,7 @@
    "found": 6,
    "admitsIllegible": false,
    "name": "Handwritten prescription: Loetril, Amlin, Flamex, Zomups, Bexidal, Seabo",
-   "dosageText": "Tab. Loetril (Montelukast) 10mg 0+0+1; Tab. Amlin 600mg 1+0+1; Tab. Flamex 400mg 1+0+1; Tab. Zomups 20mg 1+0+1; Tab. Bexidal 50mg 1+0+1; Tab. Seabo 12mg as advised",
+   "dosageText": "Tab. Loetril 10mg (Montelukast) 0+0+1; Tab. Amlin 600mg 1+0+1; Tab. Flamex 400mg 1+0+1; Tab. Zomups 20mg 1+0+1; Tab. Bexidal 50mg 1+0+1; Tab. Seabo 12mg as directed",
    "scheduleCount": 0
   },
   {
@@ -1650,10 +1650,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 5,
+   "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - fibroid uterus (Fibroproven, Rommo, Solcon, Multivitablus)",
-   "dosageText": "1) Fibroproven 5mg - 1 tab morning, afternoon, night; 2) Rat good - 1 tab morning, night; 3) Rommo 20mg - 1 tab morning, afternoon, night; 4) Solcon - 1 tab morning, night; 5) Multivitablus - 1 tab morning, night",
+   "name": "Handwritten prescription - Fibroproven, Romno, Solan, Multivitolus",
+   "dosageText": "1) Fibroproven 5mg - 1tt mo chsmo mo; 2) Romno 20mg - 1tt mo chsm mo bhpr; 3) Solan - 1to1t mo; 4) Multivitolus - 1to1t mo",
    "scheduleCount": 0
   },
   {
@@ -1666,7 +1666,7 @@
    "found": 8,
    "admitsIllegible": true,
    "name": "Handwritten multi-drug prescription",
-   "dosageText": "Tab. Amilin 10 (0-0-1); Tab. Deprex (0-0-1); Tab. Ovocal-D (0-0-0-1); Tab. Surgel-40 (0-0-1); Tab. Reservijo 100 (0-0-1); Tab. Cortom 10 (0-0-0, timing unclear); Cap. Regler 30mg (1-0-1); Tab. Tolfer 200mg (1-0-1)",
+   "dosageText": "Cap. Regler (30mg) 1+0+1 before food; Tab. Tolfer (200mg) 1+0+1 after food; Tab. Amilin 10 0+0+1; Tab. Deprex 0+0+1; Tab. Ovocal-D 0+0+0+1; Tab. Sergel-40 1+0+1; Tab. Reservijo 100 1+0+1; Tab. Cortom 10 1+1+0 and 1+0+1+0 (exact timings unclear)",
    "scheduleCount": 0
   },
   {
@@ -1678,8 +1678,8 @@
    "handwritten": true,
    "found": 8,
    "admitsIllegible": false,
-   "name": "Handwritten prescription for UTI/BEP (epididymo-orchitis)",
-   "dosageText": "I. Tab. Oflacin (400)/Rutix (400) - 1-0-1; II. Cap. Dexilond (60mg) - 1-0-1; III. Syp. Citra-K - 2-0-2; IV. Tab. Napadol - 1-0-1; V. Tab. Epiclon (0.5) - 0-0-1; VI. Cap. Uromax (0.4) - 1-0-1; VII. Tab. Cilocab (5) - 0-0-1; VIII. Tab. Rostab (5) - 0-0-1",
+   "name": "Handwritten prescription - UTI/BEP/Epididymoorchitis",
+   "dosageText": "I. Tab. Oflacin (400)/Rutix (400) 1+0+1; II. Cap. Dexilond (60mg) 1+0+1; III. Syp. Citra-K 2+0+2; IV. Tab. Napadol 1+0+1; V. Tab. Epicion (0.5) 0+0+1; VI. Cap. Uromax (0.4) 0+0+1; VII. Tab. Cilocab (5) 0+0+2; VIII. Tab. Rostab (5) 0+0+1",
    "scheduleCount": 0
   },
   {
@@ -1689,10 +1689,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 7,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten cardiology prescription (chest pain, dyslipidaemia)",
-   "dosageText": "Tab. Prucet 75mg - 1-0-0 (before food); Tab. Rosuva 5mg - 0-0-1 (bedtime); Tab. Lino-M 2.5/500 - 1-0-0; Tab. Sinjard 10mg - 0-0-1 (bedtime); Tab. Ramoril 1.25mg - 1-0-0; Tab. Pantonix 40mg / Finix 20mg - 1-0-0; Syp. Progain 20ml - 2 times a day",
+   "name": "Handwritten prescription for chest pain with dyslipidaemia",
+   "dosageText": "Tab. Prucet (75mg), Tab. Rosuva (5mg), Tab. Lino-M 2.5/500, Tab. Sinjard (10mg), Tab. Ramoril (1.25mg), Tab. Pantonix (40mg)/Finix (20mg), Syr. Progain 20ml — dosing frequencies handwritten in local script, not clearly legible",
    "scheduleCount": 0
   },
   {
@@ -1704,8 +1704,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription: Trevox, Fenofep, Monas, Fluticasone Nasal Spray, Topicot Cream, Famonap",
-   "dosageText": "Tab. Trevox (500mg) - as marked; Tab. Fenofep-120mg - as marked; Tab. Monas (10mg) - as marked; Fluticasone Nasal Spray - 2 puffs per nostril, use for marked days; Topicot Cream - apply 2 times daily as directed; Tab. Famonap 20mg - as marked",
+   "name": "Handwritten prescription with multiple medications",
+   "dosageText": "Tab. Trevox (500mg); Tab. Feno-fep-120mg; Tab. Monas (10mg); Flutica Nasal Spray - 2 puffs each nostril, 2 times daily; Topicot Cream - apply 2 times daily; Tab. Famonap 20mg",
    "scheduleCount": 0
   },
   {
@@ -1717,8 +1717,8 @@
    "handwritten": true,
    "found": 2,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Tab Bilam 20mg, Tab Vonomax 10/20mg",
-   "dosageText": "Tab Bilam 20mg - 0-0-1 (night); Tab Vonomax 10/20mg - 0-?-? before food, for 28 days",
+   "name": "Handwritten prescription: Tab Bilam 20mg, Tab Vonomax 10/20mg",
+   "dosageText": "Tab. Bilam 20mg - 0-0-1 (9 din); Tab. Vonomax 10/20mg - 0-?-? before food, for 18 din",
    "scheduleCount": 0
   },
   {
@@ -1730,8 +1730,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten prescription for fever/common cold",
-   "dosageText": "1) Tab. Renova XR 6mg - 1+1+1 | 2) Tab. Fexo 120mg - 20mg 1+0+1 | 3) Tab. Monas 10mg - 0+0+1 | 4) Cap. Seelo 20mg - 1+0+1 | 5) Syp. Adovas 100mg - 1+0+1, 2 tsp x 6",
+   "name": "Handwritten prescription for fever/common cold/rhinorrhea",
+   "dosageText": "1) Tab. Renova XR - 6 days, 1+1+1 | 2) Tab. Fexo 120mg - 20 days, 0+0+1 | 3) Tab. Monos 10mg - 7 days, 0+0+1 | 4) Cap. Seelo 20mg - 20 days, 1+0+1 | 5) Syp. Adovas 100ml - 7 days, 2 tsp x 6 hrs",
    "scheduleCount": 0
   },
   {
@@ -1743,8 +1743,8 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Itrader, Alcet, Curafin, Pevitin, Dermasole",
-   "dosageText": "Cap. Itrader (100mg) 0-0-1 (1 month); Tab. Alcet 0-0-1 (as noted); Curafin Cream applied 1 month; Pevitin Cream applied 1 month; Dermasole Bar",
+   "name": "Handwritten prescription - antifungal medications",
+   "dosageText": "Cap. Itrader (100mg) 0+0+1; Tab. Alcet 0+0+1; Curafin Cream - apply topically; Pevitin Cream - apply topically; Dermasole Bar",
    "scheduleCount": 0
   },
   {
@@ -1757,7 +1757,7 @@
    "found": 5,
    "admitsIllegible": false,
    "name": "Prescription for Left Knee Pain",
-   "dosageText": "1. Aceclofenac 100mg Tab 1+0+1 After Meal (5 Days, Qty 10); 2. Calcium carbonate 500mg + Vitamin D Tab 1+0+1 (1 Month, Qty 60); 3. Omeprazole 20mg Cap 1+0+1 Before Meal (7 Days, Qty 14); 4. Vitamin B1, B6 & B12 Tab 1+0+1 (1 Month, Qty 60); 5. Glucosamine 500mg + Chondroitin sulfate Tab 1+0+1 (1 Month, Qty 60)",
+   "dosageText": "1. Aceclofenac 100mg Tab - 1+0+1, 5 Day(s), After Meal (Qty 10)\n2. Calcium carbonate 500mg + Vitamin D Tab - 1+0+1, 1 Month(s) (Qty 60)\n3. Omeprazole 20mg Cap - 1+0+1, 7 Day(s), Before Meal (Qty 14)\n4. Vitamin B1, B6 & B12 Tab - 1+0+1, 1 Month(s) (Qty 60)\n5. Glucosamine 500mg + Chondroitin sulfate Tab - 1+0+1, 1 Month(s) (Qty 60)",
    "scheduleCount": 2
   },
   {
@@ -1767,11 +1767,11 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": false,
-   "found": 1,
+   "found": 13,
    "admitsIllegible": false,
-   "name": "Multi-drug prescription (cardiac, diabetes, thyroid, antibiotic course)",
-   "dosageText": "1) Mupirocin ointment 2% - apply 3x daily (7d). 2) Insulin Glargine 100IU/ml - 0+0+0+1 SC at 10PM, continue (30d). 3) Insulin Short Acting Human 100IU - 10+10+8(+/-2) SC 15min before meals, continue (30d). 4) Pantoprazole 20mg - 1+0+1 before meal, continue (30d). 5) Rosuvastatin 10mg - 0+0+1, continue (30d). 6) Aspirin Enteric Coated 75mg - 0+1+0 after meal (30d). 7) Propranolol 10mg - 1+0+1, continue (30d). 8) Levothyroxine 50mcg - 1+0+0, continue (30d). 9) Warfarin 5mg - 0+0+1 as per chart, continue (30d). 10) Cefuroxime 500mg+Clavulanic 125mg - 1+0+1 (7d). 11) Cetirizine HCl 10mg - 0+0+1 (10d). 12) Paracetamol 500mg - 2+2+2 after meal if pain (5d). 13) Vitamin B1,B6,B12 - 1+0+1 (1 month).",
-   "scheduleCount": 6
+   "name": "Multi-drug prescription (cardiac, diabetes, thyroid, wound care)",
+   "dosageText": "1. Mupirocin ointment 2% - Apply three times daily [7 Day(s)]; 2. Insulin Glargine 100 IU/ml - 0+0+0+8 [30 Day] SC at 10 PM - Continue; 3. Insulin Short Acting Soluble Human 100 IU - 10+10+8(+/-2) [30 Day] SC 15 min before meal - Continue; 4. Pantoprazole 20mg - 1+0+1 [30 Day] Before Meal - Continue; 5. Rosuvastatin 10mg - 0+0+1 [30 Day] - Continue; 6. Aspirin Enteric Coated 75mg - 0+1+0 [30 Day] After Meal - Continue; 7. Propranolol 10mg - 1+0+1 [30 Day] - Continue; 8. Levothyroxine 50mcg - 1+0+0 [30 Day] - Continue; 9. Warfarin 5mg - 0+0+1 [30 Day] AS PER CHART - Continue; 10. Cefuroxime 500mg + Clavulanic 125mg - 1+0+1 [7 Day(s)]; 11. Cetirizine HCl 10mg - 0+0+1 [10 Day(s)]; 12. Paracetamol 500mg - 2+2+2 [5 Day(s)] After Meal, if pain; 13. Vitamin B1, B6 & B12 - 1+0+1 [1 Month(s)]",
+   "scheduleCount": 7
   },
   {
    "img": "136.png",
@@ -1780,11 +1780,11 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": false,
-   "found": 8,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Multi-drug prescription (Atorvastatin, Linagliptin/Metformin, Penicillin, Levothyroxine, Olmesartan, Pantoprazole, Spironolactone/Frusemide, Empagliflozin)",
-   "dosageText": "1. Atorvastatin 10mg Tab 0+0+1 (30 Day) - Continue (Qty 30)\n2. Linagliptin 2.5mg+Metformin Hcl 500mg Tab 1+0+1 (30 Day) - Continue (Qty 60)\n3. Phenoxymethyl penicillin 250mg Tab 1+0+1 (30 Day) - Continue (Qty 60)\n4. Levothyroxine 50 MCG Tab 2+0+0 (30 Day) - Continue (Qty 60)\n5. Olmesartan 40mg Tab 0+0+1 (30 Day) - Continue (Qty 30)\n6. Pantoprazole 20mg Tab 1+0+1 (30 Day) - Continue (Qty 60)\n7. Spironolactone 50mg + Frusemide 20mg Tab 1+0+0 (30 Day) - Continue (Qty 30)\n8. Empagliflozin 10mg Tab 0+1+0 (30 Day) After Meal - Continue (Qty 30)",
-   "scheduleCount": 11
+   "name": "Multi-drug prescription (cardiac/diabetes/thyroid regimen)",
+   "dosageText": "1. Atorvastatin 10mg 0+0+1 (30 Tabs) 2. Linagliptin 2.5mg+Metformin 500mg 1+0+1 (60 Tabs) 3. Phenoxymethyl penicillin 250mg 1+0+1 (60 Tabs) 4. Levothyroxine 50mcg 2+0+0 (60 Tabs) 5. Olmesartan 40mg 0+0+1 (30 Tabs) 6. Pantoprazole 20mg 1+0+1 (60 Tabs) 7. Spironolactone 50mg+Frusemide 20mg 1+0+0 (30 Tabs) 8. Empagliflozin 10mg 0+1+0 after meal (30 Tabs)",
+   "scheduleCount": 3
   },
   {
    "img": "137.png",
@@ -1795,8 +1795,8 @@
    "handwritten": false,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Fexofenadine 120 mg Tab",
-   "dosageText": "1+0+0 (1 Month(s)) Qty. 30",
+   "name": "Fexofenadine 120 mg Tab prescription",
+   "dosageText": "Fexofenadine 120 mg Tab, 1+0+0",
    "scheduleCount": 1
   },
   {
@@ -1809,7 +1809,7 @@
    "found": 2,
    "admitsIllegible": false,
    "name": "Eye clinic prescription - Nepado Eye Drop & Cap Avanza 2mg",
-   "dosageText": "Nepado Eye Drop: 1 drop 3 times (Left Eye); Cap Avanza 2mg: 0+0+1",
+   "dosageText": "Nepado Eye Drop: Left Eye - 1 drop 3 times; Cap Avanza 2mg: 0+0+1",
    "scheduleCount": 0
   },
   {
@@ -1822,7 +1822,7 @@
    "found": 1,
    "admitsIllegible": false,
    "name": "Handwritten prescription for Saikat Chatterjee (Parotitis)",
-   "dosageText": "1) W. Saline + 2% Althymol mouth wash + gargling, twice daily x 7 days. 2) Trexydin twice daily x 7 days. 3) Roxitem (150) twice daily, half an hour before meal x 7 days. 4) Nauzifer MPS 2ml twice daily before meal x 7 days. Entakav 0-0-0 x 7 days. Urine for R/E, Hb, TLC, DC, ESR advised.",
+   "dosageText": "1) W. Saline + 2tsp althymol mouth wash + gargling, twice daily x 7 days. 2) Trexydin twice daily x 7 days. 3) Roxitem (150) twice daily, half an hr before meal x 7 days. 4) Nausifer MPS 2ml thrice daily before meal x 7 days. Entakay 0-0-0 x 7 days. Urine for R/E, Hb, TLC, DC, ESR advised.",
    "scheduleCount": 0
   },
   {
@@ -1831,11 +1831,11 @@
    "status": 200,
    "intent": "prescription",
    "isRx": true,
-   "handwritten": true,
-   "found": 5,
+   "handwritten": false,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Prescription with 5 medications",
-   "dosageText": "1. খাবার স্বাভাবিক; 2. Tab Coralcal-DX 600mg+400IU 0+1+0 for 2 months; 3. Tab Neuro-B 100mg+200mg+200mcg 0+0+1 for 2 months; 4. Tab Pase .5mg 0+0+1 for 7 days; 5. Cap Exium 20mg 1+0+1 before food for 15 days",
+   "name": "Prescription - Coralcal-DX, Neuro-B, Pase, Exium",
+   "dosageText": "1. Normal diet. 2. Tab Coralcal-DX 600mg+400IU: 0+1+0 for 2 months. 3. Tab Neuro-B 100mg+200mg+200mcg: 0+0+1 for 2 months. 4. Tab Pase .5mg: 0+0+1 for 7 days. 5. Cap Exium 20mg: 1+0+1 before food, for 15 days.",
    "scheduleCount": 5
   },
   {
@@ -1847,9 +1847,9 @@
    "handwritten": false,
    "found": 3,
    "admitsIllegible": false,
-   "name": "Urology prescription: Nitrofur SR, Napa, ZIF Forte",
-   "dosageText": "1. Cap. Nitrofur SR 100mg - 1+0+1 (after meal) x 7 days\n2. Tab. Napa 500mg - 1+1+1 (after meal) x 5 days\n3. Cap. ZIF Forte - 1+0+1 (after meal) x 3 months",
-   "scheduleCount": 3
+   "name": "Prescription for urinary tract infection with DJ stent",
+   "dosageText": "1. Cap. Nitrofur SR 100mg 1+0+1 after meals; 2. Tab. Napa 500mg 1+1+1 after meals; 3. Cap. ZIF Forte 1+0+1 after meals",
+   "scheduleCount": 0
   },
   {
    "img": "142.jpeg",
@@ -1860,8 +1860,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription with 6 medicines",
-   "dosageText": "Tab. Zimax (500mg) 1+0+0 (5 din); Cap. Itra (100mg) 1+0+1 (21 din); Tab. Progut Mups (20mg) 1+0+1, khabar 30 min age (2 mash); Tab. Alben-DS: 1 tablet khaben, 7 din por abar 1 tablet khaben; Dancel Shampoo: gosoler age matha gaye mekhe 20 minit apeksha kore gosol korben, sptahe 3/4 din (2 mash); Tab. Xyril (25mg) 0+0+1 (21 din)",
+   "name": "Handwritten prescription with multiple medications",
+   "dosageText": "Tab. Zimax 500mg 1+0+0 (5 days); Cap. Itra 100mg 1+0+1 (21 days); Tab. Progut Mups 20mg 1+0+1, 30 min before meals (1 month); Tab. Alben-DS 1 tablet now, repeat 1 tablet after 7 days; Dancel Shampoo - apply on wet hair before bath, wait 20 min then rinse, use 3-4 days/week (1 month); Tab. Xytril 25mg 0+0+1 (21 days)",
    "scheduleCount": 0
   },
   {
@@ -1873,8 +1873,8 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Tab. Reevit, Zinc, Ivera, Azith, D-Rise",
-   "dosageText": "Tab. Reevit (250mg) - 2 times a day; Tab. Zinc (20mg) - 2 times a day; Tab. Ivera - as per instructions written in local script; Tab. Azith (250mg) - 2 times a day; Tab. D-Rise (20000IU) - as noted",
+   "name": "Handwritten prescription (Tab. Reevit, Zinc, Ivera, Azith, D-Rise)",
+   "dosageText": "Tab. Reevit (250mg) - 1-0-1; Tab. Zinc (20mg) - 1-0-1; Tab. Ivera - as per instructions written in local language; Tab. Azith (250mg) - 1-0-1; Tab. D-Rise (20000IU) - as noted below in local language",
    "scheduleCount": 0
   },
   {
@@ -1886,8 +1886,8 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": true,
-   "name": "Handwritten prescription - multiple tablets (Iventi, Cecrit, Xinc, D-Rise, Ivera)",
-   "dosageText": "Tab. Iventi 100mg 0+2+0; Tab. Cecrit 250mg 2+0+2; Tab. Xinc 2mg 2+0+2; Cap. D-Rise 60,000 IU (weekly, as noted); Tab. Ivera 6mg (instructions handwritten, partly illegible)",
+   "name": "Handwritten prescription - multiple tablets (Iventi, Ceevit, Xinc, D-Rise, Ivera)",
+   "dosageText": "Tab. Iventi (100mg) 0+0+0; Tab. Ceevit (250mg) 0+0+0; Tab. Xinc (0mg) 0+0+0; Cap. D-Rise (60,000 IU); Tab. Ivera (6mg) - additional handwritten instructions partially illegible",
    "scheduleCount": 0
   },
   {
@@ -1899,8 +1899,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": true,
-   "name": "Handwritten prescription note",
-   "dosageText": "Illegible handwritten text - unable to reliably transcribe medication names/doses",
+   "name": "Handwritten medical prescription note",
+   "dosageText": "Illegible handwritten text - unable to reliably determine specific drug names or dosages",
    "scheduleCount": 0
   },
   {
@@ -1910,10 +1910,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 5,
-   "admitsIllegible": false,
-   "name": "Handwritten prescription note",
-   "dosageText": "Xidolec - 1-?; Loscehl(?)org - 1-?; Tab Angentz 2-2-0; Prodilage-2R (?) 1-1; Tab Bestcal-2R 1-?",
+   "found": 2,
+   "admitsIllegible": true,
+   "name": "Handwritten prescription note (partially legible, Bengali/English mixed)",
+   "dosageText": "Illegible handwritten medication list including 'Xidorec', 'Loscohl', 'Argentz', 'Prodinafe-25', 'Bestcal D-25' with dose fractions like 1-1, 2-2-0, 1-0-1; exact drug names and strengths unclear due to handwriting",
    "scheduleCount": 0
   },
   {
@@ -1926,7 +1926,7 @@
    "found": 6,
    "admitsIllegible": false,
    "name": "Handwritten medical prescription",
-   "dosageText": "Tab Amlor 8 - 1+0+0; Tab Exium MUPS 20 - 1+0+0; Tab Orthomax - 1+0+0; Tab Ostalox 300 - 0+1+0; Tab Metromol 500 - 0+0+1/2 and 1/2+0+1/2; Tab Coralex Dx - 0+1+0",
+   "dosageText": "Tab Amlor 8 - 1+0+0; Tab Exium MUPS 20 - 1+0+0; Tab Orthomax - 1+0+0; Tab Ostalox 300 - 0+1+0; Tab Dietholmol 500 - 0+0+1/2 & 1/2+0+1/2; Tab Coralax D - 0+1+0",
    "scheduleCount": 0
   },
   {
@@ -1938,8 +1938,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription with multiple medications",
-   "dosageText": "Tab Resenix 100mg 3-0; Cap Coxe 20mg 3-0; Tab Rocal-D 3-0; Tab Neucos-B 3-0; Tab Rivotril (.5mg) 1-0(nightly notation shown); Tab Renxit 1-0",
+   "name": "Handwritten prescription with multiple medicines",
+   "dosageText": "Tab Resenix 100mg - 3x; Cap Coxe 20mg - 3x; Tab Rocal-D - 3x; Tab Neucos-B - 3x; Tab Rivotril (.5mg) - 1x; Tab Renxit - 1x",
    "scheduleCount": 0
   },
   {
@@ -1951,8 +1951,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": true,
-   "name": "Handwritten prescription (Bengali/regional script)",
-   "dosageText": "Multiple medicines listed: 1) tablet - 1+0+1, for 1 month; 2) cap D-inda (100mg) - 1+0+1, for 2 months; 3) cap D-3 (2000 IU) - dosage frequency unclear, for 3 months",
+   "name": "Handwritten prescription (multiple medicines, partially illegible)",
+   "dosageText": "Tab (name unclear) 1+0+1; Cap D-inda (100mg) 1+0+1; Cap D3-max (20000 IU) 1 - direction unclear, some lines in regional script",
    "scheduleCount": 0
   },
   {
@@ -1962,10 +1962,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 7,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - diabetic diet, Metsmall, Telma-20, Ubarest and others",
-   "dosageText": "Met Small (10) - 1 OD/BD; Telma-20 - 1 OD; T. Nyprous(?) (2.0) - OD; Cap Pantaro DSR - OD; Ubarest-CE - 1 3D max/day; Probicd(30) - 1 OD; Mycom-P - 1 BDPCX7d",
+   "name": "Handwritten prescription - Diabetic drugs",
+   "dosageText": "Metsmall (10), Telma-20, T. Glimprout (2.0), T. Pantosec DSR, T. Ubroxil-CE, T. Mycom-P - various doses as written (BB/OD/BD noted per line)",
    "scheduleCount": 0
   },
   {
@@ -1978,7 +1978,7 @@
    "found": 4,
    "admitsIllegible": false,
    "name": "Handwritten prescription: Trilock, Pantomix, Flexomin, Ulmox",
-   "dosageText": "Cab Trilock 10mg (1-0-1); Tab Pantomix 20mg (1-0-1); Tab Flexomin (1-0-1); Cap Ulmox (1-1-0)",
+   "dosageText": "Cab Trilock 10mg (1-0-1); Tab Pantomix 20mg (1-0-1); Tab Flexomin (1-0-1); Cap Ulmox (1-1-0-1)",
    "scheduleCount": 0
   },
   {
@@ -1991,7 +1991,7 @@
    "found": 4,
    "admitsIllegible": false,
    "name": "Handwritten prescription",
-   "dosageText": "Tab. Voltalin D - mane/noon/night; Cap. Cosmocol 20 - mane/noon/night; Tab. Glimilan(?) 10 - mane/noon/night; Tab. VB3 - mane/noon/night",
+   "dosageText": "Tab. Voltalin D - mane/noon/night; Cap. Cosmocole 20 - mane/noon/night; Tab. Glimilar 10 - mane/noon/night; Tab. VB3 - mane/noon/night",
    "scheduleCount": 0
   },
   {
@@ -2003,8 +2003,8 @@
    "handwritten": false,
    "found": 2,
    "admitsIllegible": false,
-   "name": "Prescription - Napa Extra & Fexo",
-   "dosageText": "Tab. Napa Extra (500mg): 1+1+1 (after food) - 5 days; Tab. Fexo (120mg): 1+0+1 (before food) - 7 days",
+   "name": "Prescription: Tab. Napa Extra 500mg & Tab. Fexo 120mg",
+   "dosageText": "Napa Extra (500mg): 1+1+1 (খাবার পর) — 5 days; Fexo (120mg): 1+0+1 (খাবার পূর্বে) — 7 days",
    "scheduleCount": 5
   },
   {
@@ -2016,9 +2016,9 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Rispolux, Perkinil, Telazine, Minium, Propranol",
-   "dosageText": "1) Tab. RISPOLUX 4mg - morning:0, noon:0, night:1.5, before food, continue\n2) Tab. PERKINIL 5mg - morning:1, noon:1, night:1(2), before food, continue\n3) Tab. TELAZINE 5mg - morning:1, noon:1, night:1(2), before food, continue\n4) Tab. Minium 5mg - morning:1, noon:0.5, night:0, after food, continue\n5) Tab. Propranol 10mg - morning:0, noon:0, night:1(2), continue",
-   "scheduleCount": 3
+   "name": "Handwritten prescription - 5 medications",
+   "dosageText": "1) Tab. RISPOLUX 4mg: 0-0-2½ (after food); 2) Tab. PERKINIL 5mg: 1-1-2 (2 after food); 3) Tab. TELAZINE 5mg: 1-1-1 (2 after food); 4) Tab. Minium 5mg: 1-½-0 (before food); 5) Tab. Propranol 10mg: 0-0-2 (2 after food)",
+   "scheduleCount": 0
   },
   {
    "img": "155.jpeg",
@@ -2029,8 +2029,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription (Bengali/English mixed, skin/dermatology)",
-   "dosageText": "1. Clinex lotion - as written; 2. The Remedist Niacinamide Face Serum - apply on face twice daily; 3. Cap. [name] 100 mg - as written; 4. Cream Elvina - as written; 5. [name] Oxifun - as written; 6. Ato Gel SIODIL - apply on face twice daily",
+   "name": "Handwritten prescription (Bengali/English mixed, dermatology)",
+   "dosageText": "1. Clinex lotion - apply as directed; 2. The Remedist Niacinamide Face Serum - apply 2 times daily on face; 3. Cap. Genra 100 mg - as directed; 4. Cetraume/Elvina - as directed; 5. Loxiro Oxifun - apply as directed; 6. Ato Gel SIODIL - apply on face twice daily",
    "scheduleCount": 0
   },
   {
@@ -2042,8 +2042,8 @@
    "handwritten": false,
    "found": 1,
    "admitsIllegible": false,
-   "name": "Discharge treatment prescription with multiple medications",
-   "dosageText": "1. Syp Reset (1PH): 1.5 spoon every 6 hours if fever >100°F | 2. Oral Saline ACI-ORS: mix full packet in half litre water, drink frequently | 3. Syp B-9: 1 spoon once daily for 1 month | 4. Syp Ziton (1PH): 1 spoon twice daily - 1 vial | 5. Oint Q-Rash: apply twice daily on affected area, 14 days if rash persists | 6. Syp Rozith 35ML (1PH): 1 spoon once daily - 1 vial | After 10 days start: 7. Cap Ratinol Forte 50000 Unit: 1 capsule twice daily for 2 days, cut capsule tip and give liquid content",
+   "name": "Discharge treatment prescription (multiple medicines)",
+   "dosageText": "1. SYP Reset (1PH): 1.5 spoon every 6 hours if fever >100°F. 2. Oral saline ACI-ORS: mix full packet in half litre water, drink frequently. 3. SYP B-9: 1 spoon once daily for 1 month. 4. SYP Ziton (1PH): 1 spoon twice daily for 1 vial. 5. OINT Q-RASH: apply twice daily on affected area for 14 days if wound present. 6. SYP Rozith 35ML (1PH): 1 spoon once daily for 1 vial. After 10 days start: 7. CAP Ratinol Forte 50000 unit: 1 capsule twice daily for 2 days, cut capsule and give liquid content only.",
    "scheduleCount": 0
   },
   {
@@ -2055,9 +2055,9 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - refer to medicine specialist",
-   "dosageText": "Cap Betibac 40 (0+0+1); Tab Napa One (2+2+2); Tab Deflim 10 (2+2+1); Tab Reammo 20 (2+0+1); Tab Clopid AS (0+2+0); Clofenac Suppo 50",
-   "scheduleCount": 0
+   "name": "Handwritten prescription - multiple medications (Betibac, Napa, Deflin, Reanmo, Clopid AS, Clofenac Suppo)",
+   "dosageText": "Cap Betibac 4mg 0+0+1; Tab Napa one 1+1+1; Tab Deflin 10 2+2+2; Tab Reanmo 20 1+0+1; Tab Clopid AS 0+1+0; Clofenac Suppo 50 as needed",
+   "scheduleCount": 10
   },
   {
    "img": "158.jpeg",
@@ -2068,8 +2068,8 @@
    "handwritten": true,
    "found": 7,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - multiple medications",
-   "dosageText": "Tab. Milcal 1+0+1; Tab. Osthgen 1+0+1; Tab. Naptusyn Plus (500/20) 1+0+1 (after food); Tab. Rabe 20 1+0+1 (before food); Cap. D Cap (40000 IU) once weekly; Tab. Bele 10 (10mg) 1+0+1 (before food); Tab. TPC 1+0+1 (before food)",
+   "name": "Handwritten prescription with multiple medications",
+   "dosageText": "Tab. Milcal 1+0+1; Tab. Oxthgen 1+0+1; Tab. Napkersyn Plus (500/20) 1+0+1; Tab. Rabec 20 1+0+1; Cap. DCap (40000 IU) once weekly; Tab. Bele 10 (10mg) 1+0+1; Tab. TPC 1+0+1",
    "scheduleCount": 0
   },
   {
@@ -2080,9 +2080,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 4,
-   "admitsIllegible": true,
-   "name": "Handwritten prescription (Bengali/English mixed, partly illegible)",
-   "dosageText": "1) Junbacef - as noted; 2) Ebatin - as noted; 3) Afrin Nasal Drop 0.5% - as noted; 4) Candibar Drop - as noted",
+   "admitsIllegible": false,
+   "name": "Handwritten prescription (partly non-English script) - Jurbact, Ebatin, Afrin Nasal Drop, Candibar Drop",
+   "dosageText": "1) Jurbact (500mg) tablet; 2) Ebatin tablet; 3) Afrin Nasal Drop 0.5% - 2 drops each nostril; 4) Candibar Drop",
    "scheduleCount": 0
   },
   {
@@ -2092,10 +2092,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 2,
+   "found": 1,
    "admitsIllegible": true,
    "name": "Handwritten clinical note with medication list",
-   "dosageText": "Illegible handwritten medication list including tablets and other items; unable to reliably transcribe drug names or doses.",
+   "dosageText": "Illegible handwritten medication list, unable to reliably transcribe drug names or doses",
    "scheduleCount": 0
   },
   {
@@ -2106,9 +2106,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 1,
-   "admitsIllegible": true,
+   "admitsIllegible": false,
    "name": "Handwritten prescription - 4 medicines",
-   "dosageText": "1. Tab. Tamen - 1+1+1 - 3 days | 2. Tab. Alcet 5mg - 1+0+1 - 10 days | 3. Tab. Azithromycin - 1+0+1 - 1 (unclear) | 4. Tab. Razimor 500mg - 0+0+1 total = 7 days",
+   "dosageText": "1. Tab. Tamen 1+1+1 - 3 days | 2. Tab. Alcet 5mg 1+0+1 - 10 days | 3. Tab. Azithromycin 1+0+1 - 1 phial | 4. Tab. Razimor 500mg 0+0+1 total - 7 days",
    "scheduleCount": 0
   },
   {
@@ -2120,8 +2120,8 @@
    "handwritten": true,
    "found": 1,
    "admitsIllegible": true,
-   "name": "Handwritten prescription (Bengali/English, multiple medicines)",
-   "dosageText": "Aricam (1), Toradolyn (1), Rivaroxa 2000 (8), Dimovo 2000 (6), Finif 2000 (14), Eaxin 2000 (7) - exact drug names and doses unclear due to handwriting",
+   "name": "Handwritten prescription (medication list, Bengali form)",
+   "dosageText": "Arizom (1v)(1v), Toradolyn(1m), Renagpne, 2ce00, Dimvo, 2ce00, Finiz, 2ce00, Cadno, 0ce00 - exact drug names/doses unclear due to illegible handwriting",
    "scheduleCount": 0
   },
   {
@@ -2133,8 +2133,8 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten medication list (Telmisartan, Bliss, Naxpro, Metf-D, Vislet)",
-   "dosageText": "Tab Telbotel(?) 150mg 1-0-1; Tab Bliss 140 1-0-1; Tab Naxpro 20mg 1-0-1; Tab Metf-D 500 1-0-1; Tab Vislet 5mg 1-0-1",
+   "name": "Handwritten prescription with multiple tablets",
+   "dosageText": "Tab Webosten-150mg 1-0-1 for 2 days; Tab Bliss-140 1-0-1; Tab Haxpro-20mg 1-0-1; Tab MaiCM-D-500 1-0-1; Tab Viset-50mg 1-0-1 for 30 days",
    "scheduleCount": 0
   },
   {
@@ -2147,7 +2147,7 @@
    "found": 1,
    "admitsIllegible": false,
    "name": "Handwritten prescription: Inj. Novorapid & Inj. Ceftriaxone",
-   "dosageText": "1) Inj. Novorapid 10+10+10 (subcutaneous, with meals). 2) Inj. Ceftriaxone (1gm) 1 vial - stat - then 12 hourly for 7 days. Advice: Urgent Hospitalization",
+   "dosageText": "1) Inj. Novorapid (S/C) 10 + 10 + 10 (before meals, subcutaneous). 2) Inj. Ceftriaxone (1gm) IV, stat then 12 hourly for 7 days.",
    "scheduleCount": 0
   },
   {
@@ -2159,8 +2159,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - multiple medications",
-   "dosageText": "1. Tab. Deltasone (5mg) 1+0+1; 2. Cap. T-cef (200mg) 1+0+1; 3. Tab. Cerd- 1+0+1; 4. Tab. Pair (10mg) 1+0+1; 5. Tab. Vicral (50mg) 1+0+1; 6. Tab. Miteal 1+0+1",
+   "name": "Handwritten prescription - 6 medications",
+   "dosageText": "1. Tab. Deltroom (8mg) 1+0+1\n2. Cap. T-cef (200mg) 1+0+1\n3. Tab. Cecon 1+0+1\n4. Tab. Rair (10mg) 1+0+1\n5. Tab. Vioral (50mg) 1+0+1\n6. Tab. Bonisto/Mitcal 1+0+1",
    "scheduleCount": 0
   },
   {
@@ -2170,10 +2170,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 5,
-   "admitsIllegible": true,
-   "name": "Handwritten multi-drug prescription (Bengali disease management form)",
-   "dosageText": "Multiple Tab/Cap/Syr/Drop entries, most drug names and mg doses handwritten and illegible. Pattern repeats: dose + dose + dose (before/after meal), taken before/after food, morning/afternoon/night combinations marked. Additional printed instructions: if fever >101°F or pain increases, give supp ___ mg (morning/noon/evening/night); drops in eye/ear/nose/mouth 1-2-3 drops; TAB at 9-10am / 4-5pm mixed in a glass of cold/warm water; ORS (N.Saline/Rice Saline/Herbalyte)+Glucose+coconut water 2-3 times daily; Cream/Lotion/Gel to be applied on affected area 2 times daily.",
+   "found": 2,
+   "admitsIllegible": false,
+   "name": "Handwritten multi-drug prescription (Disease Management form)",
+   "dosageText": "Multiple Tab/Cap/Syr/Drop entries, each with a handwritten drug name and mg strength, combined as morning+afternoon+night fractions (e.g. 2+0+2), to be taken before/after meals; plus supp (suppository) if fever >101°F or pain, eye/ear/nose/mouth drops 1-2-3 drops, a tablet at 9-10am/4-5pm in water, ORS+Glucose+coconut water 2-3 times daily, and a topical cream/lotion/gel for affected area twice daily",
    "scheduleCount": 0
   },
   {
@@ -2185,8 +2185,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription with multiple medications",
-   "dosageText": "Tab. Algin 50mg; Tab. Rocipro 500mg; Tab. Frexicox 5mg (after meals); Cap. [name]-CR 82.5mg; Tab. [name]-M 20mg (before meals); Tab. XPA-XR 66mg (after meals) — doses written in Bengali numerals as fraction schedules (e.g. 1+1+1)",
+   "name": "Handwritten prescription - multiple medications",
+   "dosageText": "Tab Algin 50mg 2+2+2; Tab Rocipro 500mg 2+0+2; Tab Flexicox 5mg 2+0+2 (after food); Cap Gastrolac-CR 82.5mg 0+0+2; Tab Esorich-M/MUPS 20mg 2+0+2 (before food); Tab XPA-XR 66mg 2+0+2 (after food)",
    "scheduleCount": 0
   },
   {
@@ -2198,8 +2198,8 @@
    "handwritten": true,
    "found": 7,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - multiple tablets",
-   "dosageText": "1. Tab. Maxcoral DX - 1 tab, 1 tablet daily; 2. Tab. Baemax 10mg - 1 tab, quantity 30; 3. Tab. Xelpra Mups 20mg - 1 tab, morning 1; 4. Tab. Radex - 1 tab; 5. Tab. Elaim - 1 tab; 6. Tab. Tenorix 20mg - twice daily; 7. Tab. Trilon 40mg - quantity 3",
+   "name": "Handwritten prescription with multiple medications",
+   "dosageText": "1. Tab. Maxcoral DX - 1 tab once daily; 2. Tab. Baemax 10mg - 1 tab (30 days); 3. Tab. Xelpro Mups 20mg - 1 tab morning; 4. Tab. Radex - 1 tab; 5. Tab. Elaim - 1 tab; 6. Tab. Tenorix 20mg - twice daily; 7. Tab. Trdalon 40mg - 3 tabs",
    "scheduleCount": 0
   },
   {
@@ -2210,9 +2210,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 3,
-   "admitsIllegible": true,
-   "name": "Prescription: Lorix Plus Lotion and handwritten medications",
-   "dosageText": "Lorix Plus Lotion - apply to affected area from neck down (avoid eyes and mouth) over whole body; bathe 8-24 hours after applying lotion; reapply after 7 days if needed. Handwritten: Tab Acet OD, App'y Pacid-BT, and another lotion (name unclear)",
+   "admitsIllegible": false,
+   "name": "Handwritten prescription with Lorix Plus Lotion",
+   "dosageText": "Lorix Plus Lotion - apply to affected areas from neck down (avoid eyes and mouth), wash off after 8-24 hours, reapply after 7 days if needed. Additional handwritten notes: Tab Alcet OD; Apply q Pacid-BT; Lorix",
    "scheduleCount": 0
   },
   {
@@ -2224,8 +2224,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Tab. Ciprocid, Tab. Metro, Hib Bath (Povidone Iodin)",
-   "dosageText": "Tab. Ciprozid 500mg 2+0+2; Tab. Metro 400mg 2+2+2; Hib Bath - Povidone Iodin",
+   "name": "Handwritten prescription - Tab. Lipnosid, Tab. Metro, Hib Bath (Povidone Iodine)",
+   "dosageText": "Tab. Lipnosid-5mg 2+0+2; Tab. Metro-400mg 2+2+2; Hib Bath - Povidone Iodin, mix 2 caps in bathing water, 10 min soak",
    "scheduleCount": 0
   },
   {
@@ -2237,8 +2237,8 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten prescription: Jointflex 40, Sarva, PLC, Omep 20, Zincade Syrup",
-   "dosageText": "Cap. Jointflex 40 - as directed; Cap. Sarra - as directed; Tab. PLC - as directed; Cap. Omep 20 - as directed; Syp. Zincade - as directed, 20 ml",
+   "name": "Handwritten prescription: Jointflex 40, Sarra, PLC, Omep 20, Zincade Syrup",
+   "dosageText": "Cap. Jointflex 40 - 0-0-1; Cap. Sarra - 0-0-1; Tab. PLC - 1-0-1; Cap. Omep 20 - 1-0-1; Syp. Zincade - 0-0-1 (20 ml)",
    "scheduleCount": 0
   },
   {
@@ -2250,8 +2250,8 @@
    "handwritten": true,
    "found": 2,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Purngene whitening cream & Stretchonomics cream",
-   "dosageText": "Purngene whitening cream - apply as directed; Stretchonomics cream - apply as directed",
+   "name": "Handwritten prescription - creams (pungent whitening cream, stretch marks cream)",
+   "dosageText": "1. Pungent whitening cream - apply twice a day; 2. Stretchmarks cream - apply twice a day",
    "scheduleCount": 0
   },
   {
@@ -2263,8 +2263,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription with multiple medications",
-   "dosageText": "Tab Algis 1-1-1; Tab Bregpa 10 1-0-1; Tab Folivit 1-0-1; Tab B26 0-1-1; Tab Diclispas 1-1-1; Cap Serpel 2a 1-1-1",
+   "name": "Handwritten prescription with multiple tablets",
+   "dosageText": "Tab Algis 1-1-1; Tab Bregpa 10 1-0-1; Tab Foline 1-1-1; Tab B12/B6 0-1-1; Tab Diclighs 1-1-1; Cap Serzel 20 1-1",
    "scheduleCount": 0
   },
   {
@@ -2276,8 +2276,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten prescription: Willfert-M, Xine-B, Contido",
-   "dosageText": "Tab. Willfert-M 0+2+0; Tab. Xine-B 2+0+0; Tab. Contido 0+0+2",
+   "name": "Handwritten prescription: Willfert-M, Xine-B, Contido tablets",
+   "dosageText": "Tab Willfert-M 0+2+0; Tab Xine-B 2+0+0; Tab Contido 0+0+2",
    "scheduleCount": 0
   },
   {
@@ -2289,8 +2289,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Solaz, Ashonel, Rufenta, Masitel, Solo nasal drops",
-   "dosageText": "Tab. Solaz 100 (1-0-1) x 6 days; Syp. Ashonel 10ml/26v (2 times daily) x 9 days; Tb. Rufenta 10mg (1-0-1) x 1 day; Tb. Masitel (1-0-0) x 1 day; Trego nasal ointment; Solo nasal drops - 2 drops both nostrils, 3 times daily",
+   "name": "Handwritten prescription - Solas, Ashonel, Rufenta, Masfel, Trego, Solo",
+   "dosageText": "Tab. Solas 100 - 1-0-1; Syp. Ashonel 10ml/26v - 2ml; Tb. Rufenta 10mg - 1-0-1; Tb. Masfel - 1-0-0; Trego nasal ointment; Solo nasal drops - 2 drops both nostrils, 3 times a day for 10 days",
    "scheduleCount": 0
   },
   {
@@ -2300,10 +2300,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 7,
+   "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten Rx: Ezmol, Antacid, Xalvon, B12, Muricad, CP Dianhu",
-   "dosageText": "Tab. Ezmol 60 - 1x; Antacid - 1x; Xalvon 16 - 1x, 1x; B12-6 - 1x; Muricad AC - 1x; Cap Dianhu(?) - 3x; Vital-D 40,000 IU / Vital D 20,000 IU (as printed)",
+   "name": "Handwritten prescription (Rx) - multiple medications",
+   "dosageText": "Tab. Ezmol 60 - 1; Tab. Antace - 1; Tab. Xalvo 16 - morning 1/2, evening 1/2; Tab. B12-6 - 1; Tab. Mucinac - 1; Cp Danlu 3",
    "scheduleCount": 0
   },
   {
@@ -2314,9 +2314,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 1,
-   "admitsIllegible": true,
-   "name": "Handwritten prescription note",
-   "dosageText": "Tab (40mg), Tab Crestone, Tab Sheloald, Tab Moxpro (Rome), Tab Cenit, Tab Nurse, Nupitop Ointment, Tab Flamex (400mg) - text partially illegible due to handwriting",
+   "admitsIllegible": false,
+   "name": "Handwritten medication prescription list",
+   "dosageText": "Multiple tablets/ointment listed: Tab Uzox(400mg), Tab Crestore, Tab Shelcal, Tab Moxpro(40mg), Tab Cernitas, Tab Nurise, Nupitop Ointment, Tab Flarmen(400mg) - exact doses/frequencies not clearly legible",
    "scheduleCount": 0
   },
   {
@@ -2328,8 +2328,8 @@
    "handwritten": true,
    "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten prescription: Acifex 20mg, Lactobac, Septovit",
-   "dosageText": "Tab. Acifex 20mg 1-0-1; Cap. Lactobac 1-0-1; Syp. Septovit 200ml x 2 doses",
+   "name": "Handwritten prescription: Acitrx, Lactobac, Septovit",
+   "dosageText": "Tab. Acitrx 20mg 1-0-1; Cap. Lactobac 1-0-1; Syp. Septovit 200 x",
    "scheduleCount": 0
   },
   {
@@ -2339,10 +2339,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 6,
+   "found": 1,
    "admitsIllegible": false,
-   "name": "Handwritten prescription with 6 medications",
-   "dosageText": "1) Tab. Reservix (30) - 1-0-1; 2) Tab. Ralel 200mg (30) - 1-0-1, 2 meals; 3) Tab. Neurocare 1mg (30) - 1-0-1; 4) Tab. Domin (30) - 1-0-1; 5) Tab. Ralcord-D (15) - 1-0-1; 6) Syp. Adelium 2tsf-2tsf",
+   "name": "Handwritten prescription - 6 medicines",
+   "dosageText": "1) Tab. Reservex - 1-0-1 (30) 2) Tab. Ralcel 20mg - 1-0-1, 2 months (30) 3) Tab. Neurocare - 1-0-1 (30) 4) Tab. Doonin - 1-0-1 (30) 5) Tab. Kalcerol-D - 1-0-1 (15) 6) Syp. Addelin - 2tsf-0-2tsf",
    "scheduleCount": 0
   },
   {
@@ -2354,8 +2354,8 @@
    "handwritten": true,
    "found": 7,
    "admitsIllegible": false,
-   "name": "Hospital discharge medication advice (Bengali)",
-   "dosageText": "Syp. Ceftid 2/2 chamoch - 2 bela - 7 din; Syp. Diyafex 5/4 chamoch - 2 bela - 7 din; Micoral gel - proyojon sthane lagabe; Syp. Bekof 5/2 chamoch - 3 bela - 5 din; Syp. V-plex 2 chamoch - 2 bela - 20 din; Syp. NID 2 chamoch - 2 bela - 28 din; Nebulization with Budetide 0.5/1 - 2 ml + Normal Saline - 2 ml, 2 bar/din - 7 din",
+   "name": "Hospital discharge prescription (Bengali)",
+   "dosageText": "Syp. Ceftid 2/2 chamoch - 2 bela - 7 din; Syp. Divafex 5/4.5 chamoch - 2 bela - 7 din; Micoral gel - stan-e lagabe; Syp. Bekof 5/2.5 chamoch - 3 bela - 5 din; Syp. V-plex 2 chamoch - 2 bela - 20 din; Syp. NID 2 chamoch - 2 bela - 24 din; Nebulization with Budetide 0.5/1 - 2 ml, Normal Saline - 2 ml, din-e 2 bar, 7 din",
    "scheduleCount": 0
   },
   {
@@ -2368,7 +2368,7 @@
    "found": 7,
    "admitsIllegible": false,
    "name": "Handwritten prescription (Bengali) - multiple medicines",
-   "dosageText": "Zithrox: 1/2 ml x2 - 5 din; Buket: 1 ml x2 - 5 din; Anset: 1/2 ml x2 - 5 din (jor hole); Syp. Perenta: 2.5ml jor 100 er beshi hole 4 ghonta pore por; Ace Suppository 125: 1ta jor 101 er beshi hole 4 ghonta ontor; Nid: 1ml x2 - 5 din; Enterogermin: 1 vial - 5 din",
+   "dosageText": "Zithrox 1/2 ml x 2 times - 5 days; Bufect syrup 3/4 ml x 2 times - 5 days; Anset 1/2 ml x 2 times - 5 days (after meal); Syp Perinor - if fever >100°F then every 4 hrs; Ace Suppository 125 - if fever >101°F then every 4 hrs interval; Nid syrup 1 ml x 2 times - 15 days; Enterogermina 1 sachet x 1 - 5 days",
    "scheduleCount": 0
   },
   {
@@ -2380,8 +2380,8 @@
    "handwritten": false,
    "found": 5,
    "admitsIllegible": false,
-   "name": "Prescription - Compensated CLD (HBV) with grade I OV, Prediabetes",
-   "dosageText": "1. Tab. Carvista 6.25 mg - 1/2+0+1/2 after food (continue); 2. Tab. Omidon 10 mg - 1+1+1 before food (1 month); 3. Gavilac M Solution 500mg+213mg+325mg/10ml - 2 teaspoons x 3 times after food (1 month); 4. Tab. Nexpro Mups 40 mg - 1+0+1 (1 month); 5. Tab. Coralcal-D 500mg+200 IU - 0+0+1 after food (1 month)",
+   "name": "Prescription - Compensated CLD (HBV related), Prediabetes",
+   "dosageText": "1. Tab. Carvista 6.25 mg - 1/2+0+1/2, after food, continue\n2. Tab. Omidon 10 mg - 1+1+1, before food, 1 month\n3. Gavilac M Solution 500mg+213mg+325mg/10ml - 2 teaspoons x 3 times, after food, 1 month\n4. Tab. Nexpro Mups 40 mg - 1+0+1, 1 month\n5. Tab. Coralcal-D 500mg+200 IU - 0+0+1, after food, 1 month",
    "scheduleCount": 0
   },
   {
@@ -2393,8 +2393,8 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription for piles/hemorrhoids",
-   "dosageText": "(1) Calmistin R/L - 1/2 tab; (2) F.P. 6x - 1/2 tab, 4+0+4; (3) K.M. 6x - 1/2 tab, 4+0+4; (4) MINA 100ml (S/L)",
+   "name": "Handwritten prescription",
+   "dosageText": "1) Colimistine (R) 1/2 - 20 drops, twice a day\n2) F.P. 6x 1/2 - 4+0+4\n3) K.M. 6x 1/2 - 4+0+4\n4) MINA 10ml (5%) - 2 times daily, 2 tsp dose",
    "scheduleCount": 0
   },
   {
@@ -2405,9 +2405,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 4,
-   "admitsIllegible": false,
-   "name": "Handwritten prescription (Bengali/English)",
-   "dosageText": "1. Tab Cardisor 2mg - 30, 1+0+1; 2. Ledun Pd 1M; 3. Sunit Tab - 30, 1+0+1; 4. Cap Rhematrin 60 - 1+0+2",
+   "admitsIllegible": true,
+   "name": "Handwritten prescription - multiple medicines",
+   "dosageText": "1. Tab Cardison 5mg - 30 tabs, 1+0+1; 2. Syrup (name unclear) 1 tsp; 3. Tab Sunit - 30 tabs, 1+0+1; 4. Cap Rhumatin - 60 caps, 1+0+2",
    "scheduleCount": 0
   },
   {
@@ -2417,10 +2417,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 3,
    "admitsIllegible": false,
-   "name": "Handwritten homeopathic prescription",
-   "dosageText": "1) Gelsemium 30 - 1u b.d.w. (2d + 2d) 2) Natrum Phos 6x - 1u (4+4+1) 3) Vernisium Tab 30 - 1u (2+0+1)",
+   "name": "Handwritten homeopathic prescription (Gelsemium, Nat Phos, Vera Vom)",
+   "dosageText": "1) Gelsemium 2x - 2 drops, 2+2+2 times daily; 2) Nat Phos 6x - 4+4+4 times daily; 3) Vera Vom Tab 3x - 2+0+2 times daily",
    "scheduleCount": 0
   },
   {
@@ -2430,10 +2430,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
+   "found": 4,
    "admitsIllegible": false,
    "name": "Handwritten prescription (4 medicines)",
-   "dosageText": "1) Calthris 6, 4no 2) Syp. Alkani, 1oz 3) Special zc, 2ml 4) Magnorin phos 6c, 1no",
+   "dosageText": "1) Cathris-6, 4no; 2) Syp. Alkalin, 1oz; 3) Special-Zc, 2no (4+4+4); 4) Magnerine Pro 6c, 1no (4+4+4)",
    "scheduleCount": 0
   },
   {
@@ -2444,9 +2444,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 6,
-   "admitsIllegible": true,
+   "admitsIllegible": false,
    "name": "Handwritten prescription with multiple medications",
-   "dosageText": "Cap. Zemicef 200mg 1+0+1 (9 days); Tab. Isovent 200mg 1+1+1 (6 days); Tab. Napa 500mg 1+1+1 (duration unclear); Tab. Prolug 20mg 1+0+1, empty stomach (20 days); Tab. Ceevit DS 0+1+0 (20 days); plus Viodin instructions written separately in Bengali",
+   "dosageText": "Cap. Zemicef 200mg 1+0+1; Tab. Isovent 200mg 1+1+1; Tab. Napa 500mg 1+1+1; Tab. Prigut 20mg 1+0+1 (before meal); Tab. Ceevit DS 0+1+0; plus Viodin instructions for eye wash/rinsing as noted",
    "scheduleCount": 0
   },
   {
@@ -2456,10 +2456,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 1,
-   "admitsIllegible": true,
-   "name": "Handwritten prescription (Bengali/English mixed)",
-   "dosageText": "Paracetamol, Kiti(?), Montair, Cetirizine - exact doses/frequencies illegible due to handwriting",
+   "found": 4,
+   "admitsIllegible": false,
+   "name": "Handwritten prescription (Bengali/English mixed) - Paracetamol, Kiti syrup, Montair, Cetirizine",
+   "dosageText": "Paracetamol syrup; Kiti syrup; Montair 2+0+2; Cetirizine 1 tab",
    "scheduleCount": 0
   },
   {
@@ -2471,9 +2471,9 @@
    "handwritten": true,
    "found": 5,
    "admitsIllegible": false,
-   "name": "Handwritten prescription (Rx) with multiple medications",
-   "dosageText": "Cap. Zemicet (200 mg) 1+0+1 - 9 din; Tab. Isovent (200 mg) 1+1+1 - 6 din; Tab. Napa (500 mg) 1+1+1 - 5 din; Tab. Progut Mups (20 mg) 1+0+1 - 20 din (khali pete); Tab. Ceevit-DS 0+1+0 - 20 din",
-   "scheduleCount": 0
+   "name": "Handwritten prescription (Rx) - 5 medicines",
+   "dosageText": "Cap. Zemicet (200mg) 1+0+1 for 9 days; Tab. Isovent (200mg) 1+1+1 for 6 days; Tab. Napa (500mg) 1+1+1 for some days; Tab. Progut Mups (20mg) 1+0+1 for 20 days (empty stomach); Tab. Ceevit DS 0+1+0 for 20 days",
+   "scheduleCount": 11
   },
   {
    "img": "190.jpeg",
@@ -2485,7 +2485,7 @@
    "found": 4,
    "admitsIllegible": false,
    "name": "Handwritten prescription - Tab. Ipec-Plus, Kalcorol-D, Sergel, Vertina-D",
-   "dosageText": "Tab. IPEC-PLUS: 1-0-1; Tab. KALCOROL-D: 0-1-0; Tab. SERGEL (2ml?): 1-0-1; Tab. VERTINA-D: 0-1-0",
+   "dosageText": "Tab. IPEC-PLUS 1-0-1; Tab. KALCOROL-D 0-1-0; Tab. SERGEL (2ml) 1-0-1; Tab. VERTINA-D 0-1-0",
    "scheduleCount": 0
   },
   {
@@ -2497,8 +2497,8 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - Tab COX-E, CORTIBON, FOSSICAL, SERGEL",
-   "dosageText": "Tab COX-E (90mg) - 0+0+1 (as marked); Tab CORTIBON - 1+0+1; Tab FOSSICAL - 0+1+0; Tab SERGEL - 1+0+1",
+   "name": "Handwritten prescription (Tab. Cox-E, Cartibon, Fossical, Sergel)",
+   "dosageText": "Tab. Cox-E (90mg) - 0-0-1 (as marked); Tab. Cartibon - 1-0-1; Tab. Fossical - 0-1-0; Tab. Sergel - 1-0-1",
    "scheduleCount": 0
   },
   {
@@ -2510,8 +2510,8 @@
    "handwritten": true,
    "found": 4,
    "admitsIllegible": false,
-   "name": "Handwritten prescription: B12G, Becoral D, Pantonix 20mg, Xine B",
-   "dosageText": "Tab. B12G - 1+0+1; Tab. Becoral D - 1+0+1; Tab. Pantonix 20mg - 1+0+1 (before meal); Tab. Xine B - 1+0+1",
+   "name": "Handwritten prescription: Tab. B12G, Tab. Beeoral D, Tab. Pantonix 20mg, Tab. Xine B",
+   "dosageText": "Tab. B12G - 1+0+1; Tab. Beeoral D - 1+0+1; Tab. Pantonix 20mg - 1+0+1 (before food); Tab. Xine B - 1+0+1",
    "scheduleCount": 0
   },
   {
@@ -2524,7 +2524,7 @@
    "found": 4,
    "admitsIllegible": false,
    "name": "Handwritten prescription for GERD",
-   "dosageText": "Tab. Pregul Maps 40mg - od; Tab. Gavinon 200mg - bd (2 tabs x 6 doses); Tab. Itokine 50mg - od; Tab. Norvis 50mg - od",
+   "dosageText": "Tab. Pregul Maps 40mg - 1-0-1; Syp. Gavinon 200mg - 2 times x 6 days; Tab. Itokine 50mg - 1-0-1; Tab. Norvis 50mg - 1-0-1",
    "scheduleCount": 0
   },
   {
@@ -2536,8 +2536,8 @@
    "handwritten": true,
    "found": 8,
    "admitsIllegible": false,
-   "name": "Handwritten medical prescription",
-   "dosageText": "1. Moxaclav-375mg (10) - 1 tab twice daily; 2. Napa-extend - 1 tab twice daily (as needed for fever); 3. Dolopt-20mg - 1 tab at night; 4. Trilolic-10mg - 1 tab at night; 5. Xalcort-6mg (10) - 1 tab once daily; 6. Prevagut-mups-40mg (30) - 1 tab once daily; 7. Deconil - 1 tab, syrup twice daily; Nebulization for the patient 6 SOS: Windal Plus/Rest-solution 1 ampule, Ibudilast 1 ampule, Norsol 2 cc",
+   "name": "Handwritten prescription with multiple medications",
+   "dosageText": "Moxaclav-375mg (10): 1 tab morning; Napa-extend: 1 tab morning (as needed for fever); Dolopt-20mg: 1 tab at 6pm; Trilolu-10mg: 0 tab at 6pm; Xalcort-6mg (10): 1 tab morning; Provigut-mups-40mg (30): 1 tab morning; Deconil-C: 1 tab morning; Nebulization: Windal Plus/Rest-solution 1 ampule + Ibudilast 1 ampule + Nordsol 2cc, SOS",
    "scheduleCount": 0
   },
   {
@@ -2549,8 +2549,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription (multiple medicines)",
-   "dosageText": "Tab Traxid 500mg 1+0+1 after meal (days as noted); Tab Clavurox 250mg 1+0+1 after meal; Tab Progut-MUPS 20mg 1+0+1 before meal; N/P Afrin 0.1% 2+2+2 drops in nose; Tab Ebation 10mg at night; Cap Fluloxin 500mg 1+1+1 after meal",
+   "name": "Handwritten prescription - multiple medications",
+   "dosageText": "Tab Traeid 500mg 1+0+1 after meal; Tab Clavucox 250mg 1+0+1 after meal; Tab Progut-MUPS 20mg 1+0+1 before meal; N/P Afrin 0.1% 2+2+2 drops in nose; Tab Ebation 10mg at night; Cap Flucloxin 500mg 1+1+1 after meal",
    "scheduleCount": 0
   },
   {
@@ -2561,9 +2561,9 @@
    "isRx": true,
    "handwritten": true,
    "found": 3,
-   "admitsIllegible": true,
-   "name": "Handwritten prescription (Bengali) - Nabumax, Solupred, Dexoget",
-   "dosageText": "Tab. Nabumax 500mg - 1; Tab. Solupred (dose unclear)mg - 1; Cap. Dexoget (dose unclear)mg - 1",
+   "admitsIllegible": false,
+   "name": "Handwritten prescription with 3 medicines",
+   "dosageText": "1) Tab. Nabumax-500mg - 1 tablet; 2) Tab. Solupred-something mg - 1 tablet; 3) Cap. Dexoral-something mg - 1 tablet",
    "scheduleCount": 0
   },
   {
@@ -2573,10 +2573,10 @@
    "intent": "prescription",
    "isRx": true,
    "handwritten": true,
-   "found": 4,
+   "found": 1,
    "admitsIllegible": true,
    "name": "Handwritten prescription (4 medicines)",
-   "dosageText": "1) Tab Rofuclav 250mg - 1-0-1; 2) Cap Progut HUPS - 1-0-1; 3) Suppo A-fenac 50mg - 1 dose; 4) Tab (unclear) - 1-0-0",
+   "dosageText": "1) Tab Rofuclav 250mg - 1-0-1  2) Cap Proquet HUPS - 1-0-1  3) Suppo A-denac 50mg - 1-0-1  4) Tab (unclear) - 1-0-0",
    "scheduleCount": 0
   },
   {
@@ -2589,8 +2589,8 @@
    "found": 7,
    "admitsIllegible": false,
    "name": "Handwritten prescription with multiple medications",
-   "dosageText": "Inj. Dexa 1 amp; Iroject 500mg/1amp; Tab Kalcoral-DX 0+2+0; Cap Rofozin 1+0+1; Tab Geston(5+) 1+0+1; Tab Nexum(mps-40) 1+0+1; Tab Laxopic(10p) 0+0+1",
-   "scheduleCount": 5
+   "dosageText": "Inj. Dexa 1 amp stat; Iroject 500mg/1amp (as per printed instructions); Tab Kalcoral-DX 0+1+0; Cap Rofuzin 1+0+1; Tab Geston 5+ 1+0+1; Tab Nexum (mups-40) 1+0+1; Tab Laxopic (10P) 0+0+1",
+   "scheduleCount": 0
   },
   {
    "img": "199.jpeg",
@@ -2601,8 +2601,8 @@
    "handwritten": true,
    "found": 11,
    "admitsIllegible": false,
-   "name": "Handwritten medical prescription with multiple medications",
-   "dosageText": "Inj. Dexa 1 amp IV; Iroject 500mg/1gm IV infusion; Inj. Fatisol 500 IV; Tab Kalcohal-K 0+1+0; Cap Irofix-FZ 1+0+1; Tab Alia-5 1+0+1; Tab Defrol (2000) 1+0+1; Tab Ecospirin (75) 0+1+0; Tab Maxpro (40) 1+0+1; Tab Zinacef (250) 1+0+1; Cream Afun topical",
+   "name": "Handwritten medical prescription (antenatal case)",
+   "dosageText": "Inj. Dexa 1 amp IM; Iroject 500mg/1gm IV infusion in saline (10 drops first 10 min, then 40 drops/min); Inj. Fatisol 500 in 1 bottle IV (30 drops first, then 30 drops/min); Tab Kalcohal-K 0+1+0; Cap Irofix-FZ 1+0+1; Tab Alia-5 1+0+1; Tab Defizol 2000 1+0+1; Tab Ecospirin 75 0+1+0; Tab Maxpro (aps 40) 1+0+0; Tab Zinaclav 625 1+0+1; Cream Afun",
    "scheduleCount": 0
   },
   {
@@ -2614,8 +2614,8 @@
    "handwritten": true,
    "found": 6,
    "admitsIllegible": false,
-   "name": "Handwritten prescription - multiple medications",
-   "dosageText": "Tab. Nabupain 500mg 2+0+2; Cap. Delanzo 30mg 2+0+2; Tab. Bondrova P?0 2+0+2; Cap. Raditol 0.25mg 0+2+0; Tab. Boniben 0+0+2; Tab. Neurex 2+0+2",
+   "name": "Handwritten prescription for osteoporosis/OA/CKD",
+   "dosageText": "1) Tab. Nabu Pain (500mg) 2+0+2 x30days; 2) Cap. Delanzo (20mg) 2+0+2 x30days; 3) Tab. Bondronat P 2+0+2 x3months; 4) Cap. Raditol (0.25mcg) 0+2+0 x3months; 5) Tab. Bonigen 0+0+2 x3months; 6) Tab. Nervex 2+0+2 x3months",
    "scheduleCount": 0
   }
  ]
