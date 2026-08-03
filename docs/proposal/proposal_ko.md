@@ -411,7 +411,9 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 그러나 같은 자리에서 반대 방향의 증거도 분명하다. 앞서 인용한 물약 시험(§1.3)은 무작위 대조시험이었고, 대조군과 갈린 것이 픽토그램이 들어간 지시였다. 픽토그램을 받은 보호자에서 20%를 넘는 용량 오차는 47.8%에서 **5.4%로 떨어졌다**(절대위험 감소 42.4%p). 다만 이 값은 매일 먹는 약을 받은 99명에게만 해당한다. 필요할 때 먹는 약을 받은 158명에서는 40.0%에서 15.6%로 절대위험 감소가 24.4%p 였다. 두 값 가운데 큰 쪽만 적으면 효과를 부풀리게 되므로 함께 적는다. 복약을 지키지 않은 비율은 추적한 전체에서 38.0%에서 9.3%로 낮아졌다 (Yin, H. S. et al., "Randomized controlled trial of a pictogram-based intervention to reduce liquid medication dosing errors and improve adherence among caregivers of young children," *Archives of Pediatrics & Adolescent Medicine*, 162(9):814–822, 2008).
 
-남아공에서 정규교육 7년 이하의 저문해 성인 60명을 대조군과 실험군으로 나눈 시험에서도, 그림을 함께 받은 쪽에서 약 라벨과 복약 안내문 **양쪽 모두 이해도 80%를 넘긴 참여자가 유의하게 많았다** (Mansoor, L. E. & Dowse, R., "Effect of pictograms on readability of patient information materials," *Annals of Pharmacotherapy*, 37:1003–1009, 2003).
+남아공에서 정규교육 7년 이하이고 영어가 제2언어인 저문해 성인 60명을 무작위로 대조군과 실험군에 배정한 시험에서도, 그림을 함께 받은 쪽에서 약 라벨과 복약 안내문 **양쪽 모두 이해도 80%를 넘긴 참여자가 유의하게 많았다** (Mansoor, L. E. & Dowse, R., "Effect of pictograms on readability of patient information materials," *Annals of Pharmacotherapy*, 37:1003–1009, 2003).
+
+이 시험을 우리 근거로 쓸 때 두 가지를 밝혀야 한다. 첫째, 실험군이 받은 것은 **글에 그림을 더한 것**이지 그림만이 아니다. 이 앱은 글을 뺐으므로 이 시험이 지지하는 것은 그림을 더하는 쪽이지 글을 빼는 쪽이 아니다. §1.8 뒤에 인용한 카타르 시험이 그림만을 따로 재어 꼴찌였다는 것과 함께 읽어야 한다. 둘째, 원문은 두 자료 모두 대체로 잘 이해되었고 그림의 효과가 **더 복잡한 정보에서** 나타났다고 적는다. 쉬운 지시에서는 차이가 크지 않았다는 뜻이며, 우리가 겨냥하는 복합 지시(§1.9)가 그 복잡한 쪽에 든다는 것이 이 결과를 우리 자리로 끌어오는 근거다.
 
 무엇을 겹쳐야 하는지를 직접 가른 시험도 있다. 카타르에서 아랍어와 영어를 읽지 못하는 이주노동자 123명을 세 갈래로 무작위 배정해, 글에 구두 설명을 더한 것과 그림만 있는 라벨과 그림에 구두 설명을 더한 것을 견주었다. **그림에 구두 설명을 더한 쪽이 대부분의 지시에서 가장 나았다** (*p* ≤ 0.05) (Kheir, N., Awaisu, A., Radoui, A., El Badawi, A., Jean, L. & Dowse, R., "Development and evaluation of pictograms on medication labels for patients with limited literacy skills in a culturally diverse multiethnic population," *Research in Social and Administrative Pharmacy*, 10(5):720–730, 2014, doi:10.1016/j.sapharm.2013.11.003).
 
