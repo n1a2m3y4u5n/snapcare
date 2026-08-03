@@ -29,6 +29,7 @@
   · 그림 설명이 그림 바로 아래에 있는가
   · 본문의 검정 횟수와 Bonferroni 문턱이 실제와 같은가
   · 본문이 인용한 코드가 저장소 파일과 같은가
+  · 본문이 든 형태소 이름이 사전에 그대로 있는가
 """
 import re
 import sys
@@ -620,6 +621,47 @@ def code_drift() -> list:
     return out
 
 
+def morpheme_names() -> list:
+    """본문이 든 형태소 이름이 사전에 그대로 있는가.
+
+    표 33 이 `tree_nut` 과 `sugar` 로 적고 있었는데 사전의 이름은
+    `allergen_tree_nut` 과 `food_sugar` 다. 이름을 줄여 적으면 심사자가
+    저장소에서 찾지 못한다. 78종을 만들었다는 주장의 근거가 이 이름들이다.
+
+    플래그(`lib/snapcare/types.ts` 의 ItemFlag)는 형태소와 다른 이름
+    공간이며 `peanut`, `high_salt` 처럼 짧다. 그것까지 잡으면 오탐이
+    되므로 함께 읽어 예외로 둔다."""
+    import json
+    root = DOC.parent.parent
+    dic = root / 'engine/dictionary.json'
+    typ = root / 'lib/snapcare/types.ts'
+    if not dic.is_file() or not typ.is_file():
+        return []
+    d = json.loads(dic.read_text())
+    names = set()
+    for k in ('heads', 'modifiers', 'composition_operators', 'frame'):
+        v = d.get(k, {})
+        names |= (set(v) if isinstance(v, dict)
+                  else {x if isinstance(x, str) else x.get('name') for x in v})
+    names.discard(None)
+    t = typ.read_text()
+    flags = set(re.findall(r"'([a-z_]+)'", t.split('ItemFlag =')[1].split(';')[0]))
+
+    out = []
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        body = re.sub(r'```.*?```', '', (DOC / f).read_text(), flags=re.S)
+        seen = set()
+        for m in re.finditer(r'`(\\?[a-z][a-z0-9_]*)`', body):
+            n = m.group(1).lstrip('\\')
+            if n in names or n in flags or n in seen:
+                continue
+            near = [x for x in names if x.endswith('_' + n)]
+            if near:
+                seen.add(n)
+                out.append(f'{f}: `{n}` 은 사전에 없다 — {near[0]} 를 줄여 적었다')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -726,6 +768,9 @@ def main() -> int:
         note(t)
 
     for t in code_drift():
+        note(t)
+
+    for t in morpheme_names():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):

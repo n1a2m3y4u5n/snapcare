@@ -1727,15 +1727,15 @@ Of the 24 read differently, 7 are actually exposed on screen, while the remainin
 
 | Morpheme | Previously read as | After |
 |---|---|---|
-| `tree_nut` | cracked egg | walnut |
+| `allergen_tree_nut` | cracked egg | walnut |
 | `inhaler` | letter l | inhaler spraying |
 | `symptom_gut` | lightning bolt icon | stomach with lightning bolt |
 | `glucometer` | key fob | glucose meter |
-| `sugar` | three hexagons / three dice | spoon with powder |
+| `food_sugar` | three hexagons / three dice | spoon with powder |
 | `tablet_blister` | die showing four | pill blister pack |
 | `food_bowl` | circle with line | bowl of hot food |
 
-The improvement to `tree_nut` matters particularly. Its being read as "cracked egg" is not simply a misreading, because a different allergen, `egg`, exists in the same set. Two different allergy warnings were being read as the same picture.
+The improvement to `allergen_tree_nut` matters particularly. Its being read as "cracked egg" is not simply a misreading, because a different allergen, `egg`, exists in the same set. Two different allergy warnings were being read as the same picture.
 
 ### 5.3 Morphemes judged unimprovable
 
@@ -1748,7 +1748,7 @@ Five symbols were reworked without improving. These differ in nature from the se
 | `suppository` | Identical in form to a bullet. Adding packaging made it read as "bomb" or "rocket" | Form alone does not separate them |
 | `body_skin` | Drawn as texture it becomes waves, as an arm it clots, as a finger it becomes a footprint | "Skin" is not an object that can stand alone |
 | `time_evening` | The sun rising and the sun setting differ **only by direction** | A still picture has no direction |
-| `sesame` | Seeds in a pod worked better than scattered seeds, but `soy` is already a bean pod | **Collides within the set** |
+| `allergen_sesame` | Seeds in a pod worked better than scattered seeds, but `allergen_soy` is already a bean pod | **Collides within the set** |
 | `sachet` | The tear serration of a medicine sachet and the crimp of a sweet wrapper are the same shape in silhouette | Form alone does not separate them |
 
 §5.7 added one that is not in this table. Sheron Sir Loon Goh, Pharmacy Lecturer, wrote that a capsule picture with one dot beside it does not read as "once a day"; without hearing the audio the relationship is not visible.
@@ -2359,7 +2359,7 @@ There were inversions in the speech as well. `say.ts` had no tests at all. A pic
 
 The same kind appeared in the storage instruction. The positive check was looking only for `refrigerat`, so "Do not refrigerate" was read as refrigerated. A medicine to be kept at room temperature reads as refrigerated, and that inversion goes out through both the picture and the speech. This came to light while fixing the clinical error in the sample prescription that Sheron Sir Loon Goh, Pharmacy Lecturer, identified. The corrected wording happened to be "Do not refrigerate".
 
-Two morphemes were redrawn. `allergen_egg` followed the point made by Professor Namsoo Park of Hyupsung University. A fried egg seen from above loses its white in the silhouette because the white is white, leaving a single yolk circle that reads like a target or a button. In a set drawn as filled silhouettes, a picture whose meaning is carried by the white part never stood up in the first place, so it was changed to a cracked egg. That `tree_nut` was read as "cracked egg" in §5.2 is the evidence that this form reads as an egg. `hand_wash` followed the instruction given by Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, exactly: a hand under a running tap.
+Two morphemes were redrawn. `allergen_egg` followed the point made by Professor Namsoo Park of Hyupsung University. A fried egg seen from above loses its white in the silhouette because the white is white, leaving a single yolk circle that reads like a target or a button. In a set drawn as filled silhouettes, a picture whose meaning is carried by the white part never stood up in the first place, so it was changed to a cracked egg. That `allergen_tree_nut` was read as "cracked egg" in §5.2 is the evidence that this form reads as an egg. `hand_wash` followed the instruction given by Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, exactly: a hand under a running tap.
 
 We went through the accessibility criteria. Checking WCAG 2.2 item by item, as E. A. Draffan, retired speech and language therapist and visiting accessibility researcher, had asked, found all five verdict colours below the contrast criterion and the target size of secondary controls between 16 and 20 pixels. The colours looked perfectly fine on screen, and that is in fact how they survived this long. They are values the eye cannot hold, so they were locked with a test, and the numbers and the judgement are carried as Table 19 in §3.7. What should be recorded here is that we would not have done this without the survey. In §3.7 we had five channels standing in for colour and had not measured whether the colour itself could be read.
 
