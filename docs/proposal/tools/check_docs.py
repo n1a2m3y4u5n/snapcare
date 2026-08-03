@@ -28,6 +28,7 @@
   · 절마다 문단 수가 두 판에서 같은가
   · 그림 설명이 그림 바로 아래에 있는가
   · 본문의 검정 횟수와 Bonferroni 문턱이 실제와 같은가
+  · 본문이 인용한 코드가 저장소 파일과 같은가
 """
 import re
 import sys
@@ -566,10 +567,71 @@ def bonferroni() -> list:
     return out
 
 
+def code_drift() -> list:
+    """본문이 인용한 코드가 저장소의 파일과 같은가.
+
+    세 곳이 달랐다. 서비스워커 인용에는 실물에 있는 관문 둘(GET 만,
+    같은 출처만)이 없었고, 알레르기 추론 인용은 소스에 없는 주석을
+    달고 줄을 합쳤으며, SIGIL 파서 인용은 `if not in_slot:` 이었는데
+    실물은 `if not in_slot and not self.m.get(name).standalone:` 이다.
+    마지막 것은 문서 자신과도 어긋났다 — §2.2 가 홀로 설 수 있는
+    수식어가 넷이라고 적고 있는데 인용된 파서는 그럴 수 없다고 한다.
+
+    공백을 지우고 견준다. 줄바꿈 자리는 원고 폭 때문에 다를 수 있고
+    그것까지 잡으면 쓸 수 없는 검사가 된다. `...` 은 줄임 표시이므로
+    건너뛰고, 주석은 줄일 수 있게 두되 코드 줄은 하나도 어긋나면
+    안 된다."""
+    root = DOC.parent.parent
+    src = []
+    for pat in ('*.ts', '*.tsx', '*.py', '*.js', '*.mjs'):
+        for f in root.rglob(pat):
+            sp = str(f)
+            if 'node_modules' in sp or '/.venv' in sp or '/docs/proposal/' in sp:
+                continue
+            try:
+                src.append(re.sub(r'\s+', ' ', f.read_text()))
+            except OSError:
+                continue
+    out = []
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        body = (DOC / f).read_text()
+        for m in re.finditer(r'```(ts|python|js|mjs)\n(.*?)```', body, re.S):
+            block = False          # /* … */ 안인가
+            for ln in m.group(2).splitlines():
+                t = ln.strip()
+                if t.startswith('/*') or t.startswith('\"\"\"'):
+                    block = True
+                if block:
+                    if t.endswith('*/') or (t.endswith('\"\"\"') and len(t) > 3):
+                        block = False
+                    continue
+                if (not t or t == '...' or t.startswith(('//', '#', '*'))
+                        or len(t) < 14):
+                    continue
+                # 줄 끝에 붙인 설명 주석은 떼고 견준다. 본문이 읽는
+                # 사람을 위해 덧붙이는 것이고 코드가 아니다. 코드가
+                # 달라진 것만 잡는 것이 이 검사의 목적이다.
+                code = re.sub(r'\s+(//|#)\s.*$', '', ln)
+                n = re.sub(r'\s+', ' ', code).strip()
+                if len(n) < 14:
+                    continue
+                if not any(n in x for x in src):
+                    out.append(f'{f}: 저장소에 없는 코드 줄 — {t[:66]}')
+    return out
+
+
 def blocks(path: Path) -> dict:
-    """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
-    cur, out = None, {}
+    """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
+
+    코드 울타리 안은 세지 않는다. 같은 코드라도 영어 주석이 길어 두 줄로
+    접히므로 언제나 벌어지고, 그것은 결함이 아니다."""
+    cur, out, fence = None, {}, False
     for ln in path.read_text().splitlines():
+        if ln.strip().startswith('```'):
+            fence = not fence
+            continue
+        if fence:
+            continue
         m = re.match(r'^(#{2,4}) .+$', ln)
         if m:
             cur = len(out)
@@ -661,6 +723,9 @@ def main() -> int:
         note(t)
 
     for t in bonferroni():
+        note(t)
+
+    for t in code_drift():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):

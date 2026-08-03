@@ -595,28 +595,32 @@ def _pictogram(self, in_slot: bool = False) -> Node:
     self.i += 1
     name = self._name()
 
-    if self.m.is_operator(name):                     # \no{...} — 자식이 정확히 하나
+    if self.m.is_operator(name):
         if self._peek() != "{":
             raise ParseError(f"\\{name} requires a child: \\{name}{{...}}")
         ...
         return Node(name=name, kind=NodeKind.OPERATOR, children=[child])
 
-    if self.m.is_head(name):                         # 머리 — 슬롯에 수식어만
+    if self.m.is_head(name):
         children = self._slots()
         for c in children:
             if c.kind != NodeKind.MODIFIER:
-                raise ParseError(f"\\{name} slots only accept modifiers; got \\{c.name}")
+                raise ParseError(
+                    f"\\{name} slots only accept modifiers; got \\{c.name}"
+                )
         return Node(name=name, kind=NodeKind.HEAD, children=children)
 
-    if self.m.is_modifier(name):                     # 수식어 — 홀로 설 수 없다
-        if not in_slot:
-            raise ParseError(f"\\{name} is a modifier; must appear inside a head's slot")
+    if self.m.is_modifier(name):
+        if not in_slot and not self.m.get(name).standalone:
+            raise ParseError(
+                f"\\{name} is a modifier; must appear inside a head's slot"
+            )
         return Node(name=name, kind=NodeKind.MODIFIER)
 
     raise ParseError(f"unknown macro \\{name}")
 ```
 
-설계 의도. 세 갈래가 각각 문법의 한 조항이다. 수식어가 슬롯 밖에 오면 파스가 실패하고, 머리의 슬롯에 다른 머리를 넣어도 실패하며, 사전에 없는 이름은 그림 대신 오류가 된다. 이것이 중요한 이유는 이 DSL 을 사람이 손으로 쓰는 것이 아니라 언어 모델이 처방 문장을 보고 만들어 내기 때문이다. 모델이 그럴듯한 이름을 지어내면 그것은 화면에서 그럴듯한 그림이 아니라 파스 오류가 되어야 한다. 안전이 걸린 화면에서 확률적 출력에 결정론적 검증 계층을 두는 것이 이 파서의 역할이며, 같은 구조를 §4.2 의 영양 판정에서도 쓴다.
+설계 의도. 세 갈래가 각각 문법의 한 조항이다. 수식어가 슬롯 밖에 오면 파스가 실패하되 `standalone` 로 표시된 것은 예외이고(§2.2 의 아침·점심·저녁·밤 넷이 그것이다. 시각은 무엇을 수식하지 않고도 뜻이 서므로 홀로 설 수 있게 두었다), 머리의 슬롯에 다른 머리를 넣어도 실패하며, 사전에 없는 이름은 그림 대신 오류가 된다. 이것이 중요한 이유는 이 DSL 을 사람이 손으로 쓰는 것이 아니라 언어 모델이 처방 문장을 보고 만들어 내기 때문이다. 모델이 그럴듯한 이름을 지어내면 그것은 화면에서 그럴듯한 그림이 아니라 파스 오류가 되어야 한다. 안전이 걸린 화면에서 확률적 출력에 결정론적 검증 계층을 두는 것이 이 파서의 역할이며, 같은 구조를 §4.2 의 영양 판정에서도 쓴다.
 
 
 ![그림 17](fig/fig02_sigil_sheet.png)
@@ -707,7 +711,9 @@ SnapCare 는 라벨을 읽어 주는 도구가 아니라 판정하는 도구다.
 
 ```ts
 /** 나이대 → 대표 나이. 프로필에서 그림으로 고른 값이 문자열 파싱보다 우선한다. */
-const BAND_AGE = { child: 7, teen: 15, adult: 35, senior: 70 };
+const BAND_AGE: Record<NonNullable<Member['ageBand']>, number> = {
+  child: 7, teen: 15, adult: 35, senior: 70,
+};
 
 export function referenceFor(member: Member): DailyReference {
   const age = member.ageBand ? BAND_AGE[member.ageBand] : ageFromRole(member.role);
@@ -773,27 +779,35 @@ export function referenceFor(member: Member): DailyReference {
 export function findTriggers(log: MealFeedback[]): SuspectedTrigger[] {
   // 검사 대상: 기록에 실제로 등장한 성분만. 먹은 적 없는 성분을 검정하면
   // Bonferroni 분모만 키워서 진짜 신호를 죽인다.
-  const testable = [...flags].map(...).filter(...);
-  const threshold = ALPHA / testable.length;              // Bonferroni
+  const flags = new Set<ItemFlag>();
+  for (const m of log) for (const f of flagsOf(m.tags)) flags.add(f);
+
+  const testable = [...flags]
+    .map((f) => ({ flag: f, condition: conditionForFlag(f) }))
+    .filter((x): x is { flag: ItemFlag; condition: ConditionDef } => x.condition !== undefined);
+  if (testable.length === 0) return [];
+
+  const threshold = ALPHA / testable.length;   // Bonferroni
 
   for (const { flag, condition } of testable) {
-    const withIt  = log.filter((m) =>  flagsOf(m.tags).includes(flag));
+    const withIt = log.filter((m) => flagsOf(m.tags).includes(flag));
     const without = log.filter((m) => !flagsOf(m.tags).includes(flag));
 
-    const a = withIt.filter((m) => m.reaction === 'unwell').length;   // 먹고 탈남
-    const b = withIt.length - a;                                     // 먹고 괜찮음
-    const c = without.filter((m) => m.reaction === 'unwell').length; // 안 먹고 탈남
-    const d = without.length - c;                                    // 안 먹고 괜찮음
+    const a = withIt.filter((m) => m.reaction === 'unwell').length;
+    const b = withIt.length - a;
+    const c = without.filter((m) => m.reaction === 'unwell').length;
+    const d = without.length - c;
 
-    if (a < MIN_UNWELL || withIt.length < MIN_EATEN
-                       || without.length < MIN_CONTROL) continue;     // 증거 부족
-    if (fisherRightTail(a, b, c, d) > threshold) continue;            // 우연 범위
+    if (a < MIN_UNWELL || withIt.length < MIN_EATEN || without.length < MIN_CONTROL) continue;
+
+    const p = fisherRightTail(a, b, c, d);
+    if (p > threshold) continue;
     ...
   }
 }
 ```
 
-설계 의도. `continue` 두 줄이 이 함수가 하는 일의 대부분이다. 첫 줄은 증거의 양을 본다. 탈이 난 횟수, 먹은 횟수, 그리고 먹지 않은 끼니의 수까지 본다. 마지막 것이 없으면 비교가 성립하지 않는다. 매 끼니에 들어가는 성분은 탈이 날 때마다 함께 있었으므로 아무 검정이나 통과시키기 때문이다.
+네 값은 2x2 표다. `a` 는 그 성분을 먹고 탈이 난 횟수, `b` 는 먹고 괜찮았던 횟수, `c` 는 안 먹고 탈이 난 횟수, `d` 는 안 먹고 괜찮았던 횟수다. 설계 의도. `continue` 두 줄이 이 함수가 하는 일의 대부분이다. 첫 줄은 증거의 양을 본다. 탈이 난 횟수, 먹은 횟수, 그리고 먹지 않은 끼니의 수까지 본다. 마지막 것이 없으면 비교가 성립하지 않는다. 매 끼니에 들어가는 성분은 탈이 날 때마다 함께 있었으므로 아무 검정이나 통과시키기 때문이다.
 
 둘째 줄의 문턱은 `ALPHA / 검사한 성분 수` 다. 성분을 열 개 보면 문턱이 10분의 1이 된다. 스무 개를 놓고 각각 5% 문턱으로 보면 아무 관계가 없어도 하나쯤은 걸리는데, 그 하나를 "당신은 이것에 알레르기가 있을 수 있습니다" 로 화면에 띄우는 것이 이 기능의 최악이다.
 
@@ -1350,11 +1364,16 @@ if group["mode"] == "one":
         # 않은 종이에서 펜이 더 덮은 쪽을 조용히 고르게 된다. 종이는 서로 다른
         # 두 가지를 말하고 있고, 어느 쪽이었는지는 그것을 쓴 사람만 안다.
         values[name] = None
-        problems.append(f"{name}: two boxes filled ... erase one and retake")
+        problems.append(
+            f"{name}: two boxes filled ({best[0]}={best[1]:.2f}, "
+            f"{second[0]}={second[1]:.2f}) — erase one and retake"
+        )
 
     elif best[1] - second[1] < margin:         # ③ 갈라지지 않는다
         values[name] = None
-        problems.append(f"{name}: ambiguous ...")
+        problems.append(
+            f"{name}: ambiguous ({best[0]}={best[1]:.2f}, {second[0]}={second[1]:.2f})"
+        )
 
     else:
         values[name] = best[0]
@@ -1411,26 +1430,36 @@ else:                                          # 여럿 고르는 항목 (요일
 
 **[그림 34]** 서비스워커가 요청을 가르는 세 갈래. 셋이 각각 다른 판단이며, 붉은 칸이 이 앱이 약을 다루기 때문에 생긴 제약이다.
 
-전략의 갈래는 서비스워커의 `fetch` 처리에 그대로 드러난다.
+전략의 갈래는 서비스워커의 `fetch` 처리에 그대로 드러난다 (`public/sw.js`). 긴 주석 둘만 줄였고 코드는 파일에 있는 그대로다.
 
 ```js
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
 
   // 판정 API 는 가로채지 않는다. 오래된 답을 주는 것보다 실패하는 편이 낫고,
   // 오프라인 대비는 앱 코드(캐시된 프로필·픽토그램)가 이미 하고 있다.
   if (url.pathname.startsWith('/api/')) return;
 
-  if (event.request.mode === 'navigate') {
-    event.respondWith(networkFirst(event.request));   // 화면 이동은 최신 우선
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirst(request));
     return;
   }
 
-  if (url.pathname.startsWith('/_next/static/') ||
-      url.pathname.startsWith('/pictograms/') ||
-      url.pathname.startsWith('/models/') ||          // 영양 추정 모델 16MB
-      url.pathname.startsWith('/ocr/')) {             // OCR 워커·코어·언어 데이터
-    event.respondWith(cacheFirst(event.request));
+  if (
+    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.startsWith('/pictograms/') ||
+    // …영양 추정 모델(16MB)과 그 설정. 주석은 줄였다
+    url.pathname.startsWith('/models/') ||
+    // …OCR 의 워커·코어·언어 데이터
+    url.pathname.startsWith('/ocr/') ||
+    url.pathname.startsWith('/nutrition/') ||
+    url.pathname.startsWith('/icons/')
+  ) {
+    event.respondWith(cacheFirst(request));
   }
 });
 ```
@@ -1634,31 +1663,34 @@ res.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation
 
 처음에는 시도 횟수에 따라 고정된 지시 사다리를 올렸다. 첫 시도가 실패하면 1번 지시, 두 번째가 실패하면 2번 지시를 덧붙이는 방식이다. 이 사다리의 두 번째 칸이 "형태를 더 두툼하게 그려라" 였는데, 너무 뭉쳐서 떨어진 그림에 이 지시를 하면 실패한 방향으로 더 미는 것이 된다. `food_bread` 의 잉크 비율이 0.52 → 0.47 → 0.51 로 세 번을 헛돈 것이 그래서다. 재시도가 수렴하지 않고 진동했다.
 
-검사기는 이미 왜 떨어졌는지를 알고 있다. 그 사유를 쓰지 않고 횟수만 세는 것은 같은 주사위를 다시 굴리는 것과 같고, 굴릴 때마다 요금이 나간다. 그래서 지시를 사유에 걸었다.
+검사기는 이미 왜 떨어졌는지를 알고 있다. 그 사유를 쓰지 않고 횟수만 세는 것은 같은 주사위를 다시 굴리는 것과 같고, 굴릴 때마다 요금이 나간다. 그래서 지시를 사유에 걸었다. 아래는 `engine/gen_glyphs.py` 그대로이며 주석과 앞의 방어 두 줄만 뺐다.
 
 ```python
 def escalate(c: 'Check | None') -> str:
-    """직전 실패의 **사유에 맞춰** 다시 시킨다."""
     r = ' · '.join(c.reasons)
-
     if '뭉쳤다' in r:
-        return (' The shape came out far too heavy. Draw it noticeably smaller inside the frame '
-                'with wide empty white space around it, and punch two or three much larger white '
-                'holes through it. Keep it a solid filled black silhouette — do not turn it into '
-                'a hollow outline drawing with an empty white interior.')
+        return (' The shape came out far too heavy. Draw it noticeably smaller inside the frame with '
+                'wide empty white space around it, and punch two or three much larger white holes '
+                'through it. Keep it a solid filled black silhouette — do not turn it into a hollow '
+                'outline drawing with an empty white interior.')
     if '가늘다' in r:
         return (' The shape came out too thin and sparse. Make every black part much thicker and '
-                'heavier, and let it fill more of the frame.')
+                'heavier, and let it fill more of the frame. Fewer, larger, bolder masses.')
     if '개수' in r:
-        return (' The number of separate shapes was wrong. Draw exactly the number stated, each '
-                'one fully detached from the others with wide white space between them.')
+        return (' The number of separate shapes was wrong. Draw exactly the number stated, each one '
+                'fully detached from the others with wide white space between them.')
     if '뜻이 안 맞는다' in r:
         return (f' The previous attempt was misread: it {r.split("—")[-1].strip()}. '
                 'Redraw it so the object is unmistakable at a glance: change the shape and the '
-                'outline, not the weight.')
+                'outline, not the weight. Exaggerate the one feature that makes this object '
+                'different from anything else.')
+    if '구멍' in r or '뭉갠다' in r:
+        return (' The white holes closed up when the image was shrunk. Use far fewer holes and make '
+                'each one much larger — at most three, each at least one sixth of the image wide.')
+    return ' Remove every small detail. Keep only the two or three biggest shapes.'
 ```
 
-설계 의도. 네 갈래가 각각 다른 방향으로 민다. 특히 마지막 갈래가 중요하다. 뜻이 어긋난 것은 형태의 문제이지 무게의 문제가 아니므로, 굵기를 건드리라고 하면 잘못 그린 그림을 더 선명하게 잘못 그리게 된다. 이 분기를 넣은 뒤 앞서 통과하지 못하던 네 종이 모두 두 번째 시도에서 통과했다.
+설계 의도. 여섯 갈래가 각각 다른 방향으로 민다. 마지막 것은 앞의 다섯에 걸리지 않은 사유를 받는 자리다. 특히 마지막 갈래가 중요하다. 뜻이 어긋난 것은 형태의 문제이지 무게의 문제가 아니므로, 굵기를 건드리라고 하면 잘못 그린 그림을 더 선명하게 잘못 그리게 된다. 이 분기를 넣은 뒤 앞서 통과하지 못하던 네 종이 모두 두 번째 시도에서 통과했다.
 
 첫 갈래의 마지막 문장에도 대가를 치른 이유가 있다. 처음에는 "속을 비워라" 라고만 썼는데, 그러자 채운 실루엣이 아니라 윤곽선 그림이 나왔다. 무게는 줄었지만 세트의 나머지가 전부 채운 실루엣이라 시각 언어가 섞였고, 무엇보다 `qty_one` 이 채운 점이 아니라 고리가 되어 '1' 이 아니라 '0' 으로 읽혔다. 그래서 줄이는 방법을 "더 작게, 구멍을 뚫어서" 로 한정하고 "속이 빈 윤곽선으로 바꾸지 말 것" 을 명시했다.
 
@@ -2080,12 +2112,23 @@ Celia 교수(University of Pretoria)는 손으로 쓴 처방전에서는 동작�
 이 측정이 결함 하나를 찾아냈다. 첫 측정에서 60장 중 11장이 통째로 실패했는데 무작위가 아니었다. 전부 약이 5~12가지 적힌 장이었고 다시 돌려도 같은 장이 실패했다. **가장 필요한 사람이 못 쓰는 쪽으로 실패하고 있었다.** 약을 열 가지 먹는 사람이 이 앱을 가장 필요로 하고, 바로 그 사람의 처방전이 안 읽혔다. 무엇이 왜 그랬는지는 고친 코드의 주석이 담고 있어 그대로 옮긴다.
 
 ```ts
-/*
-  700 이었다. 그 자리에서 약이 많은 처방전이 통째로 실패하고 있었다.
-  답이 700 토큰에서 잘리고(stop_reason: max_tokens), 잘린 JSON 은
-  파싱에 실패하고, 실패는 위에서 잡혀 화면에는 "읽지 못했습니다" 로
-  나갔다. 가장 필요한 사람이 못 쓰는 쪽으로 실패하고 있었다.
-*/
+      /*
+        700 이었다. 그 자리에서 **약이 많은 처방전이 통째로 실패하고 있었다.**
+
+        방글라데시 처방전 전장 60장으로 재다가 드러났다. 11장이 실패했는데 무작위가
+        아니었다 — 전부 약이 5~12가지 적힌 장이었고, 매번 같은 장이었다. 답이 700
+        토큰에서 잘리고(`stop_reason: max_tokens`), 잘린 JSON 은 파싱에 실패하고,
+        실패는 위에서 잡혀 화면에는 "읽지 못했습니다" 로 나갔다.
+        입원 지시서 한 장의 실제 끝부분: `…urinary catheterization. 20.` — 문장
+        중간에서 끊겼다.
+
+        **가장 필요한 사람이 못 쓰는 쪽으로 실패하고 있었다.** 약을 열 가지 먹는
+        사람이 이 앱을 가장 필요로 하고, 그 사람의 처방전이 정확히 안 읽히는 장이다.
+
+        영양 응답은 700 이면 충분하지만 복약 지시는 약 수에 비례해 길어진다. 넉넉히
+        준다 — 짧은 답은 어차피 짧게 끝나므로(end_turn) 이 값이 비용을 늘리지 않는다.
+      */
+      max_tokens: 3000,
 ```
 
 같은 측정에서 결함이 하나 더 나왔다. 부름이 잠깐 실패했을 때 앱이 "이 서버에는 사진 인식이 없습니다" 라고 말하고 있었다. 지나가는 일에 영구적인 말을 한 것이고, 그 말을 들은 사람은 다시 찍어 보지 않는다. 고칠 수 없는 일로 들리기 때문이다. 지금은 갈라 둔다. 잠깐 밀린 것(503)은 다시 눌러 보라고 말하고, 수단이 없는 것(501)만 없다고 말한다.

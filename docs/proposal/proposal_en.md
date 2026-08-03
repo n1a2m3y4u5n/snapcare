@@ -595,28 +595,32 @@ def _pictogram(self, in_slot: bool = False) -> Node:
     self.i += 1
     name = self._name()
 
-    if self.m.is_operator(name):                     # \no{...} — exactly one child
+    if self.m.is_operator(name):
         if self._peek() != "{":
             raise ParseError(f"\\{name} requires a child: \\{name}{{...}}")
         ...
         return Node(name=name, kind=NodeKind.OPERATOR, children=[child])
 
-    if self.m.is_head(name):                         # head — slots take modifiers only
+    if self.m.is_head(name):
         children = self._slots()
         for c in children:
             if c.kind != NodeKind.MODIFIER:
-                raise ParseError(f"\\{name} slots only accept modifiers; got \\{c.name}")
+                raise ParseError(
+                    f"\\{name} slots only accept modifiers; got \\{c.name}"
+                )
         return Node(name=name, kind=NodeKind.HEAD, children=children)
 
-    if self.m.is_modifier(name):                     # modifier — cannot stand alone
-        if not in_slot:
-            raise ParseError(f"\\{name} is a modifier; must appear inside a head's slot")
+    if self.m.is_modifier(name):
+        if not in_slot and not self.m.get(name).standalone:
+            raise ParseError(
+                f"\\{name} is a modifier; must appear inside a head's slot"
+            )
         return Node(name=name, kind=NodeKind.MODIFIER)
 
     raise ParseError(f"unknown macro \\{name}")
 ```
 
-Design intent. Each of the three branches is one clause of the grammar. A modifier outside a slot fails to parse, a head placed in another head's slot fails as well, and a name absent from the dictionary becomes an error rather than a picture. This matters because the DSL is not written by hand but produced by a language model reading a prescription. If the model invents a plausible name, that has to become a parse error rather than a plausible picture on screen. Putting a deterministic verification layer over probabilistic output on a safety-critical screen is what this parser is for, and the same structure is used for the nutrition verdict in §4.2.
+Design intent. Each of the three branches is one clause of the grammar. A modifier outside a slot fails to parse unless it is marked `standalone` (the four in §2.2 — morning, noon, evening and night; a time of day stands on its own without modifying anything, so it is allowed to stand alone), a head placed in another head's slot fails as well, and a name absent from the dictionary becomes an error rather than a picture. This matters because the DSL is not written by hand but produced by a language model reading a prescription. If the model invents a plausible name, that has to become a parse error rather than a plausible picture on screen. Putting a deterministic verification layer over probabilistic output on a safety-critical screen is what this parser is for, and the same structure is used for the nutrition verdict in §4.2.
 
 
 ![Figure 17](fig/fig02_sigil_sheet.png)
@@ -709,7 +713,9 @@ The derivation is six lines in total.
 ```ts
 /** Age band → representative age. The value picked as a picture in the profile
  *  takes precedence over string parsing. */
-const BAND_AGE = { child: 7, teen: 15, adult: 35, senior: 70 };
+const BAND_AGE: Record<NonNullable<Member['ageBand']>, number> = {
+  child: 7, teen: 15, adult: 35, senior: 70,
+};
 
 export function referenceFor(member: Member): DailyReference {
   const age = member.ageBand ? BAND_AGE[member.ageBand] : ageFromRole(member.role);
@@ -778,27 +784,35 @@ export function findTriggers(log: MealFeedback[]): SuspectedTrigger[] {
   // Only ingredients that actually appear in the log are tested. Testing an
   // ingredient never eaten only inflates the Bonferroni denominator and kills
   // the real signal.
-  const testable = [...flags].map(...).filter(...);
-  const threshold = ALPHA / testable.length;              // Bonferroni
+  const flags = new Set<ItemFlag>();
+  for (const m of log) for (const f of flagsOf(m.tags)) flags.add(f);
+
+  const testable = [...flags]
+    .map((f) => ({ flag: f, condition: conditionForFlag(f) }))
+    .filter((x): x is { flag: ItemFlag; condition: ConditionDef } => x.condition !== undefined);
+  if (testable.length === 0) return [];
+
+  const threshold = ALPHA / testable.length;   // Bonferroni
 
   for (const { flag, condition } of testable) {
-    const withIt  = log.filter((m) =>  flagsOf(m.tags).includes(flag));
+    const withIt = log.filter((m) => flagsOf(m.tags).includes(flag));
     const without = log.filter((m) => !flagsOf(m.tags).includes(flag));
 
-    const a = withIt.filter((m) => m.reaction === 'unwell').length;   // ate it, unwell
-    const b = withIt.length - a;                                     // ate it, fine
-    const c = without.filter((m) => m.reaction === 'unwell').length; // didn't, unwell
-    const d = without.length - c;                                    // didn't, fine
+    const a = withIt.filter((m) => m.reaction === 'unwell').length;
+    const b = withIt.length - a;
+    const c = without.filter((m) => m.reaction === 'unwell').length;
+    const d = without.length - c;
 
-    if (a < MIN_UNWELL || withIt.length < MIN_EATEN
-                       || without.length < MIN_CONTROL) continue;     // too little evidence
-    if (fisherRightTail(a, b, c, d) > threshold) continue;            // within chance
+    if (a < MIN_UNWELL || withIt.length < MIN_EATEN || without.length < MIN_CONTROL) continue;
+
+    const p = fisherRightTail(a, b, c, d);
+    if (p > threshold) continue;
     ...
   }
 }
 ```
 
-Design intent. The two `continue` lines are most of what this function does. The first looks at the amount of evidence: the number of times trouble occurred, the number of times the ingredient was eaten, and the number of meals without it. Without the last, the comparison does not hold, because an ingredient present in every meal was present on every occasion of trouble and would pass any test at all.
+The four values form a 2x2 table: `a` is the number of times the ingredient was eaten and the person felt unwell, `b` eaten and fine, `c` not eaten and unwell, `d` not eaten and fine. Design intent. The two `continue` lines are most of what this function does. The first looks at the amount of evidence: the number of times trouble occurred, the number of times the ingredient was eaten, and the number of meals without it. Without the last, the comparison does not hold, because an ingredient present in every meal was present on every occasion of trouble and would pass any test at all.
 
 The threshold on the second line is `ALPHA / number of ingredients tested`. Examining ten ingredients makes the threshold one tenth. Putting twenty ingredients each against a 5% threshold catches about one even when nothing is related, and putting that one on screen as "you may be allergic to this" is the worst thing this feature could do.
 
@@ -1357,11 +1371,16 @@ if group["mode"] == "one":
         # did not erase the first mark. The paper is saying two different
         # things, and only the person who wrote it knows which one it was.
         values[name] = None
-        problems.append(f"{name}: two boxes filled ... erase one and retake")
+        problems.append(
+            f"{name}: two boxes filled ({best[0]}={best[1]:.2f}, "
+            f"{second[0]}={second[1]:.2f}) — erase one and retake"
+        )
 
     elif best[1] - second[1] < margin:         # ③ does not separate
         values[name] = None
-        problems.append(f"{name}: ambiguous ...")
+        problems.append(
+            f"{name}: ambiguous ({best[0]}={best[1]:.2f}, {second[0]}={second[1]:.2f})"
+        )
 
     else:
         values[name] = best[0]
@@ -1418,27 +1437,37 @@ The app is built as a PWA, with a service worker caching screens, assets and the
 
 **[Figure 34]** The three ways the service worker splits a request. Each is a distinct judgement, and the red cell is a constraint that exists because this app handles medicines.
 
-The branching of the strategy is visible directly in the service worker's `fetch` handling.
+The branching of the strategy is visible directly in the service worker's `fetch` handling (`public/sw.js`). Only two long comments have been shortened; the code is as it stands in the file.
 
 ```js
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
 
   // The verdict API is not intercepted. Failing is better than giving a stale
   // answer, and the app code (cached profile and pictograms) already covers
   // being offline.
   if (url.pathname.startsWith('/api/')) return;
 
-  if (event.request.mode === 'navigate') {
-    event.respondWith(networkFirst(event.request));   // navigation: latest first
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirst(request));
     return;
   }
 
-  if (url.pathname.startsWith('/_next/static/') ||
-      url.pathname.startsWith('/pictograms/') ||
-      url.pathname.startsWith('/models/') ||          // 16 MB nutrition model
-      url.pathname.startsWith('/ocr/')) {             // OCR worker, core, language data
-    event.respondWith(cacheFirst(event.request));
+  if (
+    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.startsWith('/pictograms/') ||
+    // …the nutrition model (16 MB) and its config. Comment shortened
+    url.pathname.startsWith('/models/') ||
+    // …the OCR worker, core and language data
+    url.pathname.startsWith('/ocr/') ||
+    url.pathname.startsWith('/nutrition/') ||
+    url.pathname.startsWith('/icons/')
+  ) {
+    event.respondWith(cacheFirst(request));
   }
 });
 ```
@@ -1643,31 +1672,34 @@ Placing gates is only half of it. Pictures that fail have to be remade, and the 
 
 At first a fixed ladder of instructions was climbed according to the attempt count: fail the first attempt and instruction 1 is added, fail the second and instruction 2 is added. The second rung of that ladder was "draw the form heavier," and giving that instruction to a picture that failed for being too clotted pushes it further in the direction that failed. That is why the ink ratio of `food_bread` spun through 0.52, 0.47 and 0.51 across three attempts. The retries oscillated instead of converging.
 
-The checker already knows why something failed. Counting attempts without using that reason is the same as rolling the same die again, and each roll costs money. Instructions were therefore hooked to the reason.
+The checker already knows why something failed. Counting attempts without using that reason is the same as rolling the same die again, and each roll costs money. Instructions were therefore hooked to the reason. What follows is `engine/gen_glyphs.py` as it stands, with only the comments and the two guard lines above removed. The conditions match on Korean words because the checker writes its reasons in Korean: 뭉쳤다 is clotted, 가늘다 too thin, 개수 wrong count, 뜻이 안 맞는다 misread, 구멍/뭉갠다 holes closing up when shrunk.
 
 ```python
 def escalate(c: 'Check | None') -> str:
-    """Retry **according to the reason** for the previous failure."""
     r = ' · '.join(c.reasons)
-
-    if 'clotted' in r:
-        return (' The shape came out far too heavy. Draw it noticeably smaller inside the frame '
-                'with wide empty white space around it, and punch two or three much larger white '
-                'holes through it. Keep it a solid filled black silhouette — do not turn it into '
-                'a hollow outline drawing with an empty white interior.')
-    if 'too thin' in r:
+    if '뭉쳤다' in r:
+        return (' The shape came out far too heavy. Draw it noticeably smaller inside the frame with '
+                'wide empty white space around it, and punch two or three much larger white holes '
+                'through it. Keep it a solid filled black silhouette — do not turn it into a hollow '
+                'outline drawing with an empty white interior.')
+    if '가늘다' in r:
         return (' The shape came out too thin and sparse. Make every black part much thicker and '
-                'heavier, and let it fill more of the frame.')
-    if 'count' in r:
-        return (' The number of separate shapes was wrong. Draw exactly the number stated, each '
-                'one fully detached from the others with wide white space between them.')
-    if 'misread' in r:
+                'heavier, and let it fill more of the frame. Fewer, larger, bolder masses.')
+    if '개수' in r:
+        return (' The number of separate shapes was wrong. Draw exactly the number stated, each one '
+                'fully detached from the others with wide white space between them.')
+    if '뜻이 안 맞는다' in r:
         return (f' The previous attempt was misread: it {r.split("—")[-1].strip()}. '
                 'Redraw it so the object is unmistakable at a glance: change the shape and the '
-                'outline, not the weight.')
+                'outline, not the weight. Exaggerate the one feature that makes this object '
+                'different from anything else.')
+    if '구멍' in r or '뭉갠다' in r:
+        return (' The white holes closed up when the image was shrunk. Use far fewer holes and make '
+                'each one much larger — at most three, each at least one sixth of the image wide.')
+    return ' Remove every small detail. Keep only the two or three biggest shapes.'
 ```
 
-Design intent. The four branches push in four different directions. The last one matters especially. A meaning that came out wrong is a problem of form rather than of weight, so telling the model to adjust thickness makes it draw the wrong picture more sharply wrong. After this branch was added, all four symbols that had previously failed passed on the second attempt.
+Design intent. The six branches push in six different directions. The last catches any reason the preceding five did not match. The last one matters especially. A meaning that came out wrong is a problem of form rather than of weight, so telling the model to adjust thickness makes it draw the wrong picture more sharply wrong. After this branch was added, all four symbols that had previously failed passed on the second attempt.
 
 The last sentence of the first branch was paid for as well. It originally said only "hollow it out," and what came back was an outline drawing rather than a filled silhouette. The weight dropped, but the rest of the set is all filled silhouettes so the visual language became mixed, and above all `qty_one` became a ring rather than a filled dot and read as "0" rather than "1." The method of reduction was therefore restricted to "smaller, with holes punched through" and "do not turn it into a hollow outline" was stated explicitly.
 
@@ -2089,13 +2121,27 @@ We also measured what the user actually photographs, the full prescription page.
 This measurement found a defect. On the first run 11 of the 60 pages failed outright, and not at random: every one carried 5 to 12 medicines, and the same pages failed on every rerun. **It was failing against exactly the people who need it most.** The person taking ten medicines needs this app most, and that very person's prescription would not read. What happened and why is in the comment of the fixed code, carried over as written:
 
 ```ts
-/*
-  It was 700. Right there, prescriptions with many medicines were
-  failing outright. The answer was truncated at 700 tokens
-  (stop_reason: max_tokens), the cut JSON failed to parse, and the
-  failure surfaced as "could not read it." It was failing against
-  exactly the people who need it most.
-*/
+      /*
+        It was 700. Right there, **prescriptions with many medicines were failing
+        outright.**
+
+        It surfaced while measuring on 60 whole Bangladeshi prescription pages.
+        Eleven failed, and not at random — every one of them listed 5 to 12
+        medicines, and it was the same pages every time. The answer was cut off at
+        700 tokens (`stop_reason: max_tokens`), the cut JSON failed to parse, the
+        failure was caught above, and the screen said "could not read it."
+        The actual tail of one admission order sheet:
+        `…urinary catheterization. 20.` — cut mid-sentence.
+
+        **It was failing against exactly the people who need it most.** Someone
+        taking ten medicines needs this app most, and theirs is precisely the
+        prescription that does not get read.
+
+        A nutrition answer fits in 700, but dosing instructions grow with the
+        number of medicines. Give it room — short answers end short anyway
+        (end_turn), so this value does not raise the cost.
+      */
+      max_tokens: 3000,
 ```
 
 The same measurement surfaced one more defect. When a call failed briefly, the app was saying "this server has no photo recognition." A permanent statement about a passing event, and whoever hears it does not try again, because it sounds like something that cannot be fixed. The two are now split: a momentary backlog (503) says try again in a moment, and only the genuine absence of means (501) says there are none.
