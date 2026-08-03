@@ -483,7 +483,7 @@ These five point to one conclusion. What is needed is an integrated pipeline tha
 
 ![Figure 13](fig/fig27_synthesis.png)
 
-**[Figure 13]** The five strands of chapter 1 and the three things they point to. Every number on the left is quoted exactly as it appears in the preceding sections, and nothing new is claimed here. All this figure does is put in one frame the fact that the five point at the same place. The red line beneath it is what this section is careful about.
+**[Figure 13]** The five strands of chapter 1 and the three things they point to. Every number on the left is quoted exactly as it appears in the preceding sections, and nothing new is claimed here. All this figure does is put in one frame the fact that the five point at the same place. Two of the five on the left are drawn with a heavier border: the cost of the problem and the channel that is already open. The first is the reason to take the problem on, the second the reason it can be taken on now. The red line beneath it is what this section is careful about.
 
 Having set out these five strands, we put them to the field. The survey in §5.7 is that, and the result broadly confirmed the five. What differed was how they were confirmed.
 
@@ -1447,7 +1447,7 @@ Two practical instructions come out of this. Fill more than half the box when ma
 
 ![Figure 33](fig/fig14_formsheet.png)
 
-**[Figure 33]** The paper form and what was read from it. On the left is the photograph actually fed to the parser, having been through perspective, a lighting gradient, defocus and sensor noise. On the right are the values read from that photograph and the fill score of each cell. The gap between the chosen cells and the rest (0.55–0.74 against 0.00–0.04) shows the reading was not a near miss at the boundary. The lowest of the chosen cells is Friday at 0.55 and the highest of the unchosen is Tuesday at 0.04; even at its narrowest the gap is a factor of fourteen. The values match exactly the answers set when the image was generated.
+**[Figure 33]** The paper form and what was read from it. On the left is the photograph actually fed to the parser, having been through perspective, a lighting gradient, defocus and sensor noise. On the right are the values read from that photograph and the fill score of each cell. The gap between the chosen cells and the rest (0.55–0.74 against 0.00–0.04) shows the reading was not a near miss at the boundary. For each row the figure prints the lowest of the chosen cells beside the highest of the rest. The narrowest is the days row, where the lowest chosen is Friday at 0.55 and the highest unchosen is Tuesday at 0.04, a factor of fourteen even there. The top of the range, 0.74, is Wednesday, and does not appear in the figure because the figure prints only each row's minimum. The values match exactly the answers set when the image was generated.
 
 ### 4.5 Offline operation
 
