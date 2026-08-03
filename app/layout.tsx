@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { RegisterSW } from './register-sw';
+import { WarmOffline } from './warm-offline';
 import { SyncProvider } from "./sync-provider";
 import { SweepToHear } from "@/components/sc/SweepToHear";
 
@@ -38,6 +39,7 @@ export default function RootLayout({
             빠뜨린 화면이 생기면 그 화면만 조용해진다. */}
         <SweepToHear />
         <RegisterSW />
+        <WarmOffline />
         {children}
       </body>
     </html>

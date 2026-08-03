@@ -30,9 +30,35 @@ const SHELL_URLS = [
   // 의사가 채워 준 종이를 읽는 것은 망이 없는 진료소에서 가장 쓰고 싶은 기능인데,
   // 정작 그 화면이 안 열리면 판독기를 기기 안에 넣어 둔 의미가 없다.
   '/device',
+  // 한 대를 여럿이 쓰는 것을 전제한 앱이다. 오프라인에서 사람을 못 바꾸면 그 폰은
+  // 한 사람 것이 된다.
+  '/profile',
+  '/people',
+  // 알림을 누르거나 홈의 약 카드를 누르면 오는 화면. 약을 먹었다고 기록하는 자리라
+  // 망이 없다고 못 쓰면 기록이 통째로 빈다.
+  '/dose',
+  '/provider',
   '/manifest.webmanifest',
   '/icons/icon-192.png',
 ];
+
+/**
+ * 최상위에 놓인 그림들 — 접두사로 묶이지 않아 규칙에서 통째로 빠져 있었다.
+ *
+ * 오프라인에서 홈을 열면 "TRY IT" 칸 세 개가 전부 깨진 그림으로 떴다. 앱을 처음 켠
+ * 사람이 카메라를 들이대기 전에 눌러 보는 자리이자, 심사자가 제일 먼저 누르는 자리다.
+ */
+const STATIC_FILES = new Set([
+  '/label-eu-biscuit.png',
+  '/label-peanut-bar.png',
+  '/label-us-cereal.png',
+  '/prescription-antibiotic.png',
+  '/prescription-eyedrop.png',
+  '/prescription-painkiller.png',
+  '/prescription-syrup.png',
+  '/demo-form-sheet.png',
+  '/device-code-demo.png',
+]);
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -90,7 +116,19 @@ self.addEventListener('fetch', (event) => {
   // 오프라인 대비는 앱 코드(캐시된 프로필·픽토그램)가 이미 하고 있다.
   if (url.pathname.startsWith('/api/')) return;
 
-  if (request.mode === 'navigate') {
+  /*
+    화면 이동, 그리고 **화면 주소를 그냥 fetch 하는 경우**도 같이 받는다.
+
+    뒤엣것이 없어서 예열(lib/offline/warm.ts)이 반쪽이었다. 예열은 화면 HTML 을
+    `fetch('/nutrition')` 로 받는데 그 요청의 mode 는 'navigate' 가 아니라 'cors' 라,
+    여기서 안 걸리고 그냥 망으로 나갔다 — 받아 놓고 아무 데도 안 담았다는 뜻이다.
+    설치 때 담은 HTML 이 있어서 겉으로는 동작했지만, 목록에 새 화면을 넣는 순간
+    그 화면만 조용히 오프라인에서 빠졌을 것이다.
+
+    manifest.webmanifest 도 이 줄이 고친다. 셸에 담겨 있는데 규칙 어디에도 안 걸려서,
+    오프라인에서 캐시에 있는 파일을 두고 망으로 나갔다가 실패하고 있었다.
+  */
+  if (request.mode === 'navigate' || SHELL_URLS.includes(url.pathname)) {
     event.respondWith(networkFirst(request));
     return;
   }
@@ -109,7 +147,12 @@ self.addEventListener('fetch', (event) => {
     // 현지 식품은 어느 제품 데이터베이스에도 없어서, 직접 읽는 것 말고는 길이 없다.
     url.pathname.startsWith('/ocr/') ||
     url.pathname.startsWith('/nutrition/') ||
-    url.pathname.startsWith('/icons/')
+    // SIGIL 형태소 그림 78장. 홈·프로필·되말하기·추세·온보딩이 전부 이걸 그린다.
+    // 규칙에 없어서 오프라인에서는 이 앱의 그림이 한 장도 안 떴다 — 글을 안 읽어도
+    // 되게 하는 것이 요점인 앱이 오프라인에서 글자만 남았다.
+    url.pathname.startsWith('/glyphs/') ||
+    url.pathname.startsWith('/icons/') ||
+    STATIC_FILES.has(url.pathname)
   ) {
     event.respondWith(cacheFirst(request));
   }
