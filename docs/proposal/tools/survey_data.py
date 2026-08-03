@@ -24,6 +24,7 @@ CONTINENT = {
     'JSS College of Pharmacy': '아시아',
     'United States': '북미', 'USA': '북미', 'US': '북미',
     'Australia': '오세아니아',
+    'Hungary': '유럽',
 }
 
 FIELD = {

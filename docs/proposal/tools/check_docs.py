@@ -32,11 +32,11 @@
   · 본문이 든 형태소 이름이 사전에 그대로 있는가
   · 그림 33 의 채움 점수가 파서가 내는 값과 같은가
   · 같은 출처가 두 가지 모양으로 적히지 않았는가
-  · 표 28 의 시험 수가 실제로 돌린 결과와 같은가
+  · 표 29 의 시험 수가 실제로 돌린 결과와 같은가
   · 우리 산문의 표기가 한 가지로 통일되어 있는가
   · 응답자를 부를 때 직책이 표 41 과 같은가
   · 빌드된 문서에서 주소가 눌리는가
-  · 표 19 의 명도 대비가 계산과 같고 그 색이 실제로 쓰이는가
+  · 표 20 의 명도 대비가 계산과 같고 그 색이 실제로 쓰이는가
 """
 import re
 import sys
@@ -369,9 +369,9 @@ def quote_drift(f: str = 'proposal_ko.md') -> list:
 
 
 def roster_count() -> list:
-    """표 41 의 응답자 수가 실제 응답 수와 같은지 본다.
+    """표 42 의 응답자 수가 실제 응답 수와 같은지 본다.
 
-    이름 표기는 표 41 에서 정규화한다(Vucicevic → Vučićević, 소문자 성 →
+    이름 표기는 표 42 에서 정규화한다(Vucicevic → Vučićević, 소문자 성 →
     대문자). 그래서 문자열로 대조하면 오탐이 난다. 수만 견준다."""
     import openpyxl
     xl = (Path.home() / 'Desktop/Claude/snapcare-survey/scratchpad'
@@ -382,7 +382,7 @@ def roster_count() -> list:
     n_data = ws.max_row - 1
 
     s = (DOC / 'proposal_ko.md').read_text()
-    i = s.index('[표 41]')
+    i = s.index(f'[표 {table_no("전원이 실명") or 42}]')
     names = []
     for ln in s[i:].splitlines()[1:]:
         if not ln.startswith('|'):
@@ -753,7 +753,7 @@ def cite_shape() -> list:
 
 
 def test_counts() -> list:
-    """표 28 의 시험 수가 실제로 돌린 결과와 같은가.
+    """표 29 의 시험 수가 실제로 돌린 결과와 같은가.
 
     표가 웹 앱 347개(346 통과·1 실패)라고 적고 있었는데 돌려 보니
     360개(359 통과·1 실패)였다. 실패의 설명도 달랐다 — 표는 "조건
@@ -803,7 +803,7 @@ def test_counts() -> list:
                 pass
 
     body = (DOC / 'proposal_ko.md').read_text()
-    i = body.index('[표 28]')
+    i = body.index(f'[표 {table_no("세 갈래의 시험") or 28}]')
     rows = {}
     for ln in body[i:].splitlines()[1:]:
         if not ln.startswith('|'):
@@ -820,7 +820,7 @@ def test_counts() -> list:
         if said is None:
             out.append(f'표 28 에 "{k}" 행이 없다')
         elif said != n:
-            out.append(f'표 28 의 {k} 이 {said} 인데 돌려 보니 {n} 이다')
+            out.append(f'표 29 의 {k} 이 {said} 인데 돌려 보니 {n} 이다')
     return out
 
 
@@ -859,7 +859,7 @@ def title_drift() -> list:
     """본문이 응답자를 부를 때 직책이 표 41 과 같은가.
 
     사용자가 요구한 것은 인용에 이름·소속·직책이 다 드러나는 것이다.
-    한 자리가 이소영 응답자를 "교수" 로만 적고 있었는데 표 41 은
+    한 자리가 이소영 응답자를 "교수" 로만 적고 있었는데 표 42 는
     "교수·약사" 다. 같은 사람이 문서 안에서 두 직책을 갖게 된다.
 
     한글 이름만 본다. 로마자 이름은 표기가 여럿이라(Vučićević 등)
@@ -870,7 +870,7 @@ def title_drift() -> list:
         return []
     body = s[:s.index('### 5.11')]
     roster = {}
-    for ln in s[s.index('[표 41]'):].splitlines()[1:]:
+    for ln in s[s.index(f'[표 {table_no("전원이 실명") or 42}]'):].splitlines()[1:]:
         if not ln.startswith('|'):
             if roster:
                 break
@@ -884,7 +884,7 @@ def title_drift() -> list:
         for m in re.finditer(re.escape(name), body):
             seg = body[max(0, m.start() - 24):m.end() + 14]
             if title not in seg:
-                out.append(f'{name} 을 부르는 자리의 직책이 표 41("{title}")과 다르다 '
+                out.append(f'{name} 을 부르는 자리의 직책이 표 42("{title}")과 다르다 '
                            f'— …{seg.strip()[:44]}…')
                 break
     return out
@@ -918,7 +918,7 @@ def links_live() -> list:
 
 
 def contrast() -> list:
-    """표 19 의 명도 대비가 계산과 같고, 그 색이 실제로 쓰이는가.
+    """표 20 의 명도 대비가 계산과 같고, 그 색이 실제로 쓰이는가.
 
     눈으로 지킬 수 없는 값이라 표에 적어 두어도 색을 한 번 손대면
     조용히 어긋난다. 가장 낮은 것이 주의색의 4.52 이고 기준과의
@@ -936,9 +936,10 @@ def contrast() -> list:
 
     out = []
     body = (DOC / 'proposal_ko.md').read_text()
-    m = re.search(r'\[표 19\][^\n]*`(#[0-9A-Fa-f]{6})`[^\n]*?([\d.]+):1', body)
+    tno = table_no('명도 대비') or 19
+    m = re.search(rf'\[표 {tno}\][^\n]*`(#[0-9A-Fa-f]{{6}})`[^\n]*?([\d.]+):1', body)
     bg = m.group(1) if m else '#F4F3EF'
-    i = body.index('[표 19]')
+    i = body.index(f'[표 {table_no("명도 대비") or 19}]')
     seen = 0
     for ln in body[i:].splitlines()[1:]:
         if not ln.startswith('|'):
@@ -957,11 +958,11 @@ def contrast() -> list:
                 continue
             got = ratio(col, bg)
             if abs(got - want) > 0.02:
-                out.append(f'표 19 의 {c[0]} {col} 이 {said} 라는데 '
+                out.append(f'표 20 의 {c[0]} {col} 이 {said} 라는데 '
                            f'{bg} 위에서 {got:.2f}:1 이다')
         now = c[3].strip('`')
         if ratio(now, bg) < 4.5:
-            out.append(f'표 19 의 {c[0]} {now} 이 기준 4.5:1 에 못 미친다 '
+            out.append(f'표 20 의 {c[0]} {now} 이 기준 4.5:1 에 못 미친다 '
                        f'({ratio(now, bg):.2f})')
     if seen != 5:
         out.append(f'표 19 에서 색 행을 {seen}개만 읽었다')
@@ -976,6 +977,18 @@ def contrast() -> list:
             elif f'`{mm.group(1)}`' not in body and f'`{mm.group(1).upper()}`' not in body:
                 out.append(f'{name} 이 {mm.group(1)} 인데 표 19 에 그 값이 없다')
     return out
+
+
+def table_no(title_part: str, f: str = 'proposal_ko.md') -> int | None:
+    """표를 번호가 아니라 제목으로 찾는다.
+
+    표를 하나 끼워 넣으면 뒤의 번호가 전부 밀린다. 검사에 번호를 박아
+    두면 그때마다 검사가 엉뚱한 표를 보게 되고, 실제로 표 21 을 넣었을
+    때 응답자 명단·시험 수·직책 검사 셋이 한꺼번에 다른 표를 보았다."""
+    for m in re.finditer(r'^\[표 (\d+)\](.*)$', (DOC / f).read_text(), re.M):
+        if title_part in m.group(2):
+            return int(m.group(1))
+    return None
 
 
 def blocks(path: Path) -> dict:

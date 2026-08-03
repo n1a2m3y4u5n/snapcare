@@ -67,7 +67,7 @@ This distinction affects the design. Where the rate is high the app is dealing w
 
 The distribution is also uneven within a single country. In some sub-Saharan African countries **the literacy rate among older women is 31% against 55% among older men**, while among men in parts of Europe and North America it is 99% (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025).
 
-We record here that the experts we asked answered in a direction that cuts against this statistic. Of the 35 respondents in §5.7, 15 answered that they "almost never" encounter someone unable to read a written medication instruction, and 4 that they encounter such a person almost daily. Half the respondents work in Korea, so this answer reflects the within-country distribution seen in §1.2 rather than contradicting the world figures of §1.1. Professor Hwi-Yeol Yun of Chungnam National University College of Pharmacy set down the circumstance directly.
+We record here that the experts we asked answered in a direction that cuts against this statistic. Of the 39 respondents in §5.7, 18 answered that they "almost never" encounter someone unable to read a written medication instruction, and 4 that they encounter such a person almost daily. Half the respondents work in Korea, so this answer reflects the within-country distribution seen in §1.2 rather than contradicting the world figures of §1.1. Professor Hwi-Yeol Yun of Chungnam National University College of Pharmacy set down the circumstance directly.
 
 > "Among Koreans the rate of not being able to read is close to zero, so it is mainly foreign patients. We therefore explain in English."
 > (Professor Hwi-Yeol Yun, College of Pharmacy, Chungnam National University)
@@ -487,7 +487,7 @@ These five point to one conclusion. What is needed is an integrated pipeline tha
 
 Having set out these five strands, we put them to the field. The survey in §5.7 is that, and the result broadly confirmed the five. What differed was how they were confirmed.
 
-Scale, the first, the respondents rated lower rather than higher: 15 of 35 answered that they almost never meet such a patient. The visual route, the third, was supported but with a condition attached, namely that pictures help in the low-literacy case and that total blindness and low vision are different layers. On the constraint of the standard, the fourth, two respondents recommended consulting existing sets, which are the very sets §1.9 records as unusable by us. The delivery channel, the fifth, was said to fail at managing the device rather than at owning one.
+Scale, the first, the respondents rated lower rather than higher: 18 of 39 answered that they almost never meet such a patient. The visual route, the third, was supported but with a condition attached, namely that pictures help in the low-literacy case and that total blindness and low vision are different layers. On the constraint of the standard, the fourth, two respondents recommended consulting existing sets, which are the very sets §1.9 records as unusable by us. The delivery channel, the fifth, was said to fail at managing the device rather than at owning one.
 
 What came up most often was not in the five strands at all. Six respondents independently raised the absence of validation with people, and four of the five who answered the broad question across the five segments chose it as the first thing to resolve. The five strands we used to define the problem all come from the literature, and this finding says that between that literature and our set there is still nothing.
 
@@ -505,7 +505,7 @@ The five strands above were counted against the world. This team comes from Kore
 
 In Korea what characterises this problem is not its size but its invisibility. Adult literacy is effectively close to 100%, so the phrase "people who cannot read" does not land. Yet the Korea Disease Control and Prevention Agency data cited in §1.2 says 39.6% of adults do not have sufficient health literacy, and 59.7% among those aged 65 and over. The distance between reading letters and understanding a dosing instruction opens that wide inside a single country.
 
-Our own survey produced the evidence that it goes unseen. Of the 35 respondents in §5.7, 15 answered that they almost never meet such a patient. One wrote:
+Our own survey produced the evidence that it goes unseen. Of the 39 respondents in §5.7, 18 answered that they almost never meet such a patient. One wrote:
 
 > "Among Koreans the rate of not being able to read is close to zero, so it is mainly foreign patients. We therefore explain in English."
 > (Professor Hwi-Yeol Yun, College of Pharmacy, Chungnam National University)
@@ -760,6 +760,21 @@ There is judgement in `Math.min(1, energyRatio)` as well. Salt and fibre are rec
 
 Returning the `basis` string alongside is also deliberate. "1,800 kcal at age 70, free sugars under 10%" appears on screen exactly as written (Figure 22(b)). If the user cannot see where a verdict came from, there is no way for them to examine it.
 
+What this derivation actually produces is set down here for the four age bands. These are the values the six lines above return.
+
+[Table 10] Daily references by age band (output of the code above)
+
+| Age band | Energy | Free sugars | Saturated fat | Fat | Salt | Fibre | Protein |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Child (7) | 1,800 kcal | 45 g | 20.0 g | 60 g | 4.5 g | 22.5 g | 23.2 g |
+| Teenager (15) | 2,400 kcal | 60 g | 26.7 g | 80 g | 5.0 g | 25.0 g | 48.1 g |
+| Adult (35) | 2,000 kcal | 50 g | 22.2 g | 67 g | 5.0 g | 25.0 g | 51.5 g |
+| Older adult (70) | 1,800 kcal | 45 g | 20.0 g | 60 g | 4.5 g | 22.5 g | 49.8 g |
+
+The table is included so that a reviewer can check the arithmetic. On the deployment, the home screen in Figure 15 shows 27.5 g of free sugars as 61%, and 27.5 divided by 45 is 61.1%. The percentage on screen comes straight out of the derivation in this table.
+
+The table also shows that child and older adult share an energy figure of 1,800 kcal while their protein targets part at 23.2 g and 49.8 g. Protein alone is derived from body weight (0.83 g per kg), with the representative weight set at 28 kg for a child and 60 kg for an older adult.
+
 ![Figure 20](fig/fig15_verdict_flow.png)
 
 **[Figure 20]** The path by which the verdict threshold is derived. The user chooses only the two boxes at the top; the rest is computation. It is a derivation rather than a table because the WHO recommendation is itself written as a proportion of total energy, so when the recommendation changes one constant is edited instead of a table being rebuilt.
@@ -779,7 +794,7 @@ As established in the previous section, about 43% of adults with diabetes do not
 
 The question "what are you allergic to" can therefore only be answered by someone who has been tested. SnapCare splits this question three ways.
 
-[Table 10] How conditions are asked
+[Table 11] How conditions are asked
 
 | Branch | Form of the question | Example |
 |---|---|---|
@@ -844,7 +859,7 @@ Fisher's exact test was used because the samples are small. Chi-square cannot be
 
 This section sets out how SnapCare differs from what already exists. Two comparators are taken. One is the general health and nutrition app, the other is the de facto standard for pharmaceutical pictograms, the United States Pharmacopeia set. The first says it addresses the same users but addresses them in text, and the second does not use text but cannot combine.
 
-[Table 11] Existing approaches compared with SnapCare
+[Table 12] Existing approaches compared with SnapCare
 
 | Item | General health app | USP pictogram standard | SnapCare |
 |---|---|---|---|
@@ -912,7 +927,7 @@ SnapCare's user flow is built on the principle of running from a single photogra
 
 The whole flow is the following five steps.
 
-[Table 12] The steps of the user flow and what each requires
+[Table 13] The steps of the user flow and what each requires
 
 | Step | Screen | What the user does | Text to read |
 |---|---|---|---|
@@ -922,7 +937,7 @@ The whole flow is the following five steps.
 | 4 | Capture | Point and shoot | None |
 | 5 | Verdict | Look and listen | None |
 
-The last column of Table 12 is the point of this design. At no step is the user required to read or type.
+The last column of Table 13 is the point of this design. At no step is the user required to read or type.
 
 There is one more thing absent from the table. There is no step for going back. If the photograph was wrong, take another; if the verdict is unwelcome, close it. Intermediate steps such as cancel, edit and confirm were left out because each of them requires reading "what is being asked right now." Of the five steps, 1 and 2 are passed through only once, so from the second use the real path is three steps: press on the home screen, shoot, look.
 
@@ -983,7 +998,7 @@ There is a reason for this order. Finishing anything with text on the device and
 
 While recognition runs, the preview area displays what is happening in text, and the same sentence goes out as speech. The four sentences actually displayed are as follows.
 
-[Table 13] The stages shown during recognition
+[Table 14] The stages shown during recognition
 
 | Display | When it appears | Duration |
 |---|---|---|
@@ -998,7 +1013,7 @@ Showing the percentage rather than hiding it is deliberate. One of the barriers 
 
 The verdict screen splits into two versions depending on what was photographed. The criterion for the ordering is the same: scanning top to bottom without reading, what is needed has to come first.
 
-[Table 14] Composition of the verdict screen (food and drink / prescription and medicine)
+[Table 15] Composition of the verdict screen (food and drink / prescription and medicine)
 
 | Order | Food and drink | Prescription and medicine |
 |---|---|---|
@@ -1021,7 +1036,7 @@ Cutting the nutrient bars to three follows the same criterion. Items below 5% of
 
 Colour has three levels and is derived from the user's conditions. Where several grounds apply, the worst wins.
 
-[Table 15] Grounds that raise the verdict level
+[Table 16] Grounds that raise the verdict level
 
 | Ground | How it applies | Result |
 |---|---|---|
@@ -1044,7 +1059,7 @@ The failure sentence is spoken aloud at the same time as it appears on screen. T
 
 Alongside the sentence come one picture and a two-word instruction.
 
-[Table 16] Failure guidance
+[Table 17] Failure guidance
 
 | Situation | Picture | Instruction | What it asks for |
 |---|---|---|---|
@@ -1076,7 +1091,7 @@ This design had a defect that surfaced during development. **There were 78 press
 
 Drawing the indicator larger is only half of it. Pressing is a tool for someone who already knows there is audio, and to someone opening the app for the first time a speaker glyph is just another picture. Three things were therefore put in place together.
 
-[Table 17] Three routes to the audio
+[Table 18] Three routes to the audio
 
 | Route | What it does | Why it is needed |
 |---|---|---|
@@ -1153,7 +1168,7 @@ WCAG 1.4.1 requires that colour not be the sole means of conveying meaning, and 
 
 The same verdict therefore goes out through five channels at once.
 
-[Table 18] The five channels one verdict travels through
+[Table 19] The five channels one verdict travels through
 
 | Channel | Safe | Caution | Avoid |
 |---|---|---|---|
@@ -1174,9 +1189,9 @@ The line currently being read gains an outline. Where the audio has reached has 
 
 If everything so far concerns the layers that substitute for colour, whether the colour itself can be read is a separate question. In §5.7, E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols and the University of Southampton, wrote that the WCAG 2.2 mobile criteria should be checked. The reason given was that AAC users frequently have visual difficulties as well and operate by scanning, which makes an audio button hard to reach. Working through the criteria, two items failed.
 
-The first is contrast. All five verdict colours fell short. SC 1.4.3 of WCAG 2.2 requires 4.5:1 for body text, and these colours are not decoration but the colour of the verdict sentence itself. It is not that one of the five channels in Table 18 dims but that the sentence does not read.
+The first is contrast. All five verdict colours fell short. SC 1.4.3 of WCAG 2.2 requires 4.5:1 for body text, and these colours are not decoration but the colour of the verdict sentence itself. It is not that one of the five channels in Table 19 dims but that the sentence does not read.
 
-[Table 19] Contrast of the verdict colours (on the off-white background `#F4F3EF`, criterion 4.5:1)
+[Table 20] Contrast of the verdict colours (on the off-white background `#F4F3EF`, criterion 4.5:1)
 
 | Use | Before | Ratio | Now | Ratio |
 |---|---|---|---|---|
@@ -1186,7 +1201,7 @@ The first is contrast. All five verdict colours fell short. SC 1.4.3 of WCAG 2.2
 | Accent | `#2F6BF6` | 4.15:1 | `#1D4ED8` | 6.04:1 |
 | Secondary text | `#6B7280` | 4.35:1 | `#55606E` | 5.76:1 |
 
-All five were darkened by one step while the hue was kept. Green, amber and red have to be recognisable as such at a glance for the channels to remain distinct. The present values exceed 4.5:1 in all four combinations: on a white card, on the off-white background, on their own tinted band, and as white text on the colour itself. The lowest of the eighteen combinations is the caution colour on the off-white background at 4.52, a margin of 0.02 over the criterion. Lightening that colour by even one step would put it under, so the values in Table 19 are not a matter of taste but values taken at the boundary.
+All five were darkened by one step while the hue was kept. Green, amber and red have to be recognisable as such at a glance for the channels to remain distinct. The present values exceed 4.5:1 in all four combinations: on a white card, on the off-white background, on their own tinted band, and as white text on the colour itself. The lowest of the eighteen combinations is the caution colour on the off-white background at 4.52, a margin of 0.02 over the criterion. Lightening that colour by even one step would put it under, so the values in Table 20 are not a matter of taste but values taken at the boundary.
 
 These are values the eye cannot hold, so they were locked with a test. The earlier values looked perfectly fine on screen, and that is in fact how they survived this long. The test measures more than contrast: it also checks that the three colours remain distinct in hue. Measuring contrast alone can be satisfied by collapsing everything to dark grey, which is the most common way of passing a test while losing what the test was for.
 
@@ -1212,7 +1227,7 @@ The procedure cannot be carried across to our users as it stands. They cannot re
 
 This is where the reason for using morphemes rather than a line of DSL as the answer set becomes visible. `\qty_two` is "two" without saying two of what. It is the same reason the grammar of §2.2 forbids a modifier standing alone, and what is needed in this position is not a sentence but a single picture to point at.
 
-[Table 20] What the check asks (it asks only what the prescription said)
+[Table 21] What the check asks (it asks only what the prescription said)
 
 | Order | What is asked | Spoken question | Answer set | When it is not asked |
 |---|---|---|---|---|
@@ -1242,7 +1257,7 @@ This step was built after the survey in §5.7. It has not been verified with peo
 
 This section first sets out what was built with which tools, and the sections that follow take up one by one the points where a judgement had to be made. The content of this section is why those choices were made rather than the stack itself.
 
-[Table 21] Technical stack
+[Table 22] Technical stack
 
 | Layer | Technology | Note |
 |---|---|---|
@@ -1262,7 +1277,7 @@ Reading the last column on its own shows how this stack is put together. The hea
 
 There is one reason for inverting that convention. Anything on the server becomes nothing when the internet drops. Only the things "without which the verdict does not hold at all" were therefore moved onto the device.
 
-[Table 22] What runs where
+[Table 23] What runs where
 
 | Task | Runs on | If the internet drops |
 |---|---|---|
@@ -1288,7 +1303,7 @@ How large an energy error of 253.7 kcal is becomes clear against the thresholds 
 
 SnapCare therefore applies the same checks regardless of which route a value came in by.
 
-[Table 23] Checks a value must pass before it is accepted
+[Table 24] Checks a value must pass before it is accepted
 
 | Check | Content |
 |---|---|
@@ -1337,7 +1352,7 @@ Returning `problems` as an array of strings rather than a boolean is also delibe
 
 Connecting the phone to the dispenser was a problem with several constraints applying at once.
 
-[Table 24] Connection methods considered and why each was excluded
+[Table 25] Connection methods considered and why each was excluded
 
 | Method | Reason for exclusion | Nature |
 |---|---|---|
@@ -1346,13 +1361,13 @@ Connecting the phone to the dispenser was a problem with several constraints app
 | Cloud broker (MQTT over wss) | Solves all three problems but **requires internet on both sides** | Conflicts with the target environment |
 | Dropping iOS support | Android share is 86.6% in Africa, 90.9% in Latin America and about 95% in India, so there is a basis, but **it contradicts the product's claim of working for anyone** | Our own principle |
 
-The first two are set by the platforms and cannot be worked around, the third is unacceptable as long as low-infrastructure regions are the target, and the fourth we ruled out ourselves. The last row of Table 24 is different in nature from the rest, which should be stated. Technology did not block it; we narrowed the options to keep the product's claim.
+The first two are set by the platforms and cannot be worked around, the third is unacceptable as long as low-infrastructure regions are the target, and the fourth we ruled out ourselves. The last row of Table 25 is different in nature from the rest, which should be stated. Technology did not block it; we narrowed the options to keep the product's claim.
 
 The remaining route is top-level navigation. An HTTPS page cannot `fetch` an HTTP device, but navigating to that address is not blocked. The app therefore builds a link to the device's save address, and one press from the user has the device store the schedule and show a confirmation page. No broker and no cloud are required, and the whole thing completes inside the home.
 
 #### 4.3.1 Adding a relay path
 
-The reason for excluding the cloud broker in the third row of Table 24 was that it "requires internet on both sides." That sentence is true when relying on that route alone. Since the LAN route above is already complete, adding an internet route on top of it does not increase the requirements.
+The reason for excluding the cloud broker in the third row of Table 25 was that it "requires internet on both sides." That sentence is true when relying on that route alone. Since the LAN route above is already complete, adding an internet route on top of it does not increase the requirements.
 
 That judgement was reached because a problem remained that the LAN route does not solve. The person managing the prescription is usually not in the house. The carer is at work and the dosing time changes on a Tuesday afternoon. And the two constraints excluded earlier in §4.3 remain in force on the LAN route. Mixed content means the app cannot call the device's API, so all a link can carry is the fields the legacy compatibility URL accepts. There is no field there for days of the week and none for duration. A Monday-Wednesday-Friday prescription goes out all seven days, and a 30-day prescription goes out until the tray is empty.
 
@@ -1370,7 +1385,7 @@ printed code ──HKDF──► device id      the relay's address    (relay se
 
 **[Figure 31]** Three values separate out of ten printed characters. The relay distinguishes mailboxes by the first two, and the last is sent by neither side, so the relay has no way of holding it.
 
-This is one more channel rather than a dependency. The schedule is already on the device's SD card and the time is known to the real-time clock. Whether the relay is down, unreachable or never configured at all, nobody's dose is missed. The judgement in Table 24 stands. We still do not require a cloud.
+This is one more channel rather than a dependency. The schedule is already on the device's SD card and the time is known to the real-time clock. Whether the relay is down, unreachable or never configured at all, nobody's dose is missed. The judgement in Table 25 stands. We still do not require a cloud.
 
 ### 4.4 Reading the paper form
 
@@ -1439,7 +1454,7 @@ Photographs are therefore generated. Starting from a real form image, bubbles ar
 
 With this generator each degradation was pushed until reading broke. A point counts as passing only if every trial at that point was read correctly.
 
-[Table 25] The last point at which reading stayed at 100% (16 images per point)
+[Table 26] The last point at which reading stayed at 100% (16 images per point)
 
 | Degradation | Last value read entirely correctly | At the next value |
 |---|---|---|
@@ -1453,7 +1468,7 @@ With this generator each degradation was pushed until reading broke. A point cou
 
 The bottom three rows are lower bounds rather than limits. They mean 100% was maintained to the harshest value tested, and where they break beyond that is unknown. Reading them as limits would record the parser as worse than it is, so they are marked separately.
 
-What has to be read here is not the left of Table 25 but what the right two rows mean. Robustness to shadow and brightness comes from adaptive thresholding setting its threshold locally, and surviving JPEG quality 8 comes from what is being read being a filled area rather than a fine pattern. The two that collapse are different in nature. Defocus and mark fill erase the boundary of the bubble itself. Half being wrong at fill 0.3 is because at that lightness the difference between filled and unfilled becomes smaller than the paper's own blotching.
+What has to be read here is not the left of Table 26 but what the right two rows mean. Robustness to shadow and brightness comes from adaptive thresholding setting its threshold locally, and surviving JPEG quality 8 comes from what is being read being a filled area rather than a fine pattern. The two that collapse are different in nature. Defocus and mark fill erase the boundary of the bubble itself. Half being wrong at fill 0.3 is because at that lightness the difference between filled and unfilled becomes smaller than the paper's own blotching.
 
 Two practical instructions come out of this. Fill more than half the box when marking, and focus when taking the photograph. Nothing else needs worrying about. Dark, shadowed or poor quality makes no difference. That is also why the guidance printed alongside the paper form says only these two things.
 
@@ -1518,7 +1533,7 @@ Cache names carry an asset fingerprint. A pictogram's address is derived from it
 
 Because health information is involved, measures were needed on both storage and transmission.
 
-[Table 26] Privacy-related design
+[Table 27] Privacy-related design
 
 | Item | Content |
 |---|---|
@@ -1574,7 +1589,7 @@ Deriving the household ID as the SHA-256 hash of the public key follows the same
 
 The web app, the hardware firmware and the training code are managed in a single repository. It will be transferred to the contest organisation's GitHub organisation for final submission.
 
-[Table 27] Composition of the repository (as of 3 August 2026)
+[Table 28] Composition of the repository (as of 3 August 2026)
 
 | Area | Files | Lines | Responsibility |
 |---|---|---|---|
@@ -1589,7 +1604,7 @@ There is a reason the repository was not split. What breaks most often in this p
 
 In practice three kinds of test in this repository each require something different.
 
-[Table 28] Three kinds of test
+[Table 29] Three kinds of test
 
 | Kind | Tests | Result | What it needs |
 |---|---:|---|---|
@@ -1641,7 +1656,7 @@ Design intent. The scoring result is not reduced to a single true or false but k
 
 Counting `glyphs` alongside has a reason too. All six items can be true while not a single picture appears. That is the state where delivery happens only through sentences and speech and the pictogram route is dead. Eight of the 28 runs before the fix were exactly that, and had we been watching only the item scores those eight would have passed as "partially successful."
 
-[Table 29] Scoring items in the formative evaluation
+[Table 30] Scoring items in the formative evaluation
 
 | Item | What it confirms |
 |---|---|
@@ -1660,7 +1675,7 @@ We state what the one that did not was. In the run where a user with no register
 
 This was not fixed as a defect. The alternative suggestion is derived from the reason for avoidance, as described in §2.7, and for a user with no reason to avoid anything there is nothing to derive from. Telling someone with no conditions to "choose that instead of this" would require inventing the grounds, and that is something this app has decided not to do. This one case is therefore the result of applying the scoring items uniformly across all runs rather than a feature failing to work. Splitting the scoresheet by condition would make it 28/28, but under the principle of not adjusting scoring criteria to fit results it is left as it is.
 
-[Table 30] Formative evaluation results
+[Table 31] Formative evaluation results
 
 | | Before fix | After fix |
 |---|---|---|
@@ -1682,7 +1697,7 @@ Comprehension testing requires assembling people, however, so it is expensive an
 
 This work designed a procedure that inverts that order. Two gates are placed on each pictogram.
 
-[Table 31] The two gates of pictogram verification
+[Table 32] The two gates of pictogram verification
 
 | Gate | What it judges | Method |
 |---|---|---|
@@ -1751,7 +1766,7 @@ The same defect appeared once more later. `qty_four` had remained as four rings 
 
 Applying this procedure to all 78 morphemes gave the following.
 
-[Table 32] Semantic check results for the 78 morphemes
+[Table 33] Semantic check results for the 78 morphemes
 
 | Category | Count |
 |---|---|
@@ -1765,7 +1780,7 @@ Of the 24 read differently, 7 are actually exposed on screen, while the remainin
 **[Figure 38]** First-pass semantic check results for the 78 morphemes and the breakdown of the 24 misread. The misreadings are split rather than pooled because the two are different in nature. The 7 exposed on screen are actually seen by users and have to be fixed, while the 17 that exist only in the dictionary are not yet seen by anyone. Fixing the former first is a matter of allocating effort and does not mean the latter are acceptable.
 
 
-[Table 33] Morphemes improved by rework
+[Table 34] Morphemes improved by rework
 
 | Morpheme | Previously read as | After |
 |---|---|---|
@@ -1783,7 +1798,7 @@ The improvement to `allergen_tree_nut` matters particularly. Its being read as "
 
 Five symbols were reworked without improving. These differ in nature from the seven above.
 
-[Table 34] Morphemes not improved and why
+[Table 35] Morphemes not improved and why
 
 | Morpheme | Problem | Judgement |
 |---|---|---|
@@ -1831,7 +1846,7 @@ That lands directly on the procedure of §5.2. When a morpheme fails the semanti
 
 The model used on the meal photograph route was scored against the official RGB test split of Nutrition5k. The deployed file itself (`web.onnx`) was run with the same preprocessing as the browser: short side resized to 258, 224 centre crop, divided by 255.
 
-[Table 35] Per-item error of the nutrition estimation model (n = 507)
+[Table 36] Per-item error of the nutrition estimation model (n = 507)
 
 | Item | MAE | MAE% | Test set mean |
 |---|---|---|---|
@@ -1850,7 +1865,7 @@ It should be stated that these values can no longer be re-measured. When the Nut
 
 There is a value measured on what remains, however, and it is the one that fits this app better.
 
-[Table 36] The difference between two scorings
+[Table 37] The difference between two scorings
 
 | | Official test split | Re-measured on what remains |
 |---|---|---|
@@ -1876,7 +1891,7 @@ Values from this route are therefore not trusted on the grounds of accuracy. Wha
 
 An int8 quantised build reducing the model to 4.86 MB was also exported but not deployed.
 
-[Table 37] float32 compared with int8
+[Table 38] float32 compared with int8
 
 | | Size | Mean MAE% | Energy MAE |
 |---|---|---|---|
@@ -1889,7 +1904,7 @@ The size falls to a third while the error roughly doubles. For an app targeting 
 
 The claim that verdicts are computed on the device without an internet connection was verified. After building for deployment, the following were confirmed with the server shut down.
 
-[Table 38] Offline operation check
+[Table 39] Offline operation check
 
 | Item checked | Result |
 |---|---|
@@ -1913,7 +1928,7 @@ As stated in §5.4, every measurement up to this point has been a machine scorin
 
 The list was not built in one pass. It was researched separately across eight domains and then combined. Searching sequentially, one person carries the criteria of the first domain into the later ones and the sample tilts one way. Researching by domain means people are chosen by the standards of each field.
 
-[Table 39] The eight domains of the list (846 in total)
+[Table 40] The eight domains of the list (846 in total)
 
 | Domain | Count | On what criteria they were chosen |
 |---|---|---|
@@ -1970,28 +1985,28 @@ We left a morpheme comprehension test out of the survey. A professor reading our
 
 #### 5.7.3 Who answered
 
-As of 2 August 2026, 35 people had answered: 3.2% of those contacted, with 117 free-text responses alongside.
+As of 3 August 2026, 39 people had answered: 3.5% of those contacted, with 124 free-text responses alongside.
 
-[Table 40] Composition of respondents (n = 35)
+[Table 41] Composition of respondents (n = 39)
 
 | Field | Responses | Field | Responses |
 |---|---|---|---|
-| Pharmacy and medication counselling practice | 12 | HCI and design | 2 |
+| Pharmacy and medication counselling practice | 13 | HCI and design | 4 |
 | Nursing and public health | 9 | Adult literacy education | 1 |
-| Other | 9 | AAC and special education | 1 |
+| Other | 10 | AAC and special education | 1 |
 | | | Industry practice | 1 |
 
 ![Figure 40](fig/chart15_survey_who.png)
 
-**[Figure 40]** The composition of the 35 respondents. Field on the left, continent on the right. Pharmacy and nursing account for three fifths at 21 people, and these two are the centre of the five segments we judged qualified to view the demonstration and rule on patient comprehension. That Asia accounts for 25 reflects exactly the order in which the list was built, starting in Korea and widening region by region.
+**[Figure 40]** The composition of the 39 respondents. Field on the left, continent on the right. Pharmacy and nursing account for more than half at 22 people, and these two are the centre of the five segments we judged qualified to view the demonstration and rule on patient comprehension. That Asia accounts for 27 reflects exactly the order in which the list was built, starting in Korea and widening region by region.
 
-The countries respondents recorded as working in span 20 countries across five continents, with 17 recording Korea only. All respondents consented to being quoted by name and affiliation, so they are recorded here as given.
+The countries respondents recorded as working in span 22 countries across five continents, with 20 recording Korea only. All respondents consented to being quoted by name and affiliation, so they are recorded here as given.
 
-[Table 41] The 35 respondents (all consented to being named with their affiliation)
+[Table 42] The 39 respondents (all consented to being named with their affiliation)
 
 | Name | Position | Affiliation | Country |
 |---|---|---|---|
-| **Pharmacy and medication counselling practice (12)** | | | |
+| **Pharmacy and medication counselling practice (13)** | | | |
 | Hwi-Yeol Yun | Professor | College of Pharmacy, Chungnam National University | Republic of Korea |
 | Hangil Lee | Associate Professor | College of Pharmacy, Ewha Womans University | Republic of Korea |
 | So-Young Lee | Professor and pharmacist | Chungnam National University | Republic of Korea |
@@ -2003,6 +2018,7 @@ The countries respondents recorded as working in span 20 countries across five c
 | Maria Stefanova | Researcher | Medical University of Sofia | Bulgaria |
 | Katarina Vučićević | Professor | University of Belgrade, Faculty of Pharmacy | Serbia |
 | E. Michael Murphy | Assistant Professor of Clinical Pharmacy | The Ohio State University College of Pharmacy | United States |
+| Yoanna | (no position given) | Future Values | Bulgaria |
 | Sheron Sir Loon Goh | Pharmacy Lecturer | Department of Clinical Pharmacy and Pharmacy Practice | Malaysia |
 | **Nursing and public health (9)** | | | |
 | Sung-il Cho | Professor | Seoul National University | Republic of Korea |
@@ -2014,13 +2030,15 @@ The countries respondents recorded as working in span 20 countries across five c
 | Celia | Professor | University of Pretoria | South Africa |
 | Foued Maaoui | Researcher | Institut Pasteur de Tunis | Tunisia |
 | Aliya Naheed | Senior Scientist | International Centre for Diarrhoeal Disease Research (icddr,b) | Bangladesh |
-| **AAC and special education · adult literacy · HCI and design · industry practice (5)** | | | |
+| **AAC and special education · adult literacy · HCI and design · industry practice (7)** | | | |
 | E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · University of Southampton | United Kingdom |
 | Eun-Kyoung Kim | Professor | Kongju National University | Republic of Korea |
 | Yonghan Lee | Senior Manager | Korea Craft and Design Foundation | Republic of Korea |
 | Myojung Choi | Researcher | Korea Disabled People's Development Institute | Republic of Korea |
 | Cheolhyeon Park | Team Leader | VOICEYE | Republic of Korea |
-| **Other (9)** | | | |
+| Youngchan Kim | (no position given) | Kyung Hee Cyber University | Republic of Korea |
+| Seunghoon Jung | (no position given) | Korea Institute of Design Promotion | Korea · China · Japan · Middle East |
+| **Other (10)** | | | |
 | Kyogu Lee | Professor | Seoul National University | Republic of Korea |
 | Kyunghwa Lee | Professor | Soongsil University | Republic of Korea |
 | Heejung Seo | Professor | Dong-eui University | Republic of Korea |
@@ -2030,6 +2048,7 @@ The countries respondents recorded as working in span 20 countries across five c
 | Raisa Kravchenko | Deputy Director | All Ukrainian NGO Coalition for Persons with Intellectual Disabilities | Ukraine |
 | Afonso Cavaco | Professor | Faculdade de Farmácia, Universidade de Lisboa | Portugal |
 | Mustapha Taibi | Professor of Translation and Interpreting | Western Sydney University | Australia |
+| Barbara Báldy | (no position given) | Semmelweis University | Hungary |
 
 Half the respondents work outside Korea. Since this app claims not to be for one particular region (§1.2), we judged that the people reviewing it should not be concentrated in one country either, and when building the list we separately researched and added groups for Eastern Europe, the Middle East and North Africa, South Asia, Latin America, Southeast Asia and Africa. Those groups are 40.5% of the 1,103.
 
@@ -2039,7 +2058,7 @@ One thing has to be set down here. Forty-three percent of respondents (15 people
 
 The questions calling for a judgement on the demonstration were attached to five segments only. They were not attached to the law, standards and industry segments. Ruling on patient comprehension is not something that can be done from those positions, and mixing unqualified answers into the denominator makes the resulting proportion a proportion of nothing.
 
-[Table 42] Could a patient who cannot read take their medicine correctly, alone, with only these screens? (five qualified segments, n = 25)
+[Table 43] Could a patient who cannot read take their medicine correctly, alone, with only these screens? (five qualified segments, n = 25)
 
 | Answer | Responses |
 |---|---|
@@ -2060,7 +2079,7 @@ In the nursing and public health segment, 6 of 9 answered that the patient and t
 
 The sample is small. The judgement question went only to the five qualified segments, so n = 25 there, and questions taking all respondents as the denominator have n = 35. So rather than recording proportions alone we record how much those proportions move. The intervals below are 95% confidence intervals by the Wilson method. With a small sample the normal approximation produces intervals dropping below 0 or exceeding 1; Wilson does not.
 
-[Table 43] Proportions and 95% confidence intervals for the judgement question (n = 25)
+[Table 44] Proportions and 95% confidence intervals for the judgement question (n = 25)
 
 | Answer | Responses | Proportion | 95% CI |
 |---|---|---|---|
@@ -2077,18 +2096,18 @@ The last row is the place in this table to be most careful about. Zero "No" answ
 
 We then tested whether differences exist between groups. Fisher's exact test was used throughout. Chi-squared cannot be used when an expected cell frequency falls below 5, and the tables from this sample always do. It is the same reason the same test is used for allergy inference in §2.5.
 
-[Table 44] Tests of difference between groups
+[Table 45] Tests of difference between groups
 
 | What against what | Observed | Test | p | Verdict |
 |---|---|---|---|---|
 | Contact frequency vs judgement | "possible" in 2/4 frequent, 5/21 rare | Fisher | 0.548 | no difference can be claimed |
 | Occupation vs judgement | "possible" in 4/12 pharmacy, 3/9 nursing | Fisher | 1.000 | no difference can be claimed |
-| Response rate, band A vs B | 0/41 against 35/1,062 | Fisher | 0.637 | no difference can be claimed |
+| Response rate, band A vs B | 0/41 against 39/1,062 | Fisher | 0.396 | no difference can be claimed |
 | Language vs judgement | "possible" in 0/11 Korean, 7/14 English | Fisher | **0.0078** | exceeds the corrected threshold |
 | Language vs time taken | median 7.1 min against 24.0 min | Mann-Whitney | 0.029 | below threshold after correction |
 | Time taken vs free-text volume | rho = 0.723 | Spearman | < 0.0001 | significant |
 
-Six tests were run, so the Bonferroni-corrected threshold is 0.0083. Two rows exceed it. We counted that number as five in an earlier version and wrote the threshold as 0.010. The error ran in our favour, so it is recorded here. The p in the fourth row is 0.0078 against a threshold of 0.0083, so the conclusion did not change, but the margin is 0.0005. That is a width one more response could overturn again. The last says people who stayed longer wrote more, which is not a finding about content. The fourth is different. Not one of the eleven who answered in Korean answered "possible", while half of the fourteen who answered in English did.
+Six tests were run, so the Bonferroni-corrected threshold is 0.0083. Two rows exceed it. We counted that number as five in an earlier version and wrote the threshold as 0.010. The error ran in our favour, so it is recorded here. The p in the fourth row is 0.0078 against a threshold of 0.0083, so the conclusion did not change, but the margin is 0.0005. That is a width one more response could overturn again. Having written that in an earlier version, four more responses did in fact arrive. The judgement question goes only to the five qualified segments, and all four of the new respondents fall outside them, so the denominator of 25 was unchanged and p did not move from 0.0078. The risk we flagged did not materialise this time; it has not gone away. The last says people who stayed longer wrote more, which is not a finding about content. The fourth is different. Not one of the eleven who answered in Korean answered "possible", while half of the fourteen who answered in English did.
 
 Here is why we do not turn that row into a claim. **One person crossed the threshold.** At 34 responses the value was 0.019, short of the corrected threshold; adding one respondent who answered in Korean and chose something other than "possible" brought it to 0.0078. Where a conclusion turns on a single person, that fact is more accurate information than the conclusion. Up to the previous version this section read "nothing in this survey supports a claim of difference between groups", and we set this down as we correct that sentence.
 
@@ -2098,7 +2117,7 @@ Dropping the non-significant tests and reporting only the significant one would 
 
 The sixth row is worth reading on its own. A rank correlation of 0.723 between time taken and free-text volume means that people who stayed longer did in fact write more, and it can serve as a proxy for the care taken over a response. The median time taken is 9.3 minutes, with quartiles at 6.0 and 40.5 minutes. E. A. Draffan, retired speech and language therapist and visiting accessibility researcher, noted separately that they were interrupted partway and that their own time should not be read as time actually spent.
 
-Free text was written by 30 of the 35 respondents, 117 items in all. Counting by keyword how many people independently raised the same point gives 6 on the absence of validation, 5 on too many elements in one image, 6 on blind users, 4 on the prohibition marking and 4 on referring to existing sets. That count is by words we chose, however, so the body text uses the counts a person read and confirmed.
+Free text was written by 33 of the 39 respondents, 124 items in all. Counting by keyword how many people independently raised the same point gives 6 on the absence of validation, 5 on too many elements in one image, 6 on blind users, 4 on the prohibition marking and 4 on referring to existing sets. That count is by words we chose, however, so the body text uses the counts a person read and confirmed.
 
 #### 5.7.6 Points raised in several countries at once
 
@@ -2297,7 +2316,7 @@ Professor Eun-Kyoung Kim pointed at the procedure before the test rather than th
 
 The preceding subsections quoted only the questions we selected. To see whether the basis of that selection tilted one way, we laid out the whole tally by occupation again. It had tilted. There were places where the figure unfavourable to us was included and the favourable one omitted, and the bold rows in the table below are those.
 
-[Table 45] Every answer by occupation (the denominator is the number of respondents in that occupation)
+[Table 46] Every answer by occupation (the denominator is the number of respondents in that occupation)
 
 | Occupation | Question | Answer | Responses |
 |---|---|---|---|
@@ -2403,7 +2422,7 @@ The same kind appeared in the storage instruction. The positive check was lookin
 
 Two morphemes were redrawn. `allergen_egg` followed the point made by Professor Namsoo Park of Hyupsung University. A fried egg seen from above loses its white in the silhouette because the white is white, leaving a single yolk circle that reads like a target or a button. In a set drawn as filled silhouettes, a picture whose meaning is carried by the white part never stood up in the first place, so it was changed to a cracked egg. That `allergen_tree_nut` was read as "cracked egg" in §5.2 is the evidence that this form reads as an egg. `hand_wash` followed the instruction given by Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, exactly: a hand under a running tap.
 
-We went through the accessibility criteria. Checking WCAG 2.2 item by item, as E. A. Draffan, retired speech and language therapist and visiting accessibility researcher, had asked, found all five verdict colours below the contrast criterion and the target size of secondary controls between 16 and 20 pixels. The colours looked perfectly fine on screen, and that is in fact how they survived this long. They are values the eye cannot hold, so they were locked with a test, and the numbers and the judgement are carried as Table 19 in §3.7. What should be recorded here is that we would not have done this without the survey. In §3.7 we had five channels standing in for colour and had not measured whether the colour itself could be read.
+We went through the accessibility criteria. Checking WCAG 2.2 item by item, as E. A. Draffan, retired speech and language therapist and visiting accessibility researcher, had asked, found all five verdict colours below the contrast criterion and the target size of secondary controls between 16 and 20 pixels. The colours looked perfectly fine on screen, and that is in fact how they survived this long. They are values the eye cannot hold, so they were locked with a test, and the numbers and the judgement are carried as Table 20 in §3.7. What should be recorded here is that we would not have done this without the survey. In §3.7 we had five channels standing in for colour and had not measured whether the colour itself could be read.
 
 The speech was given the languages of six countries. Professor Kyogu Lee of Seoul National University proposed multilingual expansion, and the target user does not speak English in the first place. Only the spoken side was translated. The screen text stays in English, because the channels that reach the target user are the pictures and the sound, and the screen text is for the carer and the reviewer standing beside them. The languages were chosen from where the respondents work: Urdu (Pakistan), Hausa (Nigeria), Indonesian, Bengali (Bangladesh), Romanian (Moldova) and Korean, 72 morpheme sentences × 6 = 432 entries. Swapping words alone does not make a sentence, so each bundle carries its own word order, and doing that revealed that the storage instruction is a separate act rather than a modifier, so the sentence was split; the English improved with it. **No native-speaker clinical review has been done**, and that fact is recorded in both the code and on screen. The wording that goes out on screen, carried over as written:
 
@@ -2426,11 +2445,11 @@ The dispenser now calls the phone when it presents a dose. The same respondent p
 
 A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Institut Pasteur de Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
 
-The web app test count went from 231 to 360 (Table 28).
+The web app test count went from 231 to 360 (Table 29).
 
 #### 5.7.14 Limits of this survey
 
-The sample is self-selected. Thirty-five of 1,103 answered, and those who answered are people with an interest in the subject. The judgement of the 1,068 who did not answer is unknown.
+The sample is self-selected. Thirty-nine of 1,103 answered, and those who answered are people with an interest in the subject. The judgement of the 1,068 who did not answer is unknown.
 
 The denominators are small. The largest segment, pharmacy, is 12 people. Written as a percentage, one person moves 8 points, so this section records numerator and denominator together.
 
@@ -2438,13 +2457,13 @@ The denominators are small. The largest segment, pharmacy, is 12 people. Written
 
 Three respondents told us the survey instrument itself was flawed. Professor Atif Usman of The Islamia University of Bahawalpur asked that multiple responses be allowed in every segment, and Associate Professor Hangil Lee of Ewha Womans University wrote that only one option could be selected so he chose contraindications, though side effects and dose adjustment belong in the same place. Professor Namsoo Park of Hyupsung University said the same thing: asked where an older patient living alone fails first, he answered that operating the screen, managing the device and trust arrive together.
 
-The distributions for single-choice questions in this section therefore do not hold everything the respondents wanted to choose. That has to be read alongside the figures in Table 45, and it is why this section presents the free text next to the multiple choice.
+The distributions for single-choice questions in this section therefore do not hold everything the respondents wanted to choose. That has to be read alongside the figures in Table 46, and it is why this section presents the free text next to the multiple choice.
 
 E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols, told us of another flaw: they only realised at the end that there was a button back to the screen showing the 78 morphemes. How many responses were given without being able to look at the morphemes again, we do not know. The same respondent suggested putting a link back to the morphemes inside the questions.
 
 There are groups the link does not reach. The Korea Institute for Health and Social Affairs replied that as a public institution it cannot open an unverified URL and asked us to send the questions by email. The list contains 91 international organisations alone, and running a survey through a single link structurally fails to reach this group. A version with the same questions written in the body of the email should have been prepared alongside.
 
-The screen respondents saw is not the screen our users will see. Of the 35, 30 answered on a desktop, 3 on mobile and 2 on a tablet. This app is built on the premise of use on a handheld device (§1.6), so a judgement formed on a large screen may come out more generous than the real condition. That the point about icons being small and needing magnification came from a desktop respondent rather than a mobile one should be read alongside this.
+The screen respondents saw is not the screen our users will see. Of the 39, 30 answered on a desktop, 3 on mobile and 2 on a tablet, and for 4 no record remains. This app is built on the premise of use on a handheld device (§1.6), so a judgement formed on a large screen may come out more generous than the real condition. That the point about icons being small and needing magnification came from a desktop respondent rather than a mobile one should be read alongside this.
 
 We do not know how many people heard the audio. Whether the speaker in the demonstration was pressed was being recorded, but the instrumentation failed to account for the speaker rendering as `<span role="button">` rather than `<button>`, so the first 34 were all recorded as not pressed. It was fixed during the survey, so only later responses are valid. In other words, of the responses to the judgement question in this section, how many were answered after hearing the audio cannot be known.
 
@@ -2452,7 +2471,7 @@ We do not know how many people heard the audio. Whether the speaker in the demon
 
 The point at which SnapCare intervenes is the last step described in §1.4. The health system takes care of consultation and dispensing, but from the moment the patient opens the medicine packet at home it is left to their own ability to read.
 
-[Table 46] Correspondence with SDG 3 targets
+[Table 47] Correspondence with SDG 3 targets
 
 | Target | SnapCare's contribution |
 |---|---|
@@ -2502,11 +2521,11 @@ Eleventh, whether people keep using it was not measured. The formative evaluatio
 
 ### 5.10 Future plans
 
-[Table 47] Plans after the contest
+[Table 48] Plans after the contest
 
 | Stage | Content | Rationale |
 |---|---|---|
-| 1 | Expert opinion survey (**complete**, §5.7) | Sent to 1,103 people, answered by 35. The defects raised pass to stages 3 and 4 below |
+| 1 | Expert opinion survey (**complete**, §5.7) | Sent to 1,103 people, answered by 39. The defects raised pass to stages 3 and 4 below |
 | 2 | In-person evaluation with older Moldovan users | Addresses the first and second limitations in §5.9 |
 | 3 | Redesign morphemes confirmed as misread | The five in §5.3 need the concept itself reconsidered |
 | 4 | Fix the defects raised in §5.7 (partly complete) | The contraindication marking, `finish_course` and the checking step (§3.8) are built. The ceiling on elements per image will be set after the field evaluation |
@@ -2526,7 +2545,7 @@ It should also be recorded that we may not obtain it. That the pass rates in Tab
 
 ### 5.11 Appendix. Every free-text response
 
-§5.7 quotes only the responses we selected. Selecting can tilt towards what favours us, so all 117 free-text responses received are set down here in full, by question. Only line breaks were removed; nothing else was touched. Short answers ("N/A", "Yes.") are left in rather than being dropped and reinstated. Responses written in Korean are given here in our own translation; the originals stand unaltered in the Korean version of this document. Positions and affiliations are likewise as the respondent wrote them. Table 41 uses what we confirmed against the institution's own faculty listing when the list was built, so it is sometimes more specific: respondent Hangil Lee is "Professor · Ewha Womans University" here and "Associate Professor · College of Pharmacy, Ewha Womans University" there.
+§5.7 quotes only the responses we selected. Selecting can tilt towards what favours us, so all 124 free-text responses received are set down here in full, by question. Only line breaks were removed; nothing else was touched. Short answers ("N/A", "Yes.") are left in rather than being dropped and reinstated. Responses written in Korean are given here in our own translation; the originals stand unaltered in the Korean version of this document. Positions and affiliations are likewise as the respondent wrote them. Table 41 uses what we confirmed against the institution's own faculty listing when the list was built, so it is sometimes more specific: respondent Hangil Lee is "Professor · Ewha Womans University" here and "Associate Professor · College of Pharmacy, Ewha Womans University" there.
 
 **Anything you would add that we did not ask** (14)
 
@@ -2850,6 +2869,28 @@ It should also be recorded that we may not obtain it. That the pass rates in Tab
 |---|---|---|---|
 | Cheolhyeon Park | Team Leader | VOICEYE | An operating body and a partnership are essential, though if there is certainty about capital or investment, preparing it as a startup is one direction and one option. |
 
+**a1_notext__why** (1)
+
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Youngchan Kim |  | Kyung Hee Cyber University | 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) |
+
+**a3_voice__why** (3)
+
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Youngchan Kim |  | Kyung Hee Cyber University | 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) |
+| Seunghoon Jung |  | Korea Institute of Design Promotion | 대신할 수 있을 지 판단할 근거 자료(스냅케어의 작동화면이라든지)가 전무하여 판단할 수 없음 |
+| Barbara Báldy |  | Semmelweis University | If a patient can't read the original text (not able to or lost their eyesight), the text format is not necessary. BUT patient safety protocols suggest to use verbal, visual and text instructions. |
+
+**a7_framing__why** (3)
+
+| Respondent | Position | Affiliation | Response |
+|---|---|---|---|
+| Youngchan Kim |  | Kyung Hee Cyber University | 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) |
+| Seunghoon Jung |  | Korea Institute of Design Promotion | 한국의 경우 한글을 이해하지 못할 정도로 문해력이 낮은 성인이 그렇게 많지 않을 듯 합니다. |
+| Barbara Báldy |  | Semmelweis University | It's a huge global problem. |
+
 ### 5.12 Appendix. Every multiple-choice response
 
 For the same reason as the free text, every multiple-choice answer is set down as well. The denominator is the number of people who received that question, and since the questions differ by segment the denominator differs from question to question.
@@ -2858,10 +2899,10 @@ For the same reason as the free text, every multiple-choice answer is set down a
 
 | Option | Responses | Share |
 |---|---|---|
-| Pharmacy / medication counselling | 12 | 34% |
-| Other | 9 | 26% |
-| Nursing / public health | 9 | 26% |
-| HCI / design | 2 | 6% |
+| Pharmacy / medication counselling | 13 | 33% |
+| Other | 10 | 26% |
+| Nursing / public health | 9 | 23% |
+| HCI / design | 4 | 10% |
 | Adult literacy education | 1 | 3% |
 | Industry practitioner (building / operating products) | 1 | 3% |
 | AAC / special education | 1 | 3% |
@@ -2870,10 +2911,10 @@ For the same reason as the free text, every multiple-choice answer is set down a
 
 | Option | Responses | Share |
 |---|---|---|
-| Almost never | 15 | 43% |
-| A few times a year | 15 | 43% |
-| Almost daily | 4 | 11% |
-| About monthly | 1 | 3% |
+| Almost never | 18 | 46% |
+| A few times a year | 15 | 38% |
+| Almost daily | 4 | 10% |
+| About monthly | 2 | 5% |
 
 **Does this approach hold up from an adult-literacy standpoint**
 
@@ -3078,5 +3119,156 @@ For the same reason as the free text, every multiple-choice answer is set down a
 | Option | Responses | Share |
 |---|---|---|
 | It holds for some categories only | 1 | 100% |
+
+**a1_notext**
+
+| Option | Responses | Share |
+|---|---|---|
+| Neutral | 2 | 50% |
+| Necessary | 2 | 50% |
+
+**a1_notext__why**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**a5_notrecommend**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**a7_framing__why**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 33% |
+| 한국의 경우 한글을 이해하지 못할 정도로 문해력이 낮은 성인이 그렇게 많지 않을 듯 합니다. | 1 | 33% |
+| It's a huge global problem. | 1 | 33% |
+
+**a7_framing**
+
+| Option | Responses | Share |
+|---|---|---|
+| Yes | 2 | 50% |
+| No | 1 | 25% |
+| Partly | 1 | 25% |
+
+**a3_voice**
+
+| Option | Responses | Share |
+|---|---|---|
+| No | 2 | 50% |
+| Partly | 1 | 25% |
+| Yes, adequately | 1 | 25% |
+
+**q2_grammar**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**q2_against**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**q4_smalln**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**q5_compare**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**q6_status**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| depend on the backend and if you store any data | 1 | 50% |
+
+**q6_loss**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**q6_consent**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| consult with this a legal professional | 1 | 50% |
+
+**q7_firstbreak**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**q7_mustretest**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| you need to test it | 1 | 50% |
+
+**q7_remake**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| you need to test it | 1 | 50% |
+
+**q7_voice**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**q8_coexist**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**q8_wcag**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**q8_iso**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**q8_labeling**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| could be | 1 | 50% |
+
+**d2_referral**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+
+**d3_email**
+
+| Option | Responses | Share |
+|---|---|---|
+| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| [응답자 이메일 가림] | 1 | 50% |
 
 <!-- 부록 끝 -->

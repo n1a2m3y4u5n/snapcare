@@ -30,7 +30,7 @@ NICK_EN = {
     '최묘정': 'Myojung Choi', '박철현': 'Cheolhyeon Park', '이교구': 'Kyogu Lee',
     '이경화': 'Kyunghwa Lee', '서희정': 'Heejung Seo', '이영미': 'Youngmee Lee',
     '박경서': 'Kyungseo Park', '(성함 비공개)': '(name withheld)',
-    '이한길': 'Hangil Lee',
+    '이한길': 'Hangil Lee', '김영찬': 'Youngchan Kim', '정승훈': 'Seunghoon Jung',
 }
 AFF_EN = {
     '충남대학교': 'Chungnam National University',
@@ -44,6 +44,8 @@ AFF_EN = {
     '동의대학교': 'Dong-eui University',
     '이화여자대학교 언어병리학과': 'Ewha Womans University',
     '이화여대': 'Ewha Womans University',
+    '경희사이버대학교': 'Kyung Hee Cyber University',
+    '한국디자인진흥원': 'Korea Institute of Design Promotion',
     '한국공예디자인문화진흥원': 'Korea Craft and Design Foundation',
     '한국장애인개발원': 'Korea Disabled People\'s Development Institute',
     '보이스아이': 'VOICEYE',
