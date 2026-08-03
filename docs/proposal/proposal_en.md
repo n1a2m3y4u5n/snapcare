@@ -517,7 +517,7 @@ The only action the user performs is taking a photograph.
 
 ![Figure 15](fig/fig01_home.png)
 
-**[Figure 15]** Home screen, cropped to exactly what is visible without scrolling. This is the screen actually met on opening the app. The largest element on it is a single capture button, and there is no menu and no search box. Having only one choice is the response to the hierarchy barrier established in §1.10.
+**[Figure 15]** The whole home screen. Above the red line is what is visible without scrolling; below it is veiled. What is actually met on opening the app is the part above the line. The largest element on it is a single capture button, and there is no menu and no search box. Having only one choice is the response to the hierarchy barrier established in §1.10.
 
 Two responses in §5.7 said opposite things about this principle. Professor Celia of the University of Pretoria wrote that a picture is the medium aligned to people who cannot read, without talking down to them.
 
@@ -2321,7 +2321,11 @@ Including English is the point. It is not only the translations that are unrevie
 
 **[Figure 45]** The language picker in Settings, captured from the deployment (https://snapcare.fly.dev) as it stands. The note underneath is the point of this screen: the display stays in English and only the voice changes, and the translations have not been checked by a clinician who speaks the language, English included. That is to say it is not only the translations that are unreviewed; the source sentences are not either.
 
-One thing is missing from this figure. On a real device a language with no voice available is dimmed and carries "no voice on this phone" with a mute mark. This capture was taken with a headless browser, whose voice list is empty, so those marks did not appear. Opening it on this laptop showed them on Urdu and Hausa.
+Urdu and Hausa can be seen dimmed and carrying "no voice on this phone" with a mute mark. These are the marks §5.7 describes, and this figure confirms that description.
+
+Getting this figure took one failure. The earlier capture did not carry those marks, and we had a paragraph in the body excusing it: the browser was headless, its voice list empty, so the marks did not appear. The cause was not the browser but our capture procedure. The voice list is filled asynchronously by `speechSynthesis`, and we waited only for the heading of the list before taking the shot, so the shot was taken before the marks were attached. It now waits for the marks themselves to appear on screen.
+
+One more thing should be read from it. The disclosure sits below the red line, which is to say it is reached only by scrolling. Putting a disclosure on the screen and the user seeing it are different things, and this screen currently satisfies only the first. Someone choosing a language stops when they find their own in the list and has no reason to go further down. Whether the disclosure should move above the list is left as an item to settle with people present, in the field evaluation of §5.10.
 
 ![Figure 45](fig/fig14_language.png)
 

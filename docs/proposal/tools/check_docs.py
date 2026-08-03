@@ -23,6 +23,7 @@
   · 도판에서 글자가 상자를 넘거나 겹치지 않는가
   · 본문 인용이 부록 원문과 글자까지 같은가
   · 응답자 명단의 수가 실제 응답 수와 같은가
+  · 캡처 캡션의 "스크롤 없이" 주장이 파일 높이와 맞는가
 """
 import re
 import sys
@@ -380,6 +381,44 @@ def roster_count() -> list:
     return []
 
 
+# 촬영 뷰포트. shots.mjs 의 defaultViewport 와 같아야 한다.
+SHOT_VIEWPORT_PX = 812 * 2
+
+
+def fold_claims() -> list:
+    """캡션이 "스크롤 없이 보이는 만큼" 이라 하는데 파일이 그보다 긴가.
+
+    화면 캡처는 fullPage 로 찍으므로 스크롤해야 닿는 부분까지 들어온다.
+    그것을 "스크롤하지 않고 보이는 만큼" 이라고 적으면 독자는 이 전부가
+    한눈에 들어온다고 읽는다. 실제로 그림 15 가 그랬다. 캡션은 그렇게
+    적혀 있었고 파일은 750x2180, 뷰포트는 750x1624 였다.
+
+    지금은 접히는 자리에 붉은 선을 긋고 아래를 옅게 덮는다(shots.mjs 의
+    markFold). 이 검사는 그 선 없이 주장만 되살아나는 것을 막는다."""
+    from PIL import Image
+    CLAIM = ('스크롤하지 않고 보이는 만큼', '스크롤 없이 보이는 만큼',
+             'visible without scrolling', 'without having to scroll')
+    out = []
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        lines = (DOC / f).read_text().splitlines()
+        for i, ln in enumerate(lines):
+            m = re.match(r'!\[[^\]]*\]\((fig(?:_en)?/[^)]+\.png)\)', ln.strip())
+            if not m:
+                continue
+            img = DOC / m.group(1)
+            if not img.is_file():
+                continue
+            h = Image.open(img).height
+            if h <= SHOT_VIEWPORT_PX:
+                continue
+            cap = ' '.join(lines[i + 1:i + 4])
+            for c in CLAIM:
+                if c in cap and '붉은 선' not in cap and 'red line' not in cap:
+                    out.append(f'{f}: {m.group(1)} 는 {h}px 인데(뷰포트 '
+                               f'{SHOT_VIEWPORT_PX}px) 캡션이 "{c}" 라 한다')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -460,6 +499,9 @@ def main() -> int:
             note(f'{f}: 번호 없는 소제목 — {t[:40]}')
 
     for t in roster_count():
+        note(t)
+
+    for t in fold_claims():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):
