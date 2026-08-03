@@ -1192,6 +1192,12 @@ These are values the eye cannot hold, so they were locked with a test. The earli
 
 The second is target size. SC 2.5.8 requires a minimum of 24 pixels. The large controls were already 44 pixels, but secondary controls such as the read-again row and the row back to settings were between 16 and 20. A thin row to scan and tap is particularly bad in this app, because tapping that row is how someone who cannot read reads the screen. A 24-pixel floor was applied.
 
+These four were measured again on the deployment. Nine screens (`/home`, `/scan`, `/nutrition`, `/settings`, `/profile`, `/people`, `/device`, `/onboarding`, `/dose`) were opened at 375 pixels wide and 143 controls counted. No unnamed controls, no horizontal scrolling, and one control below 24 pixels.
+
+That one should be set down. The close button on the capture screen (`×`) is 15×24. SC 2.5.8 allows a spacing exception: an undersized target conforms if a 24-pixel-diameter circle centred on it does not touch the circle of another target. The nearest other target to this button is 601 pixels away, so it conforms. It is recorded even so, because the paragraph above says "a minimum of 24 pixels was laid down" and that is not literally true. It was laid down, and one place remains an exception.
+
+This measurement is kept as `tools/check_a11y.mjs`, to be rerun when screens are added or controls change.
+
 What was already correct should be recorded too. The path by which a scanning device reaches the audio (SC 2.1.1, keyboard operation), the absence of unnamed controls (SC 4.1.2), no horizontal scrolling at 375 pixels (SC 1.4.10) and no obscured focus (SC 2.4.11) were all confirmed to hold. These four are listed not to claim credit for passing but because stating how far we looked is what separates "passed" from "not checked".
 
 ---

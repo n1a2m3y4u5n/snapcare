@@ -45,6 +45,14 @@ python3 docs/proposal/tools/check_docs.py
 python3 docs/proposal/tools/check_figs.py
 ```
 
+§4.4 가 주장하는 접근성 값도 따로 잰다. 화면 아홉을 375픽셀에서 열어 표적 크기·
+이름 없는 조작·가로 스크롤·소리에 닿는 자리를 센다. SC 2.5.8 의 간격 예외까지
+따지므로 작은 표적이 나와도 충족 여부를 함께 알려 준다.
+
+```bash
+SNAPCARE_BASE=https://snapcare.fly.dev node docs/proposal/tools/check_a11y.mjs
+```
+
 ## 도판
 
 파일 이름의 숫자는 만든 순서이고 본문의 그림 번호와 다르다. 본문이 어떤 파일을
@@ -110,4 +118,4 @@ cd pill_dispenser/firmware && make run     # 8099 번
     공개로 바꾸어야 한다. 저장소를 공개하는 일이므로 사람이 정할 일이다
   · 배포본이 origin/main 과 같은가. 어긋나면 문서가 인용한 코드와 심사자가 보는
     것이 달라진다. 2026-08-03 기준 배포본의 `sw.js` 가 한 줄 앞서 있다
-  · `check_docs.py` 와 `check_figs.py` 가 둘 다 통과하는가
+  · `check_docs.py`·`check_figs.py`·`check_a11y.mjs` 가 모두 통과하는가
