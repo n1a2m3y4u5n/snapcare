@@ -270,6 +270,29 @@ def test_the_lcd_sets_bgr_in_every_rotation():
         assert madctl & 0x08, f"BGR clear at rotation {rotation}"
 
 
+def test_the_lcd_turns_display_inversion_on():
+    """The command that decides whether green means safe or means magenta.
+
+    This module's glass inverts. With no `INVON` in the table the panel was left
+    in whatever state it powers up in, and on the bench every primary came back
+    as its exact complement — red as cyan, green as magenta, blue as yellow.
+    That is not a cosmetic fault on this device: the verdict colours are most of
+    what it says, and amber-for-missed arriving as blue is the colour this
+    firmware uses for *the dose is in the cup*.
+
+    Asserted against the command table rather than a rendering, for the same
+    reason the BGR test is: there is no MISO line, so nothing can read the panel
+    back. A screen that is inverted, mirrored or unplugged reports identically —
+    the write succeeds in all three. The table is the only place the intent
+    exists, so the table is where it is pinned.
+    """
+    from snapcare_dispenser.display.ili9341 import _INIT, _INVOFF, _INVON
+
+    sent = [cmd for cmd, _params, _wait in _INIT]
+    assert _INVON in sent, "the panel is left in its power-up inversion state"
+    assert _INVOFF not in sent, "INVOFF would put the fault back"
+
+
 def test_the_lcd_landscape_rotations_swap_the_dimensions():
     from snapcare_dispenser.display.ili9341 import _ROTATIONS
 
@@ -325,3 +348,30 @@ def test_asking_for_no_display_does_not_probe_anything(monkeypatch):
 
     monkeypatch.setattr(os, "open", explode)
     assert isinstance(make_display("none"), NoDisplay)
+
+
+def test_the_panel_uses_the_short_pairing_payload():
+    """The panel and the printed label want different codes, and this is why.
+
+    A label is scanned by whatever is to hand, so it prints a URL. The panel is
+    photographed with the SnapCare app, which reads both forms — so the URL buys
+    nothing there and costs modules, on 2.8 inches of glass at arm's length:
+
+        https://…/pair#DDBQE-KEJ78   41 modules → 5 px a module
+        SNAPCARE-PAIR:DDBQE-KEJ78    33 modules → 6 px a module
+
+    Five was the size the bench measurements put right on the edge.
+    """
+    from snapcare_dispenser.display.health import _pair_fields
+
+    claim, payload = _pair_fields({"relayUrl": "https://snapcare-relay.fly.dev"})
+    assert payload.startswith("SNAPCARE-PAIR:"), \
+        "the panel drew the long URL form, which is 41 modules"
+    assert claim and claim in payload
+
+    from snapcare_dispenser.display import qr_art
+    matrix = qr_art.matrix_for(payload)
+    if matrix is not None:                       # needs segno
+        modules = len(matrix)
+        assert (240 - 2 * screens.PAD) // modules >= 6, \
+            f"{modules} modules leaves less than 6 px a module"

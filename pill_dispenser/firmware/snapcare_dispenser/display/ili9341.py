@@ -163,6 +163,8 @@ _SWRESET = 0x01      # software reset
 _SLPIN = 0x10        # enter sleep
 _SLPOUT = 0x11       # exit sleep
 _GAMMASET = 0x26     # select one of the four fixed gamma curves
+_INVOFF = 0x20       # display inversion off — the reset default
+_INVON = 0x21        # display inversion on — what this module needs, see _INIT
 _DISPOFF = 0x28      # display off (the panel keeps its RAM)
 _DISPON = 0x29       # display on
 _CASET = 0x2A        # column address set
@@ -262,6 +264,36 @@ _INIT: tuple[tuple[int, bytes, int], ...] = (
     # would cost three bytes per pixel on the wire — 50% more transfer for
     # gradients this device never draws.
     (_PIXFMT, b"\x55", 0),
+
+    # Display inversion **on**, and this is not a preference.
+    #
+    # It was absent, and absent meant "whatever state the panel powers up in".
+    # On the module this project ships, that state is inverted — measured on the
+    # bench by flooding the panel with primaries and looking at the glass:
+    #
+    #     sent (255,0,0) red      → seen cyan
+    #     sent (0,255,0) green    → seen magenta
+    #     sent (0,0,255) blue     → seen yellow
+    #     sent (0,160,176) cyan   → seen red
+    #
+    # Every one is the exact complement. Sending INVON puts the panel back and
+    # the same flood then reads correctly; INVOFF reproduces the fault. So the
+    # glass inverts and this command cancels it.
+    #
+    # Why it matters more than it looks: this firmware says almost everything
+    # in colour. Inverted, **green becomes magenta and red becomes cyan** — the
+    # safe verdict and the blocked one swap into colours the palette never uses,
+    # and amber-for-missed becomes blue, which is this device's colour for "the
+    # dose is in the cup". The comment on `_BGR` a few lines up warns about
+    # exactly that confusion arriving through a different bit; this is the same
+    # harm through a command that was never sent at all.
+    #
+    # It went unnoticed because nothing here can see the glass. The ILI9341 has
+    # no MISO line, so a panel that is inverted, mirrored or unplugged all
+    # report identically: the driver writes, the write succeeds, `failures`
+    # stays 0. Only a person looking at it can tell, and until somebody did,
+    # the screen looked plausible — a coloured field with legible white text.
+    (_INVON, b"", 0),
 
     # Frame rate: DIVA=0, RTNA=0x18 → about 79 Hz internal refresh. This is
     # unrelated to how often we push a frame; what it buys is that a 20x20

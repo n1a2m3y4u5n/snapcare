@@ -707,15 +707,30 @@ def _relay_standing(health: Health, last_error: bool) -> bool:
     return health.relay in _RELAY_FAULTS or (health.relay == "connecting" and last_error)
 
 
-def _pair_fields(relay_status: dict) -> tuple[str, str]:
-    """`(claim, pair_payload)` — the printed code and what its QR carries.
+def _pair_fields(_relay_status: dict) -> tuple[str, str]:
+    """`(claim, pair_payload)` — the code and what the **panel's** QR carries.
 
-    The payload depends on the relay, which is why it is derived here from the
-    live status rather than baked into the identity: with a relay configured it
-    is `https://relay/pair#CODE`, which a phone's own camera will open, and
-    without one it is the bare `SNAPCARE-PAIR:CODE`, which only the app can act
-    on. A device that is given a relay later must start drawing the better of
-    the two without anybody reprinting anything.
+    Deliberately the short `SNAPCARE-PAIR:CODE` form, and never the URL, which
+    is the opposite of what the printed label does.
+
+    Why the label and the screen want different payloads
+    ----------------------------------------------------
+    The label prints `https://relay/pair#CODE` when a relay is configured,
+    because a label is scanned by whatever is to hand — including a phone's own
+    camera, which offers to open a URL and nothing else.
+
+    The panel is not that. It is 2.8 inches of glass that this firmware tells
+    somebody to photograph **with the SnapCare app**, and that app reads both
+    forms (`lib/dispenser/qrIntent.ts`). So the URL buys nothing here and costs
+    the one thing that decides whether the photograph works at all:
+
+        https://…/pair#DDBQE-KEJ78   47 chars →  41 modules → 5 px a module
+        SNAPCARE-PAIR:DDBQE-KEJ78    25 chars →  33 modules → 6 px a module
+
+    Twenty percent more module for free, on a code somebody is photographing at
+    arm's length in a room with whatever light it has. The measurements in
+    `screens.pair` say the margin collapses below about five pixels a module
+    once there is any defocus at all, which is exactly where the long form sat.
     """
     from .. import provisioning  # noqa: PLC0415 - reads a file on first call
 
@@ -723,8 +738,7 @@ def _pair_fields(relay_status: dict) -> tuple[str, str]:
     claim = provisioning.format_claim(identity.claim)
     if not claim:
         return "", ""
-    return claim, provisioning.pair_qr_payload(
-        identity.claim, str(relay_status.get("relayUrl") or ""))
+    return claim, f"SNAPCARE-PAIR:{claim}"
 
 
 def _network_fields(network) -> tuple[str, str, str, str, bool]:
