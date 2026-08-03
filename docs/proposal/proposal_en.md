@@ -67,6 +67,8 @@ This distinction affects the design. Where the rate is high the app is dealing w
 
 The distribution is also uneven within a single country. In some sub-Saharan African countries **the literacy rate among older women is 31% against 55% among older men**, while among men in parts of Europe and North America it is 99% (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025).
 
+The expert responses quoted from this section onward are not carried over from someone else's survey; we collected them ourselves. Over three hours before dawn on 31 July 2026 we sent 1,103 individual emails, each carrying a different link that opened a working demonstration of the app together with the questions. Thirty-nine people answered, all consenting to be quoted by name and affiliation, and all 124 free-text answers are reproduced in full in §5.11. How the list was built and how it was sent are in §5.7.1 and §5.7.2. Every quotation below comes from that survey, and the question it answers is named with it.
+
 We record here that the experts we asked answered in a direction that cuts against this statistic. Of the 39 respondents in §5.7, 18 answered that they "almost never" encounter someone unable to read a written medication instruction, and 4 that they encounter such a person almost daily. Half the respondents work in Korea, so this answer reflects the within-country distribution seen in §1.2 rather than contradicting the world figures of §1.1. Professor Hwi-Yeol Yun of Chungnam National University College of Pharmacy set down the circumstance directly.
 
 > "Among Koreans the rate of not being able to read is close to zero, so it is mainly foreign patients. We therefore explain in English."
@@ -408,6 +410,13 @@ One thing the field has not answered attaches to that. Mourad et al. finding tha
 
 **[Figure 11]** Share of pharmaceutical pictograms passing comprehension criteria. The criterion applied differs by bar and is noted underneath each. Sharing an axis does not make these values competitors. The middle two bars are the control and experimental arms of the same study, **the result of showing two sets carrying the same instructions to the same 46 people**. Where the pictures came from splits the pass rate almost twofold. Our own value (69.2%) is the machine-scored result from §5.2 and was not obtained by asking people, so it is not directly comparable with the rest. It is placed on the same panel not to claim superiority but to show that our value falls within the range this field has observed.
 
+Rather than close this section on the literature alone, we put the limitation to the field directly. In the survey sent to 1,103 people on 31 July 2026 (§5.7) we asked "could a patient who cannot read take their medicine correctly, alone, with only these screens, and why", and Foued Maaoui, Researcher at the Pasteur Institute of Tunis, answered:
+
+> "Many individual pictograms are highly abstract, including symbols representing treatment completion, dosage quantity, administration timing, and warning or prohibition messages. Without prior training or accompanying text, patients may misinterpret the prescribed dose, the timing of medication in relation to meals, or the intended meaning of specific warning icons."
+> (Foued Maaoui, Researcher, Pasteur Institute of Tunis)
+
+What the studies above measured and what this answer says are the same thing. It differs in having been written after looking at what we made. The pass rates in Table 6 are values for other people's sets; this is the word of someone who actually looked at the 78 morphemes of §2.2. In the same answer he singled out four of our morphemes as particularly abstract — completion, quantity, timing and prohibition — and those four are where the errors concentrate in Table 4 of §1.3. That the places most needed are the hardest is the conclusion of this section, and the literature and the survey pointed at it separately.
+
 This is why the present work does not stop at making pictograms but designs a procedure for measuring their comprehension alongside.
 
 
@@ -439,6 +448,13 @@ Where this difference actually shows is in the part that records concepts the ap
 
 That comprehension varies by culture and that culturally adapted versions are needed is already shown in Table 6.
 
+An answer against this section's conclusion came out of our survey, so it is set down as written. At the end of the survey we left open "anything you would add that we did not ask", and Professor Atif Usman of The Islamia University of Bahawalpur in Pakistan wrote in that box:
+
+> "Also, refer to USP pictograms instead of developing a new set. You can definitely develop your own when and if these are not available elsewhere to suit your local context."
+> (Professor Atif Usman, The Islamia University of Bahawalpur)
+
+This whole section argues why a new set has to be made, and the answer from the field is not to. Our reply is the second licence condition set out above: USP forbids overlaying or joining symbols, so there is no way to build one compound instruction into one picture while observing the standard. But the answer cannot be called wrong. For an instruction that needs no composition, using USP is right, and among our 78 the ones that stand alone could indeed have been replaced by USP. We built the whole set new because we did not want to mix composable and non-composable symbols inside one set, and that is a judgement rather than a necessity.
+
 ### 1.10 Prior work on interfaces for low-literate users
 
 Research on interfaces for low-literate users shows that removing text is a necessary condition rather than a sufficient one.
@@ -464,6 +480,13 @@ That study parts from us at two points. First, the authors divided users by lite
 What the same literature records about icons is set down as well: icons are often semantically opaque to low-literacy users, abstract symbols in particular fail to cross cultural and literacy barriers, and users prefer concrete, photorealistic representations to stylised glyphs. The last of those runs directly against our design. The set in §2.2 is a black-and-white silhouette, chosen so that it survives at 32 pixels (§5.2). Surviving and being preferred may not point the same way, and that divergence is an item for the field evaluation of §5.10.
 
 The authors locate the cause in the understanding of nesting itself. Some participants did not grasp that a higher-level picture in the hierarchy stood for a bundle of items beneath it, and some could not remember how to return upward after entering the wrong branch. Turning pages was not itself the problem. The problem is having to hold in mind how far down one has gone.
+
+All of this prior work is other people's making, measured by other people. To hear the same thing said about ours, the survey asked "where it could be misread", and Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, answered:
+
+> "The images clearly reflect a lot of thought, but they need to land more intuitively. The image for washing your hands before taking it, for instance, is not intuitive. A hand under a running tap would come across far better. In fact many pictograms of this kind have already been developed, so it would be good to consult and borrow from them."
+> (Yonghan Lee, Senior Manager, Korea Craft and Design Foundation)
+
+Where the papers above say "they do not grasp the hierarchy", this answer goes one step more concrete. It names which picture fails to read and why, and offers the alternative. We took the point in §5.2 and redrew `hand_wash`, one of the two responses in §5.7 that actually changed a picture. What the prior work told us was where to be careful; what the survey told us was what to fix.
 
 ### 1.11 The problem in summary
 
@@ -511,6 +534,13 @@ Our own survey produced the evidence that it goes unseen. Of the 39 respondents 
 > (Professor Hwi-Yeol Yun, College of Pharmacy, Chungnam National University)
 
 We take that answer as counter-evidence. If national statistics say 39.6% while nearly half of practitioners say they do not meet them, one of the two does not mean there is no problem; it means the problem does not surface in the consulting room. That people who cannot read do not say so is something the prior work cited in §1.10 already observed, and our survey showed it again.
+
+The same judgement came once more from a different segment. Asked whether this approach frames the problem correctly, Seunghoon Jung of the Korea Institute of Design Promotion answered:
+
+> "In Korea I do not think there are many adults whose literacy is low enough that they cannot understand Hangul."
+> (Seunghoon Jung, Korea Institute of Design Promotion)
+
+That the same thing is said from two different positions, pharmacy practice and design, strengthens this section's argument rather than weakening it, because it means this is not one person's impression but common sense widely shared in Korea. The only way that common sense and the national figure of 39.6% can both be true is if reading letters and understanding a dosing instruction are different things, and that gap is where this app stands.
 
 In Moldova the shape is different. The population is projected to fall by 31% by 2060, the median age to rise from 38 to 47, and the share of older people to more than double to 27%. The disease burden is concentrated in noncommunicable disease, and between 2008 and 2015 diabetes prevalence rose 75% and circulatory disease 41% (Voncina, L., Dozol, A., Volovei, I. & Cetinkaya, V., *Human Development Assessment for Moldova: Background Paper on Health*, World Bank, 2022). It is a country where the number of people taking several medicines over a long period is rising fast, and with it the number handling those medicines alone at home.
 
@@ -2266,6 +2296,15 @@ The finding from Professor Heejung Seo of Dong-eui University was the most funda
 > "Pictograms are a good medium for conveying information intuitively, but to a non-literate person these too can feel like letters. As the saying goes, 'the black is the writing and the white is the paper,' so it would be good to implement this with a design and colouring that can be perceived from a non-literate person's point of view."
 
 In §2.1 we assumed that removing text lowers the barrier. This response inverts that assumption. For someone who cannot read, black shapes sitting on paper may already be "writing", and whether it is a picture or a letter may be a distinction only a reader makes. The pictogram comprehension studies cited in §1.8 measured comprehension after a picture was recognised as a picture. Whether a picture is recognised as a picture was not measured.
+
+One more response reached the same place from another angle. Asked whether speech can replace the written explanation, Barbara Báldy of Semmelweis University answered:
+
+> "If a patient can't read the original text (not able to or lost their eyesight), the text format is not necessary. BUT patient safety protocols suggest to use verbal, visual and text instructions."
+> (Barbara Báldy, Semmelweis University)
+
+The first half agrees with us and the second does not. That text is unnecessary for someone who cannot read it is the premise of this app, but patient safety protocols call for verbal, visual and written instructions together. We removed the text. §2.1 records that as removing a barrier; this response reads the same decision as a departure from protocol.
+
+Both readings can be true at once. Where text remains, a literate carer or pharmacist can check it, and that is presumably why the protocols ask for all three. This app moved that checking path into the teach-back of §3.8 and the provider screen of §4.4, but whether what we moved satisfies the protocol is not ours to judge. This is a reason the field evaluation of §5.10 needs someone who knows clinical protocol in it.
 
 The point from Professor Eun-Kyoung Kim of Kongju National University runs the same way.
 
