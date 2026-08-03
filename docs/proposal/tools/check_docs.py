@@ -154,6 +154,24 @@ def short_cites(f: str) -> list:
     return out
 
 
+# 같은 수치가 두 곳에 다르게 적히는 일을 막는다. 실제로 5.7 이 345,
+# 표 28 이 347 로 갈렸던 적이 있다.
+PAIRED = (
+    (r'웹 앱 \(`node --test`\) \| (\d+)', r'시험은 231개에서 (\d+)개가'),
+    (r'Web app \(`node --test`\) \| (\d+)', r'went from 231 to (\d+)'),
+)
+
+
+def paired(f: str) -> list:
+    s = (DOC / f).read_text()
+    out = []
+    for a, b in PAIRED:
+        ma, mb = re.search(a, s), re.search(b, s)
+        if ma and mb and ma.group(1) != mb.group(1):
+            out.append(f'웹 앱 시험 수 {ma.group(1)} 대 {mb.group(1)}')
+    return out
+
+
 def sec_refs(f: str) -> dict:
     """절마다 다른 절을 몇 번 가리키는지 센다.
 
@@ -241,6 +259,8 @@ def main() -> int:
             note(f'{f}: 직책 없이 인용했다 — {x}')
 
     for f, _, _ in PAIR:
+        for t in paired(f):
+            note(f'{f}: 같은 수치가 두 곳에 다르다 — {t}')
         for t in short_cites(f):
             note(f'{f}: 서지 정보 없는 인용 — ({t})')
 

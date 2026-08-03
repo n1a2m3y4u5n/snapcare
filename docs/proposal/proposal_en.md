@@ -1455,6 +1455,14 @@ Design intent. The second argument to `generateKey` being `false` means not even
 
 What is signed is composed for reasons of its own. The timestamp (`ts`) is included so that anyone intercepting a signature cannot replay it later. Because the time is inside the signature the server can reject stale ones, and in practice requests older than five minutes are refused. The body hash is included so that a signature cannot be detached and attached to different content. Missing either one makes the signature worthless.
 
+Permissions the app does not use are closed at the browser level. The response header opens the camera and closes the microphone and location.
+
+```ts
+res.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
+```
+
+That one line is also why the checking step of §3.8 has the user point at a picture rather than say the answer back. Carrying teach-back over as it stands would need speech recognition, and that is a permission we chose not to open. Opening a permission and not using it is different from closing it: the first can quietly begin to be used when the code changes, the second is refused by the browser.
+
 Deriving the household ID as the SHA-256 hash of the public key follows the same reasoning. It removes the registration step, and requesting someone else's data would require their private key, which cannot leave their device. Access control becomes structural rather than a rule.
 
 
@@ -1493,7 +1501,7 @@ All three run without the hardware. No servo, no Raspberry Pi and no network is 
 
 Roles were divided as follows. Yunsu Nam took the web app and the SIGIL and VOCA engines, Dohun Kim took the hardware firmware, the paper form reading and the nutrition estimation model, and the Moldovan team took 3D printing, mechanical design and screen design. Over 17 days 320 commits accumulated.
 
-There is a condition attached here as well. This project used AI coding tools throughout development, and we do not hide it. Nowhere was what a tool produced left as it stood. The defects recorded in this document, such as 12 of 37 citations differing from their sources (§5.9) or the morpheme checker passing four rings as "four" (§5.2), were all found by a person checking again. What this repository sets out to show is not that tools were used but how the results were verified.
+There is a condition attached here as well. This project used AI coding tools throughout development, and we do not hide it. Nowhere was what a tool produced left as it stood. The defects recorded in this document were all found by a person checking again. Of the 37 citations checked in the first pass, 12 differed from their sources (what was wrong in each is kept case by case in `citations.md` in the repository); the morpheme checker passed four rings as "four" (§5.2); and the sample prescriptions carried five clinical errors (§5.7). What this repository sets out to show is not that tools were used but how the results were verified.
 
 ---
 
@@ -2264,7 +2272,7 @@ The dispenser now calls the phone when it presents a dose. The same respondent p
 
 A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Institut Pasteur de Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
 
-The test count went from 231 to 345.
+The web app test count went from 231 to 347 (Table 28).
 
 #### Limits of this survey
 
