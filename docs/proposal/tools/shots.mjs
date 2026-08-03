@@ -30,10 +30,38 @@ async function waitForText(page, text, ms = 60000) {
   );
 }
 
+
+/**
+ * 픽토그램이 실제로 그려질 때까지 기다린다.
+ *
+ * 문구만 기다리면 이르다. "PRESCRIPTION RECOGNIZED" 는 판정이 끝나면 바로
+ * 뜨지만 픽토그램은 그 뒤에 따로 만들어져 붙는다. 1.5초를 세는 것으로는
+ * 모자라서, 시럽 표본이 안내 칸이 흰 채로 찍혀 제안서에 실렸다 — 이 앱의
+ * 핵심 기여가 그림인데 그림이 없는 화면이 나갔다.
+ *
+ * 안내 칸이 있는 화면에서만 기다린다. 없는 화면(촬영·첫 실행)은 바로 지나간다.
+ */
+async function waitForPictograms(page, ms = 90000) {
+  const hasGuide = await page.evaluate(
+    () => document.body.innerText.includes('PICTOGRAM GUIDE'),
+  );
+  if (!hasGuide) return;
+  await page.waitForFunction(
+    () => {
+      const imgs = [...document.querySelectorAll('img[src^="/pictograms/"]')];
+      return imgs.length > 0 && imgs.every((i) => i.complete && i.naturalWidth > 0);
+    },
+    { timeout: ms, polling: 500 },
+  );
+}
+
 const SHOTS = [
   { file: 'fig01_home.png', path: '/home?demo=1', wait: 'TODAY' },
   { file: 'fig04_camera.png', path: '/camera?demo=1', wait: 'Point at something' },
-  { file: 'fig05_processing.png', path: '/camera?try=syrup&demo=1', wait: 'Reading text' },
+  // 이 한 장만 **끝나기 전** 을 찍는다. 그래서 픽토그램을 기다리지 않는다
+  // (noWait). 기다리면 판정 화면이 찍히고, 본문(§3.3)이 서술하는 "감추지
+  // 않은 진행 단계" 가 그림에서 사라진다.
+  { file: 'fig05_processing.png', path: '/camera?try=syrup&demo=1', wait: 'Reading text', noWait: true },
   // 표본을 태우면 OCR → SIGIL → VOCA 가 순서대로 돈다. 판정 화면의 고정 문구를 기다린다.
   { file: 'fig06_verdict_rx.png', path: '/camera?try=antibiotic&demo=1', wait: 'PICTOGRAM GUIDE', ms: 90000 },
   { file: 'fig07_verdict_label.png', path: '/camera?try=peanut&demo=1', wait: 'PICTOGRAM GUIDE', ms: 90000 },
@@ -57,9 +85,10 @@ for (const s of SHOTS) {
   try {
     await page.goto(BASE + s.path, { waitUntil: 'networkidle2', timeout: 60000 });
     await waitForText(page, s.wait, s.ms ?? 45000);
+    if (!s.noWait) await waitForPictograms(page, s.ms ?? 90000);
     await page.addStyleTag({ content: CLEANUP });
-    // 애니메이션과 이미지 로딩이 가라앉을 시간
-    await new Promise((r) => setTimeout(r, 1500));
+    // 애니메이션이 가라앉을 시간. 이미지는 위에서 기다렸다.
+    await new Promise((r) => setTimeout(r, s.noWait ? 300 : 1500));
     await page.screenshot({ path: FIG + s.file, fullPage: true });
     console.log(`${s.file}  OK`);
   } catch (e) {

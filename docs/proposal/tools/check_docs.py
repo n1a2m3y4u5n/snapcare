@@ -18,6 +18,7 @@
   · 두 판이 절마다 비슷한 수의 상호 참조를 갖는가
   · 인용이 이름과 해만 적혀 있지 않은가
   · 서식으로 뽑은 뒤 표와 그림이 성한가
+  · 화면 캡처가 지금 앱보다 낡지 않았는가
 """
 import re
 import sys
@@ -241,6 +242,44 @@ def built_faults(path: Path) -> list:
     return out
 
 
+# 화면 캡처는 앱이 바뀌면 낡는다. 낡아도 아무 표시가 나지 않는 것이 문제라,
+# 마지막으로 뜬 날과 화면 코드가 마지막으로 바뀐 날을 견준다. 실제로 캡처가
+# 7월 29일이고 화면 코드가 8월 3일이던 적이 있고, 그 캡처는 본문이 걷어냈다고
+# 적은 스피커 원과 본문이 고쳤다고 적은 냉장 오류를 그대로 담고 있었다.
+SHOT_FILES = ('fig01_home.png', 'fig04_camera.png', 'fig05_processing.png',
+              'fig06_verdict_rx.png', 'fig07_verdict_label.png', 'fig08_today.png',
+              'fig09_device.png', 'fig12_onboarding.png', 'fig13_profile.png')
+UI_PATHS = ('app', 'components')
+
+
+def _last_commit(path: str) -> str:
+    import subprocess
+    try:
+        return subprocess.run(
+            ['git', 'log', '-1', '--format=%ct', '--', path],
+            cwd=DOC.parents[1], capture_output=True, text=True, timeout=20,
+        ).stdout.strip()
+    except Exception:
+        return ''
+
+
+def stale_shots() -> list:
+    ui = max((int(t) for t in (_last_commit(p) for p in UI_PATHS) if t), default=0)
+    if not ui:
+        return []
+    out = []
+    for f in SHOT_FILES:
+        t = _last_commit(f'docs/proposal/fig/{f}')
+        if t and int(t) < ui:
+            out.append(f)
+    if out:
+        import datetime as dt
+        d = dt.datetime.fromtimestamp(ui).date()
+        return [f'화면 코드가 {d} 에 바뀐 뒤 다시 뜨지 않은 캡처 {len(out)}장: '
+                + ', '.join(out[:4]) + (' …' if len(out) > 4 else '')]
+    return []
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -315,6 +354,9 @@ def main() -> int:
             note(f'{f}: 같은 수치가 두 곳에 다르다 — {t}')
         for t in short_cites(f):
             note(f'{f}: 서지 정보 없는 인용 — ({t})')
+
+    for t in stale_shots():
+        note(t)
 
     for name in ('SnapCare_H1_Final_Proposal_KO.docx',
                  'SnapCare_H1_Final_Proposal_EN.docx'):

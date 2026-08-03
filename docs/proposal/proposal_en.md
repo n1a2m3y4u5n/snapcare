@@ -808,7 +808,7 @@ When the user photographs a prescription, OCR (Tesseract.js) extracts the text i
 
 ![Figure 21](fig/panelA_flow.png)
 
-**[Figure 21]** From capture to verdict. (a) Capture screen. The user does not choose what is being photographed. (b) Recognition in progress. Not hiding this stage is deliberate. A screen that has stopped with no indication reads as a fault. (c) Prescription verdict. From top to bottom: what it is, whether it is safe, what to do, what that means, and when. The previews in (a) and (b) are empty because the browser automating the capture has no camera; on a real device the screen is filled.
+**[Figure 21]** From capture to verdict. (a) Capture screen. The user does not choose what is being photographed. (b) Recognition in progress. Not hiding this stage is deliberate. A screen that has stopped with no indication reads as a fault. (c) Prescription verdict. From top to bottom: what it is, whether it is safe, what to do, what that means, and when, with the checking step of §3.8 attached at the foot. "How many do you take at a time?" is asked aloud and answered by pointing at a picture; it can be skipped, and the medicine information stays below it. The grey speaker circles that used to sit on every row are absent because §3.5 removed them; what remains is on the header and the pictogram cards, places that are not rows. The previews in (a) and (b) are empty because the browser automating the capture has no camera; on a real device the screen is filled.
 
 **Function 2. Verdicts on food and nutrition labels (Personalized Verdict)**
 
