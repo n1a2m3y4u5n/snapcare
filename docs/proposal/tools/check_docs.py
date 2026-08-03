@@ -34,6 +34,7 @@
   · 같은 출처가 두 가지 모양으로 적히지 않았는가
   · 표 28 의 시험 수가 실제로 돌린 결과와 같은가
   · 우리 산문의 표기가 한 가지로 통일되어 있는가
+  · 응답자를 부를 때 직책이 표 41 과 같은가
 """
 import re
 import sys
@@ -852,6 +853,41 @@ def spelling() -> list:
     return out
 
 
+def title_drift() -> list:
+    """본문이 응답자를 부를 때 직책이 표 41 과 같은가.
+
+    사용자가 요구한 것은 인용에 이름·소속·직책이 다 드러나는 것이다.
+    한 자리가 이소영 응답자를 "교수" 로만 적고 있었는데 표 41 은
+    "교수·약사" 다. 같은 사람이 문서 안에서 두 직책을 갖게 된다.
+
+    한글 이름만 본다. 로마자 이름은 표기가 여럿이라(Vučićević 등)
+    문자열로 대조하면 오탐이 난다."""
+    out = []
+    s = (DOC / 'proposal_ko.md').read_text()
+    if '### 5.11' not in s or '[표 41]' not in s:
+        return []
+    body = s[:s.index('### 5.11')]
+    roster = {}
+    for ln in s[s.index('[표 41]'):].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if roster:
+                break
+            continue
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        if len(c) >= 4 and c[0] and c[0] != '성함' and '---' not in c[0]:
+            roster[c[0]] = c[1]
+    for name, title in roster.items():
+        if not re.search(r'[가-힣]', name) or not title:
+            continue
+        for m in re.finditer(re.escape(name), body):
+            seg = body[max(0, m.start() - 24):m.end() + 14]
+            if title not in seg:
+                out.append(f'{name} 을 부르는 자리의 직책이 표 41("{title}")과 다르다 '
+                           f'— …{seg.strip()[:44]}…')
+                break
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -973,6 +1009,9 @@ def main() -> int:
         note(t)
 
     for t in spelling():
+        note(t)
+
+    for t in title_drift():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):

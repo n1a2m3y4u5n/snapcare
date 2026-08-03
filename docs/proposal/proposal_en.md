@@ -2349,7 +2349,7 @@ There is one more in the same place. Both HCI and design respondents answered "j
 
 Then the things that read newly.
 
-Ten of the twelve pharmacy respondents answered that there are things which must not be conveyed by picture and speech alone: contraindications and interactions for 5, cases needing dose adjustment for 3, other for 2, against 2 who answered that all of it can be. This app includes interactions in its verdict (§2.4), so this answer is a request to narrow the scope of our design. It interlocks with the risk of unilateral discontinuation written by Professor So-Young Lee of Chungnam National University.
+Ten of the twelve pharmacy respondents answered that there are things which must not be conveyed by picture and speech alone: contraindications and interactions for 5, cases needing dose adjustment for 3, other for 2, against 2 who answered that all of it can be. This app includes interactions in its verdict (§2.4), so this answer is a request to narrow the scope of our design. It interlocks with the risk of unilateral discontinuation written by Professor and pharmacist So-Young Lee of Chungnam National University.
 
 The nine nursing respondents split on where an older patient living alone fails first: 4 on operating the screen and 4 on managing the device. The latter is charging and loss, which lies outside our design. However much the app is improved, it does not open if the device is flat. The offline operation of §4.5 handles a connection being cut; it does not handle the device being off.
 
