@@ -1561,11 +1561,15 @@ In practice three kinds of test in this repository each require something differ
 
 | Kind | Tests | Result | What it needs |
 |---|---:|---|---|
-| Web app (`node --test`) | 347 | 346 pass · 1 fail | Node only |
+| Web app (`node --test`) | 360 | 359 pass · 1 fail | Node only |
 | Paper form and cloud relay (`pytest`) | 172 | 169 pass · 3 skipped | OpenCV |
 | Device firmware (`pytest`) | 668 | 591 pass · 77 skipped | Python only |
 
-These are counts from running the suites on 3 August 2026, and the single web-app failure is set down as it stands. A default in the condition-tracking module changed and the test still holds the old expectation; it is not a defect in the feature, but leaving the failure out while reporting the passes would change what this table says.
+These are counts from running the suites on 3 August 2026, and the single web-app failure is set down as it stands.
+
+What failed is `pill_dispenser/webapp_kit/tests/kit.test.ts`, and the cause lies not in the test but in loading it. `relay.ts` uses a constructor parameter property (`constructor(readonly status: number)`), and Node's type stripping removes types without emitting code, so it does not support that syntax. The import stops with `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`.
+
+It is set down because something heavier than one failure rides along with it. Since the file never loads, **not one** of the tests inside it runs. The 360 above does not count that file's tests, so what looks like a single failure is in fact an entire file going unmeasured. It is the same shape of failure as the eight display constants in §5.4: the tool showed green while what it was measuring was empty.
 
 That the firmware suite was for a while not running at all is also set down. Eight screen constants disappeared in one commit, and since every test file goes through that module, all of them stopped at import. Restoring them revealed 35 failures, and those 35 went away when the screen was redesigned around a single panel. They were missed not for want of tests but because the tests were not running, which is to say that counting passes and checking that the tests actually run are two different jobs.
 
@@ -2388,7 +2392,7 @@ The dispenser now calls the phone when it presents a dose. The same respondent p
 
 A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Institut Pasteur de Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
 
-The web app test count went from 231 to 347 (Table 28).
+The web app test count went from 231 to 360 (Table 28).
 
 #### 5.7.14 Limits of this survey
 

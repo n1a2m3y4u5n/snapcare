@@ -32,6 +32,7 @@
   · 본문이 든 형태소 이름이 사전에 그대로 있는가
   · 그림 33 의 채움 점수가 파서가 내는 값과 같은가
   · 같은 출처가 두 가지 모양으로 적히지 않았는가
+  · 표 28 의 시험 수가 실제로 돌린 결과와 같은가
 """
 import re
 import sys
@@ -747,6 +748,72 @@ def cite_shape() -> list:
     return out
 
 
+def test_counts() -> list:
+    """표 28 의 시험 수가 실제로 돌린 결과와 같은가.
+
+    표가 웹 앱 347개(346 통과·1 실패)라고 적고 있었는데 돌려 보니
+    360개(359 통과·1 실패)였다. 실패의 설명도 달랐다 — 표는 "조건
+    추적 모듈의 기본값" 이라 했으나 실제로는 kit.test.ts 가 불러오는
+    데서 멈춘다. 그 파일의 시험이 한 개도 돌지 않으므로 실패 한 건이
+    아니라 파일 하나가 통째로 재어지지 않는 상태였다.
+
+    SNAPCARE_SKIP_TESTS=1 이면 건너뛴다. 세 갈래를 다 돌리면 40초쯤
+    걸리므로 문서만 고칠 때는 끌 수 있어야 한다."""
+    import os
+    import subprocess
+    if os.environ.get('SNAPCARE_SKIP_TESTS'):
+        return []
+    root = DOC.parent.parent
+    py = DOC / '.venv-doc/bin/python'
+    if not (root / 'package.json').is_file():
+        return []
+
+    got = {}
+    try:
+        r = subprocess.run(['node', '--test'], cwd=root, capture_output=True,
+                           text=True, timeout=600).stdout
+        m = {k: int(v) for k, v in re.findall(r'^\u2139 (\w+) (\d+)$', r, re.M)}
+        if 'tests' in m:
+            got['웹 앱'] = (m['tests'], m.get('pass', 0), m.get('fail', 0))
+    except Exception as e:
+        return [f'웹 앱 시험을 돌리지 못했다: {e}']
+
+    if py.is_file():
+        for name, paths in (('종이 서식·클라우드 릴레이', ['pill_dispenser/form_sheet_parser',
+                                         'pill_dispenser/cloud_relay']),
+                            ('기기 펌웨어', ['pill_dispenser/firmware'])):
+            try:
+                r = subprocess.run([str(py), '-m', 'pytest', *paths, '-q'], cwd=root,
+                                   capture_output=True, text=True, timeout=900).stdout
+                m = re.search(r'(?:(\d+) passed)(?:, (\d+) skipped)?', r)
+                if m:
+                    p_, sk = int(m.group(1)), int(m.group(2) or 0)
+                    got[name] = (p_ + sk, p_, 0)
+            except Exception:
+                pass
+
+    body = (DOC / 'proposal_ko.md').read_text()
+    i = body.index('[표 28]')
+    rows = {}
+    for ln in body[i:].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if rows:
+                break
+            continue
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        if len(c) >= 3 and c[1].isdigit():
+            rows[c[0].split('(')[0].strip()] = int(c[1])
+
+    out = []
+    for k, (n, _p, _f) in got.items():
+        said = rows.get(k)
+        if said is None:
+            out.append(f'표 28 에 "{k}" 행이 없다')
+        elif said != n:
+            out.append(f'표 28 의 {k} 이 {said} 인데 돌려 보니 {n} 이다')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -862,6 +929,9 @@ def main() -> int:
         note(t)
 
     for t in cite_shape():
+        note(t)
+
+    for t in test_counts():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):
