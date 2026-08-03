@@ -1137,6 +1137,52 @@ def doc_props() -> list:
     return out
 
 
+def built_order() -> list:
+    """빌드된 문서에서 설명이 제자리에 오는가.
+
+    원고를 고쳐도 빌드가 차례를 바꿀 수 있으므로 결과물에서 다시 본다.
+    학술 관례대로 그림 설명은 그림 바로 뒤, 표 설명은 표 바로 앞이다."""
+    try:
+        import docx
+    except ImportError:
+        return []
+    from docx.oxml.ns import qn
+    out = []
+    for name, fw, tw in (('SnapCare_H1_Final_Proposal_KO.docx', '그림', '표'),
+                         ('SnapCare_H1_Final_Proposal_EN.docx', 'Figure', 'Table')):
+        path = DOC / name
+        if not path.exists():
+            continue
+        d = docx.Document(path)
+        seq = []
+        for el in d.element.body.iter():
+            t = el.tag.split('}')[1]
+            if t == 'tbl':
+                seq.append(('TBL', None))
+                continue
+            if t != 'p':
+                continue
+            if el.findall('.//' + qn('wp:extent')):
+                seq.append(('IMG', None))
+            txt = ''.join(n.text or '' for n in el.iter(qn('w:t'))).strip()
+            m = re.match(rf'^\[{fw} (\d+)\]', txt)
+            if m:
+                seq.append(('FCAP', int(m.group(1))))
+            m = re.match(rf'^\[{tw} (\d+)\]', txt)
+            if m:
+                seq.append(('TCAP', int(m.group(1))))
+        for i, (k, v) in enumerate(seq):
+            if k == 'FCAP':
+                prev = seq[i - 1] if i else None
+                if not prev or prev[0] != 'IMG':
+                    out.append(f'{name}: {fw} {v} 의 설명 앞이 그림이 아니다')
+            elif k == 'TCAP':
+                nxt = seq[i + 1] if i + 1 < len(seq) else None
+                if not nxt or nxt[0] != 'TBL':
+                    out.append(f'{name}: {tw} {v} 의 설명 뒤가 표가 아니다')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -1270,6 +1316,9 @@ def main() -> int:
         note(t)
 
     for t in doc_props():
+        note(t)
+
+    for t in built_order():
         note(t)
 
     for t in links_live():
