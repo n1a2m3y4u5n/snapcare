@@ -373,13 +373,31 @@ def roster_count() -> list:
 
     이름 표기는 표 42 에서 정규화한다(Vucicevic → Vučićević, 소문자 성 →
     대문자). 그래서 문자열로 대조하면 오탐이 난다. 수만 견준다."""
-    import openpyxl
     xl = (Path.home() / 'Desktop/Claude/snapcare-survey/scratchpad'
           / 'SnapCare_설문응답.xlsx')
-    if not xl.is_file():
-        return []
-    ws = openpyxl.load_workbook(xl, data_only=True)['응답']
-    n_data = ws.max_row - 1
+    if xl.is_file():
+        import openpyxl
+        ws = openpyxl.load_workbook(xl, data_only=True)['응답']
+        n_data = ws.max_row - 1
+        src = '원자료'
+    else:
+        # 원자료가 없으면 부록으로 견준다. 부록 §5.11 은 자유 서술을
+        # 응답자별로 싣고 있으므로 거기 나오는 사람 수가 하한이 된다.
+        # 자유 서술을 한 줄도 적지 않은 응답자는 부록에 없으므로 이
+        # 값은 실제 응답 수 이하이며, 명단이 그보다 적으면 확실히 틀렸다.
+        doc = (DOC / 'proposal_ko.md').read_text()
+        if '### 5.11' not in doc:
+            return []
+        seg = doc[doc.index('### 5.11'):doc.index('### 5.12')]
+        who = set()
+        for ln in seg.splitlines():
+            if not ln.startswith('|'):
+                continue
+            c = [x.strip() for x in ln.strip('|').split('|')]
+            if len(c) >= 4 and c[0] and c[0] != '응답자' and '---' not in c[0]:
+                who.add(c[0])
+        n_data = len(who)
+        src = '부록에 나오는 응답자'
 
     s = (DOC / 'proposal_ko.md').read_text()
     i = s.index(f'[표 {table_no("전원이 실명") or 42}]')
@@ -393,9 +411,22 @@ def roster_count() -> list:
         if len(c) >= 4 and c[0] and c[0] != '성함' and '---' not in c[0] \
                 and not c[0].startswith('**'):
             names.append(c[0])
-    if len(names) != n_data:
-        return [f'표 41 이 {len(names)}명인데 응답은 {n_data}건이다']
-    return []
+    if src == '원자료':
+        if len(names) != n_data:
+            return [f'표 42 가 {len(names)}명인데 응답은 {n_data}건이다']
+        return []
+
+    # 원자료가 없을 때. 수만 견주면 명단에서 한 명을 지워도 안 걸린다
+    # (자유 서술을 적지 않은 사람이 있어 부록이 늘 더 적다). 이름을
+    # 견딘다 — 부록에 답이 실린 사람은 반드시 명단에 있어야 한다.
+    missing = sorted(who - set(names))
+    out = []
+    if missing:
+        out.append(f'부록에 답이 실렸는데 표 42 에 없는 응답자 '
+                   f'{len(missing)}명 — {", ".join(missing[:4])}')
+    if len(names) < n_data:
+        out.append(f'표 42 가 {len(names)}명인데 {src}가 {n_data}명이다')
+    return out
 
 
 # 촬영 뷰포트. shots.mjs 의 defaultViewport 와 같아야 한다.
