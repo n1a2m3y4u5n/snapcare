@@ -346,6 +346,13 @@ The same structure is observed in Moldova. Between 2015 and 2060 the population 
 
 There is also research addressing the relationship between health literacy and primary care use directly in a Moldovan population. The subjects of that study, however, are not residents of Moldova but **170 Moldovan migrant women living in Padua, Italy**, and it reports higher smoking rates (33.3% against 14.3%) and fewer visits to a general practitioner among those with lower literacy (Vianello, F. A. et al., "Health status of female Moldovan migrants to Italy by health literacy level and age group," *BMC Public Health*, 20:1502, 2020, doi:10.1186/s12889-020-09582-9). Being a migrant sample, it cannot be transferred directly to the population inside Moldova. What we take from this study is not the figures but **the relationship, that health literacy is in fact linked to primary care use**, and confirming that relationship in Moldova itself belongs to the field evaluation in §5.9.
 
+Whether this section is right to treat old age as a single layer we put back to the survey. Kyungseo Park, Assistant Manager at the Korea Disabled People's Development Institute, wrote in the "anything you would add" box:
+
+> "Being in a position of not being able to read comes from a range of individual circumstances: old age, childhood, blindness, low vision. It is certainly needed, and our own institute has run projects such as typeface development for legibility."
+> (Kyungseo Park, Assistant Manager, Korea Disabled People's Development Institute)
+
+That answer joins this section to §1.1. §1.1 counted non-literacy as a matter of educational opportunity and this section counts ageing as a matter of population structure, but in the field the two meet in one person. Eyes that have weakened with age and never having been taught come to the same thing in front of a screen, and that is why this app does not separate them. The same answer told us one thing more: an institution in Korea has already approached this problem from the typeface side, which means making letters easier to read and not using letters at all are two answers to one problem. We chose the second and do not claim the first is wrong.
+
 ### 1.8 The effect and the limits of visual delivery
 
 That pictures are remembered better than text is a repeatedly verified finding in cognitive psychology. The picture superiority effect refers to pictures being recalled at higher rates than words and persisting longer, and dual coding theory explains this by holding that visual information is encoded along both a visual and a verbal route, giving two paths to recall, whereas text is not readily encoded visually (Paivio, A., *Imagery and Verbal Processes*, Holt, Rinehart & Winston, 1971; *Mental Representations: A Dual Coding Approach*, Oxford University Press, 1986). In health communication as well, pictures closely tied to text markedly increase attention and recall relative to text alone (Houts, P. S., Doak, C. C., Doak, L. G. & Loscalzo, M. J., "The role of pictures in improving health communication," *Patient Education and Counseling*, 61(2):173–190, 2006).
@@ -885,6 +892,13 @@ Narrowing the tested set to ingredients that actually appear in the log follows 
 
 Fisher's exact test was used because the samples are small. Chi-square cannot be used when expected frequencies fall below 5, and food diary tables always look like that. It is rare for a person to record eating one ingredient twenty times and how often trouble followed.
 
+A response arrived that shakes the premise this whole section rests on. Asked whether the app could change health outcomes, Professor Namsoo Park of Hyupsung University answered:
+
+> "(There is an instruction reading "select any that apply to you", for instance; if that instruction cannot be read, how is the app to be used well?)"
+> (Professor Namsoo Park, Hyupsung University)
+
+This section says we ask the user for their conditions. But the instruction to pick conditions is itself text. Here is the place where an app built for people who cannot read puts a written question to them. §3.2 answers the same problem by having age chosen from four pictures, and the conditions screen is likewise picture and speech (Figure 21). Whether "select any that apply to you" itself carries without being read, however, we have not confirmed by asking people. Of everything §5.9 records as untested with people, this is the sorest place.
+
 ### 2.6 How this differs from existing approaches
 
 This section sets out how SnapCare differs from what already exists. Two comparators are taken. One is the general health and nutrition app, the other is the de facto standard for pharmaceutical pictograms, the United States Pharmacopeia set. The first says it addresses the same users but addresses them in text, and the second does not use text but cannot combine.
@@ -911,7 +925,14 @@ One row has to be read again against the survey of §5.7. In the fifth row we re
 
 The last two rows are where we consider this work to have put something new. We did not find, within the range we looked over, a procedure that measures pictogram comprehension automatically before release (the same qualification as in §1.11), and §5.2 sets out both the procedure and its results. The remaining rows are design choices rather than distinct contributions, and the grounds for each are given in §2.1 through §2.5.
 
-The limits of this comparison are set down too. We treated the general health app as a single type, though there is much variation within it, and we did not survey individual products systematically. The left-hand column is a set of features we observed repeatedly within the range we looked at, not the result of a market study. What the team leader at GC Medi-AI wrote in §5.7, that there are already many medication-counselling solutions, aims exactly at this limit. We may not have seen everything that already exists.
+The limits of this comparison are set down too. We treated the general health app as a single type, though there is much variation within it, and we did not survey individual products systematically. The left-hand column is a set of features we observed repeatedly within the range we looked at, not the result of a market study. An answer aimed at that limit came out of the survey, and because it would bring down what this section claims, it is set down in full rather than trimmed. In the "anything you would add that we did not ask" box, the team leader at the GC Medi-AI Uisarang Service Centre (name withheld) wrote five things:
+
+> "1. Korean prescriptions carry a barcode, and only the barcode needs reading, so scanning the whole sheet is inefficient. 2. Apps that read the barcode and can guide people with disabilities already exist. 3. Medication counselling is the duty of the pharmacist, and of the doctor for in-hospital prescribing, and there are already many solutions for it. 4. For a business model aimed at people who cannot read, the market is too small relative to the investment. 5. Electronic prescriptions are already being prepared. Once they are electronic this is useless."
+> ((name withheld), Team Leader, GC Medi-AI, Uisarang Service Centre)
+
+Each of the five is taken in turn. Points 1 and 5 assume Korea, and they are right. If Korean prescriptions carry a barcode and electronic prescriptions are on the way, photographing a sheet and reading its letters will soon be unnecessary in Korea. The countries in Table 1 of §1.1, however, have neither that barcode nor that digitisation. That is where this app is aimed, and the fact does not refute the response — the range in which the response is right and the range in which we stand are simply different. Points 2 and 3 are things we did not verify: we did not survey individual products systematically, so we may not have seen everything that already exists. Point 4 is not the kind of thing this document can answer. Whether market size is the right basis for deciding what gets built is not a question this proposal takes up, and that the judgement divides at all may itself be why the place §1.4 calls the last step is empty.
+
+This response is set down here not because it can be answered. Half of it cannot.
 
 ### 2.7 The three core functions
 
