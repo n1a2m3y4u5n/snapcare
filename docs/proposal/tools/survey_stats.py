@@ -19,6 +19,14 @@ from scipy import stats
 
 XLSX = pathlib.Path.home() / 'Desktop/Claude/snapcare-survey/scratchpad/SnapCare_설문응답.xlsx'
 
+if not XLSX.is_file():
+    raise SystemExit(
+        f'설문 원자료가 없다: {XLSX}\n'
+        '  이 도구는 원자료에서 만든다. 문서에 이미 실린 부록(§5.11·§5.12)이\n'
+        '  같은 내용을 담고 있으므로 문서를 고치지 않아도 되지만, 응답이\n'
+        '  더 들어와 다시 만들어야 한다면 원자료를 되찾아야 한다.')
+
+
 FIELD_KO = {
     'Pharmacy / medication counselling': '약국·복약지도',
     'Nursing / public health': '간호·보건',

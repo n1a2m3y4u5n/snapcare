@@ -373,13 +373,31 @@ def roster_count() -> list:
 
     이름 표기는 표 42 에서 정규화한다(Vucicevic → Vučićević, 소문자 성 →
     대문자). 그래서 문자열로 대조하면 오탐이 난다. 수만 견준다."""
-    import openpyxl
     xl = (Path.home() / 'Desktop/Claude/snapcare-survey/scratchpad'
           / 'SnapCare_설문응답.xlsx')
-    if not xl.is_file():
-        return []
-    ws = openpyxl.load_workbook(xl, data_only=True)['응답']
-    n_data = ws.max_row - 1
+    if xl.is_file():
+        import openpyxl
+        ws = openpyxl.load_workbook(xl, data_only=True)['응답']
+        n_data = ws.max_row - 1
+        src = '원자료'
+    else:
+        # 원자료가 없으면 부록으로 견준다. 부록 §5.11 은 자유 서술을
+        # 응답자별로 싣고 있으므로 거기 나오는 사람 수가 하한이 된다.
+        # 자유 서술을 한 줄도 적지 않은 응답자는 부록에 없으므로 이
+        # 값은 실제 응답 수 이하이며, 명단이 그보다 적으면 확실히 틀렸다.
+        doc = (DOC / 'proposal_ko.md').read_text()
+        if '### 5.11' not in doc:
+            return []
+        seg = doc[doc.index('### 5.11'):doc.index('### 5.12')]
+        who = set()
+        for ln in seg.splitlines():
+            if not ln.startswith('|'):
+                continue
+            c = [x.strip() for x in ln.strip('|').split('|')]
+            if len(c) >= 4 and c[0] and c[0] != '응답자' and '---' not in c[0]:
+                who.add(c[0])
+        n_data = len(who)
+        src = '부록에 나오는 응답자'
 
     s = (DOC / 'proposal_ko.md').read_text()
     i = s.index(f'[표 {table_no("전원이 실명") or 42}]')
@@ -393,9 +411,22 @@ def roster_count() -> list:
         if len(c) >= 4 and c[0] and c[0] != '성함' and '---' not in c[0] \
                 and not c[0].startswith('**'):
             names.append(c[0])
-    if len(names) != n_data:
-        return [f'표 41 이 {len(names)}명인데 응답은 {n_data}건이다']
-    return []
+    if src == '원자료':
+        if len(names) != n_data:
+            return [f'표 42 가 {len(names)}명인데 응답은 {n_data}건이다']
+        return []
+
+    # 원자료가 없을 때. 수만 견주면 명단에서 한 명을 지워도 안 걸린다
+    # (자유 서술을 적지 않은 사람이 있어 부록이 늘 더 적다). 이름을
+    # 견딘다 — 부록에 답이 실린 사람은 반드시 명단에 있어야 한다.
+    missing = sorted(who - set(names))
+    out = []
+    if missing:
+        out.append(f'부록에 답이 실렸는데 표 42 에 없는 응답자 '
+                   f'{len(missing)}명 — {", ".join(missing[:4])}')
+    if len(names) < n_data:
+        out.append(f'표 42 가 {len(names)}명인데 {src}가 {n_data}명이다')
+    return out
 
 
 # 촬영 뷰포트. shots.mjs 의 defaultViewport 와 같아야 한다.
@@ -993,6 +1024,93 @@ def table_no(title_part: str, f: str = 'proposal_ko.md') -> int | None:
     return None
 
 
+def affil_drift() -> list:
+    """한 응답자의 소속이 문서 안에서 한 가지로 적혀 있는가.
+
+    Foued Maaoui 의 소속이 "Pasteur Institute of Tunis" 와
+    "파스퇴르연구소" 와 "Institut Pasteur de Tunis" 로 갈려 있었다.
+    같은 사람이 세 기관에 있는 것처럼 보인다.
+
+    표 42 의 소속을 정본으로 삼고, 본문이 그 사람을 부르면서 다른
+    기관 이름을 붙였는지 본다. 이름 둘레 60자만 본다 — 문단 전체를
+    보면 다른 응답자의 소속까지 걸린다."""
+    out = []
+    for f, roster_key in (('proposal_ko.md', '전원이 실명'),
+                          ('proposal_en.md', 'The 39 respondents')):
+        s = (DOC / f).read_text()
+        mark = '### 5.11'
+        if mark not in s:
+            continue
+        body = s[:s.index(mark)]
+        i = s.find(f'[표 {table_no(roster_key) or 42}]')
+        if i < 0:
+            i = s.find('[Table 42]')
+        if i < 0:
+            continue
+        roster = {}
+        for ln in s[i:].splitlines()[1:]:
+            if not ln.startswith('|'):
+                if roster:
+                    break
+                continue
+            c = [x.strip() for x in ln.strip('|').split('|')]
+            if len(c) >= 4 and c[0] and c[0] not in ('성함', 'Name') \
+                    and '---' not in c[0] and not c[0].startswith('**'):
+                roster[c[0]] = c[2]
+        # 소속 이름의 다른 판을 찾는다 — 같은 기관을 가리키는 낱말이
+        # 본문에 있는데 표 42 의 표기와 다르면 잡는다.
+        VARIANT = {
+            'Pasteur Institute of Tunis': ('파스퇴르연구소', 'Institut Pasteur'),
+        }
+        for name, aff in roster.items():
+            for canon, alts in VARIANT.items():
+                if canon not in aff:
+                    continue
+                for alt in alts:
+                    if alt in body:
+                        out.append(f'{f}: {name} 의 소속이 표 42 에서는 '
+                                   f'"{canon}" 인데 본문에 "{alt}" 가 있다')
+    return out
+
+
+# §5.9 는 항목을 "첫째" 부터 세어 나간다. 본문이 "§5.9 의 N째 항목"
+# 이라고 가리킬 때 그 자리가 정말 그 내용인지 사람은 세어 보지 않는다.
+ORDINAL = ['첫째', '둘째', '셋째', '넷째', '다섯째', '여섯째', '일곱째',
+           '여덟째', '아홉째', '열째', '열한째', '열두째', '열셋째']
+
+
+def item_refs() -> list:
+    """"§5.9 의 N째 항목" 이 실제로 그 자리를 가리키는가.
+
+    §1.5 가 시각장애를 "§5.9 의 여덟째 항목" 이라고 가리키고 있었는데
+    여덟째는 지적장애였고 시각장애는 §5.9 에 아예 없었다. 없는 항목을
+    번호로 가리키면 심사자가 그 자리를 열어 본다.
+
+    번호가 있는지만 본다. 가리키는 문장의 낱말이 그 항목에 있는지까지
+    보게 해 보았으나 정상 참조 둘이 걸리고 정작 틀린 것은 통과했다.
+    낱말 겹침으로는 참조의 옳고 그름을 가릴 수 없다 — 앞서 같은 이유로
+    지운 검사가 있다."""
+    out = []
+    s = (DOC / 'proposal_ko.md').read_text()
+    if '### 5.9' not in s:
+        return []
+    nxt = re.search(r'^### 5\.1[0-9]', s[s.index('### 5.9'):], re.M)
+    seg = s[s.index('### 5.9'):][:nxt.start() if nxt else None]
+    have = [o for o in ORDINAL if re.search(rf'^{o},', seg, re.M)]
+    for m in re.finditer(r'§5\.9 의 (\S+?)째 항목', s):
+        word = m.group(1) + '째'
+        if word not in have:
+            out.append(f'§5.9 에 "{word}" 항목이 없다 — 지금 있는 것은 '
+                       f'{have[0]}~{have[-1]} 까지 {len(have)}개다')
+            continue
+    # 번호가 끊기지 않았는가
+    for i, o in enumerate(ORDINAL[:len(have)]):
+        if o != have[i]:
+            out.append(f'§5.9 의 항목 차례가 끊긴다 — {i + 1}번째가 "{have[i]}" 다')
+            break
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -1117,6 +1235,12 @@ def main() -> int:
         note(t)
 
     for t in title_drift():
+        note(t)
+
+    for t in affil_drift():
+        note(t)
+
+    for t in item_refs():
         note(t)
 
     for t in links_live():

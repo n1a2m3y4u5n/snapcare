@@ -17,6 +17,14 @@ from survey_ko_en import TRANSLATION
 
 LANG = os.environ.get('SNAPCARE_LANG', 'ko').lower()
 XLSX = pathlib.Path.home() / 'Desktop/Claude/snapcare-survey/scratchpad/SnapCare_설문응답.xlsx'
+
+if not XLSX.is_file():
+    raise SystemExit(
+        f'설문 원자료가 없다: {XLSX}\n'
+        '  이 도구는 원자료에서 만든다. 문서에 이미 실린 부록(§5.11·§5.12)이\n'
+        '  같은 내용을 담고 있으므로 문서를 고치지 않아도 되지만, 응답이\n'
+        '  더 들어와 다시 만들어야 한다면 원자료를 되찾아야 한다.')
+
 _DOC = pathlib.Path(__file__).resolve().parent.parent
 DOC = _DOC / ('proposal_en.md' if LANG == 'en' else 'proposal_ko.md')
 BEGIN = '<!-- 부록 시작. survey_appendix.py 가 생성한다. 손으로 고치지 말 것 -->'

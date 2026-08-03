@@ -192,6 +192,15 @@ What these figures point to together is that medication-related harm occurs outs
 
 The cost estimates span a wide range, and the basis of the 300 billion dollar upper figure is disputed. Our purpose in citing these numbers is to give a sense of scale rather than to argue for any particular value, and the indicator on which this work claims improvement is not cost but the delivery success rate in §5.1.
 
+The misreading this section counted from the literature we observed in our own pictures too. Asked how the whole looked from a pharmacy standpoint, Sheron Sir Loon Goh, Pharmacy Lecturer at the Department of Clinical Pharmacy and Pharmacy Practice, pointed at two things:
+
+> "Once a day dose, I dont see the relationship by just looking at the capsule symbol with 1 dot means once a day without hearing the audio for explanation. Putting a pregnant mother symbol does not explains that it is not safe for pregnant mother to consume the meds. Perhaps you will need to add a \"X\" symbol somewhere in the picture"
+> (Sheron Sir Loon Goh, Pharmacy Lecturer, Department of Clinical Pharmacy and Pharmacy Practice)
+
+The first is this section's "how much" error and the second its contraindication error. The top types in Table 4 reproduced themselves in our own pictures, which is where the distribution in the literature stopped being someone else's story.
+
+The second is the heavier one. A pregnancy symbol with no prohibition mark can be read as "safe in pregnancy". That is not meaning going vague but meaning **inverting**, and it is why ANSI Z535.3 requires critical-confusion errors below 5%. Dividing the prohibition marking into three by the nature of the flag in §5.2 was the result of taking this point.
+
 ### 1.4 International policy and its blind spot
 
 In 2017 the World Health Organization declared Medication Without Harm as its third Global Patient Safety Challenge, setting a goal of reducing severe avoidable medication-related harm by 50% within five years (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017). It identified three priority areas: high-risk situations, polypharmacy and transitions of care (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017).
@@ -293,6 +302,15 @@ That gap overlaps with the regions we target. Smartphones have already spread, a
 This app was not designed for blindness. The pictures are drawn large and speech is attached, but two responses in §5.7 noted that the act of taking a photograph is itself a barrier for someone who cannot see. It is a layer we have not addressed and it belongs to the unverified items in §5.10.
 
 There is a further assumption still. Even someone who can read has no guarantee that the text in front of them is in their own language. Forty percent of the world's population does not have access to education in a language they understand, and most literacy surveys themselves measure in a single language (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). Prescriptions and nutrition labels are printed in a country's official language or in English, so among those counted as "able to read" in literacy statistics there are people who cannot read the paper in front of them. Pictures and speech step over both layers at once. After the survey of §5.7 the speech acquired the languages of the six countries the respondents work in; the account and its limits are in §5.7.
+
+This section doubted one premise: that the user knows their own condition. The survey handed us a premise we had not doubted. Asked whether a patient who cannot read could take their medicine correctly with only these screens, Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, answered:
+
+> "As noted above, there are several types of people who cannot read, and in fact the largest group is likely to be blind people rather than the 'illiterate'. I do not know whether blind users were considered from the outset, but if you want to include them, for a blind person the very act of taking a photograph can be a barrier."
+> (Yonghan Lee, Senior Manager, Korea Craft and Design Foundation)
+
+This app begins with one photograph. That premise — that taking it is possible for anyone — we never tested anywhere in this document. If the 43% above are people who do not know their illness, this point is about people who cannot see the screen, and both are premises we built into the design without counting them.
+
+This app did not take blind users as its target. The premise of §1.5 is being undiagnosed rather than being visually impaired, and of the three layers §2.1 overlays, picture and colour both require sight. Speech alone still carries the verdict, but the photographing remains. We have recorded that gap as the twelfth item in §5.9, and how far a screen reader and assisted capture can be joined to this is left to §5.10.
 
 ### 1.6 How widely the delivery medium has spread
 
@@ -422,7 +440,7 @@ Rather than close this section on the literature alone, we put the limitation to
 > "Many individual pictograms are highly abstract, including symbols representing treatment completion, dosage quantity, administration timing, and warning or prohibition messages. Without prior training or accompanying text, patients may misinterpret the prescribed dose, the timing of medication in relation to meals, or the intended meaning of specific warning icons."
 > (Foued Maaoui, Researcher, Pasteur Institute of Tunis)
 
-What the studies above measured and what this answer says are the same thing. It differs in having been written after looking at what we made. The pass rates in Table 6 are values for other people's sets; this is the word of someone who actually looked at the 78 morphemes of §2.2. In the same answer he singled out four of our morphemes as particularly abstract — completion, quantity, timing and prohibition — and those four are where the errors concentrate in Table 4 of §1.3. That the places most needed are the hardest is the conclusion of this section, and the literature and the survey pointed at it separately.
+What the studies above measured and what this answer says are the same thing. It differs in having been written after looking at what we made. The pass rates in Table 6 are values for other people's sets; this is the word of someone who actually looked at the 78 morphemes of §2.2. In the same answer he singled out four of our morphemes as particularly abstract: completion, quantity, timing and prohibition. The first three coincide exactly with the three types where errors concentrate in Table 4 of §1.3 (omission 32.9%, dose 28.4%, timing 23.2%). The fourth, prohibition, is not in Table 4 — that table counts errors pharmacists made while dispensing, so contraindication marking was never among the things counted. That the response nonetheless lists it fourth is because prohibition is separately dangerous seen from the patient side, and §1.3.1 takes up that misreading on its own. That the places most needed are the hardest is the conclusion of this section, and the literature and the survey pointed at it separately.
 
 This is why the present work does not stop at making pictograms but designs a procedure for measuring their comprehension alongside.
 
@@ -493,7 +511,7 @@ All of this prior work is other people's making, measured by other people. To he
 > "The images clearly reflect a lot of thought, but they need to land more intuitively. The image for washing your hands before taking it, for instance, is not intuitive. A hand under a running tap would come across far better. In fact many pictograms of this kind have already been developed, so it would be good to consult and borrow from them."
 > (Yonghan Lee, Senior Manager, Korea Craft and Design Foundation)
 
-Where the papers above say "they do not grasp the hierarchy", this answer goes one step more concrete. It names which picture fails to read and why, and offers the alternative. We took the point in §5.2 and redrew `hand_wash`, one of the two responses in §5.7 that actually changed a picture. What the prior work told us was where to be careful; what the survey told us was what to fix.
+Where the papers above say "they do not grasp the hierarchy", this answer goes one step more concrete. It names which picture fails to read and why, and offers the alternative. We took the point and redrew `hand_wash` as a hand under a running tap (§5.7.13). Three responses actually changed a picture: this one, `allergen_egg`, and `finish_course`, which followed a suggestion from Pharmacy Lecturer Sheron Sir Loon Goh. What the prior work told us was where to be careful; what the survey told us was what to fix.
 
 ### 1.11 The problem in summary
 
@@ -950,7 +968,7 @@ The limits of this comparison are set down too. We treated the general health ap
 > "1. Korean prescriptions carry a barcode, and only the barcode needs reading, so scanning the whole sheet is inefficient. 2. Apps that read the barcode and can guide people with disabilities already exist. 3. Medication counselling is the duty of the pharmacist, and of the doctor for in-hospital prescribing, and there are already many solutions for it. 4. For a business model aimed at people who cannot read, the market is too small relative to the investment. 5. Electronic prescriptions are already being prepared. Once they are electronic this is useless."
 > ((name withheld), Team Leader, GC Medi-AI, Uisarang Service Centre)
 
-Each of the five is taken in turn. Points 1 and 5 assume Korea, and they are right. If Korean prescriptions carry a barcode and electronic prescriptions are on the way, photographing a sheet and reading its letters will soon be unnecessary in Korea. The countries in Table 1 of §1.1, however, have neither that barcode nor that digitisation. That is where this app is aimed, and the fact does not refute the response — the range in which the response is right and the range in which we stand are simply different. Points 2 and 3 are things we did not verify: we did not survey individual products systematically, so we may not have seen everything that already exists. Point 4 is not the kind of thing this document can answer. Whether market size is the right basis for deciding what gets built is not a question this proposal takes up, and that the judgement divides at all may itself be why the place §1.4 calls the last step is empty.
+Each of the five is taken in turn. Points 1 and 5 assume Korea, and they are right. If Korean prescriptions carry a barcode and electronic prescriptions are on the way, photographing a sheet and reading its letters will soon be unnecessary in Korea. Those two, however, are Korean conditions. Whether the countries in Table 1 of §1.1 also have prescription barcodes and electronic prescriptions we did not investigate, so we do not assert that they do not. What is clear is that what this response rests on is the domestic system, and where this app is aimed is not where that system stands. The range in which the response is right and the range in which we stand are simply different, and which range is larger this document cannot answer. Points 2 and 3 are things we did not verify: we did not survey individual products systematically, so we may not have seen everything that already exists. Point 4 is not the kind of thing this document can answer. Whether market size is the right basis for deciding what gets built is not a question this proposal takes up, and that the judgement divides at all may itself be why the place §1.4 calls the last step is empty.
 
 This response is set down here not because it can be answered. Half of it cannot.
 
@@ -983,6 +1001,15 @@ The design of the transmission path is the result of several constraints applyin
 ![Figure 24](fig/fig10_dispenser.png)
 
 **[Figure 24]** The dispenser's wiring and the device's own console. On the left is the wiring drawn from the pin map, on the right the same firmware running on a laptop with only the servo driver swapped for a recording stub. The API, the scheduler and the storage are the same code that runs on the device. These two are shown instead of a photograph because what gets decided here is not visible in a photograph. Splitting the power rails in two is an example. One SG90 under load draws about 700 mA, and pulling that from the same rail as the Pi causes a brownout, and the file in use at that instant happens to be the one recording whether this dose has already been dispensed. The two missed doses in the dose log at the lower right matter for the same reason. If a dose that was not dispensed is not recorded as not dispensed, every subsequent dose number is off by one.
+
+Who these three are for drew a different answer in the survey. E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols, wrote:
+
+> "I think the idea of this app is good but may suit many people and not just AAC or those with literacy difficulties but it is hard to judge how easy it would be to actually use the app"
+> (E. A. Draffan, retired speech and language therapist and visiting accessibility researcher, Global Symbols · University of Southampton)
+
+The first half says we scoped the audience narrowly. From §1.1 onward this document has counted non-literate adults, but one photograph producing a picture and a spoken sentence may be of use to people who can read as well. Among the respondents in §5.7 there was in fact one who wrote that even they, in their forties, found the images hard to grasp at once (§5.7.9). Whether the audience should be drawn wider this document does not judge. What it records is that drawing it narrowly narrowed the evidence, not the users.
+
+The second half bears more directly on this section. Reading about three functions is no way to judge whether they are easy to use, which is the same thing §5.9 records as the absence of testing with people. This section can set down what was built; whether it is easy to use becomes an answer only when people are asked, in §5.10.
 
 ---
 
@@ -1220,10 +1247,10 @@ On the member list screen only the current person's conditions are shown and the
 
 Deleting takes two presses. One press raises a red outline, and a second deletes. No "are you sure?" dialogue is raised, because that sentence is not readable by this app's users. An unreadable confirmation dialogue is not a confirmation but merely one more press, so the procedure itself was made two-stage. The current person and the last remaining person cannot be deleted.
 
-What this section covers is several people sharing one device, not several people helping one person. Six of the nine in the nursing and public health segment of §5.7 answered that the patient and the carer should be designed for separately, and Foued Maaoui, researcher at the Institut Pasteur de Tunis, addressed the premise head on.
+What this section covers is several people sharing one device, not several people helping one person. Six of the nine in the nursing and public health segment of §5.7 answered that the patient and the carer should be designed for separately, and Foued Maaoui, researcher at the Pasteur Institute of Tunis, addressed the premise head on.
 
 > "The original assumption that the patient will use the app alone does not match common practice, especially among older adults, people with low literacy, cognitive impairment, or complex regimens."
-> (Foued Maaoui, researcher, Institut Pasteur de Tunis)
+> (Foued Maaoui, Researcher, Pasteur Institute of Tunis)
 
 Professor Minsun Song of Konyang University put the same thing differently: it should be built so that the patient and the carer can both understand it at once. There are dissenting views. Professor Celia of the University of Pretoria did not feel separate designs would be required, and Professor Namsoo Park of Hyupsung University answered that it depends on the age and condition of the target.
 
@@ -1290,7 +1317,12 @@ What was already correct should be recorded too. The path by which a scanning de
 
 ### 3.8 Checking that it was understood
 
-A verdict screen having appeared does not mean the delivery is finished. This is the point Foued Maaoui, a researcher at the Institut Pasteur de Tunis, raised in §5.7. However clear the screen, without a procedure for confirming that the person who saw it understood it there is no returning signal, and from a patient-safety standpoint the absence of that loop is a serious risk.
+A verdict screen having appeared does not mean the delivery is finished. This section exists because of one sentence in the survey, so it is carried over rather than summarised. Answering "could a patient who cannot read take their medicine correctly, alone, with only these screens", Foued Maaoui, Researcher at the Pasteur Institute of Tunis, wrote:
+
+> "The system lacks a teach-back or confirmation mechanism that would allow patients to verify that they have correctly understood the instructions. From a patient safety perspective, the absence of such a feedback loop represents a significant risk, particularly for individuals with limited literacy."
+> (Foued Maaoui, Researcher, Pasteur Institute of Tunis)
+
+However clear the screen, without a procedure for confirming that the person who saw it understood it there is no returning signal. The checking step in this section was built on receiving that answer, and it is the one case where the survey changed the design by adding a whole screen.
 
 Teach-back as used in clinical practice runs like this. When the explanation is finished, the clinician asks the patient to say how they will take the medicine at home, and re-explains whatever is missing from the answer. The premise is that nodding is not evidence of understanding. The systematic review cited in §5.7 found positive results in 19 of 20 studies of this procedure.
 
@@ -2099,7 +2131,7 @@ The countries respondents recorded as working in span 22 countries across five c
 | Rahul Malhotra | Associate Professor | Duke-NUS Medical School | Singapore |
 | Raghupathy Anchala | Professor | Public Health Foundation of India | India |
 | Celia | Professor | University of Pretoria | South Africa |
-| Foued Maaoui | Researcher | Institut Pasteur de Tunis | Tunisia |
+| Foued Maaoui | Researcher | Pasteur Institute of Tunis | Tunisia |
 | Aliya Naheed | Senior Scientist | International Centre for Diarrhoeal Disease Research (icddr,b) | Bangladesh |
 | **AAC and special education · adult literacy · HCI and design · industry practice (7)** | | | |
 | E. A. Draffan | Retired speech and language therapist · visiting accessibility researcher | Global Symbols · University of Southampton | United Kingdom |
@@ -2226,7 +2258,7 @@ The same respondent pointed at institutional material we did not know about: a c
 
 #### 5.7.7 Individual findings
 
-Foued Maaoui, a researcher at the Institut Pasteur de Tunis, noted the absence of teach-back. There is no procedure for confirming that the patient understood correctly, and from a patient-safety standpoint the absence of this feedback loop is a serious risk.
+Foued Maaoui, a researcher at the Pasteur Institute of Tunis, noted the absence of teach-back. There is no procedure for confirming that the patient understood correctly, and from a patient-safety standpoint the absence of this feedback loop is a serious risk.
 
 There is evidence behind that point. A systematic review synthesising 20 studies of teach-back found positive results in 19, with significant improvement in medication adherence and diet among patients with type 2 diabetes (Talevski, J., Wong Shee, A., Rasmussen, B., Kemp, G. & Beauchamp, A., "Teach-back: A systematic review of implementation and impacts," *PLOS ONE*, 15(4):e0231350, 2020). It is exactly the procedure that Professor Samirah Abdu-Aguye of Ahmadu Bello University in Nigeria answered she currently uses in practice. Acting on this point we built a checking step, described in §3.8. Instead of speaking back, the user points at pictures; whether that substitution produces the same confirming effect has not yet been put to people. The same respondent also set out a validation design: work with low-literate participants and do not substitute educated volunteers; use predefined scoring criteria and blinded assessors; test pictogram-only, audio-only and both separately; and use real prescriptions rather than a clean demonstration. The evaluation design in §5.10 was revised accordingly.
 
@@ -2378,7 +2410,7 @@ The same respondent left a line about what must not be conveyed by picture and s
 
 The field evaluation design in §5.10 was revised in line with the responses. Advice came from four places.
 
-Foued Maaoui, researcher at the Institut Pasteur de Tunis, asked for low-literate participants rather than educated volunteers, predefined scoring criteria and blinded assessors, separate testing of pictogram-only, audio-only and both, real prescriptions rather than a clean demonstration, and audio in a language matching the participants'.
+Foued Maaoui, researcher at the Pasteur Institute of Tunis, asked for low-literate participants rather than educated volunteers, predefined scoring criteria and blinded assessors, separate testing of pictogram-only, audio-only and both, real prescriptions rather than a clean demonstration, and audio in a language matching the participants'.
 
 Myojung Choi, researcher at the Korea Disabled People's Development Institute, cited Nielsen, J. & Landauer, T. K., "A mathematical model of the finding of usability problems," *Proc. INTERCHI '93*, 206–213, 1993, to the effect that a small sample of around 15 can secure the validity of a usability evaluation, and that a small sample in fact allows user behaviour and reactions to be grasped in detail, recommending behavioural analysis alongside the survey responses.
 
@@ -2523,7 +2555,7 @@ One more thing should be read from it. The disclosure sits below the red line, w
 
 The dispenser now calls the phone when it presents a dose. The same respondent proposed dosing-time notifications. The release button is visible only while the app is open, so without a place that calls, this feature works only for whoever happens to have the app open. It does not call while you are watching, it does not disappear until touched, and permission is asked right after pairing the box: to someone who has just claimed the box, "shall we tell you when a dose is ready" is a continuation, whereas a dialogue at first launch gets refused before its purpose is known.
 
-A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Institut Pasteur de Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
+A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Pasteur Institute of Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
 
 The web app test count went from 231 to 360 (Table 29).
 
@@ -2591,6 +2623,13 @@ We state what this proposal does not claim.
 
 First, no comprehension testing with people was carried out. The expert survey in §5.7 is not that test: it asked people who deal with such patients daily, whereas a comprehension test has to ask the patients. The measurement in §5.2 concerns a machine, and whether the 67% criterion required by ISO 9186 is met has to be confirmed with people. Further, because misreading a dosing instruction leads directly to harm, we judge it appropriate to also apply the **critical confusion of 5% or less** required by ANSI Z535.3. The field evaluation plans to tally wrong answers separately as ordinary errors and as opposite-meaning errors.
 
+We did not write that item ourselves. The survey gave us the same thing in one sentence. Answering "could a patient who cannot read take their medicine correctly, alone, with only these screens", Associate Professor Rahul Malhotra of the Duke-NUS Medical School wrote:
+
+> "Pictograms need to validated for understanding before use"
+> (Associate Professor Rahul Malhotra, Duke-NUS Medical School)
+
+Eight words, saying what the first item of this section says. Between what we measured by machine in §5.2 and what that sentence requires, the people are missing, and which of us named the gap first does not matter. That we pointed at the same place does.
+
 Second, cultural adaptation has not been verified. In the controlled comparison showing two sets to the same 46 people, 20 of 23 locally made pictograms passed the ANSI criterion while USP-DI managed 11 of 23 (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). Pictogram comprehension therefore varies by culture. This set was designed in Korea and needs verification with Moldovan users.
 
 Third, no claim is made about clinical outcomes. Ownby et al. (2024), cited in §1.4, makes this item heavier. Three hundred and fifteen people with low health literacy were given an app with lowered reading difficulty and audio, and medication adherence did not move. We hold that changing the medium is different, but whether that holds can only be known by measuring, and we have not measured it. This work measured the arrival of information and did not measure improvement in adherence or health outcomes.
@@ -2611,7 +2650,16 @@ Tenth, the spoken translations in six languages have had no native-speaker clini
 
 Eleventh, whether people keep using it was not measured. The formative evaluation of §5.1 covers a single capture, and whether the same person opens this app again a few days later was not measured. What the industry-practice respondent in §5.7 chose as the first thing to break in operation is that point.
 
+Twelfth, whether taking the photograph is possible was assumed and not measured. This app begins with one photograph, and we assumed that taking it is possible for anyone. It is the point Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, raised in §1.5: that blind people may be the largest group among those who cannot read, and that for them the act of photographing is itself a barrier. This app did not take blind users as its target, so it is out of scope rather than a failure. But unless the scope is written down, the "three layers overlaid" of §2.1 reads as though it required no sight. How far a screen reader and assisted capture can be joined to this is left to §5.10.
+
 ### 5.10 Future plans
+
+The plans were not drawn up among ourselves. Points from the last box of the survey went into the table, and one of them is a single line from Professor Sung-il Cho of Seoul National University.
+
+> "A plan is needed to reflect the fact that circumstances differ by country."
+> (Professor Sung-il Cho, Seoul National University)
+
+That one line separates stages 3 and 5 of the table below. Running the field evaluation of stage 3 in one country yields that country's answer only, and Figure 10 in §1.8 has already shown the same internationally standardised symbol going from 94% in one country to 8% in another. Table 6 in the same section likewise shows the highest pass rate belonging to a set made locally and tested on local people. So the evaluation is split by country, and building culturally adapted versions of the morphemes was set as stage 5. That the 39 respondents work in 22 countries is itself the first data for that plan.
 
 [Table 48] Plans after the contest
 
