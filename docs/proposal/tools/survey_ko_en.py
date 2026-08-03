@@ -13,8 +13,8 @@ TRANSLATION = {
         'I have neither seen nor used the system. (There is no system in the email.)',
 
     '대신할 수 있을 지 판단할 근거 자료(스냅케어의 작동화면이라든지)가 전무하여 판단할 수 없음':
-        'There is no material at all to judge from \u2014 no working screens of SnapCare, '
-        'for instance \u2014 so I cannot judge.',
+        'There is no material at all to judge from (no working screens of SnapCare, '
+        'for instance), so I cannot judge.',
 
     '한국의 경우 한글을 이해하지 못할 정도로 문해력이 낮은 성인이 그렇게 많지 않을 듯 합니다.':
         'In Korea I do not think there are many adults whose literacy is low enough that '
