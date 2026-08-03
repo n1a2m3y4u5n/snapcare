@@ -512,6 +512,10 @@ What the same literature records about icons is set down as well: icons are ofte
 
 The authors locate the cause in the understanding of nesting itself. Some participants did not grasp that a higher-level picture in the hierarchy stood for a bundle of items beneath it, and some could not remember how to return upward after entering the wrong branch. Turning pages was not itself the problem. The problem is having to hold in mind how far down one has gone.
 
+The limitation the authors set down themselves belongs here as well. The experiment had no control group of literate readers. The authors wrote that they therefore cannot rule out that literate users would also have been comparably slow on the hierarchical UI under the same conditions, and they named this a limitation of their study. On this evidence, then, one cannot say that difficulty with hierarchy is peculiar to non-literate users.
+
+Stating that limitation in fact favours our design. The mechanism the authors point to is not the ability to read but the memory load of holding in mind how far down one has come. If that is right, a screen with the hierarchy removed is not an accommodation that works only for low-literacy users but a structure that works for everyone. It runs the same way as the decision in §1.5 to design for total blindness, low vision and low literacy as one, and it is also why this app flattens its screens to a single layer in §3.2.
+
 All of this prior work is other people's making, measured by other people. To hear the same thing said about ours, the survey asked "where it could be misread", and Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, answered:
 
 > "The images clearly reflect a lot of thought, but they need to land more intuitively. The image for washing your hands before taking it, for instance, is not intuitive. A hand under a running tap would come across far better. In fact many pictograms of this kind have already been developed, so it would be good to consult and borrow from them."
