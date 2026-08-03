@@ -19,6 +19,7 @@
   · 인용이 이름과 해만 적혀 있지 않은가
   · 서식으로 뽑은 뒤 표와 그림이 성한가
   · 화면 캡처가 지금 앱보다 낡지 않았는가
+  · 소제목에 번호가 붙어 있는가
 """
 import re
 import sys
@@ -280,6 +281,16 @@ def stale_shots() -> list:
     return []
 
 
+def unnumbered_subs(f: str) -> list:
+    """번호 없는 소제목을 찾는다.
+
+    본문 소제목이 스물여덟 개인데 번호가 없으면 목차에서 어느 절에 딸린
+    것인지 보이지 않고, 서로 참조할 방법도 없다."""
+    s = (DOC / f).read_text()
+    s = s[:s.index('### 5.11')]
+    return re.findall(r'^#### (?!\d+\.\d+\.\d+ )(.+)$', s, re.M)
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -354,6 +365,10 @@ def main() -> int:
             note(f'{f}: 같은 수치가 두 곳에 다르다 — {t}')
         for t in short_cites(f):
             note(f'{f}: 서지 정보 없는 인용 — ({t})')
+
+    for f, _, _ in PAIR:
+        for t in unnumbered_subs(f):
+            note(f'{f}: 번호 없는 소제목 — {t[:40]}')
 
     for t in stale_shots():
         note(t)

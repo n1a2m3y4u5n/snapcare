@@ -160,7 +160,7 @@ One qualification is needed here. This distribution covers errors made on the di
 **[Figure 4]** Distribution by type of 155 dispensing errors found by pharmacists (Anacleto, T. A., Perini, E., Rosa, M. B. & César, C. C., "Medication dispensing errors in a Brazilian hospital pharmacy," *Clinics*, 62(3):243–250, 2007). Omission, dose and timing account for 84.5%. That all three are information which can be carried in a picture is the starting point of the SIGIL morpheme design, and `finish_course`, `qty_*` and `time_*` correspond to them respectively.
 
 
-#### Misreading measured on the patient side
+#### 1.3.1 Misreading measured on the patient side
 
 The distribution above is a record from the dispensing side. What happens on the patient side has been measured separately.
 
@@ -798,7 +798,15 @@ This section sets out how SnapCare differs from what already exists. Two compara
 
 The rows of the table are not independent of one another. Fixing the input as a single photograph in the first row means the user does not say what they photographed, so the app has to determine it itself (§3.3), and deciding in the fifth row not to assume a diagnosis changes how conditions are asked altogether (§2.5). Settling one brings the rest with it, and the starting point is the first constraint in §2.1.
 
+The heaviest row in the table is the third, composition. As §1.9 showed, the USP set's licence forbids derivative works, so those 81 symbols cannot be joined to one another. Given that one prescription usually carries several instructions, that is not a small constraint. "Three times a day, with food, for a week" is three instructions, and with a fixed set there is nothing to do but place three pictures side by side. Composing by grammar means the combinations available from the same 78 morphemes are settled by a rule rather than by a list (§2.2).
+
+The fourth row is larger than it looks as well. An app that judges from a fixed table applies one threshold, say "warn above 25 g of sugar", to every user. The WHO recommendation is itself written as a proportion of total energy, so that approach is the source rounded once. Derived as in §2.4, the same can of drink is a warning for a seven-year-old and not for an adult. This is a question of what is being measured, not of precision.
+
+One row has to be read again against the survey of §5.7. In the fifth row we record not presuming a diagnosis as a differentiator, and yet 9 of the 12 pharmacy respondents answered that a pharmacist should review the instructions this app produces every time. Not asking about a diagnosis and reaching a verdict alone are different things, and what we removed is the first, not the second. What §2.6 claims as a differentiator is what the user is not asked, not that the process completes without a professional.
+
 The last two rows are where we consider this work to have put something new. We did not find, within the range we looked over, a procedure that measures pictogram comprehension automatically before release (the same qualification as in §1.11), and §5.2 sets out both the procedure and its results. The remaining rows are design choices rather than distinct contributions, and the grounds for each are given in §2.1 through §2.5.
+
+The limits of this comparison are set down too. We treated the general health app as a single type, though there is much variation within it, and we did not survey individual products systematically. The left-hand column is a set of features we observed repeatedly within the range we looked at, not the result of a market study. What the team leader at GC Medi-AI wrote in §5.7, that there are already many medication-counselling solutions, aims exactly at this limit. We may not have seen everything that already exists.
 
 ### 2.7 The three core functions
 
@@ -889,7 +897,7 @@ Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, looked at 
 
 ### 3.3 From capture to verdict
 
-#### Getting to the shutter
+#### 3.3.1 Getting to the shutter
 
 Pressing the blue circle on the home screen moves to the capture screen. At the very top is one line, "Point at something," and the screen reads that sentence aloud the moment it arrives. You do not have to press anything to find out what to do.
 
@@ -897,7 +905,7 @@ In the middle is a preview area, and below it a single 64-pixel white circle. Th
 
 Pressing the shutter opens the device's own camera, and the photograph comes straight back to the app. No separate capture screen was built inside the app because the device camera already handles focus, exposure and stabilisation, and reimplementing that could only make it worse.
 
-#### The order in which what was photographed is decided
+#### 3.3.2 The order in which what was photographed is decided
 
 The returned photograph is classified into one of four categories: food, drink, medicine or prescription. This determination is not made at once but split across two layers.
 
@@ -911,7 +919,7 @@ The second layer is invoked only when the first has failed. If the text read fro
 
 There is a reason for this order. Finishing anything with text on the device and sending out only what needs a connection means prescriptions and nutrition labels are read without an internet connection. These two are the most urgent things in this app (§4.5).
 
-#### What is shown while waiting
+#### 3.3.3 What is shown while waiting
 
 While recognition runs, the preview area displays what is happening in text, and the same sentence goes out as speech. The four sentences actually displayed are as follows.
 
@@ -926,7 +934,7 @@ While recognition runs, the preview area displays what is happening in text, and
 
 Showing the percentage rather than hiding it is deliberate. One of the barriers identified in research on low-literate users is intimidation (Medhi, I., Cutrell, E. & Toyama, K., "It's not just illiteracy," *Proc. International Conference on Interaction Design & International Development*, 2010), and a screen that has stopped with no indication reads as a fault. Simply watching the number climb conveys "it is running," and that is conveyed without reading. For the same reason the shutter and every button below it are locked against presses while recognition runs. Pressing twice must not run it twice.
 
-#### The vertical order of the verdict screen
+#### 3.3.4 The vertical order of the verdict screen
 
 The verdict screen splits into two versions depending on what was photographed. The criterion for the ordering is the same: scanning top to bottom without reading, what is needed has to come first.
 
@@ -949,7 +957,7 @@ The difference between the two versions is at positions 4 and 3. For prescriptio
 
 Cutting the nutrient bars to three follows the same criterion. Items below 5% of the daily reference and items already sufficient are dropped, and only the top three of what remains are shown. Showing all ten lines buries which one is the problem.
 
-#### What determines the verdict
+#### 3.3.5 What determines the verdict
 
 Colour has three levels and is derived from the user's conditions. Where several grounds apply, the worst wins.
 
@@ -1002,7 +1010,7 @@ Speech plays once automatically on arriving at the verdict screen. The listener 
 
 This design responds to the IVR research in §1.10. What that study identified as the main difficulties for older users were speech rate and the length of options. Even if it is not all taken in at once, the part that is needed can be heard again.
 
-#### Signalling that something can be pressed
+#### 3.5.1 Signalling that something can be pressed
 
 This design had a defect that surfaced during development. **There were 78 pressable places and only nine visible indicators**, and those nine were emoji at 0.75 times body size with 40% opacity. The capability existed but where to press was invisible, and for a user with reduced vision that is the same as its not being there.
 
@@ -1020,7 +1028,7 @@ The arrival announcement reads one line per screen. Reading everything would pou
 
 The listen button is 44 pixels. That is roughly the area a fingertip covers on the screen, and anything smaller starts to demand aim.
 
-#### Speaking the pictograms
+#### 3.5.2 Speaking the pictograms
 
 The last thing discovered was that only the pictograms did not speak. The verdict, the product name and the nutrient figures could all be pressed and heard, while the pictures, the core contribution of this work, were silent.
 
@@ -1094,7 +1102,7 @@ The same principle repeats in the nutrient bars. One fact is expressed five time
 The line currently being read gains an outline. Where the audio has reached has to be visible as well as audible, so that someone who lost the thread can press that spot again.
 
 
-#### Whether the colours themselves can be read was measured separately
+#### 3.7.1 Whether the colours themselves can be read was measured separately
 
 If everything so far concerns the layers that substitute for colour, whether the colour itself can be read is a separate question. In §5.7, E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols and the University of Southampton, wrote that the WCAG 2.2 mobile criteria should be checked. The reason given was that AAC users frequently have visual difficulties as well and operate by scanning, which makes an audio button hard to reach. Working through the criteria, two items failed.
 
@@ -1265,7 +1273,7 @@ The first two are set by the platforms and cannot be worked around, the third is
 
 The remaining route is top-level navigation. An HTTPS page cannot `fetch` an HTTP device, but navigating to that address is not blocked. The app therefore builds a link to the device's save address, and one press from the user has the device store the schedule and show a confirmation page. No broker and no cloud are required, and the whole thing completes inside the home.
 
-#### Adding a relay path
+#### 4.3.1 Adding a relay path
 
 The reason for excluding the cloud broker in the third row of Table 24 was that it "requires internet on both sides." That sentence is true when relying on that route alone. Since the LAN route above is already complete, adding an internet route on top of it does not increase the requirements.
 
@@ -1341,7 +1349,7 @@ A named problem (`problems`) sends the user back to the paper and is recoverable
 
 For multi-select items such as days of the week, the `unclear` marks, those too ambiguous to call either empty or filled, are collected separately and reported alongside. Yielding a value while also saying what is doubtful is better than dropping something silently.
 
-#### Measuring where degradation breaks it
+#### 4.4.1 Measuring where degradation breaks it
 
 We wanted how rough a photograph the parser can still read to be recorded as a measurement rather than an opinion. Testing an optical mark reader normally means printing the form, filling it by hand and photographing it under various lighting, and repeating all of that whenever the code changes. Then nobody runs it, and behaviour under poor conditions stays a guess.
 
@@ -1598,7 +1606,7 @@ The two conditions differ. The first asks whether the result can be thrown away;
 The 512px original and the 32px reduction are also shown together, with the answer given against the reduction, because the reduction is the size actually seen in a list.
 
 
-#### The retry strategy
+#### 5.2.1 The retry strategy
 
 Placing gates is only half of it. Pictures that fail have to be remade, and the retries have to converge.
 
@@ -1634,7 +1642,7 @@ The last sentence of the first branch was paid for as well. It originally said o
 
 The same defect appeared once more later. `qty_four` had remained as four rings rather than four filled dots, and in a counting picture an empty ring reads as zero, while one, two, three and five in the same set are all filled dots, so it alone followed a different rule within the set. Why the checker passed it is clear: four rings is still correctly "four." This means something can pass both the counting check and the meaning check and still be wrong, and this is the point taken up again as a limitation of the procedure in §5.4.
 
-#### Results across all 78 morphemes
+#### 5.2.2 Results across all 78 morphemes
 
 Applying this procedure to all 78 morphemes gave the following.
 
@@ -1759,7 +1767,7 @@ Values from this route are therefore not trusted on the grounds of accuracy. Wha
 
 **[Figure 38]** Per-item MAE% of the nutrition estimation model (n = 507). The dashed line is the mean across the five items (26.75%). Mass and energy are relatively better and the trace items get worse, because a photograph of a plate shows volume but not composition. The same volume of rice and the same volume of fried food have similar mass and completely different fat.
 
-#### Quantisation not applied
+#### 5.5.1 Quantisation not applied
 
 An int8 quantised build reducing the model to 4.86 MB was also exported but not deployed.
 
@@ -1790,11 +1798,13 @@ What survives when the connection drops and what does not divides as follows. Wi
 
 This division matches the boundary described in §4.5. The most urgent things were placed on the device, so what dies first when the connection drops is the least urgent route. This check was made by cutting the connection in developer tools, however, rather than measured in an actual low-bandwidth environment. Having no connection and having a slow one fail differently, and the latter has not yet been measured (§5.9).
 
+What this measurement does not say is also recorded. Only a completely severed connection was measured, so as the fifth item of §5.9 records, a slow connection was not. And it was measured after the service worker had already filled its cache. Someone opening the app for the first time has to download 16 MB, and how long that download takes on the connections of the target regions was not measured either. What this section shows is behaviour after installation, not installation itself.
+
 ### 5.7 Expert opinion survey
 
 As stated in §5.4, every measurement up to this point has been a machine scoring a machine. So we asked people. The people we asked, however, are not low-literate patients but those who deal with such patients every day. Because that distinction matters, we state it first. **This survey does not stand in for the comprehension testing of §5.9.** An expert answering that "a patient would probably be able to read this" does not mean a patient read it.
 
-#### How the list was built
+#### 5.7.1 How the list was built
 
 The list was not built in one pass. It was researched separately across eight domains and then combined. Searching sequentially, one person carries the criteria of the first domain into the later ones and the sample tilts one way. Researching by domain means people are chosen by the standards of each field.
 
@@ -1827,7 +1837,7 @@ We wrote down separate rules for handling the list. Taking Article 50-2 of the K
 
 Each recipient was assigned a ten-character token derived from their email address. The token alone identifies no one, and the table linking tokens to people exists only in a spreadsheet in our own hands. The response server stores only tokens, and because the folder holding the list was excluded when the Docker image was built, the server does not hold the list at all. That the deployed image contains no list was verified by connecting to it.
 
-#### How it was sent
+#### 5.7.2 How it was sent
 
 Between 04:48 and 07:50 on 31 July 2026, over 182 minutes, 1,103 messages were sent one at a time. The mean interval was 9.9 seconds and no address was rejected. Bulk mail and blind copy were not used because the rules forbid addresses being exposed to one another and because the link carries a different token for each person, so several people cannot share one message.
 
@@ -1853,7 +1863,7 @@ The answer options always kept a choice that is unfavourable to us: "there is no
 
 We left a morpheme comprehension test out of the survey. A professor reading our pictograms does not mean a low-literate patient reads them, and writing that number down as meeting the ISO 67% criterion would state something untrue.
 
-#### Who answered
+#### 5.7.3 Who answered
 
 As of 2 August 2026, 35 people had answered: 3.2% of those contacted, with 117 free-text responses alongside.
 
@@ -1920,7 +1930,7 @@ Half the respondents work outside Korea. Since this app claims not to be for one
 
 One thing has to be set down here. Forty-three percent of respondents (15 people) answered that they "almost never" encounter someone unable to read a written medication instruction. Four answered that they encounter such a person almost daily. And one respondent pointed this out directly. It means the answers to this question are themselves evidence about the premise of §1.1, and not in a direction that favours us.
 
-#### What they answered
+#### 5.7.4 What they answered
 
 The questions calling for a judgement on the demonstration were attached to five segments only. They were not attached to the law, standards and industry segments. Ruling on patient comprehension is not something that can be done from those positions, and mixing unqualified answers into the denominator makes the resulting proportion a proportion of nothing.
 
@@ -1941,7 +1951,7 @@ In the nursing and public health segment, asked whether it can change health out
 
 In the nursing and public health segment, 6 of 9 answered that the patient and the carer should be designed for separately. This app is designed on the premise that the patient uses it alone, so what was caught is the premise rather than a feature.
 
-#### How far the numbers can be pushed
+#### 5.7.5 How far the numbers can be pushed
 
 An n of 34 is small. So rather than recording proportions alone we record how much those proportions move. The intervals below are 95% confidence intervals by the Wilson method. With a small sample the normal approximation produces intervals dropping below 0 or exceeding 1; Wilson does not.
 
@@ -1985,7 +1995,7 @@ The sixth row is worth reading on its own. A rank correlation of 0.723 between t
 
 Free text was written by 30 of the 35 respondents, 117 items in all. Counting by keyword how many people independently raised the same point gives 6 on the absence of validation, 5 on too many elements in one image, 6 on blind users, 4 on the prohibition marking and 4 on referring to existing sets. That count is by words we chose, however, so the body text uses the counts a person read and confirmed.
 
-#### Points raised in several countries at once
+#### 5.7.6 Points raised in several countries at once
 
 The heaviest finding was that a prohibition is not read as a prohibition. The morpheme for pregnancy contraindication, `state_pregnant`, is a picture of a pregnant woman with no prohibition marking. The prescription says "do not use during pregnancy" and the speech says so too, but to someone looking only at the picture it reads the other way round.
 
@@ -2019,7 +2029,7 @@ Where the earlier five responses said "there are more blind people", this one di
 
 The same respondent pointed at institutional material we did not know about: a comparative study of domestic and international guidelines for braille labelling on medicines (Yakhak Hoeji), and the Ministry of Food and Drug Safety guideline on braille and voice and sign-language conversion codes for medicines and quasi-drugs. It means standards and guidance already exist for the layer we chose not to address, and it makes us look again at leaving blindness among the unverified items in §5.9. If this app ever does address that layer, it should follow that guidance rather than design something new.
 
-#### Individual findings
+#### 5.7.7 Individual findings
 
 Foued Maaoui, a researcher at the Institut Pasteur de Tunis, noted the absence of teach-back. There is no procedure for confirming that the patient understood correctly, and from a patient-safety standpoint the absence of this feedback loop is a serious risk.
 
@@ -2091,7 +2101,7 @@ We corrected the samples. The amoxicillin warnings were changed to penicillin al
 
 That all three are problems with the example we made rather than with the engine is the same as the refrigeration error before them. And it says the same thing this section leaves in §5.9. Not one sample in this document has been reviewed by a pharmacist.
 
-#### Objections to the approach itself
+#### 5.7.8 Objections to the approach itself
 
 The sharpest response asked whether our product is needed at all. The team leader at the GC Medi-AI Uisarang Service Centre wrote five things: that Korean prescriptions already carry a barcode, so scanning the whole sheet is inefficient; that apps reading the barcode and guiding people with disabilities already exist; that medication counselling is a legal duty of pharmacists and doctors and that many solutions for it already exist; that the market for a business aimed at people who cannot read is too small relative to the investment; and that electronic prescriptions are being prepared, so once they arrive this becomes useless.
 
@@ -2101,7 +2111,7 @@ For the other two we have no answer. That the domestic market is small is true, 
 
 A finding in the same direction came from the industry-practice segment. Cheolhyeon Park, Team Leader at VOICEYE, wrote that "however good a product or piece of software is, without recognition at the client or operator level there is no diffusion", and added that anyone thinking about commercialisation should propose it to a body such as the Korean Pharmaceutical Association and settle both acceptability and price.
 
-#### Responses that made us revisit our premise
+#### 5.7.9 Responses that made us revisit our premise
 
 The finding from Professor Heejung Seo of Dong-eui University was the most fundamental in this survey.
 
@@ -2117,7 +2127,7 @@ Professor Kyunghwa Lee of Soongsil University wrote that whether the pictures ar
 
 Professor Namsoo Park of Hyupsung University pointed at digital literacy. How well people who cannot read handle a mobile device has to be examined first, and the app in fact contains an instruction reading "select any that apply to you", which blocks that screen for anyone who cannot read it. This is a direct finding about the profile-setup screen of §3.2.
 
-#### New risks our design could create
+#### 5.7.10 New risks our design could create
 
 Professor and pharmacist So-Young Lee of Chungnam National University pointed out that this app could create a risk that did not exist before.
 
@@ -2136,7 +2146,7 @@ That stings, because what this document measures from §5.1 to §5.6 is largely 
 
 The same respondent left a line about what must not be conveyed by picture and speech alone. Only one option could be selected, so they chose contraindications, but side effects and cases needing dose adjustment belong there too. The respondent filled in the limits of our question design for us, and it is why this section has to read the multiple-choice results alongside the free text.
 
-#### Advice on the evaluation design
+#### 5.7.11 Advice on the evaluation design
 
 The field evaluation design in §5.10 was revised in line with the responses. Advice came from four places.
 
@@ -2154,7 +2164,7 @@ The same respondent also pointed us to a reference: a study testing pictograms d
 
 Professor Eun-Kyoung Kim pointed at the procedure before the test rather than the test itself: explain the purpose and the benefit from the learner's point of view to the institution and the literacy teacher first, obtain their cooperation, and only then use part of a class period. Asked whether a tool like this might reduce the motivation to learn to read, the same respondent answered that it would not, on the grounds that the motivation to learn to read is more than the acquisition of a skill.
 
-#### Every answer, by occupation
+#### 5.7.12 Every answer, by occupation
 
 The preceding subsections quoted only the questions we selected. To see whether the basis of that selection tilted one way, we laid out the whole tally by occupation again. It had tilted. There were places where the figure unfavourable to us was included and the favourable one omitted, and the bold rows in the table below are those.
 
@@ -2232,7 +2242,7 @@ Asked which morphemes would be misread first, the AAC respondent chose abstract 
 
 Asked what breaks first in operation, the industry-practice respondent chose "users stop using it after a few days". No measurement in this document addresses continued use. It has been added to the unverified items in §5.9. That the formative evaluation of §5.1 covers only a single capture is what is caught here.
 
-#### What was fixed after the survey
+#### 5.7.13 What was fixed after the survey
 
 This survey was carried out to fix things rather than to record results and stop, so what was fixed and what further came to light in the fixing is set down here. All of it took place after the survey in August 2026.
 
@@ -2274,7 +2284,7 @@ A checking step was built. It responds to the absence of teach-back raised by Fo
 
 The web app test count went from 231 to 347 (Table 28).
 
-#### Limits of this survey
+#### 5.7.14 Limits of this survey
 
 The sample is self-selected. Thirty-five of 1,103 answered, and those who answered are people with an interest in the subject. The judgement of the 1,068 who did not answer is unknown.
 
@@ -2373,7 +2383,6 @@ The sample will be older Moldovan users, with the aim, as Table 6 showed, of mea
 It should also be recorded that we may not obtain it. That the pass rates in Table 6 spread from 15.7% to 87% means the comprehensibility of any one set is not predictable in advance in this field. What this work offers is not a claim to have a good set but a procedure for measuring a set before release, and whatever that procedure says about our set is the result.
 
 <!-- 부록 시작. survey_appendix.py 가 생성한다. 손으로 고치지 말 것 -->
-
 ### 5.11 Appendix. Every free-text response
 
 §5.7 quotes only the responses we selected. Selecting can tilt towards what favours us, so all 117 free-text responses received are set down here in full, by question. Only line breaks were removed; nothing else was touched. Short answers ("N/A", "Yes.") are left in rather than being dropped and reinstated. Responses written in Korean are given here in our own translation; the originals stand unaltered in the Korean version of this document.

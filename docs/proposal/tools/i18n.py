@@ -96,12 +96,12 @@ EN = {
     '색각이상 대응': 'For colour vision deficiency',
     '색만으로 판정하지 않는다 (WCAG 1.4.1)':
         'The verdict never rests on colour alone (WCAG 1.4.1)',
-    '전달의 세 층 — 서로를 대체하지 않고 겹친다':
+    '전달의 세 층. 서로를 대체하지 않고 겹친다':
         'Three layers of delivery. They overlap rather than substitute',
-    '계층을 두지 않는다 — 비문해 사용자에게 깊은 계층형 65.5초 대 평면 목록형 25초 (Medhi 등, 2013)':
+    '계층을 두지 않는다. 비문해 사용자에게 깊은 계층형 65.5초 대 평면 목록형 25초 (Medhi 등, 2013)':
         'No hierarchy. For non-literate users a deep hierarchy took 65.5 s '
         'against 25 s for a flat list (Medhi et al., 2013)',
-    '인식 과정을 감추지 않는다 — 아무 표시 없이 멈춘 화면은 고장으로 읽힌다 (Medhi, Cutrell & Toyama, 2010)':
+    '인식 과정을 감추지 않는다. 아무 표시 없이 멈춘 화면은 고장으로 읽힌다 (Medhi, Cutrell & Toyama, 2010)':
         'Recognition is not hidden. A screen stopped with no indication reads '
         'as a fault (Medhi, Cutrell & Toyama, 2010)',
     '[그림 11]': '[Figure 13]',
@@ -494,8 +494,8 @@ EN = {
     '남긴 것을 이 순서로 말한다. 듣는 사람은 되감을 수 없다':
         'What is kept is spoken in this order. The listener cannot rewind',
     '무엇에 대한 말인지 세운다': 'Establishes what this is about',
-    '형성 평가 첫 측정에서 음성까지 도달하지 않던 항목':
-        'Did not reach the speech channel in the first formative measurement',
+    '형성 평가에서 음성까지 닿지 않던 항목':
+        'Did not reach the speech channel',
     '언제 · 얼마나 자주': 'When and how often',
     '냉장일 때만 말한다': 'Spoken only when refrigeration is required',
     '제형은 읽히지 않는다. 동사와 부위를 정하고 사라진다 (표 9)':
