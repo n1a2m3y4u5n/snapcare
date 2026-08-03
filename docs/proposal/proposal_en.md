@@ -2623,6 +2623,13 @@ We state what this proposal does not claim.
 
 First, no comprehension testing with people was carried out. The expert survey in §5.7 is not that test: it asked people who deal with such patients daily, whereas a comprehension test has to ask the patients. The measurement in §5.2 concerns a machine, and whether the 67% criterion required by ISO 9186 is met has to be confirmed with people. Further, because misreading a dosing instruction leads directly to harm, we judge it appropriate to also apply the **critical confusion of 5% or less** required by ANSI Z535.3. The field evaluation plans to tally wrong answers separately as ordinary errors and as opposite-meaning errors.
 
+We did not write that item ourselves. The survey gave us the same thing in one sentence. Answering "could a patient who cannot read take their medicine correctly, alone, with only these screens", Associate Professor Rahul Malhotra of the Duke-NUS Medical School wrote:
+
+> "Pictograms need to validated for understanding before use"
+> (Associate Professor Rahul Malhotra, Duke-NUS Medical School)
+
+Eight words, saying what the first item of this section says. Between what we measured by machine in §5.2 and what that sentence requires, the people are missing, and which of us named the gap first does not matter. That we pointed at the same place does.
+
 Second, cultural adaptation has not been verified. In the controlled comparison showing two sets to the same 46 people, 20 of 23 locally made pictograms passed the ANSI criterion while USP-DI managed 11 of 23 (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). Pictogram comprehension therefore varies by culture. This set was designed in Korea and needs verification with Moldovan users.
 
 Third, no claim is made about clinical outcomes. Ownby et al. (2024), cited in §1.4, makes this item heavier. Three hundred and fifteen people with low health literacy were given an app with lowered reading difficulty and audio, and medication adherence did not move. We hold that changing the medium is different, but whether that holds can only be known by measuring, and we have not measured it. This work measured the arrival of information and did not measure improvement in adherence or health outcomes.
@@ -2644,6 +2651,13 @@ Tenth, the spoken translations in six languages have had no native-speaker clini
 Eleventh, whether people keep using it was not measured. The formative evaluation of §5.1 covers a single capture, and whether the same person opens this app again a few days later was not measured. What the industry-practice respondent in §5.7 chose as the first thing to break in operation is that point.
 
 ### 5.10 Future plans
+
+The plans were not drawn up among ourselves. Points from the last box of the survey went into the table, and one of them is a single line from Professor Sung-il Cho of Seoul National University.
+
+> "A plan is needed to reflect the fact that circumstances differ by country."
+> (Professor Sung-il Cho, Seoul National University)
+
+That one line separates stages 3 and 5 of the table below. Running the field evaluation of stage 3 in one country yields that country's answer only, and Table 6 in §1.8 has already shown the same picture going from 94% in one country to 8% in another. So the evaluation is split by country, and building culturally adapted versions of the morphemes was set as stage 5. That the 39 respondents work in 22 countries is itself the first data for that plan.
 
 [Table 48] Plans after the contest
 
