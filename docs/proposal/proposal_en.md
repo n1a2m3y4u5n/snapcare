@@ -417,6 +417,10 @@ One trial separated directly what has to be layered with what. In Qatar, 123 mig
 
 The arm that won is the same combination SnapCare uses. Not text with speech, and not pictures alone, but pictures with speech. The decision in §2.1 to overlay three layers is supported directly by this trial.
 
+The heavier finding from that trial is which arm came last. The paper concludes that **pictogram-only labels were the least comprehended of the three**, worse even than text carrying verbal support in a language the participant could not read. That does not say pictures beat text; it says pictures beat text once speech is attached, and that a picture with the speech removed can do worse than letters the reader cannot read. It is why this app does not let the speech be switched off and plays it once automatically on the verdict screen (§3.5).
+
+The caution the paper leaves belongs here too. Some pictograms were difficult to interpret even with verbal instructions, and the authors write that they therefore need thorough piloting with users before implementation. What §5.9 records as the absence of testing with people lands on exactly that sentence.
+
 The result running the other way in the same study should be recorded too. "Take two tablets three times a day" and "Instill one drop in the eye" came across well, but **"Do not take with dairy products" remained difficult even with a picture and an explanation.** Abstract and negative instructions are what is left over. It is the same place as the AAC respondent in §5.7 predicting that abstract concepts such as empty stomach and interaction would fail first, and as all five of the morphemes we could not improve in §5.3 being problems of concept.
 
 There is work with a large sample as well. Showing 1,848 Lebanese adults the same prescription instructions in text alone and then with pictograms raised the comprehension score from 9.36 (±1.60) to 10.88 (±0.89), a difference of 1.52 (95% CI 1.45–1.60, *p* < 0.001) (Mourad, N., Younes, S., Mourad, L. et al., "Comprehension of prescription orders with and without pictograms," *BMC Public Health*, 23:1926, 2023, doi:10.1186/s12889-023-16856-5).
