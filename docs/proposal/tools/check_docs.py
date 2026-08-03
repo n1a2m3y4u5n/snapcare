@@ -265,14 +265,20 @@ def _last_commit(path: str) -> str:
 
 
 def stale_shots() -> list:
+    """캡처가 화면 코드보다 낡았는지 본다.
+
+    파일별 커밋 시각으로만 견주면 오탐이 난다. 화면이 바뀌어도 그 화면을
+    담지 않은 캡처는 픽셀이 같아 커밋에 담기지 않고, 그러면 옛 시각인
+    채로 남는다. 그래서 **가장 최근에 다시 뜬 캡처** 를 기준으로 본다.
+    한 장이라도 화면 코드보다 뒤라면 그때 전부 다시 떴다는 뜻이다."""
     ui = max((int(t) for t in (_last_commit(p) for p in UI_PATHS) if t), default=0)
     if not ui:
         return []
-    out = []
-    for f in SHOT_FILES:
-        t = _last_commit(f'docs/proposal/fig/{f}')
-        if t and int(t) < ui:
-            out.append(f)
+    times = [(f, _last_commit(f'docs/proposal/fig/{f}')) for f in SHOT_FILES]
+    newest = max((int(t) for _, t in times if t), default=0)
+    if newest >= ui:
+        return []
+    out = [f for f, t in times if t and int(t) < ui]
     if out:
         import datetime as dt
         d = dt.datetime.fromtimestamp(ui).date()
