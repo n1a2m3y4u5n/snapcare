@@ -207,8 +207,17 @@ html[data-hearing] {
 .sc-demo-ripple { animation: sc-demo-ripple 3.2s ease-in-out infinite; }
 .sc-demo-press  { animation: sc-demo-press 3.2s ease-in-out infinite; }
 
+/*
+  움직임을 안 쓰는 사람에게는 화살표를 대신 준다.
+
+  손과 물결은 정지하면 뜻이 없다 — "손가락 그림" 과 "동그라미" 가 남을 뿐이다.
+  그래서 아예 안 그리고, 대신 정지한 채로도 뜻이 서는 것을 놓는다. 화살표는
+  "누르면 다음으로 간다" 를 말하고, 이 줄들이 실제로 하는 일이 그것이다.
+*/
+.sc-reduced-only { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
   .sc-demo-hand, .sc-demo-ripple, .sc-demo-press { animation: none; }
-  /* 손과 물결은 정지하면 뜻이 없다 — 안 움직이면 아예 안 보이는 편이 낫다 */
   .sc-demo-hand, .sc-demo-ripple { display: none; }
+  .sc-reduced-only { display: block; }
 }

@@ -97,37 +97,28 @@ export default function TextSizePage() {
                 고르는 자리라는 표시), 눌리는 반응. 가운데 줄은 천천히 숨쉬어서 눈이
                 먼저 가게 한다 — 그것이 기본값이라 아무 생각 없이 눌러도 무난하다.
               */
-              className={`flex w-full items-center gap-4 rounded-2xl border-2 bg-white px-4 py-4
-                          text-left shadow-sm transition-transform
+              className={`flex w-full items-center justify-center gap-4 rounded-2xl border-2 bg-white
+                          px-6 py-4 text-center shadow-sm transition-transform
                           active:scale-[0.97] active:bg-[color-mix(in_srgb,var(--color-sc-primary)_10%,white)]
                           ${!demoOff && i === DEMO_ROW ? 'relative sc-demo-press' : 'relative'}`}
               style={{ borderColor: 'var(--color-sc-line)' }}
             >
-              {/* 고르는 동그라미. 크기를 줄마다 키워서 큰 글자를 고르는 사람에게
-                  표적도 함께 커지게 한다. */}
-              <span aria-hidden
-                    className="relative shrink-0 rounded-full border-[3px]"
-                    style={{
-                      width: ROOT_PX[size] * 0.9, height: ROOT_PX[size] * 0.9,
-                      borderColor: 'var(--color-sc-primary)',
-                    }}>
-                {/* 누르는 순간 퍼지는 물결. 동그라미를 중심으로 나가야 "여기를
-                    눌렀다" 로 읽힌다. */}
-                {!demoOff && i === DEMO_ROW && (
-                  <span aria-hidden
-                        className="sc-demo-ripple absolute inset-[-6px] rounded-full"
-                        style={{ background: 'var(--color-sc-primary)' }} />
-                )}
-              </span>
               {/*
                 px 로 박는다. rem 이면 지금 걸려 있는 뿌리 크기를 따라가서 다섯 줄이
                 다 같이 커지고, 그러면 검사표가 아니라 그냥 목록이 된다.
               */}
               <span aria-hidden
-                    className="flex-1 font-bold"
+                    className="font-bold"
                     style={{ fontSize: ROOT_PX[size] * 1.15, lineHeight: 1.3, color: 'var(--color-sc-ink)' }}>
                 {SAMPLE}
               </span>
+
+              {/*
+                움직임을 안 쓰는 사람 몫. 손이 안 보이는 대신 화살표가 "누르면
+                다음으로 간다" 를 말한다 — 이 줄들이 실제로 하는 일이 그것이다.
+              */}
+              <span aria-hidden className="sc-reduced-only absolute right-4 top-1/2 -translate-y-1/2 text-2xl"
+                    style={{ color: 'var(--color-sc-primary)' }}>›</span>
 
               {/*
                 시범 손. 오른쪽에서 들어와 이 줄을 누르고 물러난다.
@@ -137,12 +128,27 @@ export default function TextSizePage() {
                 자기 줄을 따라다닌다.
               */}
               {!demoOff && i === DEMO_ROW && (
-                <span aria-hidden
-                      className="sc-demo-hand pointer-events-none absolute right-4 top-1/2 -translate-y-1/2
-                                 text-3xl leading-none"
-                      style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.25))' }}>
-                  👆
-                </span>
+                <>
+                  {/*
+                    물결은 손이 닿는 바로 그 자리에서 퍼진다.
+
+                    전에는 왼쪽 동그라미에서 퍼졌는데, 그 동그라미를 없앴다 —
+                    **채워지지 않는 동그라미**였기 때문이다. 고르면 곧바로 다음
+                    화면으로 가므로 "선택됨" 이라는 상태가 아예 존재하지 않는데,
+                    라디오 버튼 모양은 그 상태를 약속한다. 없는 것을 약속하는 표시는
+                    없느니만 못하다.
+                  */}
+                  <span aria-hidden
+                        className="sc-demo-ripple pointer-events-none absolute right-4 top-1/2
+                                   h-10 w-10 -translate-y-1/2 rounded-full"
+                        style={{ background: 'var(--color-sc-primary)' }} />
+                  <span aria-hidden
+                        className="sc-demo-hand pointer-events-none absolute right-4 top-1/2 -translate-y-1/2
+                                   text-3xl leading-none"
+                        style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.25))' }}>
+                    👆
+                  </span>
+                </>
               )}
             </button>
           ))}
