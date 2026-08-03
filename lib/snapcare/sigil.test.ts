@@ -178,3 +178,24 @@ test('주의는 금지로 그리지 않는다 — 사선은 회피에만', () =>
   assert.ok(!caution.some((l) => l.startsWith('\\no{\\dropper_bottle')), caution.join(' · '));
   assert.ok(avoid.some((l) => l.startsWith('\\no{\\dropper_bottle')), avoid.join(' · '));
 });
+
+test('현탁액은 쓰기 전에 흔들라고 그린다', () => {
+  // 2026년 8월 조사에서 약국 실무 응답자가 빠진 특별 지시로 처음 꼽았다. 현탁액에서
+  // 이것은 예의가 아니라 용량이다 — 가라앉은 채로 따르면 앞쪽은 묽고 바닥은 진하다.
+  // 그림(shake_bottle)은 이미 만들어져 있었고 부르는 곳만 없었다.
+  const out = lines(item({ rx: rx({ form: 'syrup', shake: true }) }), false);
+  assert.ok(out.includes('\\shake_bottle'), `흔들기가 없다: ${out.join(' · ')}`);
+});
+
+test('흔들 필요가 없으면 그리지 않는다', () => {
+  const out = lines(item({ rx: rx({ form: 'capsule' }) }), false);
+  assert.ok(!out.includes('\\shake_bottle'));
+});
+
+test('흔들기는 약을 입에 대기 전에 온다', () => {
+  // 순서가 곧 읽는 순서다. 흔들라는 말이 먹으라는 그림 뒤에 오면 이미 늦었다.
+  const out = lines(item({ rx: rx({ form: 'syrup', shake: true, handwash: true }) }), false);
+  const shake = out.indexOf('\\shake_bottle');
+  const core = out.findIndex((l) => l.includes('pill_bottle') || l.includes('syrup'));
+  assert.ok(shake >= 0 && (core === -1 || shake < core), `순서가 뒤집혔다: ${out.join(' · ')}`);
+});

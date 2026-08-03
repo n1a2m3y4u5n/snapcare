@@ -26,9 +26,24 @@ interface PreferencesState {
   speechRate: number;
   /** 소리로 말할 언어. 화면 글자와는 무관하다. */
   sayLang: string;
+  /**
+   * 픽토그램을 크게 본다.
+   *
+   * 2026년 8월 조사에서 AAC·특수교육 응답자가 짚었다 — "아침·정오·저녁 아이콘의
+   * 크기가 문제가 될 수 있으니 가능하면 확대를 제공하라." 같은 응답자가 스위치
+   * 스캐닝으로 조작하는 사용자를 함께 언급했다.
+   *
+   * 그래서 타일마다 돋보기 버튼을 달지 않았다. 스캐닝은 표적 하나하나를 차례로
+   * 훑으므로 버튼이 늘면 그만큼 도달이 멀어진다. 줄 전체에 스위치 하나를 둔다.
+   *
+   * 누름으로 크기를 바꾸는 것이라 확대·축소 손짓(핀치)과도 겹치지 않는다. 손이
+   * 떨리거나 한 손만 쓰는 사람에게 두 손가락 손짓은 없는 기능과 같다.
+   */
+  bigPictures: boolean;
   setAutoTts: (value: boolean) => void;
   setSpeechRate: (rate: number) => void;
   setSayLang: (code: string) => void;
+  setBigPictures: (value: boolean) => void;
 }
 
 export const SPEECH_RATES = [0.7, 0.85, 0.95, 1.1] as const;
@@ -39,9 +54,11 @@ export const usePreferences = create<PreferencesState>()(
       autoTts: true,
       speechRate: 0.95,
       sayLang: DEFAULT_LANGUAGE,
+      bigPictures: false,
       setAutoTts: (autoTts) => set({ autoTts }),
       setSpeechRate: (speechRate) => set({ speechRate }),
       setSayLang: (sayLang) => set({ sayLang }),
+      setBigPictures: (bigPictures) => set({ bigPictures }),
     }),
     { name: 'snapcare-preferences' },
   ),

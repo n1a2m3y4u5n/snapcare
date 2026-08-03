@@ -78,6 +78,7 @@ export const id: SayPack = {
     'contact_lens.yes': 'lensa kontak',
     'contact_lens.no': 'Lepas lensa kontak Anda dulu.',
     'hand_wash.yes': 'Cuci tangan Anda dulu.',
+    'shake_bottle.yes': 'Kocok botolnya dulu sebelum dipakai.',
     'finish_course.yes': 'Habiskan semuanya, walaupun Anda sudah merasa sehat.',
 
     'cadence.twice_daily': 'dua kali sehari',

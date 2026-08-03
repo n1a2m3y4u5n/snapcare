@@ -84,6 +84,7 @@ export const ur: SayPack = {
     'contact_lens.yes': 'کانٹیکٹ لینز',
     'contact_lens.no': 'پہلے اپنے کانٹیکٹ لینز اتاریں۔',
     'hand_wash.yes': 'پہلے اپنے ہاتھ دھوئیں۔',
+    'shake_bottle.yes': 'استعمال سے پہلے بوتل کو اچھی طرح ہلائیں۔',
     'finish_course.yes': 'طبیعت بہتر ہو جائے تب بھی پوری دوا مکمل کریں۔',
 
     'cadence.twice_daily': 'دن میں دو بار،',
