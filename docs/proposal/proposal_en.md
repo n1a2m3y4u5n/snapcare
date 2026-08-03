@@ -1462,16 +1462,16 @@ Deriving the household ID as the SHA-256 hash of the public key follows the same
 
 The web app, the hardware firmware and the training code are managed in a single repository. It will be transferred to the contest organisation's GitHub organisation for final submission.
 
-[Table 27] Composition of the repository (as of 29 July 2026)
+[Table 27] Composition of the repository (as of 3 August 2026)
 
 | Area | Files | Lines | Responsibility |
 |---|---|---|---|
-| `app` · `components` | 41 | 5,439 | Screens and flow |
-| `lib` | 68 | 7,143 | Verdict, nutrition, inference, sync |
-| `engine` | 107 | 13,934 | SIGIL morphemes and composition |
-| `pill_dispenser` | 109 | 22,032 | Firmware and paper form reading |
-| `nutrition_manager` | 61 | 59,083 | Nutrition model training and evaluation |
-| `docs` | 43 | 43,700 | Proposal and figure generation |
+| `app` · `components` | 48 | 7,816 | Screens and flow |
+| `lib` | 118 | 14,227 | Verdict, nutrition, inference, sync |
+| `engine` | 107 | 14,200 | SIGIL morphemes and composition |
+| `pill_dispenser` | 156 | 46,214 | Firmware and paper form reading |
+| `nutrition_manager` | 61 | 59,335 | Nutrition model training and evaluation |
+| `docs` | 122 | 113,559 | The proposal and figure generation |
 
 There is a reason the repository was not split. What breaks most often in this project is not the individual parts but the agreements between them. The cause of 0 passes out of 28 in the formative evaluation in §5.1 was a missing connection rather than a defect in any single feature. With the repository split, that connection cannot be tested in one go, and there is no way to tell which side changed first.
 
@@ -1479,15 +1479,17 @@ In practice three kinds of test in this repository each require something differ
 
 [Table 28] Three kinds of test
 
-| Kind | Count | What it needs |
-|---|---|---|
-| Web app (`node --test`) | 174 | Node only |
-| Paper form and scheduling (`pytest`) | 105 | OpenCV |
-| Firmware protocol and scheduler | Host build | A C++ compiler only |
+| Kind | Tests | Result | What it needs |
+|---|---:|---|---|
+| Web app (`node --test`) | 345 | 345 pass | Node only |
+| Paper form and cloud relay (`pytest`) | 172 | 169 pass · 3 skipped | OpenCV |
+| Device firmware (`pytest`) | 663 | 549 pass · 79 skipped · **35 fail** | Python only |
+
+The 35 failures are set down here. They are tests of the OLED screen rendering, and the screen specification is still being settled by the person responsible for the device, so they were left rather than guessed at. That these 663 were for a while not running at all is also set down. Eight screen constants disappeared in one commit, and since every test file goes through that module, all of them stopped at import. Restoring them revealed the 35. They were missed not for want of tests but because the tests were not running, which is to say that counting passes and checking that the tests actually run are two different jobs.
 
 All three run without the hardware. No servo, no Raspberry Pi and no network is needed. Making code that runs on a device you cannot attach a debugger to verifiable by anyone in a few seconds is the purpose of this arrangement, and bringing the whole firmware up on a laptop with `make run` (Figure 22, right) comes from the same principle.
 
-Roles were divided as follows. Yunsu Nam took the web app and the SIGIL and VOCA engines, Dohun Kim took the hardware firmware, the paper form reading and the nutrition estimation model, and the Moldovan team took 3D printing, mechanical design and screen design. Over 11 days 194 commits accumulated.
+Roles were divided as follows. Yunsu Nam took the web app and the SIGIL and VOCA engines, Dohun Kim took the hardware firmware, the paper form reading and the nutrition estimation model, and the Moldovan team took 3D printing, mechanical design and screen design. Over 17 days 320 commits accumulated.
 
 There is a condition attached here as well. This project used AI coding tools throughout development, and we do not hide it. Nowhere was what a tool produced left as it stood. The defects recorded in this document, such as 12 of 37 citations differing from their sources (§5.9) or the morpheme checker passing four rings as "four" (§5.2), were all found by a person checking again. What this repository sets out to show is not that tools were used but how the results were verified.
 
