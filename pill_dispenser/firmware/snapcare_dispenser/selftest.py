@@ -63,7 +63,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from . import config, envelope, gpiochip, indicators, provisioning, rtc, soc, wifi
+from . import (config, envelope, gpiochip, indicators, provisioning, rtc, soc,
+               touch, wifi)
 from .button import TakeDoseButton
 from .clock import Clock
 from .display import Tone, screens, shapes
@@ -756,13 +757,13 @@ def check_buzzer(report: Report, indicator, interactive: bool) -> None:
 def check_release_path(report: Report, servos: TrayServos) -> None:
     """Can a tap actually reach this machine and open a tray?
 
-    On this build the release button in the app is the only thing that opens a
-    tray on the schedule's behalf, so the question a checklist could never ask —
-    "is the one control that matters connected?" — is worth asking here.
+    Nothing on this device opens a tray on the schedule's behalf — something has
+    to ask — so the question a checklist could never ask, "is the one control
+    that matters connected?", is worth asking here.
 
     Both halves are machine-checkable and neither needs a person. A device that
-    cannot move a horn will fail every release; a device with no way for the app
-    to reach it will never be asked to.
+    cannot move a horn will fail every release; a device with no way to be asked
+    will never be asked.
     """
     if not servos.backend.moves_hardware:
         report.add("a release can open a tray", FAIL,
@@ -772,11 +773,14 @@ def check_release_path(report: Report, servos: TrayServos) -> None:
         report.add("a release can open a tray", PASS,
                    f"{servos.backend.name} backend, {len(servos.pins)} tray(s) wired")
 
-    # Three ways a release can arrive, and any one of them is enough: the
-    # button on the machine, the app over the LAN, or the app through the relay.
-    # Having none of them is a machine that will chirp for an hour and then
-    # record a miss because nobody could tell it to open.
+    # Four ways a release can arrive, and any one of them is enough: a tap on
+    # the glass, the button on the machine, the app over the LAN, or the app
+    # through the relay. Having none of them is a machine that will chirp for an
+    # hour and then record a miss because nobody could tell it to open.
     reachable = []
+    touch_node = touch.find_touch_device()
+    if touch_node is not None:
+        reachable.append("a tap on the screen")
     if _button_available():
         reachable.append("the button on the machine")
     if shutil.which("avahi-daemon") or Path("/etc/avahi").exists():
@@ -788,11 +792,28 @@ def check_release_path(report: Report, servos: TrayServos) -> None:
         report.add("something can ask for a release", PASS, ", ".join(reachable))
     else:
         report.add("something can ask for a release", FAIL,
-                   "no button, no mDNS and no relay — nothing can tell this device "
-                   "to open a tray, so every dose will expire untaken",
-                   "wire the button to GPIO {}, install avahi-daemon for the LAN "
-                   "path, or set SNAPCARE_RELAY_URL so a phone can reach it from "
-                   "anywhere".format(config.BUTTON_GPIO))
+                   "no touch panel, no button, no mDNS and no relay — nothing "
+                   "can tell this device to open a tray, so every dose will "
+                   "expire untaken",
+                   "run `snapcare-dispenser --touch-setup` for the screen, wire "
+                   "the button to GPIO {}, install avahi-daemon for the LAN "
+                   "path, or set SNAPCARE_RELAY_URL so a phone can reach it "
+                   "from anywhere".format(config.BUTTON_GPIO))
+
+    # Said separately, because "the app can reach it" is not an answer to "can
+    # the person standing in front of it release a dose". On a build with no
+    # button fitted — which is the normal build — a dead touch panel means the
+    # room has no control at all, and the screen goes on showing the dose it
+    # cannot release.
+    if touch_node is None and not _button_available():
+        report.add("the room can release a dose", FAIL,
+                   "no touch panel and no button",
+                   "the screen is the control on this build: "
+                   "`sudo snapcare-dispenser --touch-setup`")
+    else:
+        report.add("the room can release a dose", PASS,
+                   "a tap on the screen" if touch_node is not None
+                   else "the button on the machine")
 
 
 def check_trays(report: Report, servos: TrayServos, fitted: int | None,

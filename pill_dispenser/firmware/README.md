@@ -9,10 +9,9 @@ goes green and names the tray, and the buzzer starts; the tray opens when the
 screen is touched or a release is tapped in the app. No press inside the grace
 window and the tray stays shut, recorded missed.
 
-(One exception, and it is on by default: with `SNAPCARE_TOUCH_DEMO=1` a tap with
-no dose due drops a pill anyway, so the machine can be demonstrated. It is
-recorded as a manual drop and cannot consume a scheduled dose — see
-[demonstration mode](#demonstration-mode-which-is-on-by-default).)
+No exceptions. A tap with no dose due opens nothing, from the glass or anywhere
+else. To move a tray for a bench check, `POST /api/drop` does it from the
+device's own page, where it is logged as a manual drop.
 
 ```
    the web app, anywhere                                the person
@@ -486,37 +485,48 @@ missing, which is exactly when somebody is debugging.
 If the panel is listed and taps still do nothing, the firmware did not recognise
 its name. Point it straight at the node with `SNAPCARE_TOUCH_DEVICE`.
 
-#### Demonstration mode, which is on by default
+#### A tap with nothing due opens nothing
 
-A tap with **no dose due** drops a pill anyway, cycling through the fitted
-trays. That is what makes the machine demonstrable: a device that does nothing
-visible when you press it demonstrates badly, and this build is shown far more
-often than it is deployed.
+There is no setting for this and there was: any tap dropped a pill, so the
+machine had something visible to do when pressed. It inverted the rule the rest
+of the firmware is built on — pills nobody asked for are how a double dose
+happens — and a hopper walkable one tap at a time by a visitor, a cleaner, or
+the person themselves pressing twice because they were not sure, is a hopper
+that runs out mid-week. Every pill taken that way is missing from a later dose
+with nothing anywhere recording why.
 
-**It inverts the rule the rest of this firmware is built on.** The release model
-exists because pills nobody asked for are how a double dose happens — nothing
-leaves a hopper until a person has been offered it, so a dose that came out is a
-dose somebody asked for. With this on, anybody who touches the glass gets a
-pill: a visitor, a cleaner, or the person themselves twice because they were not
-sure the first press registered.
+So a tap reaches `Dispenser.release()` and that is all it can do:
 
-```bash
-SNAPCARE_TOUCH_DEMO=0        # turn it off before the machine goes to anybody
-SNAPCARE_TOUCH_DEMO_TRAY=2   # pin one hopper instead of cycling
+* **a dose is due** — the tray sweeps, the event is logged as a dose, the screen
+  turns blue. Identical to the same release from the app;
+* **nothing is due** — nothing moves, nothing is recorded. The panel still wakes
+  out of its night palette, because a tap is also somebody asking the machine to
+  be readable;
+* **nothing can move** — `release` refuses rather than claiming a dose it could
+  not deliver.
+
+To open a tray on the bench, `POST /api/drop` does it from the device's own
+page, logged as `reason: "manual"` where nobody reads it as medication taken.
+All of that is pinned in `tests/test_touch_release.py`.
+
+#### When a tap does nothing at all
+
+`gpio.touch` in `/api/status` is the first thing to read, and it separates the
+two failures that look identical from the room:
+
+```json
+"touch": { "fitted": true, "device": "/dev/input/event0", "presses": 4 }
 ```
 
-What it does not do is lie. A demonstration drop goes through the same
-`drop_now` the bench check uses, so:
+`presses` climbing means the panel works and no dose was due — which is the
+correct behaviour above, not a fault. `presses` stuck at zero with
+`fitted: true` means taps are not arriving. `fitted: false` means no driver
+bound at all: run `sudo snapcare-dispenser --touch-setup`, and `gpio.missing`
+says so in words.
 
-* **the scheduler is untouched** — a real dose still comes due at its proper
-  minute, and a demonstration at 07:50 cannot swallow the 08:00 dose;
-* **it is recorded as `reason: "manual"`**, never as a scheduled dose, so the
-  dose log and the carer's app cannot read it as medication taken;
-* **it refuses rather than claiming** when no GPIO library is present.
-
-A tap that *does* release a real dose releases that and nothing else — the press
-that matters never gives out two pills. All of that is pinned in
-`tests/test_demo_drop.py`.
+`--selftest` asks the same question from the other side: *can the room release a
+dose at all?* On a build with no button fitted — the normal build — a dead panel
+means it cannot, and the screen goes on showing a dose it has no way to release.
 
 The servo pins avoid every pin that costs hardware on a 3B: GPIO 0/1 are the HAT
 ID EEPROM, 2/3 have permanent 1.8 kΩ pull-ups (a servo signal idling high before

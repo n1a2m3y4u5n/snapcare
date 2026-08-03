@@ -97,7 +97,8 @@ class Router:
     """Everything the handler needs, so the handler stays a thin adapter."""
 
     def __init__(self, dispenser: Dispenser, identity: provisioning.Identity | None = None,
-                 cloud=None, network: Supervisor | None = None, button=None):
+                 cloud=None, network: Supervisor | None = None, button=None,
+                 touch=None):
         self.dispenser = dispenser
         self.identity = identity or provisioning.load_identity(dispenser.store)
         self.cloud = cloud
@@ -106,6 +107,13 @@ class Router:
         #: page: the button drives the dispenser directly from the daemon, not
         #: through here.
         self.button = button
+        #: The screen as the control, on the same terms. This build fits no
+        #: physical button, so on a normal machine this is the *only* thing in
+        #: the room that can release a dose — which is exactly why it has to
+        #: appear on the status page. It did not, and a panel with no driver
+        #: bound was therefore invisible: every other field said the machine was
+        #: healthy, and the one control it had was dead.
+        self.touch = touch
         #: The radio-mode policy. A server built without one — the tests, and
         #: `make run` on a laptop — gets a supervisor that manages nothing, so
         #: that every endpoint has something coherent to answer with instead of
@@ -142,6 +150,7 @@ class Router:
         buzzer = getattr(indicator, "buzzer", None)
         display = getattr(indicator, "display", None)
         button = self.button
+        touch = self.touch
         backend = self.dispenser.servos.backend
 
         missing = []
@@ -163,6 +172,27 @@ class Router:
             # identical, from the room, to one where nobody pressed it.
             missing.append("no take-dose button — a dose can only be released "
                            "from the app")
+        if touch is not None and not touch.fitted:
+            # The screen is the control on this build, so this is the line that
+            # matters most in the list. A panel with no driver bound paints
+            # every dose perfectly and answers no tap, and until this was
+            # reported there was nothing anywhere that said so.
+            missing.append("no touch panel — the screen shows a dose but a tap "
+                           "on it releases nothing. Run "
+                           "`sudo snapcare-dispenser --touch-setup`")
+        if button is not None and touch is not None \
+                and button.backend == "none" and not touch.fitted:
+            # Neither control. Said separately from the two above because it is
+            # a different fault: not "one way in is missing" but "nobody in the
+            # room can release a dose at all", which on a device whose whole
+            # model is asking first means every dose expires untaken.
+            #
+            # Both objects have to exist before this can be claimed. A process
+            # holding neither is not a machine with no controls, it is a process
+            # with no GPIO — the tests and `make run` — and the two `is not None`
+            # guards above draw exactly that line for the same reason.
+            missing.append("nothing in the room can release a dose — no button "
+                           "and no working touch panel. Only the app can")
 
         return {
             "board": gpiochip.board_model() or "not a Raspberry Pi",
@@ -199,6 +229,23 @@ class Router:
                        "backend": button.backend if button else "none",
                        "gpio": button.gpio if button else config.BUTTON_GPIO,
                        "presses": button.presses if button else 0},
+            #: Stronger evidence than `display` above, and worth saying why: the
+            #: touch controller is on I2C and had to acknowledge its address for
+            #: a driver to bind at all, so `fitted: true` means a real chip
+            #: answered — not merely that a driver loaded.
+            #:
+            #: `device` and `name` are here because the failure they diagnose is
+            #: otherwise silent. A driver that binds under a name this firmware
+            #: does not recognise leaves `fitted: false` with a perfectly good
+            #: panel on the glass, and the fix is one environment variable —
+            #: but only for somebody who can see what the kernel called it.
+            #:
+            #: `presses` separates the two ways a tap fails: it climbing means
+            #: the panel works and no dose was due, and it staying at zero
+            #: means the tap never arrived.
+            "touch": {"fitted": bool(touch and touch.fitted),
+                      "device": str(touch.device) if touch and touch.device else "",
+                      "presses": touch.presses if touch else 0},
             "missing": missing,
         }
 
@@ -1080,8 +1127,8 @@ def _is_ours(host: str) -> bool:
 def make_server(dispenser: Dispenser, port: int | None = None,
                 identity: provisioning.Identity | None = None,
                 cloud=None, network: Supervisor | None = None,
-                button=None) -> ThreadingHTTPServer:
-    router = Router(dispenser, identity, cloud, network, button)
+                button=None, touch=None) -> ThreadingHTTPServer:
+    router = Router(dispenser, identity, cloud, network, button, touch)
 
     handler = type("BoundHandler", (Handler,), {"router": router})
     # 0.0.0.0 because the device is reached from the home network and from the
@@ -1096,9 +1143,10 @@ def make_server(dispenser: Dispenser, port: int | None = None,
 def serve_forever(dispenser: Dispenser, port: int | None = None,
                    identity: provisioning.Identity | None = None,
                    cloud=None, network: Supervisor | None = None,
-                   button=None) -> ThreadingHTTPServer:
+                   button=None, touch=None) -> ThreadingHTTPServer:
     """Start the server on a background thread and return it."""
-    server = make_server(dispenser, port, identity, cloud, network, button)
+    server = make_server(dispenser, port, identity, cloud, network, button,
+                         touch)
     thread = threading.Thread(target=server.serve_forever, name="http", daemon=True)
     thread.start()
     log.info("web server listening on port %d", server.server_address[1])
