@@ -1090,7 +1090,11 @@ The grey speaker circles that sat on every line were taken away. Having attached
 
 The sign was there because we held that the user has to be told in advance where the audio is. Being able to sweep removes that premise. Press and hold, slide, and what passes under the finger is read in turn, so it is swept rather than searched for. This is how a screen reader navigates, and it is closer to the criterion established in §1.10, that no step requiring explanation should be created.
 
-The signs did not disappear altogether; they became transient. While a sweep is in progress `html[data-hearing]` reveals every place that has audio, and they go quiet again when the finger lifts (`app/globals.css`). So the screen shows where the audio is exactly while the user is looking for it, and shows nothing the rest of the time.
+The signs did not disappear altogether; they became transient. While a sweep is in progress `html[data-hearing]` reveals them, and they go quiet again when the finger lifts (`app/globals.css`). So the screen shows where the audio is exactly while the user is looking for it, and shows nothing the rest of the time.
+
+One thing has to be stated precisely here. What a sweep reveals is **not all** of the places that carry audio. Counting on the home screen of the deployment, 14 places carry audio and 3 of them get a marker. Places wrapping a picture or a bar are called with `bare` and get no marker at all (six such call sites), because putting a grey circle over a picture covers the picture. A sweep still reads those places, but for someone who is not sweeping, the fact that audio is there never appears on screen. For a user who does not know about sweeping there is still audio that cannot be seen, and that is an item to settle with people present in the field evaluation of §5.10.
+
+Nor did all the grey circles go. Where the row is itself a button, a button cannot be nested inside it, so a 44-pixel listen button sits beside it as a sibling. There are two such places on the home screen of the deployment, and the speaker is always visible there.
 
 #### 3.5.2 Speaking the pictograms
 
