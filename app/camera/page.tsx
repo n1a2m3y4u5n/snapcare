@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/stores/analysis';
+import { makeThumb } from '@/lib/photos/store';
 import { getItem } from '@/lib/snapcare/catalog';
 import { ocrToScanItem } from '@/lib/snapcare/fromOcr';
 import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } from '@/lib/nutrition/labelOcr';
@@ -19,6 +20,7 @@ const DEMO_IDS = ['energy_drink', 'granola_bar', 'amoxicillin', 'ibuprofen'];
 export default function CameraPage() {
   const router = useRouter();
   const setCurrent = useAnalysis((s) => s.setCurrent);
+  const setPhoto = useAnalysis((s) => s.setPhoto);
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -58,8 +60,17 @@ export default function CameraPage() {
     setShowOptions(true);
   }
 
-  function goWith(item: ScanItem) {
+  /**
+   * 결과 화면으로 넘어간다. 사진이 있으면 섬네일을 함께 들려 보낸다.
+   *
+   * 섬네일 만들기를 기다리지 않는다. 판정은 이미 끝났고 사람은 결과를 보러 가는
+   * 중인데, 캔버스가 돌아가는 동안 화면이 멈춰 있으면 그 지연이 판정이 느린 것으로
+   * 읽힌다. 늦게 도착해도 저장은 결과 화면에서 하므로 늦지 않는다.
+   */
+  function goWith(item: ScanItem, photo?: string) {
     setCurrent(item);
+    setPhoto(null);
+    if (photo) void makeThumb(photo).then((t) => { if (t) setPhoto(t); });
     router.push('/scan');
   }
 
@@ -73,6 +84,8 @@ export default function CameraPage() {
     setBusy(true);
     setHint(null);
     setStatus('Reading text… 0%');
+    // 어느 갈래로 가든 사진은 같다. 여기서 한 번만 만들어 둔다.
+    const shot = typeof image === 'string' ? image : await toDataUrl(image);
     try {
       const text = await recognizeText(image, (p) => setStatus(`Reading text… ${Math.round(p * 100)}%`));
       if (!text || text.trim().length < 4) {
@@ -88,7 +101,7 @@ export default function CameraPage() {
 
         // 오프라인으로 전 항목을 검증까지 통과했으면 그대로 쓴다 — 네트워크를 타지 않는다.
         if (parsed.profile && parsed.rejected.length === 0) {
-          goWith(labelItem(parsed.profile, parsed.servingGrams));
+          goWith(labelItem(parsed.profile, parsed.servingGrams), shot);
           return;
         }
 
@@ -99,7 +112,7 @@ export default function CameraPage() {
 
         // 보강도 실패 — 부분적으로라도 읽힌 게 있으면 그것만이라도 쓴다.
         if (parsed.profile) {
-          goWith(labelItem(parsed.profile, parsed.servingGrams));
+          goWith(labelItem(parsed.profile, parsed.servingGrams), shot);
           return;
         }
         fail('Could not read the table reliably. Hold steady and fill the frame with the label.');
@@ -110,7 +123,7 @@ export default function CameraPage() {
       // 글자가 읽혔다는 이유만으로 처방전 취급하면 음식 사진이 처방전이 된다.
       if (looksLikePrescription(text)) {
         const { item } = ocrToScanItem(text);
-        goWith(item);
+        goWith(item, shot);
         return;
       }
 
@@ -204,7 +217,9 @@ export default function CameraPage() {
       return false;
     }
     const { item } = (await res.json()) as { item: ScanItem };
-    goWith(item);
+    // 사진을 함께 넘긴다. 되짚는 화면에서 "이 날 뭘 먹었나" 에 답하는 것은 이름이
+    // 아니라 그림이고, 이름은 읽어야 하지만 자기가 찍은 사진은 안 그렇다.
+    goWith(item, dataUrl);
     return true;
   }
 

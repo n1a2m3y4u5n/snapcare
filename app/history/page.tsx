@@ -11,6 +11,7 @@ import { useIsClient } from '@/lib/hooks';
 import { byDay, dayLabel, daySentence, type DaySummary } from '@/lib/history/byDay';
 import { adherence, adherenceSentence, clockOf, doseRows } from '@/lib/history/adherence';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
+import { Thumb } from '@/components/sc/Thumb';
 
 /**
  * 지난 날들.
@@ -162,12 +163,9 @@ function Day({ day, today }: { day: DaySummary; today: string }) {
         누름이 하루마다 하나씩 더 들고, 이 화면은 되짚으라고 있는 화면이다.
       */}
       <div className="mt-2 flex flex-wrap gap-1.5 pl-6">
+        {/* 직접 찍은 것은 사진으로, 나머지는 이모지로. 이유는 Thumb 안에 적었다. */}
         {day.records.slice(0, open ? day.records.length : 8).map((r) => (
-          <span key={r.id} aria-hidden
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-lg"
-                style={{ background: 'white' }}>
-            {r.emoji}
-          </span>
+          <Thumb key={r.id} id={r.id} emoji={r.emoji} />
         ))}
         {!open && day.records.length > 8 && (
           <span className="flex h-9 items-center px-1 text-xs" style={{ color: 'var(--color-sc-muted)' }}>
@@ -180,7 +178,7 @@ function Day({ day, today }: { day: DaySummary; today: string }) {
         <div className="mt-2 flex flex-col gap-1.5 pl-6">
           {day.records.map((r) => (
             <div key={r.id} className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm">
-              <span aria-hidden className="text-base">{r.emoji}</span>
+              <Thumb id={r.id} emoji={r.emoji} size={28} />
               <span className="flex-1">
                 <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                   {r.name}

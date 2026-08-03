@@ -14,6 +14,7 @@ import { spokenName } from '@/lib/tts/speakable';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
 import { useAnalysis } from '@/stores/analysis';
+import { putThumb, prunePhotos } from '@/lib/photos/store';
 import { useProfile } from '@/stores/profile';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
@@ -32,6 +33,7 @@ export default function ScanResultPage() {
   const router = useRouter();
   const item = useAnalysis((s) => s.current);
   const setCurrent = useAnalysis((s) => s.setCurrent);
+  const photo = useAnalysis((s) => s.photo);
   const addScan = useScans((s) => s.addScan);
   const scans = useScans((s) => s.scans);
   const addReminders = useReminders((s) => s.addReminders);
@@ -89,8 +91,21 @@ export default function ScanResultPage() {
   const alternative = item ? alternativeFor(item, verdict) : null;
 
   function finish() {
+    const id = `r_${cryptoId()}`;
+    /*
+      사진을 이 기록에 붙인다.
+
+      기다리지 않는다. 사람은 이미 "다 됐다" 를 눌렀고 다음 화면으로 가는 중인데,
+      IndexedDB 쓰기를 기다리면 그 지연이 버튼이 안 먹은 것으로 읽힌다. 실패해도
+      조용하다 — 사진은 곁들이고, 판정과 기록이 이 앱의 일이다.
+
+      정리도 여기서 한 번 돈다. 기록은 200개·90일에서 잘리는데(retention.ts) 사진은
+      그것을 모르므로, 가리킬 기록이 없어진 사진이 계속 쌓인다.
+    */
+    if (photo) void putThumb(id, photo);
+    void prunePhotos([id, ...scans.map((r) => r.id)]);
     addScan({
-      id: `r_${cryptoId()}`,
+      id,
       itemId: item!.id,
       name: item!.name,
       kind: item!.kind,
