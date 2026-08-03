@@ -529,6 +529,15 @@ We set the evidence this chapter used side by side, by which direction it points
 
 Within the range we searched, no system had all three. Pictogram sets exist but do not combine (§1.9), work addressing combination does not measure comprehension before release, and the studies that did measure comprehension (Table 4) assembled people and measured after the fact once the set was built. This is an observation from the range we looked over while preparing this work rather than the result of a systematic review, so it should be read as "we did not find one" rather than "there is none." This is SnapCare's starting point.
 
+Putting these three to the survey brought agreement on the direction with a condition attached. Asked whether a patient who cannot read could take their medicine correctly with only these screens, Myojung Choi, Researcher at the Korea Disabled People's Development Institute, answered:
+
+> "Presenting information on a multi-channel cognitive basis, combining pictogram and sound, seems the right direction. Where one pictogram contains a lot of information, however, clarity of perception can fall, so it needs simplifying around the core information."
+> (Myojung Choi, Researcher, Korea Disabled People's Development Institute)
+
+The first sentence supports the third of the three above, delivery that does not demand text; the second collides head-on with the first, composition. We set as our conclusion that one instruction should become one picture, and doing so increases what one picture has to carry. The gain from composition and clarity of perception are two ends of one axis, and our design picks a point on that axis rather than getting both.
+
+How far that tension can be carried is the ceiling of this approach. §2.2 restricts the grammar so that a head takes only one modifier, which stops a picture growing heavy, and the machine evaluation of §5.2 measures whether pictures built that way are read. Where clarity breaks down, though, can only be learned by asking people, and that remains in §5.10.
+
 ### 1.12 How this problem looks in our own two countries
 
 The five strands above were counted against the world. This team comes from Korea and Moldova, so they are read again against those two countries, and because the contest form asks how the problem bears on our own school and community.
@@ -683,6 +692,17 @@ Design intent. Each of the three branches is one clause of the grammar. A modifi
 ![Figure 17](fig/fig02_sigil_sheet.png)
 
 **[Figure 17]** All 78 SIGIL morphemes (57 heads and 21 modifiers). The small image beneath each morpheme is the same glyph reduced to 34 pixels. The reductions are included because these pictures are in practice used on a palm-sized screen, sometimes as a single cell in a list. A picture that is only distinguishable when drawn large cannot be used in this app.
+
+Whether 78 is enough was put to us head-on in the survey. It is the first line Professor Kyogu Lee of Seoul National University wrote in the "anything you would add" box:
+
+> "The pictograms define 78 \"words\"; even with recombination, can they really cover the very wide range of medicines and regimens?"
+> (Professor Kyogu Lee, Seoul National University)
+
+What this section can answer is the arithmetic. Each of the 57 heads has one modifier slot and the dictionary restricts which modifiers may enter it, so the set as it stands can produce 1,258 cells (Figure 12). The 78 is a count of words, not a count of instructions that can be expressed.
+
+That answer does not take the whole question, though. How many of the 1,258 make sense we did not count, and we did not survey the distribution of instructions in real prescriptions to see whether they are covered. The top three types clustered in Table 4 of §1.3 can be said to be covered, but that is where errors cluster, not where instructions cluster. We leave this question to stage 4 of §5.10, the procedure that records concepts the app could not build. Only by counting what it fails to make can we learn whether 78 is short.
+
+The same response pointed at one more thing, and that one is already fixed: some negative instructions carry no "/" or "X", with alcohol and pregnancy given as examples. §5.2 divided the prohibition marking into three by the nature of the flag and dealt with that place.
 
 ![Figure 18](fig/fig03_dsl.png)
 
