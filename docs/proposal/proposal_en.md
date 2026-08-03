@@ -192,6 +192,15 @@ What these figures point to together is that medication-related harm occurs outs
 
 The cost estimates span a wide range, and the basis of the 300 billion dollar upper figure is disputed. Our purpose in citing these numbers is to give a sense of scale rather than to argue for any particular value, and the indicator on which this work claims improvement is not cost but the delivery success rate in §5.1.
 
+The misreading this section counted from the literature we observed in our own pictures too. Asked how the whole looked from a pharmacy standpoint, Sheron Sir Loon Goh, Pharmacy Lecturer at the Department of Clinical Pharmacy and Pharmacy Practice, pointed at two things:
+
+> "Once a day dose, I dont see the relationship by just looking at the capsule symbol with 1 dot means once a day without hearing the audio for explanation. Putting a pregnant mother symbol does not explains that it is not safe for pregnant mother to consume the meds. Perhaps you will need to add a \"X\" symbol somewhere in the picture"
+> (Sheron Sir Loon Goh, Pharmacy Lecturer, Department of Clinical Pharmacy and Pharmacy Practice)
+
+The first is this section's "how much" error and the second its contraindication error. The top types in Table 4 reproduced themselves in our own pictures, which is where the distribution in the literature stopped being someone else's story.
+
+The second is the heavier one. A pregnancy symbol with no prohibition mark can be read as "safe in pregnancy". That is not meaning going vague but meaning **inverting**, and it is why ANSI Z535.3 requires critical-confusion errors below 5%. Dividing the prohibition marking into three by the nature of the flag in §5.2 was the result of taking this point.
+
 ### 1.4 International policy and its blind spot
 
 In 2017 the World Health Organization declared Medication Without Harm as its third Global Patient Safety Challenge, setting a goal of reducing severe avoidable medication-related harm by 50% within five years (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017). It identified three priority areas: high-risk situations, polypharmacy and transitions of care (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017).
@@ -293,6 +302,15 @@ That gap overlaps with the regions we target. Smartphones have already spread, a
 This app was not designed for blindness. The pictures are drawn large and speech is attached, but two responses in §5.7 noted that the act of taking a photograph is itself a barrier for someone who cannot see. It is a layer we have not addressed and it belongs to the unverified items in §5.10.
 
 There is a further assumption still. Even someone who can read has no guarantee that the text in front of them is in their own language. Forty percent of the world's population does not have access to education in a language they understand, and most literacy surveys themselves measure in a single language (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). Prescriptions and nutrition labels are printed in a country's official language or in English, so among those counted as "able to read" in literacy statistics there are people who cannot read the paper in front of them. Pictures and speech step over both layers at once. After the survey of §5.7 the speech acquired the languages of the six countries the respondents work in; the account and its limits are in §5.7.
+
+This section doubted one premise: that the user knows their own condition. The survey handed us a premise we had not doubted. Asked whether a patient who cannot read could take their medicine correctly with only these screens, Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, answered:
+
+> "As noted above, there are several types of people who cannot read, and in fact the largest group is likely to be blind people rather than the 'illiterate'. I do not know whether blind users were considered from the outset, but if you want to include them, for a blind person the very act of taking a photograph can be a barrier."
+> (Yonghan Lee, Senior Manager, Korea Craft and Design Foundation)
+
+This app begins with one photograph. That premise — that taking it is possible for anyone — we never tested anywhere in this document. If the 43% above are people who do not know their illness, this point is about people who cannot see the screen, and both are premises we built into the design without counting them.
+
+This app did not take blind users as its target. The premise of §1.5 is being undiagnosed rather than being visually impaired, and of the three layers §2.1 overlays, picture and colour both require sight. Speech alone still carries the verdict, but the photographing remains. We have recorded that gap as the eighth item in §5.9, and how far a screen reader and assisted capture can be joined to this is left to §5.10.
 
 ### 1.6 How widely the delivery medium has spread
 
@@ -983,6 +1001,15 @@ The design of the transmission path is the result of several constraints applyin
 ![Figure 24](fig/fig10_dispenser.png)
 
 **[Figure 24]** The dispenser's wiring and the device's own console. On the left is the wiring drawn from the pin map, on the right the same firmware running on a laptop with only the servo driver swapped for a recording stub. The API, the scheduler and the storage are the same code that runs on the device. These two are shown instead of a photograph because what gets decided here is not visible in a photograph. Splitting the power rails in two is an example. One SG90 under load draws about 700 mA, and pulling that from the same rail as the Pi causes a brownout, and the file in use at that instant happens to be the one recording whether this dose has already been dispensed. The two missed doses in the dose log at the lower right matter for the same reason. If a dose that was not dispensed is not recorded as not dispensed, every subsequent dose number is off by one.
+
+Who these three are for drew a different answer in the survey. E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols, wrote:
+
+> "I think the idea of this app is good but may suit many people and not just AAC or those with literacy difficulties but it is hard to judge how easy it would be to actually use the app"
+> (E. A. Draffan, retired speech and language therapist and visiting accessibility researcher, Global Symbols · University of Southampton)
+
+The first half says we scoped the audience narrowly. From §1.1 onward this document has counted non-literate adults, but one photograph producing a picture and a spoken sentence may be of use to people who can read as well. Among the respondents in §5.7 there was in fact one who wrote that even they, in their forties, found the images hard to grasp at once (§5.7.9). Whether the audience should be drawn wider this document does not judge. What it records is that drawing it narrowly narrowed the evidence, not the users.
+
+The second half bears more directly on this section. Reading about three functions is no way to judge whether they are easy to use, which is the same thing §5.9 records as the absence of testing with people. This section can set down what was built; whether it is easy to use becomes an answer only when people are asked, in §5.10.
 
 ---
 
