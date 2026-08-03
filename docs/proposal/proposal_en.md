@@ -198,6 +198,10 @@ A gap remains even after the instruction has been delivered. Adherence among pat
 
 The relationship between literacy and adherence itself is not on our side either. A meta-analysis pooling studies that measured the direct relationship between health literacy and medication adherence found the association statistically significant but **weak**, with weighted correlation coefficients between 0.056 and 0.072 (Zhang, N. J., Terry, A. & McHorney, C. A., "Impact of health literacy on medication adherence: a systematic review and meta-analysis," *Annals of Pharmacotherapy*, 48(6):741–751, 2014, doi:10.1177/1060028014526562). The authors suggest health literacy may mediate other determinants of adherence rather than setting adherence directly.
 
+There is more direct evidence too. A multisite randomised controlled trial gave 315 adults with low health literacy the same chronic-disease self-management app, differing only in the reading difficulty of its text: third-grade level with audio narration, sixth-grade level, and eighth-grade level as the control. All three groups gained in activation, self-efficacy and health-related quality of life, but **there were no between-group differences and medication adherence did not change in any group** (Ownby, R. L., Simonson, M., Caballero, J. et al., "A mobile app for chronic disease self-management for individuals with low health literacy: A multisite randomized controlled clinical trial," *Journal of Ageing and Longevity*, 4(2):51–71, 2024, doi:10.3390/jal4020005).
+
+That result stings because the design is close to ours. It targeted low health literacy, it simplified the text, and it added audio. Doing all three moved nothing. What that trial varied, however, is the difficulty of the text rather than the medium. Eighth-grade text and third-grade text are both text, and to someone who cannot read they are the same thing. We change the medium rather than the difficulty, so we do not take the result as applying directly, but we have no grounds for saying it does not apply either.
+
 Read plainly, that means solving literacy raises adherence only a little. We do not claim to improve adherence (§5.9), so this does not undo the argument of this work, but the figure shows the distance between making something readable and making someone take it. What §5.1 measures is the first of those. The second we did not measure.
 
 There is evidence for low- and middle-income countries taken on their own. Pooling 22 studies and 92,443 subjects, non-adherence to antihypertensive medication ranged from 25.45% (95% CI 17.23–33.76) to 63.35% (38.78–87.91) depending on the measurement instrument, and most of the studies located the cause in what the World Health Organization classifies as socioeconomic factors (Nielsen, J. Ø., Shrestha, A. D., Neupane, D. & Kallestrup, P., "Non-adherence to anti-hypertensive medication in low- and middle-income countries: a systematic review and meta-analysis of 92443 subjects," *Journal of Human Hypertension*, 31(1):14–21, 2017, doi:10.1038/jhh.2016.31).
@@ -471,6 +475,12 @@ Scale, the first, the respondents rated lower rather than higher: 15 of 35 answe
 
 What came up most often was not in the five strands at all. Six respondents independently raised the absence of validation with people, and four of the five who answered the broad question across the five segments chose it as the first thing to resolve. The five strands we used to define the problem all come from the literature, and this finding says that between that literature and our set there is still nothing.
 
+We set the evidence this chapter used side by side, by which direction it points. The column that cuts against is the longer one.
+
+**[Figure 14]** Evidence that supports this approach and evidence that cuts against it. The section number after each item leads to the full citation. The unfavourable column has six entries to the other's five, and not shortening it is this chapter's method. The last row on the right is the heaviest: that the centre of gravity of harm sits at the prescribing stage names the place this app does not intervene, and §1.4 records why we chose the patient stage even so. The reason for setting the evidence out this way is that collecting only the favourable half would mean doing to the literature what §5.2 refuses to do to the morphemes.
+
+![Figure 14](fig/chart23_evidence.png)
+
 Within the range we searched, no system had all three. Pictogram sets exist but do not combine (§1.9), work addressing combination does not measure comprehension before release, and the studies that did measure comprehension (Table 4) assembled people and measured after the fact once the set was built. This is an observation from the range we looked over while preparing this work rather than the result of a systematic review, so it should be read as "we did not find one" rather than "there is none." This is SnapCare's starting point.
 
 ---
@@ -489,9 +499,9 @@ The reason the three layers were not collapsed into one is as follows. One could
 
 The only action the user performs is taking a photograph.
 
-![Figure 14](fig/fig01_home.png)
+![Figure 15](fig/fig01_home.png)
 
-**[Figure 14]** Home screen, cropped to exactly what is visible without scrolling. This is the screen actually met on opening the app. The largest element on it is a single capture button, and there is no menu and no search box. Having only one choice is the response to the hierarchy barrier established in §1.10.
+**[Figure 15]** Home screen, cropped to exactly what is visible without scrolling. This is the screen actually met on opening the app. The largest element on it is a single capture button, and there is no menu and no search box. Having only one choice is the response to the hierarchy barrier established in §1.10.
 
 Two responses in §5.7 said opposite things about this principle. Professor Celia of the University of Pretoria wrote that a picture is the medium aligned to people who cannot read, without talking down to them.
 
@@ -534,9 +544,9 @@ How the 78 were chosen says what kind of set this is. They were not drawn in bul
 
 The two categories in bold correspond directly to the top two errors in Table 4 (dose 28.4%, timing 23.2%). Count stopping at five and time of day having only four is not economy aimed at shrinking the set but a reflection of prescriptions not in fact requiring more. Dosing more than five times a day is rare, and anything more frequent is expressed as "every so many hours" rather than as a time of day.
 
-**[Figure 15]** How the 78 morphemes divide, set against the distribution of medication error. The two red branches map directly onto the leading error types in Table 4. That the size of a branch runs opposite to the size of the error is because the side that needs many drawings and the side that goes wrong often are not the same. Five is enough for count; twenty-six are needed for dosage form. Count stopping at five and time of day having only four is not economising to keep the set small but the fact that prescriptions do not ask for more. Dosing more than five times a day is rare, and anything more frequent is expressed as "every so many hours" rather than as a time of day.
+**[Figure 16]** How the 78 morphemes divide, set against the distribution of medication error. The two red branches map directly onto the leading error types in Table 4. That the size of a branch runs opposite to the size of the error is because the side that needs many drawings and the side that goes wrong often are not the same. Five is enough for count; twenty-six are needed for dosage form. Count stopping at five and time of day having only four is not economising to keep the set small but the fact that prescriptions do not ask for more. Dosing more than five times a day is rare, and anything more frequent is expressed as "every so many hours" rather than as a time of day.
 
-![Figure 15](fig/chart17_morpheme_map.png)
+![Figure 16](fig/chart17_morpheme_map.png)
 
 The thickest category, conversely, is dosage form. The reason is in §2.3. Once the form is settled the verb and the body site are settled with it, so adding one form adds a whole instruction. The nine allergens follow the list of major allergens whose declaration is mandatory internationally.
 
@@ -593,13 +603,13 @@ def _pictogram(self, in_slot: bool = False) -> Node:
 Design intent. Each of the three branches is one clause of the grammar. A modifier outside a slot fails to parse, a head placed in another head's slot fails as well, and a name absent from the dictionary becomes an error rather than a picture. This matters because the DSL is not written by hand but produced by a language model reading a prescription. If the model invents a plausible name, that has to become a parse error rather than a plausible picture on screen. Putting a deterministic verification layer over probabilistic output on a safety-critical screen is what this parser is for, and the same structure is used for the nutrition verdict in §4.2.
 
 
-![Figure 16](fig/fig02_sigil_sheet.png)
+![Figure 17](fig/fig02_sigil_sheet.png)
 
-**[Figure 16]** All 78 SIGIL morphemes (57 heads and 21 modifiers). The small image beneath each morpheme is the same glyph reduced to 34 pixels. The reductions are included because these pictures are in practice used on a palm-sized screen, sometimes as a single cell in a list. A picture that is only distinguishable when drawn large cannot be used in this app.
+**[Figure 17]** All 78 SIGIL morphemes (57 heads and 21 modifiers). The small image beneath each morpheme is the same glyph reduced to 34 pixels. The reductions are included because these pictures are in practice used on a palm-sized screen, sometimes as a single cell in a list. A picture that is only distinguishable when drawn large cannot be used in this app.
 
-![Figure 17](fig/fig03_dsl.png)
+![Figure 18](fig/fig03_dsl.png)
 
-**[Figure 17]** How one line of DSL becomes one picture. All four examples are outputs from the actual engine and were not redrawn for the diagram. Because modifiers go into slots opened in the head, the combinations arising from 78 morphemes are determined by the grammar rather than by a list.
+**[Figure 18]** How one line of DSL becomes one picture. All four examples are outputs from the actual engine and were not redrawn for the diagram. Because modifiers go into slots opened in the head, the combinations arising from 78 morphemes are determined by the grammar rather than by a list.
 
 ### 2.3 VOCA, the spoken instruction engine
 
@@ -613,9 +623,9 @@ What to discard is settled first. One prescription sheet also carries a patient 
 
 There is a reason for the order in which what remains is spoken. The dose per intake comes first. In the first formative measurement in §5.1, dose and storage information reached the pictogram from OCR but did not reach the speech and the sentences, and that state is exactly the failure type cited in §1.3: repeating the instruction accurately while being unable to point out how many tablets a day. In Davis et al. (2006), of the 70.7% who could do the former, 34.7% could do the latter. Then comes how to take it, then the closing sentence, and storage is attached only when refrigeration is required. Room temperature is the default and not worth another sentence.
 
-**[Figure 18]** What VOCA discards from one prescription sheet and in what order it says the rest. The six discarded lines are not erased from the screen; they are simply not read aloud. Order is importance because the listener cannot rewind, and the dose per intake comes first because in the first measurement of §5.1 that item was not reaching the speech channel.
+**[Figure 19]** What VOCA discards from one prescription sheet and in what order it says the rest. The six discarded lines are not erased from the screen; they are simply not read aloud. Order is importance because the listener cannot rewind, and the dose per intake comes first because in the first measurement of §5.1 that item was not reaching the speech channel.
 
-![Figure 18](fig/fig26_voca.png)
+![Figure 19](fig/fig26_voca.png)
 
 The verb also changes with the dosage form. A tablet is "take," but eye drops are "put in," an ointment is "apply" and an inhaler is "breathe in." The single word "administer" points to completely different physical actions.
 
@@ -706,11 +716,11 @@ Design intent. Age is folded into four representative values. The user picks one
 
 There is judgement in `Math.min(1, energyRatio)` as well. Salt and fibre are recommended as absolute amounts and cannot be converted proportionally. Children are scaled down in proportion to energy requirement (the very recommendation underlying §2.4 says children should have less according to their energy intake), but someone who eats more than an adult does not get a raised salt limit. The recommendation is a ceiling.
 
-Returning the `basis` string alongside is also deliberate. "1,800 kcal at age 70, free sugars under 10%" appears on screen exactly as written (Figure 21(b)). If the user cannot see where a verdict came from, there is no way for them to examine it.
+Returning the `basis` string alongside is also deliberate. "1,800 kcal at age 70, free sugars under 10%" appears on screen exactly as written (Figure 22(b)). If the user cannot see where a verdict came from, there is no way for them to examine it.
 
-**[Figure 19]** The path by which the verdict threshold is derived. The user chooses only the two boxes at the top; the rest is computation. It is a derivation rather than a table because the WHO recommendation is itself written as a proportion of total energy, so when the recommendation changes one constant is edited instead of a table being rebuilt.
+**[Figure 20]** The path by which the verdict threshold is derived. The user chooses only the two boxes at the top; the rest is computation. It is a derivation rather than a table because the WHO recommendation is itself written as a proportion of total energy, so when the recommendation changes one constant is edited instead of a table being rebuilt.
 
-![Figure 19](fig/fig15_verdict_flow.png)
+![Figure 20](fig/fig15_verdict_flow.png)
 
 The pharmacy segment of §5.7 twice pointed at a risk this derivation can create. Professor and pharmacist So-Young Lee of Chungnam National University wrote that an interaction warning can itself prompt unilateral discontinuation.
 
@@ -735,9 +745,9 @@ The question "what are you allergic to" can therefore only be answered by someon
 | What you have experienced | Experience | Ever felt unwell after eating something |
 | What you have been told | Diagnosis | Diabetes, hypertension |
 
-**[Figure 20]** The three ways of asking about conditions (§2.5). The further right, the fewer people can answer. Existing apps ask only the third column, and as established in §1.5, 43% of adults with diabetes and 44% of adults with hypertension cannot answer it. That is why the first two columns are there.
+**[Figure 21]** The three ways of asking about conditions (§2.5). The further right, the fewer people can answer. Existing apps ask only the third column, and as established in §1.5, 43% of adults with diabetes and 44% of adults with hypertension cannot answer it. That is why the first two columns are there.
 
-![Figure 20](fig/fig16_conditions.png)
+![Figure 21](fig/fig16_conditions.png)
 
 The app also infers allergies the user does not know about. It runs Fisher's exact test over the food diary to find ingredients recurring in meals after which the user felt unwell. A minimum evidence threshold and multiple-comparison correction (Bonferroni) are applied, and the result is presented as an observation rather than a diagnosis and is not written into the profile until the user confirms it.
 
@@ -814,9 +824,9 @@ The limits of this comparison are set down too. We treated the general health ap
 
 When the user photographs a prescription, OCR (Tesseract.js) extracts the text inside the browser and SIGIL and VOCA process it in parallel. Six pieces of information are extracted from a prescription: which medicine, how many times a day, when, under what conditions, how to store it, and who must not take it.
 
-![Figure 21](fig/panelA_flow.png)
+![Figure 22](fig/panelA_flow.png)
 
-**[Figure 21]** From capture to verdict. (a) Capture screen. The user does not choose what is being photographed. (b) Recognition in progress. Not hiding this stage is deliberate. A screen that has stopped with no indication reads as a fault. (c) Prescription verdict. From top to bottom: what it is, whether it is safe, what to do, what that means, and when, with the checking step of §3.8 attached at the foot. "How many do you take at a time?" is asked aloud and answered by pointing at a picture; it can be skipped, and the medicine information stays below it. The grey speaker circles that used to sit on every row are absent because §3.5 removed them; what remains is on the header and the pictogram cards, places that are not rows. The previews in (a) and (b) are empty because the browser automating the capture has no camera; on a real device the screen is filled.
+**[Figure 22]** From capture to verdict. (a) Capture screen. The user does not choose what is being photographed. (b) Recognition in progress. Not hiding this stage is deliberate. A screen that has stopped with no indication reads as a fault. (c) Prescription verdict. From top to bottom: what it is, whether it is safe, what to do, what that means, and when, with the checking step of §3.8 attached at the foot. "How many do you take at a time?" is asked aloud and answered by pointing at a picture; it can be skipped, and the medicine information stays below it. The grey speaker circles that used to sit on every row are absent because §3.5 removed them; what remains is on the header and the pictogram cards, places that are not rows. The previews in (a) and (b) are empty because the browser automating the capture has no camera; on a real device the screen is filled.
 
 **Function 2. Verdicts on food and nutrition labels (Personalized Verdict)**
 
@@ -824,9 +834,9 @@ When a nutrition label is photographed, OCR reads the figures inside the browser
 
 Whichever path a value arrives by, it has to pass the same physical checks before it is used in a verdict: value ranges, subset relations (saturated fat ≤ total fat), mass balance, and the Atwater identity (4·carbohydrate + 4·protein + 9·fat ≈ energy). Why these checks are necessary is set out with actual cases in §5.
 
-![Figure 22](fig/panelB_nutrition.png)
+![Figure 23](fig/panelB_nutrition.png)
 
-**[Figure 22]** After the verdict. (a) Nutrition label verdict. The figures are not transcribed but converted into the share they occupy of this person's daily reference. (b) Today's running total. Not a single verdict but the day's sum. The source attribution at the bottom has never been removed from the screen. (c) Device link. The result of placing the schedule the app produced into the dispenser trays; because of the constraint in §4.3 this button acts as top-level navigation.
+**[Figure 23]** After the verdict. (a) Nutrition label verdict. The figures are not transcribed but converted into the share they occupy of this person's daily reference. (b) Today's running total. Not a single verdict but the day's sum. The source attribution at the bottom has never been removed from the screen. (c) Device link. The result of placing the schedule the app produced into the dispenser trays; because of the constraint in §4.3 this button acts as top-level navigation.
 
 **Function 3. Automatic pill dispenser link (Device Link)**
 
@@ -834,9 +844,9 @@ The dosing schedule produced by the app is sent to the device. The device is bas
 
 The design of the transmission path is the result of several constraints applying at once. This is detailed in §4.
 
-![Figure 23](fig/fig10_dispenser.png)
+![Figure 24](fig/fig10_dispenser.png)
 
-**[Figure 23]** The dispenser's wiring and the device's own console. On the left is the wiring drawn from the pin map, on the right the same firmware running on a laptop with only the servo driver swapped for a recording stub. The API, the scheduler and the storage are the same code that runs on the device. These two are shown instead of a photograph because what gets decided here is not visible in a photograph. Splitting the power rails in two is an example. One SG90 under load draws about 700 mA, and pulling that from the same rail as the Pi causes a brownout, and the file in use at that instant happens to be the one recording whether this dose has already been dispensed. The two missed doses in the dose log at the lower right matter for the same reason. If a dose that was not dispensed is not recorded as not dispensed, every subsequent dose number is off by one.
+**[Figure 24]** The dispenser's wiring and the device's own console. On the left is the wiring drawn from the pin map, on the right the same firmware running on a laptop with only the servo driver swapped for a recording stub. The API, the scheduler and the storage are the same code that runs on the device. These two are shown instead of a photograph because what gets decided here is not visible in a photograph. Splitting the power rails in two is an example. One SG90 under load draws about 700 mA, and pulling that from the same rail as the Pi causes a brownout, and the file in use at that instant happens to be the one recording whether this dose has already been dispensed. The two missed doses in the dose log at the lower right matter for the same reason. If a dose that was not dispensed is not recorded as not dispensed, every subsequent dose number is off by one.
 
 ---
 
@@ -846,9 +856,9 @@ The design of the transmission path is the result of several constraints applyin
 
 SnapCare's user flow is built on the principle of running from a single photograph to a verdict without branching. As cited in the previous section, a deep hierarchy takes non-literate users 65.5 seconds on average against 25 seconds for a flat list (Medhi, I., Toyama, K., Joshi, A., Athavankar, U. & Cutrell, E., "A Comparison of List vs. Hierarchical UIs on Mobile Phones for Non-literate Users," *INTERACT 2013*, LNCS 8118:497–504). Choices on the path to a verdict were therefore minimised.
 
-![Figure 24](fig/fig11_userflow.png)
+![Figure 25](fig/fig11_userflow.png)
 
-**[Figure 24]** The overall user flow. Beneath each step is the reason that step is shaped as it is. What to look for in the diagram is that there is no point anywhere requiring reading.
+**[Figure 25]** The overall user flow. Beneath each step is the reason that step is shaped as it is. What to look for in the diagram is that there is no point anywhere requiring reading.
 
 The whole flow is the following five steps.
 
@@ -882,9 +892,9 @@ The lock is a picture key rather than a text password. Four pictograms chosen in
 
 The list of household members sits on this same lock screen (§3.6). It has the same structure as an operating system lock screen, and because choosing a face and unlocking finish on one screen there is no need to build a separate way back after choosing wrongly. Someone using the phone alone never sees the list. Asking a single person to choose is asking them to make a choice that does not exist.
 
-![Figure 25](fig/panelC_onboarding.png)
+![Figure 26](fig/panelC_onboarding.png)
 
-**[Figure 25]** First run. (a) Five guide cards. Each is a picture and one sentence, and on arrival the screen reads that sentence aloud by itself. (b) Profile setup. The age band is chosen through our morphemes and conditions through picture cards, with no input field on either. This step is needed because of the verdict method in §2.4. Since thresholds are derived from the user's energy requirement, no verdict is possible without knowing the age band.
+**[Figure 26]** First run. (a) Five guide cards. Each is a picture and one sentence, and on arrival the screen reads that sentence aloud by itself. (b) Profile setup. The age band is chosen through our morphemes and conditions through picture cards, with no input field on either. This step is needed because of the verdict method in §2.4. Since thresholds are derived from the user's energy requirement, no verdict is possible without knowing the age band.
 
 Two answers in §5.7 split exactly on this screen. Asked where a first run gets stuck, one of the two HCI respondents chose granting camera permission and the other chose that it does not get stuck. Myojung Choi, researcher at the Korea Disabled People's Development Institute, set down the reason for the first.
 
@@ -913,9 +923,9 @@ The first layer runs on the device. Text is read from the photograph first (Tess
 
 The second layer is invoked only when the first has failed. If the text read from the photograph is shorter than four characters (which is usually the case for food photographs) or the markers match neither pattern, the photograph is sent to the vision model on the server.
 
-**[Figure 26]** The two layers that decide what was photographed. Falling to the left calls no server; only falling to the right needs a connection. This split is what makes the offline operation of §4.5 possible.
+**[Figure 27]** The two layers that decide what was photographed. Falling to the left calls no server; only falling to the right needs a connection. This split is what makes the offline operation of §4.5 possible.
 
-![Figure 26](fig/fig19_recognition.png)
+![Figure 27](fig/fig19_recognition.png)
 
 There is a reason for this order. Finishing anything with text on the device and sending out only what needs a connection means prescriptions and nutrition labels are read without an internet connection. These two are the most urgent things in this app (§4.5).
 
@@ -949,9 +959,9 @@ The verdict screen splits into two versions depending on what was photographed. 
 | 5 | Alternative suggestion card | Dose card and storage card |
 | 6 | Confirm button | Dosing schedule |
 
-**[Figure 27]** The two vertical orders of the verdict screen. The red arrow marks where the pictogram was moved up two places on the prescription side. The colour-and-symbol band is pushed down with it.
+**[Figure 28]** The two vertical orders of the verdict screen. The red arrow marks where the pictogram was moved up two places on the prescription side. The colour-and-symbol band is pushed down with it.
 
-![Figure 27](fig/fig22_verdict_order.png)
+![Figure 28](fig/fig22_verdict_order.png)
 
 The difference between the two versions is at positions 4 and 3. For prescriptions the pictograms were moved above the text cards. They were below at first, and a user who cannot read scanning from the top had to pass three empty cards before reaching a picture. Changing the order alone removes those three.
 
@@ -974,7 +984,7 @@ The third row is why this app's verdict differs from person to person. Because t
 
 The second row was added later. The vision model tends to return all values as zero when it is not confident, and zero passes every one of the physical checks in §4.2. It catches on no check at all and is displayed as a green "safe." A separate judgement, that all zeros means the item was not recognised, was therefore added apart from the physical checks.
 
-The screen during recognition and the resulting verdict screen are in Figure 21(b) and (c).
+The screen during recognition and the resulting verdict screen are in Figure 22(b) and (c).
 
 ### 3.4 The path when recognition fails
 
@@ -994,9 +1004,9 @@ Alongside the sentence come one picture and a two-word instruction.
 | Could not reach the server | 📡 | No connection | Retrying will not help. Photograph a label or pick a sample |
 | Not recognised | 🔄 | Try again | Taking another photograph will do |
 
-**[Figure 28]** The two paths a failure takes. On the left, failures that another photograph will fix; on the right, failures another photograph will not. This split is why server responses 422 and 501 are handled separately.
+**[Figure 29]** The two paths a failure takes. On the left, failures that another photograph will fix; on the right, failures another photograph will not. This split is why server responses 422 and 501 are handled separately.
 
-![Figure 28](fig/fig25_failure.png)
+![Figure 29](fig/fig25_failure.png)
 
 What matters in this table is that the fourth and fifth rows are separated. Server responses are handled separately as 501 (no means available) and 422 (not recognised). If it was not recognised, taking another photograph is the answer, but if there is no connection a hundred more photographs give the same result. Showing the same sentence in both cases leaves the user retaking photographs until it works.
 
@@ -1220,9 +1230,9 @@ SnapCare therefore applies the same checks regardless of which route a value cam
 | Mass balance | Does the sum of nutrients exceed the total mass |
 | Atwater identity | 4·carbohydrate + 4·protein + 9·fat ≈ energy |
 
-**[Figure 29]** Three paths pass through one gate (§4.2). The red line underneath is the reason the checks were gathered in one place rather than placed on each path. The third path arrived in this app later, and no additional validation code was written for it. It was simply routed through the gate that already existed.
+**[Figure 30]** Three paths pass through one gate (§4.2). The red line underneath is the reason the checks were gathered in one place rather than placed on each path. The third path arrived in this app later, and no additional validation code was written for it. It was simply routed through the gate that already existed.
 
-![Figure 29](fig/fig17_gate.png)
+![Figure 30](fig/fig17_gate.png)
 
 One response in §5.7 sums up why these checks sit ahead of the verdict. Associate Professor Hangil Lee of the College of Pharmacy, Ewha Womans University, withheld judgement on whether the app could fit a pharmacy workflow and pointed at the order: accuracy has to be secured before convenience. The gate in this section is that order written into code. Wherever a value came from, it is not used in a verdict unless it holds up physically, and the price is that sometimes no value is produced.
 
@@ -1289,9 +1299,9 @@ printed code ──HKDF──► device id      the relay's address    (relay se
              ──HKDF──► box key        opens the schedule     (relay never sees it)
 ```
 
-**[Figure 30]** Three values separate out of ten printed characters. The relay distinguishes mailboxes by the first two, and the last is sent by neither side, so the relay has no way of holding it.
+**[Figure 31]** Three values separate out of ten printed characters. The relay distinguishes mailboxes by the first two, and the last is sent by neither side, so the relay has no way of holding it.
 
-![Figure 30](fig/fig20_relay_keys.png)
+![Figure 31](fig/fig20_relay_keys.png)
 
 This is one more channel rather than a dependency. The schedule is already on the device's SD card and the time is known to the DS3231. Whether the relay is down, unreachable or never configured at all, nobody's dose is missed. The judgement in Table 24 stands. We still do not require a cloud.
 
@@ -1339,9 +1349,9 @@ else:                                          # multi-select items (days of wee
     unclear = [k for k in group["bubbles"] if abs_min - margin <= s[k] < abs_min]
 ```
 
-**[Figure 31]** The four stages of reading the paper form, and the three branches on which a single-choice item yields no value. All three red boxes end on the side that produces nothing.
+**[Figure 32]** The four stages of reading the paper form, and the three branches on which a single-choice item yields no value. All three red boxes end on the side that produces nothing.
 
-![Figure 31](fig/fig23_formsheet.png)
+![Figure 32](fig/fig23_formsheet.png)
 
 Design intent. That branches ①, ② and ③ all end by yielding no value is the character of this function. Branch ② especially. When two cells are both properly filled in, picking the darker is technically easy, but it manufactures something the paper did not say.
 
@@ -1375,17 +1385,17 @@ What has to be read here is not the left of Table 25 but what the right two rows
 
 Two practical instructions come out of this. Fill more than half the box when marking, and focus when taking the photograph. Nothing else needs worrying about. Dark, shadowed or poor quality makes no difference. That is also why the guidance printed alongside the paper form says only these two things.
 
-![Figure 32](fig/fig14_formsheet.png)
+![Figure 33](fig/fig14_formsheet.png)
 
-**[Figure 32]** The paper form and what was read from it. On the left is the photograph actually fed to the parser, having been through perspective, a lighting gradient, defocus and sensor noise. On the right are the values read from that photograph and the fill score of each cell. The gap between the chosen cells and the rest (0.67–0.71 against 0.00–0.04) shows the reading was not a near miss at the boundary. The values match exactly the answers set when the image was generated.
+**[Figure 33]** The paper form and what was read from it. On the left is the photograph actually fed to the parser, having been through perspective, a lighting gradient, defocus and sensor noise. On the right are the values read from that photograph and the fill score of each cell. The gap between the chosen cells and the rest (0.67–0.71 against 0.00–0.04) shows the reading was not a near miss at the boundary. The values match exactly the answers set when the image was generated.
 
 ### 4.5 Offline operation
 
 The app is built as a PWA, with a service worker caching screens, assets and the model. The strategy differs by the nature of the resource. Navigation is handled network-first so that the latest is always fetched when connected, while static assets and pictograms are handled cache-first. The verdict API is not intercepted, because failing is better than serving a stale answer.
 
-**[Figure 33]** The three ways the service worker splits a request. Each is a distinct judgement, and the red cell is a constraint that exists because this app handles medicines.
+**[Figure 34]** The three ways the service worker splits a request. Each is a distinct judgement, and the red cell is a constraint that exists because this app handles medicines.
 
-![Figure 33](fig/fig21_sw.png)
+![Figure 34](fig/fig21_sw.png)
 
 The branching of the strategy is visible directly in the service worker's `fetch` handling.
 
@@ -1455,9 +1465,9 @@ export async function sign(method: string, body: string, ts: number): Promise<st
 }
 ```
 
-**[Figure 34]** What goes into the signature and what each part prevents. Missing either one makes the signature worthless. Deriving the storage location from the public key is not the signature but a separate access control.
+**[Figure 35]** What goes into the signature and what each part prevents. Missing either one makes the signature worthless. Deriving the storage location from the public key is not the signature but a separate access control.
 
-![Figure 34](fig/fig24_sign.png)
+![Figure 35](fig/fig24_sign.png)
 
 Design intent. The second argument to `generateKey` being `false` means not even our own code can read the private key. All we can do is ask the browser to sign with it. Taking the device's entire storage therefore yields nothing worth taking. It becomes something usable only by holding that device rather than a value that can be observed and imitated.
 
@@ -1505,7 +1515,7 @@ These are counts from running the suites on 3 August 2026, and the single web-ap
 
 That the firmware suite was for a while not running at all is also set down. Eight screen constants disappeared in one commit, and since every test file goes through that module, all of them stopped at import. Restoring them revealed 35 failures, and those 35 went away when the screen was redesigned around a single panel. They were missed not for want of tests but because the tests were not running, which is to say that counting passes and checking that the tests actually run are two different jobs.
 
-All three run without the hardware. No servo, no Raspberry Pi and no network is needed. Making code that runs on a device you cannot attach a debugger to verifiable by anyone in a few seconds is the purpose of this arrangement, and bringing the whole firmware up on a laptop with `make run` (Figure 22, right) comes from the same principle.
+All three run without the hardware. No servo, no Raspberry Pi and no network is needed. Making code that runs on a device you cannot attach a debugger to verifiable by anyone in a few seconds is the purpose of this arrangement, and bringing the whole firmware up on a laptop with `make run` (Figure 23, right) comes from the same principle.
 
 Roles were divided as follows. Yunsu Nam took the web app and the SIGIL and VOCA engines, Dohun Kim took the hardware firmware, the paper form reading and the nutrition estimation model, and the Moldovan team took 3D printing, mechanical design and screen design. Over 17 days 320 commits accumulated.
 
@@ -1567,9 +1577,9 @@ This was not fixed as a defect. The alternative suggestion is derived from the r
 
 It should be made clear that what this evaluation measured is the arrival of information rather than human understanding. The latter has to be asked of people and lies outside the scope of this evaluation.
 
-![Figure 35](fig/chart06_formative.png)
+![Figure 36](fig/chart06_formative.png)
 
-**[Figure 35]** Formative evaluation before and after the fix (n = 28). The left pair is the number of runs satisfying all six items, the right pair the number of runs ending without a single pictogram appearing. More than 0 becoming 27, **the move from 8 to 0 on zero pictograms** is what this evaluation yielded. Those eight arose from an empty cache rather than a missing feature, and without measuring we would have discovered them first during the demonstration.
+**[Figure 36]** Formative evaluation before and after the fix (n = 28). The left pair is the number of runs satisfying all six items, the right pair the number of runs ending without a single pictogram appearing. More than 0 becoming 27, **the move from 8 to 0 on zero pictograms** is what this evaluation yielded. Those eight arose from an empty cache rather than a missing feature, and without measuring we would have discovered them first during the demonstration.
 
 
 ### 5.2 A procedure for verifying pictogram comprehension
@@ -1587,9 +1597,9 @@ This work designed a procedure that inverts that order. Two gates are placed on 
 | 1. Mechanical check | Does the form survive being shrunk | Ink ratio, survival of interior holes at 32px, number of separate blobs |
 | 2. Semantic check | Is it read as intended | The picture is shown and **"what does this look like"** asked as an open question |
 
-**[Figure 36]** The two gates a morpheme passes on its way to release, and the ladder it climbs when it fails. The ladder is keyed to the reason for failure rather than to the number of attempts.
+**[Figure 37]** The two gates a morpheme passes on its way to release, and the ladder it climbs when it fails. The ladder is keyed to the reason for failure rather than to the number of attempts.
 
-![Figure 36](fig/fig18_pictogram_gate.png)
+![Figure 37](fig/fig18_pictogram_gate.png)
 
 The form of the question at the second gate matters. Asking "is this a peanut" mostly gets a yes. No options are therefore given and a description is requested, and whether the answer matches the intent is judged separately. This is the same reason the ISO 9186 comprehension test presents no options.
 
@@ -1655,9 +1665,9 @@ Applying this procedure to all 78 morphemes gave the following.
 
 Of the 24 read differently, 7 are actually exposed on screen, while the remaining 17 exist only in the dictionary and are never called by the app. The 7 that are exposed were reworked with the misreading fed back into the prompt, with the improvements shown below.
 
-![Figure 37](fig/chart07_glyph_check.png)
+![Figure 38](fig/chart07_glyph_check.png)
 
-**[Figure 37]** First-pass semantic check results for the 78 morphemes and the breakdown of the 24 misread. The misreadings are split rather than pooled because the two are different in nature. The 7 exposed on screen are actually seen by users and have to be fixed, while the 17 that exist only in the dictionary are not yet seen by anyone. Fixing the former first is a matter of allocating effort and does not mean the latter are acceptable.
+**[Figure 38]** First-pass semantic check results for the 78 morphemes and the breakdown of the 24 misread. The misreadings are split rather than pooled because the two are different in nature. The 7 exposed on screen are actually seen by users and have to be fixed, while the 17 that exist only in the dictionary are not yet seen by anyone. Fixing the former first is a matter of allocating effort and does not mean the latter are acceptable.
 
 
 [Table 33] Morphemes improved by rework
@@ -1763,9 +1773,9 @@ Our own values show that directly. Mass is comparatively better at 16.61%, but f
 
 Values from this route are therefore not trusted on the grounds of accuracy. What justifies putting this route on screen is that it passed the physical checks in §4.2 and that the verdict is presented not as this single value but as a share of the user's own reference. For products carrying a nutrition label this route is not used.
 
-![Figure 38](fig/chart08_model_mae.png)
+![Figure 39](fig/chart08_model_mae.png)
 
-**[Figure 38]** Per-item MAE% of the nutrition estimation model (n = 507). The dashed line is the mean across the five items (26.75%). Mass and energy are relatively better and the trace items get worse, because a photograph of a plate shows volume but not composition. The same volume of rice and the same volume of fried food have similar mass and completely different fat.
+**[Figure 39]** Per-item MAE% of the nutrition estimation model (n = 507). The dashed line is the mean across the five items (26.75%). Mass and energy are relatively better and the trace items get worse, because a photograph of a plate shows volume but not composition. The same volume of rice and the same volume of fried food have similar mass and completely different fat.
 
 #### 5.5.1 Quantisation not applied
 
@@ -1876,9 +1886,9 @@ As of 2 August 2026, 35 people had answered: 3.2% of those contacted, with 117 f
 | Other | 9 | AAC and special education | 1 |
 | | | Industry practice | 1 |
 
-![Figure 39](fig/chart15_survey_who.png)
+![Figure 40](fig/chart15_survey_who.png)
 
-**[Figure 39]** The composition of the 35 respondents. Field on the left, continent on the right. Pharmacy and nursing account for three fifths at 21 people, and these two are the centre of the five segments we judged qualified to view the demonstration and rule on patient comprehension. That Asia accounts for 25 reflects exactly the order in which the list was built, starting in Korea and widening region by region.
+**[Figure 40]** The composition of the 35 respondents. Field on the left, continent on the right. Pharmacy and nursing account for three fifths at 21 people, and these two are the centre of the five segments we judged qualified to view the demonstration and rule on patient comprehension. That Asia accounts for 25 reflects exactly the order in which the list was built, starting in Korea and widening region by region.
 
 The countries respondents recorded as working in span 20 countries across five continents, with 17 recording Korea only. All respondents consented to being quoted by name and affiliation, so they are recorded here as given.
 
@@ -1964,9 +1974,9 @@ An n of 34 is small. So rather than recording proportions alone we record how mu
 | No basis on which to judge | 1 / 25 | 4.0% | 0.7% – 19.5% |
 | No | 0 / 25 | 0.0% | 0.0% – 13.3% |
 
-![Figure 40](fig/chart10_survey.png)
+![Figure 41](fig/chart10_survey.png)
 
-**[Figure 40]** Proportions and 95% confidence intervals for the judgement question (n = 25). The dot is the proportion, the line is the interval. The width of the intervals is the size of this sample, and what to read in this figure is the length of the lines rather than the position of the dots. Even with zero "No" answers, the interval reaches 13.3%.
+**[Figure 41]** Proportions and 95% confidence intervals for the judgement question (n = 25). The dot is the proportion, the line is the interval. The width of the intervals is the size of this sample, and what to read in this figure is the length of the lines rather than the position of the dots. Even with zero "No" answers, the interval reaches 13.3%.
 
 The last row is the place in this table to be most careful about. Zero "No" answers does not mean no one would answer that way. What this sample supports is that the proportion is probably below 13.3%, and as many as three in 25 would not contradict this result.
 
@@ -2045,9 +2055,9 @@ One photograph is a case, not a measurement, so we measured again on public data
 
 We also measured whether confidence can filter it. It cannot. At a threshold of 0.4, 44% survive and only 74% of those are correct; at 0.6, 4% survive. No threshold satisfies accuracy and coverage together, so treating all handwriting without confidence, as the app now does, is the only honest choice left. One thing is reassuring: not one of the 200 was wrong while carrying confidence of 0.8 or higher. The model does say it cannot read what it cannot read.
 
-**[Figure 41]** How 200 handwritten drug names were read, and why confidence cannot filter them. The right panel is the design basis: the share surviving (grey) and the accuracy of the survivors (blue) move in opposite directions, so no threshold satisfies both, and all handwriting is therefore handled without confidence. The red bar on the left is the heaviest finding of this measurement. A name read as something else looks wrong; a name off by a character or two can be a different drug that actually exists.
+**[Figure 42]** How 200 handwritten drug names were read, and why confidence cannot filter them. The right panel is the design basis: the share surviving (grey) and the accuracy of the survivors (blue) move in opposite directions, so no threshold satisfies both, and all handwriting is therefore handled without confidence. The red bar on the left is the heaviest finding of this measurement. A name read as something else looks wrong; a name off by a character or two can be a different drug that actually exists.
 
-![Figure 41](fig/chart21_handwriting.png)
+![Figure 42](fig/chart21_handwriting.png)
 
 We also measured what the user actually photographs, the full prescription page. From 200 Bangladeshi prescription pages annotated with the number of drug-name regions (Mendeley k62rfd23kz, CC BY 4.0), 60 were drawn at fixed intervals and sent not to the model but to the app's `/api/analyze`, because a value only becomes the app's value after passing the deployed prompt and post-processing. The ground truth is a count, not text. This dataset has no drug-name text; it records how many medicines each page carries, and the count matters for a reason. If three of five medicines are read, two vanish silently, and the user takes the three on screen to be all of them.
 
@@ -2067,9 +2077,9 @@ The same measurement surfaced one more defect. When a call failed briefly, the a
 
 After the fix the same 60 pages were measured again. Recognition as a prescription rose from 81.7% to 98.3%, recall of the medicine count from 89.7% to 91.0%, all 60 were flagged handwritten, and no page had an invented schedule. Opening the 4 pages that carried one showed each was reading notation actually on the paper, the Bangladeshi `1+0+1` style.
 
-**[Figure 42]** The same 60 pages measured before and after the fix. The gap in the left pair is the 11 truncated replies. A caveat belongs beside it: the two values must not be multiplied together. The 91% recall is a count, not letter accuracy; letter accuracy is the 47% of Figure 41. Different sample, different task.
+**[Figure 43]** The same 60 pages measured before and after the fix. The gap in the left pair is the 11 truncated replies. A caveat belongs beside it: the two values must not be multiplied together. The 91% recall is a count, not letter accuracy; letter accuracy is the 47% of Figure 42. Different sample, different task.
 
-![Figure 42](fig/chart22_pageeval.png)
+![Figure 43](fig/chart22_pageeval.png)
 
 In sum, Professor Celia's point is confirmed by three measurements. This app cannot read handwriting. Two things have changed: the screen now knows it, and what the app does everywhere else is now stated in numbers.
 
@@ -2220,9 +2230,9 @@ The preceding subsections quoted only the questions we selected. To see whether 
 | Other (9) | What has to be resolved first | That there is no validation with people | 2 |
 | | | A route that reaches actual users | 1 |
 
-![Figure 43](fig/chart18_field_answers.png)
+![Figure 44](fig/chart18_field_answers.png)
 
-**[Figure 43]** What the 12 pharmacy and 9 nursing and public-health respondents answered. The denominators are small, so head counts are drawn rather than percentages. The third row on the left and the first row on the right point in different directions. Pharmacy sees things this app cannot handle; nursing sees outcomes that can be changed once the conditions are met.
+**[Figure 44]** What the 12 pharmacy and 9 nursing and public-health respondents answered. The denominators are small, so head counts are drawn rather than percentages. The third row on the left and the first row on the right point in different directions. Pharmacy sees things this app cannot handle; nursing sees outcomes that can be changed once the conditions are met.
 
 What we had omitted comes first.
 
@@ -2326,9 +2336,9 @@ The link to 3.d is the most direct. An analysis of more than 23 million laborato
 
 Broken down by region, this problem too is concentrated where we are aimed. In South-East Asia and the Eastern Mediterranean one in three reported infections showed resistance, in Africa one in five and in the Americas one in seven (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). The regions with the lowest literacy in §1.1 appear here again.
 
-**[Figure 44]** Share of reported bacterial infections showing antibiotic resistance (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). The world average is one in six; in South-East Asia and the Eastern Mediterranean it is one in three. The low-literacy countries of Table 1 are in those two regions. That is the place the `finish_course` morpheme aims at.
+**[Figure 45]** Share of reported bacterial infections showing antibiotic resistance (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). The world average is one in six; in South-East Asia and the Eastern Mediterranean it is one in three. The low-literacy countries of Table 1 are in those two regions. That is the place the `finish_course` morpheme aims at.
 
-![Figure 44](fig/chart14_amr_region.png)
+![Figure 45](fig/chart14_amr_region.png)
 
 If one person in three believes that, the course length written on the prescription is not unread but read and not followed. On top of this come the people who cannot read it. If a duration written in text is never delivered in the first place, that instruction may as well not exist, and this is the point SnapCare's `finish_course` morpheme is aimed at. A picture alone does not change a belief, however, and what this morpheme does extends only as far as making the duration arrive.
 
@@ -2340,7 +2350,7 @@ First, no comprehension testing with people was carried out. The expert survey i
 
 Second, cultural adaptation has not been verified. In the controlled comparison showing two sets to the same 46 people, 20 of 23 locally made pictograms passed the ANSI criterion while USP-DI managed 11 of 23 (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). Pictogram comprehension therefore varies by culture. This set was designed in Korea and needs verification with Moldovan users.
 
-Third, no claim is made about clinical outcomes. This work measured the arrival of information and did not measure improvement in adherence or health outcomes.
+Third, no claim is made about clinical outcomes. Ownby et al. (2024), cited in §1.4, makes this item heavier. Three hundred and fifteen people with low health literacy were given an app with lowered reading difficulty and audio, and medication adherence did not move. We hold that changing the medium is different, but whether that holds can only be known by measuring, and we have not measured it. This work measured the arrival of information and did not measure improvement in adherence or health outcomes.
 
 Fourth, the recovery path after a misclassification was not measured. Because the design does not have the user choose what they photographed (§3.3), if the app mistakes food for medicine there is nothing on screen for the user to correct it with and taking another photograph is the only option. This design made the user bear misclassification in exchange for removing the selection step, and how often that misclassification actually occurs was not measured. Nor was it confirmed whether users can notice that something has been read wrongly.
 

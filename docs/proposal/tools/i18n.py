@@ -446,6 +446,37 @@ EN = {
     '복약 안전 교육 받음': 'Received medication-safety education',
     '한국 고령자에서의 비율 (%)': 'Share among older adults in Korea (%)',
 
+    # ── charts.py · chart_evidence (§1.11) ────────────────────────
+    '이 접근을 받치는 근거와 깎는 근거':
+        'Evidence supporting this approach, and evidence cutting against it',
+    '각 항목 끝의 절 번호에서 원문 서지와 함께 확인할 수 있다':
+        'The section number after each item leads to the full citation',
+    '받친다': 'Supports', '깎는다': 'Cuts against',
+    '그림은 문자보다 잘 기억된다 (§1.8)':
+        'Pictures are remembered better than text (§1.8)',
+    '그림을 곁들이면 물약 용량 오류가 47.8%에서 5.4%로 (§1.8)':
+        'With pictures, liquid dosing errors fell from 47.8% to 5.4% (§1.8)',
+    'RCT 54편 메타분석. 저건강문해력에서 특히 크다 (§1.8)':
+        'Meta-analysis of 54 RCTs. Largest in low health literacy (§1.8)',
+    '그림에 음성을 더한 쪽이 셋 중 가장 나았다 (§1.8)':
+        'Pictures plus speech beat the other two arms (§1.8)',
+    '현지에서 만든 세트가 통과율을 두 배로 (§1.8)':
+        'A locally made set nearly doubled the pass rate (§1.8)',
+    '만들었다고 읽히지는 않는다. 108종 중 17종 (§1.8)':
+        'Making them does not make them read. 17 of 108 (§1.8)',
+    '같은 기호가 나라를 옮기면 94%에서 8%로 (§1.8)':
+        'The same symbol goes from 94% to 8% across countries (§1.8)',
+    '나이가 많을수록 그림으로 얻는 이득이 작다 (§1.8)':
+        'The gain from pictures shrinks with age (§1.8)',
+    '문해력과 순응도의 상관은 유의하나 약하다 (§1.4)':
+        'Literacy and adherence correlate significantly but weakly (§1.4)',
+    '난이도를 낮추고 음성을 붙여도 순응도는 그대로 (§1.4)':
+        'Lower reading level plus audio left adherence unchanged (§1.4)',
+    '위해의 무게중심은 환자가 아니라 처방 단계 (§1.4)':
+        'Harm centres on prescribing, not on the patient (§1.4)',
+    '불리한 쪽이 더 길다. 그것을 줄이지 않는 것이 이 장의 방식이다':
+        'The unfavourable column is the longer one. Not shortening it is this chapter\'s method',
+
     # ── charts.py · 손글씨 측정 (§5.7) ────────────────────────────
     '손글씨 약 이름 {n}장을 읽힌 결과': 'Reading {n} handwritten drug names',
     'RxHandBD (Zenodo 18478741) · 방글라데시 실제 처방전에서 잘라낸 낱말':

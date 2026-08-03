@@ -287,6 +287,66 @@ def chart_ageing():
     save(fig, 'chart20_ageing')
 
 
+# ── 근거가 어느 쪽을 가리키는가 ─────────────────────────────────────
+def chart_evidence():
+    """§1.11. 받치는 근거와 깎는 근거를 나란히.
+
+    수치를 세지 않고 항목을 적는다. 어느 인용이 어느 쪽인지는 문장의
+    뜻이라 기계가 가릴 수 없다. 대신 §번호를 달아 확인할 수 있게 한다."""
+    fig, ax = plt.subplots(figsize=(6.0, 3.1))
+    title(fig, T('이 접근을 받치는 근거와 깎는 근거'),
+          note=T('각 항목 끝의 절 번호에서 원문 서지와 함께 확인할 수 있다'))
+    fig.subplots_adjust(left=0.02, right=0.98, top=0.86, bottom=0.06)
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 100)
+    ax.axis('off')
+
+    FOR = [T('그림은 문자보다 잘 기억된다 (§1.8)'),
+           T('그림을 곁들이면 물약 용량 오류가 47.8%에서 5.4%로 (§1.8)'),
+           T('RCT 54편 메타분석. 저건강문해력에서 특히 크다 (§1.8)'),
+           T('그림에 음성을 더한 쪽이 셋 중 가장 나았다 (§1.8)'),
+           T('현지에서 만든 세트가 통과율을 두 배로 (§1.8)')]
+    AGAINST = [T('만들었다고 읽히지는 않는다. 108종 중 17종 (§1.8)'),
+               T('같은 기호가 나라를 옮기면 94%에서 8%로 (§1.8)'),
+               T('나이가 많을수록 그림으로 얻는 이득이 작다 (§1.8)'),
+               T('문해력과 순응도의 상관은 유의하나 약하다 (§1.4)'),
+               T('난이도를 낮추고 음성을 붙여도 순응도는 그대로 (§1.4)'),
+               T('위해의 무게중심은 환자가 아니라 처방 단계 (§1.4)')]
+
+    for col, (head, items, edge) in enumerate((
+            (T('받친다'), FOR, DARK), (T('깎는다'), AGAINST, RED))):
+        x = 2 + col * 50
+        ax.text(x, 95, head, fontsize=9.6, fontweight='bold', color=INK)
+        ax.plot([x, x + 46], [92.5, 92.5], color=edge, lw=1.2)
+        for i, t in enumerate(items):
+            y = 86 - i * 13.5
+            ax.plot([x + 0.6, x + 0.6], [y - 8.4, y + 3.0], color=edge, lw=2.2,
+                    solid_capstyle='butt')
+            for j, ln in enumerate(_wrap_txt(t, 44)):
+                ax.text(x + 3.2, y - j * 5.2, ln, fontsize=7.6, color=MUTED,
+                        va='top')
+
+    ax.text(2, 4, T('불리한 쪽이 더 길다. 그것을 줄이지 않는 것이 이 장의 방식이다'),
+            fontsize=7.8, color=INK, fontweight='bold')
+    save(fig, 'chart23_evidence')
+
+
+def _wrap_txt(s, n):
+    """글자 수로 접는다. 한글 한 자를 라틴 두 자로 센다."""
+    out, cur, w = [], '', 0
+    for word in s.split(' '):
+        ww = sum(2 if '가' <= c <= '힣' else 1 for c in word) + 1
+        if cur and w + ww > n:
+            out.append(cur)
+            cur, w = word, ww
+        else:
+            cur = f'{cur} {word}'.strip()
+            w += ww
+    if cur:
+        out.append(cur)
+    return out
+
+
 # ── 손글씨 약 이름 200장 ────────────────────────────────────────────
 def chart_handwriting():
     """§5.7. 낱말 단위 성적과, 확신도로 걸러낼 수 없다는 것.
@@ -691,6 +751,7 @@ if __name__ == '__main__':
     chart_glyphs()
     chart_expressive()
     chart_ageing()
+    chart_evidence()
     chart_handwriting()
     chart_pageeval()
     chart_model()

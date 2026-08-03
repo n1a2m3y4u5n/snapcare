@@ -308,6 +308,7 @@ PMC8544505 한국 고령자 79.4%/28.2% · PMC7532569 몰도바 건강문해력 
 | Mansoor, L. E. & Dowse, R., *Ann Pharmacother* 37:1003 | PubMed 초록 | 확인. 저문해 60명(정규교육 ≤7년), 실험군에서 라벨·안내문 양쪽 80% 초과가 유의하게 많았다 |
 | Schubbe, D. et al., *Patient Educ Couns* 103(10):1935 | PubMed 초록 | 확인. 4,160편 선별 → RCT 54편(메타 42편). 저건강문해력 13편에서 지식·이해 크게 상승. "icons with few words may be most helpful" |
 | Zhang, N. J., Terry, A. & McHorney, C. A., *Ann Pharmacother* 48(6):741 | PubMed 초록 | 확인. 가중 상관 0.056~0.072. 유의하나 약하다 |
+| Ownby, R. L. et al., *J Ageing Longev* 4(2):51 | PMC 전문 | 확인. 저건강문해력 315명, 2개 기관, 3·6·8학년 수준 세 무리. 무리 간 차이 없음, 복약 순응도 변화 없음 |
 | WHO, *Assistive technology* fact sheet | WHO 공식 페이지 | 확인. 25억 명 필요, 2050년 35억 명. 저소득국 3% 대 고소득국 90% |
 | Kheir, N. et al., *Res Social Adm Pharm* 10(5):720 | PubMed 초록 | 확인. 123명 세 갈래 무작위. 그림+구두가 대부분 지시에서 최고 (p ≤ 0.05). "Do not take with dairy products" 는 여전히 어려웠다 |
 | Mourad, N. et al., *BMC Public Health* 23:1926 | PMC 전문 | 확인. n=1,848. 9.36±1.60 → 10.88±0.89, 차이 1.52 (95% CI 1.45~1.60). 나이 Beta = −0.019 |
