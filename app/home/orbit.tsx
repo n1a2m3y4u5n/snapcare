@@ -39,9 +39,19 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
   const spots = orbitSpots(satellites.length);
 
   return (
-    // 폭을 화면에 맞추되 상한을 둔다. 태블릿에서 지름 400px 짜리 원이 되면
-    // 위성 사이가 엄지로 닿지 않는 거리가 된다.
-    <div className="relative mx-auto aspect-square w-full max-w-[300px]">
+    /*
+      폭을 화면에 맞추되 상한을 둔다.
+
+      300px 이었다. 그러면 폰에서 화면 폭의 8할만 쓰고 나머지가 여백으로 남는데,
+      이 원이 홈의 전부인 화면에서 그 여백은 "덜 만든 화면" 으로 읽힌다. 상한을
+      올리고 세로로도 남는 자리에 맞춘다(`min()` 이 둘 중 작은 쪽을 고른다) —
+      그래야 카드가 하나 뜬 날에도 원이 잘리지 않는다.
+
+      상한이 여전히 있는 이유: 태블릿에서 지름 400px 짜리 원이 되면 위성 사이가
+      한 엄지로 닿지 않는 거리가 된다.
+    */
+    <div className="relative mx-auto aspect-square w-full"
+         style={{ maxWidth: 'min(100%, 68vh, 420px)' }}>
       {/*
         가운데. DOM 에서 맨 앞이라 키보드·스캐닝이 여기부터 만난다.
         컨테이너의 40% — 340px 상자에서 136px 이다. 전에는 96px 였다.

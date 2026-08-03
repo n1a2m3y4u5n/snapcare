@@ -91,23 +91,29 @@ export default function HomePage() {
   }
 
   /*
-    둘레에 놓을 것들.
+    둘레에 놓을 것들 — 홈에서 갈 수 있는 곳 전부.
 
-    기준 하나: **아래 탭이 못 닿는 곳만.**
+    중복을 없애는 방법을 두 번 바꿨다. 처음에는 '오늘' 을 위성에서 빼서 아래 탭에
+    맡겼는데, 그러면 홈이 두 가지 언어로 말한다 — 가운데는 둥근 궤도, 아래는 네모난
+    탭. 어느 쪽이 이 앱의 길인지가 화면에서 안 정해진다.
 
-    처음에는 '오늘(/nutrition)' 도 위성으로 뒀다. 홈에서 한 번에 닿는 편이 낫다고
-    봤는데, 아래 탭에 같은 곳이 이미 있어서 한 화면에 같은 곳으로 가는 길이 둘이
-    됐다. 못 읽는 사람에게 길이 둘인 것이 늘 나은 것은 아니다 — 두 그림이 같은
-    데로 간다는 것을 알아내려면 **둘 다 눌러 봐야** 하고, 그 사이에 "이 둘은 뭐가
-    다르지" 라는 물음이 생긴다. 이 앱은 그 물음을 안 만드는 것이 일이다.
+    이제 반대로 한다. **홈에서는 궤도가 유일한 길**이고 아래 탭의 이동 링크는 감춘다.
+    영양과 설정이 궤도로 올라오고, 다른 화면에서는 탭이 그대로 남아 돌아오는 길이 된다.
 
-    남은 셋은 아래 탭 어디에도 없다. 지난 날들과 약통과 프로필은 지금까지 설정
-    안쪽에 묻혀 있었고, 그래서 궤도가 실제로 길을 **새로 내는** 자리가 된다.
+    낭독 버튼만은 자리를 지킨다. 읽지 못하는 사람이 그 버튼을 찾는 방법은 '늘 거기
+    있다' 뿐이고, 하필 홈이 앱을 여는 첫 화면이다 — 여기서 자리가 바뀌면 그 규칙이
+    처음부터 깨진다. TabBar 의 `hideNav` 가 링크만 비우고 그 칸은 남긴다.
+
+    순서는 DOM 순서이자 스캐닝 순서다. 자주 쓰는 것부터 놓는다.
 
     배지는 답을 기다리는 것에만 붙인다. 숫자를 못 읽어도 **점이 붙었다**는 것은
     보이고, 그것만으로 "여기 뭔가 있다" 는 뜻이 선다.
   */
   const satellites: Satellite[] = [
+    {
+      emoji: '🥗', label: 'Today', href: '/nutrition',
+      say: 'Today. Everything you have eaten so far, added up against your daily amount.',
+    },
     {
       emoji: '📅', label: 'Past days', href: '/history',
       say: 'Past days. Everything you have checked, day by day, and how your medicine went.',
@@ -123,12 +129,27 @@ export default function HomePage() {
       // 나오는데 기본값('어른, 조건 없음')이 아무 표시 없이 정해져 있었다.
       badge: confirmed ? 0 : 1,
     },
+    {
+      emoji: '⚙️', label: 'Settings', href: '/settings',
+      say: 'Settings. Who we check for, the voice, and the pill box.',
+    },
   ];
 
 
   return (
-    <MobileScreen tab="home">
-      <div className="px-5 pt-14">
+    <MobileScreen tab="home" hideNav>
+      {/*
+        세로 공간을 실제로 쓴다.
+
+        `main` 이 이미 `flex-1` 인데 홈은 그 안에서 위에만 붙어 있었다. 그래서
+        궤도가 화면 위쪽에 몰리고 아래 절반이 비었다 — 카메라를 크게 만들어 놓고
+        정작 화면은 안 채운 셈이다.
+
+        `flex-1` 로 받아서 궤도를 남는 자리 가운데에 앉힌다. 위아래 카드가 뜨는
+        날에는 그만큼 자리가 줄고 궤도가 알아서 위로 붙는다 — 카드가 궤도를 화면
+        밖으로 밀어내던 것을 이 구조가 대신 막는다.
+      */}
+      <div className="flex flex-1 flex-col px-5 pt-14">
         <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
             {...ask('SnapCare. Photograph food or medicine to check it. The big blue button takes a photograph.')}>
           SnapCare
@@ -224,7 +245,13 @@ export default function HomePage() {
           위쪽 알림 카드들은 그대로 뒀다. 저것들은 통계가 아니라 **지금 해야 하는
           일**이고, 특히 배출 카드는 유예가 지나면 트레이가 닫힌다.
         */}
-        <div className="mt-6">
+        {/*
+          좌우 여백까지 궤도에 준다(`-mx-5`). 이 화면에서 그 여백은 지키는 것이
+          아무 뜻도 없다 — 옆에 나란히 놓일 글이 없기 때문이다. 폰에서 40px 을
+          되찾으면 위성 지름이 그만큼 커지고, 그것이 이 화면에서 제일 겨누기 어려운
+          표적이다.
+        */}
+        <div className="-mx-5 flex flex-1 items-center justify-center py-2">
           <Orbit satellites={satellites} />
         </div>
 
