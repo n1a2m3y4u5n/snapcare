@@ -1244,7 +1244,9 @@ This section first sets out what was built with which tools, and the sections th
 | Product data | OpenFoodFacts API | Via server |
 | Image recognition | Claude Vision | Via server |
 | Hardware | Raspberry Pi 3B · 3 servos · WS2812 · DS1302 | 3 trays |
-| Deployment | fly.io (Tokyo) · 1 GB persistent volume | |
+| Deployment | fly.io (Tokyo) · 1 GB persistent volume | Stops when idle, wakes on request |
+
+The last row should be set down first. To avoid leaving a machine idle we set `min_machines_running = 0`, so it stops when nobody is using it and wakes on the first request. Anyone opening it for the first time therefore waits a few seconds. Measured on 3 August 2026, the first request took 6.5 seconds and the ones after it 0.17. That 6.5 seconds is what someone who reads this document and opens the deployment meets first, so it is recorded. Running it always-on would remove it, but that is a question of cost rather than of design.
 
 Reading the last column on its own shows how this stack is put together. The heavy things are on the device and the light things are on the server. A 16 MB nutrition estimation model runs in the browser, while recognising what a photograph shows goes out to the server. This is the reverse of an ordinary web app. Sending heavy computation to the server is the conventional choice, and it lets the device be old and makes the model easy to swap.
 
