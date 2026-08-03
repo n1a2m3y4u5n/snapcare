@@ -33,6 +33,7 @@
   · 그림 33 의 채움 점수가 파서가 내는 값과 같은가
   · 같은 출처가 두 가지 모양으로 적히지 않았는가
   · 표 28 의 시험 수가 실제로 돌린 결과와 같은가
+  · 우리 산문의 표기가 한 가지로 통일되어 있는가
 """
 import re
 import sys
@@ -820,6 +821,37 @@ def test_counts() -> list:
     return out
 
 
+# 우리 산문에서 한 가지로 써야 하는 말. 왼쪽이 틀린 표기다.
+# 인용과 표, 부록은 보지 않는다 — 응답자가 쓴 말을 우리가 고르게
+# 만들면 그것은 인용이 아니게 된다. 실제로 "팩토그램" 은 응답자가
+# 그렇게 적은 것이고 그대로 두어야 한다.
+SPELLING = {
+    '건강문해력': '건강 문해력',      # 저건강문해력 은 합성어라 예외로 둔다
+    '복약순응': '복약 순응',
+    '서비스 워커': '서비스워커',
+    '손 글씨': '손글씨',
+}
+
+
+def spelling() -> list:
+    out = []
+    for f in ('proposal_ko.md',):
+        body = (DOC / f).read_text()
+        cut = body.index('### 5.11') if '### 5.11' in body else len(body)
+        for i, ln in enumerate(body[:cut].splitlines(), 1):
+            t = ln.strip()
+            if t.startswith(('>', '|', '```')):
+                continue
+            for bad, good in SPELLING.items():
+                if bad == '건강문해력':
+                    hits = re.findall(r'(?<!저)건강문해력', ln)
+                else:
+                    hits = re.findall(re.escape(bad), ln)
+                if hits:
+                    out.append(f'{f}:{i} 표기가 갈린다 — "{bad}" 는 "{good}" 로')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -938,6 +970,9 @@ def main() -> int:
         note(t)
 
     for t in test_counts():
+        note(t)
+
+    for t in spelling():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):

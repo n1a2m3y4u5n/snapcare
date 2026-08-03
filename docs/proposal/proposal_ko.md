@@ -87,7 +87,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 ### 1.2 건강 문해력의 분포
 
-글자를 읽을 수 있는 것과 건강 정보를 이해하는 것은 다르다. 유럽 17개국에서 42,445명을 면접한 HLS19 조사는 일반 건강문해력을 우수·충분·문제적·부적절 네 수준으로 나누어 재었고, 참여한 모든 나라에서 낮은 건강문해력이 상당한 비율로 남아 있음을 보고했다 (HLS19 Consortium of the WHO Action Network M-POHL, *International Report on the Methodology, Results, and Recommendations of the European Health Literacy Population Survey 2019–2021*, Austrian National Public Health Institute, Vienna, 2021). 다만 이 보고서는 자료 수집 시기와 방법이 나라마다 달라 국가 간 비교를 신중히 하라고 명시하며, 17개국을 하나로 묶은 대표값을 내세우지 않는다. 따라서 여기서는 통합 백분율 대신 한국 자료를 본다.
+글자를 읽을 수 있는 것과 건강 정보를 이해하는 것은 다르다. 유럽 17개국에서 42,445명을 면접한 HLS19 조사는 일반 건강 문해력을 우수·충분·문제적·부적절 네 수준으로 나누어 재었고, 참여한 모든 나라에서 낮은 건강 문해력이 상당한 비율로 남아 있음을 보고했다 (HLS19 Consortium of the WHO Action Network M-POHL, *International Report on the Methodology, Results, and Recommendations of the European Health Literacy Population Survey 2019–2021*, Austrian National Public Health Institute, Vienna, 2021). 다만 이 보고서는 자료 수집 시기와 방법이 나라마다 달라 국가 간 비교를 신중히 하라고 명시하며, 17개국을 하나로 묶은 대표값을 내세우지 않는다. 따라서 여기서는 통합 백분율 대신 한국 자료를 본다.
 
 [표 3] 한국 성인의 건강정보이해능력 (질병관리청, *국민건강영양조사 제9기 2차년도*, 2023)
 
@@ -204,7 +204,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 지시가 전달된 뒤에도 남는 간극이 있다. 만성 질환자의 복약 순응도는 선진국에서 평균 50%이며 개발도상국에서는 그보다 낮다 (World Health Organization, *Adherence to long-term therapies: evidence for action*, 2003). 이 수치는 글을 읽을 수 있고 진단도 받은 사람들을 포함해 잰 것이므로, 문해력만 해결하면 되는 문제가 아니라는 뜻이기도 하다.
 
-문해력과 순응도의 관계 자체를 잰 자료도 우리 편이 아니다. 여러 데이터베이스를 훑어 건강문해력과 복약 순응도의 직접적 관계를 잰 연구를 모은 메타분석에서, 둘 사이의 상관은 통계적으로 유의하지만 **약했다.** 가중 상관계수가 0.056에서 0.072 사이다 (Zhang, N. J., Terry, A. & McHorney, C. A., "Impact of health literacy on medication adherence: a systematic review and meta-analysis," *Annals of Pharmacotherapy*, 48(6):741–751, 2014, doi:10.1177/1060028014526562). 저자들은 건강문해력이 순응도를 직접 정하기보다 다른 결정 요인을 매개할 가능성을 제시한다.
+문해력과 순응도의 관계 자체를 잰 자료도 우리 편이 아니다. 여러 데이터베이스를 훑어 건강 문해력과 복약 순응도의 직접적 관계를 잰 연구를 모은 메타분석에서, 둘 사이의 상관은 통계적으로 유의하지만 **약했다.** 가중 상관계수가 0.056에서 0.072 사이다 (Zhang, N. J., Terry, A. & McHorney, C. A., "Impact of health literacy on medication adherence: a systematic review and meta-analysis," *Annals of Pharmacotherapy*, 48(6):741–751, 2014, doi:10.1177/1060028014526562). 저자들은 건강 문해력이 순응도를 직접 정하기보다 다른 결정 요인을 매개할 가능성을 제시한다.
 
 더 직접적인 자료도 있다. 저건강문해력 성인 315명을 세 무리로 나눠 같은 만성질환 자기관리 앱을 글의 난이도만 달리해 준 다중기관 무작위 대조시험이다. 3학년 수준(음성 낭독 포함), 6학년 수준, 8학년 수준(대조군)으로 갈랐는데, 세 무리 모두 활성화·자기효능감·건강 관련 삶의 질이 올랐으나 **무리 사이에 차이가 없었고 복약 순응도는 어느 무리에서도 바뀌지 않았다** (Ownby, R. L., Simonson, M., Caballero, J. et al., "A mobile app for chronic disease self-management for individuals with low health literacy: A multisite randomized controlled clinical trial," *Journal of Ageing and Longevity*, 4(2):51–71, 2024, doi:10.3390/jal4020005).
 
@@ -396,7 +396,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 이 연구에도 우리에게 불리한 결과가 있다. **나이가 많을수록 그림으로 얻는 이득이 작았다** (Beta = −0.019, *p* < 0.001). 이 앱이 고령자를 주요 대상으로 삼는다는 점(§1.7)을 생각하면 이것은 그냥 지나칠 수치가 아니다. §5.7 에서 김은경 국립공주대학교 교수가 "이런 이미지와 친숙하지 않은 고령자들은 더 어려울 것" 이라고 적은 것이 같은 방향의 관찰이다.
 
-개별 시험을 넘어 전체를 모은 것도 있다. 4,160편을 훑어 무작위 대조시험 54편을 고르고 그중 42편을 메타분석한 결과, 그림을 곁들인 건강 정보는 지식·이해와 회상을 전반적으로 중간 정도 높였고, **건강문해력이 낮은 집단(13편)에서는 지식·이해가 크게 올랐다** (Schubbe, D., Scalia, P., Yen, R. W., Saunders, C. H., Cohen, S., Elwyn, G., van den Muijsenbergh, M. & Durand, M.-A., "Using pictures to convey health information: A systematic review and meta-analysis of the effects on patient and consumer health behaviors and outcomes," *Patient Education and Counseling*, 103(10):1935–1960, 2020, doi:10.1016/j.pec.2020.04.010).
+개별 시험을 넘어 전체를 모은 것도 있다. 4,160편을 훑어 무작위 대조시험 54편을 고르고 그중 42편을 메타분석한 결과, 그림을 곁들인 건강 정보는 지식·이해와 회상을 전반적으로 중간 정도 높였고, **건강 문해력이 낮은 집단(13편)에서는 지식·이해가 크게 올랐다** (Schubbe, D., Scalia, P., Yen, R. W., Saunders, C. H., Cohen, S., Elwyn, G., van den Muijsenbergh, M. & Durand, M.-A., "Using pictures to convey health information: A systematic review and meta-analysis of the effects on patient and consumer health behaviors and outcomes," *Patient Education and Counseling*, 103(10):1935–1960, 2020, doi:10.1016/j.pec.2020.04.010).
 
 같은 논문이 우리 설계에 직접 걸리는 문장을 하나 더 남겼다. **낱말이 적은 아이콘이 가장 도움이 될 수 있다**는 것이다. §5.7 에서 세 나라의 응답자가 한 장에 요소가 너무 많다고 지적한 것과 독립적으로 같은 방향을 가리킨다. 다만 저자들이 결과의 이질성이 크므로 조심해 읽으라고 적어 두었고, 여기서도 그렇게 읽는다. 이 값들은 그림을 쓰라는 근거이지 어떤 그림이든 된다는 근거가 아니다.
 
@@ -2260,7 +2260,7 @@ Atif Usman 교수와 윤휘열 교수는 기존 픽토그램 세트를 참조하
 
 한국공예디자인문화진흥원 이용한 선임은 표본을 연령·학습수준·성별로 고르게 잡을 것, 참가자가 해당 픽토그램에 사전지식이 전혀 없을 것, 그리고 뜻을 서술하게 하는 방식을 쓸 것을 적었다. 객관식은 의미가 없어 보인다는 단서를 함께 달았는데, 이는 §5.2 에서 우리가 보기를 주지 않기로 한 것과 같은 판단이다.
 
-University of Pretoria 의 Celia 교수는 복약순응도 도구와 K-HLAT-8·HLS 계열 도구를 함께 쓰라고 권했다. 협성대학교 박남수 교수는 이 앱의 목적이 복약 지시의 이해이므로 건강정보이해력 도구보다 사용자 만족도와 계속 사용 의향, 편의성 향상 정도를 재는 것이 맞다고 보았다.
+University of Pretoria 의 Celia 교수는 복약 순응도 도구와 K-HLAT-8·HLS 계열 도구를 함께 쓰라고 권했다. 협성대학교 박남수 교수는 이 앱의 목적이 복약 지시의 이해이므로 건강정보이해력 도구보다 사용자 만족도와 계속 사용 의향, 편의성 향상 정도를 재는 것이 맞다고 보았다.
 
 Sheron Sir Loon Goh 약학 전임강사는 시험 앞에 하나를 더 두라고 적었다. 앱을 내놓기 전에 현지 약사에게 그 지역 맥락에서 기호가 적절한지 전문가 조언을 구하라는 것이다. §5.7 에서 우리 표본 처방전에 임상 오류가 다섯 건 나온 것이 이 조언이 왜 필요한지를 보여 준다. 우리는 공개 자료를 대조해 고쳤을 뿐 검토를 받지 않았고, 형태소 78종에 대해서는 그런 대조조차 하지 않았다.
 
