@@ -499,6 +499,26 @@ We set the evidence this chapter used side by side, by which direction it points
 
 Within the range we searched, no system had all three. Pictogram sets exist but do not combine (§1.9), work addressing combination does not measure comprehension before release, and the studies that did measure comprehension (Table 4) assembled people and measured after the fact once the set was built. This is an observation from the range we looked over while preparing this work rather than the result of a systematic review, so it should be read as "we did not find one" rather than "there is none." This is SnapCare's starting point.
 
+### 1.12 How this problem looks in our own two countries
+
+The five strands above were counted against the world. This team comes from Korea and Moldova, so they are read again against those two countries, and because the contest form asks how the problem bears on our own school and community.
+
+In Korea what characterises this problem is not its size but its invisibility. Adult literacy is effectively close to 100%, so the phrase "people who cannot read" does not land. Yet the Korea Disease Control and Prevention Agency data cited in §1.2 says 39.6% of adults do not have sufficient health literacy, and 59.7% among those aged 65 and over. The distance between reading letters and understanding a dosing instruction opens that wide inside a single country.
+
+Our own survey produced the evidence that it goes unseen. Of the 35 respondents in §5.7, 15 answered that they almost never meet such a patient. One wrote:
+
+> "Among Koreans the rate of not being able to read is close to zero, so it is mainly foreign patients. We therefore explain in English."
+> (Professor Hwi-Yeol Yun, College of Pharmacy, Chungnam National University)
+
+We take that answer as counter-evidence. If national statistics say 39.6% while nearly half of practitioners say they do not meet them, one of the two does not mean there is no problem; it means the problem does not surface in the consulting room. That people who cannot read do not say so is something the prior work cited in §1.10 already observed, and our survey showed it again.
+
+In Moldova the shape is different. The population is projected to fall by 31% by 2060, the median age to rise from 38 to 47, and the share of older people to more than double to 27%. The disease burden is concentrated in noncommunicable disease, and between 2008 and 2015 diabetes prevalence rose 75% and circulatory disease 41% (Voncina, L., Dozol, A., Volovei, I. & Cetinkaya, V., *Human Development Assessment for Moldova: Background Paper on Health*, World Bank, 2022). It is a country where the number of people taking several medicines over a long period is rising fast, and with it the number handling those medicines alone at home.
+
+Placed side by side, the two make the target of this app plain. In Korea it is a problem that exists but is not seen; in Moldova it is a problem that is going to grow. The first needs a route that reaches the people the consulting room missed; the second needs a tool that scales without adding staff. A design in which one photograph produces a picture and a spoken sentence, computed on the device, treats both the same way.
+
+A limit belongs here. We could not find data measuring the relationship between health literacy and primary care use inside Moldova itself. What §1.5 cites is a study of 170 Moldovan migrant women living in Padua, Italy, and being a migrant sample it cannot be carried across to the population inside Moldova. Confirming it in Moldova is part of the field evaluation in §5.10.
+
+
 ---
 
 ## □ Solution and Main Functions
