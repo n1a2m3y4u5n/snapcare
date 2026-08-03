@@ -1233,6 +1233,35 @@ def len_ratio() -> list:
     return out[:8]
 
 
+def en_figures() -> list:
+    """영어판 문서가 실제로 영어 도판을 담고 있는가.
+
+    원고는 두 판 모두 `fig/` 를 가리키고, 영어 빌드가 같은 이름이
+    `fig_en/` 에 있으면 그것으로 바꿔 넣는다. 바꿔치기가 조용히
+    깨지면 원고만 보아서는 알 수 없고, 심사자는 한국어가 적힌
+    도표를 보게 된다. 결과물의 그림을 해시로 견딘다."""
+    import hashlib
+    import zipfile
+    path = DOC / 'SnapCare_H1_Final_Proposal_EN.docx'
+    if not path.exists() or not (DOC / 'fig_en').is_dir():
+        return []
+    md5 = lambda b: hashlib.md5(b).hexdigest()
+    ko = {q.name: md5(q.read_bytes()) for q in (DOC / 'fig').glob('*.png')}
+    en = {q.name: md5(q.read_bytes()) for q in (DOC / 'fig_en').glob('*.png')}
+    z = zipfile.ZipFile(path)
+    inside = {md5(z.read(n)) for n in z.namelist() if n.startswith('word/media/')}
+    differ = [k for k in en if k in ko and ko[k] != en[k]]
+    wrong = [k for k in differ if ko[k] in inside and en[k] not in inside]
+    if wrong:
+        return [f'영어판 문서가 한글 도판을 담고 있다 — {len(wrong)}장 '
+                f'({", ".join(sorted(wrong)[:3])} …)']
+    missing = [k for k in differ if en[k] not in inside]
+    if missing:
+        return [f'영어판 문서에 영어 도판이 들어가지 않은 것 {len(missing)}장 '
+                f'({", ".join(sorted(missing)[:3])} …)']
+    return []
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -1372,6 +1401,9 @@ def main() -> int:
         note(t)
 
     for t in len_ratio():
+        note(t)
+
+    for t in en_figures():
         note(t)
 
     for t in links_live():
