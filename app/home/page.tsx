@@ -14,18 +14,13 @@ import { useProfile, PROFILE_ID } from '@/stores/profile';
 import { useAnalysis } from '@/stores/analysis';
 import { useReminders } from '@/stores/reminders';
 import { finished, nextDue, running } from '@/lib/snapcare/course';
-import { getItem } from '@/lib/snapcare/catalog';
-import { LEVEL_META } from '@/lib/snapcare/verdict';
 import type { Reminder } from '@/stores/reminders';
-import type { ScanRecord } from '@/lib/snapcare/types';
 import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
 import { SuspectedTriggerCard } from './suspected';
-import { Today } from './today';
 import { TryIt } from './try-it';
+import { Orbit, type Satellite } from './orbit';
 import { sayable, ask, Speakable } from '@/components/sc/Say';
-import { speak } from '@/lib/voice';
 import { spokenName } from '@/lib/tts/speakable';
-import { TimeGlyph } from '@/components/sc/TimeGlyph';
 
 export default function HomePage() {
   const router = useRouter();
@@ -95,13 +90,39 @@ export default function HomePage() {
     router.push('/dose');
   }
 
-  function openScan(rec: ScanRecord) {
-    // 기록에 담아둔 대상을 우선 쓰고, 없으면(구버전 기록) 카탈로그에서 찾는다.
-    const item = rec.item ?? getItem(rec.itemId);
-    if (!item) return;
-    setCurrent(item);
-    router.push(rec.kind === 'prescription' || rec.kind === 'medicine' ? '/dose' : '/scan');
-  }
+  /*
+    둘레에 놓을 것들.
+
+    고른 기준: **여기 아니면 갈 길이 없는 곳**과 **지금 볼 것이 있을 수 있는 곳**.
+    설정과 영양은 아래 탭에도 있지만 그것은 어느 화면에서나 같은 자리에 있는 통로이고,
+    이쪽은 홈에서 한 번에 닿는 통로다. 둘이 겹쳐도 잘못될 것이 없다 — 못 읽는
+    사람에게 길이 하나뿐인 것보다 둘인 편이 낫다.
+
+    배지는 답을 기다리는 것에만 붙인다. 숫자를 못 읽어도 **점이 붙었다**는 것은
+    보이고, 그것만으로 "여기 뭔가 있다" 는 뜻이 선다.
+  */
+  const satellites: Satellite[] = [
+    {
+      emoji: '🥗', label: 'Today', href: '/nutrition',
+      say: 'Today. Everything you have eaten so far, added up against your daily amount.',
+    },
+    {
+      emoji: '📅', label: 'Past days', href: '/history',
+      say: 'Past days. Everything you have checked, day by day, and how your medicine went.',
+    },
+    {
+      emoji: '💊', label: 'Pill box', href: '/device',
+      say: 'The pill box. Send the schedule, and see what it has done.',
+    },
+    {
+      emoji: '🧑', label: 'Who', href: '/profile',
+      say: 'Who we are checking for. Your age, your conditions and your allergies.',
+      // 프로필을 한 번도 확인하지 않았으면 점을 붙인다. 판정이 전부 이 값에서
+      // 나오는데 기본값('어른, 조건 없음')이 아무 표시 없이 정해져 있었다.
+      badge: confirmed ? 0 : 1,
+    },
+  ];
+
 
   return (
     <MobileScreen tab="home">
@@ -125,28 +146,13 @@ export default function HomePage() {
         </div>
 
         {/*
-          프로필을 한 번도 확인하지 않은 사람에게, 지금 무엇을 기준으로 판정하고
-          있는지 보여준다. 기본값은 '어른, 조건 없음' 인데 그것이 아무 표시 없이
-          정해져 왔다 — 아이가 써도 어른 기준이고, 알레르기가 있어도 등록할 자리를
-          만나지 못했다. 첫 실행에서 건너뛴 사람이 여기로 돌아올 수 있어야 한다.
+          프로필 안내 카드가 여기 있었다. 걷어낸 이유는 **`Who` 위성의 배지가 같은
+          말을 하기 때문**이다. 한 화면에서 같은 것을 두 번 말하면 읽는 쪽은 둘이
+          다른 것을 말한다고 생각하고, 무엇보다 이 카드가 궤도를 화면 밖으로 밀어냈다.
+
+          배지가 카드보다 약한 신호인 것은 맞다. 대신 **늘 보인다** — 카드는 스크롤로
+          지나가지만 궤도는 이 화면의 가운데다.
         */}
-        {!confirmed && (
-          <button onClick={() => router.push('/profile?setup=1')}
-                  className="mt-4 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
-                  style={{ background: 'color-mix(in srgb, var(--color-caution) 14%, white)' }}
-                  {...sayable('We are checking as an adult with no conditions. Tap to set who this is for.')}>
-            <span className="text-xl" aria-hidden>⚖️</span>
-            <span className="flex-1">
-              <span className="block text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}>
-                Checking as an adult
-              </span>
-              <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-                Tap to set your age and allergies
-              </span>
-            </span>
-            <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
-          </button>
-        )}
 
         {/*
           다 먹었다.
@@ -201,136 +207,45 @@ export default function HomePage() {
           </button>
         )}
 
-        {/* 스캔 버튼 */}
-        <div className="mt-8 flex flex-col items-center">
-          <button
-            onClick={() => router.push('/camera')}
-            className="flex h-24 w-24 items-center justify-center rounded-full text-white shadow-lg active:scale-95 transition-transform"
-            style={{ background: 'var(--color-sc-primary)' }}
-            aria-label="Scan something"
-          >
-            <CameraGlyph />
-          </button>
-          <span className="mt-2 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
-                {...sayable('The big blue button takes a photograph.')}>
-            Scan something
-          </span>
+        {/*
+          가운데에 카메라, 둘레에 나머지.
+
+          왜 이 모양인지는 lib/home/orbit.ts 에 적었다. 요약하면 홈이 세로로 긴
+          목록이었고, 그 안에서 카메라가 여덟 칸 중 하나로 보였다 — 이 앱에서 사람이
+          하는 일은 사진을 찍는 것 하나인데.
+
+          통계는 걷어내 자기 화면으로 보냈다. 오늘 누적은 `/nutrition`, 최근 목록은
+          `/history` 에 이미 있었고, 홈에 있던 것은 그 화면들의 **미리보기**였다.
+          미리보기가 본체 옆에 계속 떠 있으면 눈이 그쪽으로 새고, 정작 그 미리보기로는
+          아무 판단도 못 한다(넉 줄로는 추세가 안 보인다).
+
+          위쪽 알림 카드들은 그대로 뒀다. 저것들은 통계가 아니라 **지금 해야 하는
+          일**이고, 특히 배출 카드는 유예가 지나면 트레이가 닫힌다.
+        */}
+        <div className="mt-6">
+          <Orbit satellites={satellites} />
         </div>
 
         {/*
-          아직 아무것도 찍지 않았다면 눌러볼 것을 내놓는다. 이 자리는 원래 빈 공간이었고,
-          빈 화면은 "쓸 것이 없다"로 읽힌다 — 실제로는 카메라 화면 안쪽에 다 있었다.
+          아직 아무것도 안 찍은 사람에게만 표본을 내놓는다. 궤도 아래에 두는 이유는
+          이것이 **한 번 쓰고 사라지는 안내**이기 때문이다 — 한 번이라도 찍고 나면
+          다시는 안 보이므로 궤도를 차지할 자리가 아니다.
         */}
         {scans.length === 0 && <TryIt />}
 
         {/*
-          기록에서 드러난 것이 있으면 먼저 묻는다. 아직 답하지 않은 끼니를 묻는 것보다
-          이쪽이 무겁고, 통계 문턱을 넘었을 때만 뜨므로 자주 보일 일이 없다.
+          묻는 것들은 궤도 **아래**다.
+
+          한 번 위에 두었다가 내렸다. 둘 다 통계가 아니라 답해야 하는 것이라 위가
+          맞다고 봤는데, 실제로 그려 보니 이 둘이 뜨는 날에는 카메라가 화면 밖으로
+          밀려났다 — 홈을 다시 짠 이유가 그것이었는데 되돌아간 셈이다.
+
+          위에 남는 것은 배출 카드뿐이다. 그것만 **유예가 있다**: 한 시간이 지나면
+          트레이는 열리지 않고 '놓침' 이 기록된다. 나머지는 오늘 안에만 답하면 된다.
         */}
         <SuspectedTriggerCard />
-
-        {/* 오늘 하루 누적 — 오늘 먹은 것이 있을 때만 스스로 뜬다 */}
-        <Today scans={scans} />
-
-        {/* 식이 일지 — 아직 답하지 않은 끼니가 있을 때만 뜬다 */}
         {pending && <HowDidItSit key={pending.id} record={pending} />}
-
-        {/*
-          최근 — 아무것도 없으면 제목도 내지 않는다. 빈 목록 위의 제목은 자리를
-          차지하면서 아무것도 말하지 않고, 소리로 들으면 "RECENT" 다음에 침묵이라
-          뭔가 놓친 것처럼 들린다.
-        */}
-        {scans.length > 0 && (
-          <div className="mt-8 flex w-full items-center gap-2">
-            <Speakable text={'Recent. What has been checked lately.'} className="flex flex-1 items-center gap-2 text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-              <span className="flex-1">RECENT</span>
-            </Speakable>
-            {/*
-              지난 날들로 가는 길. 홈은 최근 넉 줄만 보여주는데, 그 넉 줄이 기록의
-              전부인 것처럼 보였다 — 쌓인 것을 되짚을 자리가 있다는 것을 알 방법이
-              아예 없었다. 달력 그림을 붙여 글자 없이도 무엇인지 서게 한다.
-            */}
-            <button onClick={() => router.push('/history')}
-                    aria-label="See past days"
-                    className="flex h-11 items-center gap-1 rounded-full px-3 text-[11px] font-bold"
-                    style={{ background: 'var(--color-sc-bg)', color: 'var(--color-sc-muted)' }}>
-              <span aria-hidden className="text-base leading-none">📅</span>
-              PAST DAYS
-            </button>
-          </div>
-        )}
-        <div className="mt-2 flex flex-col gap-2">
-          {scans.map((s) => {
-            const meta = LEVEL_META[s.level];
-            return (
-              // 듣기 버튼을 행 버튼 안에 넣으면 버튼이 중첩돼 키보드 탐색이 깨진다.
-              // 행을 div 로 두고 두 버튼을 나란히 놓는다.
-              <div
-                key={s.id}
-                className="flex items-center gap-2 rounded-2xl bg-white pr-2 shadow-sm"
-              >
-                <button
-                  onClick={() => openScan(s)}
-                  className="flex flex-1 items-center gap-3 px-4 py-3 text-left"
-                >
-                  {/*
-                    이 원은 **무엇을 찍었는지**만 말한다.
-
-                    전에는 판정 색으로 물들어 있었다. 그런데 오른쪽 배지가 이미 판정을
-                    색과 모양으로 싣고 있어서, 한 줄에 같은 판정이 색으로 두 번 실렸다.
-                    같은 것을 두 번 말하면 읽는 쪽은 둘이 다른 것을 말한다고 생각한다.
-                  */}
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full text-lg"
-                        style={{ background: 'var(--color-sc-bg)' }}>
-                    {s.emoji}
-                  </span>
-                  <span className="flex-1">
-                    <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-                      {s.name}
-                    </span>
-                    {/* 누구 것인지 표시하던 아바타는 뺐다. 쓰는 사람이 한 명이므로
-                        매 줄에 같은 얼굴이 붙는 것은 정보가 아니라 잡음이다. */}
-                    <span className="mt-0.5 flex items-center gap-1.5">
-                      <TimeGlyph label={s.timeLabel} mute compact />
-                    </span>
-                  </span>
-                </button>
-                {/*
-                  판정 배지가 듣기 버튼을 겸한다.
-
-                  전에는 원이 셋이었다 — 아이템 그림, 스피커, 판정 배지. 크기가 비슷한
-                  원 셋이 한 줄에 늘어서면 어느 것이 무엇인지가 매번 다시 읽힌다.
-
-                  스피커를 지우는 대신 배지에 합쳤다. 지우기만 하면 키보드·스캐닝
-                  사용자가 이 줄을 들을 길이 사라진다(훑어 듣기는 손가락 전용이다).
-                  합치면 원이 둘로 줄면서 44px 표적과 소리 경로가 그대로 남는다.
-
-                  판정은 색만으로 싣지 않는다 — ✅ ⚠️ ⛔ 는 색과 무관하게 모양이 다르다.
-                  적록색약에게 안전과 회피가 같은 점이 되면 안 된다.
-                */}
-                <button
-                  onClick={() => speak(`${spokenName(s.name, s.kind)}. ${meta.label}.`, 'en-US')}
-                  aria-label={`${s.name}. ${meta.label}. Read aloud.`}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base
-                             active:scale-95 transition-transform"
-                  style={{ background: meta.bg }}
-                >
-                  {meta.emoji}
-                </button>
-              </div>
-            );
-          })}
-        </div>
       </div>
     </MobileScreen>
-  );
-}
-
-function CameraGlyph() {
-  return (
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-      <circle cx="12" cy="13" r="4" />
-    </svg>
   );
 }
