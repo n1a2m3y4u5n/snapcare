@@ -145,6 +145,9 @@ function medicineLabels(item: ScanItem, avoid: boolean): string[] {
 
   // 손을 씻고 시작하는 약이 있다 (안약·연고).
   if (rx?.handwash) labels.push('\\hand_wash');
+  // 흔들고 시작하는 약이 있다 (현탁액·시럽). 손 씻기 바로 뒤에 놓는 것은 순서가
+  // 곧 읽는 순서이기 때문이다 — 둘 다 약을 입에 대기 **전에** 하는 일이다.
+  if (rx?.shake) labels.push('\\shake_bottle');
 
   // 슬롯은 하나뿐이다. 부위가 있으면 부위가 먼저다 — 안약에 '식사와 함께' 는 뜻이 없고,
   // '눈에' 는 이 지시의 절반이다. 부위가 없으면 식사 맥락이 그 자리를 쓴다.

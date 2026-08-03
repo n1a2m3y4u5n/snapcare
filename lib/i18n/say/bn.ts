@@ -82,6 +82,7 @@ export const bn: SayPack = {
     'contact_lens.yes': 'কনট্যাক্ট লেন্স',
     'contact_lens.no': 'আগে কনট্যাক্ট লেন্স খুলে নিন।',
     'hand_wash.yes': 'আগে হাত ধুয়ে নিন।',
+    'shake_bottle.yes': 'ব্যবহারের আগে বোতলটি ভালো করে ঝাঁকিয়ে নিন।',
     'finish_course.yes': 'ভালো লাগলেও পুরো কোর্স শেষ করুন।',
 
     'cadence.twice_daily': 'দিনে দুইবার,',

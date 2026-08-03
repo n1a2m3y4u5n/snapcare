@@ -83,6 +83,7 @@ export const ha: SayPack = {
     'contact_lens.yes': 'ruwan tabarau na ido',
     'contact_lens.no': 'Ka cire ruwan tabarau na ido tukuna.',
     'hand_wash.yes': 'Ka wanke hannunka tukuna.',
+    'shake_bottle.yes': 'Ka girgiza kwalbar sosai kafin ka yi amfani da ita.',
     'finish_course.yes': 'Ka gama duka, ko da ka ji sauki.',
 
     'cadence.twice_daily': 'sau biyu a rana',

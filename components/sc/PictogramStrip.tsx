@@ -34,6 +34,7 @@ export function PictogramStrip({ source }: { source: string }) {
    */
   const [tiles, setTiles] = useState<{ src: string; line: string }[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const big = usePreferences((s) => s.bigPictures);
 
   useEffect(() => {
     if (lines.length === 0) return;
@@ -84,22 +85,68 @@ export function PictogramStrip({ source }: { source: string }) {
 
   return (
     <div className="mt-1">
-      <Speakable text="Pictogram guide. Tap a picture to hear what it means."
-                 className="flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
-                 style={{ color: 'var(--color-sc-muted)' }}>
-        <span className="flex-1">PICTOGRAM GUIDE</span>
-      </Speakable>
-      <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
+      <div className="flex w-full items-center gap-2">
+        <Speakable text="Pictogram guide. Tap a picture to hear what it means."
+                   className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
+                   style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">PICTOGRAM GUIDE</span>
+        </Speakable>
+        <BiggerPictures />
+      </div>
+      <div className={big
+        ? 'mt-2 flex flex-col gap-3'
+        : 'mt-2 flex gap-3 overflow-x-auto pb-1'}>
         {missing.map((c) => (
           <MadeGlyph key={c} concept={c} />
         ))}
         {tiles
-          ? tiles.map((t, i) => <Tile key={i} src={t.src} line={t.line} />)
+          ? tiles.map((t, i) => <Tile key={i} src={t.src} line={t.line} big={big} />)
           : [0, 1, 2].map((i) => (
               <div key={i} className="h-24 w-24 shrink-0 animate-pulse rounded-2xl bg-white shadow-sm" />
             ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * 그림을 크게 보는 스위치.
+ *
+ * 2026년 8월 조사에서 AAC·특수교육 응답자가 적었다 — "아침·정오·저녁 아이콘의 크기가
+ * 문제가 될 수 있으니 가능하면 확대를 제공하라." 96px 짜리 칸에서 해가 뜨는 그림과
+ * 지는 그림을 가르려면 이미 그 둘을 아는 사람이어야 한다.
+ *
+ * 타일마다 돋보기를 달지 않은 이유는 같은 응답자가 함께 적은 것 때문이다. 스위치
+ * 스캐닝 사용자는 표적을 하나씩 차례로 훑으므로, 버튼이 그림 수만큼 늘면 마지막
+ * 그림에 닿는 데 그만큼이 더 걸린다. 줄 전체에 스위치 하나가 그 반대다.
+ *
+ * 고른 값은 기기에 남는다. 크게 봐야 하는 사람은 늘 크게 봐야 한다.
+ */
+function BiggerPictures() {
+  const big = usePreferences((s) => s.bigPictures);
+  const setBig = usePreferences((s) => s.setBigPictures);
+  return (
+    <button
+      type="button"
+      onClick={() => setBig(!big)}
+      aria-pressed={big}
+      /*
+        이름을 못박는다. 접근성 트리에서 이 버튼이 이름 없는 "button" 으로만 잡혔다 —
+        스크린리더가 "버튼" 하고 만다. 화면 글자가 'BIGGER'/'BIG' 이라 이름이 붙을
+        법하지만, 붙더라도 그 두 낱말은 **무엇이** 커지는지를 말하지 않는다.
+        스위치 스캐닝으로 훑는 사람은 그림을 못 보고 이름만 듣는다.
+      */
+      aria-label={big ? 'Show smaller pictures' : 'Show bigger pictures'}
+      // 44px. 이 버튼이 필요한 사람은 정확히 작은 표적을 못 누르는 사람이다.
+      className="flex h-11 min-w-11 items-center gap-1 rounded-full px-3 text-[11px] font-bold"
+      style={{
+        background: big ? 'var(--color-sc-ink)' : 'var(--color-sc-bg)',
+        color: big ? '#fff' : 'var(--color-sc-muted)',
+      }}
+    >
+      <span aria-hidden className="text-base leading-none">🔍</span>
+      <span>{big ? 'BIG' : 'BIGGER'}</span>
+    </button>
   );
 }
 
@@ -120,16 +167,26 @@ export function PictogramStrip({ source }: { source: string }) {
  * 뜻을 모르는 줄은 누를 수 없게 둔다. 아무 말도 안 하는 편이 틀린 말보다 낫다 —
  * 틀린 설명은 바로 그 거짓 확신을 굳혀 준다.
  */
-function Tile({ src, line }: { src: string; line?: string }) {
+function Tile({ src, line, big = false }: { src: string; line?: string; big?: boolean }) {
   // 고른 언어로 말한다. 그림은 그대로다 — 그림에는 번역이 필요 없고, 그것이 그림을
   // 쓰는 이유이기도 하다.
   const sayLang = usePreferences((s) => s.sayLang);
   const say = line ? dslSentence(line, sayLang) : null;
+  /*
+    크게 볼 때는 화면 폭을 채우고 한 줄에 하나씩 내려간다.
+
+    옆으로 미는 줄에 큰 그림을 얹지 않는다. 가로 스크롤은 다음 그림이 있다는 것을
+    화면 밖에서 알려야 하는데, 큰 그림 하나가 폭을 다 먹으면 그 단서가 사라진다.
+    세로로 쌓으면 스크롤이 화면 전체의 것이 되어 따로 배울 것이 없다.
+  */
+  const size = big ? 'aspect-square w-full max-w-[280px] p-4' : 'h-24 w-24 p-2';
   // eslint-disable-next-line @next/next/no-img-element
-  const img = <img src={src} alt={say ?? ''} className="h-24 w-24 rounded-2xl bg-white p-2 shadow-sm" />;
-  if (!say) return <div className="shrink-0">{img}</div>;
+  const img = <img src={src} alt={say ?? ''} className={`${size} rounded-2xl bg-white shadow-sm`} />;
+  if (!say) return <div className={big ? 'mx-auto' : 'shrink-0'}>{img}</div>;
   return (
-    <Speakable text={say} bare className="relative block shrink-0" label={`Read aloud: ${say}`}>
+    <Speakable text={say} bare
+               className={big ? 'relative mx-auto block' : 'relative block shrink-0'}
+               label={`Read aloud: ${say}`}>
       {img}
       {/*
         표시를 그림 위 모서리에 얹는다. 옆에 두면 그림 사이가 벌어져서, 한 줄로

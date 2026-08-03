@@ -73,6 +73,7 @@ export function ocrToScanItem(ocrText: string): { item: ScanItem; rxInfo: Struct
       // 'unknown' 은 제형을 못 알아냈다는 뜻이므로 넘기지 않는다 — 그림 엔진이 기본형을 쓴다
       form: rx.drugForm === 'unknown' ? undefined : rx.drugForm,
       handwash: rx.needsHandwash,
+      shake: rx.needsShake,
       storage: rx.storageType ?? undefined,
       // "Take 1 capsule" · "5 mL" 의 앞 숫자. 셀 수 있는 개수일 때만 그림으로 옮긴다.
       doseCount: countFromAmount(rx.amountText),

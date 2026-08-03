@@ -82,6 +82,7 @@ export const ro: SayPack = {
     'contact_lens.yes': 'lentile de contact',
     'contact_lens.no': 'Scoateți-vă mai întâi lentilele de contact.',
     'hand_wash.yes': 'Spălați-vă mai întâi pe mâini.',
+    'shake_bottle.yes': 'Agitați bine flaconul înainte de utilizare.',
     'finish_course.yes': 'Terminați tot tratamentul, chiar dacă vă simțiți mai bine.',
 
     'cadence.twice_daily': 'de două ori pe zi',

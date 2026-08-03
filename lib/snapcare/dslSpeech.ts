@@ -135,6 +135,7 @@ const CONCEPT: Record<string, { yes: string; no?: string; alone?: string }> = {
 
   // 혼자 서는 지시
   hand_wash: { yes: 'Wash your hands first.' },
+  shake_bottle: { yes: 'Shake the bottle well before you use it.' },
   finish_course: { yes: 'Finish all of it, even when you feel better.' },
 };
 

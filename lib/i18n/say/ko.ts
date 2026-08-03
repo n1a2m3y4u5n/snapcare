@@ -88,6 +88,7 @@ export const ko: SayPack = {
     'contact_lens.yes': '콘택트렌즈',
     'contact_lens.no': '먼저 콘택트렌즈를 빼세요.',
     'hand_wash.yes': '먼저 손을 씻으세요.',
+    'shake_bottle.yes': '쓰기 전에 병을 잘 흔드세요.',
     'finish_course.yes': '다 나은 것 같아도 끝까지 드세요.',
 
     'cadence.twice_daily': '하루 두 번,',

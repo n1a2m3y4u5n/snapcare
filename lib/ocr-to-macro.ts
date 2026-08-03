@@ -40,6 +40,8 @@ export interface StructuredRxInfo {
   needsHandwash: boolean;
   /** 렌즈 착용 금지 여부 */
   lensRestriction: boolean;
+  /** 쓰기 전에 흔들어야 하는가 (현탁액·시럽). 흔들지 않으면 용량이 달라진다. */
+  needsShake: boolean;
 }
 
 type DrugForm =
@@ -184,8 +186,39 @@ export function extractRxInfo(rawText: string): StructuredRxInfo {
   }
 
   // ── 특이 주의 ────────────────────────────────────────────────────────────
-  const needsHandwash    = /안약|점안|귀약|연고|eye\s*drop|ear\s*drop|ointment|cream/i.test(t);
+  /*
+    손을 씻고 시작하는 약.
+
+    글자만 보던 자리였고, 그래서 **제형 판별과 어긋났다.** "Instil 1 drop into each
+    eye" 는 위에서 안약으로 잡히는데(`instil` 이 있다) 이 정규식에는 "eye drop" 이라는
+    말이 없어서 손 씻기가 빠졌다. 같은 종이 한 장에서 그림은 안약이 뜨고 손 씻으라는
+    말만 사라진다.
+
+    조사에서 간호·보건 응답자가 "wash hands before use 를 **동작의 순서**로 전달하는
+    것" 을 그림만으로 보장되지 않는 임상 정보의 예로 들었다. 순서를 전달할지 이전에
+    그 말이 나오기라도 해야 한다.
+
+    이제 제형이 먼저 판단한다. 눈·피부에 직접 닿는 제형이면 글자에 뭐라고 적혀 있든
+    손을 씻는다. 글자 검사는 그 위에 남긴다 — 제형을 못 알아낸 종이에서도 "연고" 라는
+    말이 있으면 잡아야 한다.
+  */
+  const HANDWASH_FORMS: DrugForm[] = ['eyedrop', 'cream'];
+  const needsHandwash = HANDWASH_FORMS.includes(drugForm)
+    || /안약|점안|귀약|연고|eye\s*drop|ear\s*drop|ointment|cream/i.test(t);
   const lensRestriction  = /렌즈.*(?:금지|착용.*금지)|contact\s*lens/i.test(t);
+  /*
+    쓰기 전에 흔들 것.
+
+    2026년 8월 조사에서 약국 실무 응답자가 빠진 특별 지시로 처음 꼽은 것이다
+    (위스콘신 문해력 협회의 special instructions 목록을 함께 보내 왔다).
+
+    현탁액에서 이것은 예의가 아니라 용량이다. 가라앉은 채로 따르면 앞쪽 몇 회분은
+    묽고 바닥 쪽은 진하다. 같은 5 mL 를 재도 들어가는 약의 양이 달라지는데, 그 차이가
+    그림에도 소리에도 안 나타났다.
+
+    그림은 이미 있었다(`shake_bottle`). 만들어 놓고 부르는 곳이 없었던 형태소다.
+  */
+  const needsShake = /흔들|현탁|shake|suspension/i.test(t);
 
   // ── 약품명 ───────────────────────────────────────────────────────────────
   // 용량이나 제형이 적힌 짧은 줄을 약품명으로 본다. 언어는 가리지 않는다 —
@@ -240,6 +273,7 @@ export function extractRxInfo(rawText: string): StructuredRxInfo {
     contraindications,
     needsHandwash,
     lensRestriction,
+    needsShake,
   };
 }
 /*
