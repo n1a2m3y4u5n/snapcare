@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { staticAssetsFrom, warmOffline, WARM_ROUTES, WARM_ASSETS } from './warm.ts';
+import { staticAssetsFrom, warmOffline, WARM_ROUTES, WARM_ASSETS, WARM_PROBE } from './warm.ts';
 
 /** 실제 Next 16 프로덕션 HTML 에서 잘라온 모양 */
 const HTML = `<!DOCTYPE html><html lang="en" class="h-full"><head><meta charSet="utf-8"/>
@@ -134,6 +134,24 @@ const OFFLINE_EXEMPT = new Set([
   // 픽토그램 이해도 조사. 앱 안에서 가는 링크가 없고 조사원이 주소로 직접 연다.
   'survey',
 ]);
+
+test('예열 성공을 확인할 주소는 새 규칙에서만 담기는 것이어야 한다', async () => {
+  // 이 주소가 캐시에 남았는지로 "예열이 진짜 먹었는가" 를 판단한다. 그러려면
+  // 두 가지가 동시에 참이어야 한다: 예열이 실제로 받아 오는 주소일 것, 그리고
+  // sw.js 의 STATIC_FILES 에 있을 것. 후자가 핵심이다 — 접두사 규칙에도 걸리는
+  // 주소를 고르면 옛 워커 밑에서도 담겨서, 확인이 늘 통과하는 장식이 된다.
+  assert.ok(WARM_ASSETS.includes(WARM_PROBE), '예열이 받지 않는 주소로는 확인할 수 없다');
+
+  const { readFileSync } = await import('node:fs');
+  const sw = readFileSync(new URL('../../public/sw.js', import.meta.url), 'utf8');
+  const block = sw.slice(sw.indexOf('const STATIC_FILES'), sw.indexOf('self.addEventListener'));
+  assert.ok(block.includes(`'${WARM_PROBE}'`), `sw.js 의 STATIC_FILES 에 ${WARM_PROBE} 이 없다`);
+
+  const prefixes = ['/_next/static/', '/pictograms/', '/models/', '/ocr/', '/nutrition/', '/glyphs/', '/icons/'];
+  for (const p of prefixes) {
+    assert.ok(!WARM_PROBE.startsWith(p), `${WARM_PROBE} 은 ${p} 규칙에도 걸려서 확인용으로 못 쓴다`);
+  }
+});
 
 test('앱의 모든 화면이 오프라인 목록에 있다', async () => {
   const { readdirSync, existsSync } = await import('node:fs');

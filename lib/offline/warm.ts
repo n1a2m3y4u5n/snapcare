@@ -54,15 +54,32 @@ export const WARM_ROUTES = [
  * **쓸 때** 받는다. 예열에 넣으면 앱을 처음 켠 사람이 68 MB 를 물게 된다 —
  * 안 켜지는 것과 구별이 안 된다. 이 둘은 "쓴 적 있으면 오프라인에서도 된다" 로 남는다.
  */
+/**
+ * 예열이 **실제로 캐시에 닿았는지** 확인할 때 볼 주소.
+ *
+ * 왜 확인이 필요한가: 배포 직후에는 새 서비스워커가 설치되어도 페이지는 잠깐
+ * **옛 워커**가 잡고 있다. 그동안 예열이 돌면 요청은 전부 성공하는데, 옛 워커에는
+ * 이 그림을 담는 규칙이 없어서 아무것도 안 남는다. 실제로 배포본에서 그랬다 —
+ * 화면 13개는 다 채워졌고(청크 규칙은 옛 워커에도 있었다) 형태소 78장과 표본
+ * 그림 7장만 통째로 빠졌는데, 예열은 "실패 0" 으로 끝나고 표시를 남겼다.
+ *
+ * 표시가 남으면 다시 안 돈다. 표시는 캐시 지문으로 매기고 그 지문은 픽토그램
+ * 자산이 바뀔 때만 움직이므로, sw.js 규칙만 고친 배포에서는 **영영** 안 돈다.
+ *
+ * 그래서 다 받은 뒤 이 주소가 캐시에 남았는지 본다. 이 그림은 새 규칙에서만
+ * 담기므로, 남아 있지 않다면 옛 워커 밑에서 돈 것이고 표시를 남기면 안 된다.
+ */
+export const WARM_PROBE = '/prescription-antibiotic.png';
+
 export const WARM_ASSETS = [
   // 픽토그램 목록. 이게 없으면 오프라인에서 PictogramStrip 이 매번 엔진 합성을
   // 시도하고, 그 요청이 실패하면서 그림이 통째로 사라진다.
   '/pictograms/manifest.json',
   // 홈의 "TRY IT" — 사진을 못 찍는 자리에서 앱을 통과시켜 보는 유일한 길
+  WARM_PROBE,
   '/label-eu-biscuit.png',
   '/label-peanut-bar.png',
   '/label-us-cereal.png',
-  '/prescription-antibiotic.png',
   '/prescription-eyedrop.png',
   '/prescription-painkiller.png',
   '/prescription-syrup.png',

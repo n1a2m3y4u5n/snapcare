@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { warmOffline } from '@/lib/offline/warm';
+import { warmOffline, WARM_PROBE } from '@/lib/offline/warm';
 
 /** 예열을 마친 캐시 이름을 적어 둔다. 배포가 바뀌면 이름이 바뀌므로 다시 돈다. */
 const MARK = 'snapcare-warmed';
@@ -91,9 +91,23 @@ export function WarmOffline() {
           const report = await warmOffline();
           if (cancelled) return;
 
-          // 일부 실패는 표시를 남긴다 — 다음 방문에 다시 시도한다. 전부 실패했으면
-          // 망이 끊긴 것이므로 아무것도 적지 않는다.
-          if (report.ok > 0 && report.failed.length === 0) localStorage.setItem(MARK, version);
+          /*
+            "다 받았다" 로는 부족하다. 받은 것이 **캐시에 남았는지**까지 본다.
+
+            배포 직후에는 새 워커가 설치돼도 이 페이지는 잠깐 옛 워커가 잡고 있고,
+            그 밑에서 예열이 돌면 요청은 전부 성공하면서 새 규칙이 담을 것만 조용히
+            빠진다. 실제로 배포본에서 그랬다: 화면 13개는 다 채워졌고 형태소 78장과
+            표본 그림 7장만 없는 채로 "실패 0" 이 나왔다. 표시를 남겼으면 그 상태로
+            굳는다 — 표시는 캐시 지문으로 매기는데 그 지문은 sw.js 규칙만 바뀐
+            배포에서는 움직이지 않으므로, 다음에도 그 다음에도 안 돈다.
+
+            표시를 안 남기면 다음 방문에 다시 돈다. 그때는 새 워커가 잡고 있다.
+          */
+          const landed = await caches.match(WARM_PROBE);
+          if (cancelled) return;
+          if (report.ok > 0 && report.failed.length === 0 && landed) {
+            localStorage.setItem(MARK, version);
+          }
         } catch {
           // 예열은 있으면 좋은 것이다. 실패해도 앱은 그대로 돈다.
         }
