@@ -37,7 +37,7 @@ def MONO(sz):
 
 photo_path = PARTS / '_sheet_photo.png'
 out = subprocess.run(
-    [str(REPO / '.venv-cv/bin/python'),
+    [str(HERE / '..' / '.venv-doc' / 'bin' / 'python'),
      str(REPO / 'pill_dispenser/form_sheet_parser/parse_cli.py'), str(photo_path)],
     capture_output=True, text=True, check=True)
 r = json.loads(out.stdout)

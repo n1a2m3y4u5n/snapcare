@@ -30,6 +30,7 @@
   · 본문의 검정 횟수와 Bonferroni 문턱이 실제와 같은가
   · 본문이 인용한 코드가 저장소 파일과 같은가
   · 본문이 든 형태소 이름이 사전에 그대로 있는가
+  · 그림 33 의 채움 점수가 파서가 내는 값과 같은가
 """
 import re
 import sys
@@ -662,6 +663,52 @@ def morpheme_names() -> list:
     return out
 
 
+def sheet_scores() -> list:
+    """그림 33 의 캡션이 말하는 채움 점수가 파서가 실제로 내는 값인가.
+
+    캡션이 "0.67~0.71 대 0.00~0.04" 라고 적고 있었는데 파서를 돌리면
+    고른 칸이 0.546~0.741 이다. 가장 낮은 금요일 0.546 이 빠져서
+    간격이 실제보다 깨끗해 보였다. 우리에게 유리한 쪽으로 틀린 것이다.
+
+    파서를 실제로 돌려 견준다. 사진 한 장이라 1초가 안 걸린다."""
+    import json
+    import subprocess
+    root = DOC.parent.parent
+    photo = DOC / 'fig/parts/_sheet_photo.png'
+    cli = root / 'pill_dispenser/form_sheet_parser/parse_cli.py'
+    py = DOC / '.venv-doc/bin/python'
+    if not (photo.is_file() and cli.is_file() and py.is_file()):
+        return []
+    try:
+        r = json.loads(subprocess.run([str(py), str(cli), str(photo)],
+                                      capture_output=True, text=True,
+                                      timeout=120).stdout)
+    except Exception as e:                       # 파서가 없거나 못 돌면 넘어간다
+        return [f'그림 33 의 파서를 돌리지 못했다: {e}']
+    if not r.get('ok'):
+        return ['그림 33 의 파서가 사진을 읽지 못했다']
+    chosen, rest = [], []
+    for field, cells in r['scores'].items():
+        pick = r['values'][field]
+        pick = pick if isinstance(pick, list) else [pick]
+        for name, v in cells.items():
+            (chosen if name in pick else rest).append(v)
+    lo, hi = min(chosen), max(chosen)
+    rlo, rhi = min(rest), max(rest)
+    want = (f'{lo:.2f}', f'{hi:.2f}', f'{rlo:.2f}', f'{rhi:.2f}')
+    out = []
+    for f, sep in (('proposal_ko.md', '~'), ('proposal_en.md', '–')):
+        body = (DOC / f).read_text()
+        m = re.search(r'\(([\d.]+)[~–]([\d.]+) (?:대|against) ([\d.]+)[~–]([\d.]+)\)', body)
+        if not m:
+            out.append(f'{f}: 그림 33 의 점수 범위를 찾지 못했다')
+            continue
+        if m.groups() != want:
+            out.append(f'{f}: 그림 33 이 {m.group(0)} 라 하는데 파서는 '
+                       f'({want[0]}~{want[1]} 대 {want[2]}~{want[3]}) 다')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -771,6 +818,9 @@ def main() -> int:
         note(t)
 
     for t in morpheme_names():
+        note(t)
+
+    for t in sheet_scores():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):

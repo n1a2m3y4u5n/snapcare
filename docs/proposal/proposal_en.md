@@ -1427,7 +1427,7 @@ Two practical instructions come out of this. Fill more than half the box when ma
 
 ![Figure 33](fig/fig14_formsheet.png)
 
-**[Figure 33]** The paper form and what was read from it. On the left is the photograph actually fed to the parser, having been through perspective, a lighting gradient, defocus and sensor noise. On the right are the values read from that photograph and the fill score of each cell. The gap between the chosen cells and the rest (0.67–0.71 against 0.00–0.04) shows the reading was not a near miss at the boundary. The values match exactly the answers set when the image was generated.
+**[Figure 33]** The paper form and what was read from it. On the left is the photograph actually fed to the parser, having been through perspective, a lighting gradient, defocus and sensor noise. On the right are the values read from that photograph and the fill score of each cell. The gap between the chosen cells and the rest (0.55–0.74 against 0.00–0.04) shows the reading was not a near miss at the boundary. The lowest of the chosen cells is Friday at 0.55 and the highest of the unchosen is Tuesday at 0.04; even at its narrowest the gap is a factor of fourteen. The values match exactly the answers set when the image was generated.
 
 ### 4.5 Offline operation
 
