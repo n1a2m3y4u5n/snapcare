@@ -1,8 +1,9 @@
-import { createHash, webcrypto } from 'node:crypto';
 import { readFile, rename, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { NextRequest, NextResponse } from 'next/server';
+
+import { verifySigned } from '@/lib/store/auth';
 
 /**
  * 서버 영속 저장소 (fly.io 볼륨).
@@ -22,47 +23,25 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 const DATA_DIR = process.env.SNAPCARE_DATA_DIR || join(process.cwd(), '.data');
 
-/** 서명이 이보다 오래됐으면 거절한다. 가로챈 서명을 나중에 다시 쓰지 못하게. */
-const MAX_AGE_MS = 5 * 60 * 1000;
-
-function b64url(buf: Buffer): string {
-  return buf.toString('base64url');
-}
-
-/** 공개키 → 파일 이름. 이 유도가 곧 접근 통제다. */
-function householdFor(publicKeyB64: string): string {
-  const h = createHash('sha256').update(Buffer.from(publicKeyB64, 'base64')).digest();
-  return b64url(h).slice(0, 32);
-}
-
 /**
- * 서명 확인. 통과하면 이 요청이 그 공개키의 주인에게서 왔다는 뜻이다.
+ * 서명 확인은 `lib/store/auth.ts` 로 옮겼다.
  *
- * 서명 대상에 시각과 본문 해시가 함께 들어간다 — 시각이 없으면 가로챈 서명을 나중에
- * 다시 쓸 수 있고, 본문 해시가 없으면 서명만 떼어 다른 내용에 붙일 수 있다.
+ * 여기 있는 동안에는 시험이 하나도 없었다. 이 파일은 next/server 를 불러서 앱의
+ * 시험 러너(`node --test --experimental-strip-types`)로 열리지 않고, 그래서 "열 수
+ * 없으니 안 쟀다" 가 굳어 있었다. 저장된 건강 정보 전부를 지키는 함수치고는 나쁜
+ * 자리였다. 밖으로 꺼내니 열 개가 붙었고, 그중 셋(메서드 바꿔치기, 미래 시각 서명,
+ * 공개키 바꿔치기)은 여기서는 한 번도 확인된 적이 없던 성질이다.
  */
 async function verify(req: NextRequest, method: string, body: string): Promise<string | null> {
-  const pub = req.headers.get('x-device');
-  const sig = req.headers.get('x-sig');
-  const ts = Number(req.headers.get('x-ts'));
-  if (!pub || !sig || !Number.isFinite(ts)) return null;
-  if (Math.abs(Date.now() - ts) > MAX_AGE_MS) return null;
-
-  try {
-    const key = await webcrypto.subtle.importKey(
-      'raw', Buffer.from(pub, 'base64'),
-      { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify'],
-    );
-    const digest = createHash('sha256').update(body).digest().toString('base64');
-    const payload = `${ts}.${method}.${digest}`;
-    const ok = await webcrypto.subtle.verify(
-      { name: 'ECDSA', hash: 'SHA-256' }, key,
-      Buffer.from(sig, 'base64'), Buffer.from(payload, 'utf8'),
-    );
-    return ok ? householdFor(pub) : null;
-  } catch {
-    return null;   // 공개키 형식이 틀렸거나 서명이 깨졌다
-  }
+  return verifySigned(
+    {
+      device: req.headers.get('x-device'),
+      sig: req.headers.get('x-sig'),
+      ts: req.headers.get('x-ts'),
+    },
+    method,
+    body,
+  );
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {

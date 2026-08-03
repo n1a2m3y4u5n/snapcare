@@ -216,10 +216,19 @@ def write_atomic(path: Path, text: str) -> None:
 class Mailboxes:
     """Every device the relay knows about, in memory, backed by files."""
 
-    def __init__(self, directory: Path | None = None, now=time.monotonic):
+    def __init__(self, directory: Path | None = None, now=time.monotonic,
+                 on_write=None):
+        """`on_write(device_id, slot, rev)` runs after a successful write.
+
+        A callback rather than a call to `hook.notify` directly, because this
+        class stores envelopes and knows nothing about HTTP — and because the
+        tests need to see that it fires exactly once per accepted write without
+        standing up a web server to catch it.
+        """
         self.dir = Path(directory) if directory else config.DATA_DIR
         self.dir.mkdir(parents=True, exist_ok=True)
         self._now = now
+        self._on_write = on_write
         self._devices: dict[str, Device] = {}
         # Guards the dictionary itself. Each device's own condition guards its
         # slots — two locks rather than one so that a hundred parked polls on
@@ -365,7 +374,19 @@ class Mailboxes:
             # wake-up — which is a schedule that sits undelivered until the
             # next heartbeat and is entirely invisible in testing.
             device.condition.notify_all()
-            return rev
+
+        # Outside the lock. The callback goes to the network, and holding a
+        # device's condition across a network call would park every poll on
+        # that device behind it — the dispenser's own long poll included.
+        if self._on_write is not None:
+            try:
+                self._on_write(device.device_id, slot_name, rev)
+            except Exception:            # noqa: BLE001 - see below
+                # The write has already succeeded and the client is about to be
+                # told so. A notification that does not go out costs a buzz; an
+                # exception raised here would cost the dose event itself.
+                log.exception("write hook failed")
+        return rev
 
     def get(self, device: Device, slot_name: str, since: int, hold_s: float) -> Slot | None:
         """The slot if it is newer than `since`, else None once the hold expires.

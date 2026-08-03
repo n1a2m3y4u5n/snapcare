@@ -13,7 +13,7 @@ import logging
 import signal
 import sys
 
-from . import __version__, config
+from . import __version__, config, hook
 from .mailbox import Mailboxes
 from .server import make_server
 
@@ -45,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.data:
         config.DATA_DIR = type(config.DATA_DIR)(args.data)
 
-    server = make_server(Mailboxes(config.DATA_DIR), args.port)
+    server = make_server(Mailboxes(config.DATA_DIR, on_write=hook.notify), args.port)
     host, port = server.server_address[0], server.server_address[1]
 
     log.info("snapcare relay %s listening on %s:%d", __version__, host, port)

@@ -22,6 +22,7 @@ import { decodeToGray, RETRY_WORK_DIM } from '@/lib/formsheet/decode';
 import { parseFormSheet } from '@/lib/formsheet/sheet';
 import { DEFAULT_HOST, FITTED_TRAYS, MAX_TRAYS, planTrays, saveUrl, scheduleUrl, releaseUrl, weeklyFrom, looksLikeHost } from '@/lib/hardware/dispenser';
 import { speak } from '@/lib/voice';
+import { PushToggle } from './push-toggle';
 
 /**
  * 디스펜서와 주고받는 화면.
@@ -317,6 +318,11 @@ export default function DevicePage() {
           <DoseRelease report={box.report} onRelease={box.release} />
           <DispenserPanel paired={box.paired} report={box.report} stale={box.stale}
                           loading={box.loading} error={box.error} onChanged={box.refresh} />
+          {/*
+            짝이 지어져 있을 때만 낸다. 짝이 없으면 알릴 상자도 없고, 스위치만
+            먼저 보이면 켜 놓고 아무 일도 안 일어나는 상태가 된다.
+          */}
+          {box.paired && <PushToggle deviceId={box.paired.deviceId} />}
         </div>
 
         {/* 폰 → 기기 (WiFi) */}

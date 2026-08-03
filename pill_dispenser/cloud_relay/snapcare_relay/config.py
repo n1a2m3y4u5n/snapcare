@@ -66,3 +66,22 @@ EXPIRE_DAYS = _int("SNAPCARE_RELAY_EXPIRE_DAYS", 180)
 SERVE_LAB = os.environ.get("SNAPCARE_RELAY_LAB", "1").strip().lower() not in (
     "0", "false", "no", "off",
 )
+
+#: Where to say "device X wrote its reported slot", so a phone that is closed
+#: can be woken. Empty means the relay says nothing to anybody, which is the
+#: right default: a relay somebody else deploys should not be calling out to
+#: our web app.
+#:
+#: The relay does not send the push itself — see hook.py for why (ES256 is not
+#: in the standard library, and the standard-library-only rule is worth more
+#: than hand-rolled curve arithmetic).
+HOOK_URL = os.environ.get("SNAPCARE_RELAY_HOOK_URL", "").strip()
+
+#: Shared secret for the line above. Without it the web app would accept
+#: "device X just dispensed" from anybody who can reach the endpoint, which is
+#: a way to make somebody's phone buzz at three in the morning.
+HOOK_TOKEN = os.environ.get("SNAPCARE_RELAY_HOOK_TOKEN", "").strip()
+
+#: Short on purpose. The write this follows has already succeeded; nothing is
+#: waiting on the hook, and a slow web app must not turn into parked threads.
+HOOK_TIMEOUT_S = _int("SNAPCARE_RELAY_HOOK_TIMEOUT", 5)

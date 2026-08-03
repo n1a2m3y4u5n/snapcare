@@ -89,6 +89,36 @@ self.addEventListener('activate', (event) => {
  * 이미 열려 있는 창이 있으면 그 창을 앞으로 가져온다 — 새로 열면 긴 폴링이 하나 더
  * 돌고, 사용자는 같은 앱 두 개를 갖게 된다.
  */
+/**
+ * 앱이 완전히 닫혀 있을 때 서버가 깨우는 자리.
+ *
+ * 여기까지 오는 신호에는 **내용이 없다.** 약 이름도 시각도 안 실려 있다 — 실으려면
+ * 구글·애플·모질라의 푸시 서비스를 지나가야 하고, 그 길로 약 이름을 내보내지 않기로
+ * 했다. 오는 것은 "이 약통에 무언가 생겼다" 하나뿐이다.
+ *
+ * 그래서 문구가 일부러 뭉뚱그려져 있다. 이건 아쉬운 타협이 아니라 이 앱의 약속이
+ * 지켜지는 모습이다. 무엇인지는 눌러서 앱을 열면 보인다 — 봉투를 열 수 있는 곳은
+ * 폰뿐이고, 앱은 그때 릴레이에서 직접 받아 온다.
+ *
+ * showNotification 을 부르지 않으면 브라우저가 대신 "이 사이트가 백그라운드에서
+ * 갱신되었습니다" 같은 문구를 띄운다. 그건 우리 문구가 아니고 번역도 안 된다.
+ */
+self.addEventListener('push', (event) => {
+  event.waitUntil(
+    self.registration.showNotification('Your medicine is ready', {
+      body: 'Open SnapCare to see what to take.',
+      icon: '/icons/icon-192.png',
+      // 고정 태그라 새 신호가 앞의 것을 갈아치운다. 서랍에 옛 알림이 쌓이면
+      // 그중 어느 것이 지금 것인지 알 수 없고, 지난 알림을 눌러 봐야 그 약은
+      // 이미 유예가 지났다.
+      tag: 'snapcare-dose-ready',
+      renotify: true,
+      // 저절로 사라지지 않는다. 약 알림은 놓치면 그걸로 끝이다.
+      requireInteraction: true,
+    }),
+  );
+});
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil((async () => {
