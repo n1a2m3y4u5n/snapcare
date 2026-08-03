@@ -1531,6 +1531,10 @@ res.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation
 
 That one line is also why the checking step of §3.8 has the user point at a picture rather than say the answer back. Carrying teach-back over as it stands would need speech recognition, and that is a permission we chose not to open. Opening a permission and not using it is different from closing it: the first can quietly begin to be used when the code changes, the second is refused by the browser.
 
+The same middleware sends four more headers. The values are recorded here as confirmed on the deployment. `Content-Security-Policy` opens with `default-src 'self'` and pins `object-src 'none'`, `frame-ancestors 'none'`, `base-uri 'self'` and `form-action 'self'`. Its `connect-src` is only `'self'` and `https://snapcare-relay.fly.dev`. That the app sends requests nowhere else is therefore not a rule but something the browser enforces, and this header is what makes the relay the single external channel described in §4.3. The other three are `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and `Strict-Transport-Security: max-age=31536000; includeSubDomains`.
+
+There is a weak point in that policy and it belongs here too. `script-src` and `style-src` both carry `'unsafe-inline'`, because Next.js emits its bootstrap script and styles inline, and the defence against cross-site scripting is that much shallower for it. A nonce would remove the need; we did not do it. `wasm-unsafe-eval` is open for the same kind of reason, because the on-device nutrition model and the OCR are WebAssembly (§4.1). Having a reason to leave something open is not the same as it being closed, so it is recorded as open.
+
 Deriving the household ID as the SHA-256 hash of the public key follows the same reasoning. It removes the registration step, and requesting someone else's data would require their private key, which cannot leave their device. Access control becomes structural rather than a rule.
 
 

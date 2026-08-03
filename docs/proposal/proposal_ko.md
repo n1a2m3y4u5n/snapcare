@@ -1522,6 +1522,10 @@ res.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation
 
 이 한 줄이 §3.8 의 되짚기가 말로 되받지 않고 그림을 짚게 하는 이유이기도 하다. 되말하기를 그대로 옮기려면 음성 인식이 필요한데, 그것은 우리가 열지 않기로 한 권한이다. 권한을 열어 두고 쓰지 않는 것과 아예 닫아 두는 것은 다르다. 앞의 것은 코드가 바뀌면 조용히 쓰이기 시작할 수 있고, 뒤의 것은 브라우저가 막는다.
 
+같은 미들웨어가 헤더 넷을 더 내보낸다. 배포본에서 확인한 값 그대로 적는다. `Content-Security-Policy` 는 `default-src 'self'` 로 시작해 `object-src 'none'`, `frame-ancestors 'none'`, `base-uri 'self'`, `form-action 'self'` 를 못 박는다. 그리고 `connect-src` 가 `'self'` 와 `https://snapcare-relay.fly.dev` 둘뿐이다. 이 앱이 그 밖의 어디로도 요청을 보내지 않는다는 것이 규칙이 아니라 브라우저가 막는 사실이 된다는 뜻이며, §4.3 이 릴레이를 유일한 외부 통로로 서술한 것을 이 헤더가 강제한다. 나머지 셋은 `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Strict-Transport-Security: max-age=31536000; includeSubDomains` 다.
+
+이 정책에 약한 자리가 있어 함께 적는다. `script-src` 와 `style-src` 에 `'unsafe-inline'` 이 들어 있다. Next.js 가 부팅 스크립트와 스타일을 인라인으로 내보내기 때문인데, 그만큼 교차 사이트 스크립팅에 대한 방어가 얕아진다. nonce 를 쓰면 없앨 수 있으나 하지 않았다. `wasm-unsafe-eval` 도 마찬가지로 필요해서 열어 둔 것이며, 기기에서 도는 영양 추정 모델과 OCR 이 WebAssembly 이기 때문이다(§4.1). 열어 둔 이유가 있다는 것과 닫혀 있다는 것은 다르므로 열려 있다고 적는다.
+
 가구 ID 를 공개키의 SHA-256 해시로 유도한 것도 같은 맥락이다. 등록 절차가 없어지고, 남의 자료를 요청하려면 그 사람의 개인키가 있어야 하는데 그 열쇠는 그 기기 밖으로 나갈 수 없다. 접근 통제가 규칙이 아니라 구조가 된다.
 
 
