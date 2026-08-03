@@ -35,6 +35,7 @@
   · 표 28 의 시험 수가 실제로 돌린 결과와 같은가
   · 우리 산문의 표기가 한 가지로 통일되어 있는가
   · 응답자를 부를 때 직책이 표 41 과 같은가
+  · 빌드된 문서에서 주소가 눌리는가
 """
 import re
 import sys
@@ -888,6 +889,33 @@ def title_drift() -> list:
     return out
 
 
+def links_live() -> list:
+    """빌드된 문서의 주소가 눌리는가, 그리고 부호가 딸려 있지 않은가.
+
+    앞 판은 하이퍼링크가 0개였다. 표지의 저장소·배포 주소가 맨 글자라
+    심사자가 눌러도 아무 일이 없었다. 링크를 붙인 뒤에는 문장 끝
+    마침표가 주소에 딸려 들어가 열리지 않는 것이 하나 있었다."""
+    import zipfile
+    out = []
+    for name in ('SnapCare_H1_Final_Proposal_KO.docx', 'SnapCare_H1_Final_Proposal_EN.docx'):
+        path = DOC / name
+        if not path.exists():
+            continue
+        z = zipfile.ZipFile(path)
+        rels = z.read('word/_rels/document.xml.rels').decode()
+        ext = sorted(set(re.findall(r'Target="(https?://[^"]+)"', rels)))
+        if not ext:
+            out.append(f'{name}: 주소가 하나도 눌리지 않는다')
+            continue
+        for u in ext:
+            if u[-1] in '.,;:':
+                out.append(f'{name}: 주소 끝에 문장부호가 붙었다 — {u}')
+        for must in ('github.com/16th-eicon-contest', 'snapcare.fly.dev'):
+            if not any(must in u for u in ext):
+                out.append(f'{name}: 표지의 {must} 가 링크가 아니다')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -1012,6 +1040,9 @@ def main() -> int:
         note(t)
 
     for t in title_drift():
+        note(t)
+
+    for t in links_live():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):
