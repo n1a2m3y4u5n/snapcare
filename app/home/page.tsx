@@ -241,9 +241,23 @@ export default function HomePage() {
           뭔가 놓친 것처럼 들린다.
         */}
         {scans.length > 0 && (
-          <Speakable text={'Recent. What has been checked lately.'} className="mt-8 text-xs font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
-          <span className="flex-1">RECENT</span>
-        </Speakable>
+          <div className="mt-8 flex w-full items-center gap-2">
+            <Speakable text={'Recent. What has been checked lately.'} className="flex flex-1 items-center gap-2 text-xs font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
+              <span className="flex-1">RECENT</span>
+            </Speakable>
+            {/*
+              지난 날들로 가는 길. 홈은 최근 넉 줄만 보여주는데, 그 넉 줄이 기록의
+              전부인 것처럼 보였다 — 쌓인 것을 되짚을 자리가 있다는 것을 알 방법이
+              아예 없었다. 달력 그림을 붙여 글자 없이도 무엇인지 서게 한다.
+            */}
+            <button onClick={() => router.push('/history')}
+                    aria-label="See past days"
+                    className="flex h-11 items-center gap-1 rounded-full px-3 text-[11px] font-bold"
+                    style={{ background: 'var(--color-sc-bg)', color: 'var(--color-sc-muted)' }}>
+              <span aria-hidden className="text-base leading-none">📅</span>
+              PAST DAYS
+            </button>
+          </div>
         )}
         <div className="mt-2 flex flex-col gap-2">
           {scans.map((s) => {

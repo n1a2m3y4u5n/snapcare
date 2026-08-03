@@ -38,6 +38,7 @@ const SHELL_URLS = [
   // 망이 없다고 못 쓰면 기록이 통째로 빈다.
   '/dose',
   '/provider',
+  '/history',
   '/manifest.webmanifest',
   '/icons/icon-192.png',
 ];

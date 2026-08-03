@@ -65,5 +65,14 @@ export function toScanRecord(e: DoseEvent, opts: {
     level: e.taken ? 'safe' : 'caution',
     timeLabel: day === opts.today ? `Today · ${when}` : `${day.slice(5)} · ${when}`,
     dayKey: day,
+    /*
+      상자가 말한 것을 그대로 싣는다.
+
+      전에는 `level` 로만 남겼다 — 먹었으면 safe, 걸렀으면 caution. 그런데 caution 은
+      설탕 많은 과자에도 붙는 값이라, 저장소에서 놓친 항생제와 과자가 같아진다.
+      상자는 사실을 보고했는데 앱이 세는 자리에서 잃어버리고 있었고, 그래서 "이번
+      주에 두 번 걸렀다" 를 낼 수가 없었다.
+    */
+    dose: { taken: e.taken, due: e.time, tray: e.tray, reason: e.reason },
   };
 }
