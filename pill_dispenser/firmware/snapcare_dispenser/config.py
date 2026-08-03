@@ -214,13 +214,16 @@ DISPLAY_DC_GPIO = 25
 DISPLAY_RESET_GPIO = 18
 
 #: Degrees, clockwise. The ILI9341 is a portrait part — 240 wide by 320 tall —
-#: and 90 turns it on its side, so a screen is 320x240 landscape.
+#: and both 90 and 270 turn it on its side, so a screen is 320x240 landscape.
 #:
 #: That is the orientation a dose screen wants: a tray number and a time sit
 #: beside each other rather than stacked, which leaves both big enough to read
-#: from the doorway. It costs nothing but a MADCTL byte at initialisation. Set
-#: it to 0 if the panel is mounted on end.
-DISPLAY_ROTATION = 90
+#: from the doorway. It costs nothing but a MADCTL byte at initialisation.
+#:
+#: 270 rather than 90 is which way up: the two differ by half a turn, and which
+#: one is right is decided by where the ribbon leaves the module once it is in a
+#: case. 0 and 180 are the same choice for a panel mounted on end.
+DISPLAY_ROTATION = 270
 
 #: SPI clock for the LCD.
 #:
