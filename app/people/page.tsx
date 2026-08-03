@@ -106,7 +106,7 @@ export default function PeoplePage() {
                   aria-label={on ? `You, ${p.emoji}` : `Switch to ${p.emoji}`}
                   {...sayable(on ? 'This is you.' : 'Tap to switch to this person.')}
                 >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full text-2xl"
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-2xl"
                         style={{ background: p.color, opacity: on ? 1 : 0.55 }}>
                     {p.emoji}
                   </span>
@@ -161,7 +161,7 @@ export default function PeoplePage() {
             style={{ border: '2px dashed var(--color-sc-line)' }}
             {...sayable('Add a person who shares this phone.')}
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full text-2xl"
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-2xl"
                   style={{ background: 'var(--color-sc-line)' }}>＋</span>
             <span className="text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
               Add a person

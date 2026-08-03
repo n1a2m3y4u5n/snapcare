@@ -333,7 +333,7 @@ export default function DevicePage() {
               {trayPlan.plan.map((t) => (
                 <Speakable key={t.tray} text={`Tray ${t.tray}. ${t.name}, at ${t.time}.`}
                            className="flex items-center gap-2 py-1">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white"
                         style={{ background: 'var(--color-sc-primary)' }}>
                     {t.tray}
                   </span>

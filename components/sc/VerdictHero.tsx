@@ -14,7 +14,7 @@ export function VerdictHero({ item, verdict }: { item: ScanItem; verdict: Verdic
   return (
     <div className="flex flex-col items-center text-center px-6 pt-6">
       <div
-        className="flex h-28 w-28 items-center justify-center rounded-full text-5xl"
+        className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full text-5xl"
         style={{ background: meta.bg }}
       >
         {item.emoji}

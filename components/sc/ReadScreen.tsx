@@ -159,8 +159,21 @@ export function ReadScreen({ variant = 'float' }: { variant?: ReadScreenVariant 
     <button
       onClick={play}
       aria-label={playing ? 'Stop reading' : 'Read this screen aloud'}
-      className="fixed bottom-28 left-4 z-40 flex h-14 w-14 items-center justify-center rounded-full text-2xl text-white shadow-lg active:scale-95 transition-transform"
-      style={{ background: playing ? 'var(--color-caution)' : 'var(--color-sc-ink)' }}
+      /*
+        떠 있는 버튼은 크기와 자리를 px 로 박는다.
+
+        rem 이면 글자를 가장 크게 뒀을 때 지름 112px 짜리 원이 화면 아래에서 224px
+        위까지 올라와 **아래 내용을 덮는다.** 잠금 화면에서 실제로 그랬다 — 그림
+        열쇠의 첫 칸을 가려서, 그 칸을 눌러야 하는 사람이 누를 수가 없었다.
+
+        떠 있는 것은 내용이 아니라 도구다. 글자를 키운 이유는 글을 읽기 위해서지
+        도구를 키우기 위해서가 아니다. 56px 은 손끝보다 넉넉하다(WCAG 2.5.8 은 24).
+      */
+      className="fixed z-40 flex shrink-0 items-center justify-center rounded-full text-white shadow-lg active:scale-95 transition-transform"
+      style={{
+        background: playing ? 'var(--color-caution)' : 'var(--color-sc-ink)',
+        bottom: 96, left: 16, width: 56, height: 56, fontSize: 24,
+      }}
     >
       {playing ? '⏹' : '🔊'}
     </button>

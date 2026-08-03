@@ -139,7 +139,7 @@ export default function NutritionPage() {
               */}
               {daily.entries.map(({ record, amounts }) => (
                 <div key={record.id} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full text-lg" style={{ background: 'var(--color-sc-bg)' }}>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg" style={{ background: 'var(--color-sc-bg)' }}>
                     {record.emoji}
                   </span>
                   <span className="flex-1">

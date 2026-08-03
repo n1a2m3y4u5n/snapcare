@@ -26,7 +26,7 @@ function Dots({ total, filled }: { total: number; filled: number }) {
       {Array.from({ length: Math.min(total, 12) }, (_, i) => (
         <span
           key={i}
-          className="h-3 w-3 rounded-full"
+          className="h-3 w-3 shrink-0 rounded-full"
           style={{
             background: i < filled ? 'var(--color-caution)' : 'transparent',
             border: i < filled ? 'none' : '2px solid var(--color-sc-bg)',

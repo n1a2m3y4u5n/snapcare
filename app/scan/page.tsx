@@ -309,7 +309,7 @@ function RxResult({
   return (
     <div className="flex flex-1 flex-col px-5">
       <div className="flex flex-col items-center pt-4 text-center">
-        <div className="flex h-24 w-24 items-center justify-center rounded-full text-5xl" style={{ background: conflict ? meta.bg : 'var(--color-med-bg)' }}>
+        <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full text-5xl" style={{ background: conflict ? meta.bg : 'var(--color-med-bg)' }}>
           {item.emoji}
         </div>
         <h1 className="mt-4 text-2xl font-bold" style={{ color: 'var(--color-sc-ink)' }}>
@@ -411,10 +411,19 @@ function RxResult({
             <span className="flex-1">INTAKE SCHEDULE</span>
           </Speakable>
           <div className="mt-2 flex flex-col gap-2">
+            {/*
+              `flex-wrap` 과 최소폭. 이 줄에는 같은 것을 말하는 셋이 나란히 있다 —
+              아침 그림, "Morning at 8:00 AM", 그리고 시계 그림. 글자를 가장 크게
+              두면 셋이 271px 을 나눠 갖다가 가운데 글이 52px 로 눌려 "Mor / nin /
+              g at" 처럼 낱말 가운데가 끊겼다.
+
+              글에 최소폭을 주면 자리가 모자랄 때 시계 그림이 아랫줄로 내려간다.
+              셋 다 남고 글만 온전해진다.
+            */}
             {item.rx.schedule.map((s, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
-                <span className="text-xl">{s.emoji}</span>
-                <Say className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{`${s.label} at ${s.time}`}</Say>
+              <div key={i} className="flex flex-wrap items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
+                <span className="shrink-0 text-xl">{s.emoji}</span>
+                <Say className="min-w-[8rem] flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{`${s.label} at ${s.time}`}</Say>
                 <TimeGlyph label={s.time} className="text-sm" />
               </div>
             ))}
@@ -513,19 +522,33 @@ function PrimaryButton({ children, onClick, level, say, icon }: {
 }) {
   const bg = level === 'avoid' ? 'var(--color-avoid)' : level === 'caution' ? 'var(--color-caution)' : 'var(--color-sc-primary)';
   return (
-    <div className="flex items-stretch gap-2">
+    /*
+      늘리지 않고 가운데 맞춘다.
+
+      전에는 `items-stretch` 에 듣기 버튼이 `h-auto` 라, 그 버튼이 옆 버튼 높이를
+      따라갔다. 기본 크기에서는 56×56 이라 동그라미였는데, 글자를 가장 크게 두면
+      옆 버튼이 160px 높이가 되면서 112×160 짜리 타원이 됐다. 동그라미가 타원이
+      되면 그것은 이 앱에서 "듣기" 를 뜻하는 모양이 아니게 된다.
+    */
+    <div className="flex flex-wrap items-center gap-2">
       <button onClick={onClick}
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-4 text-center
+              /*
+                최소폭 8rem: 이보다 좁아지면 "reminders" 가 낱말 가운데서 끊긴다.
+                자리가 모자라면 듣기 버튼이 아랫줄로 내려가고 이 버튼이 폭을 다 쓴다.
+              */
+              className="flex min-w-[8rem] flex-1 items-center justify-center gap-2 rounded-2xl py-4 text-center
                          text-base font-bold text-white active:scale-[0.98] transition-transform"
               style={{ background: bg }}>
         {/* aria-hidden: 소리로는 옆의 듣기 버튼과 say 가 이미 말한다. 스크린리더가
             "알람 시계 이모지" 를 읽으면 문장 가운데 잡음이 하나 끼는 것과 같다. */}
-        {icon && <span aria-hidden className="text-xl leading-none">{icon}</span>}
-        {children}
+        {icon && <span aria-hidden className="shrink-0 text-xl leading-none">{icon}</span>}
+        {/* 맨몸 글자를 flex 안에 두면 익명 칸이 되어 줄어들지도 접히지도 않는다.
+            큰 글자에서 "reminders" 가 그렇게 버튼 밖으로 잘렸다. */}
+        <span className="min-w-0">{children}</span>
       </button>
       {/* 듣기 버튼은 흰 바탕에 둔다 — 같은 색으로 붙이면 버튼 하나가 두 칸으로
           쪼개진 것처럼 보여서, 오른쪽을 눌러도 끝나는 줄 안다. */}
-      <Hear text={say} className="h-auto w-14 shadow-sm" />
+      <Hear text={say} className="h-14 w-14 shadow-sm" />
     </div>
   );
 }

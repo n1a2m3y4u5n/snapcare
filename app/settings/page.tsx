@@ -42,10 +42,10 @@ export default function SettingsPage() {
         </Speakable>
         <button
           onClick={() => router.push('/profile')}
-          className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
+          className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
         >
           <span
-            className="flex h-10 w-10 items-center justify-center rounded-full text-xl"
+            className="sc-avatar flex items-center justify-center rounded-full"
             style={{ background: myColor }}
           >
             {profile.emoji}
@@ -59,7 +59,7 @@ export default function SettingsPage() {
               {profile.role}{profile.conditionIds.length > 0 ? ` · ${profile.conditionIds.length}` : ''}
             </span>
           </span>
-          <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
+          <span className="sc-end" style={{ color: 'var(--color-sc-muted)' }}>›</span>
         </button>
 
         {/*
@@ -73,9 +73,9 @@ export default function SettingsPage() {
         */}
         <button
           onClick={() => router.push('/people')}
-          className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
+          className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full text-xl"
+          <span className="sc-avatar flex items-center justify-center rounded-full"
                 style={{ background: 'var(--color-sc-line)' }}>👥</span>
           <span className="flex-1">
             <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
@@ -86,7 +86,7 @@ export default function SettingsPage() {
               Share this phone — each person keeps their own
             </span>
           </span>
-          <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
+          <span className="sc-end" style={{ color: 'var(--color-sc-muted)' }}>›</span>
         </button>
 
         {/*
@@ -141,18 +141,18 @@ export default function SettingsPage() {
         </Speakable>
         <button
           onClick={() => setAutoTts(!autoTts)}
-          className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
+          className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
           aria-pressed={autoTts}
         >
-          <span className="text-lg">{autoTts ? '🔊' : '🔇'}</span>
+          <span className="sc-icon">{autoTts ? '🔊' : '🔇'}</span>
           <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }} {...sayable('Read results aloud. This is on.')}>Read results aloud
           </span>
           <span
-            className="flex h-6 w-11 items-center rounded-full px-0.5 transition-colors"
+            className="flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors"
             style={{ background: autoTts ? 'var(--color-safe)' : 'var(--color-sc-line)' }}
           >
             <span
-              className="h-5 w-5 rounded-full bg-white transition-transform"
+              className="h-5 w-5 shrink-0 rounded-full bg-white transition-transform"
               style={{ transform: autoTts ? 'translateX(20px)' : 'none' }}
             />
           </span>
@@ -201,12 +201,12 @@ export default function SettingsPage() {
         </Speakable>
         <button
           onClick={() => router.push('/device')}
-          className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
+          className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
         >
-          <span className="text-lg">💊</span>
+          <span className="sc-icon">💊</span>
           <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }} {...sayable('Send the schedule to the pill device, using the camera.')}>Send the schedule to the device
           </span>
-          <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
+          <span className="sc-end" style={{ color: 'var(--color-sc-muted)' }}>›</span>
         </button>
 
         {/* 의료진 공유 — 타이핑 없이 기록을 넘기는 경로 */}
@@ -215,12 +215,12 @@ export default function SettingsPage() {
         </Speakable>
         <button
           onClick={() => router.push('/provider')}
-          className="mt-2 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm"
+          className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
         >
-          <span className="text-lg">👩‍⚕️</span>
+          <span className="sc-icon">👩‍⚕️</span>
           <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }} {...sayable('Show your history to a health worker.')}>Show history to a provider
           </span>
-          <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
+          <span className="sc-end" style={{ color: 'var(--color-sc-muted)' }}>›</span>
         </button>
       </div>
     </MobileScreen>

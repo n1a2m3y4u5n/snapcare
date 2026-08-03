@@ -160,7 +160,7 @@ function ProfileBody() {
         */}
         {!setup && (
         <div className="mt-4 flex items-center gap-3">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl"
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-3xl"
                 style={{ background: myColor }}>
             {profile.emoji}
           </span>

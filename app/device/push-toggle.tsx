@@ -69,9 +69,9 @@ export function PushToggle({ deviceId }: { deviceId: string }) {
         disabled={busy || on === null}
         // 44px. 이 화면의 다른 누를 곳들과 같은 크기다 (WCAG 2.5.8 은 24 를 요구하지만
         // 이 앱의 사용자는 손이 떨리는 사람을 포함한다).
-        className="flex min-h-[44px] w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm disabled:opacity-60"
+        className="sc-row flex min-h-[44px] w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm disabled:opacity-60"
       >
-        <span aria-hidden className="text-lg">{on ? '🔔' : '🔕'}</span>
+        <span aria-hidden className="sc-icon">{on ? '🔔' : '🔕'}</span>
         <span className="flex-1">
           <Speakable
             text={on
@@ -92,7 +92,7 @@ export function PushToggle({ deviceId }: { deviceId: string }) {
           style={{ background: on ? 'var(--color-safe)' : 'var(--color-sc-bg)' }}
         >
           <span
-            className="block h-5 w-5 rounded-full bg-white shadow transition-transform"
+            className="block h-5 w-5 shrink-0 rounded-full bg-white shadow transition-transform"
             style={{ transform: on ? 'translateX(20px)' : 'none' }}
           />
         </span>

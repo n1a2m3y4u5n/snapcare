@@ -120,7 +120,7 @@ export default function LoginPage() {
                     onClick={() => { if (!on) switchTo(p.id); }}
                     aria-pressed={on}
                     aria-label={`Person ${p.emoji}`}
-                    className="flex h-16 w-16 items-center justify-center rounded-full text-3xl
+                    className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-3xl
                                transition-transform active:scale-95"
                     style={{
                       background: p.color,
@@ -138,7 +138,7 @@ export default function LoginPage() {
             </div>
           </>
         )}
-        <div className="flex h-12 w-12 items-center justify-center rounded-full text-2xl" style={{ background: 'color-mix(in srgb, var(--color-sc-primary) 12%, white)' }}>🔒</div>
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-2xl" style={{ background: 'color-mix(in srgb, var(--color-sc-primary) 12%, white)' }}>🔒</div>
         <h1 className="mt-4 text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}
             {...ask(setup ? 'Create your picture key. Tap four pictures in an order you will remember.' : 'Enter your picture key. Tap your four pictures, in the order you chose.')}>
           {setup ? 'Create your picture key' : 'Enter your picture key'}
@@ -158,14 +158,19 @@ export default function LoginPage() {
           삭제 버튼이 직관적이지 않다는 지적의 실제 원인이 여기였다.
           마지막 칸은 다음에 지워질 대상이라 테두리로 강조한다.
         */}
-        <div className="mt-5 flex gap-3">
+        {/*
+          칸을 격자로 두고 폭에 맞춘다. 전에는 `flex` 에 칸마다 `h-12 w-12`(rem) 라,
+          글자를 가장 크게 두면 칸 넷이 384px + 사이 72px = 456px 이 되어 327px 짜리
+          화면을 넘었다. 잠금 화면은 넘칠 데가 없다 — 여기서 못 누르면 앱에 못 들어온다.
+        */}
+        <div className="mt-5 grid w-full max-w-[22rem] grid-cols-4 gap-3">
           {Array.from({ length: KEY_LEN }).map((_, k) => {
             const filled = k < picked.length;
             const isLast = filled && k === picked.length - 1;
             return (
               <span
                 key={k}
-                className="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl transition-transform"
+                className="flex aspect-square w-full items-center justify-center rounded-2xl text-2xl transition-transform"
                 style={{
                   background: filled ? 'white' : 'transparent',
                   border: `2px ${filled ? 'solid' : 'dashed'} ${
@@ -189,13 +194,13 @@ export default function LoginPage() {
           </div>
         )}
 
-        <div className="mt-6 grid grid-cols-4 gap-3">
+        <div className="mt-6 grid w-full max-w-[22rem] grid-cols-4 gap-3">
           {TILES.map((t, idx) => (
             <button
               key={idx}
               onClick={() => tap(idx)}
               disabled={busy}
-              className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm active:scale-95 transition-transform disabled:opacity-50"
+              className="flex aspect-square w-full items-center justify-center rounded-2xl bg-white text-2xl shadow-sm active:scale-95 transition-transform disabled:opacity-50"
               aria-label={`picture ${idx + 1}`}
             >
               {t}

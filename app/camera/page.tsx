@@ -283,7 +283,7 @@ export default function CameraPage() {
 
         {/* 캡처 */}
         <div className="flex justify-center pb-2">
-          <button onClick={() => fileRef.current?.click()} disabled={busy} className="h-16 w-16 rounded-full bg-white/90 active:scale-95 transition-transform disabled:opacity-50" aria-label="Capture" />
+          <button onClick={() => fileRef.current?.click()} disabled={busy} className="h-16 w-16 shrink-0 rounded-full bg-white/90 active:scale-95 transition-transform disabled:opacity-50" aria-label="Capture" />
           <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
         </div>
 
@@ -337,7 +337,16 @@ export default function CameraPage() {
               <Speakable text={'Or try a ready-made item.'} className="text-[11px] font-bold tracking-wide opacity-60 flex w-full items-center gap-2">
           <span className="flex-1">TRY A DEMO ITEM</span>
         </Speakable>
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              {/*
+                두 칸으로 고정하지 않는다. 글자를 가장 크게 두면 "Peanut chocolate bar"
+                한 줄이 반 칸(163px)보다 넓어져 화면 밖으로 밀려났다 — 화면 전체에
+                가로 스크롤이 생겼고, 그것은 WCAG 1.4.10 이 막는 것이다.
+
+                최소 너비를 rem 으로 적으면 글자 크기가 그 최소값을 같이 끌어올린다.
+                기본 크기에서는 두 칸, 글자를 키우면 저절로 한 칸이 된다. 글자 크기를
+                뿌리 font-size 하나로 다루기 때문에 조건문 없이 따라온다.
+              */}
+              <div className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-2">
                 {DEMO_IDS.map((id) => {
                   const it = getItem(id)!;
                   return (

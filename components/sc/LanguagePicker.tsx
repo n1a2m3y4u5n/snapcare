@@ -59,21 +59,21 @@ export function LanguagePicker() {
               }}
               aria-pressed={on}
               aria-label={`Speak ${l.english}${mute ? ' — no voice on this phone' : ''}`}
-              className="flex items-center gap-3 rounded-2xl px-4 py-3 text-left"
+              className="sc-row flex items-center rounded-2xl py-3 text-left"
               style={{
                 background: on ? 'var(--color-sc-primary)' : 'white',
                 color: on ? '#fff' : 'var(--color-sc-ink)',
               }}
             >
-              <span className="text-xl" aria-hidden>{l.flag}</span>
+              <span className="sc-icon" aria-hidden>{l.flag}</span>
               <span className="flex-1">
                 <span className="block text-sm font-bold">{l.native}</span>
                 <span className="block text-xs" style={{ color: on ? 'rgba(255,255,255,0.8)' : 'var(--color-sc-muted)' }}>
                   {mute ? `${l.english} — no voice on this phone` : l.english}
                 </span>
               </span>
-              {mute && <span aria-hidden className="text-base">🔇</span>}
-              {on && <span aria-hidden className="text-base">✓</span>}
+              {mute && <span aria-hidden className="sc-end">🔇</span>}
+              {on && <span aria-hidden className="sc-end">✓</span>}
             </button>
           );
         })}

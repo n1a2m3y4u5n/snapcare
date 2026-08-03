@@ -154,7 +154,15 @@ export function Say({ children, as, className = '', style, bare = false }: SayPr
       style={style}
       bare={bare}
     >
-      <span>{children}</span>
+      {/*
+        `min-w-0` 이 있어야 글자가 접힌다.
+
+        Speakable 은 스피커 표시를 옆에 붙이려고 flex 다. flex 의 자식은 기본값이
+        `min-width: auto` 라 자기 안의 가장 긴 낱말보다 좁아지지 않는데, 글자를 가장
+        크게 두면 "Morning" 한 낱말이 이미 106px 이라 52px 짜리 칸에서 잘려 나갔다.
+        (실제로 복용 스케줄 줄에서 그렇게 잘렸다.)
+      */}
+      <span className="min-w-0">{children}</span>
     </Speakable>
   );
 }
@@ -241,7 +249,7 @@ export function SayButton({ text, label = 'Read aloud', className = '' }: {
     <button
       onClick={play}
       aria-label={label}
-      className={`flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow-sm ${className}`}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl shadow-sm ${className}`}
     >
       {speaking ? '⏸' : '🔊'}
     </button>

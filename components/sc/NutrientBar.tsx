@@ -35,9 +35,14 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
   // 카드 전체다.
   return (
     <Speakable text={barSentence(a)} bare className="block rounded-2xl bg-white px-3 py-2 shadow-sm">
-      <div className="flex items-center gap-2">
-        <span className="text-base">{NUTRIENT_EMOJI[a.key]}</span>
-        <span className="flex-1 text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+      {/*
+        다섯이 한 줄에 있다 — 그림, 이름, 양, 칸 수, 듣기. 글자를 가장 크게 두면
+        287px 안에서 이름 몫이 36px 로 줄어 잘렸다. 이름에 최소폭을 주고 접히게 두면
+        첫 줄은 "🍬 Sugars", 둘째 줄은 "25.9 g · 5/10 · 🔊" 로 나뉜다. 다섯 다 남는다.
+      */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="shrink-0 text-base">{NUTRIENT_EMOJI[a.key]}</span>
+        <span className="min-w-[6rem] flex-1 text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
           {NUTRIENT_LABEL[a.key]}
         </span>
         <span className="text-xs font-bold" style={{ color }}>
@@ -51,7 +56,7 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
         <span className="w-11 text-right text-[11px] tabular-nums" style={{ color: 'var(--color-sc-muted)' }}>
           {g.over > 0 ? `+${g.over}` : `${g.filled}/${g.segments}`}
         </span>
-        <Hear text={barSentence(a)} />
+        <Hear text={barSentence(a)} className="sc-hear" />
       </div>
       <Gauge pct={a.pct} kind={a.kind} color={color} />
     </Speakable>
