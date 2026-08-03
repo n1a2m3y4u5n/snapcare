@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { RegisterSW } from './register-sw';
 import { WarmOffline } from './warm-offline';
+import { TextSize } from './text-size';
 import { SyncProvider } from "./sync-provider";
 import { SweepToHear } from "@/components/sc/SweepToHear";
 
@@ -40,6 +41,7 @@ export default function RootLayout({
         <SweepToHear />
         <RegisterSW />
         <WarmOffline />
+        <TextSize />
         {children}
       </body>
     </html>

@@ -5,6 +5,7 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { LanguagePicker } from '@/components/sc/LanguagePicker';
 import { useProfile } from '@/stores/profile';
 import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
+import { TEXT_SIZES, TEXT_SIZE_LABEL, ROOT_PX } from '@/lib/a11y/textSize';
 import { sayable, ask, Speakable } from '@/components/sc/Say';
 import { useMyColor } from '@/lib/hooks';
 import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
@@ -27,9 +28,11 @@ export default function SettingsPage() {
   const speechRate = usePreferences((s) => s.speechRate);
   const setSpeechRate = usePreferences((s) => s.setSpeechRate);
   const setAutoTts = usePreferences((s) => s.setAutoTts);
+  const textSize = usePreferences((s) => s.textSize);
+  const setTextSize = usePreferences((s) => s.setTextSize);
 
   return (
-    <MobileScreen tab="settings">
+    <MobileScreen bar="inner">
       <div className="px-5 pt-14">
         <h1 {...ask('Settings. Change who we check for, how the voice reads, and the pill device.')} className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Settings</h1>
 
@@ -85,6 +88,49 @@ export default function SettingsPage() {
           </span>
           <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
         </button>
+
+        {/*
+          글자 크기.
+
+          **음성보다 위에 둔다.** 이 목록을 읽어 내려오는 사람은 글자가 작아서
+          고생하는 중일 수 있고, 그렇다면 가장 먼저 만나야 하는 것이 이것이다.
+
+          기본이 'Large' 인 이유는 lib/a11y/textSize.ts 에 적었다 — 요약하면,
+          작아서 못 읽는 사람이 "글자 크기" 라는 작은 글자를 찾을 수는 없다.
+        */}
+        <Speakable text={'Text size. How big the words are on every screen.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">TEXT SIZE</span>
+        </Speakable>
+        <div className="mt-2 flex gap-2">
+          {TEXT_SIZES.map((size) => {
+            const on = size === textSize;
+            return (
+              <button
+                key={size}
+                onClick={() => setTextSize(size)}
+                aria-pressed={on}
+                aria-label={`Text size: ${TEXT_SIZE_LABEL[size]}`}
+                className="flex flex-1 flex-col items-center gap-1 rounded-2xl bg-white py-3 shadow-sm"
+                style={{ outline: on ? '3px solid var(--color-sc-primary)' : 'none' }}
+              >
+                {/*
+                  보기가 곧 예시다. 'Large' 라는 낱말을 못 읽어도 **글자 크기가
+                  실제로 다르게 그려져 있으면** 무엇을 고르는지가 보인다. 그래서
+                  크기를 rem 이 아니라 px 로 박는다 — rem 이면 셋이 같이 커져서
+                  차이가 안 보인다.
+                */}
+                <span aria-hidden style={{ fontSize: ROOT_PX[size] * 1.1, lineHeight: 1 }}
+                      className="font-extrabold">
+                  Aa
+                </span>
+                <span aria-hidden className="text-[11px] font-semibold"
+                      style={{ color: on ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)' }}>
+                  {TEXT_SIZE_LABEL[size]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
         {/* 음성 — 접근성 코어라 설정에서 끌 수 있게만 둔다 */}
         <Speakable text={'Voice.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>

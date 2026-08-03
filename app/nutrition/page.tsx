@@ -59,7 +59,7 @@ export default function NutritionPage() {
     : '';
 
   return (
-    <MobileScreen tab="nutrition">
+    <MobileScreen bar="inner">
       <div className="px-5 pt-14">
         {/*
           제목 옆 듣기 버튼이 20px 짜리 이모지였다. 다른 화면을 전부 44 로 맞추면서

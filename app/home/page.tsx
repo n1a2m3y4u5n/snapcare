@@ -102,7 +102,7 @@ export default function HomePage() {
 
     낭독 버튼만은 자리를 지킨다. 읽지 못하는 사람이 그 버튼을 찾는 방법은 '늘 거기
     있다' 뿐이고, 하필 홈이 앱을 여는 첫 화면이다 — 여기서 자리가 바뀌면 그 규칙이
-    처음부터 깨진다. TabBar 의 `hideNav` 가 링크만 비우고 그 칸은 남긴다.
+    처음부터 깨진다. HomeBar 가 홈에서는 왼쪽을 비우고 낭독 버튼만 남긴다.
 
     순서는 DOM 순서이자 스캐닝 순서다. 자주 쓰는 것부터 놓는다.
 
@@ -137,7 +137,7 @@ export default function HomePage() {
 
 
   return (
-    <MobileScreen tab="home" hideNav>
+    <MobileScreen bar="home">
       {/*
         세로 공간을 실제로 쓴다.
 

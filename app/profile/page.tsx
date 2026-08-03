@@ -127,7 +127,7 @@ function ProfileBody() {
   const currentBand: AgeBand = profile.ageBand ?? 'adult';
 
   return (
-    <MobileScreen tab="settings">
+    <MobileScreen bar="inner">
       <div className="px-5 pt-14 pb-8">
         {setup ? (
           <div className="flex items-center justify-between">
@@ -143,10 +143,10 @@ function ProfileBody() {
             </button>
           </div>
         ) : (
-          <button onClick={() => router.push('/settings')} className="text-sm font-semibold"
-                  style={{ color: 'var(--color-sc-primary)' }}>
-            <span aria-hidden>◀️</span> Back
-          </button>
+          // 뒤로가기를 걷어냈다. 이 화면은 홈의 위성이라 들어온 길이 홈인데 나가는
+          // 길만 설정으로 갔다. 아래 줄의 Home 버튼이 들어온 길로 돌려보낸다.
+          // (첫 설정 중일 때는 위의 Skip 이 그대로 남는다 — 그때는 홈이 아직 없다.)
+          null
         )}
 
         {/*

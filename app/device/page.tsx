@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { DispenserPanel } from '@/components/sc/DispenserPanel';
@@ -50,7 +49,6 @@ function toDataUrl(file: File): Promise<string> {
 }
 
 export default function DevicePage() {
-  const router = useRouter();
   const reminders = useReminders((s) => s.reminders);
   const addScan = useScans((s) => s.addScan);
   const member = useProfile((s) => s.profile);
@@ -289,12 +287,11 @@ export default function DevicePage() {
   }
 
   return (
-    <MobileScreen>
+    <MobileScreen bar="inner">
       <div className="px-5 pt-14 pb-10">
-        <button onClick={() => router.push('/settings')} className="text-sm font-semibold" style={{ color: 'var(--color-sc-primary)' }}>
-          <span aria-hidden>◀️</span> Settings
-        </button>
-        <h1 className="mt-2 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
+        {/* 뒤로가기를 걷어냈다. 이 화면은 홈의 위성이라 **들어온 길이 홈**인데
+            나가는 길만 설정으로 갔다. 아래 줄의 Home 버튼이 들어온 길로 돌려보낸다. */}
+        <h1 className=" text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
             {...ask('Pill device. Send your dose times to the box, or read what it shows.')}>Pill device</h1>
         {/*
           짝을 지으면 이 말이 더 이상 참이 아니다 — 사서함을 거치므로 같은 공유기 뒤에

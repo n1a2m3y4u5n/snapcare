@@ -71,7 +71,7 @@ export default function PeoplePage() {
   const free = freeFaces();
 
   return (
-    <MobileScreen tab="settings">
+    <MobileScreen bar="inner">
       <div className="px-5 pt-14 pb-8" onClickCapture={(e) => {
         // 다른 곳을 건드리면 지우기 상태가 풀린다.
         if (armed && !(e.target as Element).closest('[data-arm]')) setArmed(null);

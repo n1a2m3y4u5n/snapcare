@@ -49,7 +49,7 @@ export default function ProviderPage() {
   const ss = (left % 60).toString().padStart(2, '0');
 
   return (
-    <MobileScreen>
+    <MobileScreen bar="inner">
       <div className="flex flex-col items-center px-6 pt-14 text-center">
         <button onClick={() => router.push('/settings')} className="self-start text-sm font-semibold" style={{ color: 'var(--color-sc-primary)' }}>‹ Settings</button>
         {/*

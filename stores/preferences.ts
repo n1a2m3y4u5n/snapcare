@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { TextSize } from '@/lib/a11y/textSize';
 import { DEFAULT_LANGUAGE } from '@/lib/i18n/languages';
 
 /**
@@ -40,10 +41,16 @@ interface PreferencesState {
    * 떨리거나 한 손만 쓰는 사람에게 두 손가락 손짓은 없는 기능과 같다.
    */
   bigPictures: boolean;
+  /**
+   * 글자 크기. 기본이 'large' 인 이유는 lib/a11y/textSize.ts 에 적었다 —
+   * 요약하면, 작아서 못 읽는 사람이 "글자 크기" 라는 작은 글자를 찾을 수는 없다.
+   */
+  textSize: TextSize;
   setAutoTts: (value: boolean) => void;
   setSpeechRate: (rate: number) => void;
   setSayLang: (code: string) => void;
   setBigPictures: (value: boolean) => void;
+  setTextSize: (size: TextSize) => void;
 }
 
 export const SPEECH_RATES = [0.7, 0.85, 0.95, 1.1] as const;
@@ -55,10 +62,12 @@ export const usePreferences = create<PreferencesState>()(
       speechRate: 0.95,
       sayLang: DEFAULT_LANGUAGE,
       bigPictures: false,
+      textSize: 'large' as TextSize,
       setAutoTts: (autoTts) => set({ autoTts }),
       setSpeechRate: (speechRate) => set({ speechRate }),
       setSayLang: (sayLang) => set({ sayLang }),
       setBigPictures: (bigPictures) => set({ bigPictures }),
+      setTextSize: (textSize) => set({ textSize }),
     }),
     { name: 'snapcare-preferences' },
   ),

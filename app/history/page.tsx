@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { Hear, Speakable, ask } from '@/components/sc/Say';
@@ -31,7 +30,6 @@ import { Thumb } from '@/components/sc/Thumb';
  * 복약이 맨 위다. 음식은 하루 늦게 알아도 되지만 약은 오늘 저녁에 알아야 한다.
  */
 export default function HistoryPage() {
-  const router = useRouter();
   const scans = useScans((s) => s.scans);
   const member = useProfile((s) => s.profile);
   const ready = useIsClient();
@@ -48,15 +46,12 @@ export default function HistoryPage() {
   );
 
   return (
-    <MobileScreen tab="home">
+    <MobileScreen bar="inner">
       <div className="px-5 pt-14 pb-4">
-        <button onClick={() => router.push('/home')}
-                className="flex items-center gap-1 text-sm font-semibold"
-                style={{ color: 'var(--color-sc-muted)' }}>
-          <span aria-hidden>◀️</span> Home
-        </button>
-
-        <h1 className="mt-3 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
+        {/* 위쪽 뒤로가기는 걷어냈다. 아래 줄의 큰 Home 버튼이 그 일을 하고,
+            그쪽이 엄지가 닿는 자리다. 화면마다 '◀️ Home' '◀️ Back' '◀️ Settings'
+            로 제각각이던 것이 하나로 모인다. */}
+        <h1 className=" text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
             {...ask('Past days. Everything you have checked, day by day, newest first.')}>
           Past days
         </h1>
