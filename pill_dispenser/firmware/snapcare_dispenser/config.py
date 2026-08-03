@@ -286,6 +286,37 @@ TOUCH_DEVICE = os.environ.get("SNAPCARE_TOUCH_DEVICE", "").strip()
 #: RESET.
 TOUCH_PENIRQ_GPIO = 4
 
+#: Whether a tap with no dose waiting drops a pill anyway.
+#:
+#: **This inverts the rule the rest of this firmware is built on.** The release
+#: model exists because pills that nobody asked for are how a double dose
+#: happens: nothing leaves a hopper until a person has said they are there to
+#: take it, so a dose that came out is a dose somebody asked for, and a dose
+#: nobody asked for is still in the machine where the next person can count it.
+#: With this on, anybody who touches the glass gets a pill — a visitor, a
+#: cleaner, a grandchild, the person themselves twice because they were not
+#: sure the first press registered.
+#:
+#: It is on by default because this build is demonstrated far more often than
+#: it is deployed, and a device that does nothing visible when you press it
+#: demonstrates badly. **Turn it off before the machine goes to anybody who
+#: relies on it:**
+#:
+#:     SNAPCARE_TOUCH_DEMO=0
+#:
+#: What it does not do is lie. A demonstration drop is recorded with
+#: `reason: "manual"` exactly like a bench drop from the device's own page, and
+#: it never touches the scheduler — so a real dose still comes due afterwards,
+#: the dose log does not claim a scheduled dose was taken, and the carer's app
+#: shows it for what it was.
+TOUCH_DEMO_DROP = os.environ.get("SNAPCARE_TOUCH_DEMO", "1").strip().lower() \
+    not in ("0", "false", "no", "off")
+
+#: Which tray a demonstration drop opens. 0 cycles through the fitted trays,
+#: which is what shows somebody that every hopper works; a specific number pins
+#: it, for a demonstration where only one tray is loaded.
+TOUCH_DEMO_TRAY = int(os.environ.get("SNAPCARE_TOUCH_DEMO_TRAY", "0"))
+
 #: How long after a touch a second one is ignored.
 #:
 #: Not cosmetic debouncing. A resistive panel under a finger that rolls even

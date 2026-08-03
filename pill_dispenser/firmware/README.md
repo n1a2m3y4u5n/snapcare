@@ -6,8 +6,13 @@ internet going away.
 
 **Nothing drops until somebody asks for it.** At the scheduled minute the screen
 goes green and names the tray, and the buzzer starts; the tray opens when the
-button is pressed or a release is tapped in the app. No press inside the grace
+screen is touched or a release is tapped in the app. No press inside the grace
 window and the tray stays shut, recorded missed.
+
+(One exception, and it is on by default: with `SNAPCARE_TOUCH_DEMO=1` a tap with
+no dose due drops a pill anyway, so the machine can be demonstrated. It is
+recorded as a manual drop and cannot consume a scheduled dose — see
+[demonstration mode](#demonstration-mode-which-is-on-by-default).)
 
 ```
    the web app, anywhere                                the person
@@ -445,6 +450,38 @@ dtoverlay=ads7846,cs=1,penirq=4,penirq_pull=2,speed=50000,keep_vref_on=1,xohms=1
 It takes effect on the next reboot. Until then the firmware says so at startup
 and the screen still shows everything — a tap just does nothing.
 
+#### Demonstration mode, which is on by default
+
+A tap with **no dose due** drops a pill anyway, cycling through the fitted
+trays. That is what makes the machine demonstrable: a device that does nothing
+visible when you press it demonstrates badly, and this build is shown far more
+often than it is deployed.
+
+**It inverts the rule the rest of this firmware is built on.** The release model
+exists because pills nobody asked for are how a double dose happens — nothing
+leaves a hopper until a person has been offered it, so a dose that came out is a
+dose somebody asked for. With this on, anybody who touches the glass gets a
+pill: a visitor, a cleaner, or the person themselves twice because they were not
+sure the first press registered.
+
+```bash
+SNAPCARE_TOUCH_DEMO=0        # turn it off before the machine goes to anybody
+SNAPCARE_TOUCH_DEMO_TRAY=2   # pin one hopper instead of cycling
+```
+
+What it does not do is lie. A demonstration drop goes through the same
+`drop_now` the bench check uses, so:
+
+* **the scheduler is untouched** — a real dose still comes due at its proper
+  minute, and a demonstration at 07:50 cannot swallow the 08:00 dose;
+* **it is recorded as `reason: "manual"`**, never as a scheduled dose, so the
+  dose log and the carer's app cannot read it as medication taken;
+* **it refuses rather than claiming** when no GPIO library is present.
+
+A tap that *does* release a real dose releases that and nothing else — the press
+that matters never gives out two pills. All of that is pinned in
+`tests/test_demo_drop.py`.
+
 The servo pins avoid every pin that costs hardware on a 3B: GPIO 0/1 are the HAT
 ID EEPROM, 2/3 have permanent 1.8 kΩ pull-ups (a servo signal idling high before
 the software starts slams the horn to one end at power-on, with a loaded tray on
@@ -863,7 +900,7 @@ one screen that matters.
 ## Testing it without a Pi
 
 ```bash
-make            # 660 tests, no board, no servos, no network
+make            # 668 tests, no board, no servos, no network
 make run        # the whole firmware on a laptop, mock servos, port 8099
 make label      # this machine's setup QR and pairing code, in the terminal
 make cloud      # the same, wired to a relay on this machine — see ../cloud_relay
@@ -988,7 +1025,7 @@ firmware/
     ds1302.py         three bit-banged wires, and the trust model they force
     web/              four pages, no build step, nothing external
   service/            systemd unit + install.sh
-  tests/              660 tests; only the end-to-end one opens a socket
+  tests/              668 tests; only the end-to-end one opens a socket
 ```
 
 `NOTES-FOR-WEBAPP.md` is for whoever is building the production web app.

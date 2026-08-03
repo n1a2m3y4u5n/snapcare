@@ -121,11 +121,17 @@ class Daemon:
         #: tick with a trustworthy clock writes it, which is what rescues a
         #: device whose RTC has never been vouched for.
         self._last_seeded = 0.0
+        #: Rotates the demonstration drop across the fitted trays.
+        self._demo_next = 0
 
     # ── the button ──────────────────────────────────────────────────────────
 
-    def _button_pressed(self) -> None:
+    def _button_pressed(self) -> list[dict] | None:
         """Somebody pressed the button on the machine. Release what is due.
+
+        Returns what was released, `[]` when nothing was owed, or `None` when
+        nothing could move at all — which is what lets the touch handler tell a
+        press that did something from one that did not.
 
         Runs on the GPIO library's notification thread, so everything it can
         raise has to stop here — `TakeDoseButton._fire` catches it, but a
@@ -148,15 +154,16 @@ class Daemon:
             released = self.dispenser.release()
         except RuntimeError as exc:
             log.error("button pressed but nothing can move: %s", exc)
-            return
+            return None
 
         if not released:
             log.info("button pressed with no dose waiting — nothing released")
-            return
+            return []
 
         for event in released:
             log.info("button: tray %d released for the %s dose",
                      event["tray"], event["time"])
+        return released
 
     def _touch_pressed(self) -> None:
         """Somebody tapped the screen. Release what is due, and wake the panel.
@@ -173,7 +180,71 @@ class Daemon:
             self.dispenser.indicator.attention()
         except Exception:  # noqa: BLE001 - a palette is never worth a traceback
             log.debug("could not wake the panel on a touch")
-        self._button_pressed()
+
+        released = self._button_pressed()
+        if released or released is None:
+            # A real dose went out, or nothing on this machine can move. Either
+            # way the demonstration drop below would be wrong: the first is
+            # already what the person asked for, and the second would be a
+            # claim about a servo that is not there.
+            return
+        if config.TOUCH_DEMO_DROP:
+            self._demo_drop()
+
+    def _demo_drop(self) -> None:
+        """Open a tray on a tap that had no dose behind it. Demonstration only.
+
+        `config.TOUCH_DEMO_DROP` argues why this exists and what it costs, and
+        the cost is real: with it on, anybody who touches the glass gets a pill.
+        What this function is careful about is that it never *lies* about having
+        done so.
+
+        It goes through `drop_now`, which is the path the device's own page uses
+        to check a hopper at the bench. So the scheduler is untouched — a real
+        dose still comes due afterwards at its proper minute, and this drop
+        cannot suppress it — and the event is recorded with `reason: "manual"`,
+        which is what stops the dose log and the carer's app reading it as a
+        scheduled dose that was taken.
+
+        The screen still turns blue, because from the room this is the same
+        event the person just caused, and a machine that drops a pill and shows
+        nothing about it is a machine somebody presses again.
+        """
+        tray = self._demo_tray()
+        if tray is None:
+            log.warning("touch: demonstration drop, but no tray is wired")
+            return
+        try:
+            event = self.dispenser.drop_now(tray)
+        except (KeyError, RuntimeError) as exc:
+            # `drop_now` refuses rather than claiming a drop nothing performed —
+            # no GPIO library, or a tray that is not in the pin map.
+            log.error("touch: demonstration drop failed: %s", exc)
+            return
+        log.warning(
+            "touch: DEMONSTRATION drop of tray %d — no dose was due. Recorded "
+            "as a manual drop, not as a dose. Set SNAPCARE_TOUCH_DEMO=0 on a "
+            "machine somebody actually relies on", tray)
+        try:
+            self.dispenser.indicator.dose_released(event["tray"])
+        except Exception:  # noqa: BLE001 - the pill is out either way
+            log.debug("could not paint the demonstration drop")
+
+    def _demo_tray(self) -> int | None:
+        """Which tray a demonstration drop opens.
+
+        Cycling by default rather than always opening tray 1, for two reasons:
+        it shows somebody watching that every hopper works, and it does not
+        empty one tray while the others stay full over a long demonstration.
+        """
+        fitted = sorted(self.servos.pins)
+        if not fitted:
+            return None
+        if config.TOUCH_DEMO_TRAY in fitted:
+            return config.TOUCH_DEMO_TRAY
+        tray = fitted[self._demo_next % len(fitted)]
+        self._demo_next += 1
+        return tray
 
     def _show(self) -> None:
         """Hand the panel a fresh view of the whole machine.
