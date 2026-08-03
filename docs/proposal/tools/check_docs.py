@@ -21,6 +21,7 @@
   · 화면 캡처가 지금 앱보다 낡지 않았는가
   · 소제목에 번호가 붙어 있는가
   · 도판에서 글자가 상자를 넘거나 겹치지 않는가
+  · 본문 인용이 부록 원문과 글자까지 같은가
 """
 import re
 import sys
@@ -314,6 +315,36 @@ def fig_faults() -> list:
             if ln.strip() and not ln.startswith('도판에서')]
 
 
+def quote_drift() -> list:
+    """본문의 인용 블록이 부록의 원문과 글자 단위로 같은지 본다.
+
+    본문이 응답자의 오타를 조용히 고치고 있었다. "팩토그램" 을 "픽토그램"
+    으로, "이 또는" 을 "이 또한" 으로 바로잡고 띄어쓰기까지 손봤다. 인용은
+    고르는 순간 이미 우리 쪽으로 기울 수 있으므로 글자만은 그대로 두어야
+    한다. 영어로 답한 것을 우리말로 옮긴 자리는 걸리지 않도록 한글이 든
+    인용만 본다."""
+    s = (DOC / 'proposal_ko.md').read_text()
+    body, app = s[:s.index('### 5.11')], s[s.index('### 5.11'):]
+    flat = re.sub(r'\s+', ' ', app)
+    out = []
+    # 인용 줄과 바로 다음 출처 줄을 함께 본다. 출처에 "옮김" 이 적혀 있으면
+    # 영어로 답한 것을 우리말로 옮긴 자리이므로 원문과 다른 것이 맞다.
+    lines = body.splitlines()
+    for i, ln in enumerate(lines):
+        m = re.match(r'^> "([^"]{24,})"$', ln)
+        if not m:
+            continue
+        q = m.group(1)
+        if not re.search(r'[가-힣]', q):
+            continue
+        src = lines[i + 1] if i + 1 < len(lines) else ''
+        if '옮김' in src:
+            continue
+        if re.sub(r'\s+', ' ', q)[:36] not in flat:
+            out.append(q[:56])
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -392,6 +423,9 @@ def main() -> int:
     for f, _, _ in PAIR:
         for t in unnumbered_subs(f):
             note(f'{f}: 번호 없는 소제목 — {t[:40]}')
+
+    for t in quote_drift():
+        note(f'인용이 부록 원문과 다르다 — "{t}…"')
 
     for t in fig_faults():
         note(t)
