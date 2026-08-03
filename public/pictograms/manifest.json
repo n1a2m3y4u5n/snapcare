@@ -124,9 +124,10 @@
   "26be8467": "\\no{\\state_breastfeeding}",
   "080b438c": "\\state_breastfeeding",
   "cb8461a1": "\\no{\\contact_lens}",
-  "__assets": "5e5a514a51ff4d92",
+  "__assets": "14fec7778c364db1",
   "d98407b9": "\\three_times_daily{\\capsule_strip{\\food_bowl}}",
   "b23f6956": "\\three_times_daily{\\pill_bottle}",
   "7d3fb808": "\\no{\\pill_bottle}",
-  "a6af924d": "\\four_times_daily{\\liquid_bottle{\\body_mouth}}"
+  "a6af924d": "\\four_times_daily{\\liquid_bottle{\\body_mouth}}",
+  "7d35a91e": "\\no{\\capsule_strip}"
 }

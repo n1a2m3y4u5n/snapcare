@@ -6,21 +6,36 @@
 응답폴더 기본값은 $SNAPCARE_DATA_DIR/survey 이고, 없으면 ./.data/survey 다.
 운영 서버에서는 fly 볼륨의 /data/survey 이므로 먼저 내려받아야 한다.
 
-    fly ssh sftp get /data/survey ./survey-dump   # 또는 fly ssh console 로 tar
+    fly ssh sftp get /data/survey ./survey-dump
+    python3 scripts/survey_report.py ./survey-dump
 
 openpyxl 이 필요하다.  python3 -m pip install --user openpyxl
 
 ────────────────────────────────────────────────────────────────────────
-이 스크립트의 요점은 **채점을 시트 안에서 하게 만드는 것**이다.
+## 시트
 
-픽토그램 이해도는 자유응답으로 받으므로 정답 여부를 사람이 판정해야 한다.
-응답자에게 자기 판정을 맡기지 않는 이유는 자기 판정이 관대해지기 때문이고,
-그래서 원문을 그대로 저장해 두었다.
+  응답          한 사람 한 줄. 수신자 토큰으로 명단의 이름·소속을 이어 붙인다
+  직군별 집계     제안서에 그대로 들어갈 숫자. 분모가 직군별로 나뉜다
+  판단 문항       데모를 보고 답한 문항. 분모는 그 문항을 받은 다섯 직군뿐이다
+  자유응답        서술형과 "왜 그렇습니까" 칸을 문항별로 모은 것
+  선택지 분포     선택형 전체의 단순 분포
 
-'픽토그램' 시트의 판정 칸에 통과·부분·실패·치명적 혼동을 채우면 '집계' 시트의
-ISO 67% 와 ANSI 85% 판정이 수식으로 따라온다. ANSI 는 정답률 85% 와 **치명적
-혼동 5% 이하**를 함께 요구하므로 정답률만으로는 기준을 말할 수 없다. 그 두 조건을
-한 칸에서 계산한다.
+## 왜 분모를 직군별로 나누는가
+
+"전체 43명 중 20명" 은 여덟 직군이 섞인 숫자다. 약사와 법학 교수와 표준 담당자를 한
+분모에 넣으면 그 비율은 무엇에 대한 비율도 아니다. "약사 18명 중 11명" 이라야 근거가
+된다. 그래서 직군별 집계 시트가 이 파일의 중심이다.
+
+판단 문항은 특히 조심해야 한다. 데모를 보고 답하는 두 문항은 다섯 직군에만 붙어 있다.
+법·표준·산업 응답자는 그 문항을 아예 받지 않았으므로 분모에 들어가면 안 된다.
+
+## 이해도 시험 시트를 없앤 이유
+
+전에는 픽토그램 이해도 시험의 채점 시트와 ISO 67% / ANSI 85% 판정 수식이 있었다. 그
+시험을 설문에서 뺐으므로 지운다 — 전문가에게 그림 뜻을 맞히게 하는 것은 저문해 환자를
+대상으로 한 시험이 아니고, 그 숫자를 기준 통과로 적으면 사실과 다른 말이 된다.
+
+사람을 대상으로 한 이해도 시험은 여전히 남은 일이다. 이 조사는 그것을 대신하지 않는다.
 """
 import json
 import os
@@ -33,14 +48,12 @@ try:
     from openpyxl import Workbook
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     from openpyxl.utils import get_column_letter
-    from openpyxl.worksheet.datavalidation import DataValidation
 except ImportError:
     sys.exit('openpyxl 이 없다:  python3 -m pip install --user openpyxl')
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-GLYPHS_TS = ROOT / 'lib' / 'survey' / 'glyphs.ts'
-
-VERDICTS = ['통과', '부분', '실패', '치명적 혼동']
+ITEMS_TS = ROOT / 'lib' / 'survey' / 'items.ts'
+ROSTER: dict[str, tuple[str, str]] = {}
 
 HDR = Font(bold=True, color='FFFFFF', size=11)
 HDR_FILL = PatternFill('solid', fgColor='2F5597')
@@ -51,18 +64,40 @@ BOX = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
 TOP = Alignment(vertical='top', wrap_text=True)
 
 
-def intended_meanings() -> dict[str, str]:
-    """glyphs.ts 에서 형태소 이름과 의도한 뜻을 읽는다.
+def survey_shape() -> dict:
+    """문항 정의를 items.ts 에서 읽는다.
 
-    한 곳에만 적어 두고 여기서 읽는다. 이 파일에 뜻을 다시 적으면 둘이 어긋나고,
-    어긋난 채로 채점하면 통과·실패가 뒤집힌다.
+    선택지 문구를 이 파일에 다시 적지 않는다. 두 곳에 적으면 어긋나고, 어긋난 채로
+    세면 "응답 없음" 으로 빠지는 선택지가 생긴다 — 그런 누락은 표를 봐도 보이지 않는다.
+
+    응답 JSON 에는 **영어 선택지 문구가 그대로** 저장되어 있다 (radio 의 값이 o.en 이다).
+    그래서 셀 때는 영어로 맞추고, 사람이 읽는 표에는 한국어를 쓴다. 둘의 짝은 여기서만
+    만든다.
+
+    node 로 TS 모듈을 직접 불러 JSON 으로 받는다. 정규식으로 긁으면 문항이 늘거나 줄 때
+    조용히 틀린다.
     """
-    src = GLYPHS_TS.read_text(encoding='utf-8')
-    pairs = re.findall(
-        r"name:\s*'([^']+)'\s*,\s*intended:\s*\{\s*ko:\s*'([^']*)'", src)
-    if not pairs:
-        sys.exit(f'{GLYPHS_TS} 에서 형태소를 읽지 못했다. 파일 형식이 바뀌었는지 확인할 것.')
-    return dict(pairs)
+    import subprocess
+    script = f"""
+      import('file://{ITEMS_TS}').then((m) => {{
+        const opt = (i) => (i.options || []).map((o) => ({{ en: o.en, ko: o.ko }}));
+        console.log(JSON.stringify({{
+          fields: m.FIELDS.map((f) => ({{ id: f.id, en: f.label.en, ko: f.label.ko }})),
+          judge: m.DEMO_JUDGE.map((i) => i.id),
+          branches: m.BRANCHES.map((b) => ({{
+            id: b.id, ko: b.title.ko,
+            items: b.items.map((i) => ({{ id: i.id, ko: i.q.ko, kind: i.kind, options: opt(i) }})),
+          }})),
+          background: m.BACKGROUND.map((i) => ({{ id: i.id, ko: i.q.ko, kind: i.kind, options: opt(i) }})),
+          close: m.CLOSE.map((i) => ({{ id: i.id, ko: i.q.ko, kind: i.kind, options: opt(i) }})),
+        }}));
+      }});
+    """
+    r = subprocess.run(['node', '--experimental-strip-types', '-e', script],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        sys.exit(f'items.ts 를 읽지 못했다:\n{r.stderr[-800:]}')
+    return json.loads(r.stdout)
 
 
 def load(dirpath: pathlib.Path) -> list[dict]:
@@ -73,6 +108,40 @@ def load(dirpath: pathlib.Path) -> list[dict]:
         except Exception as e:                       # noqa: BLE001
             print(f'  건너뜀 {f.name}: {e}', file=sys.stderr)
     return out
+
+
+def minutes(r) -> str:
+    """시작한 때와 낸 때의 차이. 문항이 너무 길었는지 판단하는 근거가 된다."""
+    a, b = r.get('startedAt'), r.get('clientTime')
+    if not (a and b):
+        return ''
+    try:
+        from datetime import datetime
+        f = lambda x: datetime.fromisoformat(x.replace('Z', '+00:00'))
+        return round((f(b) - f(a)).total_seconds() / 60, 1)
+    except Exception:                                # noqa: BLE001
+        return ''
+
+
+def roster() -> dict[str, tuple[str, str]]:
+    """수신자 토큰 → (이름, 소속). 명단 엑셀에서 읽는다.
+
+    서버는 토큰만 알고 있고 사람은 모른다. 여기서만 이어 붙인다 — 그래서
+    이 스크립트를 우리 손에서 돌려야 응답자가 누구인지 나온다.
+    """
+    try:
+        from openpyxl import load_workbook
+        wb = load_workbook(ROOT / 'scratchpad' / 'contacts' / 'SnapCare_전문가_명단.xlsx',
+                           read_only=True, data_only=True)
+        ws = wb['발송대상']
+        out = {}
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if row[8]:
+                out[str(row[8])] = (str(row[4] or ''), str(row[5] or ''))
+        return out
+    except Exception as e:                           # noqa: BLE001
+        print(f'  명단을 읽지 못해 이름 조인을 건너뛴다: {e}', file=sys.stderr)
+        return {}
 
 
 def head(ws, cols, widths):
@@ -98,7 +167,11 @@ def main() -> None:
         sys.exit(f'{src} 에 응답이 없다')
     print(f'응답 {len(rows)}건 읽음')
 
-    INTENDED = intended_meanings()
+    SHAPE = survey_shape()
+    print(f"문항 정의: 직군 {len(SHAPE['branches'])}개, 판단 문항 {len(SHAPE['judge'])}개")
+    global ROSTER
+    ROSTER = roster()
+    print(f'명단 {len(ROSTER)}명과 토큰으로 이어 붙인다')
     wb = Workbook()
 
     # ── 1) 응답 ─────────────────────────────────────────────
@@ -110,107 +183,137 @@ def main() -> None:
     ws = wb.active
     ws.title = '응답'
     head(ws,
-         ['응답ID', '접수시각', '언어', '지목 구획', '인용 허락', '인용 범위', '이해도 시험'] + keys,
-         [26, 18, 6, 8, 9, 16, 10] + [30] * len(keys))
+         ['수신자 토큰', '명단의 이름', '명단의 소속', '응답ID', '접수시각', '소요(분)',
+          '언어', '지목 구획', '인용 범위', '표준시간대', '화면', '링크 경유'] + keys,
+         [13, 24, 30, 26, 18, 9, 6, 8, 16, 22, 9, 9] + [30] * len(keys))
     for r in rows:
         a = r.get('answers') or {}
+        env = r.get('env') or {}
+        tok = r.get('recipient') or ''
+        who = ROSTER.get(tok, ('', ''))
         ws.append([
-            r.get('id', ''), r.get('receivedAt', ''), r.get('lang', ''),
-            r.get('pinnedSection') or '', 'Y' if r.get('citeConsent') else 'N',
-            r.get('citeScope') or '', '참여' if r.get('glyphTest') else '건너뜀',
+            tok, who[0], who[1], r.get('id', ''), r.get('receivedAt', ''), minutes(r),
+            r.get('lang', ''), r.get('pinnedSection') or '', r.get('citeScope') or '',
+            env.get('tz') or '', env.get('screen') or '', 'Y' if env.get('fromLink') else 'N',
         ] + [a.get(k, '') for k in keys])
         for c in ws[ws.max_row]:
             c.alignment, c.border = TOP, BOX
-    ws.auto_filter.ref = f'A1:{get_column_letter(7 + len(keys))}{ws.max_row}'
+    ws.auto_filter.ref = f'A1:{get_column_letter(12 + len(keys))}{ws.max_row}'
 
-    # ── 2) 픽토그램 — 판정을 여기서 채운다 ──────────────────
-    wp = wb.create_sheet('픽토그램')
-    head(wp,
-         ['응답ID', '형태소', '의도한 뜻', '응답자가 적은 것', '모르겠다', '확신도(1-5)', '판정', '응답시간(ms)'],
-         [26, 20, 26, 46, 9, 11, 14, 12])
-    n_glyph = 0
+    # ── 2) 직군별 집계 ──────────────────────────────────────
+    #
+    # 이 시트가 제안서에 그대로 들어갈 숫자다. 요점은 **분모를 직군별로 나누는 것**이다.
+    # "전체 43명 중 20명" 은 여덟 직군이 섞인 숫자여서 아무것도 말하지 않는다. "약사
+    # 18명 중 11명" 이라야 근거가 된다.
+    #
+    # 응답 수가 0인 선택지도 줄로 남긴다. 아무도 고르지 않았다는 것 자체가 결과이고,
+    # 빼 버리면 그 선택지가 있었다는 사실이 표에서 사라진다.
+    field_of = {f['en']: f['id'] for f in SHAPE['fields']}
+    field_ko = {f['id']: f['ko'] for f in SHAPE['fields']}
+    by_branch: dict[str, list[dict]] = {}
     for r in rows:
-        for g in (r.get('glyphTest') or []):
-            wp.append([
-                r.get('id', ''), g.get('name', ''), INTENDED.get(g.get('name', ''), '(미확인)'),
-                g.get('guess', ''), 'Y' if g.get('dontKnow') else '',
-                g.get('confidence', ''), '', g.get('ms', ''),
-            ])
-            for c in wp[wp.max_row]:
-                c.alignment, c.border = TOP, BOX
-            n_glyph += 1
-    if n_glyph:
-        dv = DataValidation(type='list', formula1='"' + ','.join(VERDICTS) + '"', allow_blank=True)
-        dv.error = '통과 · 부분 · 실패 · 치명적 혼동 중에서 고를 것'
-        wp.add_data_validation(dv)
-        dv.add(f'G2:G{wp.max_row}')
-        wp.auto_filter.ref = f'A1:H{wp.max_row}'
-    print(f'픽토그램 응답 {n_glyph}건')
+        bid = field_of.get(((r.get('answers') or {}).get('b_field') or '').strip())
+        if bid:
+            by_branch.setdefault(bid, []).append(r)
 
-    # ── 3) 집계 — 판정을 채우면 기준 판정이 따라온다 ────────
-    wa = wb.create_sheet('집계')
-    head(wa,
-         ['형태소', '의도한 뜻', '채점된 수', '통과', '부분', '실패', '치명적 혼동',
-          '정답률', '치명적 혼동률', 'ISO 67%', 'ANSI 85%+치명5%', '모르겠다', '평균 확신도', '평균 응답시간(ms)'],
-         [20, 26, 10, 8, 8, 8, 12, 10, 13, 10, 17, 11, 12, 16])
-    seen = [g for g in INTENDED if any(
-        x.get('name') == g for r in rows for x in (r.get('glyphTest') or []))]
-    for g in (seen or list(INTENDED)):
-        row = wa.max_row + 1
-        B = f"픽토그램!$B$2:$B${max(wp.max_row, 2)}"
-        G = f"픽토그램!$G$2:$G${max(wp.max_row, 2)}"
-        E = f"픽토그램!$E$2:$E${max(wp.max_row, 2)}"
-        F = f"픽토그램!$F$2:$F${max(wp.max_row, 2)}"
-        M = f"픽토그램!$H$2:$H${max(wp.max_row, 2)}"
-        wa.append([
-            g, INTENDED[g],
-            f'=COUNTIFS({B},$A{row},{G},"<>")',
-            f'=COUNTIFS({B},$A{row},{G},"통과")',
-            f'=COUNTIFS({B},$A{row},{G},"부분")',
-            f'=COUNTIFS({B},$A{row},{G},"실패")',
-            f'=COUNTIFS({B},$A{row},{G},"치명적 혼동")',
-            f'=IF($C{row}=0,"",$D{row}/$C{row})',
-            f'=IF($C{row}=0,"",$G{row}/$C{row})',
-            f'=IF($C{row}=0,"",IF($H{row}>=0.67,"통과","미달"))',
-            f'=IF($C{row}=0,"",IF(AND($H{row}>=0.85,$I{row}<=0.05),"통과","미달"))',
-            f'=COUNTIFS({B},$A{row},{E},"Y")',
-            f'=IFERROR(AVERAGEIFS({F},{B},$A{row}),"")',
-            f'=IFERROR(AVERAGEIFS({M},{B},$A{row}),"")',
-        ])
-        for c in wa[row]:
-            c.alignment, c.border = TOP, BOX
-        wa.cell(row, 8).number_format = '0.0%'
-        wa.cell(row, 9).number_format = '0.0%'
-        wa.cell(row, 13).number_format = '0.0'
-        wa.cell(row, 14).number_format = '#,##0'
-        wa.cell(row, 10).fill = OK_FILL
-        wa.cell(row, 11).fill = WARN_FILL
+    wb2 = wb.create_sheet('직군별 집계')
+    head(wb2, ['직군', '그 직군 응답자', '문항', '선택지', '응답 수', '그 직군 안의 비율'],
+         [22, 13, 52, 46, 9, 15])
+    for br in SHAPE['branches']:
+        mine = by_branch.get(br['id'], [])
+        for it in br['items']:
+            if not it['options']:
+                continue                              # 서술형은 자유응답 시트에서 본다
+            vals = [((r.get('answers') or {}).get(it['id']) or '').strip() for r in mine]
+            answered = [v for v in vals if v]
+            cnt = Counter(answered)
+            for o in it['options']:
+                n = cnt.get(o['en'], 0)
+                wb2.append([br['ko'], len(mine), it['ko'], o['ko'], n,
+                            (n / len(answered)) if answered else ''])
+                wb2.cell(wb2.max_row, 6).number_format = '0.0%'
+                for c in wb2[wb2.max_row]:
+                    c.alignment, c.border = TOP, BOX
+            # 선택지에 없는 답이 들어왔다면 그것도 보여준다 (문항을 고친 뒤 옛 응답 등)
+            for v, n in cnt.items():
+                if v not in {o['en'] for o in it['options']}:
+                    wb2.append([br['ko'], len(mine), it['ko'], f'(선택지에 없음) {v}', n,
+                                n / len(answered)])
+                    wb2.cell(wb2.max_row, 6).number_format = '0.0%'
+                    for c in wb2[wb2.max_row]:
+                        c.alignment, c.border, c.fill = TOP, BOX, WARN_FILL
+    if wb2.max_row > 1:
+        wb2.auto_filter.ref = f'A1:F{wb2.max_row}'
 
-    note = wa.max_row + 2
-    wa.cell(note, 1, '판정 칸을 채우면 정답률과 기준 판정이 자동으로 계산된다.').font = Font(bold=True)
-    wa.cell(note + 1, 1,
-            'ISO 9186-1 은 최소 67% 이해를 요구한다. ANSI Z535.3 은 85% 정답률과 '
-            '치명적 혼동 5% 이하를 함께 요구하므로, 정답률만으로 통과를 말할 수 없다.')
-    wa.cell(note + 2, 1,
-            '치명적 혼동은 의도와 반대되거나 위험한 뜻으로 읽힌 경우다. 이것을 따로 세는 것이 요점이다.')
-    wa.cell(note + 3, 1,
-            '자기 판정을 응답자에게 맡기지 않았다. 자기 판정은 관대해지므로 원문을 저장해 두고 우리가 분류한다.')
+    # ── 3) 판단 문항 ────────────────────────────────────────
+    #
+    # 데모를 보고 답하는 문항은 다섯 직군에만 붙어 있다 — 약국·간호·AAC·문해·HCI.
+    # 법·표준·산업 응답자는 이 문항을 받지 않았으므로 **분모에 들어가면 안 된다.**
+    # 전체 응답자로 나누면 받지도 않은 사람이 분모를 부풀려 비율이 낮게 나온다.
+    judge_ids = set(SHAPE['judge'])
+    judge_branches = [b for b in SHAPE['branches']
+                      if any(i['id'] in judge_ids for i in b['items'])]
+    judge_pool = [r for b in judge_branches for r in by_branch.get(b['id'], [])]
+
+    wj = wb.create_sheet('판단 문항')
+    head(wj, ['문항', '선택지', '판단 자격 직군 전체', '비율'] + [b['ko'] for b in judge_branches],
+         [52, 44, 17, 9] + [15] * len(judge_branches))
+    for b in judge_branches[:1]:
+        for it in b['items']:
+            if it['id'] not in judge_ids or not it['options']:
+                continue
+            answered = [v for v in (((r.get('answers') or {}).get(it['id']) or '').strip()
+                                    for r in judge_pool) if v]
+            cnt = Counter(answered)
+            per = {jb['id']: Counter(
+                v for v in (((r.get('answers') or {}).get(it['id']) or '').strip()
+                            for r in by_branch.get(jb['id'], [])) if v)
+                for jb in judge_branches}
+            for o in it['options']:
+                n = cnt.get(o['en'], 0)
+                wj.append([it['ko'], o['ko'], n, (n / len(answered)) if answered else '']
+                          + [per[jb['id']].get(o['en'], 0) for jb in judge_branches])
+                wj.cell(wj.max_row, 4).number_format = '0.0%'
+                for c in wj[wj.max_row]:
+                    c.alignment, c.border = TOP, BOX
+
+    note = wj.max_row + 2
+    wj.cell(note, 1, f'분모는 판단 자격이 있는 다섯 직군의 응답자 {len(judge_pool)}명이다.').font = Font(bold=True)
+    wj.cell(note + 1, 1,
+            '법·표준·산업 응답자는 이 문항을 받지 않았으므로 분모에서 뺐다. 환자의 이해를 '
+            '판정할 자격이 있는 직군에만 물은 문항이므로, 전체 응답자로 나누면 그 숫자는 '
+            '무엇에 대한 비율도 아니게 된다.')
+    wj.cell(note + 2, 1,
+            '사람을 대상으로 한 픽토그램 이해도 시험은 이 조사로 대체되지 않는다. 전문가가 '
+            '"환자가 읽을 수 있을 것 같다" 고 답한 것은 환자가 실제로 읽었다는 뜻이 아니다. '
+            'ISO 9186 의 67% 나 ANSI Z535.3 의 85% 는 여전히 사람을 대상으로 확인해야 한다.')
 
     # ── 4) 자유응답 ─────────────────────────────────────────
-    LONG = ['a2_harm', 'a4_onefix', 'a5_notrecommend', 'a6_evidence']
+    # 서술형 문항과, 선택형에 딸린 "왜 그렇습니까" 칸을 모은다. 목록을 손으로 적어 두면
+    # 문항이 바뀔 때마다 조용히 빠진다 — 실제로 없어진 문항 네 개가 적혀 있었다.
+    ITEM_KO = {i['id']: i['ko'] for grp in
+               ([SHAPE['background'], SHAPE['close']] + [b['items'] for b in SHAPE['branches']])
+               for i in grp}
+    LONG = [i['id'] for grp in ([SHAPE['background'], SHAPE['close']]
+                                + [b['items'] for b in SHAPE['branches']])
+            for i in grp if i['kind'] == 'longtext']
+    LONG = list(dict.fromkeys(LONG)) + [k for k in keys if k.endswith('__why')]
     wf = wb.create_sheet('자유응답')
-    head(wf, ['문항', '응답ID', '분야', '노출 빈도', '내용'], [18, 26, 22, 16, 100])
-    for k in LONG + [k for k in keys if k not in LONG and k.startswith('q')]:
+    head(wf, ['문항', '문항 내용', '응답ID', '분야', '노출 빈도', '내용'], [18, 46, 26, 22, 16, 90])
+    for k in LONG:
         for r in rows:
             v = (r.get('answers') or {}).get(k, '').strip()
             if not v:
                 continue
             a = r.get('answers') or {}
-            wf.append([k, r.get('id', ''), a.get('b_field', ''), a.get('b_exposure', ''), v])
+            base = k[:-6] if k.endswith('__why') else k
+            label = ITEM_KO.get(base, '')
+            wf.append([k, label + (' → 이유' if k.endswith('__why') else ''),
+                       r.get('id', ''), a.get('b_field', ''), a.get('b_exposure', ''), v])
             for c in wf[wf.max_row]:
                 c.alignment, c.border = TOP, BOX
     if wf.max_row > 1:
-        wf.auto_filter.ref = f'A1:E{wf.max_row}'
+        wf.auto_filter.ref = f'A1:F{wf.max_row}'
 
     # ── 5) 단답 분포 ────────────────────────────────────────
     wd = wb.create_sheet('선택지 분포')

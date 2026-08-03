@@ -18,9 +18,21 @@ primary_region = "nrt"
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = "stop"
+  # 발송 기간에는 멈추지 않게 한다.
+  #
+  # min_machines_running = 1 만으로는 부족했다. 배포 직후 기계가 stopped 상태였고 첫
+  # 요청이 6.4초 걸렸다 — 그 값은 트래픽이 있을 때 유지할 최소 대수이고, 멈춘 상태에서
+  # 시작시키는 것은 아니다. "off" 로 두면 아예 멈추지 않는다.
+  auto_stop_machines = "off"
   auto_start_machines = true
-  min_machines_running = 0
+  # 발송 기간에는 한 대를 계속 켜 둔다.
+  #
+  # 0 이면 요청이 없을 때 기계가 멈추고, 다시 깨어나는 데 6.7초가 걸린다(실측). 모르는
+  # 사람이 보낸 메일의 링크를 눌렀는데 7초 동안 흰 화면이면 상당수가 그대로 닫는다.
+  # 1103통을 보내 놓고 그 자리에서 잃는 것이므로, 기계 한 대 값이 훨씬 싸다.
+  #
+  # 조사가 끝나면 0 으로 되돌린다.
+  min_machines_running = 1
 
   [http_service.concurrency]
     type = "connections"
