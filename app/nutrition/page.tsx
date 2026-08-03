@@ -6,6 +6,7 @@ import { NutrientBar } from '@/components/sc/NutrientBar';
 import { useScans } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
 import { ConditionTracking } from './tracking';
+import { Reactions } from './reactions';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NUTRIENT_LABEL, type NutrientAssessment } from '@/lib/nutrition/types';
 import { ask, Hear, Speakable } from '@/components/sc/Say';
@@ -118,6 +119,12 @@ export default function NutritionPage() {
             {/* 오늘 먹은 것 */}
             {/* 조건이 있으면 며칠치 추이를 함께 낸다 (조건이 없으면 스스로 뜨지 않는다) */}
             <ConditionTracking scans={scans} />
+
+            {/*
+              몸이 반응한 것. 추세 바로 밑에 둔다 — 위가 "무엇을 얼마나 먹었나" 라면
+              이쪽은 "그래서 몸이 어땠나" 라, 같은 줄기의 다음 물음이다.
+            */}
+            <Reactions scans={scans} />
 
             <Speakable text="Eaten today. Everything you checked since this morning."
                        className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
