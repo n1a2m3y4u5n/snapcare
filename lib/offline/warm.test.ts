@@ -113,13 +113,21 @@ test('예열 목록이 서비스워커의 셸 목록을 덮는다', async () => 
   const { readFileSync } = await import('node:fs');
   const sw = readFileSync(new URL('../../public/sw.js', import.meta.url), 'utf8');
   const block = sw.slice(sw.indexOf('const SHELL_URLS'), sw.indexOf('const STATIC_FILES'));
-  const shell = [...block.matchAll(/'(\/[a-z-]*)'/g)].map((m) => m[1])
-    .filter((p) => !p.includes('.'));
-  assert.ok(shell.length >= 9, `sw.js 셸 목록을 못 읽었다 (${shell.length}개)`);
+  const shell = [...block.matchAll(/'(\/[a-z0-9./_-]*)'/g)].map((m) => m[1]);
+  assert.ok(shell.length >= 12, `sw.js 셸 목록을 못 읽었다 (${shell.length}개)`);
 
+  /*
+    화면만 보면 부족하다. sw.js 의 install 은 `Promise.allSettled` 라 하나가
+    실패해도 설치가 계속되고, 실패한 것은 다시 담기지 않는다 — activate 도 안
+    담고, 앱이 평소에 요청하지도 않는 주소라면 영영 없다. 배포 직후 실제로
+    /manifest.webmanifest 와 /icons/icon-192.png 둘이 그렇게 빠졌다.
+
+    예열이 그 재시도 역할을 한다. 그러려면 셸 목록 **전부**가 예열 목록에
+    있어야 한다. 화면은 WARM_ROUTES, 나머지는 WARM_ASSETS 가 받는다.
+  */
+  const covered = new Set<string>([...WARM_ROUTES, ...WARM_ASSETS]);
   for (const p of shell) {
-    assert.ok(WARM_ROUTES.includes(p as (typeof WARM_ROUTES)[number]),
-      `sw.js 는 ${p} 를 오프라인 화면으로 담는데 예열 목록에 없다`);
+    assert.ok(covered.has(p), `sw.js 는 ${p} 를 미리 담는데 예열이 다시 받지 않는다`);
   }
 });
 
