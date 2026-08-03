@@ -37,7 +37,6 @@ export const WARM_ROUTES = [
   '/nutrition',
   '/settings',
   '/device',
-  '/onboarding',
   // 계정 고르기. 한 대를 여럿이 쓰는 것을 전제한 앱이라, 오프라인에서 사람을 못
   // 바꾸면 그 폰은 한 사람 것이 된다.
   '/login',

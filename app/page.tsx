@@ -4,8 +4,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from '@/stores/session';
 import { useSessionHydrated } from '@/lib/hooks';
-import { isDemo } from '@/lib/snapcare/demo';
-import { activeAccountId, DEMO_KID } from '@/lib/snapcare/accounts';
 
 /**
  * 진입 게이트 — 저장된 세션이 복원된 뒤 온보딩/로그인/홈으로 보낸다.
@@ -15,32 +13,28 @@ import { activeAccountId, DEMO_KID } from '@/lib/snapcare/accounts';
  */
 export default function Index() {
   const router = useRouter();
-  const { sizePicked, onboarded, authed, setOnboarded } = useSession();
+  const { sizePicked, authed } = useSession();
   const hydrated = useSessionHydrated();
 
   useEffect(() => {
     if (!hydrated) return;
-    // 시연 모드의 두 번째 사람은 안내를 건너뛴다.
-    //
-    // 실제로는 안내를 다시 보는 것이 맞다 — 더해진 사람에게 이 앱은 처음이다. 하지만
-    // 심사에서 얼굴을 바꿔 보일 때마다 슬라이드 다섯 장을 다시 넘기게 되면, 정작
-    // 보여주려던 것(같은 것을 찍어도 판정이 다르다)에 닿기 전에 시간을 쓴다.
-    // 첫 사람은 그대로 안내를 본다 — 첫 실행 흐름 자체도 보여줄 것이기 때문이다.
-    if (isDemo() && activeAccountId() === DEMO_KID && !onboarded) {
-      setOnboarded(true);
-      return;
-    }
     /*
-      글자 크기를 안내보다 **먼저** 묻는다.
+      앱을 처음 켜면 글자 크기부터 묻는다. 그다음은 바로 쓰는 화면이다.
 
-      안내 자체가 글자와 그림으로 되어 있어서, 글자가 안 보이는 사람에게는 그
-      안내부터 읽히지 않는다. 크기를 먼저 맞춰 놓고 나머지를 보여주는 순서가 맞다.
+      전에는 그 사이에 안내 다섯 장이 있었다. 없앤 이유: 다섯 중 넷은 화면 자체가
+      이미 말한다 — 카메라는 홈 한가운데 큰 원이고, 판정 색은 판정 화면이 색으로
+      보여주고, "당신 기준으로 본다" 는 Who 위성과 배지가 말하고, 알람은 처방을
+      찍으면 그 자리에서 만들자고 묻는다. **설명이 필요 없게 만든 것을 다시 설명하는
+      것은 그 만듦을 못 믿는다는 뜻이다.**
+
+      남은 하나(꾹 눌러 듣는 손짓)는 화면 어디에도 안 나타나므로 없앨 수 없었다.
+      대신 쓰는 자리로 옮겼다 — 판정 화면에 처음 도착했을 때 한 번
+      (components/sc/HoldToHear.tsx).
     */
     if (!sizePicked) router.replace('/text-size');
-    else if (!onboarded) router.replace('/onboarding');
     else if (!authed) router.replace('/login');
     else router.replace('/home');
-  }, [hydrated, sizePicked, onboarded, authed, router, setOnboarded]);
+  }, [hydrated, sizePicked, authed, router]);
 
   return <div className="min-h-screen" style={{ background: 'var(--color-sc-bg)' }} />;
 }

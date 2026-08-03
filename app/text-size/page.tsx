@@ -52,7 +52,7 @@ export default function TextSizePage() {
     // 무엇을 고른 것인지가 붙는다.
     applyTextSize(size);
     setSizePicked(true);
-    router.replace('/onboarding');
+    router.replace('/');
   }
 
   return (

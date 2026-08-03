@@ -8,6 +8,7 @@ import { PictogramStrip, OneGlyph } from '@/components/sc/PictogramStrip';
 import { TeachBack } from '@/components/sc/TeachBack';
 import { NutrientBars } from '@/components/sc/NutrientBars';
 import { Hear, Say, Speakable, sayable } from '@/components/sc/Say';
+import { HoldToHear } from '@/components/sc/HoldToHear';
 import { doseSentence, storageSentence } from '@/lib/snapcare/say';
 import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
@@ -182,6 +183,13 @@ export default function ScanResultPage() {
             작았다. 다른 화면과 같은 44 짜리로 맞춘다. */}
         <Hear text={itemVoiceScript(scanned, verdict, member)} />
       </div>
+
+      {/*
+        첫 실행 안내를 없애면서 거기 있던 한 가지 — 꾹 눌러 듣는 손짓 — 를 여기로
+        옮겼다. 이 화면이 그 손짓이 실제로 쓸모 있는 첫 자리다: 약 이름 하나,
+        복용 시각 하나를 다시 듣고 싶은 곳이 여기다. 딱 한 번만 뜬다.
+      */}
+      <HoldToHear />
 
       {isRx ? (
         <RxResult item={scanned} verdict={verdict} onDone={createReminders} />
