@@ -26,6 +26,7 @@
   · 캡처 캡션의 "스크롤 없이" 주장이 파일 높이와 맞는가
   · 같은 번호의 표가 두 판에서 행 수가 같은가
   · 절마다 문단 수가 두 판에서 같은가
+  · 그림 설명이 그림 바로 아래에 있는가
 """
 import re
 import sys
@@ -491,6 +492,37 @@ def para_parity() -> list:
             if len(a[k]) != len(b[k])]
 
 
+def caption_place() -> list:
+    """그림 캡션이 그림 아래에 있는가, 그리고 바로 붙어 있는가.
+
+    학술 관례는 표 설명이 표 위, 그림 설명이 그림 아래다. 두 판 모두
+    섞여 있었다. 한글판은 46개 중 8개, 영어판은 21개가 그림 위에
+    있었고, 그림 45 는 캡션과 그림 사이에 문단이 셋 끼어 있었다.
+    빌드가 원고 순서를 그대로 옮기므로 독자는 그림보다 설명을 먼저
+    읽게 된다."""
+    out = []
+    for f, cre, ire in (('proposal_ko.md', r'^\*\*\[그림 (\d+)\]', r'^!\[그림 (\d+)\]'),
+                        ('proposal_en.md', r'^\*\*\[Figure (\d+)\]', r'^!\[Figure (\d+)\]')):
+        lines = (DOC / f).read_text().splitlines()
+        pos = {}
+        for i, ln in enumerate(lines):
+            m = re.match(cre, ln)
+            if m:
+                pos.setdefault(m.group(1), {})['cap'] = i
+            m = re.match(ire, ln)
+            if m:
+                pos.setdefault(m.group(1), {})['img'] = i
+        for n, v in sorted(pos.items(), key=lambda kv: int(kv[0])):
+            if 'cap' not in v or 'img' not in v:
+                continue
+            if v['cap'] < v['img']:
+                out.append(f'{f}: 그림 {n} 의 설명이 그림 위에 있다')
+            elif v['cap'] - v['img'] > 2:
+                out.append(f'{f}: 그림 {n} 과 그 설명 사이에 '
+                           f'{v["cap"] - v["img"] - 1}줄이 끼어 있다')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -580,6 +612,9 @@ def main() -> int:
         note(t)
 
     for t in para_parity():
+        note(t)
+
+    for t in caption_place():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):
