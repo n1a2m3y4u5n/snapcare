@@ -93,19 +93,21 @@ export default function HomePage() {
   /*
     둘레에 놓을 것들.
 
-    고른 기준: **여기 아니면 갈 길이 없는 곳**과 **지금 볼 것이 있을 수 있는 곳**.
-    설정과 영양은 아래 탭에도 있지만 그것은 어느 화면에서나 같은 자리에 있는 통로이고,
-    이쪽은 홈에서 한 번에 닿는 통로다. 둘이 겹쳐도 잘못될 것이 없다 — 못 읽는
-    사람에게 길이 하나뿐인 것보다 둘인 편이 낫다.
+    기준 하나: **아래 탭이 못 닿는 곳만.**
+
+    처음에는 '오늘(/nutrition)' 도 위성으로 뒀다. 홈에서 한 번에 닿는 편이 낫다고
+    봤는데, 아래 탭에 같은 곳이 이미 있어서 한 화면에 같은 곳으로 가는 길이 둘이
+    됐다. 못 읽는 사람에게 길이 둘인 것이 늘 나은 것은 아니다 — 두 그림이 같은
+    데로 간다는 것을 알아내려면 **둘 다 눌러 봐야** 하고, 그 사이에 "이 둘은 뭐가
+    다르지" 라는 물음이 생긴다. 이 앱은 그 물음을 안 만드는 것이 일이다.
+
+    남은 셋은 아래 탭 어디에도 없다. 지난 날들과 약통과 프로필은 지금까지 설정
+    안쪽에 묻혀 있었고, 그래서 궤도가 실제로 길을 **새로 내는** 자리가 된다.
 
     배지는 답을 기다리는 것에만 붙인다. 숫자를 못 읽어도 **점이 붙었다**는 것은
     보이고, 그것만으로 "여기 뭔가 있다" 는 뜻이 선다.
   */
   const satellites: Satellite[] = [
-    {
-      emoji: '🥗', label: 'Today', href: '/nutrition',
-      say: 'Today. Everything you have eaten so far, added up against your daily amount.',
-    },
     {
       emoji: '📅', label: 'Past days', href: '/history',
       say: 'Past days. Everything you have checked, day by day, and how your medicine went.',

@@ -3,8 +3,13 @@ import assert from 'node:assert/strict';
 
 import { orbitSpots, overlaps } from './orbit.ts';
 
-/** 위성 지름을 컨테이너 폭의 몇 %로 그리는가 (Orbit.tsx 와 같은 값) */
-const SATELLITE_PCT = 20;
+/*
+  Orbit.tsx 가 쓰는 실제 크기. 여기 값이 저쪽과 어긋나면 이 시험은 **실물이 아닌
+  것을 재게 된다** — 가운데 버튼을 40%에서 46%로 키웠을 때 이 상수가 40 으로
+  남아 있어서, 위성이 버튼에 파고들어도 통과할 수 있는 상태였다.
+*/
+const SATELLITE_PCT = 20;   // w-[20%]
+const CENTER_PCT = 46;      // w-[46%]
 
 test('12시에서 시작해 고르게 나눈다', () => {
   // 처음에는 6시를 비우려고 각도를 좁혔다. "Scan something" 이라는 이름을 원 안에
@@ -44,8 +49,9 @@ test('상자 밖으로 나가지 않는다', () => {
 });
 
 test('가운데 버튼과 겹치지 않는다', () => {
-  // 가운데는 컨테이너 폭의 40% 짜리 원이다. 위성이 그 위에 앉으면 누를 곳이 겹친다.
-  const centerRadius = 20;
+  // 위성이 버튼 위에 앉으면 누를 곳이 겹치고, 겹친 자리를 누르면 어느 쪽이
+  // 잡히는지가 브라우저마다 다르다 — 카메라를 누르려다 설정으로 가는 일이 생긴다.
+  const centerRadius = CENTER_PCT / 2;
   const satRadius = SATELLITE_PCT / 2;
   for (const s of orbitSpots(4)) {
     const d = Math.hypot(s.left - 50, s.top - 50);
