@@ -121,6 +121,14 @@ WAITING = dataclasses.replace(WELL, waiting=1, waiting_tray=3,
 #: handed and its length is what the wrapping has to survive.
 SETUP = dataclasses.replace(WELL, wifi="hotspot", address="",
                             passphrase="k7mfq3ptx9wd")
+#: On a network, and nobody has sent it a prescription yet. The payload is the
+#: **long** form on purpose — a relay URL is what a configured device prints and
+#: it is 46 characters, which is what decides the module count and therefore
+#: whether the code is scannable at all. A fixture carrying the short
+#: `SNAPCARE-PAIR:` form would pass a sizing this one catches.
+PAIRING = dataclasses.replace(
+    WELL, prescribed=False, claim="DDBQE-KEJ78",
+    pair_payload="https://snapcare-relay.fly.dev/pair#DDBQEKEJ78")
 
 
 def render_all(canvas):
@@ -132,6 +140,7 @@ def render_all(canvas):
         "missed": _frame(canvas, screens.missed, WELL, 3, when),
         "schedule": _frame(canvas, screens.schedule, WELL, 2),
         "network": _frame(canvas, screens.network, SETUP),
+        "pair": _frame(canvas, screens.pair, PAIRING),
         "idle": _frame(canvas, screens.idle, WELL),
         "blocked": _frame(canvas, screens.blocked, UNWELL),
         "boot": _frame(canvas, screens.boot, Health()),
@@ -146,7 +155,7 @@ def _frame(canvas, fn, *args):
 @pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
 def test_every_state_renders_on_every_panel(canvas):
     frames = render_all(canvas)
-    assert len(frames) == 8
+    assert len(frames) == 9
 
 
 def test_no_screen_renders_a_sentence():
@@ -176,6 +185,46 @@ def test_no_screen_renders_a_sentence():
         assert len(text) <= 16, f"too long to be anything but a sentence: {text!r}"
         assert not (stripped.isalpha() and len(stripped) > 9 and "SNAPCARE" not in text), \
             f"that is a word, not a number or an SSID: {text!r}"
+
+
+def test_the_pairing_code_is_drawn_large_enough_to_scan():
+    """The one number on this frame that decides whether it works at all.
+
+    `MIN_MODULE` is 3 px and its docstring says it exists to be tripped over: a
+    code at exactly the floor reads on a bench under a lamp and not in a dim
+    hallway at arm's length. The pairing frame **was** at the floor — it started
+    out splitting the panel evenly like `network` does, and a relay URL is a
+    41-module code, so half of 320 gave 3 px a module exactly.
+
+    Asserted as a strict inequality rather than `>= MIN_MODULE`, because
+    `qr_art` clamps to the floor and would therefore satisfy any test written
+    against it. What is being asserted is that the layout **never has to be
+    clamped** — that the frame gives the code more room than the minimum,
+    with the longest payload the device can print.
+    """
+    from snapcare_dispenser.display import qr_art
+
+    matrix = qr_art.matrix_for(PAIRING.pair_payload)
+    assert matrix is not None, "segno is needed for this one"
+    modules = len(matrix)
+    # Reproduces the sizing in `screens.pair`.
+    height_allows = (240 - 2 * screens.PAD) // modules
+    width_allows = (320 * 2 // 3) // modules
+    assert min(height_allows, width_allows) > qr_art.MIN_MODULE, (
+        f"a {modules}-module code lands on the unscannable floor: "
+        f"height allows {height_allows}, width allows {width_allows}")
+
+
+def test_the_pairing_frame_survives_a_card_with_no_qr_encoder(monkeypatch):
+    """`segno` is an optional apt package, and the frame that needs it is the one
+    somebody is standing in front of with a phone. No encoder must degrade to
+    the characters, not to a traceback on the scheduler's thread."""
+    from snapcare_dispenser.display import qr_art
+
+    monkeypatch.setattr(qr_art, "matrix_for", lambda _payload: None)
+    canvas = Rgb565(320, 240)
+    screens.pair(canvas, PAIRING)          # must not raise
+    assert len(canvas.buffer()) == 320 * 240 * 2
 
 
 def test_a_nonsense_tray_number_is_a_question_mark_not_a_wrong_number():

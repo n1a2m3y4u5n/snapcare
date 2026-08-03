@@ -9,6 +9,12 @@ import { ocrToScanItem } from '@/lib/snapcare/fromOcr';
 import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } from '@/lib/nutrition/labelOcr';
 import { recognizeText } from '@/lib/ocr';
 import { estimateOnDevice, warmUp } from '@/lib/nutrition/estimateOnDevice';
+import { decodeQrFromImage } from '@/lib/hardware/qr';
+import { readQr } from '@/lib/dispenser/qrIntent';
+import { pairWith } from '@/lib/dispenser/paired';
+import { DEFAULT_RELAY } from '@/lib/dispenser/relayUrl';
+import { requestPermission } from '@/lib/notifications';
+import { speak } from '@/lib/voice';
 import { Hint } from '@/components/sc/Hint';
 import { sayable, ask, Speakable } from '@/components/sc/Say';
 import { SAMPLE_LABELS, SAMPLE_RX, sampleBySlug } from '@/lib/snapcare/samples';
@@ -79,14 +85,86 @@ export default function CameraPage() {
     if (item) goWith(item);
   }
 
+  /**
+   * 사진에 QR 이 있으면 그것부터 답한다.
+   *
+   * 왜 OCR 보다 먼저인가
+   * --------------------
+   * 이 앱의 약속은 "찍으면 알아서 판단한다" 하나다. 그런데 기기와 짝을 맺는 일만은
+   * 그 약속 밖에 있었다 — 설정으로 들어가서, 짝짓기 칸을 찾아서, 라벨의 열 글자를
+   * **타이핑**해야 했다. 글을 못 읽는 사람을 전제한 앱에서 그건 사실상 못 하는 일이다.
+   *
+   * 그래서 상자를 그냥 찍으면 된다. 카메라가 이미 "지금 보이는 게 뭔지" 를 판단하고
+   * 있으므로, 기기가 판단 대상 하나로 늘어날 뿐 새로운 동작이 아니다.
+   *
+   * QR 판독을 먼저 두는 이유는 두 가지다. **싸다** — 축소한 캔버스에서 jsQR 한 번이라
+   * Tesseract 를 태우는 것보다 훨씬 빠르다. 그리고 **결정적이다** — QR 은 읽히거나
+   * 안 읽히거나이고, 읽혔다면 그것이 무엇인지에 대한 추측이 필요 없다.
+   *
+   * 라벨에는 QR 이 넷 있고(`lib/dispenser/qrIntent`) 어느 것이 잡힐지는 정해져 있지
+   * 않다. 넷을 다 알아보고 각각 답한다 — 우리가 할 수 있는 일이 없는 것까지 포함해서.
+   * "찍었는데 아무 일도 안 났다" 는 이 앱의 사용자가 스스로 빠져나올 수 없는 상태다.
+   *
+   * @returns 처리했으면 true. 그러면 호출한 쪽은 OCR 로 넘어가지 않는다.
+   */
+  async function handledAsQr(image: string | File | Blob): Promise<boolean> {
+    const found = readQr(await decodeQrFromImage(image));
+
+    if (found.kind === 'pair') {
+      setStatus('Connecting to the box…');
+      try {
+        await pairWith(found.claim, DEFAULT_RELAY);
+      } catch (err) {
+        console.error('[camera] 짝짓기 실패:', err);
+        fail('That code did not work. Photograph the label again.');
+        return true;
+      }
+      /*
+        알림 권한은 여기서 묻는다 — 상자를 방금 자기 것이라고 말한 사람에게
+        "약이 나오면 알려 드릴까요" 는 이어지는 말이다. DispenserPanel 이 같은
+        자리에서 같은 이유로 묻는다.
+      */
+      void requestPermission();
+      void speak('This box is now yours. It will tell you when your medicine is ready.');
+      router.push('/device');
+      return true;
+    }
+
+    if (found.kind === 'device' || found.kind === 'setup') {
+      // 기기 자신의 페이지. 우리가 대신 열어 주는 편이 "아무 일도 안 남" 보다 낫다.
+      window.location.href = found.url;
+      return true;
+    }
+
+    if (found.kind === 'wifi') {
+      /*
+        앱은 폰을 다른 망에 붙일 수 없다 — 브라우저에 그런 권한이 없다. 하지만 무엇을
+        찍었는지는 알므로, **다음에 무엇을 찍어야 하는지**를 말해 줄 수 있다. 그것이
+        아무 반응이 없는 것과의 차이다.
+      */
+      fail(found.ssid
+        ? `That code joins the box's own WiFi (${found.ssid}). For the app, photograph the code next to it.`
+        : "That is the box's WiFi code. For the app, photograph the code next to it.");
+      return true;
+    }
+
+    return false;
+  }
+
   /** 실제 OCR (Tesseract, 오프라인) → 구조화 처방 */
   async function runOcr(image: string | File | Blob) {
     setBusy(true);
     setHint(null);
-    setStatus('Reading text… 0%');
+    // "글자를 읽는 중" 이라고 먼저 말하지 않는다. 상자를 찍은 사람에게 그것은 틀린
+    // 말이고, QR 판독은 그 문구가 한 번 깜빡일 시간보다 빨리 끝난다.
+    setStatus('Looking…');
     // 어느 갈래로 가든 사진은 같다. 여기서 한 번만 만들어 둔다.
     const shot = typeof image === 'string' ? image : await toDataUrl(image);
     try {
+      // 상자를 찍었는가. 맞으면 여기서 끝난다 — 아래의 어떤 갈래도 QR 을 읽지 못한다.
+      if (await handledAsQr(image)) return;
+
+      setStatus('Reading text… 0%');
       const text = await recognizeText(image, (p) => setStatus(`Reading text… ${Math.round(p * 100)}%`));
       if (!text || text.trim().length < 4) {
         // 글자가 없는 사진(음식 그 자체) → 사진 판별

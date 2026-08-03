@@ -673,6 +673,89 @@ def network(canvas: Canvas, health: Health, *, theme: dict | None = None) -> Non
                        "PASSWORD", ink, word_scale)
 
 
+def pair(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
+    """Photograph me with the app. The second frame that takes the whole panel.
+
+    Why this frame exists
+    ---------------------
+    Pairing used to mean reading ten characters off a sticker and **typing**
+    them into a settings screen. This firmware is attached to an app whose whole
+    premise is that its user cannot read, and that flow asked them to transcribe
+    a string with no meaning, from a label, into a field they had to find first.
+
+    So the device offers the code the way the app already takes everything else:
+    as something to photograph. The app's main camera decodes it and pairs
+    itself (`lib/dispenser/qrIntent.ts`), which turns the hardest step of setup
+    into the same gesture as every other step.
+
+    Cyan, like `network`
+    --------------------
+    The same colour on purpose. Both frames mean *setup is not finished and
+    somebody in the room has to do something*, and they are consecutive stages
+    of one job — the network first, then the phone. A separate colour would
+    teach a second vocabulary for the same request.
+
+    Why the QR gets two thirds and not half
+    ---------------------------------------
+    `network` splits the panel evenly, because there the code and the words
+    beside it are alternatives of equal standing — somebody who cannot scan can
+    type the SSID and passphrase and get exactly as far.
+
+    Here they are not equal. With a relay configured the payload is a URL, and
+    measured on this panel that is a **41-module** code: at half the width it
+    lands on `MIN_MODULE` exactly — the floor that module docstring says exists
+    to be tripped over, and the size that reads on a bench under a lamp and not
+    in a dim hallway at arm's length. At two thirds it is 5 px a module.
+
+    The words are what pays for it. `SCAN WITH THE APP` is a sentence this
+    device's user cannot read, and anybody who *can* read it can also recognise
+    a QR code on a medical device without being told. The characters stay,
+    because those are unguessable and are the whole fallback path: somebody can
+    read them to a person on the phone, and a helper with a keyboard can type
+    them. So the code text keeps its column and the instruction goes.
+
+    With no encoder on the card (`segno` is optional) the characters are all
+    there is, and they get the whole panel rather than a third of it.
+    """
+    theme = _palette(canvas, theme)
+    canvas.rect(0, 0, W, H, theme["NETWORK"])
+    ink = theme["BLACK"]
+
+    code = str(_field(health, "claim", "")).strip().upper()
+    matrix = qr_art.matrix_for(_field(health, "pair_payload", ""))
+
+    if matrix is None:
+        # No encoder, or no code to draw. The characters are the whole frame —
+        # they are what somebody types, and they have the width to be legible.
+        _small_centred(canvas, 0, H // 2 - 40, W, "SCAN ME WITH THE APP", ink, 2)
+        if code:
+            scale = _fit_scale(code, W - 2 * PAD, 4)
+            _small_centred(canvas, 0, H // 2, W, code, ink, scale)
+        return
+
+    modules = len(matrix)
+    scale = max(qr_art.MIN_MODULE,
+                min((H - 2 * PAD) // modules, (W * 2 // 3) // modules))
+    size = modules * scale
+    qr_art.paint(canvas, PAD, (H - size) // 2, matrix, scale,
+                 theme["BLACK"], theme["WHITE"])
+
+    left = PAD + size + PAD
+    width = W - left - PAD
+    if not code or width < font.ADVANCE * 4:
+        # The QR grew into the column. That is the right trade — a code that
+        # scans is the point of the frame — and the characters are still on the
+        # printed label, which is where somebody reading them aloud will look.
+        return
+
+    # Broken at the hyphen by `_wrapped`, so `DDBQE-` / `KEJ78` rather than a
+    # cut in the middle of a group. Vertically centred against the QR, because
+    # a short column pinned to the top reads as something that failed to draw.
+    code_scale = _fit_scale(code, width, 3, lines=2)
+    block = 2 * (font.HEIGHT * code_scale + code_scale)
+    _wrapped(canvas, left, (H - block) // 2, width, code, ink, code_scale)
+
+
 #: `Tone` is re-exported because `indicators.py` still speaks in tones when it
 #: decides who owns the screen, and importing it from here keeps that module
 #: from reaching into `canvas` for one enum.

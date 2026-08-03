@@ -60,15 +60,38 @@ export function formatClaim(code: string): string {
 }
 
 /**
- * Pull the code out of a pairing URL — `https://relay.example/pair#6V9F59QK67`.
+ * `SNAPCARE-PAIR:6V9F5-9QK67` — the form the label carries when the device has
+ * no relay configured yet.
  *
- * The code is in the **fragment**, which browsers never send to the server. So
- * it reaches this function and reaches neither the relay, its access log, nor
- * any proxy in between. Keep that property if you build your own pairing page:
- * moving the code to a query parameter would put a medical device's write key
- * into somebody's HTTP logs.
+ * Matches `pair_qr_payload` in `provisioning.py`, which falls back to this
+ * whenever `relay_url` is empty. **That is the state every device leaves the
+ * bench in**, so this is not an edge case: it was the only form a factory-fresh
+ * dispenser could print, and the app could not read it. Scanning a brand new
+ * device said "That is not a SnapCare pairing code" — about a code the device
+ * had just drawn on its own screen.
+ */
+const BARE_PREFIX = 'SNAPCARE-PAIR:';
+
+/**
+ * Pull the code out of whatever the pairing QR carried.
+ *
+ * Two forms, because the label prints two. With a relay configured it is
+ * `https://relay.example/pair#6V9F59QK67` — an ordinary URL, because that is
+ * the only kind of code a phone's own camera will offer to open. Without one it
+ * is `SNAPCARE-PAIR:6V9F5-9QK67`, which a plain camera cannot act on but this
+ * app can.
+ *
+ * In the URL form the code is in the **fragment**, which browsers never send to
+ * the server. So it reaches this function and reaches neither the relay, its
+ * access log, nor any proxy in between. Keep that property if you build your
+ * own pairing page: moving the code to a query parameter would put a medical
+ * device's write key into somebody's HTTP logs.
  */
 export function claimFromPairUrl(url: string): string {
-  const hash = url.indexOf('#');
-  return hash === -1 ? '' : normaliseClaim(url.slice(hash + 1));
+  const text = url.trim();
+  if (text.toUpperCase().startsWith(BARE_PREFIX)) {
+    return normaliseClaim(text.slice(BARE_PREFIX.length));
+  }
+  const hash = text.indexOf('#');
+  return hash === -1 ? '' : normaliseClaim(text.slice(hash + 1));
 }

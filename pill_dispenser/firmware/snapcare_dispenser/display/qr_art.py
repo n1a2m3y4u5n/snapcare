@@ -35,45 +35,64 @@ import logging
 
 log = logging.getLogger(__name__)
 
-__all__ = ["wifi_matrix", "blit", "MIN_MODULE"]
+__all__ = ["matrix_for", "wifi_matrix", "blit", "paint", "MIN_MODULE"]
 
 #: Below three pixels a module is smaller than the blur of a phone camera
 #: hand-held at 25 cm, and the code stops being reliably scannable.
 MIN_MODULE = 3
 
-#: `(ssid, passphrase) -> matrix or None`. Tiny and permanently valid — the
-#: identity is a constant of the board — so it is never evicted.
-_CACHE: dict[tuple[str, str], list[list[bool]] | None] = {}
+#: `payload -> matrix or None`. Tiny and permanently valid — every payload this
+#: is asked for is derived from the board's serial — so it is never evicted.
+_CACHE: dict[str, list[list[bool]] | None] = {}
 
 
-def wifi_matrix(ssid: object, passphrase: object) -> list[list[bool]] | None:
-    """The join code as a matrix of booleans, or None if it cannot be built.
+def matrix_for(payload: object) -> list[list[bool]] | None:
+    """Any payload as a matrix of booleans, or None if it cannot be built.
 
-    None is a real answer and the caller has a real frame for it. It means this
-    card has no QR encoder installed, which is a supported build.
+    None is a real answer and every caller has a real frame for it. It means
+    this card has no QR encoder installed, which is a supported build.
+
+    Payload rather than "the setup network" because there is now a second code
+    on the panel. The pairing code is drawn by the same three lines of geometry
+    and fails the same way, and duplicating them was the shorter road to a
+    pairing frame that scans on the bench and not in a hallway — the sizing
+    rules below are the part that is easy to get subtly wrong.
     """
-    key = (str(ssid or ""), str(passphrase or ""))
+    key = str(payload or "")
+    if not key:
+        return None
     if key in _CACHE:
         return _CACHE[key]
 
     matrix: list[list[bool]] | None = None
     try:
-        from .. import provisioning, qr  # noqa: PLC0415 - optional, and slow
+        from .. import qr  # noqa: PLC0415 - optional, and slow
 
-        payload = provisioning.wifi_qr_payload(key[0], key[1])
-        matrix = qr.qr_matrix(payload, quiet=4)
+        matrix = qr.qr_matrix(key, quiet=4)
         if not matrix or not matrix[0]:
             matrix = None
     except Exception as exc:  # noqa: BLE001 - never onto the scheduler thread
         # At INFO rather than WARNING: a build without `segno` is a decision
-        # somebody made with apt, not a fault, and the setup frame says so by
-        # printing the names instead.
-        log.info("no setup QR on the panel (%s) — the frame will show the "
-                 "network name and passphrase to be typed instead", exc)
+        # somebody made with apt, not a fault, and the frames that need a code
+        # say so by printing the characters to be typed instead.
+        log.info("no QR on the panel (%s) — the frame will show the "
+                 "characters to be typed instead", exc)
         matrix = None
 
     _CACHE[key] = matrix
     return matrix
+
+
+def wifi_matrix(ssid: object, passphrase: object) -> list[list[bool]] | None:
+    """The setup network's join code. See `matrix_for`."""
+    try:
+        from .. import provisioning  # noqa: PLC0415 - optional, and slow
+
+        return matrix_for(provisioning.wifi_qr_payload(str(ssid or ""),
+                                                       str(passphrase or "")))
+    except Exception as exc:  # noqa: BLE001 - never onto the scheduler thread
+        log.info("no setup QR on the panel (%s)", exc)
+        return None
 
 
 def blit(canvas, x: int, y: int, matrix: list[list[bool]], scale: int,

@@ -5,6 +5,7 @@ import { Speakable, sayable } from '@/components/sc/Say';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
 import { claimFromPairUrl, formatClaim, isValidClaim } from '@/lib/dispenser/claim';
 import { forgetPaired, pairWith, type PairedDevice } from '@/lib/dispenser/paired';
+import { DEFAULT_RELAY, RELAY_MISSING } from '@/lib/dispenser/relayUrl';
 import { requestPermission } from '@/lib/notifications';
 import type { DeviceReport } from '@/lib/dispenser/types';
 
@@ -18,19 +19,6 @@ import type { DeviceReport } from '@/lib/dispenser/types';
  * 중요하다 — 시계가 서 있지 않으면 기기는 **아무것도 내보내지 않고**, 전원이 뽑힌
  * 기기는 여기서 보면 건강한 것과 구별되지 않는다.
  */
-
-/** 릴레이 주소. 배포에서는 빌드 때 박고(Dockerfile), 개발에서는 화면에서 바꾼다. */
-const CONFIGURED_RELAY = process.env.NEXT_PUBLIC_SNAPCARE_RELAY || '';
-const DEFAULT_RELAY = CONFIGURED_RELAY || 'http://localhost:8088';
-
-/**
- * 배포본인데 주소가 없다.
- *
- * 이때 기본값 `localhost:8088` 은 **폰 자신**을 가리키므로 짝짓기가 반드시 실패한다.
- * 그런데 실패하는 모습이 "코드가 틀렸습니다" 라서, 라벨을 다시 읽고 다시 찍는 사람이
- * 생긴다. 원인은 코드가 아니라 이 빌드에 사서함 주소가 안 들어간 것이다.
- */
-const RELAY_MISSING = !CONFIGURED_RELAY && process.env.NODE_ENV === 'production';
 
 function hhmm(text: string): string {
   return text.length === 4 ? `${text.slice(0, 2)}:${text.slice(2)}` : text;

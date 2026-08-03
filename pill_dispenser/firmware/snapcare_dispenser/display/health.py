@@ -234,6 +234,26 @@ class Health:
     #: hotspot on purpose — the AP's own 10.42.0.1 is not an address anybody can
     #: reach from the sofa, and a screen showing it sends them to a dead page.
     address: str = ""
+    #: The ten characters printed on the label, for the pairing screen. Derived
+    #: from the board's serial and therefore a constant of this machine.
+    claim: str = ""
+    #: What the pairing QR carries — a URL when a relay is configured, the bare
+    #: `SNAPCARE-PAIR:` form when not. Both are read by the app's main camera.
+    #: Empty means there is no code to draw and the pairing screen must not run.
+    pair_payload: str = ""
+    #: True once a schedule has arrived through the relay.
+    #:
+    #: This is the closest thing the device has to "a phone has claimed me". It
+    #: is not the same question — pairing happens entirely inside the app, which
+    #: derives its keys from the printed code and never announces itself — so
+    #: the device cannot observe pairing at all. What it can observe is a
+    #: schedule, and that is the thing that actually matters: a dispenser with
+    #: no schedule has nothing to do, whoever has paired with it.
+    #:
+    #: So the pairing screen means "nobody has sent me a prescription yet", it
+    #: is true whenever it is shown, and it clears exactly when the machine
+    #: becomes useful.
+    prescribed: bool = False
     #: The next dose still to come *today*, ignoring anything already owed. A
     #: dose waiting right now shows up in `waiting`, not here.
     next_tray: int | None = None
@@ -387,6 +407,26 @@ def _read(dispenser, network, cloud, display=None) -> Health:
     owed = _try("the doses waiting", lambda: list(dispenser.awaiting_release), [])
     soonest = owed[0] if owed else None
 
+    # The pairing code and its QR payload. A pure derivation from the board's
+    # serial behind a file cache — no lock and no call into the device — but it
+    # touches the filesystem on the first call, so it goes through `_try` like
+    # everything else here.
+    claim, pair_payload = _try("the pairing code",
+                               lambda: _pair_fields(relay_status), ("", ""))
+
+    # Has anybody sent this machine a prescription yet.
+    #
+    # `appliedAt` is set the first time a schedule from the relay is put into
+    # effect and is never cleared, so it survives a reboot in a way a bare
+    # `desiredRev` would not — that counter is reset when the relay address
+    # changes, and a device pointed at a new relay has not un-been prescribed.
+    #
+    # A schedule that arrived over the LAN or off a paper sheet counts too. It
+    # never touches the relay, so `appliedAt` stays empty for it, and a machine
+    # that is dispensing correctly must not be showing a setup screen.
+    prescribed = bool(relay_status.get("appliedAt")) or _try(
+        "the loaded trays", lambda: bool(dispenser.scheduler.slots), False)
+
     next_tray, next_at = _next_dose(dispenser, at)
 
     health = Health(
@@ -395,6 +435,9 @@ def _read(dispenser, network, cloud, display=None) -> Health:
         ssid=ssid,
         passphrase=passphrase,
         address=address,
+        claim=claim,
+        pair_payload=pair_payload,
+        prescribed=prescribed,
         next_tray=next_tray,
         next_at=next_at,
         now=f"{at.hour:02d}:{at.minute:02d}" if at is not None else "",
@@ -662,6 +705,26 @@ def _relay_standing(health: Health, last_error: bool) -> bool:
     compared for equality.
     """
     return health.relay in _RELAY_FAULTS or (health.relay == "connecting" and last_error)
+
+
+def _pair_fields(relay_status: dict) -> tuple[str, str]:
+    """`(claim, pair_payload)` — the printed code and what its QR carries.
+
+    The payload depends on the relay, which is why it is derived here from the
+    live status rather than baked into the identity: with a relay configured it
+    is `https://relay/pair#CODE`, which a phone's own camera will open, and
+    without one it is the bare `SNAPCARE-PAIR:CODE`, which only the app can act
+    on. A device that is given a relay later must start drawing the better of
+    the two without anybody reprinting anything.
+    """
+    from .. import provisioning  # noqa: PLC0415 - reads a file on first call
+
+    identity = provisioning.load_identity()
+    claim = provisioning.format_claim(identity.claim)
+    if not claim:
+        return "", ""
+    return claim, provisioning.pair_qr_payload(
+        identity.claim, str(relay_status.get("relayUrl") or ""))
 
 
 def _network_fields(network) -> tuple[str, str, str, str, bool]:

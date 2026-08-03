@@ -663,6 +663,30 @@ class Presence:
         if not _field(health, "known", False):
             return plan("boot", (health,), (boot_stage(health),), Level.REST)
 
+        # 4b. On a network, and nobody has sent it a prescription yet.
+        #
+        #     This is the second half of setup and it used to have no screen at
+        #     all. The machine sat on the resting frame saying "no doses today",
+        #     which is true and useless: it is also what a fully configured
+        #     dispenser says on a Sunday, so the one state where somebody has to
+        #     go and *do* something looked exactly like the state where nobody
+        #     does. The step that was missing is the phone, and the phone is
+        #     reached by photographing the code — so the code goes on the panel.
+        #
+        #     Below the network frame because the order is forced: a phone
+        #     cannot reach a dispenser that is not on a network yet. Below
+        #     `known` because a frame drawn before the first reading would print
+        #     an empty code, and a QR of nothing is a code that scans as garbage.
+        #
+        #     Above the resting frame and nowhere near the dose frames — every
+        #     rung above this one is the machine doing its job, and a setup card
+        #     must never cover a dose that is waiting to be pressed.
+        if not _field(health, "prescribed", False) and _field(health, "pair_payload", ""):
+            return plan("pair", (health,),
+                        (_field(health, "claim", ""),
+                         _field(health, "pair_payload", "")),
+                        Level.STANDING)
+
         # 5. Nothing is happening, which is still worth a screen: the next dose,
         #    the day so far, and where to find this machine on the network.
         next_at = _field(health, "next_at", "")

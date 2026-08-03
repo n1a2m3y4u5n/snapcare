@@ -30,7 +30,18 @@ from snapcare_dispenser.display.presence import Presence
 WELL = Health(dispensing=True, problem="", wifi="online", ssid="SNAPCARE-V5XH",
               address="192.168.1.42", next_tray=3, next_at="20:00",
               now="12:34", waiting=0, known=True, clock_source="ntp",
-              trays_loaded=2)
+              trays_loaded=2,
+              #: A machine with two trays loaded has been prescribed, by
+              #: definition — `snapshot` computes both from the same
+              #: `scheduler.slots`. Stated here so the fixture cannot describe a
+              #: device that is dispensing *and* still asking to be set up.
+              prescribed=True)
+
+#: On a network, dispensing nothing, because nobody has sent it a prescription.
+#: The second half of setup, and the state the pairing frame exists for.
+UNCLAIMED = replace(WELL, prescribed=False, trays_loaded=0,
+                    next_tray=None, next_at="", claim="DDBQE-KEJ78",
+                    pair_payload="https://relay.example/pair#DDBQEKEJ78")
 
 
 @pytest.fixture
@@ -174,6 +185,63 @@ def test_the_setup_card_appears_on_the_event_not_a_tick_later(policy, clock):
     # What matters here is that the *event's* SSID is the one carried, not the
     # stale snapshot's.
     assert plan.args[0].ssid == "SNAPCARE-V5XH"
+
+
+# ── the second half of setup: a network, and no prescription ────────────────
+
+def test_a_machine_nobody_has_prescribed_for_shows_its_pairing_code(policy, clock):
+    """The state that used to have no screen.
+
+    A dispenser on WiFi with nothing loaded sat on the resting frame saying "no
+    doses today" — which is true, and is also exactly what a fully configured
+    machine says on a quiet Sunday. So the one state where somebody has to go
+    and *do* something looked identical to the state where nobody does.
+    """
+    assert screen_at(policy, clock, 1000, UNCLAIMED) == "pair"
+
+
+def test_a_prescribed_machine_never_asks_to_be_paired(policy, clock):
+    """The frame has to clear on its own. A setup card that outlives setup is a
+    machine that looks broken to the person who just finished setting it up."""
+    assert screen_at(policy, clock, 1000, replace(UNCLAIMED, prescribed=True)) == "idle"
+
+
+def test_a_schedule_off_a_paper_sheet_counts_as_prescribed(policy, clock):
+    """It never touches the relay, so `appliedAt` stays empty for it — and a
+    machine dispensing from a photographed form sheet must not be showing a
+    setup screen. `snapshot` reads `scheduler.slots` for exactly this."""
+    from_paper = replace(UNCLAIMED, prescribed=True, trays_loaded=2)
+    assert screen_at(policy, clock, 1000, from_paper) == "idle"
+
+
+def test_a_waiting_dose_outranks_the_pairing_code(policy, clock):
+    """Every rung above this one is the machine doing its job. A dose waiting on
+    a press must never be covered by a setup card — that is the screen the whole
+    device exists to show."""
+    owed = replace(UNCLAIMED, waiting=1, waiting_tray=3, waiting_at="08:00")
+    assert screen_at(policy, clock, 1000, owed) == "due"
+
+
+def test_a_machine_that_cannot_dispense_says_so_instead(policy, clock):
+    """Same rule, one rung higher: never invite somebody to set up a machine
+    whose trays will not open. They would finish and it still would not work."""
+    broken = replace(UNCLAIMED, dispensing=False, problem="gpio")
+    assert screen_at(policy, clock, 1000, broken) == "blocked"
+
+
+def test_the_network_comes_before_the_phone(policy, clock):
+    """Forced by the order of the job: a phone cannot reach a dispenser that is
+    not on a network yet, so the pairing code would be an instruction nobody
+    could carry out."""
+    on_hotspot = replace(UNCLAIMED, wifi="hotspot", address="",
+                         passphrase="k7mfq3ptx9wd")
+    assert screen_at(policy, clock, 1000, on_hotspot) == "network"
+
+
+def test_no_code_means_no_pairing_frame(policy, clock):
+    """A QR of nothing scans as garbage, and a frame drawn before the first
+    reading would have exactly that. Falls through to the resting frame."""
+    assert screen_at(policy, clock, 1000, replace(UNCLAIMED, pair_payload="")) == "idle"
 
 
 # ── the cheap part, which is what keeps it off the tick's budget ────────────
