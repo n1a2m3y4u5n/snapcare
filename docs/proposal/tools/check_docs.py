@@ -24,6 +24,8 @@
   · 본문 인용이 부록 원문과 글자까지 같은가
   · 응답자 명단의 수가 실제 응답 수와 같은가
   · 캡처 캡션의 "스크롤 없이" 주장이 파일 높이와 맞는가
+  · 같은 번호의 표가 두 판에서 행 수가 같은가
+  · 절마다 문단 수가 두 판에서 같은가
 """
 import re
 import sys
@@ -148,7 +150,11 @@ def short_cites(f: str) -> list:
         t = m.group(1)
         if not re.search(r'(19|20)\d\d', t):
             continue
-        if '*' in t or '"' in t:
+        # *p* *r* *n* 같은 통계 기호는 이탤릭이지만 제목이 아니다.
+        # 이것을 제목으로 세다가 (Dowse et al., 2023: *p* = 0.002) 를
+        # 놓쳤다. 영어판에서 표본 수·평균·상관계수가 함께 빠져 있었다.
+        bare = re.sub(r'\*[A-Za-z]{1,3}\*', '', t)
+        if '*' in bare or '"' in bare:
             continue
         # 연도만 있는 괄호와 조사 시점 표기는 인용이 아니다
         if re.fullmatch(r'[\d\-~. ]+(기준|census round)?', t.strip()):
@@ -419,6 +425,72 @@ def fold_claims() -> list:
     return out
 
 
+def table_parity() -> list:
+    """같은 번호의 표가 두 판에서 행 수가 같은가.
+
+    영어판 표 22 에 "종이 서식 판독" 행이 없었다. 한글판에는 있고
+    §4.4 가 그것만 다루는 절인데도 그랬다. 표를 한쪽에만 더하면
+    이렇게 조용히 갈린다.
+
+    행 수만 견준다. 셀 안의 말은 언어가 다르므로 견줄 수 없다."""
+    def rows(f: str) -> dict:
+        out, cur = {}, None
+        for ln in (DOC / f).read_text().splitlines():
+            m = re.match(r'^\[(?:표|Table) (\d+)\]', ln)
+            if m:
+                cur = m.group(1)
+                out[cur] = 0
+                continue
+            if cur is None:
+                continue
+            t = ln.strip()
+            if t.startswith('|'):
+                if not set(t) <= set('|- :'):      # 구분선은 세지 않는다
+                    out[cur] += 1
+            elif t:
+                cur = None
+        return out
+    a, b = rows('proposal_ko.md'), rows('proposal_en.md')
+    out = [f'표 {k}: 한글에만 있다' for k in sorted(set(a) - set(b), key=int)]
+    out += [f'표 {k}: 영어에만 있다' for k in sorted(set(b) - set(a), key=int)]
+    out += [f'표 {k} 의 행 수가 다르다 (한글 {a[k]} · 영어 {b[k]})'
+            for k in sorted(set(a) & set(b), key=int) if a[k] != b[k]]
+    return out
+
+
+def para_parity() -> list:
+    """절마다 문단 수가 두 판에서 같은가.
+
+    번역하며 문단이 통째로 빠지는 것을 잡는다. 실제로 §3.5.1 에서
+    영어판이 훑어 듣기가 들어오기 전의 설계를 그대로 서술하고 있었고
+    (표 17 의 한 행과 두 문단), §4.1 의 표 22 에서 행 하나가 없었다.
+
+    코드 블록은 뺀다. 영어 주석이 길어 두 줄로 접히므로 언제나 어긋난다.
+    말의 길이는 견주지 않는다. 언어가 다르면 길이도 다르다."""
+    def secs(f: str) -> dict:
+        out, cur, buf, fence = {}, None, [], False
+        for ln in (DOC / f).read_text().splitlines():
+            if ln.strip().startswith('```'):
+                fence = not fence
+                continue
+            if fence:
+                continue
+            m = re.match(r'^#{2,4}\s*(\d+\.\d+(?:\.\d+)?)', ln)
+            if m:
+                if cur:
+                    out[cur] = buf
+                cur, buf = m.group(1), []
+            elif cur is not None and ln.strip():
+                buf.append(ln.strip())
+        if cur:
+            out[cur] = buf
+        return out
+    a, b = secs('proposal_ko.md'), secs('proposal_en.md')
+    return [f'§{k} 의 문단 수가 다르다 (한글 {len(a[k])} · 영어 {len(b[k])})'
+            for k in sorted(set(a) & set(b), key=lambda x: [int(i) for i in x.split('.')])
+            if len(a[k]) != len(b[k])]
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -502,6 +574,12 @@ def main() -> int:
         note(t)
 
     for t in fold_claims():
+        note(t)
+
+    for t in table_parity():
+        note(t)
+
+    for t in para_parity():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):

@@ -361,7 +361,7 @@ How far the pharmaceutical pictograms actually produced pass these criteria is t
 | Study | Subjects | Criterion | Result |
 |---|---|---|---|
 | Gutierrez et al. (2022) | Filipino adults · 82 USP + 26 FIP symbols | ANSI 85% | Passed **17 of 108 (15.7%)** |
-| Dowse et al. (2023) | Low-literate South African adults · 10 locally made | ISO 66.7% | Passed **8 of 10 (80%)** · mean comprehension 7.9 ± 1.8 / 10 |
+| Dowse, R., Okeyo, S., Sikhondze, S. & Khumalo, N. (2023) | Low-literate South African adults · 10 locally made | ISO 66.7% | Passed **8 of 10 (80%)** · mean comprehension 7.9 ± 1.8 / 10 |
 | Dowse & Ehlers (2001) | 46 South African Xhosa speakers (≤7 years schooling) · 23 symbols each | ANSI 85% | Locally made **20 of 23 (87%)** vs. USP-DI **11 of 23 (48%)** |
 
 What Table 6 shows is that making a pictogram does not mean it will be read. When 108 internationally used USP and FIP pictograms were tested on Filipino adults, 17 passed the ANSI 85% criterion, roughly one in six (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022, doi:10.1186/s40545-022-00426-y).
@@ -378,7 +378,7 @@ One and the same picture becomes 94% in one country and 8% in another. This is t
 
 That taking something built as an international standard directly into another culture lowers the pass rate is what this field has observed repeatedly. This is why field evaluation in Moldova is part of our plan (§5.9), and at the same time why the machine-scored results for our own set must be read as values from before cultural adaptation.
 
-Beyond that, a statistically significant positive correlation between health literacy and pictogram comprehension has been confirmed (Dowse et al., 2023: *p* = 0.002), with more misreading among low-literacy participants. This means pictures work least well for the people who need them most, which leads to the design in §2.1, where delivery is not entrusted to a picture alone but layered with speech and colour. There is one further report in the same direction. In a study testing 10 pictograms on 197 pharmacy visitors in the Netherlands, half exceeded the 67% comprehension criterion (individual range 31.0% to 98.5%), but **in the low-literacy group only 2 of the 10 exceeded it.** In 3 symbols a risk of false confidence, believing one understands while not recognising the symbol, was observed (van Beusekom, M. M. et al., "Pharmaceutical pictograms for low-literate patients: Understanding, risk of false confidence, and evidence-based design strategies," *Patient Education and Counseling*, 100(5):966–973, 2017).
+Beyond that, a statistically significant positive correlation between health literacy and pictogram comprehension has been confirmed. The study tested 10 pictograms on 90 people in South Africa; mean comprehension was 7.9 ± 1.8 out of 10, the correlation *r* = 0.34 (*p* = 0.001), and the association with health literacy *p* = 0.002 (Dowse, R., Okeyo, S., Sikhondze, S. & Khumalo, N., "Pharmaceutical indication pictograms for low literacy viewers: Health literacy and comprehension," *Health SA Gesondheid*, 28:2192, 2023, doi:10.4102/hsag.v28i0.2192). There was more misreading among low-literacy participants. This means pictures work least well for the people who need them most, which leads to the design in §2.1, where delivery is not entrusted to a picture alone but layered with speech and colour. There is one further report in the same direction. In a study testing 10 pictograms on 197 pharmacy visitors in the Netherlands, half exceeded the 67% comprehension criterion (individual range 31.0% to 98.5%), but **in the low-literacy group only 2 of the 10 exceeded it.** In 3 symbols a risk of false confidence, believing one understands while not recognising the symbol, was observed (van Beusekom, M. M. et al., "Pharmaceutical pictograms for low-literate patients: Understanding, risk of false confidence, and evidence-based design strategies," *Patient Education and Counseling*, 100(5):966–973, 2017).
 
 One line from that paper's conclusion matches our own judgement. **For safety-related information, 67% comprehension may not be enough.** Passing a criterion and being safe to rely on are different things, which is why SnapCare keeps speech and colour alongside a picture even when the picture passes.
 
@@ -856,7 +856,7 @@ Whichever path a value arrives by, it has to pass the same physical checks befor
 
 **Function 3. Automatic pill dispenser link (Device Link)**
 
-The dosing schedule produced by the app is sent to the device. The device is based on a Raspberry Pi 3B with three trays, an LED ring, a buzzer, a confirmation button and a real-time clock (DS3231).
+The dosing schedule produced by the app is sent to the device. The device is based on a Raspberry Pi 3B with three trays, an LED ring, a buzzer, a confirmation button and a real-time clock (DS1302).
 
 The design of the transmission path is the result of several constraints applying at once. This is detailed in §4.
 
@@ -1047,12 +1047,16 @@ Drawing the indicator larger is only half of it. Pressing is a tool for someone 
 | Route | What it does | Why it is needed |
 |---|---|---|
 | Speaks on arrival | One line per screen, "what this screen is asking" | There is nothing to look for. Nothing has to be pressed |
-| Listen marker on each line | The pressable target is the whole line, the marker only signals that audio exists there | It does not ask a trembling hand to aim at a small circle |
+| Sweep the screen to hear it | Press and hold, then slide, and whatever passes under the finger is read in turn | There is no need to know in advance where the audio is |
 | Read the whole screen | One cell in the bottom tab bar | Hear it again from start to finish |
 
 The arrival announcement reads one line per screen. Reading everything would pour a paragraph out on every screen change, and then the user turns the speech off. That is the worst outcome in this app. Once it is off, nothing is heard at all.
 
-The listen button is 44 pixels. That is roughly the area a fingertip covers on the screen, and anything smaller starts to demand aim.
+The grey speaker circles that sat on every line were taken away. Having attached audio everywhere audio could go, eight to ten circles ended up tiled across a single screen, while the thing being pressed was the whole line and the circle was only a sign saying "there is audio here". What occupied the most space on the screen was not a function but a sign.
+
+The sign was there because we held that the user has to be told in advance where the audio is. Being able to sweep removes that premise. Press and hold, slide, and what passes under the finger is read in turn, so it is swept rather than searched for. This is how a screen reader navigates, and it is closer to the criterion established in §1.10, that no step requiring explanation should be created.
+
+The signs did not disappear altogether; they became transient. While a sweep is in progress `html[data-hearing]` reveals every place that has audio, and they go quiet again when the finger lifts (`app/globals.css`). So the screen shows where the audio is exactly while the user is looking for it, and shows nothing the rest of the time.
 
 #### 3.5.2 Speaking the pictograms
 
@@ -1205,7 +1209,7 @@ This section first sets out what was built with which tools, and the sections th
 | Nutrition estimation | EfficientNet-B0 224px (trained on Nutrition5k) · onnxruntime-web | On-device inference |
 | Product data | OpenFoodFacts API | Via server |
 | Image recognition | Claude Vision | Via server |
-| Hardware | Raspberry Pi 3B · 3 servos · WS2812 · DS3231 | 3 trays |
+| Hardware | Raspberry Pi 3B · 3 servos · WS2812 · DS1302 | 3 trays |
 | Deployment | fly.io (Tokyo) · 1 GB persistent volume | |
 
 Reading the last column on its own shows how this stack is put together. The heavy things are on the device and the light things are on the server. A 16 MB nutrition estimation model runs in the browser, while recognising what a photograph shows goes out to the server. This is the reverse of an ordinary web app. Sending heavy computation to the server is the conventional choice, and it lets the device be old and makes the model easy to swap.
@@ -1219,13 +1223,14 @@ There is one reason for inverting that convention. Anything on the server become
 | Reading text from a photograph | Device | Works as normal |
 | Label parsing and physical checks | Device | Works as normal |
 | Prescription parsing | Device | Works as normal |
+| Reading the paper form | Device | Works as normal |
 | Nutrition estimation (photo) | Device | Works as normal |
 | Verdict and daily reference calculation | Device | Works as normal |
 | Recognising what was photographed | Server | Treated as unrecognised, shown as caution |
 | Product data lookup | Server | Proceeds without the lookup |
 | Composing a new pictogram | Server | Only pre-built ones appear |
 
-What separates the top five rows from the bottom three is urgency. Reading a prescription is not the kind of thing that can be postponed for want of a connection, whereas a verdict still comes out without a product lookup. Whether this boundary actually behaves as stated was checked in §5.6 with the connection cut.
+What separates the top six rows from the bottom three is urgency. Reading a prescription is not the kind of thing that can be postponed for want of a connection, whereas a verdict still comes out without a product lookup. Whether this boundary actually behaves as stated was checked in §5.6 with the connection cut.
 
 One cost should be recorded. Running the model on the device means 16 MB is downloaded again whenever the model changes. Kept on the server, it could have been swapped without the user noticing. Between working without an internet connection and being fixable quietly, the former was chosen, and once the target users were settled this left no room for deliberation.
 
@@ -1319,7 +1324,7 @@ printed code ──HKDF──► device id      the relay's address    (relay se
 
 ![Figure 31](fig/fig20_relay_keys.png)
 
-This is one more channel rather than a dependency. The schedule is already on the device's SD card and the time is known to the DS3231. Whether the relay is down, unreachable or never configured at all, nobody's dose is missed. The judgement in Table 24 stands. We still do not require a cloud.
+This is one more channel rather than a dependency. The schedule is already on the device's SD card and the time is known to the real-time clock. Whether the relay is down, unreachable or never configured at all, nobody's dose is missed. The judgement in Table 24 stands. We still do not require a cloud.
 
 ### 4.4 Reading the paper form
 
@@ -2355,8 +2360,6 @@ The screen respondents saw is not the screen our users will see. Of the 35, 30 a
 
 We do not know how many people heard the audio. Whether the speaker in the demonstration was pressed was being recorded, but the instrumentation failed to account for the speaker rendering as `<span role="button">` rather than `<button>`, so the first 34 were all recorded as not pressed. It was fixed during the survey, so only later responses are valid. In other words, of the responses to the judgement question in this section, how many were answered after hearing the audio cannot be known.
 
----
-
 ### 5.8 Contribution to SDG 3
 
 The point at which SnapCare intervenes is the last step described in §1.4. The health system takes care of consultation and dispensing, but from the moment the patient opens the medicine packet at home it is left to their own ability to read.
@@ -2408,8 +2411,6 @@ Ninth, cross-cultural misreading was not measured. Professor Afonso Cavaco of th
 Tenth, the spoken translations in six languages have had no native-speaker clinical review. The 72 morpheme sentences were carried into six languages by us and a machine, not by anyone who has counselled patients in those languages. A mistranslated dosing instruction causes exactly the harm this app exists to prevent, so until reviewed these translations hold the same status as the sample prescriptions of §5.7: plausible, and unconfirmed.
 
 Eleventh, whether people keep using it was not measured. The formative evaluation of §5.1 covers a single capture, and whether the same person opens this app again a few days later was not measured. What the industry-practice respondent in §5.7 chose as the first thing to break in operation is that point.
-
----
 
 ### 5.10 Future plans
 
