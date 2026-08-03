@@ -311,6 +311,7 @@ PMC8544505 한국 고령자 79.4%/28.2% · PMC7532569 몰도바 건강문해력 
 | Ownby, R. L. et al., *J Ageing Longev* 4(2):51 | PMC 전문 | 확인. 저건강문해력 315명, 2개 기관, 3·6·8학년 수준 세 무리. 무리 간 차이 없음, 복약 순응도 변화 없음 |
 | Azad, C. L. et al., *PLOS ONE* 19(6):e0304351 | PMC 전문 | 확인. 성인 17명(46%가 REALM-SF 저문해), 여섯 기능, 문해 페르소나 셋. 아이콘이 저문해에 불투명할 수 있고 사진에 가까운 표현이 선호된다는 관찰 |
 | U.S. Pharmacopeia, *USP Pictograms* | USP 공식 페이지 | 확인. 81종, GIF·EPS 무상 배포, 네 조항을 원문 그대로 대조했다. 다만 세트가 81종에 이른 연도는 1차 출처를 못 열어 본문에서 뺐다 |
+| Fathizadeh, H. et al., *BMC Nursing* 23:175 | PMC 전문 | 확인. 36편 6,238명. 시각 27.3%, 용량 26.4%. 이질성 I² 91~96 이므로 순서만 읽는다 |
 | WHO, *Assistive technology* fact sheet | WHO 공식 페이지 | 확인. 25억 명 필요, 2050년 35억 명. 저소득국 3% 대 고소득국 90% |
 | Kheir, N. et al., *Res Social Adm Pharm* 10(5):720 | PubMed 초록 | 확인. 123명 세 갈래 무작위. 그림+구두가 대부분 지시에서 최고 (p ≤ 0.05). "Do not take with dairy products" 는 여전히 어려웠다 |
 | Mourad, N. et al., *BMC Public Health* 23:1926 | PMC 전문 | 확인. n=1,848. 9.36±1.60 → 10.88±0.89, 차이 1.52 (95% CI 1.45~1.60). 나이 Beta = −0.019 |

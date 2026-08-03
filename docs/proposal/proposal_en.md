@@ -142,6 +142,12 @@ Looking at which types medication errors cluster into narrows down what has to b
 
 Based on 155 dispensing errors found by pharmacists (Anacleto, T. A., Perini, E., Rosa, M. B. & César, C. C., "Medication dispensing errors in a Brazilian hospital pharmacy," *Clinics*, 62(3):243–250, 2007).
 
+We checked whether the same distribution appears in another country and another period. A meta-analysis pooling 36 studies (6,238 participants) of medication errors by Iranian nurses put the top two error types at wrong timing, 27.3% (95% CI 19–36), and wrong dose, 26.4% (95% CI 20–33) (Fathizadeh, H., Mousavi, S. S., Gharibi, Z., Rezaeipour, H. & Biojmajd, A. R., "Prevalence of medication errors and its related factors in Iranian nurses: an updated systematic review and meta-analysis," *BMC Nursing*, 23:175, 2024, doi:10.1186/s12912-024-01836-w). The top two are the same as those observed in one Brazilian hospital in 2007.
+
+Two cautions belong beside that pairing. First, the stages differ: the earlier figures are errors pharmacists made while dispensing, the later ones errors nurses made while administering. Neither is an error a patient makes at home, and §1.4 takes up that gap separately. Second, heterogeneity in the Iranian data is very high (I² = 91–96). The values should not be carried across; only the recurrence of the ordering should be read from them.
+
+There is a reason this section needs that recurrence even so. We designed the morpheme set to match this distribution (Table 8), and if the distribution had been an accident of one hospital in one year, the grounds for that design would fall away. That the top two are the same across seventeen years and two continents reduces the accident.
+
 Table 4 shows that most errors cluster into three things: what, how much and when. All three are information that can be carried in a picture, and SnapCare's morpheme design follows exactly this distribution.
 
 Because that distribution is now close to twenty years old, we asked the same thing again in §5.7. Asked what must not be wrong medically, the twelve pharmacy respondents chose dose and frequency most often at 7, with contraindications and interactions at 3 and route of administration and not stopping early at 1 each. The 28.4% dose errors in the 2007 dispensing record and twelve pharmacists in 2026 naming dose and frequency first point at the same place.
