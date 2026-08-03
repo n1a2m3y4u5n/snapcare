@@ -1,0 +1,467 @@
+<meta charset="utf-8">
+<title>SnapCare — A0 academic poster</title>
+<style>
+/*
+ * A0 학술 포스터 (841 x 1189 mm, 세로).
+ *
+ * 길이를 mm 와 pt 로만 적는다. px 로 적으면 어느 배율로 뽑느냐에 따라 글자가 달라진다.
+ *
+ * 3단인 이유는 A0 폭 841mm 에서 한 단이 약 250mm 가 되게 하려는 것이다. 이 폭에서 본문
+ * 21pt 는 한 줄에 영문 50자 안팎이 들어가고, 그보다 넓으면 눈이 다음 줄을 놓친다.
+ *
+ * 한 쪽에 담기게 하는 것이 이 파일의 유일한 제약이다. 넘치면 Chrome 이 두 쪽으로 나누고
+ * 포스터는 인쇄할 수 없게 된다. 그래서 아래 값들은 눈으로 보기 좋게 고른 것이 아니라
+ * 1189mm 안에 들어가도록 맞춘 것이다.
+ */
+@page { size: 841mm 1189mm; margin: 0; }
+
+:root {
+  --ink: #111;
+  --muted: #555;
+  --line: #c9c9c9;
+  --rule: #1a1a1a;
+  --wash: #f3f3f3;
+  --accent: #1b3a6b;
+}
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0; width: 841mm; height: 1189mm; overflow: hidden;
+  background: #fff; color: var(--ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.sheet { padding: 17mm 16mm 10mm; height: 1189mm; display: flex; flex-direction: column; }
+
+/* ── 머리 ── */
+header { text-align: center; padding-bottom: 5mm; }
+h1 { margin: 0 0 3mm; font-size: 86pt; font-weight: 800; letter-spacing: -1pt; line-height: 1.04; }
+h1 .sep { font-weight: 300; color: #777; }
+.byline { font-size: 25pt; color: #2a2a2a; line-height: 1.35; }
+.byline b { font-weight: 700; }
+.rule-top { border-bottom: 1.4mm solid var(--rule); margin-top: 4mm; }
+
+/* ── 3단 ── */
+.cols { display: grid; grid-template-columns: 1fr 1fr 1fr; flex: 1; min-height: 0; }
+.col { padding: 6mm 7mm 0; min-width: 0; }
+.col + .col { border-left: 0.35mm solid var(--line); }
+.col:first-child { padding-left: 0; }
+.col:last-child { padding-right: 0; }
+
+/* ── 절 ── */
+h2 { font-size: 31pt; font-weight: 800; margin: 0 0 2.6mm; padding-bottom: 1.4mm;
+     border-bottom: 1mm solid var(--rule); }
+h2 .n { color: var(--accent); margin-right: 2mm; }
+section { margin-bottom: 5mm; }
+section:last-child { margin-bottom: 0; }
+
+p { font-size: 21.5pt; line-height: 1.38; margin: 0 0 2.6mm; text-align: justify; hyphens: auto; }
+p:last-child { margin-bottom: 0; }
+.small { font-size: 16.5pt; color: var(--muted); line-height: 1.3; }
+ul { margin: 0 0 2.6mm; padding-left: 0; list-style: none; }
+li { font-size: 20.5pt; line-height: 1.34; margin-bottom: 1.6mm; position: relative; padding-left: 5.5mm; }
+li::before { content: "—"; position: absolute; left: 0; color: var(--muted); }
+
+/* ── 통계 상자 ── */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2mm; margin: 0 0 3mm; }
+.stat { border: 0.5mm solid var(--rule); padding: 2.4mm 1mm; text-align: center; }
+.stat .v { font-size: 32pt; font-weight: 800; line-height: 1.02; display: block; }
+.stat .k { font-size: 14pt; color: var(--muted); line-height: 1.22; display: block; margin-top: 1.1mm; }
+
+/* ── 순서 목록 ── */
+ol.steps { list-style: none; margin: 0 0 2.6mm; padding: 0; counter-reset: s; }
+ol.steps > li { counter-increment: s; padding-left: 9.5mm; margin-bottom: 2.2mm; font-size: 20.5pt; line-height: 1.32; }
+ol.steps > li::before {
+  content: counter(s); left: 0; top: 0.4mm; width: 6.8mm; height: 6.8mm;
+  border: 0.45mm solid var(--rule); border-radius: 50%; font-size: 15.5pt; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; color: var(--ink);
+}
+
+/* ── 그림 ── */
+figure { margin: 0 0 3mm; border: 0.35mm solid var(--line); }
+figure img { width: 100%; display: block; }
+figcaption { font-size: 15pt; line-height: 1.28; padding: 2mm 2.4mm; background: var(--wash); }
+figcaption b { font-weight: 700; }
+
+/* ── 표 ── */
+table { width: 100%; border-collapse: collapse; margin: 0 0 2.4mm; font-size: 18.5pt; }
+th, td { border: 0.3mm solid var(--line); padding: 1.7mm 2mm; text-align: left; vertical-align: top; }
+th { background: var(--wash); font-weight: 700; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+tr.total td { font-weight: 700; background: #fafafa; }
+td .small { display: block; }
+
+/* ── 인용 ── */
+blockquote { margin: 0 0 2.6mm; padding: 1.6mm 0 1.6mm 4mm; border-left: 1.2mm solid var(--accent);
+             font-size: 19.5pt; line-height: 1.3; }
+blockquote .who { display: block; font-size: 15.5pt; color: var(--muted); margin-top: 1.2mm; }
+
+/* ── DSL ── */
+.dsl { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 16pt; line-height: 1.4;
+       display: block; background: var(--wash); border: 0.3mm solid var(--line);
+       padding: 2.4mm; margin: 0 0 2.6mm; white-space: pre; }
+code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em; }
+
+/* ── 강조 띠 ── */
+.band { background: var(--rule); color: #fff; padding: 3mm 3.4mm; margin: 0 0 3mm; }
+.band p { color: #fff; margin: 0; font-size: 22pt; text-align: center; }
+
+/* ── 참고문헌 ── */
+.refs p { font-size: 14pt; line-height: 1.28; margin-bottom: 1.5mm; text-align: left;
+          padding-left: 6.5mm; text-indent: -6.5mm; }
+.refs i { font-style: italic; }
+
+/* ── 앱 화면 석 장 ── */
+.shots { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2mm; margin: 0 0 2mm; }
+.shots figure { margin: 0; }
+.shots figcaption { font-size: 13pt; padding: 1.5mm 1.8mm; }
+
+/* ── QR ── */
+.qr { display: grid; grid-template-columns: 34mm 1fr; gap: 4mm; align-items: center;
+      border: 0.6mm solid var(--rule); padding: 3.5mm; margin: 0 0 3mm; }
+.qr img { width: 34mm; height: 34mm; display: block; }
+.qr .t { font-size: 21pt; font-weight: 700; line-height: 1.25; margin-bottom: 1.5mm; }
+.qr .u { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 17pt; }
+.qr .n { font-size: 14.5pt; color: var(--muted); line-height: 1.26; margin-top: 1.5mm; }
+
+/* ── SVG 도표 ── */
+.chart { width: 100%; display: block; margin: 0 0 1mm; }
+.chart text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+</style>
+
+<div class="sheet">
+
+<header>
+  <h1>SnapCare<span class="sep"> : </span>a prescription you never have to read</h1>
+  <div class="byline">
+    <b>Namyunsu Nam</b>, ChungNam Samsung Academy &nbsp;·&nbsp; Team H1, Republic of Korea &amp; Republic of Moldova<br>
+    16th e-ICON World Contest &nbsp;·&nbsp; hosted by the Ministry of Education, Republic of Korea
+  </div>
+  <div class="rule-top"></div>
+</header>
+
+<div class="cols">
+
+<!-- ═══════════ 1단 ═══════════ -->
+<div class="col">
+
+  <section>
+    <h2><span class="n">1.</span>Background</h2>
+    <div class="stats">
+      <div class="stat"><span class="v">739M</span><span class="k">adults worldwide lack<br>basic literacy skills</span></div>
+      <div class="stat"><span class="v">18%</span><span class="k">of adults across 31<br>developed countries</span></div>
+      <div class="stat"><span class="v">59.7%</span><span class="k">Koreans 65+ below<br>sufficient health literacy</span></div>
+    </div>
+    <p>A prescription is written to be read. From the moment it is handed over everything
+    depends on the patient's ability to read it, and for a large population that ability is
+    absent or partial. Worldwide 739 million adults lack basic literacy skills, and even across
+    31 developed countries 18% of adults fall below the most elementary level of literacy,
+    numeracy and adaptive problem solving.</p>
+    <p>The gap is wider <b>within</b> countries than between them. In Korea 39.6% of adults do
+    not reach a sufficient level of health literacy; among those aged 65 and over it is
+    <b>59.7%</b>. Low health literacy is consistently associated with more hospitalisation, more
+    emergency use and a reduced ability to take medicines correctly <span class="small">[2]</span>.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">2.</span>Problem</h2>
+    <p><b>Removing text is necessary but not sufficient.</b> For someone who cannot read a
+    prescription a text interface is no different from the paper one. Yet pictures can fail to
+    be read as well: in the Philippines only <b>17 of 108</b> pictograms reached the ANSI Z535.3
+    threshold among 52 adults <span class="small">[1]</span>, and a menu hierarchy is itself a
+    barrier for low-literate users.</p>
+    <p>Existing pictogram sets are <b>lists of pictures</b>. A set of <i>n</i> drawings can say
+    <i>n</i> things; an instruction not drawn in advance cannot be said at all. Their licences
+    also state that pictograms must not be the sole means of conveying information, which is
+    exactly the case this project has to serve.</p>
+    <figure>
+      <img src="../proposal/fig_en/fig27_synthesis.png" alt="What the background establishes and what it calls for">
+      <figcaption><b>Figure 1.</b> What the literature establishes, and what each finding demands
+      of a design. Nothing we found held all three at once.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2><span class="n">3.</span>Objective</h2>
+    <div class="band">
+      <p><b>At no point on the path to a judgement is the user required to read or type.</b></p>
+    </div>
+    <p>Two channels are laid so that neither leans on the other. The pictures alone, or the
+    speech alone, must reach the same instruction. Text stays on screen for those who can use
+    it, but the instruction has to survive without it.</p>
+    <ul>
+      <li>Compose pictograms from a grammar rather than select them from a list</li>
+      <li>Rewrite the spoken sentence rather than read the extracted string aloud</li>
+      <li>Compute the verdict on the device, with no account and no network</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="n">4.</span>How it works</h2>
+    <ol class="steps">
+      <li><b>Photograph.</b> The user points the camera at a prescription. Nothing is typed and
+      no object has to be chosen first.</li>
+      <li><b>Read on the device.</b> Text recognition and form parsing run in the browser. Drug,
+      dose, frequency, timing, duration, storage and contraindications are extracted; the
+      photograph never leaves the device.</li>
+      <li><b>Compose the pictures.</b> SIGIL builds each frame on the spot from morphemes.</li>
+      <li><b>Rebuild the sentence.</b> VOCA keeps only what the patient needs; the verb and the
+      body site follow from the dosage form.</li>
+    </ol>
+    <figure>
+      <img src="../proposal/fig_en/fig11_userflow.png" alt="User flow from first run to delivery">
+      <figcaption><b>Figure 2.</b> The whole path. Setup happens once; every later use is one
+      button. The three delivery layers overlap rather than replace one another.</figcaption>
+    </figure>
+  </section>
+
+</div>
+
+<!-- ═══════════ 2단 ═══════════ -->
+<div class="col">
+
+  <section>
+    <h2><span class="n">5.</span>SIGIL — pictogram engine</h2>
+    <p>SIGIL is built from <b>morphemes and a grammar</b> rather than from a list of drawings.
+    A head stands on its own; a modifier cannot and goes into a slot inside a head. Five
+    operators apply on top.</p>
+    <table>
+      <tr><th>Element</th><th class="num">Count</th><th>Examples</th></tr>
+      <tr><td>Head</td><td class="num">57</td><td>pill_bottle, dropper_bottle, allergen_peanut</td></tr>
+      <tr><td>Modifier</td><td class="num">21</td><td>time_morning, qty_two, storage_fridge, body_eye</td></tr>
+      <tr><td>Operator</td><td class="num">5</td><td>no{}, half{}, twice_daily{} and two more</td></tr>
+      <tr class="total"><td>Morphemes</td><td class="num">78</td><td>composed, not selected</td></tr>
+    </table>
+    <p>The 78 were not chosen by drawing many pictures and thinking about combination
+    afterwards. They were derived <b>backwards from the distribution of medication error</b>:
+    dosage form and device 26, food 10, allergen 9, symptom 8, state 7, body site 6.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">6.</span>One prescription, composed</h2>
+    <p class="small">The output below is not written by hand. The prescription text is passed
+    through the same path the camera uses and the resulting DSL is reproduced verbatim.</p>
+    <span class="dsl">Amoxicillin capsules 250 mg — three times a
+day, 30 min after meals, 1 capsule, 7 days,
+refrigerate, not in pregnancy, no alcohol
+
+ \three_times_daily{\capsule_strip{\food_bowl}}
+ \capsule_strip{\time_morning}
+ \capsule_strip{\time_noon}
+ \capsule_strip{\time_evening}
+ \capsule_strip{\qty_one}
+ \capsule_strip{\storage_fridge}
+ \finish_course
+ \no_alcohol
+ \state_pregnant
+ \state_breastfeeding</span>
+    <p>Ten frames from one prescription. <b>Four carry what was buried in the warning box</b>
+    in small print: finish the course, no alcohol, not in pregnancy, caution while breastfeeding.</p>
+    <div class="shots">
+      <figure><img src="app_pictogram.png" alt="Prescription verdict">
+        <figcaption><b>a.</b> Prescription. Ten frames, each a speaker.</figcaption></figure>
+      <figure><img src="shot_label.png" alt="Nutrition label verdict">
+        <figcaption><b>b.</b> Food label. Colour plus symbol, never colour alone.</figcaption></figure>
+      <figure><img src="shot_profile.png" alt="Conditions chosen as pictures">
+        <figcaption><b>c.</b> Setup. Conditions are chosen as pictures; there is no input field.</figcaption></figure>
+    </div>
+    <p class="small" style="margin-bottom:3mm"><b>Figure 3.</b> What the user sees. Every element
+    on all three screens can be pressed to be read aloud, and no screen asks for typed input.</p>
+
+    <div class="qr">
+      <img src="qr_app.svg" alt="QR code to the live app">
+      <div>
+        <div class="t">Try it now</div>
+        <div class="u">snapcare.fly.dev</div>
+        <div class="n">Runs in the browser, no install and no account. Sample prescriptions and
+        labels are built in, so it can be tried without a real one. Works offline once loaded.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">7.</span>VOCA — spoken instruction</h2>
+    <p>VOCA does not read the extracted string aloud. A prescription holds a great deal the
+    patient does not need and what they do need is scattered. Research on interactive voice
+    response shows older users complete fewer tasks, the difficulty coming from ambiguous
+    options, speech rate and option length <span class="small">[4]</span>. The lesson taken was
+    <b>not "offer fewer options" but "remove steps"</b>; the path to a verdict has none.</p>
+    <p>The verb follows the dosage form. A tablet is <i>take</i>, eye drops are <i>put in</i>,
+    an ointment is <i>apply</i>. Once the form is known so is the body site, so the eye is
+    composed together with the drops instead of being left out of the picture.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">8.</span>Evaluation</h2>
+    <table>
+      <tr><th>What was measured</th><th>Result</th></tr>
+      <tr><td>Formative runs<span class="small">4 prescriptions × 7 user conditions, 6 items each</span></td>
+          <td><b>27 / 28</b> passed all six<span class="small">0 / 28 before the fix</span></td></tr>
+      <tr><td>Semantic check of all 78 morphemes</td>
+          <td><b>54</b> read as intended<span class="small">24 differently; the 7 exposed on screen were reworked</span></td></tr>
+      <tr><td>Nutrition model, Nutrition5k RGB split</td>
+          <td><b>26.75%</b> mean MAE<span class="small">n = 507, the deployed web.onnx</span></td></tr>
+      <tr><td>Offline with the server shut down</td>
+          <td><b>Normal</b><span class="small">a missing service-worker cache entry was found and fixed</span></td></tr>
+    </table>
+    <p class="small">The formative score is kept per item rather than reduced to one number.
+    "27/28" alone leaves no way of knowing what failed. The single failure was item D5 under
+    one condition and was left uncorrected rather than adjusting the scoring to fit.</p>
+  </section>
+
+
+  <section>
+    <h2><span class="n">9.</span>SDG 3 and what we do not claim</h2>
+    <table>
+      <tr><th>Target</th><th>Contribution</th></tr>
+      <tr><td><b>3.4</b></td><td>Thresholds derived from the individual's energy requirement; diabetes and hypertension narrow them</td></tr>
+      <tr><td><b>3.8</b></td><td>Reduces the literacy-driven gap at the self-management stage, after care ends</td></tr>
+      <tr><td><b>3.d</b></td><td>Carries course completion as a picture, addressing the human route to antimicrobial resistance</td></tr>
+    </table>
+    <ul>
+      <li><b>No comprehension test with people has been run.</b> The measurements above are
+      machine-side. ISO 9186-1 (67%) and ANSI Z535.3 (85%, critical confusions ≤ 5%) must still
+      be confirmed with low-literacy adults.</li>
+      <li><b>Cultural adaptation is unverified.</b> Locally produced pictograms passed for 20 of
+      23 symbols where USP-DI passed for 11 among the same 46 people <span class="small">[3]</span>.
+      This set was designed in Korea.</li>
+      <li><b>Experts are not patients.</b> An expert answering that a patient could probably
+      manage is not evidence that a patient did.</li>
+    </ul>
+  </section>
+
+</div>
+
+<!-- ═══════════ 3단 ═══════════ -->
+<div class="col">
+
+  <section>
+    <h2><span class="n">10.</span>Expert opinion survey</h2>
+    <div class="stats">
+      <div class="stat"><span class="v">1,103</span><span class="k">experts contacted,<br>one letter each</span></div>
+      <div class="stat"><span class="v">39</span><span class="k">responded<br>(3.5%)</span></div>
+      <div class="stat"><span class="v">22</span><span class="k">countries on<br>five continents</span></div>
+    </div>
+    <p>The list was built by surveying eight domains in parallel, recording a source URL for
+    every entry and never inventing an address. Each person received a separate letter carrying
+    an opaque token, so the server stores the token and only our own spreadsheet can say who
+    answered.</p>
+
+    <svg class="chart" viewBox="0 0 600 244" role="img" aria-label="Respondents by field and continent">
+      <text x="0" y="14" font-size="17" font-weight="700">Field</text>
+      <text x="330" y="14" font-size="17" font-weight="700">Continent</text>
+      <g font-size="15" fill="#111">
+        <text x="0" y="42">Pharmacy</text>       <rect x="120" y="30" width="169" height="15" fill="#1a1a1a"/><text x="295" y="42" font-weight="700">13</text>
+        <text x="0" y="66">Other</text>          <rect x="120" y="54" width="130" height="15" fill="#9a9a9a"/><text x="256" y="66" font-weight="700">10</text>
+        <text x="0" y="90">Nursing</text>        <rect x="120" y="78" width="117" height="15" fill="#5a5a5a"/><text x="243" y="90" font-weight="700">9</text>
+        <text x="0" y="114">HCI / design</text>  <rect x="120" y="102" width="52" height="15" fill="#9a9a9a"/><text x="178" y="114" font-weight="700">4</text>
+        <text x="0" y="138">Literacy</text>      <rect x="120" y="126" width="13" height="15" fill="#c4c4c4"/><text x="139" y="138" font-weight="700">1</text>
+        <text x="0" y="162">AAC</text>           <rect x="120" y="150" width="13" height="15" fill="#c4c4c4"/><text x="139" y="162" font-weight="700">1</text>
+        <text x="0" y="186">Industry</text>      <rect x="120" y="174" width="13" height="15" fill="#c4c4c4"/><text x="139" y="186" font-weight="700">1</text>
+
+        <text x="330" y="42">Asia</text>         <rect x="430" y="30" width="135" height="15" fill="#1a1a1a"/><text x="571" y="42" font-weight="700">27</text>
+        <text x="330" y="66">Europe</text>       <rect x="430" y="54" width="35" height="15" fill="#5a5a5a"/><text x="471" y="66" font-weight="700">7</text>
+        <text x="330" y="90">Africa</text>       <rect x="430" y="78" width="15" height="15" fill="#9a9a9a"/><text x="451" y="90" font-weight="700">3</text>
+        <text x="330" y="114">N. America</text>  <rect x="430" y="102" width="5" height="15" fill="#c4c4c4"/><text x="441" y="114" font-weight="700">1</text>
+        <text x="330" y="138">Oceania</text>     <rect x="430" y="126" width="5" height="15" fill="#c4c4c4"/><text x="441" y="138" font-weight="700">1</text>
+      </g>
+      <text x="0" y="216" font-size="15" fill="#555">Pharmacy and nursing together are 22 — the centre of the five fields</text>
+      <text x="0" y="233" font-size="15" fill="#555">judged qualified to rule on patient comprehension.</text>
+    </svg>
+    <p class="small" style="margin-top:-1mm"><b>Figure 4.</b> Composition of the 39 respondents,
+    as of 3 August 2026.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">11.</span>What they told us</h2>
+
+    <p><b>A prohibition is not read as a prohibition.</b> Three respondents on three continents
+    independently reported the same defect in the live demonstration.</p>
+    <blockquote>
+      The prescription read not to use the eyedrops in pregnancy while the pictogram showed a
+      pregnant woman, making the patient assume it is safe to use in pregnancy.
+      <span class="who">Prof. Atif Usman, The Islamia University of Bahawalpur, Pakistan</span>
+    </blockquote>
+    <p>The engine already had a <code>no{}</code> operator that draws a prohibition ring and was
+    not applying it to contraindications. This is a critical confusion in the sense of ANSI
+    Z535.3. Fixing it uncovered the same accident running the other way: an avoid verdict was
+    wrapping every flag, so <code>no_alcohol</code> became <code>\no{\no_alcohol}</code> —
+    <b>a slash through "do not drink" says that drinking is fine</b>.</p>
+
+    <p><b>The premise itself was questioned.</b> We had assumed that removing text lowers the
+    barrier. One respondent inverted that.</p>
+    <blockquote>
+      To a non-literate person pictograms too can feel like letters. As the saying goes, "the
+      black is the writing and the white is the paper."
+      <span class="who">Prof. Heejung Seo, Dong-eui University, Korea</span>
+    </blockquote>
+    <p>The comprehension studies we cite measured understanding <i>after</i> a picture was
+    recognised as a picture. Whether it is recognised as a picture at all was never measured.</p>
+
+    <p><b>Our design could create a new risk.</b> A pharmacist noted that a contraindication
+    shown without a clinician present can void a prescription that was written knowingly.</p>
+    <blockquote>
+      Even a medicine that carries risk for pregnant women is sometimes prescribed after
+      considering the patient's overall condition, and where the patient checks alone they may
+      end up not receiving the drug therapy.
+      <span class="who">Prof. So-Young Lee, pharmacist, Chungnam National University, Korea</span>
+    </blockquote>
+    <p>A personalised verdict cannot beat a personalised prescription. This runs directly into
+    the differentiator we had put forward, and 9 of the 13 pharmacists answered that a
+    pharmacist should review every time.</p>
+
+    <table>
+      <tr><th>Question</th><th>Answer</th><th class="num">n</th></tr>
+      <tr><td rowspan="2">Must a pharmacist review<br>what the app produces?<span class="small">pharmacy, n = 13</span></td>
+          <td>Every time</td><td class="num">9</td></tr>
+      <tr><td>Once at the start</td><td class="num">4</td></tr>
+      <tr><td rowspan="2">Where does it fail first for an<br>older adult living alone?<span class="small">nursing, n = 9</span></td>
+          <td>Cannot operate the screen</td><td class="num">4</td></tr>
+      <tr><td>Cannot keep the device going</td><td class="num">4</td></tr>
+      <tr><td>Patient or carer?<span class="small">nursing, n = 9</span></td>
+          <td>Both, designed separately</td><td class="num">6</td></tr>
+      <tr><td>Could it change health outcomes?<span class="small">nursing, n = 9</span></td>
+          <td>Yes, if conditions are met</td><td class="num">8</td></tr>
+    </table>
+
+    <p><b>The population was defined too loosely.</b> Five respondents noted that the people they
+    meet are more often visually impaired than non-literate, and one separated what we had been
+    blurring: total blindness, low vision and low literacy are three groups, and pictograms
+    address only the third.</p>
+
+    <p><b>One respondent argued the product may not be needed.</b> An industry team leader wrote
+    that Korean prescriptions already carry a barcode, that counselling is a legal duty with
+    existing solutions, and that electronic prescriptions will make this redundant. Three of the
+    five points do not hold outside Korea. <b>Two we cannot answer</b>, and they are recorded
+    unanswered rather than argued away.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">12.</span>What the survey changed</h2>
+    <ul>
+      <li><b>Contraindication marking was split three ways.</b> Flags that say what is contained
+      gain and lose the slash with the verdict; flags that say what not to do are always drawn
+      as prohibited.</li>
+      <li><b>finish_course was redrawn.</b> Filling three of five cells drew a state in progress,
+      which says "not finished yet" rather than "finish it". A directional arrow proposed by a
+      respondent replaced it.</li>
+      <li><b>The demonstration prescription was clinically wrong.</b> A pharmacy lecturer noted
+      that amoxicillin capsules are kept at room temperature, not refrigerated.</li>
+      <li><b>The survey's own defects were reported by respondents</b> and fixed mid-run: a
+      branch that showed no questions at all, a contact address promised but never printed, and
+      78 morphemes listed without their names.</li>
+    </ul>
+  </section>
+
+  <section class="refs">
+    <h2><span class="n">13.</span>References</h2>
+    <p>[1] Gutierrez, M. M., Patikorn, C. &amp; Anantachoti, P. Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines. <i>J. Pharm. Policy Pract.</i> 15:30 (2022).</p>
+    <p>[2] Berkman, N. D. et al. Low health literacy and health outcomes: an updated systematic review. <i>Ann. Intern. Med.</i> 155(2):97–107 (2011).</p>
+    <p>[3] Dowse, R. &amp; Ehlers, M. S. The evaluation of pharmaceutical pictograms in a low-literate South African population. <i>Patient Educ. Couns.</i> 45:87–99 (2001).</p>
+    <p>[4] Miller, D. I. et al. Improving older adults' experience with interactive voice response systems. <i>Telemed. e-Health</i> 17(6):452–455 (2011).</p>
+    <p>[5] Korea Disease Control and Prevention Agency. <i>Korea National Health and Nutrition Examination Survey</i>, 9th cycle year 2 (2023). &nbsp; [6] ISO 9186-1:2014; ANSI Z535.3.</p>
+  </section>
+
+</div>
+</div>
+</div>
