@@ -145,7 +145,7 @@ export default function NutritionPage() {
                   <span className="flex-1">
                     <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{record.name}</span>
                     <span className="mt-0.5 block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-                      <TimeGlyph label={record.timeLabel} mute />
+                      <TimeGlyph label={record.timeLabel} mute compact />
                     </span>
                   </span>
                   <span className="text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}>
