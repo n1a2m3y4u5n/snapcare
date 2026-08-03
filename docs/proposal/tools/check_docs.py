@@ -17,6 +17,7 @@
   · 두 판에서 그림이 같은 자리에 있는가
   · 두 판이 절마다 비슷한 수의 상호 참조를 갖는가
   · 인용이 이름과 해만 적혀 있지 않은가
+  · 서식으로 뽑은 뒤 표와 그림이 성한가
 """
 import re
 import sys
@@ -189,6 +190,57 @@ def sec_refs(f: str) -> dict:
     return out
 
 
+def built(path: Path) -> tuple:
+    """만들어진 서식에서 문단·표·그림을 꺼낸다. 중첩 표 안까지 들어간다."""
+    import docx
+    d = docx.Document(str(path))
+    ps, tabs = [], []
+
+    def walk(c):
+        for para in c.paragraphs:
+            ps.append(para.text)
+        for t in getattr(c, 'tables', []):
+            tabs.append(t)
+            for r in t.rows:
+                for cc in r.cells:
+                    walk(cc)
+
+    walk(d)
+    for t in d.tables:
+        tabs.append(t)
+        for r in t.rows:
+            for cc in r.cells:
+                walk(cc)
+    return ps, tabs, d.inline_shapes
+
+
+def built_faults(path: Path) -> list:
+    """서식으로 뽑고 나서야 보이는 것들. 원본 마크다운으로는 알 수 없다."""
+    ps, tabs, shapes = built(path)
+    out = []
+    txt = '\n'.join(ps)
+
+    if '\ufffd' in txt:
+        out.append(f'깨진 글자 {txt.count(chr(0xfffd))}개')
+
+    for t in tabs:
+        if len(t.rows) < 2:
+            continue
+        if len({len(r.cells) for r in t.rows}) > 1:
+            head = ' | '.join(c.text[:12] for c in t.rows[0].cells)
+            out.append(f'표의 행마다 열 수가 다르다 — {head}')
+        for r in t.rows:
+            if all(not c.text.strip() for c in r.cells):
+                out.append(f'표에 빈 행 — {t.rows[0].cells[0].text[:20]}')
+                break
+
+    for i, sh in enumerate(shapes, 1):
+        h = sh.height / 914400
+        if h > 5.4:
+            out.append(f'{i}번째 그림이 {h:.1f}인치로 높다')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -263,6 +315,11 @@ def main() -> int:
             note(f'{f}: 같은 수치가 두 곳에 다르다 — {t}')
         for t in short_cites(f):
             note(f'{f}: 서지 정보 없는 인용 — ({t})')
+
+    for name in ('SnapCare_H1_Final_Proposal_KO.docx',
+                 'SnapCare_H1_Final_Proposal_EN.docx'):
+        for t in built_faults(DOC / name):
+            note(f'{name}: {t}')
 
     ka, ea = sec_refs('proposal_ko.md'), sec_refs('proposal_en.md')
     gap = [(k, ka.get(k, 0), ea.get(k, 0)) for k in set(ka) | set(ea)
