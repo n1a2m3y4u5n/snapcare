@@ -387,13 +387,19 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 | 연구 | 대상 | 기준 | 결과 |
 |---|---|---|---|
-| Gutierrez 등 (2022) | 필리핀 성인 · USP 82종 + FIP 26종 | ANSI 85% | 통과 **108종 중 17종 (15.7%)** |
+| Gutierrez 등 (2022) | 필리핀 수도권 성인 52명 · USP 82종 + FIP 26종 | ANSI 85% | 통과 **108종 중 17종 (15.7%)** |
 | Dowse, R., Okeyo, S., Sikhondze, S. & Khumalo, N. (2023) | 남아공 저문해 성인 · 현지 제작 10종 | ISO 66.7% | 통과 **10종 중 8종 (80%)** · 평균 이해도 7.9 ± 1.8 / 10 |
 | Dowse & Ehlers (2001) | 남아공 Xhosa 46명(정규교육 ≤7년) · 각 23종 | ANSI 85% | 현지 제작 **23종 중 20종(87%)** vs. USP-DI **23종 중 11종(48%)** |
 
 표 6가 보여주는 것은 픽토그램을 만든다고 해서 읽히는 것이 아니라는 사실이다. 국제적으로 통용되는 USP·FIP 픽토그램 108종을 필리핀 성인에게 시험했을 때 ANSI 85% 기준을 통과한 것은 17종, 여섯에 하나꼴에 그쳤다 (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022, doi:10.1186/s40545-022-00426-y).
 
 세 연구를 나란히 놓으면 무엇이 통과율을 가르는지가 보인다. 통과율이 가장 높은 것은 현지에서 만들어 현지 사람에게 시험한 세트다 (Dowse, R., Okeyo, S., Sikhondze, S. & Khumalo, N., "Pharmaceutical indication pictograms for low literacy viewers: Health literacy and comprehension," *Health SA Gesondheid*, 28:2192, 2023: 10종 중 8종). 가장 직접적인 증거는 Dowse & Ehlers 의 대조 실험이다. 같은 46명에게 같은 지시를 담은 두 세트를 보였을 때, 현지에서 만든 23종 중 20종(87%)이 ANSI 85% 기준을 통과한 반면 USP-DI 23종에서는 11종(48%)만 통과했다 (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). 같은 사람들에게 같은 뜻을 물었는데 그림의 출신에 따라 두 배 가까이 갈렸다.
+
+표 6 의 첫 행을 읽을 때 범위를 함께 보아야 한다. 108종 중 17종이라는 값은 필리핀 수도권 성인 52명을 할당 표집으로 모아 얻은 것이고, 저자들은 표본이 작고 지역이 한 곳에 묶여 있다는 것을 한계로 적으면서 지역을 나눠 무작위로 뽑은 168명에게 다시 재기를 권한다. 그러므로 이것은 그 픽토그램들이 원래 못 읽히는 그림이라는 뜻이 아니라, 그 사람들에게 그렇게 읽혔다는 뜻이다. 우리가 표 6 을 세 나라의 값으로 나란히 놓는 이유도 어느 한 값이 픽토그램의 성질을 말해 주지 않기 때문이다.
+
+같은 연구에서 이해도를 가른 것이 무엇이었는지도 적어 둔다. 108점 만점에서 학력이 12학년 미만이면 21.58점이 낮았고, 여성이면 5.85점, 46세를 넘으면 1.20점이 낮았다. 통계적으로 의미 있는 예측 변수는 학력 하나였다. 이 앱이 겨냥하는 사람과 정확히 겹치는 조건이다.
+
+저자들의 결론은 우리 구조와 같은 자리를 가리킨다. 통과한 것이 17종뿐이므로 픽토그램을 단독 수단으로 쓰지 말고 말과 글로 보완하라는 것이다. 이 앱이 그림과 음성을 함께 내보내는 이유가 그것이다(§3.5). 다만 우리는 저 권고의 절반을 일부러 버렸다. 글로 보완하라는 쪽인데, 글을 읽지 못하는 사람이 이 앱의 대상이므로 글은 보완이 되지 못한다. 남은 절반인 말에 그만큼을 더 실었다.
 
 의약 픽토그램 밖에서도 같은 것이 관찰된다. 국제 표준으로 정해진 체외진단기기 기호 18종을 네 나라의 보건인력 293명에게 시험한 연구에서, ISO 기준을 넘긴 기호가 벨기에와 쿠바에서는 여섯 종인 반면 콩고민주공화국에서는 두 종, 캄보디아에서는 한 종이었다. 가장 벌어진 것은 생물학적 위험 기호로, 쿠바에서 94.1%가 맞힌 것을 콩고민주공화국에서는 8.0%가 맞혔다 (Hermans, V., Monzote, L., Van den Sande, B. et al., "Assessment of the knowledge of graphical symbols labelled on malaria rapid diagnostic tests in four international settings," *Malaria Journal*, 10:331, 2011).
 
@@ -531,7 +537,7 @@ Medhi 등은 방갈로르 빈민가의 비문해 가사노동자와의 민족지
 
 둘째, 대가. 복약 오류는 연간 420억 달러의 비용을 발생시키고 (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017), 2019년 세균 내성에 직접 기인한 사망은 127만 명으로 HIV/AIDS 나 말라리아보다 많았다 (Murray, C. J. L. et al. (Antimicrobial Resistance Collaborators), "Global burden of bacterial antimicrobial resistance in 2019: a systematic analysis," *The Lancet*, 399(10325):629–655, 2022). 2023년 자료에서 실험실로 확인된 세균 감염 여섯 건 중 한 건이 항생제에 내성을 보였다 (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025).
 
-셋째, 시각적 방법의 효과와 한계. 그림은 문자보다 잘 기억되지만 (Houts, P. S., Doak, C. C., Doak, L. G. & Loscalzo, M. J., "The role of pictures in improving health communication," *Patient Education and Counseling*, 61(2):173–190, 2006), 실제로 만들어진 의약 픽토그램 108종 가운데 ANSI 기준을 통과한 것은 17종뿐이었다 (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
+셋째, 시각적 방법의 효과와 한계. 그림은 문자보다 잘 기억되지만 (Houts, P. S., Doak, C. C., Doak, L. G. & Loscalzo, M. J., "The role of pictures in improving health communication," *Patient Education and Counseling*, 61(2):173–190, 2006), 실제로 만들어진 의약 픽토그램 108종을 필리핀 성인 52명에게 시험했을 때 ANSI 기준을 통과한 것은 17종뿐이었다 (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
 
 넷째, 표준의 구조적 제약. USP 81종은 결합이 금지되어 있어 복합 지시를 하나의 그림으로 만들 수 없다 (USP Pictogram Library License Agreement).
 
@@ -1795,7 +1801,7 @@ res.headers.set('Permissions-Policy', 'camera=(self), microphone=(), geolocation
 
 ### 5.2 픽토그램 이해도 검증 절차
 
-§1.8 에서 확인했듯 픽토그램은 만든다고 읽히는 것이 아니다. 국제 표준 픽토그램 108종 가운데 ANSI 85% 기준을 통과한 것은 17종에 그쳤다 (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
+§1.8 에서 확인했듯 픽토그램은 만든다고 읽히는 것이 아니다. 국제 표준 픽토그램 108종을 필리핀 성인 52명에게 시험했을 때 ANSI 85% 기준을 통과한 것은 17종에 그쳤다 (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
 
 그러나 이해도 시험은 사람을 모아야 하므로 비용이 크고 반복하기 어렵다. 그 결과 대부분의 픽토그램 세트는 만들어진 뒤에 평가되며, 문제가 발견되어도 이미 배포된 뒤다.
 

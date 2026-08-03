@@ -387,13 +387,19 @@ How far the pharmaceutical pictograms actually produced pass these criteria is t
 
 | Study | Subjects | Criterion | Result |
 |---|---|---|---|
-| Gutierrez et al. (2022) | Filipino adults · 82 USP + 26 FIP symbols | ANSI 85% | Passed **17 of 108 (15.7%)** |
+| Gutierrez et al. (2022) | 52 Filipino adults, capital region · 82 USP + 26 FIP symbols | ANSI 85% | Passed **17 of 108 (15.7%)** |
 | Dowse, R., Okeyo, S., Sikhondze, S. & Khumalo, N. (2023) | Low-literate South African adults · 10 locally made | ISO 66.7% | Passed **8 of 10 (80%)** · mean comprehension 7.9 ± 1.8 / 10 |
 | Dowse & Ehlers (2001) | 46 South African Xhosa speakers (≤7 years schooling) · 23 symbols each | ANSI 85% | Locally made **20 of 23 (87%)** vs. USP-DI **11 of 23 (48%)** |
 
 What Table 6 shows is that making a pictogram does not mean it will be read. When 108 internationally used USP and FIP pictograms were tested on Filipino adults, 17 passed the ANSI 85% criterion, roughly one in six (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022, doi:10.1186/s40545-022-00426-y).
 
 Placing the three studies side by side shows what separates the pass rates. The highest belongs to the set made locally and tested on local people (Dowse, R., Okeyo, S., Sikhondze, S. & Khumalo, N., "Pharmaceutical indication pictograms for low literacy viewers: Health literacy and comprehension," *Health SA Gesondheid*, 28:2192, 2023: 8 of 10). The most direct evidence is the controlled comparison by Dowse & Ehlers. When the same 46 people were shown two sets carrying the same instructions, 20 of the 23 locally made symbols (87%) passed the ANSI 85% criterion while only 11 of the 23 USP-DI symbols (48%) did (Dowse, R. & Ehlers, M. S., "The evaluation of pharmaceutical pictograms in a low-literate South African population," *Patient Education and Counseling*, 45(2):87–99, 2001). The same people were asked about the same meanings, and the answers split almost twofold according to where the pictures came from.
+
+The first row of Table 6 has to be read together with its scope. The figure of 17 out of 108 comes from 52 adults in the capital region of the Philippines gathered by quota sampling, and the authors record the small sample and the single region as limitations, recommending that the measurement be repeated on 168 participants sampled randomly across regions. It therefore does not mean that those pictograms are inherently unreadable, but that they were read that way by those people. That is also why Table 6 sets values from three countries side by side: no single value tells us the property of a pictogram.
+
+What separated comprehension in the same study is worth setting down as well. Out of 108 points, scores were 21.58 points lower where education was below Grade 12, 5.85 points lower for women, and 1.20 points lower above the age of 46. The only statistically significant predictor was education. Those conditions overlap exactly with the people this app is aimed at.
+
+The authors' conclusion points at the same place as our architecture. Since only 17 passed, they recommend that pictograms not be used as a stand-alone tool but be complemented with verbal and written instructions. That is why this app sends out picture and speech together (§3.5). We deliberately dropped half of that recommendation, though: the written half, because the people this app is for cannot read, so writing cannot complement anything. We put that much more weight on the half that remains, which is speech.
 
 The same thing is observed outside pharmaceutical pictograms. In a study testing 18 internationally standardised in-vitro diagnostic symbols on 293 health workers in four countries, the number of symbols exceeding the ISO criterion was six in Belgium and Cuba, two in the Democratic Republic of the Congo and one in Cambodia. The widest gap was the biological-hazard symbol, answered correctly by 94.1% in Cuba and by 8.0% in the Democratic Republic of the Congo (Hermans, V., Monzote, L., Van den Sande, B. et al., "Assessment of the knowledge of graphical symbols labelled on malaria rapid diagnostic tests in four international settings," *Malaria Journal*, 10:331, 2011).
 
@@ -531,7 +537,7 @@ First, scale. There are 739 million non-literate adults, and in some regions the
 
 Second, cost. Medication errors generate 42 billion dollars a year in costs (World Health Organization, *Medication Without Harm: WHO Global Patient Safety Challenge*, WHO/HIS/SDS/2017.6, 2017), and in 2019 deaths directly attributable to bacterial antimicrobial resistance numbered 1.27 million, more than HIV/AIDS or malaria (Murray, C. J. L. et al. (Antimicrobial Resistance Collaborators), "Global burden of bacterial antimicrobial resistance in 2019: a systematic analysis," *The Lancet*, 399(10325):629–655, 2022). In 2023 data, one in six laboratory-confirmed bacterial infections showed resistance to antibiotics (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025).
 
-Third, the effect and the limits of visual methods. Pictures are remembered better than text (Houts, P. S., Doak, C. C., Doak, L. G. & Loscalzo, M. J., "The role of pictures in improving health communication," *Patient Education and Counseling*, 61(2):173–190, 2006), yet of 108 pharmaceutical pictograms actually produced only 17 passed the ANSI criterion (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
+Third, the effect and the limits of visual methods. Pictures are remembered better than text (Houts, P. S., Doak, C. C., Doak, L. G. & Loscalzo, M. J., "The role of pictures in improving health communication," *Patient Education and Counseling*, 61(2):173–190, 2006), yet when 108 pharmaceutical pictograms actually produced were tested on 52 Filipino adults only 17 passed the ANSI criterion (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
 
 Fourth, the structural constraint of the standard. The 81 USP symbols are prohibited from being combined, so a compound instruction cannot be made into a single picture (USP Pictogram Library License Agreement).
 
@@ -1804,7 +1810,7 @@ It should be made clear that what this evaluation measured is the arrival of inf
 
 ### 5.2 A procedure for verifying pictogram comprehension
 
-As established in §1.8, making a pictogram does not mean it will be read. Of 108 international standard pictograms, only 17 passed the ANSI 85% criterion (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
+As established in §1.8, making a pictogram does not mean it will be read. When 108 international standard pictograms were tested on 52 Filipino adults, only 17 passed the ANSI 85% criterion (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
 
 Comprehension testing requires assembling people, however, so it is expensive and hard to repeat. As a result most pictogram sets are evaluated after they are built, and by the time a problem is found they have already been released.
 
