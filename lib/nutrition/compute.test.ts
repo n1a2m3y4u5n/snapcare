@@ -4,6 +4,7 @@ import {
   portionGrams, amountsFor, sumAmounts, assess, deriveFlags, flagsForMember, summarize,
 } from './compute.ts';
 import { referenceFor } from './reference.ts';
+import { barSentence, colorFor } from './barText.ts';
 import type { NutrientProfile } from './types.ts';
 import type { Member } from '../snapcare/types.ts';
 
@@ -90,4 +91,21 @@ test('요약 문장은 수치를 읽지 못하는 사용자를 위한 것이다'
   assert.match(summarize(assess({ saturatedFat: 15 }, ref))!, /saturated fat/, '변수명이 그대로 나가면 안 된다');
   assert.match(summarize(assess({ fiber: 8 }, ref))!, /Good source/);
   assert.equal(summarize(assess({ sugars: 1 }, ref)), null, '할 말이 없으면 아무 말도 하지 않는다');
+});
+
+test('모자란 목표 영양소에 할 말이 있다', () => {
+  // 한도가 높으면 "That is high", 목표가 충분하면 "good amount" 인데, 목표가 모자랄
+  // 때는 문장이 비어 있었다. 소리로만 듣는 사람에게는 부족하다는 사실이 도착하지 않는다.
+  const low = { key: 'protein', kind: 'target', amount: 3, reference: 58, pct: 5, level: 'low' } as const;
+  assert.match(barSentence(low), /not much yet/i);
+  const good = { key: 'protein', kind: 'target', amount: 20, reference: 58, pct: 34, level: 'good' } as const;
+  assert.match(barSentence(good), /good amount/i);
+});
+
+test('모자란 것을 빨강으로 칠하지 않는다', () => {
+  // 결핍은 위험 신호가 아니라 채우면 되는 것이다. 빨강은 "먹지 말라" 로 읽힌다.
+  const low = { key: 'protein', kind: 'target', amount: 3, reference: 58, pct: 5, level: 'low' } as const;
+  assert.ok(!colorFor(low).includes('avoid'), colorFor(low));
+  const over = { key: 'sugars', kind: 'limit', amount: 60, reference: 50, pct: 120, level: 'high' } as const;
+  assert.ok(colorFor(over).includes('avoid'), colorFor(over));
 });

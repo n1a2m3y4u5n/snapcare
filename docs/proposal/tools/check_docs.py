@@ -17,8 +17,29 @@
   · 두 판에서 그림이 같은 자리에 있는가
   · 두 판이 절마다 비슷한 수의 상호 참조를 갖는가
   · 인용이 이름과 해만 적혀 있지 않은가
+  · 서식으로 뽑은 뒤 표와 그림이 성한가
+  · 화면 캡처가 지금 앱보다 낡지 않았는가
+  · 소제목에 번호가 붙어 있는가
+  · 도판에서 글자가 상자를 넘거나 겹치지 않는가
+  · 본문 인용이 부록 원문과 글자까지 같은가
+  · 응답자 명단의 수가 실제 응답 수와 같은가
+  · 캡처 캡션의 "스크롤 없이" 주장이 파일 높이와 맞는가
+  · 같은 번호의 표가 두 판에서 행 수가 같은가
+  · 절마다 문단 수가 두 판에서 같은가
+  · 그림 설명이 그림 바로 아래에 있는가
+  · 본문의 검정 횟수와 Bonferroni 문턱이 실제와 같은가
+  · 본문이 인용한 코드가 저장소 파일과 같은가
+  · 본문이 든 형태소 이름이 사전에 그대로 있는가
+  · 그림 33 의 채움 점수가 파서가 내는 값과 같은가
+  · 같은 출처가 두 가지 모양으로 적히지 않았는가
+  · 표 29 의 시험 수가 실제로 돌린 결과와 같은가
+  · 우리 산문의 표기가 한 가지로 통일되어 있는가
+  · 응답자를 부를 때 직책이 표 41 과 같은가
+  · 빌드된 문서에서 주소가 눌리는가
+  · 표 20 의 명도 대비가 계산과 같고 그 색이 실제로 쓰이는가
 """
 import re
+import sys
 import sys
 from pathlib import Path
 
@@ -140,7 +161,11 @@ def short_cites(f: str) -> list:
         t = m.group(1)
         if not re.search(r'(19|20)\d\d', t):
             continue
-        if '*' in t or '"' in t:
+        # *p* *r* *n* 같은 통계 기호는 이탤릭이지만 제목이 아니다.
+        # 이것을 제목으로 세다가 (Dowse et al., 2023: *p* = 0.002) 를
+        # 놓쳤다. 영어판에서 표본 수·평균·상관계수가 함께 빠져 있었다.
+        bare = re.sub(r'\*[A-Za-z]{1,3}\*', '', t)
+        if '*' in bare or '"' in bare:
             continue
         # 연도만 있는 괄호와 조사 시점 표기는 인용이 아니다
         if re.fullmatch(r'[\d\-~. ]+(기준|census round)?', t.strip()):
@@ -151,6 +176,24 @@ def short_cites(f: str) -> list:
         if re.fullmatch(r'as of \d+ \w+ \d{4}|\d{4}-\d\d-\d\d 기준', t.strip()):
             continue
         out.append(t)
+    return out
+
+
+# 같은 수치가 두 곳에 다르게 적히는 일을 막는다. 실제로 5.7 이 345,
+# 표 28 이 347 로 갈렸던 적이 있다.
+PAIRED = (
+    (r'웹 앱 \(`node --test`\) \| (\d+)', r'시험은 231개에서 (\d+)개가'),
+    (r'Web app \(`node --test`\) \| (\d+)', r'went from 231 to (\d+)'),
+)
+
+
+def paired(f: str) -> list:
+    s = (DOC / f).read_text()
+    out = []
+    for a, b in PAIRED:
+        ma, mb = re.search(a, s), re.search(b, s)
+        if ma and mb and ma.group(1) != mb.group(1):
+            out.append(f'웹 앱 시험 수 {ma.group(1)} 대 {mb.group(1)}')
     return out
 
 
@@ -171,10 +214,797 @@ def sec_refs(f: str) -> dict:
     return out
 
 
+def built(path: Path) -> tuple:
+    """만들어진 서식에서 문단·표·그림을 꺼낸다. 중첩 표 안까지 들어간다."""
+    import docx
+    d = docx.Document(str(path))
+    ps, tabs = [], []
+
+    def walk(c):
+        for para in c.paragraphs:
+            ps.append(para.text)
+        for t in getattr(c, 'tables', []):
+            tabs.append(t)
+            for r in t.rows:
+                for cc in r.cells:
+                    walk(cc)
+
+    walk(d)
+    for t in d.tables:
+        tabs.append(t)
+        for r in t.rows:
+            for cc in r.cells:
+                walk(cc)
+    return ps, tabs, d.inline_shapes
+
+
+def built_faults(path: Path) -> list:
+    """서식으로 뽑고 나서야 보이는 것들. 원본 마크다운으로는 알 수 없다."""
+    ps, tabs, shapes = built(path)
+    out = []
+    txt = '\n'.join(ps)
+
+    if '\ufffd' in txt:
+        out.append(f'깨진 글자 {txt.count(chr(0xfffd))}개')
+
+    for t in tabs:
+        if len(t.rows) < 2:
+            continue
+        if len({len(r.cells) for r in t.rows}) > 1:
+            head = ' | '.join(c.text[:12] for c in t.rows[0].cells)
+            out.append(f'표의 행마다 열 수가 다르다 — {head}')
+        for r in t.rows:
+            if all(not c.text.strip() for c in r.cells):
+                out.append(f'표에 빈 행 — {t.rows[0].cells[0].text[:20]}')
+                break
+
+    for i, sh in enumerate(shapes, 1):
+        h = sh.height / 914400
+        if h > 5.4:
+            out.append(f'{i}번째 그림이 {h:.1f}인치로 높다')
+    return out
+
+
+# 화면 캡처는 앱이 바뀌면 낡는다. 낡아도 아무 표시가 나지 않는 것이 문제라,
+# 마지막으로 뜬 날과 화면 코드가 마지막으로 바뀐 날을 견준다. 실제로 캡처가
+# 7월 29일이고 화면 코드가 8월 3일이던 적이 있고, 그 캡처는 본문이 걷어냈다고
+# 적은 스피커 원과 본문이 고쳤다고 적은 냉장 오류를 그대로 담고 있었다.
+SHOT_FILES = ('fig01_home.png', 'fig04_camera.png', 'fig05_processing.png',
+              'fig06_verdict_rx.png', 'fig07_verdict_label.png', 'fig08_today.png',
+              'fig09_device.png', 'fig12_onboarding.png', 'fig13_profile.png')
+UI_PATHS = ('app', 'components')
+
+
+def _last_commit(path: str) -> str:
+    import subprocess
+    try:
+        return subprocess.run(
+            ['git', 'log', '-1', '--format=%ct', '--', path],
+            cwd=DOC.parents[1], capture_output=True, text=True, timeout=20,
+        ).stdout.strip()
+    except Exception:
+        return ''
+
+
+def stale_shots() -> list:
+    """캡처가 화면 코드보다 낡았는지 본다.
+
+    파일별 커밋 시각으로만 견주면 오탐이 난다. 화면이 바뀌어도 그 화면을
+    담지 않은 캡처는 픽셀이 같아 커밋에 담기지 않고, 그러면 옛 시각인
+    채로 남는다. 그래서 **가장 최근에 다시 뜬 캡처** 를 기준으로 본다.
+    한 장이라도 화면 코드보다 뒤라면 그때 전부 다시 떴다는 뜻이다."""
+    ui = max((int(t) for t in (_last_commit(p) for p in UI_PATHS) if t), default=0)
+    if not ui:
+        return []
+    times = [(f, _last_commit(f'docs/proposal/fig/{f}')) for f in SHOT_FILES]
+    newest = max((int(t) for _, t in times if t), default=0)
+    if newest >= ui:
+        return []
+    out = [f for f, t in times if t and int(t) < ui]
+    if out:
+        import datetime as dt
+        d = dt.datetime.fromtimestamp(ui).date()
+        return [f'화면 코드가 {d} 에 바뀐 뒤 다시 뜨지 않은 캡처 {len(out)}장: '
+                + ', '.join(out[:4]) + (' …' if len(out) > 4 else '')]
+    return []
+
+
+def unnumbered_subs(f: str) -> list:
+    """번호 없는 소제목을 찾는다.
+
+    본문 소제목이 스물여덟 개인데 번호가 없으면 목차에서 어느 절에 딸린
+    것인지 보이지 않고, 서로 참조할 방법도 없다."""
+    s = (DOC / f).read_text()
+    s = s[:s.index('### 5.11')]
+    return re.findall(r'^#### (?!\d+\.\d+\.\d+ )(.+)$', s, re.M)
+
+
+def fig_faults() -> list:
+    """check_figs.py 를 불러 도판의 글자 겹침을 함께 본다.
+
+    따로 돌리게 두면 잊는다. 이 파일 하나만 돌리면 다 보이게 한다."""
+    import subprocess
+    r = subprocess.run(
+        [sys.executable, str(DOC / 'tools' / 'check_figs.py')],
+        capture_output=True, text=True, timeout=180,
+    )
+    if r.returncode == 0:
+        return []
+    return [ln.strip() for ln in r.stdout.splitlines()
+            if ln.strip() and not ln.startswith('도판에서')]
+
+
+def quote_drift(f: str = 'proposal_ko.md') -> list:
+    """본문의 인용 블록이 부록의 원문과 글자 단위로 같은지 본다.
+
+    두 판 모두 응답자의 말을 조용히 다듬고 있었다. 한글판은 오타를
+    바로잡았고("팩토그램" → "픽토그램"), 영어판은 응답자의 영어를 다시
+    썼다("the prescription read not to use the eyedrops in pregnancy" 를
+    매끄러운 문장으로). 읽기는 나아지지만 인용이 아니게 된다.
+
+    한글판에서는 우리말 인용만 본다. 영어 응답을 옮긴 자리는 원문과 다른
+    것이 맞고, 출처에 "옮김" 이 적혀 있으면 넘어간다."""
+    s = (DOC / f).read_text()
+    body, app = s[:s.index('### 5.11')], s[s.index('### 5.11'):]
+    flat = re.sub(r'\s+', ' ', app)
+    out = []
+    # 인용 줄과 바로 다음 출처 줄을 함께 본다. 출처에 "옮김" 이 적혀 있으면
+    # 영어로 답한 것을 우리말로 옮긴 자리이므로 원문과 다른 것이 맞다.
+    lines = body.splitlines()
+    for i, ln in enumerate(lines):
+        m = re.match(r'^> "([^"]{24,})"$', ln)
+        if not m:
+            continue
+        q = m.group(1)
+        if f.endswith('_ko.md') and not re.search(r'[가-힣]', q):
+            continue
+        src = lines[i + 1] if i + 1 < len(lines) else ''
+        # 출처가 사람이 아닌 인용은 부록에 없는 것이 맞다. 화면 문구나
+        # 코드 주석을 옮긴 자리이며, 출처 줄이 그것을 밝힌다.
+        if '옮김' in src or 'Settings screen' in src or '설정 화면' in src:
+            continue
+        if re.sub(r'\s+', ' ', q)[:36] not in flat:
+            out.append(q[:56])
+    return out
+
+
+def roster_count() -> list:
+    """표 42 의 응답자 수가 실제 응답 수와 같은지 본다.
+
+    이름 표기는 표 42 에서 정규화한다(Vucicevic → Vučićević, 소문자 성 →
+    대문자). 그래서 문자열로 대조하면 오탐이 난다. 수만 견준다."""
+    import openpyxl
+    xl = (Path.home() / 'Desktop/Claude/snapcare-survey/scratchpad'
+          / 'SnapCare_설문응답.xlsx')
+    if not xl.is_file():
+        return []
+    ws = openpyxl.load_workbook(xl, data_only=True)['응답']
+    n_data = ws.max_row - 1
+
+    s = (DOC / 'proposal_ko.md').read_text()
+    i = s.index(f'[표 {table_no("전원이 실명") or 42}]')
+    names = []
+    for ln in s[i:].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if names:
+                break
+            continue
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        if len(c) >= 4 and c[0] and c[0] != '성함' and '---' not in c[0] \
+                and not c[0].startswith('**'):
+            names.append(c[0])
+    if len(names) != n_data:
+        return [f'표 41 이 {len(names)}명인데 응답은 {n_data}건이다']
+    return []
+
+
+# 촬영 뷰포트. shots.mjs 의 defaultViewport 와 같아야 한다.
+SHOT_VIEWPORT_PX = 812 * 2
+
+
+def fold_claims() -> list:
+    """캡션이 "스크롤 없이 보이는 만큼" 이라 하는데 파일이 그보다 긴가.
+
+    화면 캡처는 fullPage 로 찍으므로 스크롤해야 닿는 부분까지 들어온다.
+    그것을 "스크롤하지 않고 보이는 만큼" 이라고 적으면 독자는 이 전부가
+    한눈에 들어온다고 읽는다. 실제로 그림 15 가 그랬다. 캡션은 그렇게
+    적혀 있었고 파일은 750x2180, 뷰포트는 750x1624 였다.
+
+    지금은 접히는 자리에 붉은 선을 긋고 아래를 옅게 덮는다(shots.mjs 의
+    markFold). 이 검사는 그 선 없이 주장만 되살아나는 것을 막는다."""
+    from PIL import Image
+    CLAIM = ('스크롤하지 않고 보이는 만큼', '스크롤 없이 보이는 만큼',
+             'visible without scrolling', 'without having to scroll')
+    out = []
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        lines = (DOC / f).read_text().splitlines()
+        for i, ln in enumerate(lines):
+            m = re.match(r'!\[[^\]]*\]\((fig(?:_en)?/[^)]+\.png)\)', ln.strip())
+            if not m:
+                continue
+            img = DOC / m.group(1)
+            if not img.is_file():
+                continue
+            h = Image.open(img).height
+            if h <= SHOT_VIEWPORT_PX:
+                continue
+            cap = ' '.join(lines[i + 1:i + 4])
+            for c in CLAIM:
+                if c in cap and '붉은 선' not in cap and 'red line' not in cap:
+                    out.append(f'{f}: {m.group(1)} 는 {h}px 인데(뷰포트 '
+                               f'{SHOT_VIEWPORT_PX}px) 캡션이 "{c}" 라 한다')
+    return out
+
+
+def table_parity() -> list:
+    """같은 번호의 표가 두 판에서 행 수가 같은가.
+
+    영어판 표 22 에 "종이 서식 판독" 행이 없었다. 한글판에는 있고
+    §4.4 가 그것만 다루는 절인데도 그랬다. 표를 한쪽에만 더하면
+    이렇게 조용히 갈린다.
+
+    행 수만 견준다. 셀 안의 말은 언어가 다르므로 견줄 수 없다."""
+    def rows(f: str) -> dict:
+        out, cur = {}, None
+        for ln in (DOC / f).read_text().splitlines():
+            m = re.match(r'^\[(?:표|Table) (\d+)\]', ln)
+            if m:
+                cur = m.group(1)
+                out[cur] = 0
+                continue
+            if cur is None:
+                continue
+            t = ln.strip()
+            if t.startswith('|'):
+                if not set(t) <= set('|- :'):      # 구분선은 세지 않는다
+                    out[cur] += 1
+            elif t:
+                cur = None
+        return out
+    a, b = rows('proposal_ko.md'), rows('proposal_en.md')
+    out = [f'표 {k}: 한글에만 있다' for k in sorted(set(a) - set(b), key=int)]
+    out += [f'표 {k}: 영어에만 있다' for k in sorted(set(b) - set(a), key=int)]
+    out += [f'표 {k} 의 행 수가 다르다 (한글 {a[k]} · 영어 {b[k]})'
+            for k in sorted(set(a) & set(b), key=int) if a[k] != b[k]]
+    return out
+
+
+def para_parity() -> list:
+    """절마다 문단 수가 두 판에서 같은가.
+
+    번역하며 문단이 통째로 빠지는 것을 잡는다. 실제로 §3.5.1 에서
+    영어판이 훑어 듣기가 들어오기 전의 설계를 그대로 서술하고 있었고
+    (표 17 의 한 행과 두 문단), §4.1 의 표 22 에서 행 하나가 없었다.
+
+    코드 블록은 뺀다. 영어 주석이 길어 두 줄로 접히므로 언제나 어긋난다.
+    말의 길이는 견주지 않는다. 언어가 다르면 길이도 다르다."""
+    def secs(f: str) -> dict:
+        out, cur, buf, fence = {}, None, [], False
+        for ln in (DOC / f).read_text().splitlines():
+            if ln.strip().startswith('```'):
+                fence = not fence
+                continue
+            if fence:
+                continue
+            m = re.match(r'^#{2,4}\s*(\d+\.\d+(?:\.\d+)?)', ln)
+            if m:
+                if cur:
+                    out[cur] = buf
+                cur, buf = m.group(1), []
+            elif cur is not None and ln.strip():
+                buf.append(ln.strip())
+        if cur:
+            out[cur] = buf
+        return out
+    a, b = secs('proposal_ko.md'), secs('proposal_en.md')
+    return [f'§{k} 의 문단 수가 다르다 (한글 {len(a[k])} · 영어 {len(b[k])})'
+            for k in sorted(set(a) & set(b), key=lambda x: [int(i) for i in x.split('.')])
+            if len(a[k]) != len(b[k])]
+
+
+def caption_place() -> list:
+    """그림 캡션이 그림 아래에 있는가, 그리고 바로 붙어 있는가.
+
+    학술 관례는 표 설명이 표 위, 그림 설명이 그림 아래다. 두 판 모두
+    섞여 있었다. 한글판은 46개 중 8개, 영어판은 21개가 그림 위에
+    있었고, 그림 45 는 캡션과 그림 사이에 문단이 셋 끼어 있었다.
+    빌드가 원고 순서를 그대로 옮기므로 독자는 그림보다 설명을 먼저
+    읽게 된다."""
+    out = []
+    for f, cre, ire in (('proposal_ko.md', r'^\*\*\[그림 (\d+)\]', r'^!\[그림 (\d+)\]'),
+                        ('proposal_en.md', r'^\*\*\[Figure (\d+)\]', r'^!\[Figure (\d+)\]')):
+        lines = (DOC / f).read_text().splitlines()
+        pos = {}
+        for i, ln in enumerate(lines):
+            m = re.match(cre, ln)
+            if m:
+                pos.setdefault(m.group(1), {})['cap'] = i
+            m = re.match(ire, ln)
+            if m:
+                pos.setdefault(m.group(1), {})['img'] = i
+        for n, v in sorted(pos.items(), key=lambda kv: int(kv[0])):
+            if 'cap' not in v or 'img' not in v:
+                continue
+            if v['cap'] < v['img']:
+                out.append(f'{f}: 그림 {n} 의 설명이 그림 위에 있다')
+            elif v['cap'] - v['img'] > 2:
+                out.append(f'{f}: 그림 {n} 과 그 설명 사이에 '
+                           f'{v["cap"] - v["img"] - 1}줄이 끼어 있다')
+    return out
+
+
+def bonferroni() -> list:
+    """본문이 적은 검정 횟수와 보정 문턱이 실제로 돌린 것과 같은가.
+
+    survey_stats.py 에 TESTS = 5 가 손으로 박혀 있었는데 실제로 돌리는
+    검정은 여섯이었다. 다섯으로 세면 문턱이 0.010 이 되어 실제인
+    0.0083 보다 느슨해진다. 우리에게 유리한 쪽으로 틀린 셈이었다.
+    결론은 바뀌지 않았으나(p = 0.0078) 여유가 0.0005 로 좁다."""
+    src = (DOC / 'tools/survey_stats.py').read_text()
+    n = len(re.findall(r'=\s*stats\.(?:fisher_exact|mannwhitneyu|spearmanr)\(', src))
+    if n == 0:
+        return ['survey_stats.py 에서 검정 호출을 찾지 못했다']
+    thr = 0.05 / n
+    out = []
+
+    ko = (DOC / 'proposal_ko.md').read_text()
+    m = re.search(r'검정을 (\S+) 번 돌렸으므로 Bonferroni 보정 문턱은 (\d+\.\d+)', ko)
+    if not m:
+        out.append('한글판에서 Bonferroni 문장을 찾지 못했다')
+    else:
+        WORD = {'한': 1, '두': 2, '세': 3, '네': 4, '다섯': 5, '여섯': 6,
+                '일곱': 7, '여덟': 8, '아홉': 9, '열': 10}
+        said = WORD.get(m.group(1), None)
+        if said != n:
+            out.append(f'한글판이 검정을 {m.group(1)} 번이라 하는데 실제는 {n}회다')
+        if abs(float(m.group(2)) - thr) > 5e-5:
+            out.append(f'한글판 문턱 {m.group(2)} 인데 0.05/{n} = {thr:.4f} 다')
+
+    en = (DOC / 'proposal_en.md').read_text()
+    m = re.search(r'(\w+) tests were run, so the Bonferroni-corrected '
+                  r'threshold is (\d+\.\d+)', en)
+    if not m:
+        out.append('영어판에서 Bonferroni 문장을 찾지 못했다')
+    else:
+        WORD = {'One': 1, 'Two': 2, 'Three': 3, 'Four': 4, 'Five': 5,
+                'Six': 6, 'Seven': 7, 'Eight': 8, 'Nine': 9, 'Ten': 10}
+        if WORD.get(m.group(1)) != n:
+            out.append(f'영어판이 검정을 {m.group(1)} 이라 하는데 실제는 {n}회다')
+        if abs(float(m.group(2)) - thr) > 5e-5:
+            out.append(f'영어판 문턱 {m.group(2)} 인데 0.05/{n} = {thr:.4f} 다')
+    return out
+
+
+def code_drift() -> list:
+    """본문이 인용한 코드가 저장소의 파일과 같은가.
+
+    세 곳이 달랐다. 서비스워커 인용에는 실물에 있는 관문 둘(GET 만,
+    같은 출처만)이 없었고, 알레르기 추론 인용은 소스에 없는 주석을
+    달고 줄을 합쳤으며, SIGIL 파서 인용은 `if not in_slot:` 이었는데
+    실물은 `if not in_slot and not self.m.get(name).standalone:` 이다.
+    마지막 것은 문서 자신과도 어긋났다 — §2.2 가 홀로 설 수 있는
+    수식어가 넷이라고 적고 있는데 인용된 파서는 그럴 수 없다고 한다.
+
+    공백을 지우고 견준다. 줄바꿈 자리는 원고 폭 때문에 다를 수 있고
+    그것까지 잡으면 쓸 수 없는 검사가 된다. `...` 은 줄임 표시이므로
+    건너뛰고, 주석은 줄일 수 있게 두되 코드 줄은 하나도 어긋나면
+    안 된다."""
+    root = DOC.parent.parent
+    src = []
+    for pat in ('*.ts', '*.tsx', '*.py', '*.js', '*.mjs'):
+        for f in root.rglob(pat):
+            sp = str(f)
+            if 'node_modules' in sp or '/.venv' in sp or '/docs/proposal/' in sp:
+                continue
+            try:
+                src.append(re.sub(r'\s+', ' ', f.read_text()))
+            except OSError:
+                continue
+    out = []
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        body = (DOC / f).read_text()
+        for m in re.finditer(r'```(ts|python|js|mjs)\n(.*?)```', body, re.S):
+            block = False          # /* … */ 안인가
+            for ln in m.group(2).splitlines():
+                t = ln.strip()
+                if t.startswith('/*') or t.startswith('\"\"\"'):
+                    block = True
+                if block:
+                    if t.endswith('*/') or (t.endswith('\"\"\"') and len(t) > 3):
+                        block = False
+                    continue
+                if (not t or t == '...' or t.startswith(('//', '#', '*'))
+                        or len(t) < 14):
+                    continue
+                # 줄 끝에 붙인 설명 주석은 떼고 견준다. 본문이 읽는
+                # 사람을 위해 덧붙이는 것이고 코드가 아니다. 코드가
+                # 달라진 것만 잡는 것이 이 검사의 목적이다.
+                code = re.sub(r'\s+(//|#)\s.*$', '', ln)
+                n = re.sub(r'\s+', ' ', code).strip()
+                if len(n) < 14:
+                    continue
+                if not any(n in x for x in src):
+                    out.append(f'{f}: 저장소에 없는 코드 줄 — {t[:66]}')
+    return out
+
+
+def morpheme_names() -> list:
+    """본문이 든 형태소 이름이 사전에 그대로 있는가.
+
+    표 33 이 `tree_nut` 과 `sugar` 로 적고 있었는데 사전의 이름은
+    `allergen_tree_nut` 과 `food_sugar` 다. 이름을 줄여 적으면 심사자가
+    저장소에서 찾지 못한다. 78종을 만들었다는 주장의 근거가 이 이름들이다.
+
+    플래그(`lib/snapcare/types.ts` 의 ItemFlag)는 형태소와 다른 이름
+    공간이며 `peanut`, `high_salt` 처럼 짧다. 그것까지 잡으면 오탐이
+    되므로 함께 읽어 예외로 둔다."""
+    import json
+    root = DOC.parent.parent
+    dic = root / 'engine/dictionary.json'
+    typ = root / 'lib/snapcare/types.ts'
+    if not dic.is_file() or not typ.is_file():
+        return []
+    d = json.loads(dic.read_text())
+    names = set()
+    for k in ('heads', 'modifiers', 'composition_operators', 'frame'):
+        v = d.get(k, {})
+        names |= (set(v) if isinstance(v, dict)
+                  else {x if isinstance(x, str) else x.get('name') for x in v})
+    names.discard(None)
+    t = typ.read_text()
+    flags = set(re.findall(r"'([a-z_]+)'", t.split('ItemFlag =')[1].split(';')[0]))
+
+    out = []
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        body = re.sub(r'```.*?```', '', (DOC / f).read_text(), flags=re.S)
+        seen = set()
+        for m in re.finditer(r'`(\\?[a-z][a-z0-9_]*)`', body):
+            n = m.group(1).lstrip('\\')
+            if n in names or n in flags or n in seen:
+                continue
+            near = [x for x in names if x.endswith('_' + n)]
+            if near:
+                seen.add(n)
+                out.append(f'{f}: `{n}` 은 사전에 없다 — {near[0]} 를 줄여 적었다')
+    return out
+
+
+def sheet_scores() -> list:
+    """그림 33 의 캡션이 말하는 채움 점수가 파서가 실제로 내는 값인가.
+
+    캡션이 "0.67~0.71 대 0.00~0.04" 라고 적고 있었는데 파서를 돌리면
+    고른 칸이 0.546~0.741 이다. 가장 낮은 금요일 0.546 이 빠져서
+    간격이 실제보다 깨끗해 보였다. 우리에게 유리한 쪽으로 틀린 것이다.
+
+    파서를 실제로 돌려 견준다. 사진 한 장이라 1초가 안 걸린다."""
+    import json
+    import subprocess
+    root = DOC.parent.parent
+    photo = DOC / 'fig/parts/_sheet_photo.png'
+    cli = root / 'pill_dispenser/form_sheet_parser/parse_cli.py'
+    py = DOC / '.venv-doc/bin/python'
+    if not (photo.is_file() and cli.is_file() and py.is_file()):
+        return []
+    try:
+        r = json.loads(subprocess.run([str(py), str(cli), str(photo)],
+                                      capture_output=True, text=True,
+                                      timeout=120).stdout)
+    except Exception as e:                       # 파서가 없거나 못 돌면 넘어간다
+        return [f'그림 33 의 파서를 돌리지 못했다: {e}']
+    if not r.get('ok'):
+        return ['그림 33 의 파서가 사진을 읽지 못했다']
+    chosen, rest = [], []
+    for field, cells in r['scores'].items():
+        pick = r['values'][field]
+        pick = pick if isinstance(pick, list) else [pick]
+        for name, v in cells.items():
+            (chosen if name in pick else rest).append(v)
+    lo, hi = min(chosen), max(chosen)
+    rlo, rhi = min(rest), max(rest)
+    want = (f'{lo:.2f}', f'{hi:.2f}', f'{rlo:.2f}', f'{rhi:.2f}')
+    out = []
+    for f, sep in (('proposal_ko.md', '~'), ('proposal_en.md', '–')):
+        body = (DOC / f).read_text()
+        m = re.search(r'\(([\d.]+)[~–]([\d.]+) (?:대|against) ([\d.]+)[~–]([\d.]+)\)', body)
+        if not m:
+            out.append(f'{f}: 그림 33 의 점수 범위를 찾지 못했다')
+            continue
+        if m.groups() != want:
+            out.append(f'{f}: 그림 33 이 {m.group(0)} 라 하는데 파서는 '
+                       f'({want[0]}~{want[1]} 대 {want[2]}~{want[3]}) 다')
+    return out
+
+
+def cite_shape() -> list:
+    """같은 출처가 두 가지 모양으로 적히지 않았는가.
+
+    §1.11 의 요약 문장이 세 논문을 제목 없이 약칭 학술지로 적고
+    있었다 — *Arch Pediatr Adolesc Med*, *Res Social Adm Pharm*,
+    *J Pharm Policy Pract*. 같은 논문이 다른 자리에서는 제목과 정식
+    학술지명으로 나온다. 대장이 "나오는 자리마다 전체로 적는다" 고
+    적어 둔 규칙과 어긋난다.
+
+    Murray 등 2022 는 한쪽에서 부제가 빠져 있었다."""
+    out = []
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        s = (DOC / f).read_text()
+        s = s[:s.index('### 5.11')] if '### 5.11' in s else s
+
+        # 1) 같은 저자·연도에 제목이 둘 이상
+        by = {}
+        for au, ti, yr in re.findall(
+                r'\(([A-Z][\w.\'\- ]+(?:,[^,"]*)*?),\s*"([^"]+),"[^)]*?((?:19|20)\d\d)', s):
+            by.setdefault((au.split(',')[0].strip(), yr), set()).add(ti)
+        for (au, yr), ts in sorted(by.items()):
+            if len(ts) > 1:
+                out.append(f'{f}: {au} {yr} 의 제목이 {len(ts)}가지다 — '
+                           + ' / '.join(sorted(t[:48] for t in ts)))
+
+        # 2) 제목 없이 저자·학술지만 적은 인용
+        # 학술지 인용만 본다 — 이탤릭 뒤에 권:쪽이 따라오는 모양이다.
+        # 보고서와 단행본은 이탤릭이 곧 제목이므로 걸면 안 된다
+        # (Paivio 의 단행본, GSMA·FARE 의 보고서가 그렇다).
+        for m in re.finditer(r'\(([A-Z][\w.\'\- ]+(?:[,&][^()"]*?)?),\s*'
+                             r'\*([^*]+)\*,\s*\d+(?:\(\d+\))?:[\d–\-]+,\s*(?:19|20)\d\d', s):
+            if '"' in m.group(0):
+                continue
+            out.append(f'{f}: 제목 없이 학술지만 적은 인용 — {m.group(0)[:76]}')
+    return out
+
+
+def test_counts() -> list:
+    """표 29 의 시험 수가 실제로 돌린 결과와 같은가.
+
+    표가 웹 앱 347개(346 통과·1 실패)라고 적고 있었는데 돌려 보니
+    360개(359 통과·1 실패)였다. 실패의 설명도 달랐다 — 표는 "조건
+    추적 모듈의 기본값" 이라 했으나 실제로는 kit.test.ts 가 불러오는
+    데서 멈춘다. 그 파일의 시험이 한 개도 돌지 않으므로 실패 한 건이
+    아니라 파일 하나가 통째로 재어지지 않는 상태였다.
+
+    SNAPCARE_SKIP_TESTS=1 이면 건너뛴다. 세 갈래를 다 돌리면 40초쯤
+    걸리므로 문서만 고칠 때는 끌 수 있어야 한다."""
+    import os
+    import subprocess
+    if os.environ.get('SNAPCARE_SKIP_TESTS'):
+        return []
+    root = DOC.parent.parent
+    py = DOC / '.venv-doc/bin/python'
+    if not (root / 'package.json').is_file():
+        return []
+    # 의존성이 없으면 세 파일이 zustand 에서 멈춰 시험이 360 에서 335 로
+    # 준다. 그 상태로 세면 표가 틀렸다고 잘못 말한다. 표 28 이 적어 둔
+    # 조건(`npm ci`)과 같은 자리에서 재야 한다.
+    if not (root / 'node_modules').exists():
+        return ['node_modules 가 없어 시험 수를 셀 수 없다 — 표 28 이 '
+                '`npm ci` 를 조건으로 적고 있으므로 먼저 설치해야 한다']
+
+    got = {}
+    try:
+        r = subprocess.run(['node', '--test'], cwd=root, capture_output=True,
+                           text=True, timeout=600).stdout
+        m = {k: int(v) for k, v in re.findall(r'^\u2139 (\w+) (\d+)$', r, re.M)}
+        if 'tests' in m:
+            got['웹 앱'] = (m['tests'], m.get('pass', 0), m.get('fail', 0))
+    except Exception as e:
+        return [f'웹 앱 시험을 돌리지 못했다: {e}']
+
+    if py.is_file():
+        for name, paths in (('종이 서식·클라우드 릴레이', ['pill_dispenser/form_sheet_parser',
+                                         'pill_dispenser/cloud_relay']),
+                            ('기기 펌웨어', ['pill_dispenser/firmware'])):
+            try:
+                r = subprocess.run([str(py), '-m', 'pytest', *paths, '-q'], cwd=root,
+                                   capture_output=True, text=True, timeout=900).stdout
+                m = re.search(r'(?:(\d+) passed)(?:, (\d+) skipped)?', r)
+                if m:
+                    p_, sk = int(m.group(1)), int(m.group(2) or 0)
+                    got[name] = (p_ + sk, p_, 0)
+            except Exception:
+                pass
+
+    body = (DOC / 'proposal_ko.md').read_text()
+    i = body.index(f'[표 {table_no("세 갈래의 시험") or 28}]')
+    rows = {}
+    for ln in body[i:].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if rows:
+                break
+            continue
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        if len(c) >= 3 and c[1].isdigit():
+            rows[c[0].split('(')[0].strip()] = int(c[1])
+
+    out = []
+    for k, (n, _p, _f) in got.items():
+        said = rows.get(k)
+        if said is None:
+            out.append(f'표 28 에 "{k}" 행이 없다')
+        elif said != n:
+            out.append(f'표 29 의 {k} 이 {said} 인데 돌려 보니 {n} 이다')
+    return out
+
+
+# 우리 산문에서 한 가지로 써야 하는 말. 왼쪽이 틀린 표기다.
+# 인용과 표, 부록은 보지 않는다 — 응답자가 쓴 말을 우리가 고르게
+# 만들면 그것은 인용이 아니게 된다. 실제로 "팩토그램" 은 응답자가
+# 그렇게 적은 것이고 그대로 두어야 한다.
+SPELLING = {
+    '건강문해력': '건강 문해력',      # 저건강문해력 은 합성어라 예외로 둔다
+    '복약순응': '복약 순응',
+    '서비스 워커': '서비스워커',
+    '손 글씨': '손글씨',
+}
+
+
+def spelling() -> list:
+    out = []
+    for f in ('proposal_ko.md',):
+        body = (DOC / f).read_text()
+        cut = body.index('### 5.11') if '### 5.11' in body else len(body)
+        for i, ln in enumerate(body[:cut].splitlines(), 1):
+            t = ln.strip()
+            if t.startswith(('>', '|', '```')):
+                continue
+            for bad, good in SPELLING.items():
+                if bad == '건강문해력':
+                    hits = re.findall(r'(?<!저)건강문해력', ln)
+                else:
+                    hits = re.findall(re.escape(bad), ln)
+                if hits:
+                    out.append(f'{f}:{i} 표기가 갈린다 — "{bad}" 는 "{good}" 로')
+    return out
+
+
+def title_drift() -> list:
+    """본문이 응답자를 부를 때 직책이 표 41 과 같은가.
+
+    사용자가 요구한 것은 인용에 이름·소속·직책이 다 드러나는 것이다.
+    한 자리가 이소영 응답자를 "교수" 로만 적고 있었는데 표 42 는
+    "교수·약사" 다. 같은 사람이 문서 안에서 두 직책을 갖게 된다.
+
+    한글 이름만 본다. 로마자 이름은 표기가 여럿이라(Vučićević 등)
+    문자열로 대조하면 오탐이 난다."""
+    out = []
+    s = (DOC / 'proposal_ko.md').read_text()
+    if '### 5.11' not in s or '[표 41]' not in s:
+        return []
+    body = s[:s.index('### 5.11')]
+    roster = {}
+    for ln in s[s.index(f'[표 {table_no("전원이 실명") or 42}]'):].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if roster:
+                break
+            continue
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        if len(c) >= 4 and c[0] and c[0] != '성함' and '---' not in c[0]:
+            roster[c[0]] = c[1]
+    for name, title in roster.items():
+        # 직함을 적지 않은 응답자는 본문에서도 직함 없이 부른다.
+        # 없는 직책을 지어내지 않으므로 이 검사의 대상이 아니다.
+        if not re.search(r'[가-힣]', name) or not title or '미기재' in title:
+            continue
+        for m in re.finditer(re.escape(name), body):
+            seg = body[max(0, m.start() - 24):m.end() + 14]
+            if title not in seg:
+                out.append(f'{name} 을 부르는 자리의 직책이 표 42("{title}")과 다르다 '
+                           f'— …{seg.strip()[:44]}…')
+                break
+    return out
+
+
+def links_live() -> list:
+    """빌드된 문서의 주소가 눌리는가, 그리고 부호가 딸려 있지 않은가.
+
+    앞 판은 하이퍼링크가 0개였다. 표지의 저장소·배포 주소가 맨 글자라
+    심사자가 눌러도 아무 일이 없었다. 링크를 붙인 뒤에는 문장 끝
+    마침표가 주소에 딸려 들어가 열리지 않는 것이 하나 있었다."""
+    import zipfile
+    out = []
+    for name in ('SnapCare_H1_Final_Proposal_KO.docx', 'SnapCare_H1_Final_Proposal_EN.docx'):
+        path = DOC / name
+        if not path.exists():
+            continue
+        z = zipfile.ZipFile(path)
+        rels = z.read('word/_rels/document.xml.rels').decode()
+        ext = sorted(set(re.findall(r'Target="(https?://[^"]+)"', rels)))
+        if not ext:
+            out.append(f'{name}: 주소가 하나도 눌리지 않는다')
+            continue
+        for u in ext:
+            if u[-1] in '.,;:':
+                out.append(f'{name}: 주소 끝에 문장부호가 붙었다 — {u}')
+        for must in ('github.com/16th-eicon-contest', 'snapcare.fly.dev'):
+            if not any(must in u for u in ext):
+                out.append(f'{name}: 표지의 {must} 가 링크가 아니다')
+    return out
+
+
+def contrast() -> list:
+    """표 20 의 명도 대비가 계산과 같고, 그 색이 실제로 쓰이는가.
+
+    눈으로 지킬 수 없는 값이라 표에 적어 두어도 색을 한 번 손대면
+    조용히 어긋난다. 가장 낮은 것이 주의색의 4.52 이고 기준과의
+    여유가 0.02 다. 한 단만 밝혀도 미달이 된다."""
+    def lum(h):
+        h = h.lstrip('#')
+        c = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+        c = [x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c]
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+    def ratio(a, b):
+        la, lb = lum(a), lum(b)
+        hi, lo = max(la, lb), min(la, lb)
+        return (hi + 0.05) / (lo + 0.05)
+
+    out = []
+    body = (DOC / 'proposal_ko.md').read_text()
+    tno = table_no('명도 대비') or 19
+    m = re.search(rf'\[표 {tno}\][^\n]*`(#[0-9A-Fa-f]{{6}})`[^\n]*?([\d.]+):1', body)
+    bg = m.group(1) if m else '#F4F3EF'
+    i = body.index(f'[표 {table_no("명도 대비") or 19}]')
+    seen = 0
+    for ln in body[i:].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if seen:
+                break
+            continue
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        if len(c) != 5 or not c[1].startswith('`#'):
+            continue
+        seen += 1
+        for hexs, said in ((c[1], c[2]), (c[3], c[4])):
+            col = hexs.strip('`')
+            try:
+                want = float(said.split(':')[0])
+            except ValueError:
+                continue
+            got = ratio(col, bg)
+            if abs(got - want) > 0.02:
+                out.append(f'표 20 의 {c[0]} {col} 이 {said} 라는데 '
+                           f'{bg} 위에서 {got:.2f}:1 이다')
+        now = c[3].strip('`')
+        if ratio(now, bg) < 4.5:
+            out.append(f'표 20 의 {c[0]} {now} 이 기준 4.5:1 에 못 미친다 '
+                       f'({ratio(now, bg):.2f})')
+    if seen != 5:
+        out.append(f'표 19 에서 색 행을 {seen}개만 읽었다')
+
+    css = DOC.parent.parent / 'app/globals.css'
+    if css.is_file():
+        t = css.read_text()
+        for name, want in (('--color-safe', 2), ('--color-caution', 3), ('--color-avoid', 4)):
+            mm = re.search(rf'{name}:\s*(#[0-9A-Fa-f]{{6}})', t)
+            if not mm:
+                out.append(f'{name} 을 globals.css 에서 찾지 못했다')
+            elif f'`{mm.group(1)}`' not in body and f'`{mm.group(1).upper()}`' not in body:
+                out.append(f'{name} 이 {mm.group(1)} 인데 표 19 에 그 값이 없다')
+    return out
+
+
+def table_no(title_part: str, f: str = 'proposal_ko.md') -> int | None:
+    """표를 번호가 아니라 제목으로 찾는다.
+
+    표를 하나 끼워 넣으면 뒤의 번호가 전부 밀린다. 검사에 번호를 박아
+    두면 그때마다 검사가 엉뚱한 표를 보게 되고, 실제로 표 21 을 넣었을
+    때 응답자 명단·시험 수·직책 검사 셋이 한꺼번에 다른 표를 보았다."""
+    for m in re.finditer(r'^\[표 (\d+)\](.*)$', (DOC / f).read_text(), re.M):
+        if title_part in m.group(2):
+            return int(m.group(1))
+    return None
+
+
 def blocks(path: Path) -> dict:
-    """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
-    cur, out = None, {}
+    """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
+
+    코드 울타리 안은 세지 않는다. 같은 코드라도 영어 주석이 길어 두 줄로
+    접히므로 언제나 벌어지고, 그것은 결함이 아니다."""
+    cur, out, fence = None, {}, False
     for ln in path.read_text().splitlines():
+        if ln.strip().startswith('```'):
+            fence = not fence
+            continue
+        if fence:
+            continue
         m = re.match(r'^(#{2,4}) .+$', ln)
         if m:
             cur = len(out)
@@ -241,8 +1071,74 @@ def main() -> int:
             note(f'{f}: 직책 없이 인용했다 — {x}')
 
     for f, _, _ in PAIR:
+        for t in paired(f):
+            note(f'{f}: 같은 수치가 두 곳에 다르다 — {t}')
         for t in short_cites(f):
             note(f'{f}: 서지 정보 없는 인용 — ({t})')
+
+    for f, _, _ in PAIR:
+        for t in unnumbered_subs(f):
+            note(f'{f}: 번호 없는 소제목 — {t[:40]}')
+
+    for t in roster_count():
+        note(t)
+
+    for t in fold_claims():
+        note(t)
+
+    for t in table_parity():
+        note(t)
+
+    for t in para_parity():
+        note(t)
+
+    for t in caption_place():
+        note(t)
+
+    for t in bonferroni():
+        note(t)
+
+    for t in code_drift():
+        note(t)
+
+    for t in morpheme_names():
+        note(t)
+
+    for t in sheet_scores():
+        note(t)
+
+    for t in cite_shape():
+        note(t)
+
+    for t in test_counts():
+        note(t)
+
+    for t in spelling():
+        note(t)
+
+    for t in title_drift():
+        note(t)
+
+    for t in links_live():
+        note(t)
+
+    for t in contrast():
+        note(t)
+
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        for t in quote_drift(f):
+            note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in fig_faults():
+        note(t)
+
+    for t in stale_shots():
+        note(t)
+
+    for name in ('SnapCare_H1_Final_Proposal_KO.docx',
+                 'SnapCare_H1_Final_Proposal_EN.docx'):
+        for t in built_faults(DOC / name):
+            note(f'{name}: {t}')
 
     ka, ea = sec_refs('proposal_ko.md'), sec_refs('proposal_en.md')
     gap = [(k, ka.get(k, 0), ea.get(k, 0)) for k in set(ka) | set(ea)

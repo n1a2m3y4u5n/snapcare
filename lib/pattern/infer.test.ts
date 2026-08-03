@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { findTriggers, fisherRightTail, feedbackFrom } from './infer.ts';
+import { findTriggers, fisherRightTail, feedbackFrom, surveyTriggers } from './infer.ts';
 import type { MealFeedback } from './infer.ts';
 import type { ScanRecord, Symptom } from '../snapcare/types.ts';
 
@@ -130,4 +130,82 @@ test('답하지 않은 끼니는 자료로 세지 않는다', () => {
 test('기록이 비어도 죽지 않는다', () => {
   assert.deepEqual(findTriggers([]), []);
   assert.deepEqual(findTriggers([{ tags: [], reaction: 'fine' }]), []);
+});
+
+/*
+ * 탐색 전체를 볼 수 있는가 — 찾은 것만이 아니라 보고 있는 것과 아닌 것까지.
+ */
+
+const meal = (tags: string[], reaction: 'fine' | 'unwell', symptoms?: Symptom[]): MealFeedback =>
+  ({ tags, reaction, symptoms });
+
+test('아직 모자란 것도 남긴다 — 몇 번 더 필요한지와 함께', () => {
+  // 땅콩 두 번, 두 번 다 불편. 문턱(불편 3회·총 4회)에는 못 미친다.
+  const log = [
+    meal(['en:peanuts'], 'unwell', ['skin']),
+    meal(['en:peanuts'], 'unwell', ['skin']),
+    meal([], 'fine'), meal([], 'fine'), meal([], 'fine'),
+  ];
+  const { rows } = surveyTriggers(log);
+  const peanut = rows.find((r) => /peanut/i.test(r.condition.id));
+  assert.ok(peanut, rows.map((r) => r.condition.id).join(','));
+  assert.equal(peanut.state, 'watching');
+  assert.equal(peanut.unwellWhenEaten, 2);
+  assert.ok(peanut.moreNeeded > 0);
+  assert.match(peanut.text, /Still watching/);
+});
+
+test('자료가 찼는데 신호가 없으면 아니라고 말한다', () => {
+  // 밀 아홉 번에 불편 한 번, 대조군은 멀쩡. 문턱을 넘지 못한다.
+  const log = [
+    ...Array.from({ length: 8 }, () => meal(['en:gluten'], 'fine')),
+    meal(['en:gluten'], 'unwell'),
+    meal([], 'fine'), meal([], 'fine'), meal([], 'fine'),
+  ];
+  const wheat = surveyTriggers(log).rows.find((r) => /gluten/i.test(r.condition.trigger));
+  assert.ok(wheat);
+  assert.equal(wheat.state, 'unrelated');
+  assert.match(wheat.text, /No pattern/);
+});
+
+test('모자란 것과 아닌 것을 뭉뚱그리지 않는다', () => {
+  // 두 번 먹어 본 것을 '관련 없음' 으로 선고하면 안 된다.
+  const log = [meal(['en:soy'], 'fine'), meal(['en:soy'], 'fine'), meal([], 'fine'), meal([], 'fine'), meal([], 'fine')];
+  const soy = surveyTriggers(log).rows.find((r) => /soy/i.test(r.condition.trigger));
+  assert.ok(soy);
+  assert.equal(soy.state, 'watching');   // 'unrelated' 가 아니다
+});
+
+test('프로필에 있는 것은 확인됨으로, 근거와 함께 남는다', () => {
+  const log = [
+    ...Array.from({ length: 4 }, () => meal(['en:milk'], 'unwell', ['gut'])),
+    meal([], 'fine'), meal([], 'fine'), meal([], 'fine'),
+  ];
+  const rows = surveyTriggers(log, ['lactose_intolerance']).rows;
+  const milk = rows.find((r) => r.condition.trigger === 'lactose');
+  assert.ok(milk);
+  // 프로필에 있으면 확인됨이고, 근거 숫자는 그대로 남아 있어야 한다 — 되돌리려면 근거를 봐야 한다.
+  assert.equal(milk.state, milk.condition.id === 'lactose_intolerance' ? 'confirmed' : milk.state);
+  assert.equal(milk.unwellWhenEaten, 4);
+  assert.equal(milk.timesEaten, 4);
+});
+
+test('답한 끼니 수를 함께 낸다 — 분석이 딛고 선 바닥', () => {
+  const log = [meal(['en:peanuts'], 'fine'), meal([], 'unwell')];
+  assert.equal(surveyTriggers(log).answered, 2);
+});
+
+test('아슬아슬하게 문턱을 못 넘은 것을 "아니다" 라고 하지 않는다', () => {
+  // 우유 5번 중 4번 불편, 안 먹은 16번 중 3번. Bonferroni 문턱은 못 넘지만
+  // 보정 전 0.05 안에는 든다 — 그 사람에게 필요한 말은 "아니다" 가 아니라 "더 봐야 한다".
+  const log = [
+    ...Array.from({ length: 4 }, () => meal(['en:milk'], 'unwell', ['gut'])),
+    meal(['en:milk'], 'fine'),
+    ...Array.from({ length: 3 }, () => meal(['en:peanuts'], 'unwell', ['skin'])),
+    ...Array.from({ length: 13 }, () => meal(['en:gluten'], 'fine')),
+  ];
+  const milk = surveyTriggers(log).rows.find((r) => r.condition.trigger === 'lactose');
+  assert.ok(milk);
+  assert.equal(milk.state, 'watching');
+  assert.equal(milk.unwellWhenEaten, 4);
 });

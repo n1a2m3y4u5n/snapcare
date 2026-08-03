@@ -22,7 +22,8 @@ import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
 import { SuspectedTriggerCard } from './suspected';
 import { Today } from './today';
 import { TryIt } from './try-it';
-import { Hear, sayable, ask, Speakable } from '@/components/sc/Say';
+import { sayable, ask, Speakable } from '@/components/sc/Say';
+import { speak } from '@/lib/voice';
 import { spokenName } from '@/lib/tts/speakable';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
 
@@ -258,35 +259,50 @@ export default function HomePage() {
                   onClick={() => openScan(s)}
                   className="flex flex-1 items-center gap-3 px-4 py-3 text-left"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full text-lg" style={{ background: meta.bg }}>
+                  {/*
+                    이 원은 **무엇을 찍었는지**만 말한다.
+
+                    전에는 판정 색으로 물들어 있었다. 그런데 오른쪽 배지가 이미 판정을
+                    색과 모양으로 싣고 있어서, 한 줄에 같은 판정이 색으로 두 번 실렸다.
+                    같은 것을 두 번 말하면 읽는 쪽은 둘이 다른 것을 말한다고 생각한다.
+                  */}
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full text-lg"
+                        style={{ background: 'var(--color-sc-bg)' }}>
                     {s.emoji}
                   </span>
                   <span className="flex-1">
                     <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                       {s.name}
                     </span>
-                    {/* 시각은 시계로 — 이미 그림으로 가진 정보다.
-                        누구 것인지 표시하던 아바타는 뺐다. 쓰는 사람이 한 명이므로
+                    {/* 누구 것인지 표시하던 아바타는 뺐다. 쓰는 사람이 한 명이므로
                         매 줄에 같은 얼굴이 붙는 것은 정보가 아니라 잡음이다. */}
                     <span className="mt-0.5 flex items-center gap-1.5">
-                      <TimeGlyph label={s.timeLabel} mute />
+                      <TimeGlyph label={s.timeLabel} mute compact />
                     </span>
                   </span>
                 </button>
-                <Hear text={`${spokenName(s.name, s.kind)}. ${meta.label}.`} />
                 {/*
-                  판정은 이 목록에서 가장 중요한 정보인데 2.5px 색 점이었다.
-                  색만으로 뜻을 싣는 것은 색 규약을 아는 사람에게만 통하고, 적록색약이면
-                  안전과 회피가 같은 점이 된다. 색은 그대로 두고 기호를 얹는다 —
-                  ✅ ⚠️ ⛔ 는 색과 무관하게 모양이 다르다.
+                  판정 배지가 듣기 버튼을 겸한다.
+
+                  전에는 원이 셋이었다 — 아이템 그림, 스피커, 판정 배지. 크기가 비슷한
+                  원 셋이 한 줄에 늘어서면 어느 것이 무엇인지가 매번 다시 읽힌다.
+
+                  스피커를 지우는 대신 배지에 합쳤다. 지우기만 하면 키보드·스캐닝
+                  사용자가 이 줄을 들을 길이 사라진다(훑어 듣기는 손가락 전용이다).
+                  합치면 원이 둘로 줄면서 44px 표적과 소리 경로가 그대로 남는다.
+
+                  판정은 색만으로 싣지 않는다 — ✅ ⚠️ ⛔ 는 색과 무관하게 모양이 다르다.
+                  적록색약에게 안전과 회피가 같은 점이 되면 안 된다.
                 */}
-                <span
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm"
+                <button
+                  onClick={() => speak(`${spokenName(s.name, s.kind)}. ${meta.label}.`, 'en-US')}
+                  aria-label={`${s.name}. ${meta.label}. Read aloud.`}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-base
+                             active:scale-95 transition-transform"
                   style={{ background: meta.bg }}
-                  title={meta.label}
                 >
                   {meta.emoji}
-                </span>
+                </button>
               </div>
             );
           })}

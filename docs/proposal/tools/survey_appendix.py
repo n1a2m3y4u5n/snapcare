@@ -30,6 +30,7 @@ NICK_EN = {
     '최묘정': 'Myojung Choi', '박철현': 'Cheolhyeon Park', '이교구': 'Kyogu Lee',
     '이경화': 'Kyunghwa Lee', '서희정': 'Heejung Seo', '이영미': 'Youngmee Lee',
     '박경서': 'Kyungseo Park', '(성함 비공개)': '(name withheld)',
+    '이한길': 'Hangil Lee', '김영찬': 'Youngchan Kim', '정승훈': 'Seunghoon Jung',
 }
 AFF_EN = {
     '충남대학교': 'Chungnam National University',
@@ -42,6 +43,9 @@ AFF_EN = {
     '숭실대학교': 'Soongsil University',
     '동의대학교': 'Dong-eui University',
     '이화여자대학교 언어병리학과': 'Ewha Womans University',
+    '이화여대': 'Ewha Womans University',
+    '경희사이버대학교': 'Kyung Hee Cyber University',
+    '한국디자인진흥원': 'Korea Institute of Design Promotion',
     '한국공예디자인문화진흥원': 'Korea Craft and Design Foundation',
     '한국장애인개발원': 'Korea Disabled People\'s Development Institute',
     '보이스아이': 'VOICEYE',
@@ -198,6 +202,15 @@ TITLE_EN = {
     'Retired Speech and Language Therapist / Visiting Researcher for accessibility '
     'and disability at University of Southampton':
         'Retired speech and language therapist · visiting accessibility researcher',
+    # 응답자가 영어로 적은 직책. TITLE 이 한국어로 옮긴 뒤 여기서 되돌리지
+    # 못해 영어판 부록에 한국어가 새어 나가고 있었다.
+    'Associate Professor': 'Associate Professor',
+    'Assistant Professor': 'Assistant Professor',
+    'Assistant Professor of Clinical Pharmacy': 'Assistant Professor of Clinical Pharmacy',
+    'Professor of Translation and Interpreting': 'Professor of Translation and Interpreting',
+    'Pharmacy Lecturer': 'Pharmacy Lecturer',
+    'Senior Scientist': 'Senior Scientist',
+    'Deputy Director': 'Deputy Director',
 }
 
 QUESTION_EN = {
@@ -304,6 +317,15 @@ def main():
         if LANG == 'en':
             n, a = NICK_EN.get(n, n), AFF_EN.get(a, a)
             t = TITLE_EN.get(raw, TITLE_EN.get(t, t))
+        if LANG == 'en':
+            # 여기서 잡지 않으면 영어판 부록에 한국어가 그대로 실린다.
+            # 실제로 직책 일곱과 이름·소속 하나씩이 그렇게 나가고 있었다.
+            import re as _re
+            for label, v in (('이름', n), ('직책', t), ('소속', a)):
+                if _re.search(r'[가-힣]', v or ''):
+                    raise SystemExit(
+                        f'영어판 부록에 한국어가 남는다 — {label} {v!r} '
+                        f'(원본 {r["b_name"]!r}). NICK_EN·TITLE_EN·AFF_EN 에 넣어라')
         meta[r['응답ID']] = (n, t, a)
 
     by_q = {}
@@ -321,12 +343,20 @@ def main():
                  f'nothing else was touched. Short answers ("N/A", "Yes.") are left in '
                  f'rather than being dropped and reinstated. Responses written in Korean '
                  f'are given here in our own translation; the originals stand unaltered '
-                 f'in the Korean version of this document.')
+                 f'in the Korean version of this document. Positions and affiliations '
+                 f'are likewise as the respondent wrote them. Table 41 uses what we '
+                 f'confirmed against the institution\'s own faculty listing when the '
+                 f'list was built, so it is sometimes more specific: respondent Hangil '
+                 f'Lee is "Professor · Ewha Womans University" here and "Associate '
+                 f'Professor · College of Pharmacy, Ewha Womans University" there.')
     else:
         intro = (f'§5.7 은 우리가 고른 응답만 인용한다. 고르는 순간 우리에게 유리한 쪽으로 '
                  f'기울 수 있으므로, 받은 자유 서술 {total}건을 문항별로 그대로 싣는다. '
                  f'줄바꿈만 없애고 손대지 않았다. 짧은 답("N/A", "Yes.")도 뺐다가 넣었다 '
-                 f'하지 않고 그대로 둔다.')
+                 f'하지 않고 그대로 둔다. 직책과 소속도 응답자가 적어 준 그대로다. '
+                 f'표 41 은 명단을 만들 때 기관의 교원 목록에서 확인한 표기를 쓰므로 '
+                 f'더 자세한 자리가 있다. 예컨대 이한길 응답자는 여기 "교수 · 이화여대" '
+                 f'이고 표 41 에서는 "부교수 · 이화여자대학교 약학대학" 이다.')
     out = [BEGIN, '', L('h_free'), '', intro, '']
 
     for q in ORDER + [k for k in by_q if k not in ORDER]:

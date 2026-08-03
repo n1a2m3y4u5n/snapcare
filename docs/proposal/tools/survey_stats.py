@@ -8,6 +8,7 @@
 할 수 있는 가장 나쁜 일이다.
 """
 import collections
+from pathlib import Path
 import json
 import pathlib
 import re
@@ -144,9 +145,18 @@ def main():
     u, p_time = stats.mannwhitneyu(kt, et, alternative='two-sided')
     print(f'  소요 시간의 언어 차이        Mann-Whitney U p = {p_time:.4f}')
 
-    # 이 절에서 돌린 검정은 다섯이다. 그중 하나만 골라 싣는 것이
-    # 이 표본에서 할 수 있는 가장 나쁜 일이므로 보정값을 함께 적는다.
-    TESTS = 5
+    # 이 절에서 돌리는 검정의 수. 그중 하나만 골라 싣는 것이 이 표본에서
+    # 할 수 있는 가장 나쁜 일이므로 보정값을 함께 적는다.
+    #
+    # 손으로 5 를 적어 두었다가 틀렸다. 실제로 돌리는 것은 여섯이다.
+    # Fisher 넷(접촉 빈도, 직군, 언어, 등급별 응답률), Mann-Whitney
+    # 하나(언어와 소요 시간), Spearman 하나(소요 시간과 서술량)다.
+    # 다섯으로 세면 문턱이 0.010 이 되어 실제(0.008)보다 느슨해진다.
+    # 우리에게 유리한 쪽으로 틀린 것이므로 세는 자리를 코드로 옮긴다.
+    # 대입하는 자리만 센다. 그러지 않으면 이 세는 코드 자신과 위의
+    # 주석까지 세어 8 이 나온다.
+    TESTS = len(re.findall(r'=\s*stats\.(?:fisher_exact|mannwhitneyu|spearmanr)\(',
+                           Path(__file__).read_text()))
     print(f'\n  이 절에서 검정을 {TESTS}회 돌렸다. Bonferroni 문턱은 '
           f'{0.05 / TESTS:.3f} 다.')
     for name, p in (('언어와 판단', p_lang), ('언어와 소요 시간', p_time)):
@@ -197,7 +207,7 @@ def main():
     print(f'  등급 B {n}/{B} = {n/B:.1%}  [{lo2:.1%}, {hi2:.1%}]')
     odds, p = stats.fisher_exact([[0, A], [n, B - n]])
     print(f'  A 와 B 의 응답률 차이 Fisher 양측 p = {p:.3f}')
-    print('  0/41 과 34/1062 는 방향은 뚜렷하나 41명이 작아 단정할 수 없다.')
+    print(f'  0/{A} 과 {n}/{B} 은 방향은 뚜렷하나 {A}명이 작아 단정할 수 없다.')
 
 
 if __name__ == '__main__':

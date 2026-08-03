@@ -2,7 +2,7 @@
 
 import { useProfile } from '@/stores/profile';
 import { useTracking } from '@/lib/condition/useTracking';
-import { trackingSentence } from '@/lib/condition/tracking';
+import { trackingSentence, weeklySentence } from '@/lib/condition/tracking';
 import { sayable, Speakable } from '@/components/sc/Say';
 import type { ScanRecord } from '@/lib/snapcare/types';
 
@@ -13,8 +13,11 @@ import type { ScanRecord } from '@/lib/snapcare/types';
  * 관리해야 하는데, 그 흐름은 이미 기록에 다 들어 있으면서 아무도 되짚어 주지
  * 않았다.
  *
- * 조건이 없으면 아무것도 뜨지 않는다. 모든 영양소를 며칠씩 보여주면 다시 '읽어야
- * 하는 표' 가 되므로, 그 사람의 조건이 무엇을 볼지 정한다.
+ * 무엇을 볼지는 조건이 정한다 — 당뇨면 설탕, 고혈압이면 소금. 조건이 없으면 설탕과
+ * 소금 둘을 기본으로 본다. 예전에는 조건이 없으면 화면이 통째로 안 떴는데, 그 이유
+ * ("모든 영양소를 며칠씩 보여주면 다시 읽어야 하는 표가 된다")가 정당화하는 것은
+ * **적게 보여주는 것**이지 아무것도 안 보여주는 것이 아니었다. 진단이 없는 사람도
+ * 어제보다 오늘 덜 먹었는지는 알 수 있어야 하고, 그것이 진단을 늦추는 길이다.
  *
  * 막대 일곱 개를 쓰는 이유: 숫자 일곱 개를 읽는 것보다 높낮이 일곱 개를 보는 것이
  * 빠르고, 글을 못 읽어도 성립한다. 넘긴 날만 색이 달라지므로 "며칠 넘겼나" 가
@@ -81,6 +84,48 @@ export function ConditionTracking({ scans }: { scans: ScanRecord[] }) {
               <p className="mt-1 text-[11px] font-semibold" style={{ color: 'var(--color-safe)' }}>
                 {s.summary.streak} {s.summary.streak === 1 ? 'day' : 'days'} within the limit
               </p>
+            )}
+
+            {/*
+              더 멀리 — 주 단위.
+
+              하루 막대는 "어제 어땠나" 에 답하고, 이것은 "요즘 어떤가" 에 답한다.
+              둘은 다른 질문이고, 뒤쪽이 만성 조건을 관리하는 사람이 실제로 묻는
+              질문이다. 한 주는 하루 평균이다(합이 아니다 — 사흘 찍은 주와 이레 찍은
+              주를 합으로 견주면 많이 찍은 주가 나쁜 주로 보인다).
+
+              기록이 있는 주가 둘 미만이면 그리지 않는다. 빈 칸 열둘은 추세가 아니다.
+            */}
+            {tracking.weeksWorthShowing >= 2 && (
+              <div className="mt-3 border-t pt-2" style={{ borderColor: 'var(--color-sc-line)' }}>
+                <div className="flex items-center gap-2"
+                     {...sayable(weeklySentence(s.label, s.weeks))}>
+                  <span className="flex-1 text-[10px] font-bold tracking-wide"
+                        style={{ color: 'var(--color-sc-muted)' }}>
+                    BY WEEK
+                  </span>
+                </div>
+                <div className="mt-1 flex items-end gap-1" style={{ height: 26 }}>
+                  {s.weeks.map((w, i) => (
+                    <div key={i} className="flex flex-1 flex-col justify-end" style={{ height: '100%' }}>
+                      {w.pct === null ? (
+                        <div className="w-full rounded-sm" style={{ height: 2, background: 'var(--color-sc-bg)' }} />
+                      ) : (
+                        <div
+                          className="w-full rounded-sm"
+                          style={{
+                            height: `${Math.max(6, Math.min(100, w.pct))}%`,
+                            background: w.pct >= 50 ? 'var(--color-caution)' : 'var(--color-safe)',
+                          }}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-1 text-[10px]" style={{ color: 'var(--color-sc-muted)' }}>
+                  {weeklySentence(s.label, s.weeks)}
+                </p>
+              </div>
             )}
           </div>
         ))}

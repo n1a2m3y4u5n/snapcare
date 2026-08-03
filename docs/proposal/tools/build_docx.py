@@ -14,6 +14,7 @@ proposal_ko.md → 대회 제출용 .docx.
 from __future__ import annotations
 
 import argparse
+import copy
 import re
 from pathlib import Path
 
@@ -21,6 +22,7 @@ import docx
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 
@@ -122,6 +124,42 @@ def shade(cell, hex_color):
 INLINE = re.compile(r'(\*\*.+?\*\*|`[^`]+`|\*[^*]+?\*)')
 
 
+def add_link(par, url: str, size: float):
+    """맨 글자로 두면 눌리지 않는다. 표지의 저장소·배포 주소가 그랬다.
+
+    python-docx 에 하이퍼링크 API 가 없어 관계를 직접 만든다."""
+    part = par.part
+    rid = part.relate_to(url, RT.HYPERLINK, is_external=True)
+    link = OxmlElement('w:hyperlink')
+    link.set(qn('r:id'), rid)
+    r = OxmlElement('w:r')
+    pr = OxmlElement('w:rPr')
+    color = OxmlElement('w:color')
+    color.set(qn('w:val'), '0563C1')
+    u = OxmlElement('w:u')
+    u.set(qn('w:val'), 'single')
+    pr.append(color)
+    pr.append(u)
+    r.append(pr)
+    t = OxmlElement('w:t')
+    t.text = url
+    t.set(qn('xml:space'), 'preserve')
+    r.append(t)
+    link.append(r)
+    par._p.append(link)
+    run = par.add_run()          # 글꼴·크기를 나머지와 맞춘다
+    set_font(run)
+    run.font.size = Pt(size)
+    rpr = run._r.find(qn('w:rPr'))
+    if rpr is not None:
+        pr.insert(0, copy.deepcopy(rpr))
+    run._r.getparent().remove(run._r)
+
+
+# 끝의 문장부호는 주소가 아니다. 마침표까지 링크에 넣으면 열리지 않는다.
+URL_RE = re.compile(r'(https?://[^\s<>()\[\]"\']+?)(?=[.,;:]?(?:\s|$)|[)\]])')
+
+
 def write_inline(par, text, size=BODY_PT, bold=False):
     """**굵게**, `코드`, *기울임* 만 처리한다. 본문이 쓰는 것이 이것뿐이다."""
     text = text.replace('\\<', '<').replace('\\>', '>')
@@ -140,7 +178,21 @@ def write_inline(par, text, size=BODY_PT, bold=False):
             r.text, r.italic = piece[1:-1], True
             set_font(r)
         else:
-            r.text = piece
+            # 주소는 눌리게 만든다. 표지의 두 URL 이 심사자가 여는 자리다.
+            if URL_RE.search(piece):
+                last = 0
+                for m in URL_RE.finditer(piece):
+                    if m.start() > last:
+                        rr = par.add_run(piece[last:m.start()])
+                        set_font(rr)
+                        rr.font.size = Pt(size)
+                        if bold:
+                            rr.bold = True
+                    add_link(par, m.group(1), size)
+                    last = m.end()
+                r.text = piece[last:]
+            else:
+                r.text = piece
             set_font(r)
         r.font.size = r.font.size or Pt(size)
         if bold:

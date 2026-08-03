@@ -2,6 +2,10 @@
 
 import { NUTRIENT_LABEL, NUTRIENT_UNIT, type NutrientAssessment, type NutrientKey } from '@/lib/nutrition/types';
 import { Hear, Speakable } from './Say';
+import { barSentence, colorFor } from '@/lib/nutrition/barText';
+
+// 순수 로직은 lib 에 있다(노드 시험이 .tsx 를 못 읽는다). 부르는 쪽이 바뀌지 않게 다시 내보낸다.
+export { barSentence, colorFor };
 
 export const NUTRIENT_EMOJI: Record<NutrientKey, string> = {
   energy: '🔥',
@@ -14,15 +18,6 @@ export const NUTRIENT_EMOJI: Record<NutrientKey, string> = {
   carbohydrates: '🍚',
 };
 
-/** 레벨 → 색. limit 은 많을수록 위험, target 은 적을수록 아쉬움(위험 아님)이라 색을 다르게 쓴다. */
-export function colorFor(a: NutrientAssessment): string {
-  if (a.kind === 'limit') {
-    return a.level === 'high' ? 'var(--color-avoid)'
-      : a.level === 'moderate' ? 'var(--color-caution)'
-      : 'var(--color-safe)';
-  }
-  return a.level === 'good' ? 'var(--color-safe)' : 'var(--color-sc-muted)';
-}
 
 /**
  * 영양소 막대 한 줄 — 섭취량이 기준치에서 차지하는 비중.
@@ -58,19 +53,3 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
   );
 }
 
-/**
- * 막대 한 줄을 한 문장으로.
- *
- * 이 줄은 눈으로는 한눈에 읽히지만(길이·색·숫자) 글로는 네 조각이다 —
- * 이름, 양, 기준 대비 비율, 그리고 그게 많다는 것인지 적다는 것인지.
- * 네 조각을 따로 누르게 하면 듣는 쪽이 조립해야 하므로, 줄 전체를 한 문장으로 읽는다.
- */
-export function barSentence(a: NutrientAssessment): string {
-  const unit = NUTRIENT_UNIT[a.key] === 'kcal' ? 'kilocalories' : 'grams';
-  const of = a.kind === 'limit' ? "today's limit" : "today's target";
-  const verdict =
-    a.level === 'high' ? ' That is high.'
-    : a.level === 'good' ? ' That is a good amount.'
-    : '';
-  return `${NUTRIENT_LABEL[a.key]}: ${a.amount} ${unit}. ${Math.round(a.pct)} percent of ${of}.${verdict}`;
-}

@@ -153,13 +153,34 @@ export default function CameraPage() {
     // 그래서 여기서 잡고 501(서버에 판별 수단이 없음)과 같은 답으로 돌려보낸다.
     // 둘 다 "다시 찍어도 소용없다, 성분표를 찍어라" 이기 때문이다.
     const NEEDS_NET = 'Photo recognition needs a connection. Photograph the nutrition label instead, or pick one below.';
-    let res: Response;
-    try {
-      res = await fetch('/api/analyze', {
+
+    /*
+      밀렸으면 **한 번은 앱이 알아서 다시 보낸다.**
+
+      처방전 200장을 재다가 아홉 장이 503 으로 실패했는데, 한 장씩 다시 보내니 아홉 장
+      전부 정상으로 읽혔다. 그 장들의 문제가 아니라 그 순간 상류가 밀린 것이다.
+
+      사용자에게 "다시 눌러 보세요" 라고 말할 수는 있지만, 이 앱의 사용자는 그 문장을
+      읽지 못한다. 소리로 들려줘도 한 번 더 누르는 일 자체가 우리가 없애기로 한 종류의
+      수고다 — 앱이 대신할 수 있는 일이면 앱이 한다.
+
+      한 번만 한다. 두 번, 세 번 조용히 재시도하면 사용자는 앱이 멈춘 줄 안다.
+    */
+    async function ask(): Promise<Response> {
+      return fetch('/api/analyze', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ image: dataUrl, modelTotals }),
       });
+    }
+
+    let res: Response;
+    try {
+      res = await ask();
+      if (res.status === 503) {
+        await new Promise((r) => setTimeout(r, 1200));
+        res = await ask();
+      }
     } catch (err) {
       console.warn('[camera] 판별 요청 실패 (오프라인이면 정상):', err);
       fail(NEEDS_NET);

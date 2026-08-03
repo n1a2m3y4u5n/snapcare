@@ -78,10 +78,10 @@ EN = {
     '나이대를 모르면 판정 기준을 유도할 수 없다':
         'Without the age band no threshold can be derived',
     '촬영 버튼 하나': 'One capture button',
-    '대상을 고르지 않는다': 'The subject is not chosen',
+    '대상을': 'The subject', '고르지 않는다': 'is not chosen',
     'OCR · 모델': 'OCR · model',
     '진행 상태를 표시': 'Progress shown',
-    '물리 검사 통과 후': 'Physical checks',
+    '물리 검사 뒤': 'After physical checks',
     '개인 기준과 대조': 'Personal limits',
     '그림 · 음성 · 색': 'Picture · speech · colour',
     'SIGIL 합성 픽토그램': 'SIGIL composed pictogram',
@@ -96,12 +96,12 @@ EN = {
     '색각이상 대응': 'For colour vision deficiency',
     '색만으로 판정하지 않는다 (WCAG 1.4.1)':
         'The verdict never rests on colour alone (WCAG 1.4.1)',
-    '전달의 세 층 — 서로를 대체하지 않고 겹친다':
+    '전달의 세 층. 서로를 대체하지 않고 겹친다':
         'Three layers of delivery. They overlap rather than substitute',
-    '계층을 두지 않는다 — 비문해 사용자에게 깊은 계층형 65.5초 대 평면 목록형 25초 (Medhi 등, 2013)':
+    '계층을 두지 않는다. 비문해 사용자에게 깊은 계층형 65.5초 대 평면 목록형 25초 (Medhi 등, 2013)':
         'No hierarchy. For non-literate users a deep hierarchy took 65.5 s '
         'against 25 s for a flat list (Medhi et al., 2013)',
-    '인식 과정을 감추지 않는다 — 아무 표시 없이 멈춘 화면은 고장으로 읽힌다 (Medhi, Cutrell & Toyama, 2010)':
+    '인식 과정을 감추지 않는다. 아무 표시 없이 멈춘 화면은 고장으로 읽힌다 (Medhi, Cutrell & Toyama, 2010)':
         'Recognition is not hidden. A screen stopped with no indication reads '
         'as a fault (Medhi, Cutrell & Toyama, 2010)',
     '[그림 11]': '[Figure 13]',
@@ -446,6 +446,39 @@ EN = {
     '복약 안전 교육 받음': 'Received medication-safety education',
     '한국 고령자에서의 비율 (%)': 'Share among older adults in Korea (%)',
 
+    # ── charts.py · chart_evidence (§1.11) ────────────────────────
+    '이 접근을 받치는 근거와 깎는 근거':
+        'Evidence supporting this approach, and evidence cutting against it',
+    '각 항목 끝의 절 번호에서 원문 서지와 함께 확인할 수 있다':
+        'The section number after each item leads to the full citation',
+    '받친다': 'Supports', '깎는다': 'Cuts against',
+    '그림은 문자보다 잘 기억된다 (§1.8)':
+        'Pictures are remembered better than text (§1.8)',
+    '그림을 곁들이면 물약 용량 오류가 47.8%에서 5.4%로 (§1.8)':
+        'With pictures, liquid dosing errors fell from 47.8% to 5.4% (§1.8)',
+    'RCT 54편 메타분석. 저건강문해력에서 특히 크다 (§1.8)':
+        'Meta-analysis of 54 RCTs. Largest in low health literacy (§1.8)',
+    '그림에 음성을 더한 쪽이 셋 중 가장 나았다 (§1.8)':
+        'Pictures plus speech beat the other two arms (§1.8)',
+    '현지에서 만든 세트가 통과율을 두 배로 (§1.8)':
+        'A locally made set nearly doubled the pass rate (§1.8)',
+    '만들었다고 읽히지는 않는다. 108종 중 17종 (§1.8)':
+        'Making them does not make them read. 17 of 108 (§1.8)',
+    '같은 기호가 나라를 옮기면 94%에서 8%로 (§1.8)':
+        'The same symbol goes from 94% to 8% across countries (§1.8)',
+    '나이가 많을수록 그림으로 얻는 이득이 작다 (§1.8)':
+        'The gain from pictures shrinks with age (§1.8)',
+    '문해력과 순응도의 상관은 유의하나 약하다 (§1.4)':
+        'Literacy and adherence correlate significantly but weakly (§1.4)',
+    '난이도를 낮추고 음성을 붙여도 순응도는 그대로 (§1.4)':
+        'Lower reading level plus audio left adherence unchanged (§1.4)',
+    '저문해 사용자는 실루엣보다 사진에 가까운 그림을 선호한다 (§1.10)':
+        'Low-literacy users prefer photorealistic images to silhouettes (§1.10)',
+    '위해의 무게중심은 환자가 아니라 처방 단계 (§1.4)':
+        'Harm centres on prescribing, not on the patient (§1.4)',
+    '불리한 쪽이 더 길다. 그것을 줄이지 않는 것이 이 장의 방식이다':
+        'The unfavourable column is the longer one. Not shortening it is this chapter\'s method',
+
     # ── charts.py · 손글씨 측정 (§5.7) ────────────────────────────
     '손글씨 약 이름 {n}장을 읽힌 결과': 'Reading {n} handwritten drug names',
     'RxHandBD (Zenodo 18478741) · 방글라데시 실제 처방전에서 잘라낸 낱말':
@@ -455,15 +488,15 @@ EN = {
     '붉은 칸이 더 위험하다': 'The red bar is the more dangerous one',
     '남는 비율': 'Share surviving', '남은 것의 정확도': 'Accuracy of survivors',
     '확신도 문턱': 'Confidence threshold',
-    '둘을 함께 만족하는\n문턱이 없다': 'No threshold satisfies\nboth at once',
+    '문턱을 올려도\n정확해지지 않는다': 'Raising the threshold\nbuys no accuracy',
     '처방전 전장 {n}장. 답이 잘리던 것을 고치기 전과 뒤':
         '{n} full prescription pages, before and after fixing the truncated replies',
     'Mendeley k62rfd23kz · 약 이름 영역 개수가 주석된 방글라데시 처방전':
         'Mendeley k62rfd23kz · Bangladeshi prescriptions annotated with drug-name counts',
     '처방전으로 알아본 비율': 'Recognised as a prescription',
     '약 가짓수 재현율': 'Recall of medicine count',
-    '실패한 11장은 무작위가 아니었다.\n전부 약이 5~12가지 적힌 장이었다':
-        'The 11 failures were not random.\nEvery one carried 5 to 12 medicines',
+    '통째로 실패하던 장은 무작위가 아니었다.\n전부 약이 가장 많은 처방전이다':
+        'The pages that failed outright were not random.\nThey are the ones carrying the most medicines',
 
     # ── charts.py · chart_expressive (§1.9) ───────────────────────
     '고정 목록과 문법은 다른 속도로 늘어난다':
@@ -494,8 +527,8 @@ EN = {
     '남긴 것을 이 순서로 말한다. 듣는 사람은 되감을 수 없다':
         'What is kept is spoken in this order. The listener cannot rewind',
     '무엇에 대한 말인지 세운다': 'Establishes what this is about',
-    '형성 평가 첫 측정에서 음성까지 도달하지 않던 항목':
-        'Did not reach the speech channel in the first formative measurement',
+    '형성 평가에서 음성까지 닿지 않던 항목':
+        'Did not reach the speech channel',
     '언제 · 얼마나 자주': 'When and how often',
     '냉장일 때만 말한다': 'Spoken only when refrigeration is required',
     '제형은 읽히지 않는다. 동사와 부위를 정하고 사라진다 (표 9)':

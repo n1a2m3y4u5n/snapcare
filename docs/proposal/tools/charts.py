@@ -287,6 +287,79 @@ def chart_ageing():
     save(fig, 'chart20_ageing')
 
 
+# ── 근거가 어느 쪽을 가리키는가 ─────────────────────────────────────
+def chart_evidence():
+    """§1.11. 받치는 근거와 깎는 근거를 나란히.
+
+    수치를 세지 않고 항목을 적는다. 어느 인용이 어느 쪽인지는 문장의
+    뜻이라 기계가 가릴 수 없다. 대신 §번호를 달아 확인할 수 있게 한다."""
+    fig, ax = plt.subplots(figsize=(6.0, 3.1))
+    title(fig, T('이 접근을 받치는 근거와 깎는 근거'),
+          note=T('각 항목 끝의 절 번호에서 원문 서지와 함께 확인할 수 있다'))
+    fig.subplots_adjust(left=0.02, right=0.98, top=0.86, bottom=0.06)
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 100)
+    ax.axis('off')
+
+    FOR = [T('그림은 문자보다 잘 기억된다 (§1.8)'),
+           T('그림을 곁들이면 물약 용량 오류가 47.8%에서 5.4%로 (§1.8)'),
+           T('RCT 54편 메타분석. 저건강문해력에서 특히 크다 (§1.8)'),
+           T('그림에 음성을 더한 쪽이 셋 중 가장 나았다 (§1.8)'),
+           T('현지에서 만든 세트가 통과율을 두 배로 (§1.8)')]
+    AGAINST = [T('만들었다고 읽히지는 않는다. 108종 중 17종 (§1.8)'),
+               T('같은 기호가 나라를 옮기면 94%에서 8%로 (§1.8)'),
+               T('나이가 많을수록 그림으로 얻는 이득이 작다 (§1.8)'),
+               T('문해력과 순응도의 상관은 유의하나 약하다 (§1.4)'),
+               T('난이도를 낮추고 음성을 붙여도 순응도는 그대로 (§1.4)'),
+               T('위해의 무게중심은 환자가 아니라 처방 단계 (§1.4)'),
+               T('저문해 사용자는 실루엣보다 사진에 가까운 그림을 선호한다 (§1.10)')]
+
+    # 자리는 항목 수에서 잡는다. 간격을 고정해 두었더니 한쪽에 항목이
+    # 하나 늘었을 때 마지막 줄이 캔버스를 넘고 아래 주석과 겹쳤다.
+    # 자리를 항목마다 그 항목의 줄 수로 잡는다. 간격을 고정하면 두 줄짜리가
+    # 많은 쪽에서 넘치고, 항목 수로만 나누면 두 줄짜리끼리 붙어 구분이 사라진다.
+    wrapped = {id(t): _wrap_txt(t, 44) for t in FOR + AGAINST}
+    LH, GAP = 5.0, 3.4
+    need = max(sum(LH * len(wrapped[id(t)]) + GAP for t in col)
+               for col in (FOR, AGAINST))
+    scale = min(1.0, 78.0 / need)
+    for col, (head, items, edge) in enumerate((
+            (T('받친다'), FOR, DARK), (T('깎는다'), AGAINST, RED))):
+        x = 2 + col * 50
+        ax.text(x, 95, head, fontsize=9.6, fontweight='bold', color=INK)
+        ax.plot([x, x + 46], [92.5, 92.5], color=edge, lw=1.2)
+        y = 87.0
+        for t in items:
+            lines = wrapped[id(t)]
+            block = LH * len(lines) * scale
+            ax.plot([x + 0.6, x + 0.6], [y - block + 1.6, y + 2.4],
+                    color=edge, lw=2.2, solid_capstyle='butt')
+            for j, ln in enumerate(lines):
+                ax.text(x + 3.2, y - j * LH * scale, ln, fontsize=7.6,
+                        color=MUTED, va='top')
+            y -= block + GAP * scale
+
+    ax.text(2, 4, T('불리한 쪽이 더 길다. 그것을 줄이지 않는 것이 이 장의 방식이다'),
+            fontsize=7.8, color=INK, fontweight='bold')
+    save(fig, 'chart23_evidence')
+
+
+def _wrap_txt(s, n):
+    """글자 수로 접는다. 한글 한 자를 라틴 두 자로 센다."""
+    out, cur, w = [], '', 0
+    for word in s.split(' '):
+        ww = sum(2 if '가' <= c <= '힣' else 1 for c in word) + 1
+        if cur and w + ww > n:
+            out.append(cur)
+            cur, w = word, ww
+        else:
+            cur = f'{cur} {word}'.strip()
+            w += ww
+    if cur:
+        out.append(cur)
+    return out
+
+
 # ── 손글씨 약 이름 200장 ────────────────────────────────────────────
 def chart_handwriting():
     """§5.7. 낱말 단위 성적과, 확신도로 걸러낼 수 없다는 것.
@@ -307,15 +380,19 @@ def chart_handwriting():
     rows = [(T('정확히 읽음'), sm['exact'], BLUE),
             (T('한두 글자 어긋남'), sm['nearMiss'], RED),
             (T('전혀 다르게 읽음'), sm['wrong'], GREY)]
+    # 축을 자료에서 잡는다. 상한을 고정해 두었더니 표본이 200에서 500으로
+    # 커졌을 때 막대가 축을 넘고 숫자가 제목까지 올라갔다.
+    top = max(v for _, v, _ in rows) * 1.34
     for i, (k, v, c) in enumerate(rows):
         a1.bar(i, v, 0.56, color=c, zorder=2)
-        a1.text(i, v + 2.5, f'{v}', ha='center', fontsize=9.4,
+        a1.text(i, v + top * 0.022, f'{v}', ha='center', fontsize=9.4,
                 fontweight='bold', color=INK)
     a1.set_xticks(range(3))
     a1.set_xticklabels([r[0] for r in rows], fontsize=7.2)
-    a1.set_ylim(0, 118)
+    a1.set_ylim(0, top)
     a1.set_ylabel(T('장수'))
-    a1.text(1, 108, T('붉은 칸이 더 위험하다'), ha='center', fontsize=7.4, color=RED)
+    a1.text(1, top * 0.93, T('붉은 칸이 더 위험하다'), ha='center',
+            fontsize=7.4, color=RED)
     frame(a1, grid='y')
 
     xs = [t['threshold'] for t in th]
@@ -327,7 +404,7 @@ def chart_handwriting():
     a2.set_ylabel('%')
     a2.set_ylim(0, 112)
     a2.legend(fontsize=7.4, frameon=False, loc='lower left')
-    a2.text(0.79, 60, T('둘을 함께 만족하는\n문턱이 없다'), fontsize=7.4,
+    a2.text(0.79, 26, T('문턱을 올려도\n정확해지지 않는다'), fontsize=7.4,
             color=RED, fontweight='bold', ha='right')
     frame(a2, grid='both')
     save(fig, 'chart21_handwriting')
@@ -342,7 +419,10 @@ def chart_pageeval():
     import json
     sm = json.loads((pathlib.Path(__file__).resolve().parents[3]
                      / 'scripts' / 'prescription-page-eval.json').read_text())['summary']
-    BEFORE = {'seen': 81.7, 'recall': 89.7}          # MEASUREMENTS.md §2
+    # 고치기 전 값은 고친 뒤에 만들어진 JSON 에 없으므로 MEASUREMENTS.md §2
+    # 에서 옮긴다. 표본이 60장에서 200장 전수로 바뀌었을 때 이 상수만
+    # 옛 값으로 남아, 재현율이 오른 것이 떨어진 것처럼 보였다.
+    BEFORE = {'seen': 95.5, 'recall': 83.2}          # MEASUREMENTS.md §2
 
     fig, ax = plt.subplots(figsize=(6.0, 2.3))
     title(fig, T('처방전 전장 {n}장. 답이 잘리던 것을 고치기 전과 뒤').format(n=sm['sampled']),
@@ -362,7 +442,7 @@ def chart_pageeval():
     ax.set_xticklabels([p[0] for p in pairs], fontsize=8.4)
     ax.set_ylim(0, 132)
     ax.set_ylabel('%')
-    ax.text(0.5, 116, T('실패한 11장은 무작위가 아니었다.\n전부 약이 5~12가지 적힌 장이었다'),
+    ax.text(0.5, 116, T('통째로 실패하던 장은 무작위가 아니었다.\n전부 약이 가장 많은 처방전이다'),
             ha='center', fontsize=7.6, color=RED, fontweight='bold')
     frame(ax, grid='y')
     save(fig, 'chart22_pageeval')
@@ -691,6 +771,7 @@ if __name__ == '__main__':
     chart_glyphs()
     chart_expressive()
     chart_ageing()
+    chart_evidence()
     chart_handwriting()
     chart_pageeval()
     chart_model()

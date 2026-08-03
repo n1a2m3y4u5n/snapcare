@@ -17,9 +17,31 @@ import matplotlib.pyplot as plt
 
 from style import BLUE, GREEN, GREY, INK, MUTED, ORANGE, RED, save
 
-# 옅은 채움 + 진한 테두리 (도식 전용)
-FILL = {BLUE: '#DCE6F5', GREEN: '#E2EDDB', ORANGE: '#FBE5D2',
-        GREY: '#EFEFEF', RED: '#F7DEDE'}
+# 논문 도판 양식.
+#
+# 파스텔로 채운 둥근 상자는 발표 자료의 어법이다. 학술 문서에서 상자는
+# 각지고, 면은 아주 옅은 농담이며, 종류는 색이 아니라 선의 굵기로 갈린다.
+#
+# 빗금도 써 봤으나 상자가 여덟 개씩 깔리니 어수선했다. 빗금은 흑백 인쇄만
+# 되던 시절의 방식이고, 요즘 논문 도판은 대개 옅은 회색 농담 두세 단계로
+# 범주를 가른다. 글을 덮지 않으면서 면이 비어 보이지도 않는다.
+#
+#   회색  흰색      중간 계산. 바탕이므로 비운다
+#   파랑  #F4F4F4   사람이 고르거나 결과로 나오는 것
+#   초록  #F1F5EE   통과 · 전달
+#   주황  #F7F7F7   다른 경로
+#   빨강  #FBF2F2   회피 · 실패
+FILL = {GREY: 'white', BLUE: '#F4F4F4', GREEN: '#F1F5EE',
+        ORANGE: '#F7F7F7', RED: '#FBF2F2'}
+
+# 강조가 필요한 상자만 한 단계 더 짙게.
+SHADE = '#EBEBEB'
+
+# 선의 굵기가 층을 말한다. 굵은 것이 사람이 고르거나 결과로 나오는 것이고,
+# 가는 것이 그 사이의 계산이다. 색은 뜻이 있는 둘만 남긴다.
+EDGE = {BLUE: '#1A1A1A', GREEN: '#548235', ORANGE: '#1A1A1A',
+        GREY: '#8A8A8A', RED: '#C00000'}
+LW = {BLUE: 1.4, GREEN: 1.4, ORANGE: 1.4, GREY: 0.7, RED: 1.4}
 
 
 def _em(s: str) -> float:
@@ -70,16 +92,23 @@ def _wrap_any(s: str, em_budget: float) -> list:
 def box(ax, x, y, w, h, head, lines=(), color=GREY, lw=1.6, fs=9.2):
     """상자 하나. 글 간격은 **상자 높이에 비례**해서 잡는다 — 절대 단위로 잡으면
     축 범위가 바뀔 때 전부 겹친다."""
-    ax.add_patch(mp.FancyBboxPatch((x, y), w, h, boxstyle='round,pad=0,rounding_size=0.6',
-                                   linewidth=lw, edgecolor=color,
-                                   facecolor=FILL[color], zorder=2))
-    ax.text(x + w / 2, y + h - h * 0.22, head, ha='center', va='center', fontsize=fs,
+    ax.add_patch(mp.Rectangle((x, y), w, h, linewidth=LW.get(color, lw * 0.7),
+                              edgecolor=EDGE.get(color, '#333333'),
+                              facecolor=FILL[color], zorder=2))
+    # 하위 줄이 없으면 제목을 가운데에 둔다. 늘 위쪽에 붙이면 아래 절반이
+    # 빈 채로 남아, 상자가 글보다 커 보인다.
+    hy = y + h / 2 if not lines else y + h - h * 0.22
+    ax.text(x + w / 2, hy, head, ha='center', va='center', fontsize=fs,
             fontweight='bold', color=INK, zorder=3)
 
     # 축 100 단위 = 그림 폭 6.0 인치. 7.6pt 글자의 1em 은 7.6/72 인치.
+    #
+    # 한국어도 접는다. _wrap 은 확정된 도판을 조용히 바꾸지 않으려고
+    # 한국어를 그냥 두는데, 그 보호 때문에 "대상을 고르지 않는다" 가
+    # 상자 좌우로 넘고 있었다. 넘는 것보다 접는 편이 낫다.
     sub = 7.6
     budget = (w - 1.6) / 100 * 6.0 / (sub / 72)
-    wrapped = [ln for t in lines for ln in _wrap(t, budget)]
+    wrapped = [ln for t in lines for ln in _wrap_any(t, budget)]
     step = 0.22 if len(wrapped) <= 2 else 0.19
     for i, t in enumerate(wrapped):
         ax.text(x + w / 2, y + h * (0.52 - i * step), t, ha='center', va='center',
@@ -88,8 +117,8 @@ def box(ax, x, y, w, h, head, lines=(), color=GREY, lw=1.6, fs=9.2):
 
 def arrow(ax, x1, y1, x2, y2, label=None, color=MUTED):
     ax.annotate('', xy=(x2, y2), xytext=(x1, y1),
-                arrowprops=dict(arrowstyle='-|>', color=color, lw=1.5,
-                                shrinkA=2, shrinkB=2), zorder=4)
+                arrowprops=dict(arrowstyle='-|>', color=color, lw=1.0,
+                                mutation_scale=10, shrinkA=4, shrinkB=4), zorder=4)
     if label:
         ax.text((x1 + x2) / 2, (y1 + y2) / 2 + 0.16, label, ha='center',
                 fontsize=7.6, color=MUTED, zorder=4)
@@ -125,11 +154,11 @@ def userflow():
     M = TOP - 17.5
     ax.text(2, M + 0.4, T('매번'), fontsize=8, color=MUTED)
     steps = [(T('홈'), [T('촬영 버튼 하나')], GREY),
-             (T('촬영'), [T('대상을 고르지 않는다')], GREY),
+             (T('촬영'), [T('대상을'), T('고르지 않는다')], GREY),
              (T('인식'), [T('OCR · 모델'), T('진행 상태를 표시')], GREY),
-             (T('판정'), [T('물리 검사 통과 후'), T('개인 기준과 대조')], BLUE),
+             (T('판정'), [T('물리 검사 뒤'), T('개인 기준과 대조')], BLUE),
              (T('전달'), [T('그림 · 음성 · 색')], GREEN)]
-    w, gap = 16.4, 3.0
+    w, gap = 16.0, 4.0
     for i, (h_, ls, c) in enumerate(steps):
         x = 2 + i * (w + gap)
         box(ax, x, M - 9.4, w, 9.2, h_, ls, c, fs=9.0)
@@ -137,7 +166,7 @@ def userflow():
             arrow(ax, x - gap + 0.4, M - 4.8, x - 0.6, M - 4.8)
 
     B = M - 15.5
-    ax.text(2, B + 0.4, T('전달의 세 층 — 서로를 대체하지 않고 겹친다'),
+    ax.text(2, B + 0.4, T('전달의 세 층. 서로를 대체하지 않고 겹친다'),
             fontsize=8, color=MUTED)
     layers = [(T('그림'), [T('무엇을 해야 하는가'), T('SIGIL 합성 픽토그램')], BLUE),
               (T('음성'), [T('그 그림이 무슨 뜻인가'), T('VOCA 재구성 문장')], ORANGE),
@@ -148,8 +177,8 @@ def userflow():
 
     ax.text(2, 8.4, T('설계 근거'), fontsize=8.4, color=MUTED, fontweight='bold')
     for i, t in enumerate([
-            T('계층을 두지 않는다 — 비문해 사용자에게 깊은 계층형 65.5초 대 평면 목록형 25초 (Medhi 등, 2013)'),
-            T('인식 과정을 감추지 않는다 — 아무 표시 없이 멈춘 화면은 고장으로 읽힌다 (Medhi, Cutrell & Toyama, 2010)'),
+            T('계층을 두지 않는다. 비문해 사용자에게 깊은 계층형 65.5초 대 평면 목록형 25초 (Medhi 등, 2013)'),
+            T('인식 과정을 감추지 않는다. 아무 표시 없이 멈춘 화면은 고장으로 읽힌다 (Medhi, Cutrell & Toyama, 2010)'),
             T('색만으로 판정하지 않는다 (WCAG 1.4.1)')]):
         ax.text(12, 8.4 - i * 2.6, '· ' + t, fontsize=7.4, color=MUTED, va='center')
     save(fig, 'fig11_userflow')
@@ -435,8 +464,9 @@ def sign_payload():
     fig, ax = canvas(6.0, 2.3)
     TOP = 32.0
 
+    # 초록은 "통과" 를 뜻한다. 개인키 상자에는 그 뜻이 없으므로 회색이다.
     box(ax, 2, TOP - 8.0, 30, 7.8, T('기기가 만든 개인키'),
-        [T('extractable: false'), T('브라우저 밖으로 못 나간다')], GREEN)
+        [T('extractable: false'), T('브라우저 밖으로 못 나간다')], GREY)
     arrow(ax, 32.6, TOP - 4.1, 37.4, TOP - 4.1)
     box(ax, 38, TOP - 8.0, 60, 7.8, T('서명하는 대상'),
         [T('시각 · 메서드 · 본문 해시')], BLUE)
@@ -490,10 +520,9 @@ def voca_rebuild():
     TOP = 52.0   # ylim = 55.0
 
     def panel(x, w, title, items, color, y0, h):
-        ax.add_patch(mp.FancyBboxPatch((x, y0), w, h,
-                                       boxstyle='round,pad=0,rounding_size=0.6',
-                                       linewidth=1.6, edgecolor=color,
-                                       facecolor=FILL[color], zorder=2))
+        ax.add_patch(mp.Rectangle((x, y0), w, h, linewidth=LW.get(color, 1.0),
+                                  edgecolor=EDGE.get(color, '#333333'),
+                                  facecolor=FILL[color], zorder=2))
         ax.text(x + w / 2, y0 + h - 2.6, title, ha='center', va='center',
                 fontsize=8.8, fontweight='bold', color=INK, zorder=3)
         for i, t in enumerate(items):
@@ -511,22 +540,21 @@ def voca_rebuild():
           [T('약 이름'), T('1회 용량'), T('복용법'),
            T('보관 방법'), T('제형 (문장이 되지 않는다)')], BLUE, TOP - H, H)
 
-    M = TOP - H - 5.0
+    M = TOP - H - 4.4
     ax.text(2, M + 1.0, T('남긴 것을 이 순서로 말한다. 듣는 사람은 되감을 수 없다'),
             fontsize=8.4, color=MUTED, fontweight='bold')
 
     steps = [(T('약 이름'), T('무엇에 대한 말인지 세운다')),
-             (T('1회 용량'), T('형성 평가 첫 측정에서 음성까지 도달하지 않던 항목')),
+             (T('1회 용량'), T('형성 평가에서 음성까지 닿지 않던 항목')),
              (T('복용법'), T('언제 · 얼마나 자주')),
              (T('보관'), T('냉장일 때만 말한다'))]
     w, gap, bh = 22.6, 2.2, 7.0
     for i, (h_, sub) in enumerate(steps):
         x = 2 + i * (w + gap)
         c = BLUE if i == 1 else GREY
-        ax.add_patch(mp.FancyBboxPatch((x, M - bh), w, bh,
-                                       boxstyle='round,pad=0,rounding_size=0.6',
-                                       linewidth=1.6, edgecolor=c,
-                                       facecolor=FILL[c], zorder=2))
+        ax.add_patch(mp.Rectangle((x, M - bh), w, bh, linewidth=LW.get(c, 1.0),
+                                  edgecolor=EDGE.get(c, '#333333'),
+                                  facecolor=FILL[c], zorder=2))
         ax.text(x + w / 2, M - bh / 2, h_, ha='center', va='center',
                 fontsize=8.8, fontweight='bold', color=INK, zorder=3)
         for j, ln in enumerate(_wrap_any(sub, (w - 1.0) / 100 * 6.0 / (7.4 / 72))):
@@ -535,11 +563,11 @@ def voca_rebuild():
         if i:
             arrow(ax, x - gap + 0.3, M - bh / 2, x - 0.5, M - bh / 2)
 
-    ax.text(2, 9.0, T('제형은 읽히지 않는다. 동사와 부위를 정하고 사라진다 (표 9)'),
+    ax.text(2, 7.6, T('제형은 읽히지 않는다. 동사와 부위를 정하고 사라진다 (표 9)'),
             fontsize=7.6, color=MUTED)
-    ax.text(2, 5.4, T('안약에 "Take as prescribed." 를 붙이면 동사를 가른 이유가 마지막 문장에서 무너진다'),
+    ax.text(2, 4.2, T('안약에 "Take as prescribed." 를 붙이면 동사를 가른 이유가 마지막 문장에서 무너진다'),
             fontsize=7.6, color=MUTED)
-    ax.text(2, 1.8, T('버린 여섯 줄은 환자가 할 일을 하나도 바꾸지 않는다. 읽어 주면 그만큼 앞의 넷이 묻힌다'),
+    ax.text(2, 0.8, T('버린 여섯 줄은 환자가 할 일을 하나도 바꾸지 않는다. 읽어 주면 그만큼 앞의 넷이 묻힌다'),
             fontsize=7.6, color=RED, fontweight='bold')
     save(fig, 'fig26_voca')
 
@@ -569,10 +597,9 @@ def problem_synthesis():
     for i, (h, sub) in enumerate(left):
         y = y0 - i * (H + GAP)
         c = ORANGE if i == 1 else (GREEN if i == 4 else GREY)
-        ax.add_patch(mp.FancyBboxPatch((2, y), 52, H,
-                                       boxstyle='round,pad=0,rounding_size=0.6',
-                                       linewidth=1.5, edgecolor=c,
-                                       facecolor=FILL[c], zorder=2))
+        ax.add_patch(mp.Rectangle((2, y), 52, H, linewidth=LW.get(c, 1.0),
+                                  edgecolor=EDGE.get(c, '#333333'),
+                                  facecolor=FILL[c], zorder=2))
         ax.text(4.4, y + H - 2.8, h, fontsize=8.6, fontweight='bold',
                 color=INK, zorder=3)
         for j, ln in enumerate(_wrap_any(sub, (52 - 3.4) / 100 * 6.0 / (7.4 / 72))):
@@ -582,24 +609,33 @@ def problem_synthesis():
     mid = y0 + H / 2 - 2 * (H + GAP)
     for i in range(5):
         y = y0 - i * (H + GAP) + H / 2
-        ax.annotate('', xy=(59.4, mid), xytext=(54.6, y),
+        ax.annotate('', xy=(56.6, mid), xytext=(54.6, y),
                     arrowprops=dict(arrowstyle='-', color=MUTED, lw=0.8,
                                     alpha=0.75, shrinkA=1, shrinkB=1), zorder=1)
 
-    ax.annotate('', xy=(59.6, mid), xytext=(58.2, mid),
-                arrowprops=dict(arrowstyle='-|>', color=MUTED, lw=1.3,
+    # 오른쪽 셋 모두를 가리켜야 한다. 앞 판은 화살표가 가운데 상자
+    # 하나에만 들어가서, 캡션이 "가리키는 셋" 이라 하는데 그림은
+    # 하나만 가리키고 있었다. 모인 자리에서 세로줄로 벌린 뒤 셋에
+    # 각각 넣는다.
+    H2 = 13.0
+    cy = [TOP - H2 / 2 - i * (H2 + 4.0) for i in range(3)]
+    ax.plot([58.2, 58.2], [min(cy), max(cy)], color=MUTED, lw=1.3,
+            solid_capstyle='butt', zorder=4)
+    ax.annotate('', xy=(58.2, mid), xytext=(56.6, mid),
+                arrowprops=dict(arrowstyle='-', color=MUTED, lw=1.3,
                                 shrinkA=0, shrinkB=0), zorder=4)
+    for y in cy:
+        ax.annotate('', xy=(59.8, y), xytext=(58.2, y),
+                    arrowprops=dict(arrowstyle='-|>', color=MUTED, lw=1.3,
+                                    shrinkA=0, shrinkB=0), zorder=4)
 
     right = [(T('조합'), T('처방 지시 하나를 그림 하나로 세울 것')),
              (T('배포 전 측정'), T('읽히는지를 사람에게 내보내기 전에 잴 것')),
              (T('문자 없는 전달'), T('보조 수단까지 읽기를 요구하지 않을 것'))]
-    H2 = 13.0
     for i, (h, sub) in enumerate(right):
         y = TOP - H2 - i * (H2 + 4.0)
-        ax.add_patch(mp.FancyBboxPatch((60, y), 38, H2,
-                                       boxstyle='round,pad=0,rounding_size=0.6',
-                                       linewidth=1.6, edgecolor=BLUE,
-                                       facecolor=FILL[BLUE], zorder=2))
+        ax.add_patch(mp.Rectangle((60, y), 38, H2, linewidth=LW[BLUE],
+                                  edgecolor=EDGE[BLUE], facecolor=FILL[BLUE], zorder=2))
         ax.text(79, y + H2 - 3.6, h, ha='center', fontsize=9.0,
                 fontweight='bold', color=INK, zorder=3)
         for j, ln in enumerate(_wrap_any(sub, (38 - 3.4) / 100 * 6.0 / (7.4 / 72))):

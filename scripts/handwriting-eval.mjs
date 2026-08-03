@@ -74,8 +74,25 @@ Return STRICT JSON only, no prose:
   Handwritten drug names differ by one letter and mean different drugs, so be honest:
   if two readings are equally plausible, say so with a low number.`;
 
+/*
+  밀리면 한 번 다시 보낸다. 500장을 재던 판에서 마흔 장이 `fetch failed` 로 빠졌는데,
+  그것은 글씨가 아니라 망이 실패한 것이라 성적에 섞이면 안 된다. 다시 보낸 횟수는
+  결과에 남긴다.
+*/
+let retried = 0;
+
 async function read(file) {
   const data = readFileSync(file).toString('base64');
+  try {
+    return await send(data);
+  } catch {
+    retried += 1;
+    await new Promise((r) => setTimeout(r, 1500));
+    return send(data);
+  }
+}
+
+async function send(data) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': KEY, 'anthropic-version': '2023-06-01' },
@@ -141,6 +158,7 @@ const summary = {
   model: MODEL,
   dataset: 'RxHandBD (Zenodo 18478741, MIT)',
   sampled: results.length,
+  retriedOnce: retried,
   read: ok.length,
   failed: results.length - ok.length,
   exact: exact.length,
