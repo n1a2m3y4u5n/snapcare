@@ -17,52 +17,26 @@ import matplotlib.pyplot as plt
 
 from style import BLUE, GREEN, GREY, INK, MUTED, ORANGE, RED, save
 
-plt.rcParams['hatch.linewidth'] = 0.5
-
-# 논문 도판 양식. 면을 채우지 않고 테두리로만 말한다.
+# 논문 도판 양식.
 #
 # 파스텔로 채운 둥근 상자는 발표 자료의 어법이다. 학술 문서에서 상자는
-# 보통 흰 바탕에 가는 테두리이고, 종류는 색이 아니라 선의 굵기와 실선/파선
-# 으로 갈린다. 흑백으로 인쇄해도 그대로 읽히는 것이 그 어법을 쓰는 이유다.
+# 각지고, 면은 아주 옅은 농담이며, 종류는 색이 아니라 선의 굵기로 갈린다.
 #
-# 색을 아주 버리지는 않는다. §3.7 이 색을 판정의 한 층으로 삼는다고 적었고,
-# 회피를 붉게 두지 않으면 도판이 본문과 다른 말을 하게 된다. 다만 면이
-# 아니라 테두리와 글자에만 쓴다.
-FILL = {BLUE: 'white', GREEN: 'white', ORANGE: 'white',
-        GREY: 'white', RED: 'white'}
-
-# 빗금이 범주를 가른다. 흑백에서 색이 하던 일을 대신하는 정통 방식이다.
-# 성글게 둔다. 촘촘하면 상자 안의 글이 읽히지 않는다.
+# 빗금도 써 봤으나 상자가 여덟 개씩 깔리니 어수선했다. 빗금은 흑백 인쇄만
+# 되던 시절의 방식이고, 요즘 논문 도판은 대개 옅은 회색 농담 두세 단계로
+# 범주를 가른다. 글을 덮지 않으면서 면이 비어 보이지도 않는다.
 #
-#   회색  없음   중간 계산. 바탕이므로 비운다
-#   파랑  /      사람이 고르거나 결과로 나오는 것
-#   초록  /      통과 · 전달 (테두리 색으로 파랑과 갈린다)
-#   주황  \\     다른 경로 · 나중에 붙일 것 (반대 방향 사선)
-#   빨강  x      회피 · 실패 (격자는 사선 둘이 겹쳐 밀도가 두 배라 한 단계 성글게)
-#
-# 점 무늬는 쓰지 않는다. 글자와 같은 크기의 알갱이라 상자 안의 글과
-# 겹쳐 보였다. 방향이 다른 사선은 글자와 겹치지 않는다.
-HATCH = {GREY: None, BLUE: '//', GREEN: '//', ORANGE: '\\\\', RED: 'x'}
-HATCH_C = {BLUE: '#BEBEBE', GREEN: '#AFC6A2', ORANGE: '#CACACA', RED: '#DFA8A8'}
+#   회색  흰색      중간 계산. 바탕이므로 비운다
+#   파랑  #F4F4F4   사람이 고르거나 결과로 나오는 것
+#   초록  #F1F5EE   통과 · 전달
+#   주황  #F7F7F7   다른 경로
+#   빨강  #FBF2F2   회피 · 실패
+FILL = {GREY: 'white', BLUE: '#F4F4F4', GREEN: '#F1F5EE',
+        ORANGE: '#F7F7F7', RED: '#FBF2F2'}
 
-# 강조가 필요한 상자만 아주 옅은 회색 한 단계를 깐다.
-SHADE = '#F2F2F2'
+# 강조가 필요한 상자만 한 단계 더 짙게.
+SHADE = '#EBEBEB'
 
-
-def _hatch(ax, x, y, w, h, color, zorder=1):
-    """빗금만 그리는 아래 장. 테두리는 위에서 따로 그린다.
-
-    matplotlib 의 빗금은 edgecolor 를 따라가므로 한 장에 둘을 다 주면
-    테두리까지 옅어진다. 그래서 나눈다."""
-    pat = HATCH.get(color)
-    if not pat:
-        return
-    ax.add_patch(mp.Rectangle((x, y), w, h, linewidth=0.0,
-                              edgecolor=HATCH_C.get(color, '#CCCCCC'),
-                              facecolor='white', hatch=pat, zorder=zorder))
-
-# 테두리는 검정 계열로 통일하고 굵기로 층을 만든다. 색은 뜻이 있는 둘만
-# 남긴다 (회피 = 붉은색, 통과 = 초록색).
 # 선의 굵기가 층을 말한다. 굵은 것이 사람이 고르거나 결과로 나오는 것이고,
 # 가는 것이 그 사이의 계산이다. 색은 뜻이 있는 둘만 남긴다.
 EDGE = {BLUE: '#1A1A1A', GREEN: '#548235', ORANGE: '#1A1A1A',
@@ -118,10 +92,9 @@ def _wrap_any(s: str, em_budget: float) -> list:
 def box(ax, x, y, w, h, head, lines=(), color=GREY, lw=1.6, fs=9.2):
     """상자 하나. 글 간격은 **상자 높이에 비례**해서 잡는다 — 절대 단위로 잡으면
     축 범위가 바뀔 때 전부 겹친다."""
-    _hatch(ax, x, y, w, h, color, zorder=1.5)
     ax.add_patch(mp.Rectangle((x, y), w, h, linewidth=LW.get(color, lw * 0.7),
                               edgecolor=EDGE.get(color, '#333333'),
-                              facecolor='none', zorder=2))
+                              facecolor=FILL[color], zorder=2))
     ax.text(x + w / 2, y + h - h * 0.22, head, ha='center', va='center', fontsize=fs,
             fontweight='bold', color=INK, zorder=3)
 
@@ -539,10 +512,9 @@ def voca_rebuild():
     TOP = 52.0   # ylim = 55.0
 
     def panel(x, w, title, items, color, y0, h):
-        _hatch(ax, x, y0, w, h, color, zorder=1.5)
         ax.add_patch(mp.Rectangle((x, y0), w, h, linewidth=LW.get(color, 1.0),
                                   edgecolor=EDGE.get(color, '#333333'),
-                                  facecolor='none', zorder=2))
+                                  facecolor=FILL[color], zorder=2))
         ax.text(x + w / 2, y0 + h - 2.6, title, ha='center', va='center',
                 fontsize=8.8, fontweight='bold', color=INK, zorder=3)
         for i, t in enumerate(items):
@@ -572,10 +544,9 @@ def voca_rebuild():
     for i, (h_, sub) in enumerate(steps):
         x = 2 + i * (w + gap)
         c = BLUE if i == 1 else GREY
-        _hatch(ax, x, M - bh, w, bh, c, zorder=1.5)
         ax.add_patch(mp.Rectangle((x, M - bh), w, bh, linewidth=LW.get(c, 1.0),
                                   edgecolor=EDGE.get(c, '#333333'),
-                                  facecolor='none', zorder=2))
+                                  facecolor=FILL[c], zorder=2))
         ax.text(x + w / 2, M - bh / 2, h_, ha='center', va='center',
                 fontsize=8.8, fontweight='bold', color=INK, zorder=3)
         for j, ln in enumerate(_wrap_any(sub, (w - 1.0) / 100 * 6.0 / (7.4 / 72))):
@@ -618,10 +589,9 @@ def problem_synthesis():
     for i, (h, sub) in enumerate(left):
         y = y0 - i * (H + GAP)
         c = ORANGE if i == 1 else (GREEN if i == 4 else GREY)
-        _hatch(ax, 2, y, 52, H, c, zorder=1.5)
         ax.add_patch(mp.Rectangle((2, y), 52, H, linewidth=LW.get(c, 1.0),
                                   edgecolor=EDGE.get(c, '#333333'),
-                                  facecolor='none', zorder=2))
+                                  facecolor=FILL[c], zorder=2))
         ax.text(4.4, y + H - 2.8, h, fontsize=8.6, fontweight='bold',
                 color=INK, zorder=3)
         for j, ln in enumerate(_wrap_any(sub, (52 - 3.4) / 100 * 6.0 / (7.4 / 72))):
@@ -645,9 +615,8 @@ def problem_synthesis():
     H2 = 13.0
     for i, (h, sub) in enumerate(right):
         y = TOP - H2 - i * (H2 + 4.0)
-        _hatch(ax, 60, y, 38, H2, BLUE, zorder=1.5)
         ax.add_patch(mp.Rectangle((60, y), 38, H2, linewidth=LW[BLUE],
-                                  edgecolor=EDGE[BLUE], facecolor='none', zorder=2))
+                                  edgecolor=EDGE[BLUE], facecolor=FILL[BLUE], zorder=2))
         ax.text(79, y + H2 - 3.6, h, ha='center', fontsize=9.0,
                 fontweight='bold', color=INK, zorder=3)
         for j, ln in enumerate(_wrap_any(sub, (38 - 3.4) / 100 * 6.0 / (7.4 / 72))):
