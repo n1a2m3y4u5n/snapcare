@@ -145,7 +145,7 @@ function ProfileBody() {
         ) : (
           <button onClick={() => router.push('/settings')} className="text-sm font-semibold"
                   style={{ color: 'var(--color-sc-primary)' }}>
-            ‹ Back
+            <span aria-hidden>◀️</span> Back
           </button>
         )}
 

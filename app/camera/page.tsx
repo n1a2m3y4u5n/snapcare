@@ -280,8 +280,13 @@ export default function CameraPage() {
           <div className="px-5 pb-8 pt-3 text-center">
             <button
               onClick={() => setShowOptions(true)}
-              className="text-xs underline underline-offset-4 opacity-60"
+              className="inline-flex items-center gap-1 text-xs underline underline-offset-4 opacity-60"
             >
+              {/* 물음표. 이 자리는 **카메라를 못 쓴 사람**이 오는 유일한 출구인데
+                  글자뿐이었다. 사진을 못 찍는 이유에는 손이 떨리는 것도, 종이가 너무
+                  작은 것도 있고(이번 조사에서 AAC 응답자가 짚었다), 그 사람들이
+                  정확히 글자로 된 출구를 못 찾는 사람과 겹친다. */}
+              <span aria-hidden className="no-underline">❓</span>
               <span {...sayable('Cannot take a photo? Tap here for things you can try instead.')}>Can&apos;t take a photo?</span>
             </button>
           </div>

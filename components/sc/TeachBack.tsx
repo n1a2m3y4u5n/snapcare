@@ -126,9 +126,12 @@ export function TeachBack({ item }: { item: ScanItem }) {
       <div className="mt-3 flex items-center gap-2">
         <button
           onClick={() => setSkipped(true)}
-          className="text-xs font-semibold underline"
+          className="inline-flex items-center gap-1 text-xs font-semibold underline"
           style={{ color: 'var(--color-sc-muted)' }}
         >
+          {/* 되말하기를 건너뛰는 자리. 글자뿐이면 못 읽는 사람은 이 확인 절차에
+              **갇힌다** — 나가는 길이 딱 하나인데 그게 글자다. */}
+          <span aria-hidden className="no-underline">⏭️</span>
           Skip
         </button>
         <span className="flex-1" />

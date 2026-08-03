@@ -292,7 +292,7 @@ export default function DevicePage() {
     <MobileScreen>
       <div className="px-5 pt-14 pb-10">
         <button onClick={() => router.push('/settings')} className="text-sm font-semibold" style={{ color: 'var(--color-sc-primary)' }}>
-          ‹ Settings
+          <span aria-hidden>◀️</span> Settings
         </button>
         <h1 className="mt-2 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
             {...ask('Pill device. Send your dose times to the box, or read what it shows.')}>Pill device</h1>
@@ -612,9 +612,11 @@ export default function DevicePage() {
         {!reading && (
           <button
             onClick={() => void readSample()}
-            className="mt-2 w-full text-center text-xs underline underline-offset-4"
+            className="mt-2 flex w-full items-center justify-center gap-1 text-center text-xs
+                       underline underline-offset-4"
             style={{ color: 'var(--color-sc-muted)' }}
           >
+            <span aria-hidden className="not-italic no-underline">🧪</span>
             No device here — try a sample code
           </button>
         )}

@@ -151,9 +151,14 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
           <button
             onClick={() => pair(code)}
             disabled={busy || !isValidClaim(code)}
-            className="mt-2 h-12 w-full rounded-2xl font-bold text-white disabled:opacity-40"
+            className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl
+                       font-bold text-white disabled:opacity-40"
             style={{ background: 'var(--color-sc-primary)' }}
           >
+            {/* 사슬 고리. 이 버튼이 하는 일이 폰과 상자를 잇는 것이다. 글자만 있으면
+                글을 못 읽는 사람은 여기서 멈추는데, 하필 이 화면은 약통을 처음
+                붙이는 자리라 그 앞의 모든 그림이 소용없어진다. */}
+            <span aria-hidden className="text-lg leading-none">🔗</span>
             Connect
           </button>
         </div>

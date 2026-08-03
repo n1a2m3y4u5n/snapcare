@@ -78,7 +78,7 @@ export default function PeoplePage() {
       }}>
         <button onClick={() => router.push('/settings')} className="text-sm font-semibold"
                 style={{ color: 'var(--color-sc-primary)' }}>
-          ‹ Back
+          <span aria-hidden>◀️</span> Back
         </button>
 
         <h1 className="mt-3 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}

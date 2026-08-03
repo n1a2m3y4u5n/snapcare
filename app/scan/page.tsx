@@ -265,7 +265,8 @@ function FoodResult({
       </div>
 
       <div className="mt-auto px-5 pb-8 pt-4">
-        <PrimaryButton onClick={onDone} level={verdict.level}
+        {/* 체크 표시. 이 버튼이 하는 일은 "확인했다, 기록에 남긴다" 다. */}
+        <PrimaryButton onClick={onDone} level={verdict.level} icon="✔️"
                        say="Done. This is saved to your history, and you go back to the start.">
           Done
         </PrimaryButton>
@@ -417,7 +418,8 @@ function RxResult({
         있어야 한다. 초록 버튼은 "확인됐다" 로 읽힌다.
       */}
       <div className="mt-auto pb-8 pt-6">
-        <PrimaryButton onClick={onDone} level={item.handwritten ? 'caution' : 'safe'}
+        {/* 알람 시계. 이 버튼이 만드는 것이 정확히 그것이다 — 시각마다 폰이 부른다. */}
+        <PrimaryButton onClick={onDone} level={item.handwritten ? 'caution' : 'safe'} icon="⏰"
                        say={item.handwritten
                          ? 'Create reminders from what we read. This was handwritten, so check the times with a person first.'
                          : 'Create reminders. The phone will tell you at each time on the list above.'}>
@@ -463,19 +465,39 @@ function SwapSide({ mark, color, say, children }: {
  * 이미 보이는 것을 되풀이하는 것이고, 정작 모르는 것 — 그래서 어떻게 되는가 — 은
  * 그대로 남는다.
  */
-function PrimaryButton({ children, onClick, level, say }: {
+/**
+ * 이 화면을 끝내는 버튼.
+ *
+ * `icon` 을 따로 받는 이유
+ * -----------------------
+ * 화면을 훑어 보니 **글자만 있고 그림이 없는 누를 곳**이 여섯 있었고, 그중 이것이
+ * 가장 중요했다. 처방전을 알람으로 바꾸는 자리, 즉 이 흐름 전체의 결정 지점인데
+ * 파란 칸에 영어 두 낱말만 적혀 있었다.
+ *
+ * 글을 못 읽어도 된다는 것이 이 앱의 주장이라면, 그 주장은 픽토그램 줄에서만
+ * 지켜지면 안 된다. 누를 곳마다 지켜져야 한다 — 그림을 아무리 잘 그려도 그 다음에
+ * 눌러야 하는 버튼이 글자뿐이면 거기서 멈춘다.
+ *
+ * 글자는 지우지 않는다. 보호자와 심사자도 이 화면을 본다. 그림을 **더한다.**
+ */
+function PrimaryButton({ children, onClick, level, say, icon }: {
   children: React.ReactNode;
   onClick: () => void;
   level: 'safe' | 'caution' | 'avoid';
   say: string;
+  /** 글자를 못 읽는 사람이 이 버튼을 알아볼 그림 */
+  icon?: string;
 }) {
   const bg = level === 'avoid' ? 'var(--color-avoid)' : level === 'caution' ? 'var(--color-caution)' : 'var(--color-sc-primary)';
   return (
     <div className="flex items-stretch gap-2">
       <button onClick={onClick}
-              className="flex-1 rounded-2xl py-4 text-center text-base font-bold text-white
-                         active:scale-[0.98] transition-transform"
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-4 text-center
+                         text-base font-bold text-white active:scale-[0.98] transition-transform"
               style={{ background: bg }}>
+        {/* aria-hidden: 소리로는 옆의 듣기 버튼과 say 가 이미 말한다. 스크린리더가
+            "알람 시계 이모지" 를 읽으면 문장 가운데 잡음이 하나 끼는 것과 같다. */}
+        {icon && <span aria-hidden className="text-xl leading-none">{icon}</span>}
         {children}
       </button>
       {/* 듣기 버튼은 흰 바탕에 둔다 — 같은 색으로 붙이면 버튼 하나가 두 칸으로

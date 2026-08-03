@@ -69,8 +69,15 @@ export default function OnboardingPage() {
     <div className="min-h-screen w-full flex justify-center" style={{ background: 'var(--color-sc-bg)' }}>
       <div className="relative w-full max-w-[440px] min-h-screen flex flex-col px-6 pb-8 pt-14">
         <div className="flex items-center justify-between text-sm font-semibold" style={{ color: 'var(--color-sc-muted)' }}>
-          <button onClick={() => (i > 0 ? setI(i - 1) : null)} className={i > 0 ? '' : 'invisible'}>Back</button>
-          <button onClick={finish}>Skip</button>
+          {/* 그림을 붙인다. 이 두 개는 앱을 처음 켠 사람이 만나는 첫 두 개의 누를
+              곳인데 글자뿐이었다 — 아직 아무것도 못 배운 시점이다. */}
+          <button onClick={() => (i > 0 ? setI(i - 1) : null)}
+                  className={`flex items-center gap-1 ${i > 0 ? '' : 'invisible'}`}>
+            <span aria-hidden>◀️</span>Back
+          </button>
+          <button onClick={finish} className="flex items-center gap-1">
+            Skip<span aria-hidden>⏭️</span>
+          </button>
         </div>
 
         <div className="flex flex-1 flex-col items-center justify-center text-center">
@@ -96,9 +103,16 @@ export default function OnboardingPage() {
 
         <button
           onClick={() => (last ? finish() : setI(i + 1))}
-          className="w-full rounded-2xl py-4 text-base font-bold text-white active:scale-[0.98] transition-transform"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-base
+                     font-bold text-white active:scale-[0.98] transition-transform"
           style={{ background: 'var(--color-sc-primary)' }}
         >
+          {/*
+            앱 전체에서 **가장 먼저 눌러야 하는 버튼**이고, 글자뿐이었다. 여기서
+            멈추면 뒤의 그림은 한 장도 못 본다. 마지막 장에서는 카메라로 바뀐다 —
+            그 누름이 실제로 하는 일이 그것이다.
+          */}
+          <span aria-hidden className="text-lg leading-none">{last ? '📷' : '▶️'}</span>
           {last ? 'Get Started' : 'Next'}
         </button>
       </div>
