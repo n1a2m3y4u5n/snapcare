@@ -38,13 +38,24 @@ import type {
   WeeklySlot,
 } from './types.ts';
 
-/** A relay that answered, but not the way we hoped. */
+/**
+ * A relay that answered, but not the way we hoped.
+ *
+ * The fields are declared and assigned rather than written as constructor
+ * parameter properties. Node's `--experimental-strip-types` only strips types,
+ * it does not emit code, and a parameter property is code — so this file threw
+ * ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX at import time and took the whole suite
+ * with it. `make test` reported a failure, but zero tests had run: the
+ * dispenser's aggregate target calls `make check` (vectors only), so nothing
+ * downstream noticed. Same shape as the display glyphs going missing and 663
+ * firmware tests quietly not running.
+ */
 export class RelayError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
     super(message);
+    this.status = status;
     this.name = 'RelayError';
   }
 }
@@ -57,8 +68,11 @@ export class RelayError extends Error {
  * made on a second phone silently disappears.
  */
 export class RevisionConflictError extends RelayError {
-  constructor(readonly currentRev: number, message: string) {
+  readonly currentRev: number;
+
+  constructor(currentRev: number, message: string) {
     super(message, 409);
+    this.currentRev = currentRev;
     this.name = 'RevisionConflictError';
   }
 }
@@ -80,11 +94,17 @@ export interface DispenserClientOptions {
  * reason.
  */
 export class DispenserClient {
-  private constructor(
-    private readonly relayUrl: string,
-    private readonly keys: DeviceKeys,
-    private readonly doFetch: typeof fetch,
-  ) {}
+  private readonly relayUrl: string;
+  private readonly keys: DeviceKeys;
+  private readonly doFetch: typeof fetch;
+
+  // Written out for the same reason as RelayError above — parameter properties
+  // are code, and the runner these tests run under does not emit code.
+  private constructor(relayUrl: string, keys: DeviceKeys, doFetch: typeof fetch) {
+    this.relayUrl = relayUrl;
+    this.keys = keys;
+    this.doFetch = doFetch;
+  }
 
   static async pair(options: DispenserClientOptions): Promise<DispenserClient> {
     const keys = await deriveKeys(options.claim);

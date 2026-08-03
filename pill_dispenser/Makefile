@@ -5,6 +5,7 @@
 #     make firmware   the Raspberry Pi firmware (needs only python)
 #     make relay      the cloud relay (needs only python)
 #     make vectors    regenerate the crypto vectors the other implementations pin to
+#     make kit        the web app's dispenser client (needs node 22+)
 #     make apk        the demo app (needs the Android SDK)
 #     make demo       a relay and a dispenser on this machine, wired together
 #     make sweep      re-measure where the reader stops working
@@ -14,12 +15,23 @@
 # board, no servo and no network; the relay's need no container and no account.
 # The part of this project that runs on a device with no debugger can be checked
 # by anyone, anywhere, in a second.
+#
+# What `make all` needs, all of it, in one interpreter:
+#
+#     pip install pytest opencv-python cryptography     # plus node 22+ for `kit`
+#
+# Worth spelling out because the failures do not name themselves. Without
+# opencv the sheet reader raises ModuleNotFoundError and, separately, three
+# firmware tests go red because the QR endpoints answer 503. Without
+# cryptography the vector check stops with a line about apt. Neither points at
+# the interpreter, and this repo had two virtualenvs where each was missing
+# whichever the other had — so `make all` could not pass from either one.
 
 PYTHON ?= python
 
-.PHONY: all python firmware relay vectors apk demo sweep clean
+.PHONY: all python firmware relay vectors kit apk demo sweep clean
 
-all: firmware relay python vectors
+all: firmware relay python vectors kit
 	@echo
 	@echo "pill dispenser: all tests passed"
 
@@ -45,6 +57,23 @@ vectors:
 	@echo
 	@echo "── crypto vectors (shared by four implementations) ──"
 	@$(MAKE) --no-print-directory -C webapp_kit check PYTHON=$(PYTHON)
+
+# `vectors` above only checks that the numbers still match the firmware. It says
+# nothing about the TypeScript that consumes them, and for a while that mattered
+# more than it sounds: relay.ts used a constructor parameter property, which the
+# app's test runner cannot load, so `make test` in webapp_kit threw at import
+# and ran **zero** of its 30 tests. Nothing here called that target, so the
+# suite was dead and green at the same time. It hid a real one: a staleness
+# check asserting on timestamps with no UTC offset.
+#
+# Skipped rather than failed when node is missing — the rest of this Makefile
+# needs only Python and should stay runnable on a machine with no node.
+kit:
+	@echo
+	@echo "── web app's dispenser kit ──"
+	@command -v node >/dev/null \
+	  && $(MAKE) --no-print-directory -C webapp_kit test \
+	  || echo "   node is not on PATH — skipped"
 
 # Not part of `all`: it needs the Android SDK, which most people running the
 # tests will not have. Its own unit tests read the vectors above.

@@ -54,6 +54,17 @@ test('the display form is hyphenated and derives identically', async () => {
   const fromBare = await deviceId(vectors.claim.sample);
   const fromPretty = await deviceId(vectors.claim.formatted);
   assert.equal(fromBare, fromPretty);
+  // The token has to survive the hyphen too. The device ID only decides which
+  // mailbox is read; the token decides whether the read is allowed. If only the
+  // ID normalised, a carer who typed the code the way it is printed on the box
+  // would reach the right mailbox and be turned away by it — an authorisation
+  // failure with no wrong password behind it, which is close to undebuggable
+  // from the phone. deriveKeys covers the pair; this covers the function the
+  // relay client actually calls.
+  assert.equal(
+    await accessToken(vectors.claim.formatted),
+    vectors.keys.accessToken,
+  );
 });
 
 test('the pairing code is read out of the URL fragment', () => {
@@ -393,10 +404,32 @@ test('a relay error carries its status rather than being swallowed', async () =>
 test('staleness is judged from the report timestamp, not from "connected"', () => {
   // A dispenser whose power has been pulled sends nothing and otherwise looks
   // identical to a healthy one. This is the check that tells them apart.
-  const report = { ...vectors.envelope.reported.plaintext, at: '2026-08-01T09:15:00' };
-  const soonAfter = new Date('2026-08-01T09:20:00');
-  const muchLater = new Date('2026-08-01T14:00:00');
+  // The stamps carry an offset. isStale treats one without as unknown, and the
+  // two assertions below used to read '2026-08-01T09:15:00' — parsed in the
+  // reader's own timezone, which is the carer's phone and not the dispenser.
+  // They were written before that rule existed and had never been run since:
+  // src/relay.ts used a constructor parameter property, so importing this file
+  // threw and the whole suite died before a single test executed.
+  const report = { ...vectors.envelope.reported.plaintext, at: '2026-08-01T09:15:00+09:00' };
+  const soonAfter = new Date('2026-08-01T09:20:00+09:00');
+  const muchLater = new Date('2026-08-01T14:00:00+09:00');
   assert.equal(DispenserClient.isStale(report as never, 15 * 60, soonAfter), false);
   assert.equal(DispenserClient.isStale(report as never, 15 * 60, muchLater), true);
   assert.equal(DispenserClient.isStale({ ...report, at: 'never' } as never), true);
+});
+
+test('a timestamp with no UTC offset counts as stale rather than being guessed', () => {
+  // Older firmware sends a bare local time. Reading it in the phone's zone puts
+  // a device in Seoul nine hours away from a carer in the UK — far past any
+  // fifteen minute threshold, in whichever direction the pair happens to sit.
+  // One direction shows a healthy dispenser as unplugged; the other hides one
+  // that has been dead for days. "Go and look at it" is the recoverable half.
+  const bare = { ...vectors.envelope.reported.plaintext, at: '2026-08-01T09:15:00' };
+  const oneMinuteLater = new Date('2026-08-01T09:16:00+09:00');
+  assert.equal(DispenserClient.isStale(bare as never, 15 * 60, oneMinuteLater), true);
+  assert.equal(
+    DispenserClient.isStale({ ...bare, at: '2026-08-01T09:15:00Z' } as never, 15 * 60,
+      new Date('2026-08-01T09:16:00Z')),
+    false,
+  );
 });
