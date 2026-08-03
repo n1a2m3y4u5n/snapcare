@@ -31,6 +31,7 @@
   · 본문이 인용한 코드가 저장소 파일과 같은가
   · 본문이 든 형태소 이름이 사전에 그대로 있는가
   · 그림 33 의 채움 점수가 파서가 내는 값과 같은가
+  · 같은 출처가 두 가지 모양으로 적히지 않았는가
 """
 import re
 import sys
@@ -709,6 +710,43 @@ def sheet_scores() -> list:
     return out
 
 
+def cite_shape() -> list:
+    """같은 출처가 두 가지 모양으로 적히지 않았는가.
+
+    §1.11 의 요약 문장이 세 논문을 제목 없이 약칭 학술지로 적고
+    있었다 — *Arch Pediatr Adolesc Med*, *Res Social Adm Pharm*,
+    *J Pharm Policy Pract*. 같은 논문이 다른 자리에서는 제목과 정식
+    학술지명으로 나온다. 대장이 "나오는 자리마다 전체로 적는다" 고
+    적어 둔 규칙과 어긋난다.
+
+    Murray 등 2022 는 한쪽에서 부제가 빠져 있었다."""
+    out = []
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        s = (DOC / f).read_text()
+        s = s[:s.index('### 5.11')] if '### 5.11' in s else s
+
+        # 1) 같은 저자·연도에 제목이 둘 이상
+        by = {}
+        for au, ti, yr in re.findall(
+                r'\(([A-Z][\w.\'\- ]+(?:,[^,"]*)*?),\s*"([^"]+),"[^)]*?((?:19|20)\d\d)', s):
+            by.setdefault((au.split(',')[0].strip(), yr), set()).add(ti)
+        for (au, yr), ts in sorted(by.items()):
+            if len(ts) > 1:
+                out.append(f'{f}: {au} {yr} 의 제목이 {len(ts)}가지다 — '
+                           + ' / '.join(sorted(t[:48] for t in ts)))
+
+        # 2) 제목 없이 저자·학술지만 적은 인용
+        # 학술지 인용만 본다 — 이탤릭 뒤에 권:쪽이 따라오는 모양이다.
+        # 보고서와 단행본은 이탤릭이 곧 제목이므로 걸면 안 된다
+        # (Paivio 의 단행본, GSMA·FARE 의 보고서가 그렇다).
+        for m in re.finditer(r'\(([A-Z][\w.\'\- ]+(?:[,&][^()"]*?)?),\s*'
+                             r'\*([^*]+)\*,\s*\d+(?:\(\d+\))?:[\d–\-]+,\s*(?:19|20)\d\d', s):
+            if '"' in m.group(0):
+                continue
+            out.append(f'{f}: 제목 없이 학술지만 적은 인용 — {m.group(0)[:76]}')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -821,6 +859,9 @@ def main() -> int:
         note(t)
 
     for t in sheet_scores():
+        note(t)
+
+    for t in cite_shape():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):
