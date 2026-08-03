@@ -1183,6 +1183,56 @@ def built_order() -> list:
     return out
 
 
+def len_ratio() -> list:
+    """문단마다 영어/한글 글자 수 비율이 정상 범위에 있는가.
+
+    문단 수가 맞아도 안이 다를 수 있다. 한쪽에만 문장이 들어가거나
+    빠지면 길이가 눈에 띄게 어긋난다. 지금 중앙값이 2.1 이고, 낮은
+    쪽은 문단의 대부분이 서지 정보라 두 판이 같은 글자를 쓰는 경우,
+    높은 쪽은 영어가 기관 이름이나 법령 이름을 풀어 쓰는 경우다.
+
+    실제로 이 재기가 §5.8 에서 인용 둘이 그림 설명 안에 들어가 있던
+    것과 §5.5 에서 한 문장이 한글판에만 없던 것을 찾아냈다."""
+    import statistics
+    def secs(f):
+        out, cur, buf, fence = {}, None, [], False
+        for ln in (DOC / f).read_text().splitlines():
+            if ln.strip().startswith('```'):
+                fence = not fence
+                continue
+            if fence:
+                continue
+            m = re.match(r'^#{2,4}\s*(\d+\.\d+(?:\.\d+)?)', ln)
+            if m:
+                if cur:
+                    out[cur] = buf
+                cur, buf = m.group(1), []
+            elif cur is not None and ln.strip():
+                buf.append(ln.strip())
+        if cur:
+            out[cur] = buf
+        return out
+    ko, en = secs('proposal_ko.md'), secs('proposal_en.md')
+    rows = []
+    for k in set(ko) & set(en):
+        if len(ko[k]) != len(en[k]):
+            continue                      # 문단 수는 para_parity 가 본다
+        for i, (x, y) in enumerate(zip(ko[k], en[k])):
+            if x.startswith(('|', '!', '>', '**[')) or x == y or len(x) < 70:
+                continue
+            rows.append((len(y) / len(x), k, i, x[:44]))
+    if len(rows) < 30:
+        return []
+    med = statistics.median(r[0] for r in rows)
+    # 문턱은 실제로 찾았던 값에 맞춘다. §5.8 의 빠진 인용이 0.05,
+    # §5.5 의 빠진 문장이 4.43 이었다. 반대로 3.2~3.4 는 정상이다 —
+    # 한국어가 압축적이거나, 한국어 낱말을 영어 독자에게 풀어 준
+    # 문장처럼 일부러 한쪽에만 둔 것이 있다.
+    out = [f'§{k}[{i}] 의 길이 비율이 {v:.2f} 다 (중앙값 {med:.2f}) — {x}'
+           for v, k, i, x in rows if v < med * 0.5 or v > med * 1.9]
+    return out[:8]
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -1319,6 +1369,9 @@ def main() -> int:
         note(t)
 
     for t in built_order():
+        note(t)
+
+    for t in len_ratio():
         note(t)
 
     for t in links_live():
