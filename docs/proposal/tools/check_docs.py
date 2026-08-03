@@ -22,6 +22,7 @@
   · 소제목에 번호가 붙어 있는가
   · 도판에서 글자가 상자를 넘거나 겹치지 않는가
   · 본문 인용이 부록 원문과 글자까지 같은가
+  · 응답자 명단의 수가 실제 응답 수와 같은가
 """
 import re
 import sys
@@ -349,6 +350,36 @@ def quote_drift(f: str = 'proposal_ko.md') -> list:
     return out
 
 
+def roster_count() -> list:
+    """표 41 의 응답자 수가 실제 응답 수와 같은지 본다.
+
+    이름 표기는 표 41 에서 정규화한다(Vucicevic → Vučićević, 소문자 성 →
+    대문자). 그래서 문자열로 대조하면 오탐이 난다. 수만 견준다."""
+    import openpyxl
+    xl = (Path.home() / 'Desktop/Claude/snapcare-survey/scratchpad'
+          / 'SnapCare_설문응답.xlsx')
+    if not xl.is_file():
+        return []
+    ws = openpyxl.load_workbook(xl, data_only=True)['응답']
+    n_data = ws.max_row - 1
+
+    s = (DOC / 'proposal_ko.md').read_text()
+    i = s.index('[표 41]')
+    names = []
+    for ln in s[i:].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if names:
+                break
+            continue
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        if len(c) >= 4 and c[0] and c[0] != '성함' and '---' not in c[0] \
+                and not c[0].startswith('**'):
+            names.append(c[0])
+    if len(names) != n_data:
+        return [f'표 41 이 {len(names)}명인데 응답은 {n_data}건이다']
+    return []
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -427,6 +458,9 @@ def main() -> int:
     for f, _, _ in PAIR:
         for t in unnumbered_subs(f):
             note(f'{f}: 번호 없는 소제목 — {t[:40]}')
+
+    for t in roster_count():
+        note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
