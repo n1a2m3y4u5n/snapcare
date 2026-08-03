@@ -1761,7 +1761,7 @@ def escalate(c: 'Check | None') -> str:
 
 MAE% 는 공식 정의를 따랐다. 절대오차의 평균을 정답의 평균으로 나눈 값이며, 접시마다의 비율을 평균한 것이 아니다. 채점한 507개는 테스트 split 709개 가운데 오버헤드 프레임이 존재하는 것 전부다. 공식 프로토콜이 오버헤드 프레임만 쓰기 때문이며, 측면 프레임을 섞으면 다른 숫자가 나오고 비교할 수 없는 값이 조용히 만들어진다.
 
-내보낸 모델의 메타데이터에도 같은 수치가 기록되어 있었으나 그것을 옮겨 적지 않고 자료를 받아 다시 쟀다. 다섯 항목 모두 소수점 둘째 자리까지 일치했다.
+내보낸 모델의 메타데이터에도 같은 수치가 기록되어 있었으나 그것을 옮겨 적지 않고 자료를 받아 다시 쟀다. 다섯 항목 모두 소수점 둘째 자리까지 일치했다. 이 문서에서 인용을 1차 출처와 대조하며 확인한 것이 하나 있다면, 어딘가에 적힌 값과 그 출처가 실제로 말하는 값이 자주 다르다는 것이다.
 
 이 값이 지금은 다시 잴 수 없다는 것을 밝혀 둔다. Nutrition5k 원본이 지워지면서 공식 테스트 분할의 오버헤드 프레임 3,262장이 사라졌고, 테스트 507접시에는 측면 프레임이 하나도 없어 대체할 수도 없다. 위의 수치는 자료가 있을 때 잰 것이며 그 절차는 §11 의 스크립트에 남아 있으나, 지금 다시 돌리면 자료가 없다는 것을 알리고 멈춘다.
 
@@ -2366,13 +2366,13 @@ SnapCare 가 개입하는 지점은 §1.4 에서 서술한 마지막 한 걸음 
 
 3.8 과의 연결은 인력 격차에서 나온다. §1.4 에서 인용한 대로 의사 밀도는 지역에 따라 열세 배 넘게 벌어져 있고, 진료 시간이 짧아지면 가장 먼저 줄어드는 것이 복약 설명이다. 보편적 건강보장은 대체로 진료와 약값에 닿을 수 있는가로 측정되지만, 약을 손에 넣고도 그 지시를 읽지 못하면 보장은 거기서 끊긴다. §1.4 에서 인용한 순응도 50%가 그 끊긴 자리의 크기다. 약이 처방되고 조제되어 손에 들어간 뒤에 절반이 사라지는 것이므로, 앞 단계에 아무리 투자해도 이 단계를 그대로 두면 그만큼이 새어 나간다. SnapCare 가 줄이려는 것은 진료 이후에 남는 이 격차이며, 그것은 문해력에 따라 갈리는 격차다.
 
-특히 3.d 와의 연결이 직접적이다. 104개국에서 보고된 실험실 확인 감염 2,300만 건 이상을 분석한 결과, 2023년 세균 감염 여섯 건 중 한 건이 항생제에 내성을 보였다. 2018년부터 2023년까지 감시 대상 병원체·항생제 조합의 40% 이상에서 내성이 상승했고, 연평균 상승률은 5~15% 였다 (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025).
+특히 3.d 와의 연결이 직접적이다. 104개국에서 보고된 실험실 확인 감염 2,300만 건 이상을 분석한 결과, 2023년 세균 감염 여섯 건 중 한 건이 항생제에 내성을 보였다. 2018년부터 2023년까지 감시 대상 병원체·항생제 조합의 40% 이상에서 내성이 상승했고, 연평균 상승률은 5~15% 였다 (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). 2019년 기준 세균 내성에 직접 기인한 사망은 127만 명으로 HIV/AIDS 나 말라리아보다 많았다 (Murray, C. J. L. et al. (Antimicrobial Resistance Collaborators), "Global burden of bacterial antimicrobial resistance in 2019," *The Lancet*, 399(10325):629–655, 2022). 증상이 가시면 항생제를 중단하는 것이 내성의 주요 인적 경로다. 그리고 그것이 소수의 행동이 아니다. 12개국 9,772명을 조사한 결과 **32%가 몸이 나아지면 항생제를 끊어도 된다고 믿고 있었고**, 64%는 항생제가 감기나 독감에 듣는다고 답했다 (World Health Organization, *WHO multi-country survey reveals widespread public misunderstanding about antibiotic resistance*, 2015).
 
 지역별로 보면 이 문제도 우리가 대상으로 삼는 곳에 몰려 있다. 동남아시아와 동지중해 지역에서는 보고된 감염 셋 중 하나가 내성을 보였고, 아프리카에서는 다섯 중 하나, 아메리카에서는 일곱 중 하나다 (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). §1.1 에서 문해율이 가장 낮았던 지역이 여기서 다시 나온다.
 
 ![그림 46](fig/chart14_amr_region.png)
 
-**[그림 46]** 보고된 세균 감염 중 항생제 내성 비율 (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). 세계 평균은 여섯 중 하나인데 동남아시아와 동지중해에서는 셋 중 하나다. 이 두 지역에 표 1 의 문해율 하위 국가들이 있다. `finish_course` 형태소가 겨냥하는 자리가 그곳이다. 2019년 기준 세균 내성에 직접 기인한 사망은 127만 명으로 HIV/AIDS 나 말라리아보다 많았다 (Murray, C. J. L. et al. (Antimicrobial Resistance Collaborators), "Global burden of bacterial antimicrobial resistance in 2019," *The Lancet*, 399(10325):629–655, 2022). 증상이 가시면 항생제를 중단하는 것이 내성의 주요 인적 경로다. 그리고 그것이 소수의 행동이 아니다. 12개국 9,772명을 조사한 결과 **32%가 몸이 나아지면 항생제를 끊어도 된다고 믿고 있었고**, 64%는 항생제가 감기나 독감에 듣는다고 답했다 (World Health Organization, *WHO multi-country survey reveals widespread public misunderstanding about antibiotic resistance*, 2015).
+**[그림 46]** 보고된 세균 감염 중 항생제 내성 비율 (World Health Organization, *Global antibiotic resistance surveillance report 2025 (GLASS)*, 2025). 세계 평균은 여섯 중 하나인데 동남아시아와 동지중해에서는 셋 중 하나다. 이 두 지역에 표 1 의 문해율 하위 국가들이 있다. `finish_course` 형태소가 겨냥하는 자리가 그곳이다.
 
 세 명 중 한 명이 그렇게 믿는다면, 처방전에 적힌 복용 기간은 읽히지 않아서가 아니라 읽히고도 지켜지지 않는다. 여기에 읽지 못하는 사람이 더해진다. 문자로 적힌 기간이 애초에 전달되지 않으면 그 지시는 존재하지 않는 것과 같고, SnapCare 의 `finish_course` 형태소가 겨냥하는 것이 그 지점이다. 다만 그림 하나로 믿음이 바뀌지는 않으며, 이 형태소가 하는 일은 기간이 전달되게 하는 것까지다.
 
