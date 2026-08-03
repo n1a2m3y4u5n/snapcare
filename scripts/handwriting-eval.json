@@ -3,23 +3,24 @@
   "model": "claude-sonnet-5",
   "dataset": "RxHandBD (Zenodo 18478741, MIT)",
   "sampled": 500,
-  "read": 460,
-  "failed": 40,
-  "exact": 202,
-  "nearMiss": 132,
-  "wrong": 126,
-  "exactPct": 43.9,
+  "retriedOnce": 0,
+  "read": 500,
+  "failed": 0,
+  "exact": 226,
+  "nearMiss": 141,
+  "wrong": 133,
+  "exactPct": 45.2,
   "confidentlyWrong": 1,
   "confidentlyWrongPct": 0.2,
-  "meanConfidenceWhenRight": 0.457,
-  "meanConfidenceWhenWrong": 0.359
+  "meanConfidenceWhenRight": 0.461,
+  "meanConfidenceWhenWrong": 0.353
  },
  "results": [
   {
    "img": "P0001.jpg",
    "truth": "Nexcital",
    "reading": "Nexcital",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -27,7 +28,7 @@
    "img": "P0003.jpg",
    "truth": "Indever",
    "reading": "Indever",
-   "confidence": 0.62,
+   "confidence": 0.65,
    "exact": true,
    "distance": 0
   },
@@ -35,7 +36,7 @@
    "img": "P0005.jpg",
    "truth": "Rivotril",
    "reading": "Rivotril",
-   "confidence": 0.62,
+   "confidence": 0.75,
    "exact": true,
    "distance": 0
   },
@@ -51,7 +52,7 @@
    "img": "P0009.jpg",
    "truth": "Exeptim",
    "reading": "Exephim",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": false,
    "distance": 1
   },
@@ -59,7 +60,7 @@
    "img": "P0011.jpg",
    "truth": "Kacin",
    "reading": "Kacin.",
-   "confidence": 0.5,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -74,7 +75,7 @@
   {
    "img": "P0015.jpg",
    "truth": "Dexter",
-   "reading": "Dexta",
+   "reading": "Dextre",
    "confidence": 0.35,
    "exact": false,
    "distance": 2
@@ -98,10 +99,10 @@
   {
    "img": "P0021.jpg",
    "truth": "Napa",
-   "reading": "Galotonnhta",
-   "confidence": 0.2,
+   "reading": "Galactoformhta",
+   "confidence": 0.22,
    "exact": false,
-   "distance": 9
+   "distance": 12
   },
   {
    "img": "P0023.jpg",
@@ -114,10 +115,10 @@
   {
    "img": "P0025.jpg",
    "truth": "Panied",
-   "reading": "Flanex",
-   "confidence": 0.4,
+   "reading": "Flavex",
+   "confidence": 0.45,
    "exact": false,
-   "distance": 4
+   "distance": 5
   },
   {
    "img": "P0027.jpg",
@@ -139,7 +140,7 @@
    "img": "P0031.jpg",
    "truth": "Medroxy",
    "reading": "Relvis",
-   "confidence": 0.45,
+   "confidence": 0.4,
    "exact": false,
    "distance": 6
   },
@@ -147,14 +148,14 @@
    "img": "P0033.jpg",
    "truth": "Furocef",
    "reading": "Myosit",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": false,
    "distance": 6
   },
   {
    "img": "P0035.jpg",
    "truth": "Dextal",
-   "reading": "Tomax",
+   "reading": "Tonat",
    "confidence": 0.3,
    "exact": false,
    "distance": 5
@@ -162,7 +163,7 @@
   {
    "img": "P0037.jpg",
    "truth": "Voligel",
-   "reading": "Renlen",
+   "reading": "Renlem",
    "confidence": 0.3,
    "exact": false,
    "distance": 6
@@ -179,14 +180,14 @@
    "img": "P0041.jpg",
    "truth": "Sergel",
    "reading": "Domin",
-   "confidence": 0.55,
+   "confidence": 0.45,
    "exact": false,
    "distance": 6
   },
   {
    "img": "P0043.jpg",
    "truth": "Nitrofur",
-   "reading": "Colian",
+   "reading": "Colica",
    "confidence": 0.35,
    "exact": false,
    "distance": 8
@@ -211,7 +212,7 @@
    "img": "P0049.jpg",
    "truth": "Omep",
    "reading": "Rotac",
-   "confidence": 0.45,
+   "confidence": 0.4,
    "exact": false,
    "distance": 4
   },
@@ -234,15 +235,15 @@
   {
    "img": "P0055.jpg",
    "truth": "Fougest",
-   "reading": "Prilosec",
-   "confidence": 0.45,
+   "reading": "Prevachol",
+   "confidence": 0.35,
    "exact": false,
-   "distance": 7
+   "distance": 9
   },
   {
    "img": "P0057.jpg",
    "truth": "RUPIN",
-   "reading": "Sulfolin",
+   "reading": "Sulbutin",
    "confidence": 0.3,
    "exact": false,
    "distance": 5
@@ -259,7 +260,7 @@
    "img": "P0061.jpg",
    "truth": "Sergel",
    "reading": "Maxpro",
-   "confidence": 0.6,
+   "confidence": 0.55,
    "exact": false,
    "distance": 6
   },
@@ -267,25 +268,25 @@
    "img": "P0063.jpg",
    "truth": "Indever",
    "reading": "Dasopan",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": false,
    "distance": 7
   },
   {
    "img": "P0065.jpg",
    "truth": "Sergel",
-   "reading": "N-MAX 200/50",
+   "reading": "N-MAX 500",
    "confidence": 0.45,
    "exact": false,
-   "distance": 9
+   "distance": 7
   },
   {
    "img": "P0067.jpg",
    "truth": "Profenid Gel",
-   "reading": "Bicarbel",
-   "confidence": 0.25,
+   "reading": "Bicalutamide",
+   "confidence": 0.35,
    "exact": false,
-   "distance": 9
+   "distance": 11
   },
   {
    "img": "P0069.jpg",
@@ -298,7 +299,7 @@
   {
    "img": "P0071.jpg",
    "truth": "Etorix",
-   "reading": "Inderin (10)",
+   "reading": "Inderim (10)",
    "confidence": 0.35,
    "exact": false,
    "distance": 7
@@ -307,23 +308,23 @@
    "img": "P0073.jpg",
    "truth": "Apeelo",
    "reading": "Traxyl",
-   "confidence": 0.45,
+   "confidence": 0.35,
    "exact": false,
    "distance": 6
   },
   {
    "img": "P0075.jpg",
    "truth": "Tenocab",
-   "reading": "Mericil 76",
-   "confidence": 0.3,
+   "reading": "Mercazil 76",
+   "confidence": 0.25,
    "exact": false,
-   "distance": 7
+   "distance": 8
   },
   {
    "img": "P0077.jpg",
    "truth": "Radifil",
    "reading": "Bicalutamide",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": false,
    "distance": 10
   },
@@ -338,10 +339,10 @@
   {
    "img": "P0081.jpg",
    "truth": "Voligel",
-   "reading": "Voltage",
-   "confidence": 0.3,
+   "reading": "Voltigel",
+   "confidence": 0.35,
    "exact": false,
-   "distance": 3
+   "distance": 1
   },
   {
    "img": "P0083.jpg",
@@ -363,7 +364,7 @@
    "img": "P0087.jpg",
    "truth": "Etorix",
    "reading": "Etorix",
-   "confidence": 0.6,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -371,7 +372,7 @@
    "img": "P0089.jpg",
    "truth": "myolax",
    "reading": "Myolax",
-   "confidence": 0.75,
+   "confidence": 0.62,
    "exact": true,
    "distance": 0
   },
@@ -458,8 +459,8 @@
   {
    "img": "P0111.jpg",
    "truth": "myotax",
-   "reading": "Mydrax",
-   "confidence": 0.35,
+   "reading": "Mydfax",
+   "confidence": 0.3,
    "exact": false,
    "distance": 2
   },
@@ -491,7 +492,7 @@
    "img": "P0119.jpg",
    "truth": "Vonocab",
    "reading": "Vonocab",
-   "confidence": 0.4,
+   "confidence": 0.35,
    "exact": true,
    "distance": 0
   },
@@ -515,14 +516,14 @@
    "img": "P0125.jpg",
    "truth": "Turboclav",
    "reading": "Turbodav",
-   "confidence": 0.4,
+   "confidence": 0.35,
    "exact": false,
    "distance": 2
   },
   {
    "img": "P0127.jpg",
    "truth": "Nortum",
-   "reading": "Norum",
+   "reading": "Norlum",
    "confidence": 0.35,
    "exact": false,
    "distance": 1
@@ -547,7 +548,7 @@
    "img": "P0133.jpg",
    "truth": "Cidex",
    "reading": "Ciden",
-   "confidence": 0.4,
+   "confidence": 0.35,
    "exact": false,
    "distance": 1
   },
@@ -555,7 +556,7 @@
    "img": "P0135.jpg",
    "truth": "Esohil",
    "reading": "Esohil",
-   "confidence": 0.4,
+   "confidence": 0.35,
    "exact": true,
    "distance": 0
   },
@@ -563,15 +564,15 @@
    "img": "P0137.jpg",
    "truth": "Nexe",
    "reading": "Nexc",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 1
   },
   {
    "img": "P0139.jpg",
    "truth": "Scluprud",
-   "reading": "Solaprud",
-   "confidence": 0.35,
+   "reading": "Solupred",
+   "confidence": 0.55,
    "exact": false,
    "distance": 2
   },
@@ -579,7 +580,7 @@
    "img": "P0141.jpg",
    "truth": "Indever",
    "reading": "Inderal",
-   "confidence": 0.6,
+   "confidence": 0.55,
    "exact": false,
    "distance": 3
   },
@@ -602,10 +603,10 @@
   {
    "img": "P0147.jpg",
    "truth": "Clavutil",
-   "reading": "Clavuftl",
-   "confidence": 0.35,
+   "reading": "Clavuhil",
+   "confidence": 0.45,
    "exact": false,
-   "distance": 2
+   "distance": 1
   },
   {
    "img": "P0149.jpg",
@@ -627,7 +628,7 @@
    "img": "P0153.jpg",
    "truth": "Tuspel",
    "reading": "Zo-maps",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 6
   },
@@ -635,7 +636,7 @@
    "img": "P0155.jpg",
    "truth": "Follison",
    "reading": "Follisou",
-   "confidence": 0.3,
+   "confidence": 0.25,
    "exact": false,
    "distance": 1
   },
@@ -651,7 +652,7 @@
    "img": "P0159.jpg",
    "truth": "Costan",
    "reading": "Costan",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": true,
    "distance": 0
   },
@@ -659,7 +660,7 @@
    "img": "P0161.jpg",
    "truth": "Cortan",
    "reading": "Nexe mps",
-   "confidence": 0.15,
+   "confidence": 0.25,
    "exact": false,
    "distance": 7
   },
@@ -674,8 +675,8 @@
   {
    "img": "P0165.jpg",
    "truth": "Bilaxe",
-   "reading": "Metdau",
-   "confidence": 0.25,
+   "reading": "Metvau",
+   "confidence": 0.3,
    "exact": false,
    "distance": 6
   },
@@ -691,7 +692,7 @@
    "img": "P0169.jpg",
    "truth": "prelics CR",
    "reading": "Poclia CR",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 4
   },
@@ -699,17 +700,17 @@
    "img": "P0171.jpg",
    "truth": "Trilock 10",
    "reading": "Trilock 10",
-   "confidence": 0.45,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0173.jpg",
    "truth": "Dinovo",
-   "reading": "Nexium",
-   "confidence": 0.35,
+   "reading": "Nexc mupho",
+   "confidence": 0.2,
    "exact": false,
-   "distance": 6
+   "distance": 8
   },
   {
    "img": "P0175.jpg",
@@ -722,12 +723,18 @@
   {
    "img": "P0177.jpg",
    "truth": "Itoklav 50",
-   "error": "TypeError: fetch failed"
+   "reading": "Eto Kine 30",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 5
   },
   {
    "img": "P0179.jpg",
    "truth": "Clavutil",
-   "error": "TypeError: fetch failed"
+   "reading": "Nexpro",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 8
   },
   {
    "img": "P0181.jpg",
@@ -764,18 +771,18 @@
   {
    "img": "P0189.jpg",
    "truth": "Neuroxen",
-   "reading": "Neuroxel",
-   "confidence": 0.35,
+   "reading": "Neuroxey",
+   "confidence": 0.3,
    "exact": false,
    "distance": 1
   },
   {
    "img": "P0191.jpg",
    "truth": "Termitan",
-   "reading": "Lincocin M 25/00",
-   "confidence": 0.22,
+   "reading": "Lincomycin M 25/00",
+   "confidence": 0.2,
    "exact": false,
-   "distance": 12
+   "distance": 13
   },
   {
    "img": "P0193.jpg",
@@ -796,15 +803,15 @@
   {
    "img": "P0197.jpg",
    "truth": "Mervax",
-   "reading": "MetDau",
+   "reading": "Merdau",
    "confidence": 0.3,
    "exact": false,
-   "distance": 3
+   "distance": 2
   },
   {
    "img": "P0199.jpg",
    "truth": "Coragen-D",
-   "reading": "Corigen-D",
+   "reading": "Coralgen-D",
    "confidence": 0.35,
    "exact": false,
    "distance": 1
@@ -828,8 +835,8 @@
   {
    "img": "P0205.jpg",
    "truth": "Zo.mups 20",
-   "reading": "Zomerdo",
-   "confidence": 0.2,
+   "reading": "Zomerop",
+   "confidence": 0.25,
    "exact": false,
    "distance": 5
   },
@@ -844,8 +851,8 @@
   {
    "img": "P0209.jpg",
    "truth": "Limtab",
-   "reading": "Linatab",
-   "confidence": 0.4,
+   "reading": "Lisitab",
+   "confidence": 0.35,
    "exact": false,
    "distance": 2
   },
@@ -893,7 +900,7 @@
    "img": "P0221.jpg",
    "truth": "Elodep 5",
    "reading": "Elodep 5",
-   "confidence": 0.6,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -901,7 +908,7 @@
    "img": "P0223.jpg",
    "truth": "Neuming",
    "reading": "Neumig",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 1
   },
@@ -909,15 +916,15 @@
    "img": "P0225.jpg",
    "truth": "Duoblock",
    "reading": "Duoblock",
-   "confidence": 0.62,
+   "confidence": 0.6,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0227.jpg",
    "truth": "Clavutil",
-   "reading": "Clavuti'l",
-   "confidence": 0.35,
+   "reading": "Clavutil",
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -925,39 +932,39 @@
    "img": "P0229.jpg",
    "truth": "Cinaron",
    "reading": "Cimroy",
-   "confidence": 0.3,
+   "confidence": 0.25,
    "exact": false,
    "distance": 3
   },
   {
    "img": "P0231.jpg",
    "truth": "Atoz",
-   "reading": "Atoz preminiuq",
+   "reading": "Ato2 premixing",
    "confidence": 0.2,
    "exact": false,
-   "distance": 9
+   "distance": 10
   },
   {
    "img": "P0233.jpg",
    "truth": "TRD Coutine",
-   "reading": "TRD Continue",
-   "confidence": 0.35,
+   "reading": "TRD Combine",
+   "confidence": 0.25,
    "exact": false,
    "distance": 2
   },
   {
    "img": "P0235.jpg",
    "truth": "Coralgue D",
-   "reading": "Cobalgeu-D",
-   "confidence": 0.3,
+   "reading": "Cotalgee-D",
+   "confidence": 0.25,
    "exact": false,
-   "distance": 3
+   "distance": 2
   },
   {
    "img": "P0237.jpg",
    "truth": "Ancor 5",
    "reading": "Ancor 5",
-   "confidence": 0.4,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
@@ -972,16 +979,16 @@
   {
    "img": "P0241.jpg",
    "truth": "Trilock 10",
-   "reading": "Trilactio",
+   "reading": "Trilocic10",
    "confidence": 0.3,
    "exact": false,
-   "distance": 4
+   "distance": 2
   },
   {
    "img": "P0243.jpg",
    "truth": "Levox",
    "reading": "Levox",
-   "confidence": 0.55,
+   "confidence": 0.6,
    "exact": true,
    "distance": 0
   },
@@ -989,7 +996,7 @@
    "img": "P0245.jpg",
    "truth": "Trilock",
    "reading": "Trilock",
-   "confidence": 0.45,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -1021,7 +1028,7 @@
    "img": "P0253.jpg",
    "truth": "Nexum Mups 20",
    "reading": "Nexpro",
-   "confidence": 0.42,
+   "confidence": 0.4,
    "exact": false,
    "distance": 7
   },
@@ -1036,8 +1043,8 @@
   {
    "img": "P0257.jpg",
    "truth": "Esover",
-   "reading": "Eloner",
-   "confidence": 0.25,
+   "reading": "Eslorer",
+   "confidence": 0.3,
    "exact": false,
    "distance": 2
   },
@@ -1061,23 +1068,23 @@
    "img": "P0263.jpg",
    "truth": "Maxsulin",
    "reading": "Taxim (200mg)",
-   "confidence": 0.45,
+   "confidence": 0.35,
    "exact": false,
    "distance": 8
   },
   {
    "img": "P0265.jpg",
    "truth": "Adovas",
-   "reading": "Adovas",
-   "confidence": 0.3,
-   "exact": true,
-   "distance": 0
+   "reading": "Adoras",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
   },
   {
    "img": "P0267.jpg",
    "truth": "Texit",
    "reading": "Texit",
-   "confidence": 0.4,
+   "confidence": 0.35,
    "exact": true,
    "distance": 0
   },
@@ -1116,15 +1123,15 @@
   {
    "img": "P0277.jpg",
    "truth": "Maxsulin",
-   "reading": "Nexulin",
+   "reading": "Maxulin",
    "confidence": 0.35,
    "exact": false,
-   "distance": 3
+   "distance": 1
   },
   {
    "img": "P0279.jpg",
    "truth": "Clonapex",
-   "reading": "Clonopex",
+   "reading": "Clonpex",
    "confidence": 0.3,
    "exact": false,
    "distance": 1
@@ -1141,7 +1148,7 @@
    "img": "P0283.jpg",
    "truth": "Filmet",
    "reading": "Filmet",
-   "confidence": 0.6,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -1157,7 +1164,7 @@
    "img": "P0287.jpg",
    "truth": "Clonapex",
    "reading": "Clonapex",
-   "confidence": 0.4,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
@@ -1173,7 +1180,7 @@
    "img": "P0291.jpg",
    "truth": "BONID",
    "reading": "BONID",
-   "confidence": 0.5,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -1189,7 +1196,7 @@
    "img": "P0295.jpg",
    "truth": "Texit",
    "reading": "Texit",
-   "confidence": 0.4,
+   "confidence": 0.5,
    "exact": true,
    "distance": 0
   },
@@ -1197,7 +1204,7 @@
    "img": "P0297.jpg",
    "truth": "Nexe",
    "reading": "Nexe",
-   "confidence": 0.3,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -1205,7 +1212,7 @@
    "img": "P0299.jpg",
    "truth": "Indo",
    "reading": "Indo",
-   "confidence": 0.45,
+   "confidence": 0.5,
    "exact": true,
    "distance": 0
   },
@@ -1236,24 +1243,24 @@
   {
    "img": "P0307.jpg",
    "truth": "Spilac",
-   "reading": "Spilae",
+   "reading": "Spilac",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
+  },
+  {
+   "img": "P0309.jpg",
+   "truth": "Abicon",
+   "reading": "Aricon",
    "confidence": 0.35,
    "exact": false,
    "distance": 1
   },
   {
-   "img": "P0309.jpg",
-   "truth": "Abicon",
-   "reading": "Ativan",
-   "confidence": 0.45,
-   "exact": false,
-   "distance": 3
-  },
-  {
    "img": "P0311.jpg",
    "truth": "Kindial-D",
    "reading": "Kindfal-D",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": false,
    "distance": 1
   },
@@ -1261,7 +1268,7 @@
    "img": "P0313.jpg",
    "truth": "Brodin",
    "reading": "Brodr",
-   "confidence": 0.3,
+   "confidence": 0.25,
    "exact": false,
    "distance": 2
   },
@@ -1269,29 +1276,41 @@
    "img": "P0315.jpg",
    "truth": "Feup",
    "reading": "Feup",
-   "confidence": 0.3,
+   "confidence": 0.2,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0317.jpg",
    "truth": "Esohil",
-   "error": "TypeError: fetch failed"
+   "reading": "Esoril",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
   },
   {
    "img": "P0319.jpg",
    "truth": "mixit",
-   "error": "TypeError: fetch failed"
+   "reading": "Mixit",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0321.jpg",
    "truth": "Itogut",
-   "error": "TypeError: fetch failed"
+   "reading": "Itogut",
+   "confidence": 0.3,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0323.jpg",
    "truth": "Etorix",
-   "error": "TypeError: fetch failed"
+   "reading": "Etorix",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0325.jpg",
@@ -1305,7 +1324,7 @@
    "img": "P0327.jpg",
    "truth": "Vonocab",
    "reading": "Vonocab",
-   "confidence": 0.5,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -1336,10 +1355,10 @@
   {
    "img": "P0335.jpg",
    "truth": "Dexnaaf",
-   "reading": "Dexnaal",
-   "confidence": 0.35,
-   "exact": false,
-   "distance": 1
+   "reading": "Dexnaaf",
+   "confidence": 0.3,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0337.jpg",
@@ -1353,7 +1372,7 @@
    "img": "P0339.jpg",
    "truth": "Ruchigold",
    "reading": "Ruchigold",
-   "confidence": 0.42,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -1361,7 +1380,7 @@
    "img": "P0341.jpg",
    "truth": "Azibact",
    "reading": "Azibact",
-   "confidence": 0.55,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
@@ -1369,7 +1388,7 @@
    "img": "P0343.jpg",
    "truth": "Eylox",
    "reading": "Eylox",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -1384,10 +1403,10 @@
   {
    "img": "P0347.jpg",
    "truth": "Napxon",
-   "reading": "Naproxen",
+   "reading": "Napxon",
    "confidence": 0.45,
-   "exact": false,
-   "distance": 3
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0349.jpg",
@@ -1401,7 +1420,7 @@
    "img": "P0351.jpg",
    "truth": "Kinate",
    "reading": "Kinate",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": true,
    "distance": 0
   },
@@ -1409,7 +1428,7 @@
    "img": "P0353.jpg",
    "truth": "Bilaxe",
    "reading": "Bilaxe",
-   "confidence": 0.45,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -1424,7 +1443,7 @@
   {
    "img": "P0357.jpg",
    "truth": "Katomor",
-   "reading": "Ketoman",
+   "reading": "Ketorol",
    "confidence": 0.45,
    "exact": false,
    "distance": 3
@@ -1433,31 +1452,31 @@
    "img": "P0359.jpg",
    "truth": "Monas",
    "reading": "Monas",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0361.jpg",
    "truth": "Loxodol",
-   "reading": "Loxanol",
-   "confidence": 0.35,
+   "reading": "Loxadol",
+   "confidence": 0.4,
    "exact": false,
-   "distance": 2
+   "distance": 1
   },
   {
    "img": "P0363.jpg",
    "truth": "Vonocab",
-   "reading": "Endural",
+   "reading": "Endoxan",
    "confidence": 0.35,
    "exact": false,
-   "distance": 6
+   "distance": 5
   },
   {
    "img": "P0365.jpg",
    "truth": "Apeclo",
-   "reading": "Vadan Solanki",
-   "confidence": 0.3,
+   "reading": "Vadan Solvani",
+   "confidence": 0.25,
    "exact": false,
    "distance": 10
   },
@@ -1465,7 +1484,7 @@
    "img": "P0367.jpg",
    "truth": "Cinamycin",
    "reading": "Cinamycin",
-   "confidence": 0.55,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
@@ -1473,44 +1492,65 @@
    "img": "P0369.jpg",
    "truth": "Nexpro",
    "reading": "Nexpro",
-   "confidence": 0.65,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0371.jpg",
    "truth": "Anustat",
-   "error": "TypeError: fetch failed"
+   "reading": "Anustat",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0373.jpg",
    "truth": "Coralcal",
-   "error": "TypeError: fetch failed"
+   "reading": "Coralcal",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0375.jpg",
    "truth": "Myolax",
-   "error": "TypeError: fetch failed"
+   "reading": "Myolax",
+   "confidence": 0.6,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0377.jpg",
    "truth": "Raditil",
-   "error": "TypeError: fetch failed"
+   "reading": "Raditol",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
   },
   {
    "img": "P0379.jpg",
    "truth": "Myolax",
-   "error": "TypeError: fetch failed"
+   "reading": "Myolax",
+   "confidence": 0.75,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0381.jpg",
    "truth": "Vonocab",
-   "error": "TypeError: fetch failed"
+   "reading": "Vonocab",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0383.jpg",
    "truth": "Montelon",
-   "error": "TypeError: fetch failed"
+   "reading": "Montelon",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0385.jpg",
@@ -1524,7 +1564,7 @@
    "img": "P0387.jpg",
    "truth": "Napxon",
    "reading": "Naprxon",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": false,
    "distance": 1
   },
@@ -1547,10 +1587,10 @@
   {
    "img": "P0393.jpg",
    "truth": "Napa",
-   "reading": "Napa",
-   "confidence": 0.45,
-   "exact": true,
-   "distance": 0
+   "reading": "Nepa",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 1
   },
   {
    "img": "P0395.jpg",
@@ -1580,7 +1620,7 @@
    "img": "P0401.jpg",
    "truth": "Diaryl",
    "reading": "Diaryl",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -1588,7 +1628,7 @@
    "img": "P0403.jpg",
    "truth": "Raditil",
    "reading": "Radifil",
-   "confidence": 0.4,
+   "confidence": 0.35,
    "exact": false,
    "distance": 1
   },
@@ -1612,7 +1652,7 @@
    "img": "P0409.jpg",
    "truth": "Montelon",
    "reading": "Montelon",
-   "confidence": 0.6,
+   "confidence": 0.65,
    "exact": true,
    "distance": 0
   },
@@ -1620,23 +1660,23 @@
    "img": "P0411.jpg",
    "truth": "Apeclo",
    "reading": "Apeelo",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 1
   },
   {
    "img": "P0413.jpg",
    "truth": "Prestel",
-   "reading": "Prustel",
-   "confidence": 0.4,
+   "reading": "Prostel",
+   "confidence": 0.45,
    "exact": false,
    "distance": 1
   },
   {
    "img": "P0415.jpg",
    "truth": "Coraleal",
-   "reading": "Coralead",
-   "confidence": 0.35,
+   "reading": "Coradeal",
+   "confidence": 0.3,
    "exact": false,
    "distance": 1
   },
@@ -1644,7 +1684,7 @@
    "img": "P0417.jpg",
    "truth": "Dexnaaf",
    "reading": "Dexnaf",
-   "confidence": 0.25,
+   "confidence": 0.3,
    "exact": false,
    "distance": 1
   },
@@ -1652,7 +1692,7 @@
    "img": "P0419.jpg",
    "truth": "Bilaxe",
    "reading": "Bilaxe",
-   "confidence": 0.45,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -1667,35 +1707,50 @@
   {
    "img": "P0423.jpg",
    "truth": "Itokine",
-   "error": "TypeError: fetch failed"
+   "reading": "Storkine",
+   "confidence": 0.25,
+   "exact": false,
+   "distance": 2
   },
   {
    "img": "P0425.jpg",
    "truth": "Nexum Mups 20",
-   "error": "TypeError: fetch failed"
+   "reading": "Nexe mups",
+   "confidence": 0.2,
+   "exact": false,
+   "distance": 4
   },
   {
    "img": "P0427.jpg",
    "truth": "Bilau",
-   "error": "TypeError: fetch failed"
+   "reading": "Bilau",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0429.jpg",
    "truth": "ocof",
-   "error": "TypeError: fetch failed"
+   "reading": "ocof",
+   "confidence": 0.3,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0431.jpg",
    "truth": "Ecosprin",
-   "error": "TypeError: fetch failed"
+   "reading": "Ecosprin",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0433.jpg",
    "truth": "Telmidip",
-   "reading": "Temiridip",
-   "confidence": 0.3,
+   "reading": "Temidip",
+   "confidence": 0.35,
    "exact": false,
-   "distance": 3
+   "distance": 1
   },
   {
    "img": "P0435.jpg",
@@ -1708,7 +1763,7 @@
   {
    "img": "P0437.jpg",
    "truth": "Trilock",
-   "reading": "Trilocz",
+   "reading": "Trilocx",
    "confidence": 0.35,
    "exact": false,
    "distance": 1
@@ -1733,7 +1788,7 @@
    "img": "P0443.jpg",
    "truth": "Itokine",
    "reading": "Itokind",
-   "confidence": 0.45,
+   "confidence": 0.35,
    "exact": false,
    "distance": 1
   },
@@ -1748,8 +1803,8 @@
   {
    "img": "P0447.jpg",
    "truth": "pantonix",
-   "reading": "Pentoxix",
-   "confidence": 0.3,
+   "reading": "Pantoprix",
+   "confidence": 0.28,
    "exact": false,
    "distance": 2
   },
@@ -1764,16 +1819,16 @@
   {
    "img": "P0451.jpg",
    "truth": "melpred",
-   "reading": "Melpred",
-   "confidence": 0.55,
-   "exact": true,
-   "distance": 0
+   "reading": "Melprid",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 1
   },
   {
    "img": "P0453.jpg",
    "truth": "Apeelo",
    "reading": "Apcelo",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": false,
    "distance": 1
   },
@@ -1781,7 +1836,7 @@
    "img": "P0455.jpg",
    "truth": "Rivo",
    "reading": "Aydance",
-   "confidence": 0.3,
+   "confidence": 0.25,
    "exact": false,
    "distance": 7
   },
@@ -1797,7 +1852,7 @@
    "img": "P0459.jpg",
    "truth": "Tuspel",
    "reading": "Tuspel",
-   "confidence": 0.5,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -1829,7 +1884,7 @@
    "img": "P0467.jpg",
    "truth": "Alatol",
    "reading": "Alphacol",
-   "confidence": 0.3,
+   "confidence": 0.25,
    "exact": false,
    "distance": 3
   },
@@ -1845,31 +1900,31 @@
    "img": "P0471.jpg",
    "truth": "Tryptin",
    "reading": "Trophy",
-   "confidence": 0.4,
+   "confidence": 0.45,
    "exact": false,
    "distance": 4
   },
   {
    "img": "P0473.jpg",
    "truth": "Duoblock",
-   "reading": "Duobloek",
-   "confidence": 0.45,
-   "exact": false,
-   "distance": 1
+   "reading": "Duoblock",
+   "confidence": 0.6,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0475.jpg",
    "truth": "Coralcal",
-   "reading": "Coralcal",
+   "reading": "Cornical",
    "confidence": 0.35,
-   "exact": true,
-   "distance": 0
+   "exact": false,
+   "distance": 2
   },
   {
    "img": "P0477.jpg",
    "truth": "Vonocab",
    "reading": "Vonocab",
-   "confidence": 0.55,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -1893,7 +1948,7 @@
    "img": "P0483.jpg",
    "truth": "Bilaxe",
    "reading": "Bilaxe",
-   "confidence": 0.4,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
@@ -1909,23 +1964,23 @@
    "img": "P0487.jpg",
    "truth": "Rofixim",
    "reading": "Rofixim",
-   "confidence": 0.45,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0489.jpg",
    "truth": "Vonorab",
-   "reading": "Venorab",
-   "confidence": 0.35,
-   "exact": false,
-   "distance": 1
+   "reading": "Vonorab",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0491.jpg",
    "truth": "Algin",
    "reading": "Algin",
-   "confidence": 0.5,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
@@ -1941,7 +1996,7 @@
    "img": "P0495.jpg",
    "truth": "Nexe",
    "reading": "Nexe",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -1949,7 +2004,7 @@
    "img": "P0497.jpg",
    "truth": "Rolac",
    "reading": "Rolac",
-   "confidence": 0.6,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -1972,48 +2027,66 @@
   {
    "img": "P0503.jpg",
    "truth": "Nexe mups",
-   "error": "TypeError: fetch failed"
+   "reading": "Neremyps",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
   },
   {
    "img": "P0505.jpg",
    "truth": "Nexpro",
-   "reading": "Neupro",
-   "confidence": 0.62,
-   "exact": false,
-   "distance": 1
+   "reading": "Nexpro",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0507.jpg",
    "truth": "Amilin",
-   "error": "TypeError: fetch failed"
+   "reading": "Amilin",
+   "confidence": 0.5,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0509.jpg",
    "truth": "Apeelo",
-   "error": "TypeError: fetch failed"
+   "reading": "Apeelo",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0511.jpg",
    "truth": "Fylox",
-   "error": "TypeError: fetch failed"
+   "reading": "Fylox",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0513.jpg",
    "truth": "Klabid",
-   "error": "TypeError: fetch failed"
+   "reading": "Klabid",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0515.jpg",
    "truth": "Atozen",
-   "error": "TypeError: fetch failed"
+   "reading": "Atozen",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0517.jpg",
    "truth": "Mixit",
-   "reading": "Mixit",
-   "confidence": 0.55,
-   "exact": true,
-   "distance": 0
+   "reading": "Mixif",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 1
   },
   {
    "img": "P0519.jpg",
@@ -2027,7 +2100,7 @@
    "img": "P0521.jpg",
    "truth": "Furotil Plus",
    "reading": "Furosemide",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 7
   },
@@ -2059,7 +2132,7 @@
    "img": "P0529.jpg",
    "truth": "Bilaxe",
    "reading": "Bilaxe",
-   "confidence": 0.4,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
@@ -2091,7 +2164,7 @@
    "img": "P0537.jpg",
    "truth": "Nexe",
    "reading": "Nexe",
-   "confidence": 0.4,
+   "confidence": 0.3,
    "exact": true,
    "distance": 0
   },
@@ -2115,7 +2188,7 @@
    "img": "P0543.jpg",
    "truth": "Nexe",
    "reading": "Nexe",
-   "confidence": 0.25,
+   "confidence": 0.3,
    "exact": true,
    "distance": 0
   },
@@ -2130,8 +2203,8 @@
   {
    "img": "P0547.jpg",
    "truth": "K-flex",
-   "reading": "K-flam",
-   "confidence": 0.55,
+   "reading": "K-flav",
+   "confidence": 0.3,
    "exact": false,
    "distance": 2
   },
@@ -2139,31 +2212,31 @@
    "img": "P0549.jpg",
    "truth": "Indo",
    "reading": "Indo",
-   "confidence": 0.6,
+   "confidence": 0.65,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0551.jpg",
    "truth": "Seko",
-   "reading": "Sefo",
+   "reading": "Sepho",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0553.jpg",
+   "truth": "Nexe",
+   "reading": "Neke",
    "confidence": 0.3,
    "exact": false,
    "distance": 1
   },
   {
-   "img": "P0553.jpg",
-   "truth": "Nexe",
-   "reading": "Nexe",
-   "confidence": 0.3,
-   "exact": true,
-   "distance": 0
-  },
-  {
    "img": "P0555.jpg",
    "truth": "Seko",
    "reading": "Seko",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": true,
    "distance": 0
   },
@@ -2187,7 +2260,7 @@
    "img": "P0561.jpg",
    "truth": "Bilaxe",
    "reading": "Bilaxe",
-   "confidence": 0.4,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
@@ -2211,7 +2284,7 @@
    "img": "P0567.jpg",
    "truth": "Lyric",
    "reading": "Lyrica",
-   "confidence": 0.55,
+   "confidence": 0.62,
    "exact": false,
    "distance": 1
   },
@@ -2227,7 +2300,7 @@
    "img": "P0571.jpg",
    "truth": "Xiva",
    "reading": "Xiva",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": true,
    "distance": 0
   },
@@ -2235,7 +2308,7 @@
    "img": "P0573.jpg",
    "truth": "Bilaxe",
    "reading": "Bilaxe",
-   "confidence": 0.5,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
@@ -2259,7 +2332,7 @@
    "img": "P0579.jpg",
    "truth": "Nexe",
    "reading": "Nexe",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -2267,7 +2340,7 @@
    "img": "P0581.jpg",
    "truth": "Fixocard",
    "reading": "Fixocard",
-   "confidence": 0.45,
+   "confidence": 0.35,
    "exact": true,
    "distance": 0
   },
@@ -2275,7 +2348,7 @@
    "img": "P0583.jpg",
    "truth": "Tajenta",
    "reading": "Tajenta",
-   "confidence": 0.6,
+   "confidence": 0.65,
    "exact": true,
    "distance": 0
   },
@@ -2291,7 +2364,7 @@
    "img": "P0587.jpg",
    "truth": "Povital",
    "reading": "Povital",
-   "confidence": 0.45,
+   "confidence": 0.35,
    "exact": true,
    "distance": 0
   },
@@ -2323,7 +2396,7 @@
    "img": "P0595.jpg",
    "truth": "Voltalin",
    "reading": "Voltalin",
-   "confidence": 0.45,
+   "confidence": 0.35,
    "exact": true,
    "distance": 0
   },
@@ -2339,7 +2412,7 @@
    "img": "P0599.jpg",
    "truth": "Anfree",
    "reading": "Anfree",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": true,
    "distance": 0
   },
@@ -2371,7 +2444,7 @@
    "img": "P0607.jpg",
    "truth": "Dexter",
    "reading": "Dexpo",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": false,
    "distance": 3
   },
@@ -2379,23 +2452,23 @@
    "img": "P0609.jpg",
    "truth": "Ben A",
    "reading": "Dona",
-   "confidence": 0.4,
+   "confidence": 0.45,
    "exact": false,
    "distance": 2
   },
   {
    "img": "P0611.jpg",
    "truth": "Vorinox",
-   "reading": "Vorinox",
+   "reading": "Vonnox",
    "confidence": 0.35,
-   "exact": true,
-   "distance": 0
+   "exact": false,
+   "distance": 2
   },
   {
    "img": "P0613.jpg",
    "truth": "Fenadin",
    "reading": "Fenadin",
-   "confidence": 0.45,
+   "confidence": 0.35,
    "exact": true,
    "distance": 0
   },
@@ -2418,8 +2491,8 @@
   {
    "img": "P0619.jpg",
    "truth": "DON A",
-   "reading": "DENA",
-   "confidence": 0.35,
+   "reading": "DYNA",
+   "confidence": 0.4,
    "exact": false,
    "distance": 1
   },
@@ -2451,7 +2524,7 @@
    "img": "P0627.jpg",
    "truth": "Xyril",
    "reading": "Xanax",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": false,
    "distance": 4
   },
@@ -2459,7 +2532,7 @@
    "img": "P0629.jpg",
    "truth": "Bilan",
    "reading": "Bilaw",
-   "confidence": 0.25,
+   "confidence": 0.3,
    "exact": false,
    "distance": 1
   },
@@ -2475,22 +2548,22 @@
    "img": "P0633.jpg",
    "truth": "Glymed",
    "reading": "Viglimf",
-   "confidence": 0.55,
+   "confidence": 0.35,
    "exact": false,
    "distance": 5
   },
   {
    "img": "P0635.jpg",
    "truth": "ropitor",
-   "reading": "Dexter",
+   "reading": "Dexta",
    "confidence": 0.35,
    "exact": false,
-   "distance": 5
+   "distance": 6
   },
   {
    "img": "P0637.jpg",
    "truth": "methomol",
-   "reading": "Neuroxen",
+   "reading": "Neuroxan",
    "confidence": 0.35,
    "exact": false,
    "distance": 6
@@ -2499,22 +2572,22 @@
    "img": "P0639.jpg",
    "truth": "Dexter",
    "reading": "Relaxo",
-   "confidence": 0.55,
+   "confidence": 0.6,
    "exact": false,
    "distance": 5
   },
   {
    "img": "P0641.jpg",
    "truth": "Emlidus",
-   "reading": "Emlipus",
-   "confidence": 0.25,
+   "reading": "Emliolus",
+   "confidence": 0.2,
    "exact": false,
-   "distance": 1
+   "distance": 2
   },
   {
    "img": "P0643.jpg",
    "truth": "m-lucas 10",
-   "reading": "m-Hicas 10",
+   "reading": "m-hicas 10",
    "confidence": 0.25,
    "exact": false,
    "distance": 2
@@ -2522,10 +2595,10 @@
   {
    "img": "P0645.jpg",
    "truth": "Xinc",
-   "reading": "Xinc",
-   "confidence": 0.4,
-   "exact": true,
-   "distance": 0
+   "reading": "Xanc",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 1
   },
   {
    "img": "P0647.jpg",
@@ -2539,7 +2612,7 @@
    "img": "P0649.jpg",
    "truth": "Gel",
    "reading": "gel",
-   "confidence": 0.4,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -2563,7 +2636,7 @@
    "img": "P0655.jpg",
    "truth": "m-lucas 10",
    "reading": "M-Lucen 10",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": false,
    "distance": 2
   },
@@ -2579,7 +2652,7 @@
    "img": "P0659.jpg",
    "truth": "Dexter",
    "reading": "Dexin7",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": false,
    "distance": 3
   },
@@ -2587,17 +2660,17 @@
    "img": "P0661.jpg",
    "truth": "Monas 10",
    "reading": "Monaslo",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 2
   },
   {
    "img": "P0663.jpg",
    "truth": "Dexter",
-   "reading": "Dextac",
-   "confidence": 0.4,
+   "reading": "Dextaco",
+   "confidence": 0.3,
    "exact": false,
-   "distance": 2
+   "distance": 3
   },
   {
    "img": "P0665.jpg",
@@ -2610,10 +2683,10 @@
   {
    "img": "P0667.jpg",
    "truth": "radiflex",
-   "reading": "Nasflex",
-   "confidence": 0.25,
+   "reading": "Nardil",
+   "confidence": 0.3,
    "exact": false,
-   "distance": 3
+   "distance": 5
   },
   {
    "img": "P0669.jpg",
@@ -2635,7 +2708,7 @@
    "img": "P0673.jpg",
    "truth": "Fenadin",
    "reading": "Fenadin",
-   "confidence": 0.4,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
@@ -2651,7 +2724,7 @@
    "img": "P0677.jpg",
    "truth": "DON A",
    "reading": "Dona",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -2682,10 +2755,10 @@
   {
    "img": "P0685.jpg",
    "truth": "Alfane",
-   "reading": "B. Sofonte",
-   "confidence": 0.3,
+   "reading": "B. Woforte",
+   "confidence": 0.25,
    "exact": false,
-   "distance": 5
+   "distance": 6
   },
   {
    "img": "P0687.jpg",
@@ -2707,35 +2780,41 @@
    "img": "P0691.jpg",
    "truth": "arth",
    "reading": "Amoxil",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 5
   },
   {
    "img": "P0693.jpg",
    "truth": "Calbon",
-   "error": "TypeError: fetch failed"
-  },
-  {
-   "img": "P0695.jpg",
-   "truth": "Flamfix",
-   "error": "TypeError: fetch failed"
-  },
-  {
-   "img": "P0697.jpg",
-   "truth": "Neuroxen",
-   "reading": "Nuroxen",
-   "confidence": 0.3,
+   "reading": "Carbon",
+   "confidence": 0.35,
    "exact": false,
    "distance": 1
   },
   {
-   "img": "P0699.jpg",
-   "truth": "m-lucas",
-   "reading": "Mucaine",
+   "img": "P0695.jpg",
+   "truth": "Flamfix",
+   "reading": "Flembix",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 2
+  },
+  {
+   "img": "P0697.jpg",
+   "truth": "Neuroxen",
+   "reading": "Nunoxen",
    "confidence": 0.3,
    "exact": false,
-   "distance": 4
+   "distance": 2
+  },
+  {
+   "img": "P0699.jpg",
+   "truth": "m-lucas",
+   "reading": "Mucolas",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 3
   },
   {
    "img": "P0701.jpg",
@@ -2748,66 +2827,66 @@
   {
    "img": "P0703.jpg",
    "truth": "Biscor",
-   "reading": "Bislop",
-   "confidence": 0.3,
+   "reading": "Bristol",
+   "confidence": 0.4,
    "exact": false,
-   "distance": 2
+   "distance": 3
   },
   {
    "img": "P0705.jpg",
    "truth": "Combicid",
-   "reading": "Cartolol",
+   "reading": "Cartolid",
    "confidence": 0.3,
    "exact": false,
-   "distance": 7
+   "distance": 5
   },
   {
    "img": "P0707.jpg",
    "truth": "Estes",
    "reading": "Estes",
-   "confidence": 0.4,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0709.jpg",
    "truth": "Escilex",
-   "reading": "Esilex",
-   "confidence": 0.35,
-   "exact": false,
-   "distance": 1
+   "reading": "Escilex",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0711.jpg",
    "truth": "Dexter",
-   "reading": "Dexta",
-   "confidence": 0.35,
-   "exact": false,
-   "distance": 2
+   "reading": "Dexter",
+   "confidence": 0.3,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0713.jpg",
    "truth": "m-lucas 10",
    "reading": "m-lucosio",
-   "confidence": 0.25,
+   "confidence": 0.3,
    "exact": false,
    "distance": 3
   },
   {
    "img": "P0715.jpg",
    "truth": "Rivarox",
-   "reading": "Nitrox",
-   "confidence": 0.3,
+   "reading": "Nizrox",
+   "confidence": 0.35,
    "exact": false,
    "distance": 3
   },
   {
    "img": "P0717.jpg",
    "truth": "rosu",
-   "reading": "Robu",
-   "confidence": 0.2,
+   "reading": "Robin",
+   "confidence": 0.25,
    "exact": false,
-   "distance": 1
+   "distance": 3
   },
   {
    "img": "P0719.jpg",
@@ -2820,18 +2899,18 @@
   {
    "img": "P0721.jpg",
    "truth": "m-lucas 10",
-   "reading": "Metformin",
-   "confidence": 0.3,
+   "reading": "Melario",
+   "confidence": 0.2,
    "exact": false,
-   "distance": 8
+   "distance": 6
   },
   {
    "img": "P0723.jpg",
    "truth": "Calboral dx",
-   "reading": "Carbonel Dp",
+   "reading": "Carbonel Dx",
    "confidence": 0.3,
    "exact": false,
-   "distance": 4
+   "distance": 3
   },
   {
    "img": "P0725.jpg",
@@ -2844,10 +2923,10 @@
   {
    "img": "P0727.jpg",
    "truth": "vbi care",
-   "reading": "UbiCore",
+   "reading": "Ubicare",
    "confidence": 0.4,
    "exact": false,
-   "distance": 2
+   "distance": 1
   },
   {
    "img": "P0729.jpg",
@@ -2861,25 +2940,25 @@
    "img": "P0731.jpg",
    "truth": "vigorex",
    "reading": "Vigorex",
-   "confidence": 0.75,
+   "confidence": 0.7,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0733.jpg",
    "truth": "clacef",
-   "reading": "Clauf",
+   "reading": "Claef",
    "confidence": 0.25,
    "exact": false,
-   "distance": 2
+   "distance": 1
   },
   {
    "img": "P0735.jpg",
    "truth": "acliz plus",
-   "reading": "Doxophylline",
-   "confidence": 0.55,
+   "reading": "Dorphylline",
+   "confidence": 0.35,
    "exact": false,
-   "distance": 11
+   "distance": 10
   },
   {
    "img": "P0737.jpg",
@@ -2900,10 +2979,10 @@
   {
    "img": "P0741.jpg",
    "truth": "Calboral",
-   "reading": "Calbosal",
-   "confidence": 0.35,
+   "reading": "Calbosol",
+   "confidence": 0.3,
    "exact": false,
-   "distance": 1
+   "distance": 2
   },
   {
    "img": "P0743.jpg",
@@ -2916,16 +2995,16 @@
   {
    "img": "P0745.jpg",
    "truth": "geolan",
-   "reading": "Gestor",
+   "reading": "Gerson",
    "confidence": 0.35,
    "exact": false,
-   "distance": 4
+   "distance": 3
   },
   {
    "img": "P0747.jpg",
    "truth": "esprazo",
    "reading": "Esprazo",
-   "confidence": 0.4,
+   "confidence": 0.45,
    "exact": true,
    "distance": 0
   },
@@ -2941,31 +3020,31 @@
    "img": "P0751.jpg",
    "truth": "Neuro B",
    "reading": "Neuro-B",
-   "confidence": 0.62,
+   "confidence": 0.65,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0753.jpg",
    "truth": "Amlip",
-   "reading": "Amitip",
-   "confidence": 0.3,
+   "reading": "Amihip",
+   "confidence": 0.25,
    "exact": false,
    "distance": 2
   },
   {
    "img": "P0755.jpg",
    "truth": "folzin",
-   "reading": "Folbin",
+   "reading": "Folbic",
    "confidence": 0.35,
    "exact": false,
-   "distance": 1
+   "distance": 2
   },
   {
    "img": "P0757.jpg",
    "truth": "viset",
    "reading": "Visef",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": false,
    "distance": 1
   },
@@ -2981,7 +3060,7 @@
    "img": "P0761.jpg",
    "truth": "Calboral",
    "reading": "Calboral",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": true,
    "distance": 0
   },
@@ -2996,24 +3075,24 @@
   {
    "img": "P0765.jpg",
    "truth": "lecor",
-   "reading": "Montereleng",
-   "confidence": 0.25,
+   "reading": "Montrelong",
+   "confidence": 0.35,
    "exact": false,
-   "distance": 10
+   "distance": 8
   },
   {
    "img": "P0767.jpg",
    "truth": "Gerhinal",
-   "reading": "Gerbenol",
+   "reading": "Gerbenof",
    "confidence": 0.35,
    "exact": false,
-   "distance": 3
+   "distance": 4
   },
   {
    "img": "P0769.jpg",
    "truth": "Nexum",
    "reading": "Nexum",
-   "confidence": 0.45,
+   "confidence": 0.5,
    "exact": true,
    "distance": 0
   },
@@ -3045,23 +3124,23 @@
    "img": "P0777.jpg",
    "truth": "Dekalin",
    "reading": "Dekalin",
-   "confidence": 0.5,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0779.jpg",
    "truth": "Neuro",
-   "reading": "Nexto",
-   "confidence": 0.25,
+   "reading": "Neurontin",
+   "confidence": 0.3,
    "exact": false,
-   "distance": 2
+   "distance": 4
   },
   {
    "img": "P0781.jpg",
    "truth": "Flugal",
    "reading": "Flugal",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": true,
    "distance": 0
   },
@@ -3077,7 +3156,7 @@
    "img": "P0785.jpg",
    "truth": "Amlip",
    "reading": "AmiHP",
-   "confidence": 0.55,
+   "confidence": 0.45,
    "exact": false,
    "distance": 2
   },
@@ -3092,42 +3171,42 @@
   {
    "img": "P0789.jpg",
    "truth": "visel",
-   "reading": "Visel.",
-   "confidence": 0.35,
+   "reading": "Visel",
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0791.jpg",
    "truth": "Calboral",
-   "reading": "Cespon",
-   "confidence": 0.35,
+   "reading": "Cospon",
+   "confidence": 0.3,
    "exact": false,
    "distance": 6
   },
   {
    "img": "P0793.jpg",
    "truth": "epitra",
-   "reading": "Norum Mups",
-   "confidence": 0.2,
+   "reading": "Noxumups",
+   "confidence": 0.25,
    "exact": false,
-   "distance": 9
+   "distance": 8
   },
   {
    "img": "P0795.jpg",
    "truth": "Calboral",
-   "reading": "Cimax",
+   "reading": "Ximax",
    "confidence": 0.3,
    "exact": false,
-   "distance": 6
+   "distance": 7
   },
   {
    "img": "P0797.jpg",
    "truth": "Neuro",
-   "reading": "Gemon",
+   "reading": "Gasex",
    "confidence": 0.3,
    "exact": false,
-   "distance": 4
+   "distance": 5
   },
   {
    "img": "P0799.jpg",
@@ -3140,12 +3219,18 @@
   {
    "img": "P0801.jpg",
    "truth": "Barbit",
-   "error": "TypeError: fetch failed"
+   "reading": "Naprosyn",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 6
   },
   {
    "img": "P0803.jpg",
    "truth": "Naprox",
-   "error": "TypeError: fetch failed"
+   "reading": "Esprazo",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 5
   },
   {
    "img": "P0805.jpg",
@@ -3158,16 +3243,16 @@
   {
    "img": "P0807.jpg",
    "truth": "epitra",
-   "reading": "Крestor",
-   "confidence": 0.25,
+   "reading": "Crestor",
+   "confidence": 0.35,
    "exact": false,
-   "distance": 4
+   "distance": 6
   },
   {
    "img": "P0809.jpg",
    "truth": "Calboral",
    "reading": "Calbosal",
-   "confidence": 0.4,
+   "confidence": 0.35,
    "exact": false,
    "distance": 1
   },
@@ -3198,10 +3283,10 @@
   {
    "img": "P0817.jpg",
    "truth": "Folzin",
-   "reading": "Folzin",
-   "confidence": 0.35,
-   "exact": true,
-   "distance": 0
+   "reading": "Folvin",
+   "confidence": 0.45,
+   "exact": false,
+   "distance": 1
   },
   {
    "img": "P0819.jpg",
@@ -3215,7 +3300,7 @@
    "img": "P0821.jpg",
    "truth": "Barbit",
    "reading": "Barbit",
-   "confidence": 0.45,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -3223,7 +3308,7 @@
    "img": "P0823.jpg",
    "truth": "Novelon lite",
    "reading": "Novelon Life",
-   "confidence": 0.4,
+   "confidence": 0.45,
    "exact": false,
    "distance": 1
   },
@@ -3231,7 +3316,7 @@
    "img": "P0825.jpg",
    "truth": "Neuro",
    "reading": "Neuro",
-   "confidence": 0.55,
+   "confidence": 0.6,
    "exact": true,
    "distance": 0
   },
@@ -3239,7 +3324,7 @@
    "img": "P0827.jpg",
    "truth": "Naprox",
    "reading": "Naprox",
-   "confidence": 0.6,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
@@ -3247,14 +3332,14 @@
    "img": "P0829.jpg",
    "truth": "Lecor",
    "reading": "Lecor",
-   "confidence": 0.35,
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0831.jpg",
    "truth": "epitra",
-   "reading": "Epilba",
+   "reading": "Epiba",
    "confidence": 0.3,
    "exact": false,
    "distance": 2
@@ -3262,8 +3347,8 @@
   {
    "img": "P0833.jpg",
    "truth": "Calboral",
-   "reading": "calboral",
-   "confidence": 0.3,
+   "reading": "Calboral",
+   "confidence": 0.4,
    "exact": true,
    "distance": 0
   },
@@ -3271,29 +3356,41 @@
    "img": "P0835.jpg",
    "truth": "Neuro",
    "reading": "Neuro",
-   "confidence": 0.6,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0837.jpg",
    "truth": "geolan",
-   "error": "TypeError: fetch failed"
+   "reading": "Gestor",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 4
   },
   {
    "img": "P0839.jpg",
    "truth": "Calboral-DX",
-   "error": "TypeError: fetch failed"
+   "reading": "Calboral-DX",
+   "confidence": 0.45,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0841.jpg",
    "truth": "Neuro",
-   "error": "TypeError: fetch failed"
+   "reading": "Neuro",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0843.jpg",
    "truth": "Ointment",
-   "error": "TypeError: fetch failed"
+   "reading": "Ointment",
+   "confidence": 0.55,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0845.jpg",
@@ -3306,20 +3403,26 @@
   {
    "img": "P0847.jpg",
    "truth": "Nexum",
-   "error": "TypeError: fetch failed"
-  },
-  {
-   "img": "P0849.jpg",
-   "truth": "Dekalin",
-   "reading": "Dekalin",
-   "confidence": 0.4,
+   "reading": "Nexum",
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
   {
+   "img": "P0849.jpg",
+   "truth": "Dekalin",
+   "reading": "Dekalen",
+   "confidence": 0.4,
+   "exact": false,
+   "distance": 1
+  },
+  {
    "img": "P0851.jpg",
    "truth": "Amitip",
-   "error": "TypeError: fetch failed"
+   "reading": "Amitip",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0853.jpg",
@@ -3348,7 +3451,7 @@
   {
    "img": "P0859.jpg",
    "truth": "Algin Plus",
-   "reading": "Adizplus",
+   "reading": "Adiz Plus",
    "confidence": 0.35,
    "exact": false,
    "distance": 3
@@ -3460,16 +3563,16 @@
   {
    "img": "P0887.jpg",
    "truth": "Naprox",
-   "reading": "Naprosyn",
-   "confidence": 0.45,
-   "exact": false,
-   "distance": 3
+   "reading": "Naprox",
+   "confidence": 0.4,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0889.jpg",
    "truth": "Neuro",
    "reading": "Neuro",
-   "confidence": 0.55,
+   "confidence": 0.5,
    "exact": true,
    "distance": 0
   },
@@ -3484,10 +3587,10 @@
   {
    "img": "P0893.jpg",
    "truth": "D Cap",
-   "reading": "Dr. Cup",
+   "reading": "Dr. Cap",
    "confidence": 0.3,
    "exact": false,
-   "distance": 2
+   "distance": 1
   },
   {
    "img": "P0895.jpg",
@@ -3509,85 +3612,103 @@
    "img": "P0899.jpg",
    "truth": "Barbit",
    "reading": "Bactrim",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 4
   },
   {
    "img": "P0901.jpg",
    "truth": "Gestrenol",
-   "error": "TypeError: fetch failed"
+   "reading": "Cerbenol",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 4
   },
   {
    "img": "P0903.jpg",
    "truth": "AC PR",
-   "error": "TypeError: fetch failed"
+   "reading": "AUR",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 2
   },
   {
    "img": "P0905.jpg",
    "truth": "Neuro B",
-   "error": "TypeError: fetch failed"
+   "reading": "Nurofen",
+   "confidence": 0.35,
+   "exact": false,
+   "distance": 4
   },
   {
    "img": "P0907.jpg",
    "truth": "Amitip",
-   "error": "TypeError: fetch failed"
+   "reading": "Amitip",
+   "confidence": 0.35,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0909.jpg",
    "truth": "Folzin",
-   "error": "TypeError: fetch failed"
+   "reading": "Folzin",
+   "confidence": 0.3,
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0911.jpg",
    "truth": "Esprazo",
-   "error": "TypeError: fetch failed"
+   "reading": "Esperto",
+   "confidence": 0.3,
+   "exact": false,
+   "distance": 3
   },
   {
    "img": "P0913.jpg",
    "truth": "Neuro B",
    "reading": "Neuro B",
-   "confidence": 0.55,
+   "confidence": 0.62,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0915.jpg",
    "truth": "Desolon",
-   "reading": "Deprolon",
+   "reading": "Denolon",
    "confidence": 0.35,
    "exact": false,
-   "distance": 2
+   "distance": 1
   },
   {
    "img": "P0917.jpg",
    "truth": "Naprox",
    "reading": "Naprox",
-   "confidence": 0.45,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0919.jpg",
    "truth": "Calboral",
-   "reading": "Carboral",
+   "reading": "Carbosul",
    "confidence": 0.35,
    "exact": false,
-   "distance": 1
+   "distance": 3
   },
   {
    "img": "P0921.jpg",
    "truth": "Epitra",
-   "reading": "Epira",
+   "reading": "Epifsa",
    "confidence": 0.3,
    "exact": false,
-   "distance": 1
+   "distance": 2
   },
   {
    "img": "P0923.jpg",
    "truth": "Lecor",
    "reading": "Lecor",
-   "confidence": 0.35,
+   "confidence": 0.3,
    "exact": true,
    "distance": 0
   },
@@ -3595,7 +3716,7 @@
    "img": "P0925.jpg",
    "truth": "Calboral",
    "reading": "Calbosul",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 2
   },
@@ -3603,41 +3724,41 @@
    "img": "P0927.jpg",
    "truth": "Algin",
    "reading": "Algen",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 1
   },
   {
    "img": "P0929.jpg",
    "truth": "Gestrenol",
-   "reading": "Gasprin",
-   "confidence": 0.25,
+   "reading": "Gabapentin",
+   "confidence": 0.35,
    "exact": false,
-   "distance": 5
+   "distance": 7
   },
   {
    "img": "P0931.jpg",
    "truth": "Calboral DX",
-   "reading": "Carboxel Dp",
-   "confidence": 0.3,
+   "reading": "Carboset DP",
+   "confidence": 0.35,
    "exact": false,
-   "distance": 4
+   "distance": 5
   },
   {
    "img": "P0933.jpg",
    "truth": "Neuro B",
    "reading": "Neurobion",
-   "confidence": 0.45,
+   "confidence": 0.35,
    "exact": false,
    "distance": 3
   },
   {
    "img": "P0935.jpg",
    "truth": "Microgest",
-   "reading": "Micogen",
+   "reading": "Miconyfen",
    "confidence": 0.3,
    "exact": false,
-   "distance": 3
+   "distance": 6
   },
   {
    "img": "P0937.jpg",
@@ -3658,10 +3779,10 @@
   {
    "img": "P0941.jpg",
    "truth": "Acliz Plus",
-   "reading": "Acdiplus",
+   "reading": "Aciloc-plus",
    "confidence": 0.35,
    "exact": false,
-   "distance": 2
+   "distance": 3
   },
   {
    "img": "P0943.jpg",
@@ -3674,10 +3795,10 @@
   {
    "img": "P0945.jpg",
    "truth": "Nexum",
-   "reading": "Nexum",
-   "confidence": 0.45,
-   "exact": true,
-   "distance": 0
+   "reading": "Nexium",
+   "confidence": 0.55,
+   "exact": false,
+   "distance": 1
   },
   {
    "img": "P0947.jpg",
@@ -3690,18 +3811,18 @@
   {
    "img": "P0949.jpg",
    "truth": "Epitra",
-   "reading": "Epitol",
-   "confidence": 0.3,
+   "reading": "Epifoa",
+   "confidence": 0.2,
    "exact": false,
    "distance": 2
   },
   {
    "img": "P0951.jpg",
    "truth": "Fenix",
-   "reading": "Fenx-",
-   "confidence": 0.35,
+   "reading": "Ferx-",
+   "confidence": 0.3,
    "exact": false,
-   "distance": 1
+   "distance": 2
   },
   {
    "img": "P0953.jpg",
@@ -3723,17 +3844,17 @@
    "img": "P0957.jpg",
    "truth": "Nystat",
    "reading": "Nystat",
-   "confidence": 0.45,
+   "confidence": 0.6,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0959.jpg",
    "truth": "Escilex",
-   "reading": "Escil-40",
-   "confidence": 0.35,
+   "reading": "Escolzp",
+   "confidence": 0.25,
    "exact": false,
-   "distance": 2
+   "distance": 3
   },
   {
    "img": "P0961.jpg",
@@ -3755,7 +3876,7 @@
    "img": "P0965.jpg",
    "truth": "Farofew",
    "reading": "Farofew",
-   "confidence": 0.25,
+   "confidence": 0.3,
    "exact": true,
    "distance": 0
   },
@@ -3763,7 +3884,7 @@
    "img": "P0967.jpg",
    "truth": "Esprazo",
    "reading": "Brand",
-   "confidence": 0.25,
+   "confidence": 0.3,
    "exact": false,
    "distance": 5
   },
@@ -3787,17 +3908,17 @@
    "img": "P0973.jpg",
    "truth": "Nystat",
    "reading": "Nystat",
-   "confidence": 0.6,
+   "confidence": 0.55,
    "exact": true,
    "distance": 0
   },
   {
    "img": "P0975.jpg",
    "truth": "Escilex",
-   "reading": "Escilup",
+   "reading": "Escilex",
    "confidence": 0.35,
-   "exact": false,
-   "distance": 2
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0977.jpg",
@@ -3811,7 +3932,7 @@
    "img": "P0979.jpg",
    "truth": "Xinc",
    "reading": "Zinc",
-   "confidence": 0.55,
+   "confidence": 0.6,
    "exact": false,
    "distance": 1
   },
@@ -3827,7 +3948,7 @@
    "img": "P0983.jpg",
    "truth": "Paloxi",
    "reading": "Pulox",
-   "confidence": 0.3,
+   "confidence": 0.35,
    "exact": false,
    "distance": 2
   },
@@ -3866,10 +3987,10 @@
   {
    "img": "P0993.jpg",
    "truth": "Bislol",
-   "reading": "Bislot",
+   "reading": "Bislol",
    "confidence": 0.35,
-   "exact": false,
-   "distance": 1
+   "exact": true,
+   "distance": 0
   },
   {
    "img": "P0995.jpg",
@@ -3883,7 +4004,7 @@
    "img": "P0997.jpg",
    "truth": "Dophylin",
    "reading": "Dyphylline",
-   "confidence": 0.55,
+   "confidence": 0.45,
    "exact": false,
    "distance": 3
   },
@@ -3891,7 +4012,7 @@
    "img": "P0999.jpg",
    "truth": "sergel",
    "reading": "Prepate",
-   "confidence": 0.25,
+   "confidence": 0.3,
    "exact": false,
    "distance": 6
   }
@@ -3900,32 +4021,32 @@
   {
    "threshold": 0.0,
    "keptPct": 100.0,
-   "exactPctOfKept": 43.9
+   "exactPctOfKept": 45.2
   },
   {
    "threshold": 0.3,
-   "keptPct": 93.3,
-   "exactPctOfKept": 46.6
+   "keptPct": 93.0,
+   "exactPctOfKept": 48.4
   },
   {
    "threshold": 0.4,
-   "keptPct": 45.2,
-   "exactPctOfKept": 67.8
+   "keptPct": 45.0,
+   "exactPctOfKept": 71.6
   },
   {
    "threshold": 0.5,
-   "keptPct": 20.0,
-   "exactPctOfKept": 76.1
+   "keptPct": 20.4,
+   "exactPctOfKept": 83.3
   },
   {
    "threshold": 0.6,
-   "keptPct": 8.7,
-   "exactPctOfKept": 80.0
+   "keptPct": 7.8,
+   "exactPctOfKept": 79.5
   },
   {
    "threshold": 0.7,
    "keptPct": 2.6,
-   "exactPctOfKept": 75.0
+   "exactPctOfKept": 76.9
   },
   {
    "threshold": 0.8,

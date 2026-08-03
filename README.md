@@ -244,19 +244,19 @@ Bangladeshi prescriptions ([RxHandBD](https://zenodo.org/records/18478741), MIT)
 node scripts/handwriting-eval.mjs <path-to-RxHandBD> 500
 ```
 
-Over 460 words read: **44% exactly right, 29% off by one or two letters, 27% wrong.** The
+Over 500 words: **45% exactly right, 28% off by one or two letters, 27% wrong.** The
 middle band is the dangerous one — `Escilex` → `Eslilex`, `clavutil` → `Clavuxil` — because
 one letter away there is often another real drug. This dataset alone contains both
 `Inderen` and `Indever`.
 
 We also asked whether the model's own confidence could pick out the readings worth trusting.
-It cannot. Raising the bar throws away most readings without buying accuracy: at 0.4, 45%
-survive and 68% of those are right; at 0.6, 9% survive and 80% are right. There is no
-threshold that is both safe and useful.
+It cannot. Accuracy peaks at a threshold of 0.5 — 20% of readings survive and 83% of those
+are right — and then *falls* as the bar rises further: 80% at 0.6, 77% at 0.7. A high
+confidence score is not evidence of a correct reading.
 
 **One number moved when we enlarged the sample, and it moved the wrong way.** At 200 words,
 nothing carrying a confidence of 0.8 or higher was wrong, and we wrote that down as
-reassuring. At 460, one was:
+reassuring. At 500, one was:
 
 ```
 paper: Folzin (folic acid)   app: Naprosyn (naproxen)   confidence 0.85
