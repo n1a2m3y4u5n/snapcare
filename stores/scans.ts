@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { Reaction, ScanRecord, Symptom } from '@/lib/snapcare/types';
 import { PROFILE_ID, seedDemoProfile } from './profile';
 import { prune } from '@/lib/snapcare/retention';
+import { demoHistory } from '@/lib/snapcare/demoHistory';
 import { isDemo } from '@/lib/snapcare/demo';
 import { accountStorage, activeAccountId, DEMO_KID, DEMO_PRIMARY } from '@/lib/snapcare/accounts';
 
@@ -164,7 +165,23 @@ export function seedDemoIfEmpty(): void {
   if (useScans.getState().scans.length > 0) return;
   const seed = DEMO_SCANS[activeAccountId()];
   if (!seed) return;
-  useScans.setState({ scans: seed });
+  /*
+    오늘 것 뒤에 지난 다섯 주를 붙인다.
+
+    위의 네 줄은 **오늘 무엇을 하는 앱인지**를 보인다 — 이부프로펜이 혈액희석제와
+    걸리는 것, 초콜릿이 설탕을 밀어올리는 것. 그것만으로는 이 앱이 **시간을 두고**
+    하는 일이 화면에 하나도 안 나온다. 열나흘 추세는 막대 두 개, 주별 추세는 아예
+    안 뜨고(기록이 두 주는 있어야 방향을 말할 수 있다), 순응도는 셀 것이 없고,
+    식이 일지는 반응 하나로 아무것도 추론하지 못한다.
+
+    이 앱의 논지는 "한 장을 읽어 준다" 가 아니라 "쌓이면 보인다" 인데, 그 논지가
+    화면에서 증명되지 않고 있었다.
+
+    여기서 만드는 이유는 위의 시드가 문자열 센티널을 쓰는 이유와 같다 — 모듈을
+    읽는 시점에 new Date() 를 부르면 서버가 그린 화면과 어긋난다. 이 함수는
+    브라우저에서 화면이 붙은 뒤에 불린다.
+  */
+  useScans.setState({ scans: [...seed, ...demoHistory(todayKey(), PROFILE_ID)] });
   // 기록만 넣으면 소용이 없다 — 판정은 프로필에서 나온다. 조건이 비어 있으면 위의
   // 회피 두 건이 왜 회피인지 화면 어디에도 설명이 없다.
   seedDemoProfile();
