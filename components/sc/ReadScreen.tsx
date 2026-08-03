@@ -136,8 +136,18 @@ export function ReadScreen({ variant = 'float' }: { variant?: ReadScreenVariant 
       <button
         onClick={play}
         aria-label={playing ? 'Stop reading' : 'Read this screen aloud'}
-        className="flex flex-1 flex-col items-center gap-1 py-1"
-        style={{ color: playing ? 'var(--color-caution)' : 'var(--color-sc-muted)' }}
+        /*
+          아래 줄의 짝(Home 버튼)과 같은 모양으로 맞춘다. 전에는 이쪽만 테두리도
+          바탕도 없어서, 나란히 놓인 둘이 크기도 모양도 어긋나 보였다.
+          채움은 안 준다 — 파란 채움은 이 앱에서 "지금 눌러야 하는 것" 이고,
+          듣기는 늘 있는 도구다.
+        */
+        className="flex flex-1 flex-col items-center gap-1 rounded-2xl border-2 py-2
+                   active:scale-95 transition-transform"
+        style={{
+          color: playing ? 'var(--color-caution)' : 'var(--color-sc-muted)',
+          borderColor: playing ? 'var(--color-caution)' : 'var(--color-sc-line)',
+        }}
       >
         <span className="text-xl leading-none" aria-hidden>{playing ? '⏹' : '🔊'}</span>
         <span className="text-[11px] font-semibold">{playing ? 'Stop' : 'Listen'}</span>

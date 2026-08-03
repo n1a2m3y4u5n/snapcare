@@ -21,27 +21,36 @@
  * 다만 그래서 **레이아웃이 밀린다.** 한 단계씩만 두고 실제 화면에서 확인한 값이다.
  */
 
-export const TEXT_SIZES = ['normal', 'large', 'largest'] as const;
+export const TEXT_SIZES = ['normal', 'large', 'larger', 'huge', 'giant'] as const;
 export type TextSize = (typeof TEXT_SIZES)[number];
 
 /**
  * 뿌리 글꼴 크기(px). 브라우저 기본이 16 이다.
  *
- * `large` 가 기본값이다. 18px 은 16 대비 12.5% 인데, 이보다 키우면 판정 화면의
- * 픽토그램 줄과 영양 게이지가 한 화면에 안 들어간다 — 그 둘이 같이 보이는 것이
- * 그 화면의 요점이라 거기서 끊었다.
+ * 한때 21 에서 끊었다. 그 위로 가면 판정 화면에서 픽토그램 줄과 영양 게이지가 한
+ * 화면에 안 들어간다는 이유였는데, **그것은 자르는 근거가 못 된다.** 안 들어가면
+ * 스크롤하면 되고(WCAG 1.4.10 이 요구하는 것도 그것이다), 글자가 안 보이는 사람에게
+ * "한 화면에 담기니까 여기서 참으세요" 라고 말할 수는 없다. 못 읽으면 그 화면은
+ * 담기든 말든 못 쓰는 화면이다.
+ *
+ * 32px 은 기본의 두 배다. WCAG 1.4.4 가 요구하는 200% 확대와 같은 자리이고,
+ * 아이폰 손쉬운 사용의 가장 큰 글자와도 비슷하다.
  */
 export const ROOT_PX: Record<TextSize, number> = {
   normal: 16,
   large: 18,
-  largest: 21,
+  larger: 22,
+  huge: 26,
+  giant: 32,
 };
 
 /** 화면에 낼 이름. 크기 차이를 글자 자체로도 보인다 — 이름을 못 읽어도 고를 수 있게. */
 export const TEXT_SIZE_LABEL: Record<TextSize, string> = {
   normal: 'Normal',
   large: 'Large',
-  largest: 'Largest',
+  larger: 'Larger',
+  huge: 'Huge',
+  giant: 'Biggest',
 };
 
 export function isTextSize(v: unknown): v is TextSize {

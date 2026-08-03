@@ -39,6 +39,7 @@ const SHELL_URLS = [
   '/dose',
   '/provider',
   '/history',
+  '/text-size',
   '/manifest.webmanifest',
   '/icons/icon-192.png',
 ];

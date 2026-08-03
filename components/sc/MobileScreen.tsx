@@ -43,7 +43,12 @@ export function MobileScreen({
   return (
     <div className="min-h-screen w-full flex justify-center" style={{ background: bg }}>
       <div className="relative w-full max-w-[440px] min-h-screen flex flex-col" style={{ background: bg }}>
-        <main className={`flex-1 flex flex-col ${bar ? 'pb-24' : ''} ${className}`}>{children}</main>
+        {/*
+          아래 줄이 화면에 고정(fixed)이라, 본문 끝이 그 밑으로 들어간다. 여백을
+          rem 으로 준다 — 글자를 키우면 줄도 같이 커지므로 px 로 박으면 가장 큰
+          크기에서 마지막 줄이 가려진다.
+        */}
+        <main className={`flex-1 flex flex-col ${bar ? 'pb-[7rem]' : ''} ${className}`}>{children}</main>
         {!bar && <ReadScreen variant={variant} />}
         {bar && <HomeBar atHome={bar === 'home'}>{!ownRead && <ReadScreen variant="tab" />}</HomeBar>}
         {bar && ownRead && <ReadScreen variant="none" />}

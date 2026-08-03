@@ -99,10 +99,20 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
             그것만으로도 "여기 뭔가 있다" 는 뜻이 선다.
           */}
           {s.badge !== undefined && s.badge > 0 && (
+            /*
+              px 로 박는다. rem 이면 글자 크기를 가장 크게 한 사람에게 배지가
+              위성의 절반만 해져서 **얼굴 그림을 덮는다** — 무엇을 가리키는
+              표시인지가 그 표시 때문에 안 보이게 된다.
+
+              배지는 "여기 뭔가 있다" 만 말하면 되고, 그 뜻은 크기와 무관하다.
+            */
             <span aria-hidden
-                  className="absolute -right-0.5 -top-0.5 flex h-6 min-w-6 items-center justify-center
-                             rounded-full px-1 text-[11px] font-bold text-white"
-                  style={{ background: 'var(--color-caution)' }}>
+                  className="absolute right-0 top-0 flex items-center justify-center rounded-full
+                             font-bold text-white"
+                  style={{
+                    background: 'var(--color-caution)',
+                    width: 20, height: 20, fontSize: 11, lineHeight: '20px',
+                  }}>
               {s.badge > 9 ? '9+' : s.badge}
             </span>
           )}

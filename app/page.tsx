@@ -15,7 +15,7 @@ import { activeAccountId, DEMO_KID } from '@/lib/snapcare/accounts';
  */
 export default function Index() {
   const router = useRouter();
-  const { onboarded, authed, setOnboarded } = useSession();
+  const { sizePicked, onboarded, authed, setOnboarded } = useSession();
   const hydrated = useSessionHydrated();
 
   useEffect(() => {
@@ -30,10 +30,17 @@ export default function Index() {
       setOnboarded(true);
       return;
     }
-    if (!onboarded) router.replace('/onboarding');
+    /*
+      글자 크기를 안내보다 **먼저** 묻는다.
+
+      안내 자체가 글자와 그림으로 되어 있어서, 글자가 안 보이는 사람에게는 그
+      안내부터 읽히지 않는다. 크기를 먼저 맞춰 놓고 나머지를 보여주는 순서가 맞다.
+    */
+    if (!sizePicked) router.replace('/text-size');
+    else if (!onboarded) router.replace('/onboarding');
     else if (!authed) router.replace('/login');
     else router.replace('/home');
-  }, [hydrated, onboarded, authed, router, setOnboarded]);
+  }, [hydrated, sizePicked, onboarded, authed, router, setOnboarded]);
 
   return <div className="min-h-screen" style={{ background: 'var(--color-sc-bg)' }} />;
 }

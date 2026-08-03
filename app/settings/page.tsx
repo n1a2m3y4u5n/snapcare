@@ -101,7 +101,9 @@ export default function SettingsPage() {
         <Speakable text={'Text size. How big the words are on every screen.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
           <span className="flex-1">TEXT SIZE</span>
         </Speakable>
-        <div className="mt-2 flex gap-2">
+        {/* 다섯이 한 줄에 들어가지 않는다. 접히게 두면 칸 폭이 들쭉날쭉해지므로
+            격자로 고정한다 — 크기를 견주는 화면에서 칸이 다른 크기면 방해가 된다. */}
+        <div className="mt-2 grid grid-cols-5 gap-2">
           {TEXT_SIZES.map((size) => {
             const on = size === textSize;
             return (
@@ -110,7 +112,7 @@ export default function SettingsPage() {
                 onClick={() => setTextSize(size)}
                 aria-pressed={on}
                 aria-label={`Text size: ${TEXT_SIZE_LABEL[size]}`}
-                className="flex flex-1 flex-col items-center gap-1 rounded-2xl bg-white py-3 shadow-sm"
+                className="flex flex-col items-center justify-end gap-1 rounded-2xl bg-white py-3 shadow-sm"
                 style={{ outline: on ? '3px solid var(--color-sc-primary)' : 'none' }}
               >
                 {/*
@@ -119,11 +121,12 @@ export default function SettingsPage() {
                   크기를 rem 이 아니라 px 로 박는다 — rem 이면 셋이 같이 커져서
                   차이가 안 보인다.
                 */}
-                <span aria-hidden style={{ fontSize: ROOT_PX[size] * 1.1, lineHeight: 1 }}
+                {/* px 로 박는다. rem 이면 다섯이 다 같이 커져서 차이가 안 보인다. */}
+                <span aria-hidden style={{ fontSize: Math.min(ROOT_PX[size], 26), lineHeight: 1 }}
                       className="font-extrabold">
                   Aa
                 </span>
-                <span aria-hidden className="text-[11px] font-semibold"
+                <span aria-hidden className="text-[10px] font-semibold leading-tight"
                       style={{ color: on ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)' }}>
                   {TEXT_SIZE_LABEL[size]}
                 </span>
