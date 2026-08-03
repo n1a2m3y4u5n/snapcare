@@ -33,13 +33,16 @@
 #   dtparam=spi=on   the ILI9341 LCD, which is a four-line SPI panel. No
 #                    package: the firmware writes the pixels to /dev/spidev0.0
 #                    itself, and draws them with a bytearray rather than Pillow.
+#   dtoverlay=ads7846
+#                    the LCD's touch controller, which is the only control this
+#                    build has: there is no physical button, and a tap anywhere
+#                    on the glass releases a waiting dose. The XPT2046 on these
+#                    modules is a clone of the ADS7846, so Raspberry Pi OS
+#                    already has the driver and the firmware reads an ordinary
+#                    input device rather than speaking SPI to it.
 #   dtparam=i2c_arm=on
-#                    the SSD1306 OLED, on GPIO 2/3. Added unconditionally, and
-#                    that is a change: it used to go in only on a DS3231 build,
-#                    so a machine with the backup panel fitted and no DS3231 had
-#                    no bus for it and came up with nothing on the screen. Both
-#                    parts share the two pins — 0x3C and 0x68 are different
-#                    addresses — so one line covers both.
+#                    the DS3231, on GPIO 2/3, on the builds that fit one. It
+#                    used to be here for the OLED as well; that panel is gone.
 #   fake-hwclock     left alone on a DS1302 build (nothing competes with it —
 #                    the firmware sets the clock from the chip at startup) and
 #                    disabled on a DS3231 one, where it would overwrite a good
@@ -236,9 +239,10 @@ say "Enabling SPI and I2C (the two panels)"
 # GPIO 10 and CE0 GPIO 8, none of which is a free choice — they are the pins the
 # peripheral shifts out of. DC and RESET are ordinary GPIOs, 25 and 18.
 add_config_line "dtparam=spi=on"
-# And /dev/i2c-1 for the OLED, on GPIO 2/3. Unconditional, unlike before: this
-# line used to be added only on a DS3231 build, so the backup panel on a DS1302
-# machine had no bus and the screen stayed blank with nothing to explain it.
+# And /dev/i2c-1 on GPIO 2/3. Left unconditional even though only a DS3231 build
+# now needs it: the two pins have permanent pull-ups and nothing else on this
+# machine can use them, so the line costs nothing and means a clock chip fitted
+# later is one overlay away rather than a reinstall.
 add_config_line "dtparam=i2c_arm=on"
 # A no-op on a board whose core clock does not scale, and insurance on one that
 # does: the SPI baud rate is divided down from the core clock, so a core clock
@@ -391,12 +395,13 @@ if [[ -n "${NEEDS_REBOOT:-}" ]]; then
   echo "  Lines were added to $CONFIG_TXT and the kernel only reads it at boot."
   echo "      sudo reboot"
   echo
-  echo "  After rebooting, check the two buses the panels need. The LCD:"
+  echo "  After rebooting, check the panel's bus and its touch device:"
   echo "      ls -l /dev/spidev0.0"
-  echo "  and the OLED, which must answer at 0x3c:"
-  echo "      ls -l /dev/i2c-1 && i2cdetect -y 1"
-  echo "  (i2cdetect comes from i2c-tools, which only a DS3231 build installs —"
-  echo "   the device node being there is the part that matters.)"
+  echo "      ls -l /dev/input/event*        # ads7846 appears as one of these"
+  echo
+  echo "  If the glass stays dark, walk it one stage at a time — a write-only"
+  echo "  panel cannot be diagnosed by asking the firmware:"
+  echo "      sudo snapcare-dispenser --display-test"
   if [[ $RTC_KIND == ds3231 ]]; then
     echo "  And that the kernel found the clock chip:"
     echo "      ls -l /dev/rtc0 && sudo hwclock -r"
