@@ -71,6 +71,9 @@ const SHOTS = [
   // 얼굴 고르기가 함께 나오는데, 본문(§3.2)이 서술하는 것은 그것을 뺀 첫 실행이다.
   { file: 'fig13_profile.png', path: '/profile?setup=1&demo=1', wait: 'HOW OLD' },
   { file: 'fig12_onboarding.png', path: '/onboarding?demo=1', wait: 'Point & scan' },
+  // 언어 고르기. 없는 목소리를 미리 알리는 자리와, 검수를 받지 않았다는
+  // 고지가 한 화면에 함께 있어야 §5.7 의 서술이 그림으로 확인된다.
+  { file: 'fig14_language.png', path: '/settings?demo=1', wait: 'WHAT LANGUAGE', noWait: true },
 ];
 
 const browser = await puppeteer.launch({
