@@ -7,7 +7,7 @@ import { useScans } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
 import { ConditionTracking } from './tracking';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
-import { NUTRIENT_LABEL } from '@/lib/nutrition/types';
+import { NUTRIENT_LABEL, type NutrientAssessment } from '@/lib/nutrition/types';
 import { ask, Hear, Speakable } from '@/components/sc/Say';
 
 /**
@@ -20,9 +20,32 @@ export default function NutritionPage() {
   const daily = useDailyIntake(scans, member);
 
   const energy = daily.assessments?.find((a) => a.key === 'energy');
+  /*
+    무엇을 보여줄지.
+
+    한도(설탕·소금·포화지방)는 **많을 때** 알려주는 것이고, 목표(단백질·식이섬유)는
+    **모자랄 때** 알려주는 것이다. 방향이 반대인데 여기서는 같은 조건으로 걸러
+    내고 있었다 — `a.level !== 'low'` 라, 목표 영양소는 **이미 충분할 때만** 보였다.
+    하루 종일 단백질을 거의 못 먹은 사람 화면에 단백질 얘기가 아예 없었다는 뜻이다.
+
+    대상 지역을 생각하면 이 방향이 특히 아프다. 과잉만이 아니라 결핍이 문제이고,
+    "오늘 단백질이 모자랍니다" 는 이 앱이 해 줄 수 있는 말 중 드물게 행동으로
+    이어지는 말이다. 계산은 이미 하고 있었다(reference.ts 가 WHO/FAO 로 체중 ×
+    0.83 g/kg 을 뽑는다) — 뽑아 놓고 화면에서 버리고 있었다.
+
+    빨강으로 칠하지 않는다. `colorFor` 가 목표 영양소에는 회색과 초록만 쓴다 —
+    결핍은 위험 신호가 아니라 **채우면 되는 것**이고, 빨강은 "먹지 말라" 로 읽힌다.
+
+    순서: 넘긴 것 → 모자란 것 → 나머지. 급한 것이 위로 온다.
+  */
+  const rank = (a: NutrientAssessment) =>
+    a.kind === 'limit' && a.level === 'high' ? 0
+      : a.kind === 'target' && a.level === 'low' ? 1
+        : 2;
   const bars = (daily.assessments ?? [])
     .filter((a) => a.key !== 'energy')
-    .filter((a) => (a.kind === 'limit' ? a.pct >= 5 : a.level !== 'low'))
+    .filter((a) => (a.kind === 'limit' ? a.pct >= 5 : true))
+    .sort((x, y) => rank(x) - rank(y))
     .slice(0, 5);
 
   const overLimit = (daily.assessments ?? []).filter((a) => a.kind === 'limit' && a.level === 'high');

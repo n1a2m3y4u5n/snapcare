@@ -241,24 +241,36 @@ samples. So we measured it, on a public dataset of handwritten drug names cut fr
 Bangladeshi prescriptions ([RxHandBD](https://zenodo.org/records/18478741), MIT).
 
 ```bash
-node scripts/handwriting-eval.mjs <path-to-RxHandBD> 200
+node scripts/handwriting-eval.mjs <path-to-RxHandBD> 500
 ```
 
-Over 200 words: **47% read exactly right, 26% off by one or two letters, 26% wrong.** The
+Over 460 words read: **44% exactly right, 29% off by one or two letters, 27% wrong.** The
 middle band is the dangerous one — `Escilex` → `Eslilex`, `clavutil` → `Clavuxil` — because
 one letter away there is often another real drug. This dataset alone contains both
 `Inderen` and `Indever`.
 
 We also asked whether the model's own confidence could pick out the readings worth trusting.
-It cannot, at any useful rate: at a threshold of 0.6 the surviving readings are 100% correct
-but only 4% of them survive. So the app does not try to be clever. A prescription it judges
-handwritten never gets a confident verdict — it says so, keeps the pictograms, and points at
-the clinic's paper form sheet, which is marks rather than handwriting and reads exactly.
+It cannot. Raising the bar throws away most readings without buying accuracy: at 0.4, 45%
+survive and 68% of those are right; at 0.6, 9% survive and 80% are right. There is no
+threshold that is both safe and useful.
 
-The model does not bluff, which is the one reassuring number here: of 200 readings, none
-that carried a confidence of 0.8 or more was wrong.
+**One number moved when we enlarged the sample, and it moved the wrong way.** At 200 words,
+nothing carrying a confidence of 0.8 or higher was wrong, and we wrote that down as
+reassuring. At 460, one was:
 
-Full per-image results: `scripts/handwriting-eval.json`.
+```
+paper: Folzin (folic acid)   app: Naprosyn (naproxen)   confidence 0.85
+```
+
+Not a near-miss — a different drug, asserted. It is rare (0.2%) but it exists, so confidence
+cannot be used as a safety catch. Had we stopped at 200 we would have built on that comfort.
+
+So the app does not try to be clever. A prescription it judges handwritten never gets a
+confident verdict — it says so, keeps the pictograms, and points at the clinic's paper form
+sheet, which is marks rather than handwriting and reads exactly.
+
+Full per-image results: `scripts/handwriting-eval.json`. Whole prescription pages are
+measured separately — see `MEASUREMENTS.md`.
 
 ## Data sources
 

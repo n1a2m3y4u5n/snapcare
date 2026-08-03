@@ -68,13 +68,50 @@ const truth = readFileSync(join(ROOT, 'prescription_box_counts.csv'), 'utf8')
 const chosen = pick(truth, SAMPLE);
 console.log(`${chosen.length}장을 ${APP}/api/analyze 로 보낸다 (전체 ${truth.length}장 중 고정 간격)`);
 
-async function analyse(file) {
-  const b64 = readFileSync(join(ROOT, 'images', file)).toString('base64');
-  const res = await fetch(`${APP}/api/analyze`, {
+/*
+  앱이 살아 있는지 먼저 본다.
+
+  한 번은 개발 서버가 도중에 죽은 채로 끝까지 돌았다. 173장이 `fetch failed` 로 빠졌고
+  요약에는 "재현율 94.3%" 라고 찍혔다 — 스물일곱 장만 읽고 낸 값이다. 요약만 보면 앱의
+  성적처럼 보인다는 것이 문제다. 재는 도구가 조용히 다른 것을 재고 있으면, 그 수는
+  없는 것보다 나쁘다.
+*/
+try {
+  const ping = await fetch(`${APP}/api/analyze`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ image: `data:image/jpeg;base64,${b64}` }),
+    body: JSON.stringify({}),
   });
+  // 400 이 정상이다 — 이미지 없이 불렀으니. 붙었다는 것만 확인하면 된다.
+  if (ping.status >= 500) throw new Error(`앱이 ${ping.status} 를 돌려준다`);
+} catch (err) {
+  console.error(`${APP} 에 닿지 못한다 — \`npm run dev\` 가 떠 있는지 보라.\n  ${err}`);
+  process.exit(1);
+}
+
+/*
+  밀리면 한 번 다시 보낸다 — 앱이 하는 것과 같다(app/camera/page.tsx).
+
+  200장을 한 번에 재던 첫 판에서 아홉 장이 503 으로 실패했는데, 한 장씩 다시 보내니
+  아홉 장 전부 정상으로 읽혔다. 그것을 실패로 세면 재는 것이 앱이 아니라 그 순간의
+  대기열이 된다. 다시 보낸 횟수는 따로 세어 결과에 남긴다 — 숨기면 안 되는 값이다.
+*/
+let retried = 0;
+
+async function analyse(file) {
+  const b64 = readFileSync(join(ROOT, 'images', file)).toString('base64');
+  const mediaType = file.endsWith('.png') ? 'image/png' : 'image/jpeg';
+  const send = () => fetch(`${APP}/api/analyze`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ image: `data:${mediaType};base64,${b64}` }),
+  });
+  let res = await send();
+  if (res.status === 503) {
+    retried += 1;
+    await new Promise((r) => setTimeout(r, 1500));
+    res = await send();
+  }
   const body = await res.json().catch(() => ({}));
   return { status: res.status, body };
 }
@@ -155,6 +192,7 @@ const summary = {
   dataset: 'Mendeley k62rfd23kz (CC BY 4.0) — 200 full-page Bangladeshi prescriptions',
   through: `${APP}/api/analyze`,
   sampled: results.length,
+  retriedOnce: retried,
   failed: results.length - ok.length,
   seenAsPrescription: rx.length,
   seenAsPrescriptionPct: +(100 * rx.length / ok.length).toFixed(1),
