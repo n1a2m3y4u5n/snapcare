@@ -405,13 +405,15 @@ This is why the present work does not stop at making pictograms but designs a pr
 
 ### 1.9 Structural constraints of the existing pictogram standard
 
-The most widely used pharmaceutical pictogram standard at present is the 81-symbol set from the United States Pharmacopeia (USP). Work began in 1987 and the current set was completed in 1997, organised into three categories: mandatory (square), prohibition (circle with slash) and warning (inverted triangle) (U.S. Pharmacopeia).
+The most widely used pharmaceutical pictogram standard at present is the 81-symbol set from the United States Pharmacopeia (USP). It is organised into three categories, mandatory (square), prohibition (circle with slash) and warning (inverted triangle), and USP distributes it free in GIF and EPS form (U.S. Pharmacopeia, *USP Pictograms*, https://www.usp.org/health-quality-safety/usp-pictograms).
+
+How the set arrived at its present 81 we could not confirm at a primary source. Several secondary works record a start in the 1980s and the present count reached during the 1990s, but we could not open the originals, so no years are given here. The argument of this section is not when the set was made but that it does not compose, and the grounds for that are the licence conditions below.
 
 The limitation of this standard lies in its expressive power. A single prescription instruction such as **"three times a day, 30 minutes after meals, keep refrigerated, contraindicated in pregnancy"** cannot be expressed by any one USP pictogram and can only be conveyed by listing five or six symbols.
 
-This is an explicit constraint rather than a design shortcoming. The USP licence prohibits altering the pictograms or using them together with symbols not created by USP without USP's permission (U.S. Pharmacopeia, *USP Pictogram Library License Agreement*). Combination will therefore remain impossible for as long as the standard is observed.
+This is an explicit constraint rather than a design shortcoming. USP grants free use subject to four conditions: that, because of the potential for misinterpretation, the pictograms are not used as the sole means of conveying information to the patient; that they are not modified or used together with symbols USP did not develop without USP's permission; that only the latest versions are used, because the pictograms are subject to change; and that a notice of USP copyright accompanies them. USP also reserves the right to withdraw permission where it judges the pictograms to be used inappropriately (U.S. Pharmacopeia, *USP Pictograms*).
 
-The second of those clauses is what forbids composition. As long as the standard is observed, overlaying or joining symbols will remain impossible.
+The second of those conditions is what forbids composition. As long as the standard is observed, overlaying or joining symbols will remain impossible.
 
 The first clause, by contrast, is on our side. Telling implementers not to use pictograms as the sole means of conveying information is the standard's own authors recording that one picture is not enough, and it is the same judgement behind SnapCare overlaying three layers of picture, speech and colour in §2.1. We agree with the clause and differ only in having made the secondary means something other than text.
 
