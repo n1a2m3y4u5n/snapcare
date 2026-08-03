@@ -214,13 +214,16 @@ DISPLAY_DC_GPIO = 25
 DISPLAY_RESET_GPIO = 18
 
 #: Degrees, clockwise. The ILI9341 is a portrait part — 240 wide by 320 tall —
-#: and 90 turns it on its side, so a screen is 320x240 landscape.
+#: and both 90 and 270 turn it on its side, so a screen is 320x240 landscape.
 #:
 #: That is the orientation a dose screen wants: a tray number and a time sit
 #: beside each other rather than stacked, which leaves both big enough to read
-#: from the doorway. It costs nothing but a MADCTL byte at initialisation. Set
-#: it to 0 if the panel is mounted on end.
-DISPLAY_ROTATION = 90
+#: from the doorway. It costs nothing but a MADCTL byte at initialisation.
+#:
+#: 270 rather than 90 is which way up: the two differ by half a turn, and which
+#: one is right is decided by where the ribbon leaves the module once it is in a
+#: case. 0 and 180 are the same choice for a panel mounted on end.
+DISPLAY_ROTATION = 270
 
 #: SPI clock for the LCD.
 #:
@@ -276,15 +279,26 @@ except (KeyError, ValueError):
 #: search covers every module anyone has shipped with these panels.
 TOUCH_DEVICE = os.environ.get("SNAPCARE_TOUCH_DEVICE", "").strip()
 
-#: The GPIO the module's T_IRQ pin is on. Not used by this firmware at all —
-#: the kernel driver owns the pin — but it is what has to go in the `dtoverlay`
-#: line, so it lives here where the rest of the pin map is and gets printed in
-#: the message somebody sees when no touch panel is found.
+#: The touch controller's own bus. It is a separate chip from the panel and
+#: shares nothing with it: the LCD is on SPI, this is on I2C, and the four pins
+#: are the ones the module marks `CTP_`. GPIO 2 and 3 are bus 1 on every Pi with
+#: a 40-pin header, and they are the pair with the board's fixed 1.8k pull-ups —
+#: which is what I2C wants and what makes them useless for anything else.
+TOUCH_I2C_BUS = os.environ.get("SNAPCARE_TOUCH_I2C", "/dev/i2c-1").strip()
+TOUCH_SDA_GPIO = 2
+TOUCH_SCL_GPIO = 3
+
+#: The controller's two out-of-band lines. Neither is driven by this firmware —
+#: the kernel driver owns both — but they are what goes in the `dtoverlay` line,
+#: so they live here with the rest of the pin map and `--touch-setup` builds the
+#: line out of them.
 #:
-#: 4 rather than something lower, because 2 and 3 have the board's fixed
-#: pull-ups on them and every other free pin is a servo, the buzzer, DC or
-#: RESET.
-TOUCH_PENIRQ_GPIO = 4
+#: INT is 4 and that is not a free choice: the `edt-ft5406` overlay hardwires
+#: its interrupt there, and moving the wire means the FT6236 gets no driver.
+#: RESET is 12, the last pin on the header that is neither a servo, the buzzer,
+#: the button, the clock chip nor one of the panel's own lines.
+TOUCH_INT_GPIO = 4
+TOUCH_RESET_GPIO = 12
 
 #: Whether a tap with no dose waiting drops a pill anyway.
 #:
@@ -319,11 +333,12 @@ TOUCH_DEMO_TRAY = int(os.environ.get("SNAPCARE_TOUCH_DEMO_TRAY", "0"))
 
 #: How long after a touch a second one is ignored.
 #:
-#: Not cosmetic debouncing. A resistive panel under a finger that rolls even
-#: slightly reports several presses, and each one of those reaching `release()`
-#: is another tray sweep — one touch becoming two doses. Half a second is
-#: longer than any bounce and far shorter than the gap between two doses
-#: somebody genuinely means to take.
+#: Not cosmetic debouncing. A finger that rolls, or rests light enough to sit on
+#: the contact threshold, drops and remakes the contact — and the controller
+#: reports each remake as a new press. Every one of those reaching `release()`
+#: is another tray sweep, so this is what stops one touch becoming two doses.
+#: Half a second is longer than any bounce and far shorter than the gap between
+#: two doses somebody genuinely means to take.
 TOUCH_SETTLE_S = float(os.environ.get("SNAPCARE_TOUCH_SETTLE_S", "0.5"))
 
 #: The hours the panel wears its night palette — start inclusive, end exclusive,

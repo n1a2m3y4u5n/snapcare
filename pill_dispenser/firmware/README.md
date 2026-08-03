@@ -373,18 +373,26 @@ it with `make guide`.
 | *(servo 4..8, unfitted)* | *GPIO 5, 6, 13, 19, 26* | reserved in the map |
 | Servo V+ / GND | separate 5 V 2 A+ supply | see below |
 | Pi GND ↔ supply GND | — | **required**, see below |
-| LCD SCK / MOSI / CS | GPIO **11 / 10 / 8** (pins 23, 19, 24) | SPI0 with CE0; fixed by the peripheral |
-| LCD DC / RESET | GPIO **25 / 18** (pins 22, 12) | ordinary outputs; 18 is free because the ring is gone |
+| LCD SCK / SDI(MOSI) / LCD_CS | GPIO **11 / 10 / 8** (pins 23, 19, 24) | SPI0 with CE0; fixed by the peripheral |
+| LCD_RS / LCD_RST | GPIO **25 / 18** (pins 22, 12) | ordinary outputs; `LCD_RS` is the DC line |
 | LCD VCC / LED / GND | see below, 3.3 V, GND | backlight straight to 3V3 |
-| Touch T_CLK / T_DIN / T_DO | GPIO **11 / 10 / 9** | the same SPI0 as the panel; T_DO is MISO |
-| Touch T_CS | GPIO **7** (pin 26) | CE1 — the display has CE0 |
-| Touch T_IRQ | GPIO **4** (pin 7) | pen-down interrupt; the kernel driver owns it |
+| SDO(MISO), SD_CS | *nothing* | the panel is written and never read; the card slot is unused |
+| Touch CTP_SDA / CTP_SCL | GPIO **2 / 3** (pins 3, 5) | I²C bus 1 — a separate chip on a separate bus |
+| Touch CTP_INT | GPIO **4** (pin 7) | finger-down; the kernel driver owns it |
+| Touch CTP_RST | GPIO **12** (pin 32) | driven by the driver, or held high by the bootloader |
 | Piezo buzzer | GPIO **23** | through 100 Ω |
 | Take-dose button | GPIO **24** (pin 18) | optional — the screen is the button on this build |
 | DS1302 SCLK / I/O / CE | GPIO **16 / 20 / 21** | bit-banged; pins 36, 38, 40 |
 | DS1302 VCC / GND | 3.3 V (pin 17), GND (pin 39) | **not 5 V** — the I/O line drives back |
 
-GPIO 2 and 3 are now free. They used to carry the OLED; nothing needs them.
+That is every free pin gone: GPIO 2 and 3 carry the touch controller, and 4 and
+12 are its two out-of-band lines. GPIO 7 and 9 stay unused — the panel needs no
+second chip select and is never read back.
+
+**GPIO 2 and 3 are not 5 V tolerant.** On a module whose VCC is 5 V the touch
+pull-ups can sit on the 5 V rail. Power the module from VCC and GND alone, leave
+the other twelve pins in the air, and meter `CTP_SCL` to ground before those two
+wires go on the header. Above 3.6 V, they do not.
 
 ### Powering the panel, which is where these modules bite
 
@@ -439,16 +447,44 @@ and hit is a target that can be missed, and it would put the one action this
 machine performs behind knowing where to aim — on a device built for hands that
 shake. Only "the glass was touched" ever reaches the firmware.
 
-The XPT2046 on these modules is a clone of the ADS7846, which Raspberry Pi OS
-already has a driver for, so this is one overlay line rather than a second SPI
-protocol in the firmware. `service/install.sh` adds it:
+The touch controller is a second chip that shares nothing with the panel but the
+connector: the LCD is on SPI, the controller is on I²C. It is one of a small
+family — FT6206/FT6236 at 0x38, GT911 at 0x5d or 0x14 — and Raspberry Pi OS has
+a driver for each, so this is one device-tree line rather than a register map
+per part in the firmware.
+
+Which line is right depends on which chip answers, and the bus cannot be asked
+until the panel is wired — which is several stages after `install.sh` runs. So
+the installer does not guess. With the panel wired:
+
+```bash
+sudo snapcare-dispenser --touch-setup
+```
+
+It probes the bus, names what it found, writes the matching line, and keeps the
+previous `config.txt` beside itself. Run it again after the reboot and it says
+whether a driver actually bound.
 
 ```
-dtoverlay=ads7846,cs=1,penirq=4,penirq_pull=2,speed=50000,keep_vref_on=1,xohms=150
+dtoverlay=edt-ft5406                      # FT6206 / FT6236 at 0x38
+gpio=12=op,dh                             # ...which has no reset parameter
+dtoverlay=goodix,interrupt=4,reset=12     # GT911 at 0x5d or 0x14
 ```
 
-It takes effect on the next reboot. Until then the firmware says so at startup
-and the screen still shows everything — a tap just does nothing.
+Until the line is in place the firmware says so at startup and the screen still
+shows everything — a tap just does nothing.
+
+**A `dtoverlay=ads7846` line must not be there.** That is the driver for a
+resistive controller on SPI, and this module has none. It is not inert: nothing
+on an SPI chip select has to acknowledge, so the driver can bind against an
+empty bus and publish an *ADS7846 Touchscreen* input device that never reports a
+press. `install.sh` removes the line if it finds one, and `find_touch_device`
+refuses that name outright rather than ranking it below the real panel — a
+phantom that is merely second choice still wins whenever the real one is
+missing, which is exactly when somebody is debugging.
+
+If the panel is listed and taps still do nothing, the firmware did not recognise
+its name. Point it straight at the node with `SNAPCARE_TOUCH_DEVICE`.
 
 #### Demonstration mode, which is on by default
 

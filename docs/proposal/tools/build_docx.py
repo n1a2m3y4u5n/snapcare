@@ -14,6 +14,7 @@ proposal_ko.md → 대회 제출용 .docx.
 from __future__ import annotations
 
 import argparse
+import copy
 import re
 from pathlib import Path
 
@@ -21,6 +22,7 @@ import docx
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 
@@ -122,6 +124,42 @@ def shade(cell, hex_color):
 INLINE = re.compile(r'(\*\*.+?\*\*|`[^`]+`|\*[^*]+?\*)')
 
 
+def add_link(par, url: str, size: float):
+    """맨 글자로 두면 눌리지 않는다. 표지의 저장소·배포 주소가 그랬다.
+
+    python-docx 에 하이퍼링크 API 가 없어 관계를 직접 만든다."""
+    part = par.part
+    rid = part.relate_to(url, RT.HYPERLINK, is_external=True)
+    link = OxmlElement('w:hyperlink')
+    link.set(qn('r:id'), rid)
+    r = OxmlElement('w:r')
+    pr = OxmlElement('w:rPr')
+    color = OxmlElement('w:color')
+    color.set(qn('w:val'), '0563C1')
+    u = OxmlElement('w:u')
+    u.set(qn('w:val'), 'single')
+    pr.append(color)
+    pr.append(u)
+    r.append(pr)
+    t = OxmlElement('w:t')
+    t.text = url
+    t.set(qn('xml:space'), 'preserve')
+    r.append(t)
+    link.append(r)
+    par._p.append(link)
+    run = par.add_run()          # 글꼴·크기를 나머지와 맞춘다
+    set_font(run)
+    run.font.size = Pt(size)
+    rpr = run._r.find(qn('w:rPr'))
+    if rpr is not None:
+        pr.insert(0, copy.deepcopy(rpr))
+    run._r.getparent().remove(run._r)
+
+
+# 끝의 문장부호는 주소가 아니다. 마침표까지 링크에 넣으면 열리지 않는다.
+URL_RE = re.compile(r'(https?://[^\s<>()\[\]"\']+?)(?=[.,;:]?(?:\s|$)|[)\]])')
+
+
 def write_inline(par, text, size=BODY_PT, bold=False):
     """**굵게**, `코드`, *기울임* 만 처리한다. 본문이 쓰는 것이 이것뿐이다."""
     text = text.replace('\\<', '<').replace('\\>', '>')
@@ -140,7 +178,21 @@ def write_inline(par, text, size=BODY_PT, bold=False):
             r.text, r.italic = piece[1:-1], True
             set_font(r)
         else:
-            r.text = piece
+            # 주소는 눌리게 만든다. 표지의 두 URL 이 심사자가 여는 자리다.
+            if URL_RE.search(piece):
+                last = 0
+                for m in URL_RE.finditer(piece):
+                    if m.start() > last:
+                        rr = par.add_run(piece[last:m.start()])
+                        set_font(rr)
+                        rr.font.size = Pt(size)
+                        if bold:
+                            rr.bold = True
+                    add_link(par, m.group(1), size)
+                    last = m.end()
+                r.text = piece[last:]
+            else:
+                r.text = piece
             set_font(r)
         r.font.size = r.font.size or Pt(size)
         if bold:
@@ -310,6 +362,52 @@ def sections(md: str) -> dict[str, str]:
     return out
 
 
+def fix_props(path: str) -> None:
+    """제출 파일의 문서 속성을 우리 것으로 바꾼다.
+
+    서식을 그대로 열어 채우는 방식이라 속성이 서식의 것을 물려받는다.
+    그대로 두면 두 가지가 새어 나간다.
+
+      · 통계가 서식의 값이다 — "2쪽 249낱말" 로 적혀 있었는데 실제는
+        130쪽 42,883낱말이다. 심사자가 파일 속성을 열면 그것을 본다
+      · 작성자가 Admin, 마지막 수정자가 서식을 만든 분의 이름이다.
+        우리 제출물에 남의 이름이 실려 나간다
+
+    통계는 지운다. 지우면 Word 가 열 때 다시 센다. 우리가 손으로
+    적으면 문서를 고칠 때마다 또 틀린다."""
+    import re
+    import shutil
+    import zipfile
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    tmp = path + '.tmp'
+    with zipfile.ZipFile(path) as zin, \
+            zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            if item.filename == 'docProps/app.xml':
+                t = data.decode('utf-8')
+                for tag in ('Pages', 'Words', 'Characters', 'CharactersWithSpaces',
+                            'Lines', 'Paragraphs', 'TotalTime'):
+                    t = re.sub(rf'<{tag}>[^<]*</{tag}>', '', t)
+                data = t.encode('utf-8')
+            elif item.filename == 'docProps/core.xml':
+                t = data.decode('utf-8')
+                t = re.sub(r'<dc:creator>[^<]*</dc:creator>',
+                           '<dc:creator>Global Team H1 · SnapCare</dc:creator>', t)
+                t = re.sub(r'<cp:lastModifiedBy>[^<]*</cp:lastModifiedBy>',
+                           '<cp:lastModifiedBy>Global Team H1 · SnapCare</cp:lastModifiedBy>', t)
+                t = re.sub(r'<dcterms:modified([^>]*)>[^<]*</dcterms:modified>',
+                           rf'<dcterms:modified\1>{now}</dcterms:modified>', t)
+                if '<dc:title>' in t:
+                    t = re.sub(r'<dc:title>[^<]*</dc:title>',
+                               '<dc:title>SnapCare — Final Project Proposal</dc:title>', t)
+                data = t.encode('utf-8')
+            zout.writestr(item, data)
+    shutil.move(tmp, path)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--src', default='proposal_ko.md',
@@ -337,6 +435,7 @@ def main() -> None:
         print(f'  {key}')
 
     d.save(args.out)
+    fix_props(args.out)
     size = Path(args.out).stat().st_size / 1e6
     print(f'\n{args.out}  ({size:.1f} MB)')
 

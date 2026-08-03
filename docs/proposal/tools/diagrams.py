@@ -609,18 +609,29 @@ def problem_synthesis():
     mid = y0 + H / 2 - 2 * (H + GAP)
     for i in range(5):
         y = y0 - i * (H + GAP) + H / 2
-        ax.annotate('', xy=(59.4, mid), xytext=(54.6, y),
+        ax.annotate('', xy=(56.6, mid), xytext=(54.6, y),
                     arrowprops=dict(arrowstyle='-', color=MUTED, lw=0.8,
                                     alpha=0.75, shrinkA=1, shrinkB=1), zorder=1)
 
-    ax.annotate('', xy=(59.6, mid), xytext=(58.2, mid),
-                arrowprops=dict(arrowstyle='-|>', color=MUTED, lw=1.3,
+    # 오른쪽 셋 모두를 가리켜야 한다. 앞 판은 화살표가 가운데 상자
+    # 하나에만 들어가서, 캡션이 "가리키는 셋" 이라 하는데 그림은
+    # 하나만 가리키고 있었다. 모인 자리에서 세로줄로 벌린 뒤 셋에
+    # 각각 넣는다.
+    H2 = 13.0
+    cy = [TOP - H2 / 2 - i * (H2 + 4.0) for i in range(3)]
+    ax.plot([58.2, 58.2], [min(cy), max(cy)], color=MUTED, lw=1.3,
+            solid_capstyle='butt', zorder=4)
+    ax.annotate('', xy=(58.2, mid), xytext=(56.6, mid),
+                arrowprops=dict(arrowstyle='-', color=MUTED, lw=1.3,
                                 shrinkA=0, shrinkB=0), zorder=4)
+    for y in cy:
+        ax.annotate('', xy=(59.8, y), xytext=(58.2, y),
+                    arrowprops=dict(arrowstyle='-|>', color=MUTED, lw=1.3,
+                                    shrinkA=0, shrinkB=0), zorder=4)
 
     right = [(T('조합'), T('처방 지시 하나를 그림 하나로 세울 것')),
              (T('배포 전 측정'), T('읽히는지를 사람에게 내보내기 전에 잴 것')),
              (T('문자 없는 전달'), T('보조 수단까지 읽기를 요구하지 않을 것'))]
-    H2 = 13.0
     for i, (h, sub) in enumerate(right):
         y = TOP - H2 - i * (H2 + 4.0)
         ax.add_patch(mp.Rectangle((60, y), 38, H2, linewidth=LW[BLUE],

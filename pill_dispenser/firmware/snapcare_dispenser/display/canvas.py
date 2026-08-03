@@ -202,9 +202,10 @@ class Rgb565(Canvas):
     #: white on the old one was 2.25:1 and had shipped.
     _DARK_INK = frozenset({Tone.DUE, Tone.MISSED, Tone.NETWORK, Tone.SCHEDULE})
 
-    #: The panel as it is actually mounted: `DISPLAY_ROTATION = 90` turns the
-    #: 240x320 portrait glass on its side, and every screen in this package is
-    #: laid out against 320x240.
+    #: The panel as it is actually mounted: a landscape `DISPLAY_ROTATION` turns
+    #: the 240x320 portrait glass on its side, and every screen in this package
+    #: is laid out against 320x240. Which of the two landscape rotations is set
+    #: is only which way up, and nothing here can see the difference.
     #:
     #: These are the defaults rather than the glass's native portrait because
     #: the portrait ones were a trap. `Ili9341.new_canvas` and `NoDisplay` both

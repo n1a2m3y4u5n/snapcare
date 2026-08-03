@@ -106,7 +106,7 @@ stale.
 1 & CR2032 cell & \textbf{Not} the LIR2032 the holder is often marked for. The trickle charger is never enabled, so a rechargeable arrives flat and stays flat \\
 \midrule
 \multicolumn{3}{@{}l}{\textbf{\sffamily The screen}}\\
-1 & ILI9341 2.8\,in SPI LCD, with touch & 240$\times$320, four-line SPI, XPT2046 touch controller on the same bus. \textbf{Check yours before powering it}: boards with an on-board regulator want 5\,V, bare ones are 3.3\,V and are destroyed by 5\,V. See \S\ref{sec:panelpower} \\
+1 & ILI9341 2.8\,in SPI LCD, capacitive touch & 240$\times$320. The panel is four-line SPI; the touch controller is a separate chip on \iic{}, and its four pins are the ones marked \code{CTP\_}. \textbf{Check yours before powering it}: boards with an on-board regulator want 5\,V, bare ones are 3.3\,V and are destroyed by 5\,V. See \S\ref{sec:panelpower} \\
 \midrule
 \textemdash{} & Jumper wire, terminal blocks & Dupont leads for the bench; screw terminals for anything that gets carried \\
 \bottomrule
@@ -156,8 +156,9 @@ pull-ups that cannot be switched off.} That is why no servo goes near them
 \textemdash{} a signal line idling high before the software starts slams a horn
 to one end with a loaded tray on it \textemdash{} and it is exactly what makes
 them the I\textsuperscript{2}C pair, which wants those pull-ups and finds them
-already fitted. Nothing on this machine uses them; a DS3231 build would.
-Run \code{pinout} for the whole header.
+already fitted. The screen's touch controller is what uses them here, and a
+DS3231 build would share the same two pins. Run \code{pinout} for the whole
+header.
 
 \vspace{2mm}
 \begin{center}
@@ -170,16 +171,16 @@ Run \code{pinout} for the whole header.
 \swatch{servo} & Servo, trays 4--8 & 5, 6, 13, 19, 26 & 29, 31, 33, 35, 37 & fit a hopper and it works \\
 \swatch{buzzc} & Piezo buzzer & 23 & 16 & through 100\ohm \\
 \swatch{btnc}  & Take-dose button & 24 & 18 & optional \textemdash{} the screen is the button \\
-\swatch{dispc} & LCD MOSI, SCK, CS & 10, 11, 8 & 19, 23, 24 & \\
-\swatch{dispc} & LCD DC, RESET & 25, 18 & 22, 12 & \\
-\swatch{dispc} & Touch T\_DO (MISO), T\_CS & 9, 7 & 21, 26 & CE1 \textemdash{} the panel has CE0 \\
-\swatch{dispc} & Touch T\_IRQ & 4 & 7 & pen-down; the kernel driver owns it \\
+\swatch{dispc} & LCD SDI (MOSI), SCK, CS & 10, 11, 8 & 19, 23, 24 & \\
+\swatch{dispc} & LCD RS (DC), RESET & 25, 18 & 22, 12 & the module marks DC \code{LCD\_RS} \\
+\swatch{dispc} & Touch SDA, SCL & 2, 3 & 3, 5 & \iic{} \textemdash{} the \code{CTP\_} pins \\
+\swatch{dispc} & Touch RST, INT & 12, 4 & 32, 7 & the kernel driver owns both \\
 \swatch{rtcc}  & DS1302 CLK, DAT, RST & 16, 20, 21 & 36, 38, 40 & bit-banged; no bus, no kernel driver \\
 \swatch{p33}   & 3.3\,V & \textemdash{} & 1, 17 & clock chip, screen, backlight \\
 \swatch{gndc}  & Ground & \textemdash{} & 6, 9, 14, 20, 25, 39 & one of these must reach the servo supply's ground \\
 \midrule
 \swatch{avoid} & \emph{do not use} & 0, 1, 7, 9, 14, 15 & & HAT ID EEPROM, the rest of SPI, the serial console \\
-\swatch{ink15} & \emph{free} & 4, 12 & 7, 32 & \\
+\swatch{ink15} & \emph{free} & \textemdash{} & \textemdash{} & the touch controller took the last two \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -201,7 +202,7 @@ sudo reboot
 \end{shell}
 
 \noindent It sets the hostname to \code{pilldispenser}, turns on
-I\textsuperscript{2}C and SPI for the screen, installs the service, and prints
+\iic{} and SPI for the screen, installs the service, and prints
 this device's permanent setup network. \textbf{Keep what it prints} \textemdash{}
 that is Stage~7.
 
@@ -392,39 +393,76 @@ the machine still doses and still chirps, and the app is the only way to release
 \label{sec:panelpower}
 
 \vspace{3mm}
+\vspace{2mm}
+\noindent The module carries two chips that share nothing but the connector.
+The panel is on SPI; the touch controller is on \iic{}, and its pins are the
+four marked \code{CTP\_}. Wire them as two separate jobs.
+
+\vspace{3mm}
 \begin{center}
 \small
-\begin{tabular}{@{}ll@{\hskip 10mm}ll@{}}
+\begin{tabular}{@{}l l >{\raggedright\arraybackslash}p{62mm}@{}}
 \toprule
-\multicolumn{2}{@{}l}{\hdr{ILI9341 LCD \textemdash{} the panel}} &
-\multicolumn{2}{l}{\hdr{XPT2046 \textemdash{} the touch half}} \\
+\hdr{Module pin} & \hdr{Goes to} & \hdr{Notes} \\
 \midrule
-VCC   & \emph{read your module} & T\_CLK & GPIO 11 (pin 23) \\
-GND   & GND (pin 6)             & T\_DIN & GPIO 10 (pin 19) \\
-SCK   & GPIO 11 (pin 23)        & T\_DO  & GPIO 9 (pin 21) \\
-MOSI  & GPIO 10 (pin 19)        & T\_CS  & GPIO 7 (pin 26) \\
-CS    & GPIO 8 (pin 24)         & T\_IRQ & GPIO 4 (pin 7) \\
-DC    & GPIO 25 (pin 22)        &        & \\
-RESET & GPIO 18 (pin 12)        &        & \\
-LED   & 3.3\,V (pin 17)         &        & \\
+\multicolumn{3}{@{}l}{\textbf{\sffamily The panel \textemdash{} SPI}}\\
+VCC       & \emph{read your module} & 3.3\,V or 5\,V. Getting this wrong is the one mistake that ends the board \\
+GND       & GND (pin 6)      & \\
+LCD\_CS   & GPIO 8 (pin 24)  & CE0 \\
+LCD\_RST  & GPIO 18 (pin 12) & \\
+LCD\_RS   & GPIO 25 (pin 22) & \emph{register select} is the data/command line. The firmware calls it DC \\
+SDI(MOSI) & GPIO 10 (pin 19) & \\
+SCK       & GPIO 11 (pin 23) & \\
+LED       & 3.3\,V (pin 17)  & backlight, always on \\
+SDO(MISO) & \textbf{nothing} & the panel is written and never read \\
+\midrule
+\multicolumn{3}{@{}l}{\textbf{\sffamily The touch controller \textemdash{} \iic{}}}\\
+CTP\_SCL  & GPIO 3 (pin 5)   & \\
+CTP\_SDA  & GPIO 2 (pin 3)   & \\
+CTP\_RST  & GPIO 12 (pin 32) & \\
+CTP\_INT  & GPIO 4 (pin 7)   & finger-down; the kernel driver owns it \\
+\midrule
+\multicolumn{3}{@{}l}{\textbf{\sffamily Neither}}\\
+SD\_CS    & \textbf{nothing} & the card slot on the back of the module. This build stores nothing on it \\
 \bottomrule
 \end{tabular}
 \end{center}
 
+\vspace{3mm}
+\begin{dangerbox}
+\dangertitle{Meter CTP\_SCL and CTP\_SDA before either touches the header}
+GPIO 2 and 3 are not 5\,V tolerant, and on a module whose VCC is 5\,V the touch
+pull-ups can sit on the 5\,V rail. Power the module from its VCC and ground
+only, leave the other twelve pins in the air, and measure \code{CTP\_SCL} to
+ground: \textbf{above 3.6\,V, those two wires do not go on}. The panel half is
+unaffected \textemdash{} those lines are driven by the Pi, not back into it.
+
+\vspace{1ex}
+It reads about 3.3\,V on every board that runs its touch chip off the internal
+regulator, which is most of them. It costs thirty seconds to know which you have.
+\end{dangerbox}
+
 \vspace{4mm}
 \begin{center}
 \begin{tikzpicture}
-  \node[modbox, minimum width=28mm, minimum height=40mm] (lcd) at (-4.8,-1.35)
-       {ILI9341\\[0.4ex]\footnotesize 2.8\,in\\[-0.2ex]\footnotesize 240$\times$320
-        \\[0.4ex]\footnotesize + XPT2046};
-  \foreach \i/\name/\yy in {0/{VCC}/0.9, 1/{GND}/0.45, 2/{CS}/0.0, 3/{RESET}/-0.45,
-                            4/{DC}/-0.9, 5/{MOSI}/-1.35, 6/{SCK}/-1.8, 7/{LED}/-2.25,
-                            8/{T\_DO}/-2.7, 9/{T\_CS}/-3.15, 10/{T\_IRQ}/-3.6}{
+  % The names on this module are long enough that they, not the box, set its
+  % width — so the box is empty and the title sits above it.
+  \node[modbox, minimum width=30mm, minimum height=62mm] (lcd) at (-4.9,-2.025) {};
+  \node[font=\sffamily\bfseries\small, text=ink, anchor=south] at (-4.9,1.42)
+       {ILI9341 2.8\,in};
+  \node[font=\sffamily\scriptsize, text=ink70, anchor=south] at (-4.9,1.15)
+       {240$\times$320, \iic{} touch};
+  \foreach \i/\name/\yy in {0/{VCC}/0.9, 1/{GND}/0.45, 2/{LCD\_CS}/0.0,
+                            3/{LCD\_RST}/-0.45, 4/{LCD\_RS}/-0.9,
+                            5/{SDI(MOSI)}/-1.35, 6/{SCK}/-1.8, 7/{LED}/-2.25,
+                            8/{SDO(MISO)}/-2.7, 9/{CTP\_SCL}/-3.15,
+                            10/{CTP\_RST}/-3.6, 11/{CTP\_SDA}/-4.05,
+                            12/{CTP\_INT}/-4.5, 13/{SD\_CS}/-4.95}{
     \node[term] (t\i) at (-3.4,\yy) {};
     \node[font=\sffamily\tiny, text=ink70, anchor=east] at (-3.55,\yy) {\name};
   }
 
-  \hframe{1.9}{0.9}{-3.6}{Pi header}
+  \hframe{1.9}{0.9}{-4.95}{Pi header}
   \hpin{1.9}{0.9}{1}{ppwr33}{3V3}
   \hpin{1.9}{0.45}{6}{pusegnd}{GND}
   \hpin{1.9}{0.0}{24}{pusedisp}{GPIO 8}
@@ -433,32 +471,85 @@ LED   & 3.3\,V (pin 17)         &        & \\
   \hpin{1.9}{-1.35}{19}{pusedisp}{GPIO 10}
   \hpin{1.9}{-1.8}{23}{pusedisp}{GPIO 11}
   \hpin{1.9}{-2.25}{17}{ppwr33}{3V3}
-  \hpin{1.9}{-2.7}{21}{pusedisp}{GPIO 9}
-  \hpin{1.9}{-3.15}{26}{pusedisp}{GPIO 7}
-  \hpin{1.9}{-3.6}{7}{pusedisp}{GPIO 4}
+  \hpin{1.9}{-3.15}{5}{pusedisp}{GPIO 3}
+  \hpin{1.9}{-3.6}{32}{pusedisp}{GPIO 12}
+  \hpin{1.9}{-4.05}{3}{pusedisp}{GPIO 2}
+  \hpin{1.9}{-4.5}{7}{pusedisp}{GPIO 4}
 
   \draw[wire, p33]  (t0) -- (H1.west);
   \draw[wire, gndc] (t1) -- (H6.west);
   \foreach \i/\pinid in {2/24, 3/12, 4/22, 5/19, 6/23}{
     \draw[wire, dispc] (t\i) -- (H\pinid.west);}
   \draw[wire, p33]  (t7) -- (H17.west);
-  \foreach \i/\pinid in {8/21, 9/26, 10/7}{
+  \foreach \i/\pinid in {9/5, 10/32, 11/3, 12/7}{
     \draw[wire, dispc] (t\i) -- (H\pinid.west);}
 
-  \node[font=\sffamily\scriptsize\bfseries, text=dangerred, anchor=west] at (-4.0,1.6)
+  % the two that go nowhere, drawn as stubs so a missing wire reads as a
+  % decision rather than as something forgotten
+  \foreach \i in {8,13}{
+    \draw[ink40, line width=0.7pt, dashed] (t\i) -- ++(0.85,0);
+    \node[font=\sffamily\tiny, text=ink40, anchor=west] at ($(t\i)+(0.95,0)$)
+         {not connected};}
+
+  \node[font=\sffamily\scriptsize\bfseries, text=dangerred, anchor=west] at (-2.9,2.05)
        {check VCC before you power it};
-  \draw[-{Stealth[length=1.6mm]}, dangerred, line width=0.6pt] (-1.4,1.5) -- (-0.3,1.0);
+  \draw[-{Stealth[length=1.6mm]}, dangerred, line width=0.6pt] (-0.4,1.9) -- (-0.4,1.05);
 
   \node[font=\sffamily\scriptsize, text=ink70, align=left, anchor=north west]
-       at (4.5,1.0)
+       at (4.5,0.4)
        {\begin{minipage}{40mm}\scriptsize
         \textbf{\color{ink}Go by the silkscreen}, not the order drawn here.
         These boards vary.\\[0.8ex]
-        \textbf{\color{ink}T\_CLK and T\_DIN are not drawn}: they go to the
-        same GPIO 11 and GPIO 10 the panel already uses. Two wires into one
-        header pin.\end{minipage}};
+        \textbf{\color{ink}Names differ, function does not.} \code{LCD\_RS} is
+        the data/command line, and \code{SDI} is MOSI.\\[0.8ex]
+        \textbf{\color{ink}The \code{CTP\_} four are a second chip} on its own
+        bus. None of them touches SPI.\end{minipage}};
 \end{tikzpicture}
 \end{center}
+
+\vspace{4mm}
+\noindent\textbf{\sffamily The panel needs nothing else; the touch half needs a
+driver.} \code{install.sh} already turned on SPI and \iic{}, so the picture works
+as soon as it is wired. The controller does not: the kernel has to be told which
+chip is on the bus, and until it is, the screen paints perfectly and a tap does
+nothing.
+
+\vspace{2mm}
+\noindent One command finds it and writes the line:
+
+\begin{shell}
+sudo snapcare-dispenser --touch-setup
+sudo reboot
+\end{shell}
+
+\vspace{1mm}
+\noindent It probes the bus, names what answered, and keeps a copy of the file
+it edits. It also takes out any \code{dtoverlay=ads7846} line, which is a driver
+for a resistive controller on SPI: nothing on an SPI chip select has to
+acknowledge, so that driver can publish an input device for a chip that is not
+there. Of the two ways this can fail, a machine reporting a touch panel fitted
+and never releasing a dose is the worse.
+
+\begin{provebox}
+\provetitle
+Run it a second time after the reboot. \textbf{``A touch panel is already
+live''} is the pass.
+
+\vspace{1.5ex}
+\begin{tabular}{@{}>{\bfseries}l >{\raggedright\arraybackslash}p{92mm}@{}}
+nothing answered & the four \code{CTP\_} wires. Swapped SDA and SCL look exactly
+like this \\
+no overlay for this part & the chip is there and the wiring is right; what is
+missing is a driver nobody ships \\
+a driver bound & it printed the input devices. Name yours with
+\code{SNAPCARE\_TOUCH\_DEVICE} \\
+\end{tabular}
+
+\vspace{1.5ex}
+A build with no touch still works \textemdash{} the chirp fetches somebody and
+the app releases the dose \textemdash{} but the glass is then not a control, and
+Stage~4 stops being optional.
+\end{provebox}
 
 \vspace{2mm}
 \noindent\textbf{\sffamily Colour is only half of it.} Roughly one man in twelve
@@ -888,11 +979,15 @@ Backlight dark, not the picture &
 LED is on a GPIO nobody drives. Set \code{SNAPCARE\_DISPLAY\_BACKLIGHT} to its
 BCM pin; until then it sits low \\
 A tap on the screen does nothing &
-\code{dtoverlay=ads7846} missing from \code{/boot/firmware/config.txt}, or no
-reboot since. The log says so at startup \\
+\code{sudo snapcare-dispenser -{}-touch-setup}. It says which of the four things
+this is, and fixes the two it can \\
+The log says it is ignoring an \code{ads7846} device &
+A \code{dtoverlay=ads7846} line is still in \code{config.txt}. The firmware
+refuses it rather than reading a panel that is not there; take the line out and
+reboot \\
 LCD: lit but blank &
 The backlight is independent of the data lines, so a lit panel proves only that
-LED has power. Check DC (pin 22) and RESET (pin 12) \\
+LED has power. Check LCD\_RS (pin 22) and LCD\_RST (pin 12) \\
 LCD: the colours are wrong &
 The BGR bit. \emph{Released} and \emph{missed} swap when it is wrong; do not
 ship it like this \\

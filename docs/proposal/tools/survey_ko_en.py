@@ -9,6 +9,17 @@
 """
 
 TRANSLATION = {
+    '시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음)':
+        'I have neither seen nor used the system. (There is no system in the email.)',
+
+    '대신할 수 있을 지 판단할 근거 자료(스냅케어의 작동화면이라든지)가 전무하여 판단할 수 없음':
+        'There is no material at all to judge from (no working screens of SnapCare, '
+        'for instance), so I cannot judge.',
+
+    '한국의 경우 한글을 이해하지 못할 정도로 문해력이 낮은 성인이 그렇게 많지 않을 듯 합니다.':
+        'In Korea I do not think there are many adults whose literacy is low enough that '
+        'they cannot understand Hangul.',
+
     '명백한 시각장애가 있는 환자를 제외하고 글을 읽지 못하는 여부를 바로 알기 어려운 경우도 있음 전맹이라 글을 보지 못하는 경우와 저시력자, 문해력이 부족한 경우는 구분되어야 함. 픽토그램은 문해력이 부족한 경우에 도움이 될 수 있다고 생각됨.':
         'Apart from patients with obvious visual impairment, there are cases where it is '
         'hard to tell straight away whether someone can read. Being totally blind and '
