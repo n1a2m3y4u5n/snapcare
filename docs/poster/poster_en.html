@@ -4,16 +4,20 @@
 @page { size: 841mm 1189mm; margin: 0; }
 
 :root {
-  --bg:    #e9f1f4;
-  --card:  #ffffff;
-  --ink:   #14232e;
-  --muted: #5a6b78;
-  --navy:  #123a5f;
-  --blue:  #2563eb;
-  --green: #15803d;
-  --red:   #c62828;
-  --mark:  #ffe98a;
-  --edge:  #cfe0e6;
+  --bg:    #e8ece0;
+  --ink:   #2f3a33;
+  --muted: #6d7a70;
+  --sage:  #6f8f74;
+  --deep:  #46554a;
+  --terra: #b0603f;
+  --gold:  #b08d3f;
+  --teal:  #4f7f8b;
+  --paper: #ffffff;
+  --cream: #f7f3e8;
+  --mint:  #dbe6d8;
+  --blush: #f2e3de;
+  --sky:   #dde8ec;
+  --line:  #c3bcac;
 }
 
 * { box-sizing: border-box; }
@@ -21,202 +25,237 @@ html, body { margin: 0; padding: 0; }
 body {
   width: 841mm; height: 1189mm;
   background: var(--bg); color: var(--ink);
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+.sheet { padding: 10mm 12mm 8mm; height: 1189mm; display: flex; flex-direction: column; }
 
-.sheet { padding: 11mm 12mm 9mm; height: 1189mm; display: flex; flex-direction: column; }
+/* ══ 머리 ══ */
+header { position: relative; height: 88mm; margin-bottom: 5mm; }
+header .blob { position: absolute; left: 0; top: 0; width: 330mm; height: 88mm; }
+header .title { position: absolute; left: 0; top: 0; width: 330mm; height: 88mm;
+                display: flex; flex-direction: column; align-items: center; justify-content: center; }
+header .title .n { font-size: 74pt; font-weight: 800; color: var(--deep); letter-spacing: -1.6pt; line-height: 1; }
+header .title .c { font-size: 16.5pt; color: var(--sage); font-weight: 700; margin-top: 3mm;
+                   letter-spacing: 1.2pt; text-transform: uppercase; }
+header .right { position: absolute; left: 340mm; top: 2mm; right: 0; }
+header .lead { font-size: 46pt; font-weight: 700; line-height: 1.14; color: var(--ink); }
+header .lead em { font-style: normal; color: var(--terra); }
+header .who { font-size: 20.5pt; color: var(--muted); margin-top: 5mm; line-height: 1.3; }
+header .who b { color: var(--ink); }
+header .deco { display: flex; gap: 4.6mm; align-items: center; margin-top: 4.4mm; }
+header .deco img { width: 19mm; height: 19mm; opacity: .78; }
+header .star { position: absolute; right: 2mm; top: 2mm; width: 30mm; height: 30mm; }
 
-/* ── 머리 ── */
-header { text-align: center; margin-bottom: 6mm; }
-.tag { display: inline-block; background: var(--navy); color: #fff; font-size: 21pt; font-weight: 700;
-       padding: 2mm 6mm; border-radius: 1.6mm; letter-spacing: 0.2pt; }
-h1 { font-size: 78pt; line-height: 1.03; margin: 4mm 0 2.6mm; font-weight: 800; letter-spacing: -1.4pt; }
-h1 .a { color: var(--navy); }
-h1 .b { color: var(--blue); }
-.byline { font-size: 25pt; color: var(--muted); }
-.byline b { color: var(--ink); }
+/* ══ 처방전 모양 숫자 띠 ══ */
+.slip { position: relative; background: var(--paper); border: 0.7mm solid var(--line);
+        border-radius: 2.6mm; padding: 5mm 6mm 5mm 26mm; margin-bottom: 5mm;
+        display: grid; grid-template-columns: repeat(4, 1fr) 150mm; gap: 6mm; align-items: center; }
+.slip::before { content: "℞"; position: absolute; left: 5mm; top: 50%; transform: translateY(-50%);
+        font-size: 50pt; color: var(--terra); font-weight: 700; font-family: Georgia, serif; }
+.slip::after { content: ""; position: absolute; left: 21mm; top: 3mm; bottom: 3mm; width: 0;
+        border-left: 0.6mm dashed var(--line); }
+.slip .h { text-align: center; }
+.slip .h .v { font-size: 52pt; font-weight: 800; line-height: 1; color: var(--deep); display: block; }
+.slip .h .v small { font-size: 29pt; }
+.slip .h.t .v { color: var(--terra); }
+.slip .h.s .v { color: var(--sage); }
+.slip .h.l .v { color: var(--teal); }
+.slip .h .k { font-size: 17.5pt; color: var(--muted); line-height: 1.2; display: block; margin-top: 2mm; }
+.slip .qr { display: grid; grid-template-columns: 40mm 1fr; gap: 4mm; align-items: center;
+            border-left: 0.6mm dashed var(--line); padding-left: 6mm; }
+.slip .qr img { width: 40mm; height: 40mm; display: block; }
+.slip .qr .t { font-size: 23pt; font-weight: 800; color: var(--terra); }
+.slip .qr .u { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 19.5pt; margin: 1mm 0; }
+.slip .qr .n { font-size: 15.5pt; color: var(--muted); line-height: 1.2; }
 
-/* ── 머리 아래 큰 숫자 줄 ── */
-.hero { display: grid; grid-template-columns: repeat(4, 1fr) 152mm; gap: 5mm; margin-bottom: 6mm; }
-.hero .h { background: var(--card); border: 0.8mm solid var(--navy); border-radius: 2.4mm;
-           padding: 5mm 3mm; text-align: center; display: flex; flex-direction: column; justify-content: center; }
-.hero .h .v { font-size: 62pt; font-weight: 800; line-height: 0.98; color: var(--navy); }
-.hero .h .k { font-size: 20pt; color: var(--muted); line-height: 1.22; margin-top: 2.6mm; }
-.hero .h.b { border-color: var(--blue); } .hero .h.b .v { color: var(--blue); }
-.hero .h.r { border-color: var(--red); }  .hero .h.r .v { color: var(--red); }
-.hero .h.g { border-color: var(--green); }.hero .h.g .v { color: var(--green); }
-.hero .qr { background: var(--card); border: 0.8mm dashed var(--blue); border-radius: 2.4mm;
-            padding: 4mm; display: grid; grid-template-columns: 44mm 1fr; gap: 4mm; align-items: center; }
-.hero .qr img { width: 44mm; height: 44mm; display: block; }
-.hero .qr .t { font-size: 26pt; font-weight: 800; color: var(--blue); line-height: 1.15; }
-.hero .qr .u { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 22pt; margin: 1.4mm 0; }
-.hero .qr .n { font-size: 17pt; color: var(--muted); line-height: 1.22; }
-
-/* ── 단 ── */
+/* ══ 단과 블록 ══ */
 .cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6mm; flex: 1; min-height: 0; }
-.col { display: flex; flex-direction: column; gap: 6mm; justify-content: flex-start; }
-.col > .card:last-child { flex: 1 1 auto; }
+.col { display: flex; flex-direction: column; gap: 6mm; }
+.col > .blk:last-child { flex: 1 1 auto; }
 
-.card { background: var(--card); border: 0.8mm solid var(--navy); border-radius: 2.4mm;
-        padding: 12mm 6.5mm 6mm; position: relative; }
-.card.blue  { border-color: var(--blue); }
-.card.green { border-color: var(--green); }
-.card.red   { border-color: var(--red); }
-.card > h2 {
-  position: absolute; top: -6.4mm; left: 50%; transform: translateX(-50%); white-space: nowrap;
-  background: var(--navy); color: #fff; font-size: 30pt; font-weight: 700;
-  padding: 2.1mm 6mm; border-radius: 1.8mm; margin: 0; letter-spacing: 0.2pt;
-}
-.card > h2 .n { opacity: .55; margin-right: 2mm; }
-.card.blue  > h2 { background: var(--blue); }
-.card.green > h2 { background: var(--green); }
-.card.red   > h2 { background: var(--red); }
+.blk { position: relative; border-radius: 3.4mm; padding: 13mm 6mm 6mm; background: var(--paper);
+       border: 0.7mm solid var(--line); }
+.blk.cream { background: var(--cream); border-color: #ded4bd; }
+.blk.mint  { background: var(--mint);  border-color: #b9cdb4; }
+.blk.blush { background: var(--blush); border-color: #dfc4bb; }
+.blk.sky   { background: var(--sky);   border-color: #bcd0d7; }
+.blk.dash  { border-style: dashed; }
 
-h3 { font-size: 27pt; font-weight: 800; margin: 5mm 0 2.4mm; color: var(--navy); }
+.blk > h2 { position: absolute; top: -5.6mm; left: 5mm; margin: 0;
+            background: var(--deep); color: #fff; font-size: 26pt; font-weight: 700;
+            padding: 2mm 6mm 2mm 2.6mm; border-radius: 1.8mm;
+            display: flex; align-items: center; gap: 3.2mm; }
+.blk > h2 .n { width: 9.4mm; height: 9.4mm; border-radius: 50%; background: #fff; color: var(--deep);
+               font-size: 20pt; display: flex; align-items: center; justify-content: center; }
+.blk.t2 > h2 { background: var(--terra); } .blk.t2 > h2 .n { color: var(--terra); }
+.blk.t3 > h2 { background: var(--sage);  } .blk.t3 > h2 .n { color: var(--sage); }
+.blk.t4 > h2 { background: var(--teal);  } .blk.t4 > h2 .n { color: var(--teal); }
+.blk.t5 > h2 { background: var(--gold);  } .blk.t5 > h2 .n { color: var(--gold); }
+
+h3 { font-size: 25pt; font-weight: 800; margin: 5mm 0 2.4mm; color: var(--deep); }
 h3:first-of-type { margin-top: 0; }
 
-p { font-size: 26pt; line-height: 1.33; margin: 0 0 3.4mm; text-align: justify; hyphens: auto; }
+p { font-size: 24.5pt; line-height: 1.34; margin: 0 0 3.2mm; text-align: justify; hyphens: auto; }
 p:last-child { margin-bottom: 0; }
-.small { font-size: 20pt; color: var(--muted); line-height: 1.24; }
-mark { background: var(--mark); padding: 0 0.8mm; }
-.hl { color: var(--red); font-weight: 700; }
-.hlb { color: var(--blue); font-weight: 700; }
+.small { font-size: 18.5pt; color: var(--muted); line-height: 1.24; }
+mark { background: #f6e4a8; padding: 0 0.8mm; }
+.hl  { color: var(--terra); font-weight: 700; }
+.hlb { color: var(--sage);  font-weight: 700; }
 
-ul { margin: 0 0 3.4mm; padding-left: 0; list-style: none; }
-li { font-size: 25pt; line-height: 1.3; margin-bottom: 2.6mm; position: relative; padding-left: 7.4mm; }
-li::before { content: "▸"; position: absolute; left: 0; color: var(--blue); }
+ul { margin: 0 0 3.2mm; padding-left: 0; list-style: none; }
+li { font-size: 23.5pt; line-height: 1.3; margin-bottom: 2.6mm; position: relative; padding-left: 7.2mm; }
+li::before { content: "●"; font-size: 12.5pt; position: absolute; left: 0; top: 1.8mm; color: var(--terra); }
 
-/* ── 단계 ── */
 ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
-ol.steps > li { counter-increment: s; padding-left: 14mm; margin-bottom: 3.4mm; font-size: 25pt; line-height: 1.3; }
+ol.steps > li { counter-increment: s; padding-left: 13mm; margin-bottom: 3.2mm; font-size: 23.5pt; line-height: 1.3; }
 ol.steps > li:last-child { margin-bottom: 0; }
-ol.steps > li::before {
-  content: counter(s); left: 0; top: 0.4mm; width: 10mm; height: 10mm; border-radius: 50%;
-  background: var(--blue); color: #fff; font-size: 23pt; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-}
+ol.steps > li::before { content: counter(s); left: 0; top: 0.2mm; width: 9.4mm; height: 9.4mm;
+  border-radius: 50%; background: var(--sage); color: #fff; font-size: 21pt; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; }
 
-/* ── 숫자 상자 ── */
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 0 0 3.6mm; }
-.stat { background: #f2f7fa; border: 0.5mm solid var(--edge); border-radius: 1.8mm;
-        padding: 3mm 1.5mm; text-align: center; }
-.stat .v { font-size: 42pt; font-weight: 800; line-height: 1; display: block; color: var(--navy); }
-.stat.b .v { color: var(--blue); } .stat.r .v { color: var(--red); }
-.stat .k { font-size: 18pt; color: var(--muted); line-height: 1.2; display: block; margin-top: 1.8mm; }
-
-/* ── 그림 ── */
+/* ══ 그림 ══ */
 figure { margin: 0 0 3mm; }
-figure img { width: 100%; display: block; border-radius: 1.6mm; border: 0.4mm solid var(--edge); background: #fff; }
-figcaption { font-size: 19.5pt; line-height: 1.24; color: var(--muted); margin-top: 1.8mm; }
+figure img { width: 100%; display: block; border-radius: 1.8mm; background: #fff; }
+figcaption { font-size: 18.5pt; line-height: 1.24; color: var(--muted); margin-top: 1.6mm; }
 figcaption b { color: var(--ink); }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin: 0; }
+.duo figure { margin: 0; }
+.shots2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin: 3.6mm 0 0; }
+.shots2 figure { margin: 0; }
+.shots2 figure img { border: 0.5mm solid var(--line); max-height: 116mm; width: auto; margin: 0 auto; }
+.shots2 figcaption { font-size: 16.5pt; margin-top: 1.4mm; }
 .shots { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3mm; margin-bottom: 1.8mm; }
 .shots figure { margin: 0; }
-.shots figcaption { font-size: 17pt; margin-top: 1.4mm; }
+.shots figure img { border: 0.5mm solid var(--line); }
+.shots figcaption { font-size: 16pt; margin-top: 1.4mm; }
 
-/* ── 형태소 갤러리 ── */
+/* ══ 형태소 갤러리 ══ */
 .glyphs { display: grid; grid-template-columns: repeat(16, 1fr); gap: 1.6mm; margin: 0 0 2.4mm; }
-.glyphs img { width: 100%; display: block; border: 0.35mm solid var(--edge); border-radius: 1.2mm; background: #fff; }
-.glyphs img.mod { border-color: #e07b20; border-width: 0.7mm; }
-.glyphs img.op  { border-color: var(--red); border-width: 0.7mm; }
-.legend { display: flex; gap: 6mm; font-size: 19pt; color: var(--muted); margin: 0 0 2.4mm; }
+.glyphs img { width: 100%; display: block; border: 0.4mm solid #ddd6c6; border-radius: 1.2mm; background: #fff; }
+.glyphs img.mod { border-color: var(--gold); border-width: 0.8mm; }
+.glyphs img.op  { border-color: var(--terra); border-width: 0.8mm; }
+.legend { display: flex; gap: 6mm; font-size: 18pt; color: var(--muted); margin: 0 0 2.4mm; }
 .legend i { font-style: normal; }
 .legend i::before { content: ""; display: inline-block; width: 4.4mm; height: 4.4mm; margin-right: 1.6mm;
-  border: 0.7mm solid var(--edge); border-radius: 1mm; vertical-align: -0.7mm; }
-.legend i.m::before { border-color: #e07b20; } .legend i.o::before { border-color: var(--red); }
+  border: 0.8mm solid #ddd6c6; border-radius: 1mm; vertical-align: -0.7mm; background: #fff; }
+.legend i.m::before { border-color: var(--gold); } .legend i.o::before { border-color: var(--terra); }
 
-/* ── 응답자 아이콘 ── */
-.iso { margin: 0 0 3.4mm; }
+/* ══ 응답자 아이콘 ══ */
+.iso { margin: 0 0 3.2mm; }
 .iso svg { width: 100%; display: block; }
-.iso .lg { font-size: 19pt; color: var(--muted); margin-top: 2mm; display: flex; flex-wrap: wrap; gap: 1.4mm 5mm; }
+.iso .lg { font-size: 18pt; color: var(--muted); margin-top: 2mm; display: flex; flex-wrap: wrap; gap: 1.4mm 5mm; }
 .iso .lg b { color: var(--ink); }
 .iso .lg span::before { content: ""; display: inline-block; width: 3.6mm; height: 3.6mm; border-radius: 50%;
   margin-right: 1.4mm; vertical-align: -0.4mm; background: currentColor; }
 
-/* ── 말풍선 ── */
-blockquote { position: relative; margin: 0 0 6mm; padding: 3.4mm 4mm; background: #f2f7fa;
-             border: 0.5mm solid var(--edge); border-left: 1.8mm solid var(--blue); border-radius: 1.8mm;
-             font-size: 24pt; line-height: 1.28; font-style: italic; }
-blockquote::after { content: ""; position: absolute; left: 11mm; bottom: -3.6mm;
-  width: 0; height: 0; border-left: 3.8mm solid transparent; border-right: 3.8mm solid transparent;
-  border-top: 3.6mm solid #f2f7fa; filter: drop-shadow(0 0.5mm 0 var(--edge)); }
-blockquote .who { display: block; font-size: 20pt; color: var(--muted); margin-top: 2mm; font-style: normal; }
+/* ══ 말풍선 ══ */
+blockquote { position: relative; margin: 0 0 6mm; padding: 3.6mm 4.2mm; background: #fff;
+             border: 0.6mm solid var(--line); border-radius: 3mm;
+             font-size: 22.5pt; line-height: 1.28; font-style: italic; }
+blockquote::after { content: ""; position: absolute; left: 12mm; bottom: -3.8mm;
+  width: 0; height: 0; border-left: 4mm solid transparent; border-right: 4mm solid transparent;
+  border-top: 3.8mm solid var(--line); }
+blockquote::before { content: ""; position: absolute; left: 12.6mm; bottom: -2.9mm; z-index: 1;
+  width: 0; height: 0; border-left: 3.4mm solid transparent; border-right: 3.4mm solid transparent;
+  border-top: 3.2mm solid #fff; }
+blockquote .who { display: block; font-size: 18.5pt; color: var(--muted); margin-top: 2mm; font-style: normal; }
 
-/* ── 도넛 ── */
+/* ══ 도넛 ══ */
 .donuts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3.2mm; margin: 0; }
 .donuts figure { margin: 0; }
 .donuts svg { width: 100%; display: block; }
-.donuts .dv { font-size: 7.4px; font-weight: 800; fill: #14232e; }
-.donuts .dk { font-size: 3.5px; fill: #5a6b78; }
-.donuts figcaption { font-size: 17.5pt; line-height: 1.18; margin-top: 1.6mm; text-align: center; color: var(--ink); }
-.donuts figcaption .small { font-size: 15.5pt; display: block; }
+.donuts .dv { font-size: 7.4px; font-weight: 800; fill: #2f3a33; }
+.donuts .dk { font-size: 3.5px; fill: #6d7a70; }
+.donuts figcaption { font-size: 16.5pt; line-height: 1.18; margin-top: 1.6mm; text-align: center; color: var(--ink); }
+.donuts figcaption .small { font-size: 14.5pt; display: block; }
 
-/* ── 표 ── */
-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 0 0 3mm; font-size: 23pt;
-        border-radius: 1.8mm; overflow: hidden; border: 0.5mm solid var(--edge); }
-th, td { padding: 2.2mm 2.6mm; text-align: left; vertical-align: top; border-bottom: 0.35mm solid #e6eef1; }
+/* ══ 표 ══ */
+table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 0 0 3mm; font-size: 21.5pt;
+        border-radius: 2mm; overflow: hidden; border: 0.5mm solid var(--line); background: #fff; }
+th, td { padding: 2.2mm 2.6mm; text-align: left; vertical-align: top; border-bottom: 0.35mm solid #e7e1d3; }
 tr:last-child td { border-bottom: 0; }
-th { background: var(--navy); color: #fff; font-weight: 700; font-size: 22pt; }
+th { background: var(--deep); color: #fff; font-weight: 700; font-size: 20.5pt; }
 td.num, th.num { text-align: right; white-space: nowrap; }
-tr.total td { font-weight: 700; background: #f2f7fa; }
-td .small { display: block; font-size: 19pt; }
+tr.total td { font-weight: 700; background: var(--cream); }
+td .small { display: block; font-size: 17.5pt; }
 
-/* ── 전달 3계층 ── */
-.layers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 4mm 0 0; }
-.layer { border: 0.6mm solid var(--edge); border-radius: 1.8mm; padding: 3mm 2.4mm; background: #f7fafb; }
-.layer b { display: block; font-size: 23pt; color: var(--navy); }
-.layer span { display: block; font-size: 18.5pt; color: var(--muted); line-height: 1.22; margin-top: 1.4mm; }
-.layer.g { border-color: var(--green); background: #f2faf4; }
-.layer.g b { color: var(--green); }
+/* ══ 배지·계층 ══ */
+.badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 3.2mm 0 0; }
+.badge { border: 0.6mm solid var(--sage); border-radius: 2.4mm; padding: 3mm 2mm; text-align: center; background: #fff; }
+.badge b { display: block; font-size: 23pt; color: var(--sage); line-height: 1.1; }
+.badge span { display: block; font-size: 17pt; color: var(--muted); line-height: 1.2; margin-top: 1.4mm; }
 
-/* ── 배지 ── */
-.badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 3.4mm 0 0; }
-.badge { border: 0.6mm solid var(--green); border-radius: 1.8mm; padding: 3mm 2mm; text-align: center;
-         background: #f2faf4; }
-.badge b { display: block; font-size: 25pt; color: var(--green); line-height: 1.1; }
-.badge span { display: block; font-size: 18pt; color: var(--muted); line-height: 1.2; margin-top: 1.4mm; }
+/* ══ 전달 3계층 ══ */
+.layers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin: 3.4mm 0 0; }
+.layer { border: 0.6mm solid var(--line); border-radius: 2.4mm; padding: 3mm 2.4mm; background: #fff; }
+.layer b { display: block; font-size: 21.5pt; color: var(--deep); }
+.layer span { display: block; font-size: 17pt; color: var(--muted); line-height: 1.22; margin-top: 1.4mm; }
+.layer.g { border-color: var(--sage); } .layer.g b { color: var(--sage); }
 
-/* ── DSL ── */
-.dsl { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 19.5pt; line-height: 1.36;
-       display: block; background: #f5f8fa; border: 0.5mm solid var(--edge); border-radius: 1.8mm;
-       padding: 3.2mm 3.6mm; margin: 0 0 3mm; white-space: pre; color: #1d3a52; }
-code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em;
-       background: #f0f4f7; padding: 0 1mm; border-radius: 0.8mm; }
+/* ══ DSL ══ */
+.dsl { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 18pt; line-height: 1.36;
+       display: block; background: #fff; border: 0.5mm solid var(--line); border-radius: 2mm;
+       padding: 3.2mm 3.6mm; margin: 0 0 3mm; white-space: pre; color: var(--deep); }
+code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.9em;
+       background: #fff; border: 0.3mm solid var(--line); padding: 0 1mm; border-radius: 0.8mm; }
 
-/* ── 큰 문장 띠 ── */
-.band { background: linear-gradient(90deg, var(--navy), #1f5f92); color: #fff;
-        padding: 5mm 5mm; border-radius: 1.8mm; margin: 0 0 3.6mm; }
-.band p { color: #fff; margin: 0; font-size: 31pt; text-align: center; font-weight: 700; line-height: 1.24; }
+/* ══ 큰 문장 ══ */
+.band { background: var(--deep); color: #fff; padding: 5mm; border-radius: 2.6mm; margin: 0 0 3.6mm; }
+.band p { color: #fff; margin: 0; font-size: 29pt; text-align: center; font-weight: 700; line-height: 1.24; }
 
-/* ── 발치 띠 ── */
-.foot { margin-top: 6mm; background: var(--card); border: 0.8mm solid var(--edge); border-radius: 2.4mm;
+/* ══ 발치 ══ */
+.foot { margin-top: 5mm; background: var(--cream); border: 0.7mm solid #ded4bd; border-radius: 3mm;
         padding: 4.4mm 6mm; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6mm; }
-.foot p { font-size: 17.5pt; line-height: 1.26; margin: 0 0 1.6mm; text-align: left;
-          padding-left: 6mm; text-indent: -6mm; color: #3c4d5a; }
+.foot p { font-size: 16.5pt; line-height: 1.26; margin: 0 0 1.6mm; text-align: left;
+          padding-left: 6mm; text-indent: -6mm; color: #4b564e; }
 .foot p:last-child { margin-bottom: 0; }
 .foot b { color: var(--ink); }
 .foot i { font-style: italic; }
 
-/* ── 도표 ── */
-.chart { width: 100%; display: block; }
-.chart text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+.dia { width: 100%; display: block; margin: 3.6mm 0 0; }
 </style>
 
 <div class="sheet">
 
 <header>
-  <div class="tag">16th e-ICON World Contest · hosted by the Ministry of Education, Republic of Korea</div>
-  <h1><span class="a">SnapCare :</span> <span class="b">a prescription you never have to read</span></h1>
-  <div class="byline">
-    <b>Namyunsu Nam</b>, ChungNam Samsung Academy &nbsp;·&nbsp; Team H1, Republic of Korea &amp; Republic of Moldova
+  <svg class="blob" viewBox="0 0 330 88" preserveAspectRatio="none">
+    <g fill="#dbe6d8">
+      <ellipse cx="68"  cy="44" rx="68"  ry="39"/>
+      <ellipse cx="165" cy="39" rx="82"  ry="38"/>
+      <ellipse cx="262" cy="44" rx="68"  ry="39"/>
+      <rect x="56" y="15" width="218" height="62" rx="30"/>
+    </g>
+  </svg>
+  <div class="title">
+    <span class="n">SnapCare</span>
+    <span class="c">16th e-ICON World Contest · Team H1</span>
+  </div>
+  <div class="right">
+    <svg class="star" viewBox="0 0 40 40">
+      <path fill="#b0603f" d="M20 0c1.7 12 3.5 14.3 10 18-6.5 3.7-8.3 6-10 18-1.7-12-3.5-14.3-10-18 6.5-3.7 8.3-6 10-18z"/>
+      <path fill="#b0603f" opacity=".5" d="M20 5c1.2 8.4 2.4 10 7 12.5-4.6 2.5-5.8 4.1-7 12.5-1.2-8.4-2.4-10-7-12.5 4.6-2.5 5.8-4.1 7-12.5z" transform="rotate(90 20 20)"/>
+    </svg>
+    <div class="lead">A prescription<br>you <em>never have to read</em>.</div>
+    <div class="who"><b>Namyunsu Nam</b>, ChungNam Samsung Academy<br>
+      Republic of Korea &amp; Republic of Moldova · hosted by the Ministry of Education</div>
+    <div class="deco">
+      <img src="../../public/glyphs/capsule_strip.png" alt="">
+      <img src="../../public/glyphs/time_morning.png" alt="">
+      <img src="../../public/glyphs/body_eye.png" alt="">
+      <img src="../../public/glyphs/no_alcohol.png" alt="">
+      <img src="../../public/glyphs/state_pregnant.png" alt="">
+      <img src="../../public/glyphs/food_bowl.png" alt="">
+      <img src="../../public/glyphs/finish_course.png" alt="">
+    </div>
   </div>
 </header>
 
-<div class="hero">
-  <div class="h"><span class="v">739M</span><span class="k">adults worldwide lack<br>basic literacy skills</span></div>
-  <div class="h r"><span class="v">17<span style="font-size:38pt">/108</span></span><span class="k">pictograms that met the<br>ANSI comprehension threshold</span></div>
-  <div class="h b"><span class="v">78</span><span class="k">morphemes the engine composes<br>from, rather than selects</span></div>
-  <div class="h g"><span class="v">39</span><span class="k">experts in 22 countries<br>answered our survey</span></div>
+<div class="slip">
+  <div class="h"><span class="v">739<small>M</small></span><span class="k">adults worldwide lack<br>basic literacy skills</span></div>
+  <div class="h t"><span class="v">17<small>/108</small></span><span class="k">pictograms that met the<br>ANSI comprehension threshold</span></div>
+  <div class="h s"><span class="v">78</span><span class="k">morphemes the engine composes<br>from, rather than selects</span></div>
+  <div class="h l"><span class="v">39</span><span class="k">experts in 22 countries<br>answered our survey</span></div>
   <div class="qr">
     <img src="qr_app.svg" alt="QR code to the live app">
     <div>
@@ -230,11 +269,11 @@ code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em;
 
 <div class="cols">
 
-<!-- ═══════════ 1단 ═══════════ -->
+<!-- ══════ 1단 ══════ -->
 <div class="col">
 
-  <div class="card red">
-    <h2><span class="n">01</span>The problem</h2>
+  <div class="blk cream t2">
+    <h2><span class="n">1</span>The problem</h2>
     <p>A prescription is written to be read. From the moment it is handed over everything depends on
     the patient's ability to read it, and <mark>for a large population that ability is absent or
     partial</mark>. In Korea 39.6% of adults do not reach a sufficient level of health literacy;
@@ -244,40 +283,48 @@ code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em;
     adults <span class="small">[1]</span>.</p>
     <p>Existing sets are <b>lists of pictures</b>. A set of <i>n</i> drawings can say <i>n</i> things;
     an instruction not drawn in advance cannot be said at all.</p>
-    <figure>
-      <img src="../proposal/fig_en/chart02_health_literacy.png" alt="Health literacy in Korea">
-      <figcaption><b>Figure 1.</b> Koreans below a sufficient level of health literacy.
-      <b>The gap inside one country is 20.1 percentage points.</b></figcaption>
-    </figure>
     <figure style="margin-bottom:0">
-      <img src="../proposal/fig_en/chart05_pictogram_pass.png" alt="Pictograms passing comprehension criteria">
-      <figcaption><b>Figure 2.</b> Comprehension against the ISO and ANSI criteria.
+      <img src="fig/chart05_pictogram_pass.png" alt="Pictograms passing comprehension criteria">
+      <figcaption><b>Figure 1.</b> Comprehension against the ISO and ANSI criteria.
       <b>Locally made sets pass; the international sets do not.</b></figcaption>
     </figure>
   </div>
 
-  <div class="card blue">
-    <h2><span class="n">02</span>What must be true</h2>
+  <div class="blk mint dash">
+    <h2><span class="n">2</span>What must be true</h2>
     <div class="band">
       <p>At no point on the path to a judgement is the user required to read or type.</p>
     </div>
     <p>Two channels are laid so that neither leans on the other. The pictures alone, or the speech
     alone, must reach the same instruction. Text stays on screen for those who can use it, but the
     instruction has to survive without it.</p>
-    <ul>
-      <li>Compose pictograms from a grammar rather than select them from a list</li>
-      <li>Rewrite the spoken sentence rather than read the extracted string aloud</li>
-      <li>Compute the verdict on the device, with no account and no network</li>
-    </ul>
-    <div class="badges">
-      <div class="badge"><b>No account</b><span>nothing to register</span></div>
-      <div class="badge"><b>No upload</b><span>the photograph stays put</span></div>
-      <div class="badge"><b>Offline</b><span>verified, server off</span></div>
-    </div>
+    <svg class="dia" viewBox="0 0 300 96" role="img" aria-label="Two channels reaching one instruction">
+      <defs><marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
+        <path d="M0 0l6 3-6 3z" fill="#6f8f74"/></marker></defs>
+      <g font-family="Avenir Next, Helvetica Neue, sans-serif">
+        <rect x="0" y="30" width="62" height="36" rx="6" fill="#fff" stroke="#6f8f74" stroke-width="1.4"/>
+        <text x="31" y="45" text-anchor="middle" font-size="11" font-weight="700" fill="#46554a">Photograph</text>
+        <text x="31" y="58" text-anchor="middle" font-size="9" fill="#6d7a70">no typing</text>
+        <path d="M64 48 C78 48 78 18 92 18" stroke="#6f8f74" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+        <path d="M64 48 C78 48 78 77 92 77" stroke="#6f8f74" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+        <rect x="100" y="2" width="96" height="33" rx="6" fill="#fff" stroke="#b0603f" stroke-width="1.4"/>
+        <text x="148" y="17" text-anchor="middle" font-size="11" font-weight="700" fill="#b0603f">SIGIL</text>
+        <text x="148" y="29" text-anchor="middle" font-size="9" fill="#6d7a70">pictograms composed</text>
+        <rect x="100" y="61" width="96" height="33" rx="6" fill="#fff" stroke="#4f7f8b" stroke-width="1.4"/>
+        <text x="148" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#4f7f8b">VOCA</text>
+        <text x="148" y="88" text-anchor="middle" font-size="9" fill="#6d7a70">sentence rebuilt</text>
+        <path d="M198 18 C212 18 212 48 226 48" stroke="#6f8f74" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+        <path d="M198 77 C212 77 212 48 226 48" stroke="#6f8f74" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+        <rect x="234" y="27" width="66" height="42" rx="6" fill="#dbe6d8" stroke="#6f8f74" stroke-width="1.4"/>
+        <text x="267" y="44" text-anchor="middle" font-size="11" font-weight="700" fill="#46554a">One</text>
+        <text x="267" y="57" text-anchor="middle" font-size="11" font-weight="700" fill="#46554a">instruction</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 2.</b> Either channel on its own has to arrive at the same place.</figcaption>
   </div>
 
-  <div class="card">
-    <h2><span class="n">03</span>How it works</h2>
+  <div class="blk t3">
+    <h2><span class="n">3</span>How it works</h2>
     <ol class="steps">
       <li><b>Photograph.</b> The user points the camera at a prescription. Nothing is typed and no
       object has to be chosen first.</li>
@@ -289,24 +336,34 @@ code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em;
       <li><b>Rebuild the sentence.</b> VOCA keeps only what the patient needs; the verb and the body
       site follow from the dosage form.</li>
     </ol>
+    <div class="badges">
+      <div class="badge"><b>No account</b><span>nothing to register</span></div>
+      <div class="badge"><b>No upload</b><span>the photograph stays put</span></div>
+      <div class="badge"><b>Offline</b><span>verified, server off</span></div>
+    </div>
     <p style="margin-top:4mm">The three layers of delivery <b>overlap rather than substitute</b>.
-    Any one of them failing still leaves the instruction standing.</p>
+    Any one of them failing still leaves the instruction standing, which is why none of them is
+    allowed to be the only carrier of a warning.</p>
     <div class="layers">
       <div class="layer"><b>Picture</b><span>what to do<br>SIGIL composed pictogram</span></div>
       <div class="layer"><b>Speech</b><span>what that picture means<br>VOCA reconstructed sentence</span></div>
       <div class="layer g"><b>Colour + symbol</b><span>is this safe now<br>never colour alone</span></div>
     </div>
+    <div class="shots2">
+      <figure><img src="shot_onboard.png" alt="First run">
+        <figcaption><b>d.</b> First run. Five pictures with speech; skippable, and no field to fill.</figcaption></figure>
+      <figure><img src="shot_home.png" alt="Home">
+        <figcaption><b>e.</b> Home. One capture button; the subject is never chosen by the user.</figcaption></figure>
+    </div>
   </div>
-
-  
 
 </div>
 
-<!-- ═══════════ 2단 ═══════════ -->
+<!-- ══════ 2단 ══════ -->
 <div class="col">
 
-  <div class="card blue">
-    <h2><span class="n">04</span>SIGIL — a grammar, not a list</h2>
+  <div class="blk t2">
+    <h2><span class="n">4</span>SIGIL — a grammar, not a list</h2>
     <p>A head stands on its own; a modifier cannot, and goes into a slot inside a head. Five
     operators apply on top. The 78 were derived
     <mark><b>backwards from the distribution of medication error</b></mark>.</p>
@@ -319,12 +376,12 @@ code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.92em;
     </table>
     <div class="glyphs"><img src="../../public/glyphs/allergen_egg.png" alt="allergen_egg"><img src="../../public/glyphs/allergen_fish.png" alt="allergen_fish"><img src="../../public/glyphs/allergen_gluten.png" alt="allergen_gluten"><img src="../../public/glyphs/allergen_milk.png" alt="allergen_milk"><img src="../../public/glyphs/allergen_peanut.png" alt="allergen_peanut"><img src="../../public/glyphs/allergen_sesame.png" alt="allergen_sesame"><img src="../../public/glyphs/allergen_shellfish.png" alt="allergen_shellfish"><img src="../../public/glyphs/allergen_soy.png" alt="allergen_soy"><img src="../../public/glyphs/allergen_tree_nut.png" alt="allergen_tree_nut"><img src="../../public/glyphs/body_ear.png" alt="body_ear" class="mod"><img src="../../public/glyphs/body_eye.png" alt="body_eye" class="mod"><img src="../../public/glyphs/body_mouth.png" alt="body_mouth"><img src="../../public/glyphs/body_nose.png" alt="body_nose"><img src="../../public/glyphs/body_skin.png" alt="body_skin"><img src="../../public/glyphs/body_stomach.png" alt="body_stomach"><img src="../../public/glyphs/bp_monitor.png" alt="bp_monitor"><img src="../../public/glyphs/caffeine.png" alt="caffeine"><img src="../../public/glyphs/call_help.png" alt="call_help"><img src="../../public/glyphs/capsule_strip.png" alt="capsule_strip"><img src="../../public/glyphs/contact_lens.png" alt="contact_lens"><img src="../../public/glyphs/cream_tube.png" alt="cream_tube"><img src="../../public/glyphs/dropper_bottle.png" alt="dropper_bottle"><img src="../../public/glyphs/finish_course.png" alt="finish_course" class="op"><img src="../../public/glyphs/food_bowl.png" alt="food_bowl"><img src="../../public/glyphs/food_bread.png" alt="food_bread"><img src="../../public/glyphs/food_empty_bowl.png" alt="food_empty_bowl"><img src="../../public/glyphs/food_fruit.png" alt="food_fruit"><img src="../../public/glyphs/food_meat.png" alt="food_meat"><img src="../../public/glyphs/food_oil.png" alt="food_oil"><img src="../../public/glyphs/food_rice.png" alt="food_rice"><img src="../../public/glyphs/food_salt.png" alt="food_salt"><img src="../../public/glyphs/food_sugar.png" alt="food_sugar"><img src="../../public/glyphs/food_vegetable.png" alt="food_vegetable"><img src="../../public/glyphs/glucometer.png" alt="glucometer"><img src="../../public/glyphs/hand_wash.png" alt="hand_wash"><img src="../../public/glyphs/inhaler.png" alt="inhaler"><img src="../../public/glyphs/liquid_bottle.png" alt="liquid_bottle"><img src="../../public/glyphs/no_alcohol.png" alt="no_alcohol" class="op"><img src="../../public/glyphs/patch.png" alt="patch"><img src="../../public/glyphs/pill_bottle.png" alt="pill_bottle"><img src="../../public/glyphs/qty_five.png" alt="qty_five" class="mod"><img src="../../public/glyphs/qty_four.png" alt="qty_four" class="mod"><img src="../../public/glyphs/qty_one.png" alt="qty_one" class="mod"><img src="../../public/glyphs/qty_three.png" alt="qty_three" class="mod"><img src="../../public/glyphs/qty_two.png" alt="qty_two" class="mod"><img src="../../public/glyphs/sachet.png" alt="sachet"><img src="../../public/glyphs/shake_bottle.png" alt="shake_bottle"><img src="../../public/glyphs/spray.png" alt="spray"><img src="../../public/glyphs/state_adult.png" alt="state_adult" class="mod"><img src="../../public/glyphs/state_breastfeeding.png" alt="state_breastfeeding" class="mod"><img src="../../public/glyphs/state_child.png" alt="state_child" class="mod"><img src="../../public/glyphs/state_elderly.png" alt="state_elderly" class="mod"><img src="../../public/glyphs/state_infant.png" alt="state_infant" class="mod"><img src="../../public/glyphs/state_pregnant.png" alt="state_pregnant" class="mod"><img src="../../public/glyphs/state_teen.png" alt="state_teen" class="mod"><img src="../../public/glyphs/storage_dark.png" alt="storage_dark" class="mod"><img src="../../public/glyphs/storage_dry.png" alt="storage_dry" class="mod"><img src="../../public/glyphs/storage_fridge.png" alt="storage_fridge" class="mod"><img src="../../public/glyphs/suppository.png" alt="suppository"><img src="../../public/glyphs/symptom_breath.png" alt="symptom_breath"><img src="../../public/glyphs/symptom_cough.png" alt="symptom_cough"><img src="../../public/glyphs/symptom_dizzy.png" alt="symptom_dizzy"><img src="../../public/glyphs/symptom_fever.png" alt="symptom_fever"><img src="../../public/glyphs/symptom_gut.png" alt="symptom_gut"><img src="../../public/glyphs/symptom_mouth.png" alt="symptom_mouth"><img src="../../public/glyphs/symptom_skin.png" alt="symptom_skin"><img src="../../public/glyphs/symptom_vomit.png" alt="symptom_vomit"><img src="../../public/glyphs/syringe.png" alt="syringe"><img src="../../public/glyphs/tablet_blister.png" alt="tablet_blister"><img src="../../public/glyphs/tablet_split.png" alt="tablet_split"><img src="../../public/glyphs/thermometer.png" alt="thermometer"><img src="../../public/glyphs/time_evening.png" alt="time_evening" class="mod"><img src="../../public/glyphs/time_morning.png" alt="time_morning" class="mod"><img src="../../public/glyphs/time_night.png" alt="time_night" class="mod"><img src="../../public/glyphs/time_noon.png" alt="time_noon" class="mod"><img src="../../public/glyphs/vehicle.png" alt="vehicle"><img src="../../public/glyphs/warn_bleeding.png" alt="warn_bleeding"><img src="../../public/glyphs/water_glass.png" alt="water_glass"></div>
     <div class="legend"><i>head, 57</i><i class="m">modifier, 21</i><i class="o">operator applies on top</i></div>
-    <figcaption style="margin-top:0"><b>Figure 4.</b> Every morpheme the engine holds. Nothing here
+    <figcaption style="margin-top:0"><b>Figure 3.</b> Every morpheme the engine holds. Nothing here
     was drawn for a particular prescription.</figcaption>
   </div>
 
-  <div class="card">
-    <h2><span class="n">05</span>One prescription, composed</h2>
+  <div class="blk sky t4">
+    <h2><span class="n">5</span>One prescription, composed</h2>
     <p class="small">The prescription text is passed through the same path the camera uses. The
     output below is reproduced verbatim.</p>
     <span class="dsl">Amoxicillin capsules 250 mg — three times a
@@ -349,12 +406,12 @@ refrigerate, not in pregnancy, no alcohol
       <figure><img src="shot_profile.png" alt="Conditions chosen as pictures">
         <figcaption><b>c.</b> Setup. Conditions are pictures; no input field.</figcaption></figure>
     </div>
-    <figcaption style="margin-top:0"><b>Figure 5.</b> What the user sees. Every element on all three
+    <figcaption style="margin-top:0"><b>Figure 4.</b> What the user sees. Every element on all three
     screens can be pressed to be read aloud.</figcaption>
   </div>
 
-<div class="card green">
-    <h2><span class="n">06</span>What we measured</h2>
+  <div class="blk t3">
+    <h2><span class="n">6</span>What we measured</h2>
     <table>
       <tr><th>What was measured</th><th>Result</th></tr>
       <tr><td>Formative runs<span class="small">4 prescriptions × 7 conditions, 6 items each</span></td>
@@ -366,40 +423,45 @@ refrigerate, not in pregnancy, no alcohol
       <tr><td>Offline, with the server shut down</td>
           <td><span class="hlb">Normal</span><span class="small">one missing cache entry, found and fixed</span></td></tr>
     </table>
-    <figure style="margin-bottom:0">
-      <img src="../proposal/fig_en/chart06_formative.png" alt="Formative evaluation before and after">
-      <figcaption><b>Figure 6.</b> Before and after the fix. <b>The cause was a missing connection,
-      not a defect in any single feature.</b> The one failure was item D5 under a single condition
-      and was left uncorrected rather than scored away.</figcaption>
-    </figure>  </div>
+    <div class="duo">
+      <figure><img src="fig/chart06_formative.png" alt="Formative evaluation before and after">
+        <figcaption><b>Figure 5.</b> Before and after the fix. <b>The cause was a missing
+        connection, not a defect in any single feature.</b></figcaption></figure>
+      <figure><img src="fig/chart07_glyph_check.png" alt="Semantic check of the 78 morphemes">
+        <figcaption><b>Figure 6.</b> The 24 read differently are split, not pooled: 7 on screen,
+        reworked; 17 in the dictionary only.</figcaption></figure>
+    </div>
+    <p style="margin-top:3.4mm">The formative score is kept <b>per item</b> rather than reduced to
+    one number. "27 / 28" on its own leaves no way of knowing what failed; the single failure was
+    item D5 under one condition, and it was left uncorrected rather than scored away.</p>
+    <p>The offline result is not a claim that the network is unnecessary in principle. The server was
+    shut down and the same four screens were driven again, which is how the one missing cache entry
+    was found.</p>
+  </div>
 
 </div>
 
-<!-- ═══════════ 3단 ═══════════ -->
+<!-- ══════ 3단 ══════ -->
 <div class="col">
 
-  <div class="card green">
-    <h2><span class="n">07</span>We wrote to 1,103 experts</h2>
-    <div class="stats">
-      <div class="stat"><span class="v">1,103</span><span class="k">experts contacted,<br>one letter each</span></div>
-      <div class="stat b"><span class="v">8</span><span class="k">domains surveyed<br>in parallel</span></div>
-      <div class="stat"><span class="v">22</span><span class="k">countries on<br>five continents</span></div>
-    </div>
+  <div class="blk blush t5">
+    <h2><span class="n">7</span>We wrote to 1,103 experts</h2>
     <div class="iso">
       <svg viewBox="0 0 100 22" role="img" aria-label="39 respondents by field">
         <defs><g id="pp"><circle cx="1.6" cy="1.5" r="1.5"/><path d="M0 8.6c0-1.9 .7-4.6 1.6-4.6s1.6 2.7 1.6 4.6z"/></g></defs>
-        <use href="#pp" x="0.90" y="1.00" fill="#123a5f"/><use href="#pp" x="5.90" y="1.00" fill="#123a5f"/><use href="#pp" x="10.90" y="1.00" fill="#123a5f"/><use href="#pp" x="15.90" y="1.00" fill="#123a5f"/><use href="#pp" x="20.90" y="1.00" fill="#123a5f"/><use href="#pp" x="25.90" y="1.00" fill="#123a5f"/><use href="#pp" x="30.90" y="1.00" fill="#123a5f"/><use href="#pp" x="35.90" y="1.00" fill="#123a5f"/><use href="#pp" x="40.90" y="1.00" fill="#123a5f"/><use href="#pp" x="45.90" y="1.00" fill="#123a5f"/><use href="#pp" x="50.90" y="1.00" fill="#123a5f"/><use href="#pp" x="55.90" y="1.00" fill="#123a5f"/><use href="#pp" x="60.90" y="1.00" fill="#123a5f"/><use href="#pp" x="65.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="70.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="75.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="80.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="85.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="90.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="95.90" y="1.00" fill="#7fb0d4"/><use href="#pp" x="0.90" y="11.50" fill="#7fb0d4"/><use href="#pp" x="5.90" y="11.50" fill="#7fb0d4"/><use href="#pp" x="10.90" y="11.50" fill="#7fb0d4"/><use href="#pp" x="15.90" y="11.50" fill="#15803d"/><use href="#pp" x="20.90" y="11.50" fill="#15803d"/><use href="#pp" x="25.90" y="11.50" fill="#15803d"/><use href="#pp" x="30.90" y="11.50" fill="#15803d"/><use href="#pp" x="35.90" y="11.50" fill="#15803d"/><use href="#pp" x="40.90" y="11.50" fill="#15803d"/><use href="#pp" x="45.90" y="11.50" fill="#15803d"/><use href="#pp" x="50.90" y="11.50" fill="#15803d"/><use href="#pp" x="55.90" y="11.50" fill="#15803d"/><use href="#pp" x="60.90" y="11.50" fill="#e07b20"/><use href="#pp" x="65.90" y="11.50" fill="#e07b20"/><use href="#pp" x="70.90" y="11.50" fill="#e07b20"/><use href="#pp" x="75.90" y="11.50" fill="#e07b20"/><use href="#pp" x="80.90" y="11.50" fill="#9aa9b4"/><use href="#pp" x="85.90" y="11.50" fill="#9aa9b4"/><use href="#pp" x="90.90" y="11.50" fill="#9aa9b4"/>
+        <use href="#pp" x="0.90" y="1.00" fill="#46554a"/><use href="#pp" x="5.90" y="1.00" fill="#46554a"/><use href="#pp" x="10.90" y="1.00" fill="#46554a"/><use href="#pp" x="15.90" y="1.00" fill="#46554a"/><use href="#pp" x="20.90" y="1.00" fill="#46554a"/><use href="#pp" x="25.90" y="1.00" fill="#46554a"/><use href="#pp" x="30.90" y="1.00" fill="#46554a"/><use href="#pp" x="35.90" y="1.00" fill="#46554a"/><use href="#pp" x="40.90" y="1.00" fill="#46554a"/><use href="#pp" x="45.90" y="1.00" fill="#46554a"/><use href="#pp" x="50.90" y="1.00" fill="#46554a"/><use href="#pp" x="55.90" y="1.00" fill="#46554a"/><use href="#pp" x="60.90" y="1.00" fill="#46554a"/><use href="#pp" x="65.90" y="1.00" fill="#8fae93"/><use href="#pp" x="70.90" y="1.00" fill="#8fae93"/><use href="#pp" x="75.90" y="1.00" fill="#8fae93"/><use href="#pp" x="80.90" y="1.00" fill="#8fae93"/><use href="#pp" x="85.90" y="1.00" fill="#8fae93"/><use href="#pp" x="90.90" y="1.00" fill="#8fae93"/><use href="#pp" x="95.90" y="1.00" fill="#8fae93"/><use href="#pp" x="0.90" y="11.50" fill="#8fae93"/><use href="#pp" x="5.90" y="11.50" fill="#8fae93"/><use href="#pp" x="10.90" y="11.50" fill="#8fae93"/><use href="#pp" x="15.90" y="11.50" fill="#4f7f8b"/><use href="#pp" x="20.90" y="11.50" fill="#4f7f8b"/><use href="#pp" x="25.90" y="11.50" fill="#4f7f8b"/><use href="#pp" x="30.90" y="11.50" fill="#4f7f8b"/><use href="#pp" x="35.90" y="11.50" fill="#4f7f8b"/><use href="#pp" x="40.90" y="11.50" fill="#4f7f8b"/><use href="#pp" x="45.90" y="11.50" fill="#4f7f8b"/><use href="#pp" x="50.90" y="11.50" fill="#4f7f8b"/><use href="#pp" x="55.90" y="11.50" fill="#4f7f8b"/><use href="#pp" x="60.90" y="11.50" fill="#b0603f"/><use href="#pp" x="65.90" y="11.50" fill="#b0603f"/><use href="#pp" x="70.90" y="11.50" fill="#b0603f"/><use href="#pp" x="75.90" y="11.50" fill="#b0603f"/><use href="#pp" x="80.90" y="11.50" fill="#b3ab99"/><use href="#pp" x="85.90" y="11.50" fill="#b3ab99"/><use href="#pp" x="90.90" y="11.50" fill="#b3ab99"/>
       </svg>
-      <div class="lg"><span style="color:#123a5f"><b>13</b> Pharmacy</span><span style="color:#7fb0d4"><b>10</b> Other</span><span style="color:#15803d"><b>9</b> Nursing</span><span style="color:#e07b20"><b>4</b> HCI / design</span><span style="color:#9aa9b4"><b>3</b> Literacy, AAC, industry</span></div>
+      <div class="lg"><span style="color:#46554a"><b>13</b> Pharmacy</span><span style="color:#8fae93"><b>10</b> Other</span><span style="color:#4f7f8b"><b>9</b> Nursing</span><span style="color:#b0603f"><b>4</b> HCI / design</span><span style="color:#b3ab99"><b>3</b> Literacy, AAC, industry</span></div>
     </div>
-    <p>A source URL was recorded for every entry and <mark>no address was ever invented</mark>. Each
-    person received a separate letter carrying an opaque token, so the server stores the token and
-    only our own spreadsheet can say who answered. <b>Pharmacy and nursing together are 22</b>, the
-    centre of the fields judged qualified to rule on comprehension.</p>
+    <p>Eight domains were surveyed in parallel, a source URL was recorded for every entry and
+    <mark>no address was ever invented</mark>. Each person received a separate letter carrying an
+    opaque token, so the server stores the token and only our own spreadsheet can say who answered.
+    <b>Pharmacy and nursing together are 22</b>, the centre of the fields judged qualified to rule on
+    comprehension.</p>
   </div>
 
-  <div class="card red">
-    <h2><span class="n">08</span>What they told us</h2>
+  <div class="blk t2">
+    <h2><span class="n">8</span>What they told us</h2>
 
     <h3>A prohibition is not read as a prohibition</h3>
     <blockquote>
@@ -408,8 +470,7 @@ refrigerate, not in pregnancy, no alcohol
       <span class="who">Prof. Atif Usman, The Islamia University of Bahawalpur, Pakistan</span>
     </blockquote>
     <p>Three respondents on three continents reported this independently. Fixing it uncovered the
-    same accident running the other way: <code>no_alcohol</code> became
-    <code>\no{\no_alcohol}</code> —
+    same accident the other way: <code>no_alcohol</code> became <code>\no{\no_alcohol}</code> —
     <span class="hl">a slash through "do not drink" says that drinking is fine</span>.</p>
 
     <h3>The premise itself was questioned</h3>
@@ -423,58 +484,59 @@ refrigerate, not in pregnancy, no alcohol
 
     <h3>Our design could create a new risk</h3>
     <blockquote>
-      Even a medicine that carries risk for pregnant women is sometimes prescribed after considering
-      the patient's overall condition, and where the patient checks alone they may end up not
-      receiving the drug therapy.
+      Even a medicine that carries risk for pregnant women is sometimes prescribed after weighing the
+      patient's overall condition, and where the patient checks alone they may end up not receiving
+      the drug therapy.
       <span class="who">Prof. So-Young Lee, pharmacist, Chungnam National University, Korea</span>
     </blockquote>
     <p><b>A personalised verdict cannot beat a personalised prescription.</b></p>
 
     <div class="donuts"><figure>
         <svg viewBox="0 0 42 42" role="img" aria-label="9 / 13">
-          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#e3ecf1" stroke-width="7"/>
-          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#123a5f" stroke-width="7"
+          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#e2ded1" stroke-width="7"/>
+          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#46554a" stroke-width="7"
                   stroke-dasharray="69.2 100.0" transform="rotate(-90 21 21)"/>
           <text x="21" y="21.4" text-anchor="middle" class="dv">9 / 13</text>
           <text x="21" y="26.6" text-anchor="middle" class="dk">every time</text>
         </svg><figcaption>Must a pharmacist review the output?<span class="small">pharmacy, n = 13</span></figcaption></figure><figure>
         <svg viewBox="0 0 42 42" role="img" aria-label="4 / 9">
-          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#e3ecf1" stroke-width="7"/>
-          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#c62828" stroke-width="7"
+          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#e2ded1" stroke-width="7"/>
+          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#b0603f" stroke-width="7"
                   stroke-dasharray="44.4 100.0" transform="rotate(-90 21 21)"/>
           <text x="21" y="21.4" text-anchor="middle" class="dv">4 / 9</text>
           <text x="21" y="26.6" text-anchor="middle" class="dk">screen first</text>
         </svg><figcaption>Where does it fail first for an older adult alone?<span class="small">nursing, n = 9</span></figcaption></figure><figure>
         <svg viewBox="0 0 42 42" role="img" aria-label="6 / 9">
-          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#e3ecf1" stroke-width="7"/>
-          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#2563eb" stroke-width="7"
+          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#e2ded1" stroke-width="7"/>
+          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#4f7f8b" stroke-width="7"
                   stroke-dasharray="66.7 100.0" transform="rotate(-90 21 21)"/>
           <text x="21" y="21.4" text-anchor="middle" class="dv">6 / 9</text>
           <text x="21" y="26.6" text-anchor="middle" class="dk">both, apart</text>
         </svg><figcaption>Patient or carer &mdash; who is it for?<span class="small">nursing, n = 9</span></figcaption></figure><figure>
         <svg viewBox="0 0 42 42" role="img" aria-label="8 / 9">
-          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#e3ecf1" stroke-width="7"/>
-          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#15803d" stroke-width="7"
+          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#e2ded1" stroke-width="7"/>
+          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="#6f8f74" stroke-width="7"
                   stroke-dasharray="88.9 100.0" transform="rotate(-90 21 21)"/>
           <text x="21" y="21.4" text-anchor="middle" class="dv">8 / 9</text>
           <text x="21" y="26.6" text-anchor="middle" class="dk">yes, if met</text>
         </svg><figcaption>Could it change health outcomes?<span class="small">nursing, n = 9</span></figcaption></figure></div>
   </div>
 
-  <div class="card">
-    <h2><span class="n">09</span>What changed, what we do not claim</h2>
+  <div class="blk cream">
+    <h2><span class="n">9</span>What changed, what we do not claim</h2>
     <ul>
-      <li><b>Contraindication marking was split three ways.</b> Flags that say what is contained gain
-      and lose the slash with the verdict; flags that say what not to do are always drawn as prohibited.</li>
-      <li><b><code>finish_course</code> was redrawn.</b> Filling three of five cells drew a state in
-      progress, which says "not finished yet" rather than "finish it". A directional arrow proposed
-      by a respondent replaced it.</li>
-      <li><b>The demonstration prescription was clinically wrong.</b> Amoxicillin capsules are kept
-      at room temperature, not refrigerated.</li>
+      <li><b>Contraindication marking was split three ways.</b> Flags for what is contained gain and
+      lose the slash with the verdict; flags for what not to do are always prohibited.</li>
+      <li><b><code>finish_course</code> was redrawn.</b> Three of five cells filled says "not finished
+      yet" rather than "finish it". A directional arrow proposed by a respondent replaced it.</li>
       <li><b>No comprehension test with people has been run.</b> ISO 9186-1 (67%) and ANSI Z535.3
       (85%, critical confusions ≤ 5%) must still be confirmed with low-literacy adults.</li>
+      <li><b>Cultural adaptation is unverified.</b> Locally produced pictograms passed for 20 of 23
+      symbols where USP-DI passed for 11 among the same 46 people <span class="small">[3]</span>.</li>
       <li><b>Experts are not patients.</b> An expert answering that a patient could probably manage
       is not evidence that a patient did.</li>
+      <li><b>The survey's own defects were reported by respondents</b> and fixed mid-run, including
+      a branch that showed no questions at all.</li>
     </ul>
     <table style="margin-bottom:0">
       <tr><th class="num">SDG</th><th>Contribution, stated narrowly</th></tr>
@@ -482,6 +544,11 @@ refrigerate, not in pregnancy, no alcohol
       <tr><td class="num"><b>3.8</b></td><td>Reduces the literacy-driven gap after care ends</td></tr>
       <tr><td class="num"><b>3.d</b></td><td>Carries course completion as a picture, against resistance</td></tr>
     </table>
+    <p style="margin-top:3.4mm"><b>What comes next is the test the survey asked for.</b> ISO 9186-1
+    with low-literacy adults, scored per morpheme rather than per screen, and the three populations
+    the respondents separated for us recruited apart: total blindness, low vision, low literacy.
+    Until that is run, every comprehension figure on this sheet is a machine's judgement, not a
+    reader's.</p>
   </div>
 
 </div>
