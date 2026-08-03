@@ -362,6 +362,52 @@ def sections(md: str) -> dict[str, str]:
     return out
 
 
+def fix_props(path: str) -> None:
+    """제출 파일의 문서 속성을 우리 것으로 바꾼다.
+
+    서식을 그대로 열어 채우는 방식이라 속성이 서식의 것을 물려받는다.
+    그대로 두면 두 가지가 새어 나간다.
+
+      · 통계가 서식의 값이다 — "2쪽 249낱말" 로 적혀 있었는데 실제는
+        130쪽 42,883낱말이다. 심사자가 파일 속성을 열면 그것을 본다
+      · 작성자가 Admin, 마지막 수정자가 서식을 만든 분의 이름이다.
+        우리 제출물에 남의 이름이 실려 나간다
+
+    통계는 지운다. 지우면 Word 가 열 때 다시 센다. 우리가 손으로
+    적으면 문서를 고칠 때마다 또 틀린다."""
+    import re
+    import shutil
+    import zipfile
+    from datetime import datetime, timezone
+
+    now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    tmp = path + '.tmp'
+    with zipfile.ZipFile(path) as zin, \
+            zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            if item.filename == 'docProps/app.xml':
+                t = data.decode('utf-8')
+                for tag in ('Pages', 'Words', 'Characters', 'CharactersWithSpaces',
+                            'Lines', 'Paragraphs', 'TotalTime'):
+                    t = re.sub(rf'<{tag}>[^<]*</{tag}>', '', t)
+                data = t.encode('utf-8')
+            elif item.filename == 'docProps/core.xml':
+                t = data.decode('utf-8')
+                t = re.sub(r'<dc:creator>[^<]*</dc:creator>',
+                           '<dc:creator>Global Team H1 · SnapCare</dc:creator>', t)
+                t = re.sub(r'<cp:lastModifiedBy>[^<]*</cp:lastModifiedBy>',
+                           '<cp:lastModifiedBy>Global Team H1 · SnapCare</cp:lastModifiedBy>', t)
+                t = re.sub(r'<dcterms:modified([^>]*)>[^<]*</dcterms:modified>',
+                           rf'<dcterms:modified\1>{now}</dcterms:modified>', t)
+                if '<dc:title>' in t:
+                    t = re.sub(r'<dc:title>[^<]*</dc:title>',
+                               '<dc:title>SnapCare — Final Project Proposal</dc:title>', t)
+                data = t.encode('utf-8')
+            zout.writestr(item, data)
+    shutil.move(tmp, path)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--src', default='proposal_ko.md',
@@ -389,6 +435,7 @@ def main() -> None:
         print(f'  {key}')
 
     d.save(args.out)
+    fix_props(args.out)
     size = Path(args.out).stat().st_size / 1e6
     print(f'\n{args.out}  ({size:.1f} MB)')
 

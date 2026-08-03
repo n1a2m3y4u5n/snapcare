@@ -1111,6 +1111,32 @@ def item_refs() -> list:
     return out
 
 
+def doc_props() -> list:
+    """제출 파일의 속성에 남의 이름이나 낡은 통계가 없는가.
+
+    서식을 열어 채우는 방식이라 속성이 서식의 것을 물려받는다.
+    작성자가 Admin, 마지막 수정자가 서식을 만든 분의 이름이었고
+    통계는 "2쪽 249낱말" 이었다. 실제는 130쪽 42,883낱말이다.
+    심사자가 파일 속성을 열면 그것을 본다."""
+    import zipfile
+    out = []
+    for name in ('SnapCare_H1_Final_Proposal_KO.docx',
+                 'SnapCare_H1_Final_Proposal_EN.docx'):
+        path = DOC / name
+        if not path.exists():
+            continue
+        z = zipfile.ZipFile(path)
+        app = z.read('docProps/app.xml').decode('utf-8', 'ignore')
+        core = z.read('docProps/core.xml').decode('utf-8', 'ignore')
+        stale = re.findall(r'<(Pages|Words|Characters|Lines|Paragraphs)>', app)
+        if stale:
+            out.append(f'{name}: 속성에 낡은 통계가 남았다 — {sorted(set(stale))}')
+        for who in re.findall(r'<(?:dc:creator|cp:lastModifiedBy)>([^<]*)<', core):
+            if 'SnapCare' not in who:
+                out.append(f'{name}: 속성의 이름이 우리 것이 아니다 — "{who}"')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -1241,6 +1267,9 @@ def main() -> int:
         note(t)
 
     for t in item_refs():
+        note(t)
+
+    for t in doc_props():
         note(t)
 
     for t in links_live():
