@@ -95,7 +95,10 @@ def box(ax, x, y, w, h, head, lines=(), color=GREY, lw=1.6, fs=9.2):
     ax.add_patch(mp.Rectangle((x, y), w, h, linewidth=LW.get(color, lw * 0.7),
                               edgecolor=EDGE.get(color, '#333333'),
                               facecolor=FILL[color], zorder=2))
-    ax.text(x + w / 2, y + h - h * 0.22, head, ha='center', va='center', fontsize=fs,
+    # 하위 줄이 없으면 제목을 가운데에 둔다. 늘 위쪽에 붙이면 아래 절반이
+    # 빈 채로 남아, 상자가 글보다 커 보인다.
+    hy = y + h / 2 if not lines else y + h - h * 0.22
+    ax.text(x + w / 2, hy, head, ha='center', va='center', fontsize=fs,
             fontweight='bold', color=INK, zorder=3)
 
     # 축 100 단위 = 그림 폭 6.0 인치. 7.6pt 글자의 1em 은 7.6/72 인치.
@@ -461,8 +464,9 @@ def sign_payload():
     fig, ax = canvas(6.0, 2.3)
     TOP = 32.0
 
+    # 초록은 "통과" 를 뜻한다. 개인키 상자에는 그 뜻이 없으므로 회색이다.
     box(ax, 2, TOP - 8.0, 30, 7.8, T('기기가 만든 개인키'),
-        [T('extractable: false'), T('브라우저 밖으로 못 나간다')], GREEN)
+        [T('extractable: false'), T('브라우저 밖으로 못 나간다')], GREY)
     arrow(ax, 32.6, TOP - 4.1, 37.4, TOP - 4.1)
     box(ax, 38, TOP - 8.0, 60, 7.8, T('서명하는 대상'),
         [T('시각 · 메서드 · 본문 해시')], BLUE)
