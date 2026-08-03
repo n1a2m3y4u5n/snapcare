@@ -367,15 +367,19 @@ def chart_handwriting():
     rows = [(T('정확히 읽음'), sm['exact'], BLUE),
             (T('한두 글자 어긋남'), sm['nearMiss'], RED),
             (T('전혀 다르게 읽음'), sm['wrong'], GREY)]
+    # 축을 자료에서 잡는다. 상한을 고정해 두었더니 표본이 200에서 500으로
+    # 커졌을 때 막대가 축을 넘고 숫자가 제목까지 올라갔다.
+    top = max(v for _, v, _ in rows) * 1.34
     for i, (k, v, c) in enumerate(rows):
         a1.bar(i, v, 0.56, color=c, zorder=2)
-        a1.text(i, v + 2.5, f'{v}', ha='center', fontsize=9.4,
+        a1.text(i, v + top * 0.022, f'{v}', ha='center', fontsize=9.4,
                 fontweight='bold', color=INK)
     a1.set_xticks(range(3))
     a1.set_xticklabels([r[0] for r in rows], fontsize=7.2)
-    a1.set_ylim(0, 118)
+    a1.set_ylim(0, top)
     a1.set_ylabel(T('장수'))
-    a1.text(1, 108, T('붉은 칸이 더 위험하다'), ha='center', fontsize=7.4, color=RED)
+    a1.text(1, top * 0.93, T('붉은 칸이 더 위험하다'), ha='center',
+            fontsize=7.4, color=RED)
     frame(a1, grid='y')
 
     xs = [t['threshold'] for t in th]
@@ -387,7 +391,7 @@ def chart_handwriting():
     a2.set_ylabel('%')
     a2.set_ylim(0, 112)
     a2.legend(fontsize=7.4, frameon=False, loc='lower left')
-    a2.text(0.79, 60, T('둘을 함께 만족하는\n문턱이 없다'), fontsize=7.4,
+    a2.text(0.79, 26, T('문턱을 올려도\n정확해지지 않는다'), fontsize=7.4,
             color=RED, fontweight='bold', ha='right')
     frame(a2, grid='both')
     save(fig, 'chart21_handwriting')
@@ -402,7 +406,10 @@ def chart_pageeval():
     import json
     sm = json.loads((pathlib.Path(__file__).resolve().parents[3]
                      / 'scripts' / 'prescription-page-eval.json').read_text())['summary']
-    BEFORE = {'seen': 81.7, 'recall': 89.7}          # MEASUREMENTS.md §2
+    # 고치기 전 값은 고친 뒤에 만들어진 JSON 에 없으므로 MEASUREMENTS.md §2
+    # 에서 옮긴다. 표본이 60장에서 200장 전수로 바뀌었을 때 이 상수만
+    # 옛 값으로 남아, 재현율이 오른 것이 떨어진 것처럼 보였다.
+    BEFORE = {'seen': 95.5, 'recall': 83.2}          # MEASUREMENTS.md §2
 
     fig, ax = plt.subplots(figsize=(6.0, 2.3))
     title(fig, T('처방전 전장 {n}장. 답이 잘리던 것을 고치기 전과 뒤').format(n=sm['sampled']),
@@ -422,7 +429,7 @@ def chart_pageeval():
     ax.set_xticklabels([p[0] for p in pairs], fontsize=8.4)
     ax.set_ylim(0, 132)
     ax.set_ylabel('%')
-    ax.text(0.5, 116, T('실패한 11장은 무작위가 아니었다.\n전부 약이 5~12가지 적힌 장이었다'),
+    ax.text(0.5, 116, T('통째로 실패하던 장은 무작위가 아니었다.\n전부 약이 가장 많은 처방전이다'),
             ha='center', fontsize=7.6, color=RED, fontweight='bold')
     frame(ax, grid='y')
     save(fig, 'chart22_pageeval')

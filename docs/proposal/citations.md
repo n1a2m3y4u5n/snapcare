@@ -315,8 +315,8 @@ PMC8544505 한국 고령자 79.4%/28.2% · PMC7532569 몰도바 건강문해력 
 | Chaudry, B. et al., *PervasiveHealth 2011*:160 | PMC 전문 | 확인. CKD 5기 10명, REALM 3/3/4. 액체 10/10, 무정형 8/10, 고형식 0/10 |
 | Nielsen, J. & Landauer, T. K., *Proc. INTERCHI 93*:206 | 응답자가 지목 | 최묘정 연구원이 소규모 표본의 근거로 든 것이다. 서지 정보만 보완했고 우리가 이 값을 주장에 쓰지는 않는다 |
 | Tumkur, A. et al., *Clin Epidemiol Glob Health*, 2025 | 열지 못함 | Sheron Sir Loon Goh 전임강사가 알려 준 논문이다. 출판사·DOAJ·Semantic Scholar 셋 다 초록을 열지 못해 결과를 쓰지 않고, 응답자가 알려 주었다는 사실만 5.10 에 적었다 |
-| RxHandBD (Zenodo 18478741, MIT) | 개발 세션이 직접 측정 | 손글씨 약 이름 5,578장. 고정 간격 200장 표본, 결과는 scripts/handwriting-eval.json 에 전부 있다 |
-| Mendeley k62rfd23kz (CC BY 4.0) | 개발 세션이 직접 측정 | 방글라데시 처방전 전장 200장, 약 이름 영역 개수 주석. 60장 표본, scripts/prescription-page-eval.json |
+| RxHandBD (Zenodo 18478741, MIT) | 개발 세션이 직접 측정 | 손글씨 약 이름 5,578장. 시험셋 500장 전수(실패 0), 결과는 scripts/handwriting-eval.json 에 전부 있다 |
+| Mendeley k62rfd23kz (CC BY 4.0) | 개발 세션이 직접 측정 | 방글라데시 처방전 전장 200장, 약 이름 영역 개수 주석. 200장 전수(실패 0), scripts/prescription-page-eval.json |
 
 ### 표본 처방전을 대조한 것
 

@@ -486,15 +486,15 @@ EN = {
     '붉은 칸이 더 위험하다': 'The red bar is the more dangerous one',
     '남는 비율': 'Share surviving', '남은 것의 정확도': 'Accuracy of survivors',
     '확신도 문턱': 'Confidence threshold',
-    '둘을 함께 만족하는\n문턱이 없다': 'No threshold satisfies\nboth at once',
+    '문턱을 올려도\n정확해지지 않는다': 'Raising the threshold\nbuys no accuracy',
     '처방전 전장 {n}장. 답이 잘리던 것을 고치기 전과 뒤':
         '{n} full prescription pages, before and after fixing the truncated replies',
     'Mendeley k62rfd23kz · 약 이름 영역 개수가 주석된 방글라데시 처방전':
         'Mendeley k62rfd23kz · Bangladeshi prescriptions annotated with drug-name counts',
     '처방전으로 알아본 비율': 'Recognised as a prescription',
     '약 가짓수 재현율': 'Recall of medicine count',
-    '실패한 11장은 무작위가 아니었다.\n전부 약이 5~12가지 적힌 장이었다':
-        'The 11 failures were not random.\nEvery one carried 5 to 12 medicines',
+    '통째로 실패하던 장은 무작위가 아니었다.\n전부 약이 가장 많은 처방전이다':
+        'The pages that failed outright were not random.\nThey are the ones carrying the most medicines',
 
     # ── charts.py · chart_expressive (§1.9) ───────────────────────
     '고정 목록과 문법은 다른 속도로 늘어난다':
