@@ -20,8 +20,10 @@
   · 서식으로 뽑은 뒤 표와 그림이 성한가
   · 화면 캡처가 지금 앱보다 낡지 않았는가
   · 소제목에 번호가 붙어 있는가
+  · 도판에서 글자가 상자를 넘거나 겹치지 않는가
 """
 import re
+import sys
 import sys
 from pathlib import Path
 
@@ -297,6 +299,21 @@ def unnumbered_subs(f: str) -> list:
     return re.findall(r'^#### (?!\d+\.\d+\.\d+ )(.+)$', s, re.M)
 
 
+def fig_faults() -> list:
+    """check_figs.py 를 불러 도판의 글자 겹침을 함께 본다.
+
+    따로 돌리게 두면 잊는다. 이 파일 하나만 돌리면 다 보이게 한다."""
+    import subprocess
+    r = subprocess.run(
+        [sys.executable, str(DOC / 'tools' / 'check_figs.py')],
+        capture_output=True, text=True, timeout=180,
+    )
+    if r.returncode == 0:
+        return []
+    return [ln.strip() for ln in r.stdout.splitlines()
+            if ln.strip() and not ln.startswith('도판에서')]
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -375,6 +392,9 @@ def main() -> int:
     for f, _, _ in PAIR:
         for t in unnumbered_subs(f):
             note(f'{f}: 번호 없는 소제목 — {t[:40]}')
+
+    for t in fig_faults():
+        note(t)
 
     for t in stale_shots():
         note(t)

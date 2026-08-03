@@ -78,10 +78,10 @@ EN = {
     '나이대를 모르면 판정 기준을 유도할 수 없다':
         'Without the age band no threshold can be derived',
     '촬영 버튼 하나': 'One capture button',
-    '대상을 고르지 않는다': 'The subject is not chosen',
+    '대상을': 'The subject', '고르지 않는다': 'is not chosen',
     'OCR · 모델': 'OCR · model',
     '진행 상태를 표시': 'Progress shown',
-    '물리 검사 통과 후': 'Physical checks',
+    '물리 검사 뒤': 'After physical checks',
     '개인 기준과 대조': 'Personal limits',
     '그림 · 음성 · 색': 'Picture · speech · colour',
     'SIGIL 합성 픽토그램': 'SIGIL composed pictogram',

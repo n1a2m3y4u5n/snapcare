@@ -99,9 +99,13 @@ def box(ax, x, y, w, h, head, lines=(), color=GREY, lw=1.6, fs=9.2):
             fontweight='bold', color=INK, zorder=3)
 
     # 축 100 단위 = 그림 폭 6.0 인치. 7.6pt 글자의 1em 은 7.6/72 인치.
+    #
+    # 한국어도 접는다. _wrap 은 확정된 도판을 조용히 바꾸지 않으려고
+    # 한국어를 그냥 두는데, 그 보호 때문에 "대상을 고르지 않는다" 가
+    # 상자 좌우로 넘고 있었다. 넘는 것보다 접는 편이 낫다.
     sub = 7.6
     budget = (w - 1.6) / 100 * 6.0 / (sub / 72)
-    wrapped = [ln for t in lines for ln in _wrap(t, budget)]
+    wrapped = [ln for t in lines for ln in _wrap_any(t, budget)]
     step = 0.22 if len(wrapped) <= 2 else 0.19
     for i, t in enumerate(wrapped):
         ax.text(x + w / 2, y + h * (0.52 - i * step), t, ha='center', va='center',
@@ -147,9 +151,9 @@ def userflow():
     M = TOP - 17.5
     ax.text(2, M + 0.4, T('매번'), fontsize=8, color=MUTED)
     steps = [(T('홈'), [T('촬영 버튼 하나')], GREY),
-             (T('촬영'), [T('대상을 고르지 않는다')], GREY),
+             (T('촬영'), [T('대상을'), T('고르지 않는다')], GREY),
              (T('인식'), [T('OCR · 모델'), T('진행 상태를 표시')], GREY),
-             (T('판정'), [T('물리 검사 통과 후'), T('개인 기준과 대조')], BLUE),
+             (T('판정'), [T('물리 검사 뒤'), T('개인 기준과 대조')], BLUE),
              (T('전달'), [T('그림 · 음성 · 색')], GREEN)]
     w, gap = 16.0, 4.0
     for i, (h_, ls, c) in enumerate(steps):
