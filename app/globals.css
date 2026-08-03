@@ -159,25 +159,56 @@ html[data-hearing] {
 }
 
 /*
-  글자 크기 고르는 줄이 "눌러야 하는 것" 으로 보이게.
+  글자 크기 고르는 줄 — 누르는 것을 **보여준다.**
 
-  처음에는 흰 카드에 글자만 있었고, 그러니 **네모 박스 다섯 개**로 보였다. 누르는
-  것인지 그냥 보기인지가 화면에 없었다. 이 화면은 앱을 처음 켠 사람이 만나는 첫
-  화면이고, 여기서 아무것도 안 누르면 그 뒤로 갈 수가 없다.
+  두 번 고쳤다. 처음에는 흰 카드에 글자만 있어서 네모 박스 다섯 개로 보였고,
+  테두리와 고르는 동그라미를 붙였더니 "박스 왼쪽에 원 하나" 가 됐다. 둘 다
+  **누르라고 말하는** 방식이었지, 누르는 것을 보여주지는 않았다.
 
-  테두리와 그림자로 떠 있게 하고, 한 줄만 천천히 숨쉬게 한다 — 움직이는 것은
-  눈이 먼저 찾는다. 가운데 줄을 고른 이유는 그것이 기본값이기도 해서, 아무 생각
-  없이 눌러도 무난한 자리이기 때문이다.
+  지운 첫 실행 안내에 이 원칙이 적혀 있었다 — 글을 못 읽는 사람에게 손짓을 가르치는
+  방법은 **그 손짓이 일어나는 것을 보여주는 것** 하나뿐이고, 알아보는 것은 그림이
+  아니라 변화다. 정지한 손가락 그림은 "손가락" 을 그린 것이지 "누름" 을 그린 것이
+  아니다.
 
-  움직임을 줄이라고 한 사람에게는 안 움직인다. 어지럼증이 있는 사람에게 숨쉬는
-  화면은 도움이 아니라 방해다.
+  그래서 손이 들어와 한 줄을 누르고 물결이 퍼지는 것을 반복해 보인다. 사람이 한 번
+  건드리면 멈춘다 — 이미 알아들은 사람에게 계속 도는 시범은 잔소리다.
+
+  움직임을 줄이라고 한 사람에게는 안 움직인다. 어지럼증이 있는 사람에게 움직이는
+  화면은 도움이 아니라 방해이고, 그때는 테두리와 동그라미가 남는다.
 */
-@keyframes sc-breathe {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.03); }
+
+/* 손: 오른쪽 아래에서 들어와 → 누르고 → 물러난다 */
+@keyframes sc-demo-hand {
+  0%          { opacity: 0; transform: translate(28px, 22px) scale(1); }
+  10%         { opacity: 1; transform: translate(14px, 11px) scale(1); }
+  24%         { opacity: 1; transform: translate(0, 0) scale(1); }
+  30%         { opacity: 1; transform: translate(0, 0) scale(0.8); }
+  38%         { opacity: 1; transform: translate(0, 0) scale(1); }
+  60%         { opacity: 1; transform: translate(0, 0) scale(1); }
+  74%, 100%   { opacity: 0; transform: translate(28px, 22px) scale(1); }
 }
-.sc-breathe { animation: sc-breathe 2.4s ease-in-out infinite; }
+
+/* 물결: 누르는 순간에만 퍼진다 */
+@keyframes sc-demo-ripple {
+  0%, 28%   { opacity: 0; transform: scale(0.4); }
+  32%       { opacity: 0.45; transform: scale(0.6); }
+  48%       { opacity: 0; transform: scale(1.9); }
+  100%      { opacity: 0; transform: scale(1.9); }
+}
+
+/* 줄: 손이 닿는 순간 살짝 눌린다 */
+@keyframes sc-demo-press {
+  0%, 26%    { transform: scale(1); }
+  32%        { transform: scale(0.975); }
+  42%, 100%  { transform: scale(1); }
+}
+
+.sc-demo-hand   { animation: sc-demo-hand 3.2s ease-in-out infinite; }
+.sc-demo-ripple { animation: sc-demo-ripple 3.2s ease-in-out infinite; }
+.sc-demo-press  { animation: sc-demo-press 3.2s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .sc-breathe { animation: none; }
+  .sc-demo-hand, .sc-demo-ripple, .sc-demo-press { animation: none; }
+  /* 손과 물결은 정지하면 뜻이 없다 — 안 움직이면 아예 안 보이는 편이 낫다 */
+  .sc-demo-hand, .sc-demo-ripple { display: none; }
 }

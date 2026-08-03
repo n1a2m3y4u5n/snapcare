@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { usePreferences } from '@/stores/preferences';
@@ -37,8 +37,18 @@ import { speak } from '@/lib/voice';
 /** 검사표에 쓸 글. 이 앱이 실제로 하는 말이라, 고른 크기가 곧 앱에서 볼 크기다. */
 const SAMPLE = 'Take one pill';
 
+/** 시범을 보일 줄. 기본값이라 아무 생각 없이 따라 눌러도 무난한 자리다. */
+const DEMO_ROW = 1;
+
 export default function TextSizePage() {
   const router = useRouter();
+  /*
+    사람이 한 번 건드리면 시범을 멈춘다.
+
+    이미 알아들은 사람에게 계속 도는 손은 잔소리이고, 무엇보다 **자기 손가락과
+    화면 속 손가락이 같은 자리에서 겹친다.** 누가 누른 것인지가 흐려진다.
+  */
+  const [demoOff, setDemoOff] = useState(false);
   const setTextSize = usePreferences((s) => s.setTextSize);
   const setSizePicked = useSession((s) => s.setSizePicked);
 
@@ -74,6 +84,7 @@ export default function TextSizePage() {
             <button
               key={size}
               onClick={() => choose(size)}
+              onPointerDown={() => setDemoOff(true)}
               aria-label={`Use this size: ${SAMPLE}`}
               /*
                 네모 박스가 아니라 **누르는 것**으로 보이게 한다.
@@ -89,17 +100,25 @@ export default function TextSizePage() {
               className={`flex w-full items-center gap-4 rounded-2xl border-2 bg-white px-4 py-4
                           text-left shadow-sm transition-transform
                           active:scale-[0.97] active:bg-[color-mix(in_srgb,var(--color-sc-primary)_10%,white)]
-                          ${i === 1 ? 'sc-breathe' : ''}`}
+                          ${!demoOff && i === DEMO_ROW ? 'relative sc-demo-press' : 'relative'}`}
               style={{ borderColor: 'var(--color-sc-line)' }}
             >
               {/* 고르는 동그라미. 크기를 줄마다 키워서 큰 글자를 고르는 사람에게
                   표적도 함께 커지게 한다. */}
               <span aria-hidden
-                    className="shrink-0 rounded-full border-[3px]"
+                    className="relative shrink-0 rounded-full border-[3px]"
                     style={{
                       width: ROOT_PX[size] * 0.9, height: ROOT_PX[size] * 0.9,
                       borderColor: 'var(--color-sc-primary)',
-                    }} />
+                    }}>
+                {/* 누르는 순간 퍼지는 물결. 동그라미를 중심으로 나가야 "여기를
+                    눌렀다" 로 읽힌다. */}
+                {!demoOff && i === DEMO_ROW && (
+                  <span aria-hidden
+                        className="sc-demo-ripple absolute inset-[-6px] rounded-full"
+                        style={{ background: 'var(--color-sc-primary)' }} />
+                )}
+              </span>
               {/*
                 px 로 박는다. rem 이면 지금 걸려 있는 뿌리 크기를 따라가서 다섯 줄이
                 다 같이 커지고, 그러면 검사표가 아니라 그냥 목록이 된다.
@@ -109,6 +128,22 @@ export default function TextSizePage() {
                     style={{ fontSize: ROOT_PX[size] * 1.15, lineHeight: 1.3, color: 'var(--color-sc-ink)' }}>
                 {SAMPLE}
               </span>
+
+              {/*
+                시범 손. 오른쪽에서 들어와 이 줄을 누르고 물러난다.
+
+                줄 **안에** 둔다 — 바깥에 두고 좌표를 재서 맞추면 글자 크기가 바뀔
+                때마다 줄 높이가 달라져서 손이 엉뚱한 데를 가리킨다. 안에 두면
+                자기 줄을 따라다닌다.
+              */}
+              {!demoOff && i === DEMO_ROW && (
+                <span aria-hidden
+                      className="sc-demo-hand pointer-events-none absolute right-4 top-1/2 -translate-y-1/2
+                                 text-3xl leading-none"
+                      style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.25))' }}>
+                  👆
+                </span>
+              )}
             </button>
           ))}
         </div>
