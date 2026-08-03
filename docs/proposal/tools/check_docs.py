@@ -1073,6 +1073,44 @@ def affil_drift() -> list:
     return out
 
 
+# §5.9 는 항목을 "첫째" 부터 세어 나간다. 본문이 "§5.9 의 N째 항목"
+# 이라고 가리킬 때 그 자리가 정말 그 내용인지 사람은 세어 보지 않는다.
+ORDINAL = ['첫째', '둘째', '셋째', '넷째', '다섯째', '여섯째', '일곱째',
+           '여덟째', '아홉째', '열째', '열한째', '열두째', '열셋째']
+
+
+def item_refs() -> list:
+    """"§5.9 의 N째 항목" 이 실제로 그 자리를 가리키는가.
+
+    §1.5 가 시각장애를 "§5.9 의 여덟째 항목" 이라고 가리키고 있었는데
+    여덟째는 지적장애였고 시각장애는 §5.9 에 아예 없었다. 없는 항목을
+    번호로 가리키면 심사자가 그 자리를 열어 본다.
+
+    번호가 있는지만 본다. 가리키는 문장의 낱말이 그 항목에 있는지까지
+    보게 해 보았으나 정상 참조 둘이 걸리고 정작 틀린 것은 통과했다.
+    낱말 겹침으로는 참조의 옳고 그름을 가릴 수 없다 — 앞서 같은 이유로
+    지운 검사가 있다."""
+    out = []
+    s = (DOC / 'proposal_ko.md').read_text()
+    if '### 5.9' not in s:
+        return []
+    nxt = re.search(r'^### 5\.1[0-9]', s[s.index('### 5.9'):], re.M)
+    seg = s[s.index('### 5.9'):][:nxt.start() if nxt else None]
+    have = [o for o in ORDINAL if re.search(rf'^{o},', seg, re.M)]
+    for m in re.finditer(r'§5\.9 의 (\S+?)째 항목', s):
+        word = m.group(1) + '째'
+        if word not in have:
+            out.append(f'§5.9 에 "{word}" 항목이 없다 — 지금 있는 것은 '
+                       f'{have[0]}~{have[-1]} 까지 {len(have)}개다')
+            continue
+    # 번호가 끊기지 않았는가
+    for i, o in enumerate(ORDINAL[:len(have)]):
+        if o != have[i]:
+            out.append(f'§5.9 의 항목 차례가 끊긴다 — {i + 1}번째가 "{have[i]}" 다')
+            break
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -1200,6 +1238,9 @@ def main() -> int:
         note(t)
 
     for t in affil_drift():
+        note(t)
+
+    for t in item_refs():
         note(t)
 
     for t in links_live():

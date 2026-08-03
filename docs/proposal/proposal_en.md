@@ -310,7 +310,7 @@ This section doubted one premise: that the user knows their own condition. The s
 
 This app begins with one photograph. That premise — that taking it is possible for anyone — we never tested anywhere in this document. If the 43% above are people who do not know their illness, this point is about people who cannot see the screen, and both are premises we built into the design without counting them.
 
-This app did not take blind users as its target. The premise of §1.5 is being undiagnosed rather than being visually impaired, and of the three layers §2.1 overlays, picture and colour both require sight. Speech alone still carries the verdict, but the photographing remains. We have recorded that gap as the eighth item in §5.9, and how far a screen reader and assisted capture can be joined to this is left to §5.10.
+This app did not take blind users as its target. The premise of §1.5 is being undiagnosed rather than being visually impaired, and of the three layers §2.1 overlays, picture and colour both require sight. Speech alone still carries the verdict, but the photographing remains. We have recorded that gap as the twelfth item in §5.9, and how far a screen reader and assisted capture can be joined to this is left to §5.10.
 
 ### 1.6 How widely the delivery medium has spread
 
@@ -440,7 +440,7 @@ Rather than close this section on the literature alone, we put the limitation to
 > "Many individual pictograms are highly abstract, including symbols representing treatment completion, dosage quantity, administration timing, and warning or prohibition messages. Without prior training or accompanying text, patients may misinterpret the prescribed dose, the timing of medication in relation to meals, or the intended meaning of specific warning icons."
 > (Foued Maaoui, Researcher, Pasteur Institute of Tunis)
 
-What the studies above measured and what this answer says are the same thing. It differs in having been written after looking at what we made. The pass rates in Table 6 are values for other people's sets; this is the word of someone who actually looked at the 78 morphemes of §2.2. In the same answer he singled out four of our morphemes as particularly abstract — completion, quantity, timing and prohibition — and those four are where the errors concentrate in Table 4 of §1.3. That the places most needed are the hardest is the conclusion of this section, and the literature and the survey pointed at it separately.
+What the studies above measured and what this answer says are the same thing. It differs in having been written after looking at what we made. The pass rates in Table 6 are values for other people's sets; this is the word of someone who actually looked at the 78 morphemes of §2.2. In the same answer he singled out four of our morphemes as particularly abstract: completion, quantity, timing and prohibition. The first three coincide exactly with the three types where errors concentrate in Table 4 of §1.3 (omission 32.9%, dose 28.4%, timing 23.2%). The fourth, prohibition, is not in Table 4 — that table counts errors pharmacists made while dispensing, so contraindication marking was never among the things counted. That the response nonetheless lists it fourth is because prohibition is separately dangerous seen from the patient side, and §1.3.1 takes up that misreading on its own. That the places most needed are the hardest is the conclusion of this section, and the literature and the survey pointed at it separately.
 
 This is why the present work does not stop at making pictograms but designs a procedure for measuring their comprehension alongside.
 
@@ -511,7 +511,7 @@ All of this prior work is other people's making, measured by other people. To he
 > "The images clearly reflect a lot of thought, but they need to land more intuitively. The image for washing your hands before taking it, for instance, is not intuitive. A hand under a running tap would come across far better. In fact many pictograms of this kind have already been developed, so it would be good to consult and borrow from them."
 > (Yonghan Lee, Senior Manager, Korea Craft and Design Foundation)
 
-Where the papers above say "they do not grasp the hierarchy", this answer goes one step more concrete. It names which picture fails to read and why, and offers the alternative. We took the point in §5.2 and redrew `hand_wash`, one of the two responses in §5.7 that actually changed a picture. What the prior work told us was where to be careful; what the survey told us was what to fix.
+Where the papers above say "they do not grasp the hierarchy", this answer goes one step more concrete. It names which picture fails to read and why, and offers the alternative. We took the point and redrew `hand_wash` as a hand under a running tap (§5.7.13). Three responses actually changed a picture: this one, `allergen_egg`, and `finish_course`, which followed a suggestion from Pharmacy Lecturer Sheron Sir Loon Goh. What the prior work told us was where to be careful; what the survey told us was what to fix.
 
 ### 1.11 The problem in summary
 
@@ -2649,6 +2649,8 @@ Ninth, cross-cultural misreading was not measured. Professor Afonso Cavaco of th
 Tenth, the spoken translations in six languages have had no native-speaker clinical review. The 72 morpheme sentences were carried into six languages by us and a machine, not by anyone who has counselled patients in those languages. A mistranslated dosing instruction causes exactly the harm this app exists to prevent, so until reviewed these translations hold the same status as the sample prescriptions of §5.7: plausible, and unconfirmed.
 
 Eleventh, whether people keep using it was not measured. The formative evaluation of §5.1 covers a single capture, and whether the same person opens this app again a few days later was not measured. What the industry-practice respondent in §5.7 chose as the first thing to break in operation is that point.
+
+Twelfth, whether taking the photograph is possible was assumed and not measured. This app begins with one photograph, and we assumed that taking it is possible for anyone. It is the point Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, raised in §1.5: that blind people may be the largest group among those who cannot read, and that for them the act of photographing is itself a barrier. This app did not take blind users as its target, so it is out of scope rather than a failure. But unless the scope is written down, the "three layers overlaid" of §2.1 reads as though it required no sight. How far a screen reader and assisted capture can be joined to this is left to §5.10.
 
 ### 5.10 Future plans
 
