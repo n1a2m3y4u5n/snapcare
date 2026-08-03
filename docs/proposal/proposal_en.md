@@ -2459,6 +2459,18 @@ Three respondents told us the survey instrument itself was flawed. Professor Ati
 
 The distributions for single-choice questions in this section therefore do not hold everything the respondents wanted to choose. That has to be read alongside the figures in Table 46, and it is why this section presents the free text next to the multiple choice.
 
+A heavier flaw surfaced as the fourth wave of responses came in. What the demonstration attached to the survey shows is a prescription photograph and the pictograms and speech produced from it; the app's own screens are not in it. Youngchan Kim of Kyung Hee Cyber University gave the same answer to three questions:
+
+> "I have neither seen nor used the system. (There is no system in the email.)"
+> (Youngchan Kim, Kyung Hee Cyber University)
+
+Seunghoon Jung of the Korea Institute of Design Promotion stopped at the same place.
+
+> "There is no material at all to judge from — no working screens of SnapCare, for instance — so I cannot judge."
+> (Seunghoon Jung, Korea Institute of Design Promotion)
+
+Both are in the HCI and design segment. We asked people whose work is judging screens to judge without showing them a screen, and this is a flaw not in the questions but in what we chose to show. We put in only the pictograms, judging them the core of this work, and that decision made one segment's answers unusable. It differs in kind from the judgement question going to only five segments: that was a filter on qualification, this was withholding the material from people who were qualified.
+
 E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols, told us of another flaw: they only realised at the end that there was a button back to the screen showing the 78 morphemes. How many responses were given without being able to look at the morphemes again, we do not know. The same respondent suggested putting a link back to the morphemes inside the questions.
 
 There are groups the link does not reach. The Korea Institute for Health and Social Affairs replied that as a public institution it cannot open an unverified URL and asked us to send the questions by email. The list contains 91 international organisations alone, and running a survey through a single link structurally fails to reach this group. A version with the same questions written in the body of the email should have been prepared alongside.
@@ -2873,22 +2885,22 @@ It should also be recorded that we may not obtain it. That the pass rates in Tab
 
 | Respondent | Position | Affiliation | Response |
 |---|---|---|---|
-| Youngchan Kim |  | Kyung Hee Cyber University | 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) |
+| Youngchan Kim |  | Kyung Hee Cyber University | I have neither seen nor used the system. (There is no system in the email.) |
 
 **a3_voice__why** (3)
 
 | Respondent | Position | Affiliation | Response |
 |---|---|---|---|
-| Youngchan Kim |  | Kyung Hee Cyber University | 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) |
-| Seunghoon Jung |  | Korea Institute of Design Promotion | 대신할 수 있을 지 판단할 근거 자료(스냅케어의 작동화면이라든지)가 전무하여 판단할 수 없음 |
+| Youngchan Kim |  | Kyung Hee Cyber University | I have neither seen nor used the system. (There is no system in the email.) |
+| Seunghoon Jung |  | Korea Institute of Design Promotion | There is no material at all to judge from — no working screens of SnapCare, for instance — so I cannot judge. |
 | Barbara Báldy |  | Semmelweis University | If a patient can't read the original text (not able to or lost their eyesight), the text format is not necessary. BUT patient safety protocols suggest to use verbal, visual and text instructions. |
 
 **a7_framing__why** (3)
 
 | Respondent | Position | Affiliation | Response |
 |---|---|---|---|
-| Youngchan Kim |  | Kyung Hee Cyber University | 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) |
-| Seunghoon Jung |  | Korea Institute of Design Promotion | 한국의 경우 한글을 이해하지 못할 정도로 문해력이 낮은 성인이 그렇게 많지 않을 듯 합니다. |
+| Youngchan Kim |  | Kyung Hee Cyber University | I have neither seen nor used the system. (There is no system in the email.) |
+| Seunghoon Jung |  | Korea Institute of Design Promotion | In Korea I do not think there are many adults whose literacy is low enough that they cannot understand Hangul. |
 | Barbara Báldy |  | Semmelweis University | It's a huge global problem. |
 
 ### 5.12 Appendix. Every multiple-choice response
@@ -3131,20 +3143,20 @@ For the same reason as the free text, every multiple-choice answer is set down a
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **a5_notrecommend**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **a7_framing__why**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 33% |
-| 한국의 경우 한글을 이해하지 못할 정도로 문해력이 낮은 성인이 그렇게 많지 않을 듯 합니다. | 1 | 33% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 33% |
+| In Korea I do not think there are many adults whose literacy is low enough that they cannot understand Hangul. | 1 | 33% |
 | It's a huge global problem. | 1 | 33% |
 
 **a7_framing**
@@ -3167,108 +3179,108 @@ For the same reason as the free text, every multiple-choice answer is set down a
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **q2_against**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **q4_smalln**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **q5_compare**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **q6_status**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 50% |
 | depend on the backend and if you store any data | 1 | 50% |
 
 **q6_loss**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **q6_consent**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 50% |
 | consult with this a legal professional | 1 | 50% |
 
 **q7_firstbreak**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **q7_mustretest**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 50% |
 | you need to test it | 1 | 50% |
 
 **q7_remake**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 50% |
 | you need to test it | 1 | 50% |
 
 **q7_voice**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **q8_coexist**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **q8_wcag**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **q8_iso**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **q8_labeling**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 50% |
 | could be | 1 | 50% |
 
 **d2_referral**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 100% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 100% |
 
 **d3_email**
 
 | Option | Responses | Share |
 |---|---|---|
-| 시스템을 보거나 사용한 적이 없음.(메일에 시스템이 없음) | 1 | 50% |
+| I have neither seen nor used the system. (There is no system in the email.) | 1 | 50% |
 | [응답자 이메일 가림] | 1 | 50% |
 
 <!-- 부록 끝 -->

@@ -879,7 +879,9 @@ def title_drift() -> list:
         if len(c) >= 4 and c[0] and c[0] != '성함' and '---' not in c[0]:
             roster[c[0]] = c[1]
     for name, title in roster.items():
-        if not re.search(r'[가-힣]', name) or not title:
+        # 직함을 적지 않은 응답자는 본문에서도 직함 없이 부른다.
+        # 없는 직책을 지어내지 않으므로 이 검사의 대상이 아니다.
+        if not re.search(r'[가-힣]', name) or not title or '미기재' in title:
             continue
         for m in re.finditer(re.escape(name), body):
             seg = body[max(0, m.start() - 24):m.end() + 14]
