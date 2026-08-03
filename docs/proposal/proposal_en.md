@@ -1186,7 +1186,7 @@ The first is contrast. All five verdict colours fell short. SC 1.4.3 of WCAG 2.2
 | Accent | `#2F6BF6` | 4.15:1 | `#1D4ED8` | 6.04:1 |
 | Secondary text | `#6B7280` | 4.35:1 | `#55606E` | 5.76:1 |
 
-All five were darkened by one step while the hue was kept. Green, amber and red have to be recognisable as such at a glance for the channels to remain distinct. The present values exceed 4.5:1 in all four combinations: on a white card, on the off-white background, on their own tinted band, and as white text on the colour itself.
+All five were darkened by one step while the hue was kept. Green, amber and red have to be recognisable as such at a glance for the channels to remain distinct. The present values exceed 4.5:1 in all four combinations: on a white card, on the off-white background, on their own tinted band, and as white text on the colour itself. The lowest of the eighteen combinations is the caution colour on the off-white background at 4.52, a margin of 0.02 over the criterion. Lightening that colour by even one step would put it under, so the values in Table 19 are not a matter of taste but values taken at the boundary.
 
 These are values the eye cannot hold, so they were locked with a test. The earlier values looked perfectly fine on screen, and that is in fact how they survived this long. The test measures more than contrast: it also checks that the three colours remain distinct in hue. Measuring contrast alone can be satisfied by collapsing everything to dark grey, which is the most common way of passing a test while losing what the test was for.
 

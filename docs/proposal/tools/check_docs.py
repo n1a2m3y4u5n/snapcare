@@ -36,6 +36,7 @@
   · 우리 산문의 표기가 한 가지로 통일되어 있는가
   · 응답자를 부를 때 직책이 표 41 과 같은가
   · 빌드된 문서에서 주소가 눌리는가
+  · 표 19 의 명도 대비가 계산과 같고 그 색이 실제로 쓰이는가
 """
 import re
 import sys
@@ -916,6 +917,67 @@ def links_live() -> list:
     return out
 
 
+def contrast() -> list:
+    """표 19 의 명도 대비가 계산과 같고, 그 색이 실제로 쓰이는가.
+
+    눈으로 지킬 수 없는 값이라 표에 적어 두어도 색을 한 번 손대면
+    조용히 어긋난다. 가장 낮은 것이 주의색의 4.52 이고 기준과의
+    여유가 0.02 다. 한 단만 밝혀도 미달이 된다."""
+    def lum(h):
+        h = h.lstrip('#')
+        c = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+        c = [x / 12.92 if x <= 0.04045 else ((x + 0.055) / 1.055) ** 2.4 for x in c]
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+    def ratio(a, b):
+        la, lb = lum(a), lum(b)
+        hi, lo = max(la, lb), min(la, lb)
+        return (hi + 0.05) / (lo + 0.05)
+
+    out = []
+    body = (DOC / 'proposal_ko.md').read_text()
+    m = re.search(r'\[표 19\][^\n]*`(#[0-9A-Fa-f]{6})`[^\n]*?([\d.]+):1', body)
+    bg = m.group(1) if m else '#F4F3EF'
+    i = body.index('[표 19]')
+    seen = 0
+    for ln in body[i:].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if seen:
+                break
+            continue
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        if len(c) != 5 or not c[1].startswith('`#'):
+            continue
+        seen += 1
+        for hexs, said in ((c[1], c[2]), (c[3], c[4])):
+            col = hexs.strip('`')
+            try:
+                want = float(said.split(':')[0])
+            except ValueError:
+                continue
+            got = ratio(col, bg)
+            if abs(got - want) > 0.02:
+                out.append(f'표 19 의 {c[0]} {col} 이 {said} 라는데 '
+                           f'{bg} 위에서 {got:.2f}:1 이다')
+        now = c[3].strip('`')
+        if ratio(now, bg) < 4.5:
+            out.append(f'표 19 의 {c[0]} {now} 이 기준 4.5:1 에 못 미친다 '
+                       f'({ratio(now, bg):.2f})')
+    if seen != 5:
+        out.append(f'표 19 에서 색 행을 {seen}개만 읽었다')
+
+    css = DOC.parent.parent / 'app/globals.css'
+    if css.is_file():
+        t = css.read_text()
+        for name, want in (('--color-safe', 2), ('--color-caution', 3), ('--color-avoid', 4)):
+            mm = re.search(rf'{name}:\s*(#[0-9A-Fa-f]{{6}})', t)
+            if not mm:
+                out.append(f'{name} 을 globals.css 에서 찾지 못했다')
+            elif f'`{mm.group(1)}`' not in body and f'`{mm.group(1).upper()}`' not in body:
+                out.append(f'{name} 이 {mm.group(1)} 인데 표 19 에 그 값이 없다')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다.
 
@@ -1043,6 +1105,9 @@ def main() -> int:
         note(t)
 
     for t in links_live():
+        note(t)
+
+    for t in contrast():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):
