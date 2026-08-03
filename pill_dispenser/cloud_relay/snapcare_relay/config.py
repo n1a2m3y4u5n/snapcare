@@ -82,6 +82,17 @@ HOOK_URL = os.environ.get("SNAPCARE_RELAY_HOOK_URL", "").strip()
 #: a way to make somebody's phone buzz at three in the morning.
 HOOK_TOKEN = os.environ.get("SNAPCARE_RELAY_HOOK_TOKEN", "").strip()
 
-#: Short on purpose. The write this follows has already succeeded; nothing is
-#: waiting on the hook, and a slow web app must not turn into parked threads.
-HOOK_TIMEOUT_S = _int("SNAPCARE_RELAY_HOOK_TIMEOUT", 5)
+#: Long enough for a web app that was asleep.
+#:
+#: This was 5 s, which sounds generous until you notice *when* the hook fires.
+#: The web app runs with `min_machines_running = 0`, so it is stopped whenever
+#: nobody is using it — and "nobody is using it" is the exact situation this
+#: feature exists for. The first request wakes the machine, and the wake plus a
+#: Next.js cold start took longer than five seconds on the first real try:
+#:
+#:     relay.hook: push hook unreachable: The read operation timed out
+#:
+#: A timeout here is a notification nobody gets. Nothing is waiting on this
+#: thread — the write it follows has already been answered — so the cost of
+#: waiting longer is one daemon thread parked for a few extra seconds.
+HOOK_TIMEOUT_S = _int("SNAPCARE_RELAY_HOOK_TIMEOUT", 20)

@@ -54,6 +54,12 @@ def _post(url: str, token: str, payload: dict, timeout: float) -> None:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             if response.status >= 400:
                 log.warning("push hook answered %s", response.status)
+            else:
+                # Logged on success too, and deliberately. Everything else about
+                # this path is silent by design, so without a line here the only
+                # way to tell "the hook worked" from "the hook never ran" is to
+                # own a phone that did or did not buzz.
+                log.info("push hook ok: %s %s", payload.get("deviceId", "")[:8], response.status)
     except urllib.error.HTTPError as exc:
         # Worth a line at warning: a 401 here means the two halves have
         # different tokens, and the only symptom anybody would otherwise see is
