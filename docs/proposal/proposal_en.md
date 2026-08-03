@@ -154,7 +154,7 @@ Because that distribution is now close to twenty years old, we asked the same th
 
 One respondent set down the reason as well. The explanation is given in speech, but what the patient can go back to afterwards is only the dose written on the label.
 
-> "The patient is thoroughly explained/counselled about the medication. However, it is only the dose that is written on the label which the patient can refer to when taking the medication."
+> "The patient is thoroughly explained/ counselled about the medication. However, it is only the dose that is written on the label which the patient can refer to when taking the medication."
 > (Professor Atif Usman, The Islamia University of Bahawalpur)
 
 A spoken explanation disappears the moment the patient leaves the pharmacy and only the paper remains. If they cannot read that paper, nothing remains.
@@ -2025,10 +2025,10 @@ Free text was written by 30 of the 35 respondents, 117 items in all. Counting by
 
 The heaviest finding was that a prohibition is not read as a prohibition. The morpheme for pregnancy contraindication, `state_pregnant`, is a picture of a pregnant woman with no prohibition marking. The prescription says "do not use during pregnancy" and the speech says so too, but to someone looking only at the picture it reads the other way round.
 
-> "The prescription says not to use during pregnancy, yet the pictogram shows a pregnant woman, which makes the patient think it is safe to use during pregnancy."
+> "In second example, the prescription read not to use the eyedrops in pregnancy while the pictogram showed a pregnant woman making the patient assume it is safe to use in pregnancy."
 > (Professor Atif Usman, The Islamia University of Bahawalpur)
 
-> "Putting in the pregnancy symbol alone does not convey that it is unsafe, so an X mark should be added."
+> "Putting a pregnant mother symbol does not explains that it is not safe for pregnant mother to consume the meds. Perhaps you will need to add a \"X\" symbol somewhere in the picture"
 > (Sheron Sir Loon Goh, Pharmacy Lecturer, Department of Clinical Pharmacy and Pharmacy Practice)
 
 Raisa Kravchenko, Deputy Director of the All Ukrainian NGO Coalition for Persons with Intellectual Disabilities in Ukraine, wrote that "with no danger marking it can be understood as being recommended for pregnant women", and Professor Eun-Kyoung Kim of Kongju National University noted that "'you must do this' and 'you must not' are not properly distinguished; the 'must not' in particular ought to be emphasised." The same statement came from four different countries.
@@ -2037,7 +2037,7 @@ Raisa Kravchenko, Deputy Director of the All Ukrainian NGO Coalition for Persons
 
 The same kind of inversion was raised for the finish-the-course morpheme.
 
-> "As the black dots are not filled to the end, to me it reads as meaning I do not have to finish the course."
+> "The symbol do not show what it means. For me it means I do not need to finish the course as your black dots did not complete the fully. you may want to add a arrow symbol for direction so that its clearer?"
 > (Sheron Sir Loon Goh, Pharmacy Lecturer, Department of Clinical Pharmacy and Pharmacy Practice)
 
 `finish_course` is the very morpheme named in the SDG 3.d contribution of §5.8 as what this app aims at. The finding is that it reads as the exact opposite.

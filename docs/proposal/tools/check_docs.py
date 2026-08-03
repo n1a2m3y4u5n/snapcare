@@ -315,15 +315,17 @@ def fig_faults() -> list:
             if ln.strip() and not ln.startswith('도판에서')]
 
 
-def quote_drift() -> list:
+def quote_drift(f: str = 'proposal_ko.md') -> list:
     """본문의 인용 블록이 부록의 원문과 글자 단위로 같은지 본다.
 
-    본문이 응답자의 오타를 조용히 고치고 있었다. "팩토그램" 을 "픽토그램"
-    으로, "이 또는" 을 "이 또한" 으로 바로잡고 띄어쓰기까지 손봤다. 인용은
-    고르는 순간 이미 우리 쪽으로 기울 수 있으므로 글자만은 그대로 두어야
-    한다. 영어로 답한 것을 우리말로 옮긴 자리는 걸리지 않도록 한글이 든
-    인용만 본다."""
-    s = (DOC / 'proposal_ko.md').read_text()
+    두 판 모두 응답자의 말을 조용히 다듬고 있었다. 한글판은 오타를
+    바로잡았고("팩토그램" → "픽토그램"), 영어판은 응답자의 영어를 다시
+    썼다("the prescription read not to use the eyedrops in pregnancy" 를
+    매끄러운 문장으로). 읽기는 나아지지만 인용이 아니게 된다.
+
+    한글판에서는 우리말 인용만 본다. 영어 응답을 옮긴 자리는 원문과 다른
+    것이 맞고, 출처에 "옮김" 이 적혀 있으면 넘어간다."""
+    s = (DOC / f).read_text()
     body, app = s[:s.index('### 5.11')], s[s.index('### 5.11'):]
     flat = re.sub(r'\s+', ' ', app)
     out = []
@@ -335,10 +337,12 @@ def quote_drift() -> list:
         if not m:
             continue
         q = m.group(1)
-        if not re.search(r'[가-힣]', q):
+        if f.endswith('_ko.md') and not re.search(r'[가-힣]', q):
             continue
         src = lines[i + 1] if i + 1 < len(lines) else ''
-        if '옮김' in src:
+        # 출처가 사람이 아닌 인용은 부록에 없는 것이 맞다. 화면 문구나
+        # 코드 주석을 옮긴 자리이며, 출처 줄이 그것을 밝힌다.
+        if '옮김' in src or 'Settings screen' in src or '설정 화면' in src:
             continue
         if re.sub(r'\s+', ' ', q)[:36] not in flat:
             out.append(q[:56])
@@ -424,8 +428,9 @@ def main() -> int:
         for t in unnumbered_subs(f):
             note(f'{f}: 번호 없는 소제목 — {t[:40]}')
 
-    for t in quote_drift():
-        note(f'인용이 부록 원문과 다르다 — "{t}…"')
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        for t in quote_drift(f):
+            note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
 
     for t in fig_faults():
         note(t)
