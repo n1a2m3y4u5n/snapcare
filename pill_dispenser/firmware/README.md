@@ -370,18 +370,80 @@ it with `make guide`.
 | Pi GND ↔ supply GND | — | **required**, see below |
 | LCD SCK / MOSI / CS | GPIO **11 / 10 / 8** (pins 23, 19, 24) | SPI0 with CE0; fixed by the peripheral |
 | LCD DC / RESET | GPIO **25 / 18** (pins 22, 12) | ordinary outputs; 18 is free because the ring is gone |
-| LCD VCC / LED / GND | 3.3 V, 3.3 V, GND | backlight straight to 3V3 |
-| OLED SDA / SCL | GPIO **2 / 3** (pins 3, 5) | I²C bus 1 at 0x3C; the board's own pull-ups |
-| OLED V / G | 3.3 V (pin 1), GND (pin 9) | four wires, no resistors |
+| LCD VCC / LED / GND | see below, 3.3 V, GND | backlight straight to 3V3 |
+| Touch T_CLK / T_DIN / T_DO | GPIO **11 / 10 / 9** | the same SPI0 as the panel; T_DO is MISO |
+| Touch T_CS | GPIO **7** (pin 26) | CE1 — the display has CE0 |
+| Touch T_IRQ | GPIO **4** (pin 7) | pen-down interrupt; the kernel driver owns it |
 | Piezo buzzer | GPIO **23** | through 100 Ω |
-| Take-dose button | GPIO **24** (pin 18) | to a ground; internal pull-up, no resistor |
+| Take-dose button | GPIO **24** (pin 18) | optional — the screen is the button on this build |
 | DS1302 SCLK / I/O / CE | GPIO **16 / 20 / 21** | bit-banged; pins 36, 38, 40 |
 | DS1302 VCC / GND | 3.3 V (pin 17), GND (pin 39) | **not 5 V** — the I/O line drives back |
-| *(SPI, reserved)* | *GPIO 7, 9* | claimed by `dtparam=spi=on`, unused |
-| *(free)* | *GPIO 4* | unassigned |
 
-One panel or the other, not both — `SNAPCARE_DISPLAY` picks, and `auto` tries
-the LCD first.
+GPIO 2 and 3 are now free. They used to carry the OLED; nothing needs them.
+
+### Powering the panel, which is where these modules bite
+
+**Check which board you have before you wire VCC.** The 2.8-inch modules come in
+two families that look identical and are not:
+
+* a **3.3 V board** — VCC to the Pi's 3V3, logic straight to the controller;
+* a **5 V board** — VCC to 5 V, an on-board regulator makes the 3.3 V the
+  controller wants, and the logic pins go through a level shifter.
+
+A 5 V board driven from the Pi's 3.3 V logic is the awkward case, and it fails
+in the most confusing way available. If the shifter is a 74HC**T**245 it is
+fine — those switch at about 2 V. If it is a plain 74HC245 running off 5 V it
+needs about 3.5 V to read a logic high, and the Pi puts out 3.3 V: every line
+reads low, the panel is never addressed, and **it stays black while the
+backlight glows**. Nothing in the firmware can tell that from a working screen,
+because there is no MISO to ask with.
+
+The experiment that settles it in thirty seconds: power VCC from 3V3 instead. A
+3.3 V board simply works. A 5 V board goes properly dark, because its regulator
+is not getting enough to drop — and that is your answer.
+
+If the backlight is dark rather than the picture, the LED pin is the suspect. On
+the reference build it is tied to 3V3 and is always on; if yours is wired to a
+GPIO, the firmware has to be told or it never drives it:
+
+```bash
+SNAPCARE_DISPLAY_BACKLIGHT=12      # BCM pin, in the systemd unit
+```
+
+**`--display-test` is the tool for all of this**, and it exists because a
+write-only panel cannot be diagnosed by asking the firmware:
+
+```bash
+sudo snapcare-dispenser --display-test          # walk it one stage at a time
+sudo snapcare-dispenser --display-test --display-hz 8000000    # a slower bus
+```
+
+It lights the backlight, floods red then green then blue, draws a windowed
+rectangle and finally a real frame, asking after each one what you can actually
+see — then says what the first failure means.
+
+### The screen is the button
+
+There is no physical switch on this build. The touch panel on the LCD module is
+the control, and **a tap anywhere on the glass** releases whatever dose is
+waiting — the same `Dispenser.release()` a button press or an app tap reaches,
+so there is one path by which a tray opens and one set of rules around it.
+
+No on-screen buttons, no regions, no calibration. A target somebody has to find
+and hit is a target that can be missed, and it would put the one action this
+machine performs behind knowing where to aim — on a device built for hands that
+shake. Only "the glass was touched" ever reaches the firmware.
+
+The XPT2046 on these modules is a clone of the ADS7846, which Raspberry Pi OS
+already has a driver for, so this is one overlay line rather than a second SPI
+protocol in the firmware. `service/install.sh` adds it:
+
+```
+dtoverlay=ads7846,cs=1,penirq=4,penirq_pull=2,speed=50000,keep_vref_on=1,xohms=150
+```
+
+It takes effect on the next reboot. Until then the firmware says so at startup
+and the screen still shows everything — a tap just does nothing.
 
 The servo pins avoid every pin that costs hardware on a 3B: GPIO 0/1 are the HAT
 ID EEPROM, 2/3 have permanent 1.8 kΩ pull-ups (a servo signal idling high before
@@ -390,12 +452,10 @@ it), and 14/15 are the serial console — the one way back into a Pi whose netwo
 you have just broken. A test asserts all of that, and that no peripheral shares a
 pin with a servo.
 
-**Those same pull-ups on 2/3 are why the OLED is there.** I²C is an open-drain
-bus: SDA and SCL do nothing without a resistor to 3.3 V, and the Pi has two
-soldered on that cannot be switched off. What rules the pins out for a servo is
-exactly what the panel wants, so the OLED is four wires with nothing else in
-them — and it shares the bus with a DS3231 quite happily, since 0x3C and 0x68 are
-different addresses.
+Those same pull-ups on 2/3 are what makes them the I²C pair: an open-drain bus
+does nothing without a resistor to 3.3 V and the Pi has two soldered on. A
+DS3231 build hangs its clock chip there with no resistors of its own. Nothing
+else on this machine uses them any more.
 
 **The RTC is on 16/20/21 and deliberately not on 2/3.** Those two pull-ups are
 wrong for a bit-banged three-wire chip in both directions: on the bidirectional
@@ -405,35 +465,106 @@ configured — which breaks the chip's requirement that SCLK be low when CE rise
 
 ### The screen needs no package, and no Pillow
 
-Two panels, one API. The **ILI9341** is the real one — 2.8", 240x320, four-line
-SPI — and a small **SSD1306** OLED is the backup and what a bench usually has.
-Both are written through the kernel's own device nodes with `os.write` and
-`fcntl.ioctl`: `dtparam=spi=on` and `dtparam=i2c_arm=on` in config.txt are the
-entire dependency. Nothing is pip-installable on Trixie anyway (PEP 668), which
-is the lesson the LED ring taught this build the hard way — the installer asked
-apt for a package that has never existed, swallowed the failure, and shipped
-every device dark.
+One panel: the **ILI9341**, 2.8", 240x320 native and mounted landscape as
+320x240. It is written through the kernel's own device nodes with `os.write` and
+`fcntl.ioctl`, so `dtparam=spi=on` in config.txt is the entire dependency.
+Nothing is pip-installable on Trixie anyway (PEP 668), which is the lesson the
+LED ring taught this build the hard way — the installer asked apt for a package
+that has never existed, swallowed the failure, and shipped every device dark.
+
+There used to be a second panel, a 128x64 SSD1306 on I²C, and everything that
+existed to keep the two in step has gone with it: `Mono1`, the one-bit
+treatments that stood in for colour, the probe order, the small-panel layout
+machinery. What that bought was a device that could be built two ways; what it
+cost was every screen being written for the worse of the two. **The colour is
+the message** on a device whose user cannot be assumed to read, and a panel with
+one ink could only ever approximate that.
 
 Pillow is absent too, and that is a size decision rather than a principle:
-everything these screens draw is rectangles, integer-scaled 1-bit glyphs and a
-5x7 font, which is a hundred lines of `bytearray` work. A full 240x320 repaint is
-about 12 ms of drawing against a 38 ms SPI transfer, so the drawing is not what
-costs anything.
+everything drawn here is rectangles, scanline-filled shapes, integer-scaled
+1-bit glyphs and two typefaces, which is a few hundred lines of `bytearray`
+work. A full frame is about 5 ms of drawing on a laptop against a 38 ms SPI
+transfer; the drawing has never been what costs anything.
 
-`display/canvas.py` is where the two panels stop differing. `Mono1` packs one bit
-per pixel in the SSD1306's own page layout, so its buffer goes down the I²C wire
-unrepacked; `Rgb565` packs big-endian 16-bit pixels, which is what the ILI9341
-reads. Screens are written once against that and do not know which panel they are
-on.
+**The one thing this driver cannot tell you** is whether a screen is there. Four-
+line SPI has no MISO, so nothing is ever read back: opening `/dev/spidev0.0`,
+claiming DC and RESET and writing the whole initialisation sequence succeeds
+exactly as well with nothing on the end of the ribbon. `/api/status` therefore
+reports `fitted: true` for "a driver is loaded and has not been dropped", never
+for "there is a screen" — and it now carries the panel's error string and a
+count of consecutive refused frames beside it, because neither driver *raises*
+on a write failure and a ribbon that works loose used to report perfect health
+for ever. `--display-test` is the way to settle it with your eyes.
 
-**They are not equally good, and the difference is the whole project.** The LCD
-has colour, and on a device whose user cannot be assumed to read, the colour *is*
-the message. The OLED has one ink, so a tone has to become a *treatment* instead
-— the due screen inverts the whole panel, the rest do not — which keeps the five
-states apart and is still worse from across a dim room. `SNAPCARE_DISPLAY=auto`
-therefore tries the LCD first, and `/api/status` reports which one answered,
-because a machine that quietly fell back to the OLED is a working machine saying
-less than it should.
+### The frame is three bands
+
+```
+┌──────────────────────────────────────────────┐
+│ ▮▮ ▮▮ ▮▮ ▮▮ ▮▮ ▮▮ ▮▮              09:41      │  bar    36 px
+├──────────────────────────────────────────────┤
+│   ███                                        │
+│   ███        13:00                           │  hero  148 px
+│    3         192.168.1.42                    │
+├──────────────────────────────────────────────┤
+│   ●      ●      ■      ■                     │  strip  56 px
+│ 08:00  13:00  20:00  22:30                   │
+└──────────────────────────────────────────────┘
+```
+
+**The bar** is seven fixed slots — wifi, relay, clock, tray, power, cell, card —
+each an icon with a solid severity shape under it, and the wall clock on the
+right. It never reorders, reflows, shrinks or truncates. That is the rule, not
+an observation: the status *screen* it replaced sorted faults to the front and
+dropped healthy subsystems off the end, so the same machine showed the same
+subsystem in three different places on three different days. A row you cannot
+learn is a row you have to read.
+
+An empty field draws a dim icon and **no** severity mark. Absence is not a fault
+and emphatically not a tick — a machine with no relay configured and no RTC
+fitted is a valid build, and three green circles on it would be the bar
+inventing health it has not verified.
+
+**The hero** is the one dose that matters, and its large numerals are always a
+time. There is no frame where the biggest thing on the panel is not a clock. The
+wall clock lives in the bar and the dose lives in the hero, told apart by
+position, permanently.
+
+**The strip** is the whole day: one solid colour-coded mark per dose with its
+time printed under it, and a white divider showing where you are in it. Taken is
+a blue circle, waiting a green circle, missed an amber triangle, still to come a
+steel square. A past dose the ledger has no entry for is an *outlined* square and
+prints no time — solid means "we know", outline means "we do not", and a
+confident false claim about whether a dose was taken is the worst error this
+codebase recognises.
+
+**No pictograms inside the shapes.** The old frames drew a hand inside a circle
+and a cup inside another; on the actual glass they were read as a face and a
+skull. A 16x16 glyph scaled to fit inside a triangle's usable area is a smudge at
+any distance worth designing for. The shape is solid now and the numbers beside
+it carry what the picture was failing to.
+
+**Colour is never the only channel.** Every severity is a shape as well —
+circle safe, triangle caution, octagon will-not-dispense, square not-yet — at
+13 px on the bar and 59 px on the hero. Roughly one man in twelve cannot use the
+red-green difference, and filled shapes are told apart by mass, which survives
+both that and being across the room.
+
+Two things here were measured rather than judged, and both had shipped wrong:
+
+* white on the old due green was **2.25:1**, below even the large-text contrast
+  floor, on the single most important frame the product has. The ink is black
+  now, at 10.79:1.
+* due and missed sat **1.12x** apart in lightness — all but identical in
+  greyscale, separated only by a 2 px outline that is below the eye's resolving
+  limit at three metres. They are 2.16x apart now, plus solid circle against
+  solid triangle. `blocked` no longer shares amber with `missed` either; it has
+  its own red.
+
+**Numbers are drawn, not scaled.** `display/numerals.py` builds each digit from
+strokes in a unit box and stamps a filled disc along them, the way a marker pen
+works — round terminals, round joins, and correct at every size because nothing
+is ever scaled. The 5x7 font in `display/font.py` stays for the small text an
+SSID and an IP address need. A 65 px clock costs 1.4 ms.
 
 ### What the person sees and hears
 
@@ -442,29 +573,38 @@ has used one of these devices understands the other:
 
 | | |
 |---|---|
-| **green, repeating chirp** | a dose is due; press the button, or release it in the app |
+| **green, repeating chirp** | a dose is due; touch the screen, or release it in the app |
 | **blue** | released — the pills are in the cup |
 | **amber** | the dose went untaken, or its window closed |
 | **violet** | a new schedule was accepted |
 | **cyan, silent** | waiting to be put on a WiFi network |
+| **red** | the machine will not open a tray until somebody fixes something |
 
 Green means "there is a dose you can have"; blue is what follows once somebody
 has released it. The distinction is load-bearing on this build, because nothing
 leaves the hopper until a person asks — green is an offer, not an announcement.
 
-**What the screen adds is which tray and what time.** That is the one thing it
-can do that a ring could not, and it is the reason for the change: a ring on an
-eight-hopper machine says "a dose" and leaves the person to work out which one,
-and an amber ring says nothing about whether the dose it is mourning was this
-morning's or last night's. So the due screen carries the tray number and the
-hour, and the missed screen carries the hour it was owed.
+Red is the newest of them and it exists because amber was doing two jobs. "A
+dose was missed" and "this machine has stopped" are the two states the severity
+grammar exists to keep apart, and the only thing separating them was a 2 px
+outline nobody can resolve across a room. Red for stopped is the road-sign
+convention, and the octagon says it again for anybody who cannot use the hue.
 
-**What it must not become is a text display.** The font in `display/font.py` has
-digits, capitals and four punctuation marks, and it exists for a tray number, a
-clock and the setup network's name. Everything else on a screen here is a shape
-and a colour. Anything that wants a sentence belongs in the app, where there is
-a reader — putting it on the machine would hand the whole interface back to a
-skill this device may not assume.
+**What the screen adds is which tray, what time, and what else today.** A ring on
+an eight-hopper machine says "a dose" and leaves the person to work out which
+one, and an amber ring says nothing about whether the dose it is mourning was
+this morning's or last night's. The hero carries the tray and the hour; the strip
+along the bottom carries the whole day, so "did I take the eight o'clock one" is
+answered by looking rather than by asking somebody.
+
+**What it must not become is a text display.** The whole device's word inventory
+is `SNAPCARE`, `PASSWORD`, an SSID, a passphrase, an IPv4 address and a `DD-MM` —
+and every one of those is something a person is about to type or dial, never a
+sentence explaining the machine to them. Everything else is a shape, a colour or
+a number. A test spies on `font.draw` and fails on any run over sixteen
+characters or any alphabetic run over nine, so the rule is enforced rather than
+remembered. Anything that wants a sentence belongs in the app, where there is a
+reader.
 
 The chirp repeats every `BUZZER_REPEAT_S` (20 s) until the dose is released, the
 chime is silenced, or the grace window closes. That pairing is the point rather
@@ -481,10 +621,19 @@ to be configured is indistinguishable from one that is switched off, and the onl
 cue anybody gets is the app staying empty. A waiting dose always wins the screen
 and hands it back afterwards — medication is the job.
 
-Any of these three parts can be absent. A missing one is logged at startup and
+Any of these parts can be absent. A missing one is logged at startup and
 skipped; the status page reports what is actually fitted rather than pretending.
 A dispenser that will not start because its buzzer is unplugged is strictly
 worse than a quiet one — the pills are what matter.
+
+**Quiet hours are a palette, not a brightness.** Between 22:00 and 07:00 the
+resting frame wears a darker set of colours; it never blanks, because a person
+waking at three wondering whether they have a dose due must be able to answer
+that by looking rather than by finding something to press. A waiting dose is
+never dimmed at any hour, and touching the screen brings the day palette back
+for thirty seconds. It is a palette because this build's backlight is tied to
+3V3 and there is no pin to dim — the old brightness numbers were being computed
+and then thrown away.
 
 ### Powering the servos
 
@@ -714,7 +863,7 @@ one screen that matters.
 ## Testing it without a Pi
 
 ```bash
-make            # 490 tests, no board, no servos, no network
+make            # 660 tests, no board, no servos, no network
 make run        # the whole firmware on a laptop, mock servos, port 8099
 make label      # this machine's setup QR and pairing code, in the terminal
 make cloud      # the same, wired to a relay on this machine — see ../cloud_relay
@@ -788,14 +937,14 @@ direction in the browser, at load, by opening an envelope Python sealed.
 | Servo timing | lgpio, or pigpio DMA on the older cards that still have it |
 | Schedule storage | JSON, atomically replaced |
 | Setup | scan a QR |
-| Opening a tray | when a release is asked for — in the app, or on the button |
+| Opening a tray | when a release is asked for — a tap on the screen, or in the app |
 
 Nothing is dropped at the scheduled minute. At its minute a dose is *offered*:
 the screen goes green and names the tray, the chirp starts, and the dose sits on
-`awaitingRelease` until somebody asks for it — by tapping release in the app, or
-by pressing the button on the machine. Both land on the same `Dispenser.release`,
-so there is one fact rather than two, and a dose that came out is a dose somebody
-asked for.
+`awaitingRelease` until somebody asks for it — by touching the screen, or by
+tapping release in the app. Both land on the same `Dispenser.release`, so there
+is one fact rather than two, and a dose that came out is a dose somebody asked
+for.
 
 The 20-character device→phone ceiling is kept even though nothing here is short
 of room for it. Events are still emitted as `SC1*E*` and still fit, so the log
@@ -831,13 +980,15 @@ firmware/
     server.py         both APIs, the captive portal, the pages
     daemon.py         the process
     indicators.py     the screen and the buzzer: what the person sees and hears
-    display/          the two panels, one drawing API, and the screens
-    button.py         the one input: take this dose now
+    soc.py            what the board can tell you about itself: power, storage
+    display/          the panel, the three bands, and the two typefaces
+    button.py         an optional physical switch: take this dose now
+    touch.py          the screen as the button — a tap anywhere releases a dose
     rtc.py            whether the clock chip can be believed, whichever is fitted
     ds1302.py         three bit-banged wires, and the trust model they force
     web/              four pages, no build step, nothing external
   service/            systemd unit + install.sh
-  tests/              490 tests; only the end-to-end one opens a socket
+  tests/              660 tests; only the end-to-end one opens a socket
 ```
 
 `NOTES-FOR-WEBAPP.md` is for whoever is building the production web app.

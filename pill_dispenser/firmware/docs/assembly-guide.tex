@@ -40,7 +40,7 @@
 \textbf{Nothing drops by itself.} At the scheduled minute the machine
 \emph{offers} the dose: the screen turns green and names the tray, and the
 buzzer chirps every 20 seconds. The tray opens only when somebody asks
-\textemdash{} the button on the machine, or release in the app. They do the same
+\textemdash{} a tap on the screen, or release in the app. They do the same
 thing. Ask within the hour or the screen goes amber, the dose is logged missed,
 and the tray never opened.
 
@@ -58,7 +58,7 @@ and the tray never opened.
   \node[ev] (due) at (0,1.4)
        {\textbf{08:00 \textendash{} due}\\[-0.3ex]screen green, names the tray\\[-0.3ex]chirp every 20\,s};
   \node[ev, fill=okgreen!10, draw=okgreen!55] (ask) at (6.0,1.4)
-       {\textbf{somebody asks}\\[-0.3ex]the button, or the app\\[-0.3ex]tray opens, screen blue};
+       {\textbf{somebody asks}\\[-0.3ex]the screen, or the app\\[-0.3ex]tray opens, screen blue};
   \node[ev, fill=dangerred!7, draw=dangerred!50] (miss) at (6.0,-1.1)
        {\textbf{nobody asks}\\[-0.3ex]\textbf{the tray stays shut}\\[-0.3ex]screen amber, logged missed};
 
@@ -101,13 +101,12 @@ stale.
 1 per tray & SG90 micro servo & Up to eight. Adding one later is a plug \\
 1 & Passive piezo buzzer & \textbf{Passive}, not an active beeper. They look identical in the bin; Stage~2 tells them apart by ear \\
 1 & 100\ohm{} resistor & In series with the buzzer \\
-1 & Momentary push button & Any normally-open switch. Two wires, no resistor \\
+1 & Momentary push button & \emph{Optional.} The touch screen is the control; fit this only for a second, physical one. Any normally-open switch, two wires, no resistor \\
 1 & DS1302 RTC module & The five-pin board with a coin-cell holder \\
 1 & CR2032 cell & \textbf{Not} the LIR2032 the holder is often marked for. The trickle charger is never enabled, so a rechargeable arrives flat and stays flat \\
 \midrule
-\multicolumn{3}{@{}l}{\textbf{\sffamily A screen \textemdash{} one of these two}}\\
-1 & ILI9341 2.8\,in SPI LCD & 240$\times$320, four-line SPI. \textbf{Check yours before powering it}: boards with an on-board regulator want 5\,V, bare ones are 3.3\,V and are destroyed by 5\,V \\
-1 & SSD1306 I\textsuperscript{2}C OLED & The small one with SD / CL / V / G pins. 3.3\,V \\
+\multicolumn{3}{@{}l}{\textbf{\sffamily The screen}}\\
+1 & ILI9341 2.8\,in SPI LCD, with touch & 240$\times$320, four-line SPI, XPT2046 touch controller on the same bus. \textbf{Check yours before powering it}: boards with an on-board regulator want 5\,V, bare ones are 3.3\,V and are destroyed by 5\,V. See \S\ref{sec:panelpower} \\
 \midrule
 \textemdash{} & Jumper wire, terminal blocks & Dupont leads for the bench; screw terminals for anything that gets carried \\
 \bottomrule
@@ -155,8 +154,9 @@ Stage~6.
 \noindent\textbf{\sffamily GPIO 2 and 3 carry permanent 1.8\,k\textohm{}
 pull-ups that cannot be switched off.} That is why no servo goes near them
 \textemdash{} a signal line idling high before the software starts slams a horn
-to one end with a loaded tray on it \textemdash{} and it is exactly why the OLED
-does. I\textsuperscript{2}C wants those pull-ups and they are already fitted.
+to one end with a loaded tray on it \textemdash{} and it is exactly what makes
+them the I\textsuperscript{2}C pair, which wants those pull-ups and finds them
+already fitted. Nothing on this machine uses them; a DS3231 build would.
 Run \code{pinout} for the whole header.
 
 \vspace{2mm}
@@ -169,10 +169,11 @@ Run \code{pinout} for the whole header.
 \swatch{servo} & Servo, trays 1--3 & 17, 27, 22 & 11, 13, 15 & signal only \textemdash{} \textbf{not} power \\
 \swatch{servo} & Servo, trays 4--8 & 5, 6, 13, 19, 26 & 29, 31, 33, 35, 37 & fit a hopper and it works \\
 \swatch{buzzc} & Piezo buzzer & 23 & 16 & through 100\ohm \\
-\swatch{btnc}  & Take-dose button & 24 & 18 & to a ground; the pull-up is internal \\
-\swatch{dispc} & OLED SD, CL & 2, 3 & 3, 5 & \\
+\swatch{btnc}  & Take-dose button & 24 & 18 & optional \textemdash{} the screen is the button \\
 \swatch{dispc} & LCD MOSI, SCK, CS & 10, 11, 8 & 19, 23, 24 & \\
 \swatch{dispc} & LCD DC, RESET & 25, 18 & 22, 12 & \\
+\swatch{dispc} & Touch T\_DO (MISO), T\_CS & 9, 7 & 21, 26 & CE1 \textemdash{} the panel has CE0 \\
+\swatch{dispc} & Touch T\_IRQ & 4 & 7 & pen-down; the kernel driver owns it \\
 \swatch{rtcc}  & DS1302 CLK, DAT, RST & 16, 20, 21 & 36, 38, 40 & bit-banged; no bus, no kernel driver \\
 \swatch{p33}   & 3.3\,V & \textemdash{} & 1, 17 & clock chip, screen, backlight \\
 \swatch{gndc}  & Ground & \textemdash{} & 6, 9, 14, 20, 25, 39 & one of these must reach the servo supply's ground \\
@@ -384,25 +385,28 @@ somebody checking a hopper, not a dose anybody has to be fetched for.)
 The screen is most of what the person in the room ever sees, and it is the one
 part that can say \emph{which tray} and \emph{what time}.
 
-Fit \textbf{one} of the two. With both fitted the colour panel wins and the OLED
-is the standby; with neither, the machine still doses and still chirps.
+It is also the only \emph{control} this build has: there is no physical button,
+and a tap anywhere on the glass releases a waiting dose. With no screen fitted
+the machine still doses and still chirps, and the app is the only way to release.
+
+\label{sec:panelpower}
 
 \vspace{3mm}
 \begin{center}
 \small
 \begin{tabular}{@{}ll@{\hskip 10mm}ll@{}}
 \toprule
-\multicolumn{2}{@{}l}{\hdr{ILI9341 LCD \textemdash{} the colour one}} &
-\multicolumn{2}{l}{\hdr{SSD1306 OLED \textemdash{} the standby}} \\
+\multicolumn{2}{@{}l}{\hdr{ILI9341 LCD \textemdash{} the panel}} &
+\multicolumn{2}{l}{\hdr{XPT2046 \textemdash{} the touch half}} \\
 \midrule
-VCC   & \emph{read your module} & V  & 3.3\,V (pin 1) \\
-GND   & GND (pin 6)             & G  & GND (pin 9) \\
-SCK   & GPIO 11 (pin 23)        & CL & GPIO 3 (pin 5) \\
-MOSI  & GPIO 10 (pin 19)        & SD & GPIO 2 (pin 3) \\
-CS    & GPIO 8 (pin 24)         &    & \\
-DC    & GPIO 25 (pin 22)        &    & \\
-RESET & GPIO 18 (pin 12)        &    & \\
-LED   & 3.3\,V (pin 17)         &    & \\
+VCC   & \emph{read your module} & T\_CLK & GPIO 11 (pin 23) \\
+GND   & GND (pin 6)             & T\_DIN & GPIO 10 (pin 19) \\
+SCK   & GPIO 11 (pin 23)        & T\_DO  & GPIO 9 (pin 21) \\
+MOSI  & GPIO 10 (pin 19)        & T\_CS  & GPIO 7 (pin 26) \\
+CS    & GPIO 8 (pin 24)         & T\_IRQ & GPIO 4 (pin 7) \\
+DC    & GPIO 25 (pin 22)        &        & \\
+RESET & GPIO 18 (pin 12)        &        & \\
+LED   & 3.3\,V (pin 17)         &        & \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -410,15 +414,17 @@ LED   & 3.3\,V (pin 17)         &    & \\
 \vspace{4mm}
 \begin{center}
 \begin{tikzpicture}
-  \node[modbox, minimum width=28mm, minimum height=28mm] (lcd) at (-4.8,-0.68)
-       {ILI9341\\[0.4ex]\footnotesize 2.8\,in\\[-0.2ex]\footnotesize 240$\times$320};
+  \node[modbox, minimum width=28mm, minimum height=40mm] (lcd) at (-4.8,-1.35)
+       {ILI9341\\[0.4ex]\footnotesize 2.8\,in\\[-0.2ex]\footnotesize 240$\times$320
+        \\[0.4ex]\footnotesize + XPT2046};
   \foreach \i/\name/\yy in {0/{VCC}/0.9, 1/{GND}/0.45, 2/{CS}/0.0, 3/{RESET}/-0.45,
-                            4/{DC}/-0.9, 5/{MOSI}/-1.35, 6/{SCK}/-1.8, 7/{LED}/-2.25}{
+                            4/{DC}/-0.9, 5/{MOSI}/-1.35, 6/{SCK}/-1.8, 7/{LED}/-2.25,
+                            8/{T\_DO}/-2.7, 9/{T\_CS}/-3.15, 10/{T\_IRQ}/-3.6}{
     \node[term] (t\i) at (-3.4,\yy) {};
     \node[font=\sffamily\tiny, text=ink70, anchor=east] at (-3.55,\yy) {\name};
   }
 
-  \hframe{1.9}{0.9}{-2.25}{Pi header}
+  \hframe{1.9}{0.9}{-3.6}{Pi header}
   \hpin{1.9}{0.9}{1}{ppwr33}{3V3}
   \hpin{1.9}{0.45}{6}{pusegnd}{GND}
   \hpin{1.9}{0.0}{24}{pusedisp}{GPIO 8}
@@ -427,12 +433,17 @@ LED   & 3.3\,V (pin 17)         &    & \\
   \hpin{1.9}{-1.35}{19}{pusedisp}{GPIO 10}
   \hpin{1.9}{-1.8}{23}{pusedisp}{GPIO 11}
   \hpin{1.9}{-2.25}{17}{ppwr33}{3V3}
+  \hpin{1.9}{-2.7}{21}{pusedisp}{GPIO 9}
+  \hpin{1.9}{-3.15}{26}{pusedisp}{GPIO 7}
+  \hpin{1.9}{-3.6}{7}{pusedisp}{GPIO 4}
 
   \draw[wire, p33]  (t0) -- (H1.west);
   \draw[wire, gndc] (t1) -- (H6.west);
   \foreach \i/\pinid in {2/24, 3/12, 4/22, 5/19, 6/23}{
     \draw[wire, dispc] (t\i) -- (H\pinid.west);}
   \draw[wire, p33]  (t7) -- (H17.west);
+  \foreach \i/\pinid in {8/21, 9/26, 10/7}{
+    \draw[wire, dispc] (t\i) -- (H\pinid.west);}
 
   \node[font=\sffamily\scriptsize\bfseries, text=dangerred, anchor=west] at (-4.0,1.6)
        {check VCC before you power it};
@@ -443,16 +454,17 @@ LED   & 3.3\,V (pin 17)         &    & \\
        {\begin{minipage}{40mm}\scriptsize
         \textbf{\color{ink}Go by the silkscreen}, not the order drawn here.
         These boards vary.\\[0.8ex]
-        Fitting the LCD retires the OLED \textemdash{} only one panel is
-        driven.\end{minipage}};
+        \textbf{\color{ink}T\_CLK and T\_DIN are not drawn}: they go to the
+        same GPIO 11 and GPIO 10 the panel already uses. Two wires into one
+        header pin.\end{minipage}};
 \end{tikzpicture}
 \end{center}
 
 \vspace{2mm}
-\noindent\textbf{\sffamily Colour is only half of it.} The OLED has one ink,
-and roughly one man in twelve cannot use the colour on the LCD either
-\textemdash{} so every screen also carries a \emph{shape}, and the shape means
-the same thing on both panels and to everybody:
+\noindent\textbf{\sffamily Colour is only half of it.} Roughly one man in twelve
+cannot use the red-against-green difference at all \textemdash{} so every screen
+also carries a \emph{shape}, filled rather than outlined so it is told apart by
+its mass, and the shape means the same thing to everybody:
 
 \vspace{2mm}
 \begin{center}
@@ -480,24 +492,47 @@ the same thing on both panels and to everybody:
 day is a warning they stop reading.
 
 \vspace{2mm}
-\noindent\textbf{\sffamily The screen says more than doses.} Left alone it
-cycles slowly through the time and the next dose, a whole-machine summary
-(radio, clock, relay), and \textemdash{} when the radio has something to say
-\textemdash{} the network and this device's IP address. No button, nothing to
-learn: it simply takes its turn. That address is worth knowing about, because
-Chrome on Android cannot resolve \code{pilldispenser.local} and the number on
-this screen is the way in.
+\noindent\textbf{\sffamily The frame is three bands, and they never move.} A
+status bar across the top carries seven fixed slots \textemdash{} wifi, relay,
+clock, tray, power, coin cell, SD card \textemdash{} each an icon with a solid
+severity shape under it, plus the wall clock. It never reorders and never
+reflows, because a row you cannot learn is a row you have to read. An empty
+field draws a dim icon and \emph{no} mark: absence is not a fault and is
+certainly not a tick.
+
+The middle band is the one dose that matters, with the time as the largest thing
+on the panel and the tray number under the shape. Below it, a strip carries the
+whole day: one solid mark per dose with its time under it, and a white divider
+showing where you are. Taken is a blue circle, waiting a green circle, missed an
+amber triangle, still to come a steel square \textemdash{} so ``did I take the
+eight o'clock one'' is answered by looking.
+
+The device's IP address sits permanently under the time. That matters more than
+it sounds: Chrome on Android cannot resolve \code{pilldispenser.local}, so those
+four numbers are the only way in for about half of everybody who tries \textemdash{}
+and the screen that used to show them was part of a rotation that dropped it
+exactly when there was an address to show.
+
+\vspace{2mm}
+\noindent\textbf{\sffamily A tap anywhere releases a dose.} There are no
+on-screen buttons and nothing to aim at, deliberately: a target can be missed,
+and this is a machine for hands that shake. Touching it also brings the panel
+out of its night colours for half a minute.
 
 \begin{provebox}
 \provetitle
-For the OLED, first check it is answering at all:
+If the glass is dark, walk it one stage at a time:
 \begin{shell}
-i2cdetect -y 1        # 3c, or 3d on a board with the address link moved
+sudo snapcare-dispenser --display-test
 \end{shell}
-Then, for either panel, \code{selftest}. It paints each state in turn and asks
-which one you are looking at, \textbf{what shape is on it}, and \textemdash{} on
-the LCD \textemdash{} what colour. Those questions are the whole test; answer
-them honestly.
+It lights the backlight, floods red then green then blue, draws a windowed
+rectangle and finally a real frame, asking after each what you can actually see
+\textemdash{} then says what the first failure means. \code{--display-hz 8000000}
+retries on a slower bus, which is the first thing to try on a speckled panel.
+
+Then \code{selftest}. It paints each state in turn and asks which one you are
+looking at, \textbf{what shape is on it}, and what colour. Those questions are
+the whole test; answer them honestly.
 \end{provebox}
 
 \vspace{1mm}
@@ -517,10 +552,16 @@ asks what colour you can see and not whether you can see anything.
 \clearpage
 
 % ═══════════════════════════════════════════════════════════════════════════
-\section{Stage 4 \textemdash{} the take-dose button}
+\section{Stage 4 \textemdash{} the take-dose button (optional)}
 
-Two wires. It is the control the person in the room actually uses, and the only
-one that works with no network at all.
+The screen is already the control: a tap anywhere on the glass releases a
+waiting dose, and Stage~3 fitted it. This stage adds a \emph{second}, physical
+control, and it is worth two wires in exactly two situations \textemdash{} a
+person who cannot reliably work a touch screen, and a bench where you want to
+prove the release path without a finger on the glass.
+
+Skip it otherwise. Both inputs reach the same \code{release()}, so nothing about
+the machine's behaviour changes either way.
 
 \vspace{3mm}
 \begin{center}
@@ -586,9 +627,8 @@ tray moves here, stop and fix it.
 \end{provebox}
 
 \vspace{1mm}
-\noindent A build with no button is a valid build \textemdash{} the app still
-releases doses \textemdash{} but fit one if the person using the machine does
-not carry a phone.
+\noindent A build with no button is the normal build: the screen and the app
+both release doses without it.
 
 \clearpage
 
@@ -839,9 +879,17 @@ It was accepted but never fitted. Set \code{SNAPCARE\_TRAYS} \\
 \multicolumn{2}{@{}l}{\textbf{\sffamily Screen}}\\
 Nothing on the screen, ever &
 \code{gpio.display} in \code{status}. \code{fitted:false} carries the reason \\
-OLED: \code{i2cdetect} finds nothing &
-\code{dtparam=i2c\_arm=on} in \code{/boot/firmware/config.txt}, then reboot.
-\code{3d} instead of \code{3c} is not a fault \\
+Lit, but nothing is ever drawn &
+Very likely logic levels. A 5\,V module with a plain 74HC245 shifter needs
+\textasciitilde3.5\,V to read a high and the Pi puts out 3.3\,V, so every line
+reads low. Power VCC from 3V3 instead: a 3.3\,V board works, a 5\,V one goes
+dark, and that tells you which you have \\
+Backlight dark, not the picture &
+LED is on a GPIO nobody drives. Set \code{SNAPCARE\_DISPLAY\_BACKLIGHT} to its
+BCM pin; until then it sits low \\
+A tap on the screen does nothing &
+\code{dtoverlay=ads7846} missing from \code{/boot/firmware/config.txt}, or no
+reboot since. The log says so at startup \\
 LCD: lit but blank &
 The backlight is independent of the data lines, so a lit panel proves only that
 LED has power. Check DC (pin 22) and RESET (pin 12) \\
