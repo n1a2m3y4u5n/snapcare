@@ -62,25 +62,50 @@ export default function TextSizePage() {
           제목은 작게 둔다. 이 화면에서 크기를 말하는 것은 아래 줄들이고, 제목이
           크면 그 비교를 방해한다. 어차피 소리가 같은 말을 이미 했다.
         */}
-        <p className="text-center text-sm font-semibold" style={{ color: 'var(--color-sc-muted)' }}>
+        {/* 손가락을 함께 낸다. 이 문장을 못 읽는 사람에게 "누르라" 는 말은 그림이다. */}
+        <p className="flex items-center justify-center gap-2 text-center text-sm font-semibold"
+           style={{ color: 'var(--color-sc-muted)' }}>
+          <span aria-hidden className="text-xl leading-none">👆</span>
           Tap the smallest line you can read
         </p>
 
-        <div className="mt-6 flex flex-col gap-2">
-          {TEXT_SIZES.map((size) => (
+        <div className="mt-6 flex flex-col gap-3">
+          {TEXT_SIZES.map((size, i) => (
             <button
               key={size}
               onClick={() => choose(size)}
               aria-label={`Use this size: ${SAMPLE}`}
-              className="w-full rounded-2xl bg-white px-4 py-4 text-center shadow-sm
-                         active:scale-[0.98] transition-transform"
+              /*
+                네모 박스가 아니라 **누르는 것**으로 보이게 한다.
+
+                흰 카드에 글자만 있을 때는 다섯 개의 네모로 보였다 — 누르는 것인지
+                그냥 보기인지가 화면에 없었다. 앱을 처음 켠 사람이 만나는 첫 화면이고
+                여기서 아무것도 안 누르면 뒤로 갈 수가 없는데.
+
+                셋을 준다: 테두리(경계가 있어야 물건이 된다), 고르는 동그라미(하나를
+                고르는 자리라는 표시), 눌리는 반응. 가운데 줄은 천천히 숨쉬어서 눈이
+                먼저 가게 한다 — 그것이 기본값이라 아무 생각 없이 눌러도 무난하다.
+              */
+              className={`flex w-full items-center gap-4 rounded-2xl border-2 bg-white px-4 py-4
+                          text-left shadow-sm transition-transform
+                          active:scale-[0.97] active:bg-[color-mix(in_srgb,var(--color-sc-primary)_10%,white)]
+                          ${i === 1 ? 'sc-breathe' : ''}`}
+              style={{ borderColor: 'var(--color-sc-line)' }}
             >
+              {/* 고르는 동그라미. 크기를 줄마다 키워서 큰 글자를 고르는 사람에게
+                  표적도 함께 커지게 한다. */}
+              <span aria-hidden
+                    className="shrink-0 rounded-full border-[3px]"
+                    style={{
+                      width: ROOT_PX[size] * 0.9, height: ROOT_PX[size] * 0.9,
+                      borderColor: 'var(--color-sc-primary)',
+                    }} />
               {/*
                 px 로 박는다. rem 이면 지금 걸려 있는 뿌리 크기를 따라가서 다섯 줄이
                 다 같이 커지고, 그러면 검사표가 아니라 그냥 목록이 된다.
               */}
               <span aria-hidden
-                    className="font-bold"
+                    className="flex-1 font-bold"
                     style={{ fontSize: ROOT_PX[size] * 1.15, lineHeight: 1.3, color: 'var(--color-sc-ink)' }}>
                 {SAMPLE}
               </span>
