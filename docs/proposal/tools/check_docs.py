@@ -14,6 +14,9 @@
   · 요약란이 서식의 2~3문장 제한을 지키는가
   · 서식으로 뽑았을 때 마크다운이 새지 않는가
   · 기계가 쓴 티가 나는 상투구가 남아 있지 않은가
+  · 두 판에서 그림이 같은 자리에 있는가
+  · 두 판이 절마다 비슷한 수의 상호 참조를 갖는가
+  · 인용이 이름과 해만 적혀 있지 않은가
 """
 import re
 import sys
@@ -99,6 +102,75 @@ def slop(f: str) -> list:
     return out
 
 
+def orphan_figs(f: str, fw: str) -> set:
+    """절이 그림으로 끝나는 자리를 모은다.
+
+    그것 자체는 잘못이 아니다. 두 판에서 다르면 잘못이다. 한쪽에서만
+    그림이 절 끝으로 밀려 있으면 넣을 때 앵커를 다르게 잡은 것이고,
+    실제로 영어판 그림 19·20 이 그랬다."""
+    s = (DOC / f).read_text()
+    s = s[:s.index('### 5.11')]
+    lines = s.splitlines()
+    out = set()
+    for i, ln in enumerate(lines):
+        m = re.match(rf'^\*\*\[{fw} (\d+)\]', ln)
+        if not m:
+            continue
+        j, tail = i + 1, 0
+        while j < len(lines) and not lines[j].startswith(('### ', '## ')):
+            t = lines[j].strip()
+            if t and not t.startswith(('|', '[표', '[Table', '![', '**[', '```', '#')):
+                tail += 1
+            j += 1
+        if tail == 0:
+            out.add(int(m.group(1)))
+    return out
+
+
+def short_cites(f: str) -> list:
+    """서지 정보 없이 이름과 해만 적은 인용을 찾는다.
+
+    (UNESCO, 2025) 처럼 적으면 읽는 사람이 앞으로 되돌아가야 무엇인지
+    안다. 제목이나 학술지가 함께 있으면 되돌아갈 일이 없다. 여기서는
+    괄호 안에 이탤릭 제목도 따옴표 제목도 없는 것을 걸러 낸다."""
+    s = (DOC / f).read_text()
+    s = s[:s.index('### 5.11')]
+    out = []
+    for m in re.finditer(r'\(([^()]{6,58})\)', s):
+        t = m.group(1)
+        if not re.search(r'(19|20)\d\d', t):
+            continue
+        if '*' in t or '"' in t:
+            continue
+        # 연도만 있는 괄호와 조사 시점 표기는 인용이 아니다
+        if re.fullmatch(r'[\d\-~. ]+(기준|census round)?', t.strip()):
+            continue
+        if re.fullmatch(r'(as of |조사 기간 )?[\d\-~ ]+(기준)?', t.strip()):
+            continue
+        # "as of 29 July 2026" 같은 시점 표기. 인용이 아니라 날짜다.
+        if re.fullmatch(r'as of \d+ \w+ \d{4}|\d{4}-\d\d-\d\d 기준', t.strip()):
+            continue
+        out.append(t)
+    return out
+
+
+def sec_refs(f: str) -> dict:
+    """절마다 다른 절을 몇 번 가리키는지 센다.
+
+    두 판에서 이 수가 다르면 한쪽에만 넣은 것이다. 실제로 조사를 본문에
+    엮을 때 한글판에만 들어간 자리가 두 곳 있었다."""
+    s = (DOC / f).read_text()
+    s = s[:s.index('### 5.11')]
+    cur, out = None, {}
+    for ln in s.splitlines():
+        m = re.match(r'^### (\d+\.\d+)', ln)
+        if m:
+            cur = m.group(1)
+        if cur:
+            out[cur] = out.get(cur, 0) + len(re.findall(r'§\d+\.\d+', ln))
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -167,6 +239,21 @@ def main() -> int:
             note(f'{f}: 상투구 — {x}')
         for x in unattributed(f):
             note(f'{f}: 직책 없이 인용했다 — {x}')
+
+    for f, _, _ in PAIR:
+        for t in short_cites(f):
+            note(f'{f}: 서지 정보 없는 인용 — ({t})')
+
+    ka, ea = sec_refs('proposal_ko.md'), sec_refs('proposal_en.md')
+    gap = [(k, ka.get(k, 0), ea.get(k, 0)) for k in set(ka) | set(ea)
+           if abs(ka.get(k, 0) - ea.get(k, 0)) > 1]
+    if gap:
+        note(f'절 참조 수가 두 판에서 다르다 {sorted(gap)}')
+
+    ko_orph = orphan_figs('proposal_ko.md', '그림')
+    en_orph = orphan_figs('proposal_en.md', 'Figure')
+    if ko_orph != en_orph:
+        note(f'두 판에서 그림 자리가 다르다 {sorted(ko_orph ^ en_orph)}')
 
     # 절마다 문단 수를 견준다. 영어판 §4.4 에서 세 문단이 통째로 빠진 적이 있다.
     kb, eb = blocks(DOC / 'proposal_ko.md'), blocks(DOC / 'proposal_en.md')

@@ -168,3 +168,13 @@ test('시각은 자기 칸을 갖는다 — 약 그림 안에 넣지 않는다',
   assert.ok(out.includes('\\time_evening'), out.join(' · '));
   assert.ok(!out.some((l) => /\{\\time_/.test(l)), `시각이 아직 머리 안에 있다: ${out.join(' · ')}`);
 });
+
+test('주의는 금지로 그리지 않는다 — 사선은 회피에만', () => {
+  // 부르는 쪽이 `level !== 'safe'` 를 넘기고 있었다. 손글씨 처방전에 주의가 붙자마자
+  // 녹내장 안약 화면에 금지 표시가 떴다 — 읽기 어렵다는 이유로 약을 끊으라고 한 셈이다.
+  const rx7 = item({ rx: rx({ form: 'eyedrop' }) });
+  const caution = lines(rx7, false);          // 주의: avoid=false 로 부른다
+  const avoid = lines(rx7, true);
+  assert.ok(!caution.some((l) => l.startsWith('\\no{\\dropper_bottle')), caution.join(' · '));
+  assert.ok(avoid.some((l) => l.startsWith('\\no{\\dropper_bottle')), avoid.join(' · '));
+});

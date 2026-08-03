@@ -1,6 +1,6 @@
 'use client';
 
-import { sayable, ask } from '@/components/sc/Say';
+import { ask } from '@/components/sc/Say';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';

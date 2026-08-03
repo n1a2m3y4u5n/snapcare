@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { speak, stopSpeaking, setSpeechRate } from '@/lib/voice';
+import { speak, stopSpeaking, setSayLang, setSpeechRate } from '@/lib/voice';
 import { usePreferences } from '@/stores/preferences';
+import { languageByCode } from '@/lib/i18n/languages';
 
 /**
  * 화면에 있는 것을 처음부터 끝까지 읽어준다.
@@ -43,6 +44,9 @@ export function ReadScreen({ variant = 'float' }: { variant?: ReadScreenVariant 
   // 저장된 속도를 음성 계층에 밀어 넣는다. 이 컴포넌트가 모든 화면에 있으므로
   // 어디로 들어와도 적용된다 — 설정에서 고른 값이 새로고침에 사라지면 안 된다.
   useEffect(() => { setSpeechRate(speechRate); }, [speechRate]);
+  // 말하는 언어도 같은 자리에서 밀어 넣는다.
+  const sayLang = usePreferences((s) => s.sayLang);
+  useEffect(() => { setSayLang(languageByCode(sayLang).tag); }, [sayLang]);
 
   /** 읽기를 멈추고 표시를 지운다. 상태 갱신은 재생 루프가 스스로 정리한다. */
   const stop = useCallback(() => {

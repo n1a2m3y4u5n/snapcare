@@ -126,6 +126,15 @@ class Indicator:
     def clear(self, tray: int | None = None, at=None) -> None: ...
     def close(self) -> None: ...
 
+    #: The scheduler tick calls this on every pass (`daemon._show`). It was
+    #: added to the screen-backed indicator only, so every build without a
+    #: screen — the laptop, the tests, and any dispenser fitted with just a ring
+    #: and a buzzer — raised AttributeError once a second. The call is guarded,
+    #: so nothing broke; what it cost was the log. A traceback every second
+    #: buries the lines that matter, and those lines are how anybody finds out
+    #: why a tray did not open.
+    def refresh(self, health) -> None: ...
+
 
 class LogIndicator(Indicator):
     """Writes what a fitted screen and buzzer would have done.

@@ -369,8 +369,23 @@ class Daemon:
                 self._reseed_rtc_if_due()
 
                 trusted = self.dispenser.clock.trusted
-                if trusted and not last_seen_trusted:
-                    log.info("clock is trusted — dispensing is enabled")
+                if trusted != last_seen_trusted:
+                    log.info("clock is %s — dispensing is %s",
+                             "trusted" if trusted else "no longer trusted",
+                             "enabled" if trusted else "held")
+                    # Tell the app now, not at the next heartbeat.
+                    #
+                    # `CLOUD_HEARTBEAT_S` is five minutes, and `nudge` was being
+                    # called for a dose and for a schedule — but not for this.
+                    # Yet this is the single most important boolean the app
+                    # shows: while it is false the panel says "it does not know
+                    # the time, nothing will come out", and that sentence stayed
+                    # on screen for up to five minutes after a phone had already
+                    # set the clock. Somebody watching that screen has no way to
+                    # tell a fixed clock from a broken one, and the obvious next
+                    # move — set it again — changes nothing.
+                    if self.cloud is not None:
+                        self.cloud.nudge()
                 last_seen_trusted = trusted
 
                 for event in self.dispenser.tick():

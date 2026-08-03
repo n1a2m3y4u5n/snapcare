@@ -303,6 +303,18 @@ PMC8544505 한국 고령자 79.4%/28.2% · PMC7532569 몰도바 건강문해력 
 | Talevski, J. et al., *PLOS ONE* | 저널 페이지 | 확인. 20편 중 19편 긍정, 제2형 당뇨에서 순응도·식이 개선 |
 | U.S. Pharmacopeia, *USP Pictograms* | 공식 페이지 | 확인. 81종, 라이선스 네 조항 |
 | Dowse, R. et al., *Health SA Gesondheid* 28:2192 | PMC 전문 | 확인. n=90, 7.9±1.8, r=0.34 (p=0.001), p=0.002 |
+| International Telecommunication Union, *Facts and Figures 2024* | ITU 보도자료 | 확인. 55억 명(68%) 사용, 26억 명(3분의 1) 미사용 |
+| Mansoor, L. E. & Dowse, R., *Ann Pharmacother* 37:1003 | PubMed 초록 | 확인. 저문해 60명(정규교육 ≤7년), 실험군에서 라벨·안내문 양쪽 80% 초과가 유의하게 많았다 |
+| Schubbe, D. et al., *Patient Educ Couns* 103(10):1935 | PubMed 초록 | 확인. 4,160편 선별 → RCT 54편(메타 42편). 저건강문해력 13편에서 지식·이해 크게 상승. "icons with few words may be most helpful" |
+| Zhang, N. J., Terry, A. & McHorney, C. A., *Ann Pharmacother* 48(6):741 | PubMed 초록 | 확인. 가중 상관 0.056~0.072. 유의하나 약하다 |
+| WHO, *Assistive technology* fact sheet | WHO 공식 페이지 | 확인. 25억 명 필요, 2050년 35억 명. 저소득국 3% 대 고소득국 90% |
+| Kheir, N. et al., *Res Social Adm Pharm* 10(5):720 | PubMed 초록 | 확인. 123명 세 갈래 무작위. 그림+구두가 대부분 지시에서 최고 (p ≤ 0.05). "Do not take with dairy products" 는 여전히 어려웠다 |
+| Mourad, N. et al., *BMC Public Health* 23:1926 | PMC 전문 | 확인. n=1,848. 9.36±1.60 → 10.88±0.89, 차이 1.52 (95% CI 1.45~1.60). 나이 Beta = −0.019 |
+| Chaudry, B. et al., *PervasiveHealth 2011*:160 | PMC 전문 | 확인. CKD 5기 10명, REALM 3/3/4. 액체 10/10, 무정형 8/10, 고형식 0/10 |
+| Nielsen, J. & Landauer, T. K., *Proc. INTERCHI 93*:206 | 응답자가 지목 | 최묘정 연구원이 소규모 표본의 근거로 든 것이다. 서지 정보만 보완했고 우리가 이 값을 주장에 쓰지는 않는다 |
+| Tumkur, A. et al., *Clin Epidemiol Glob Health*, 2025 | 열지 못함 | Sheron Sir Loon Goh 전임강사가 알려 준 논문이다. 출판사·DOAJ·Semantic Scholar 셋 다 초록을 열지 못해 결과를 쓰지 않고, 응답자가 알려 주었다는 사실만 5.10 에 적었다 |
+| RxHandBD (Zenodo 18478741, MIT) | 개발 세션이 직접 측정 | 손글씨 약 이름 5,578장. 고정 간격 200장 표본, 결과는 scripts/handwriting-eval.json 에 전부 있다 |
+| Mendeley k62rfd23kz (CC BY 4.0) | 개발 세션이 직접 측정 | 방글라데시 처방전 전장 200장, 약 이름 영역 개수 주석. 60장 표본, scripts/prescription-page-eval.json |
 
 ### 표본 처방전을 대조한 것
 
@@ -331,6 +343,7 @@ Sheron Sir Loon Goh 전임강사가 아목시실린 캡슐의 냉장 표기를 �
 | 자료 | 왜 쓰지 않았나 |
 |---|---|
 | GSMA, *State of Mobile Internet Connectivity 2025* 의 usage gap 31억 명 | §1.6 에 딱 맞는 값이었으나 GSMA 가 세 경로 모두 403 으로 막아 원문을 열지 못했다. 검색 요약만 보고 쓰지 않고 ITU 로 갈음했다 |
+| Sherwani 등의 HealthLine (음성 인터페이스, 파키스탄) | §1.10 이 Medhi 한 연구진에만 기대고 있어 다른 연구진의 것을 찾았으나, CMU 사본은 403, IEEE 는 본문이 비어 있어 1차 출처를 열지 못했다. 검색 요약에 수치가 있었으나 쓰지 않았다 |
 | Wang, Z. et al., *Pharmacoepidemiol Drug Saf* 33:e5880 의 다제복용 유병률 | 유료 벽에 막혔다. 우회하다 제목이 비슷한 다른 논문(턱관절 장애 질적연구)을 잡은 것을 초록을 열어 확인하고 바로잡았으며, 대신 초록이 공개된 Tian 등을 썼다 |
 
 ### 검색 요약과 원문이 달랐던 것

@@ -169,6 +169,15 @@ export default function CameraPage() {
       fail(NEEDS_NET);
       return false;
     }
+    /*
+      503 은 **잠깐 밀린 것**이다. 사진에는 아무 문제가 없고, 같은 사진을 다시 보내면
+      읽힌다. 아래 일반 문구("알아보지 못했습니다")로 묶으면 사용자가 사진을 탓하며
+      다시 찍는데, 다시 찍을 이유가 없다 — 그냥 한 번 더 누르면 된다.
+    */
+    if (res.status === 503) {
+      fail('Busy right now — press again in a moment. The photo is fine.');
+      return false;
+    }
     if (!res.ok) {
       fail('Could not recognise that. Try again, or pick one below.');
       return false;

@@ -1,6 +1,20 @@
 app = "snapcare"
 primary_region = "nrt"
 
+# 약통 사서함 주소.
+#
+# **빌드 인자**로 넣는다. `NEXT_PUBLIC_` 이 붙은 값은 Next 가 묶는 시점에 브라우저
+# 코드 안으로 박아 넣으므로, 아래 [env] 처럼 실행할 때 주는 것으로는 폰까지 닿지
+# 않는다. 그때 나타나는 모습이 고약하다 — 서버(미들웨어)는 주소를 알아서 CSP 를
+# 열어 주는데 화면은 localhost 로 붙으러 가고, 짝짓기가 "코드가 틀렸습니다" 로
+# 실패한다. 라벨을 다시 읽는 사람이 생긴다.
+#
+# 그래서 여기 적어 둔다. 이러면 `fly deploy` 만 쳐도 맞게 나간다 — 플래그를 기억해야
+# 하는 배포는 언젠가 잊는 배포다. 다른 릴레이로 보내려면 --build-arg 로 덮어쓴다.
+[build]
+  [build.args]
+    NEXT_PUBLIC_SNAPCARE_RELAY = "https://snapcare-relay.fly.dev"
+
 [http_service]
   internal_port = 3000
   force_https = true

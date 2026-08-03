@@ -45,6 +45,21 @@ export function computeVerdict(
     reasons.push({ level: 'caution', text: 'Not sure what this is — check the packet' });
   }
 
+  /*
+    손으로 쓴 처방전은 확신하고 읽을 수 없다.
+
+    실제로 재 봤다. 라고스 안과 병원의 공개 처방전 한 장에서 "8hrly"(8시간마다)가
+    "8mg" 으로, "12hrly" 가 "12mg" 으로 읽혔다 — 빈도가 용량이 됐다. 종이에 없는
+    시각 세 개가 붙었고, 그 위에 초록 "Take as prescribed" 가 떴다.
+
+    못 읽는 것보다 나쁘다. 못 읽으면 사용자가 사람에게 묻는데, 이렇게 읽으면 확신을
+    갖고 틀린다. 그래서 초록을 켜지 않는다 — 이 한 줄이 하는 일이 그것이고, 나머지
+    (그림·문장)는 그대로 보여준다. 지우는 것이 아니라 **확신을 지우는 것**이다.
+  */
+  if (item.handwritten) {
+    reasons.push({ level: 'caution', text: 'Handwritten — ask someone to read it to you' });
+  }
+
   // 등록된 조건과 무관하게, 한 번에 하루 상한을 넘겨버리면 경고한다.
   // 7살이 한 끼에 하루치 소금의 1.7배를 먹는 건 고혈압 진단이 없어도 문제다 —
   // 조건 매칭에만 의존하면 이런 경우가 "Safe"로 나온다 (비빔밥 실측에서 발견).

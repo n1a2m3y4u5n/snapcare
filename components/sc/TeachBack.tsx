@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { dslSentence } from '@/lib/snapcare/dslSpeech';
 import { buildQuestions } from '@/lib/snapcare/teachBack';
+import { usePreferences } from '@/stores/preferences';
 import { Speakable } from '@/components/sc/Say';
 import { speak } from '@/lib/voice';
 import type { ScanItem } from '@/lib/snapcare/types';
@@ -23,6 +24,7 @@ import type { ScanItem } from '@/lib/snapcare/types';
  *    반응은 다음 화면의 경고까지 같은 무게로 만든다.
  */
 export function TeachBack({ item }: { item: ScanItem }) {
+  const sayLang = usePreferences((s) => s.sayLang);
   const questions = buildQuestions(item);
   const [at, setAt] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
@@ -93,7 +95,7 @@ export function TeachBack({ item }: { item: ScanItem }) {
               key={option}
               onClick={() => choose(option)}
               disabled={!!picked}
-              aria-label={dslSentence(`\\${option}`) ?? option.replace(/_/g, ' ')}
+              aria-label={dslSentence(`\\${option}`, sayLang) ?? option.replace(/_/g, ' ')}
               className="flex aspect-square items-center justify-center rounded-2xl p-2 transition-opacity"
               style={{
                 background: 'var(--color-sc-bg)',

@@ -217,16 +217,48 @@ Docker multi-stage build on **fly.io** (Tokyo). A mounted volume holds the house
 and the pictogram/product caches, so the app keeps answering when the network does not.
 
 ```bash
-fly deploy --build-arg NEXT_PUBLIC_SNAPCARE_RELAY=https://…   # the pill box's mailbox
-fly secrets set ANTHROPIC_API_KEY=… -a snapcare               # meal-photo recognition in production
+fly deploy
+fly secrets set ANTHROPIC_API_KEY=… -a snapcare   # meal-photo recognition in production
 ```
 
-The relay address goes in as a **build argument**, not a secret and not `fly.toml`'s
-`[env]`. Anything named `NEXT_PUBLIC_` is baked into the browser bundle when Next builds
-it, so a value supplied at run time never reaches the phone. Getting this wrong fails in a
-confusing way: the server knows the address and opens the CSP for it, while the page tries
-`localhost` and pairing fails as though the code on the label were wrong. The pairing
-screen says so when the build has no address at all.
+The relay lives at **https://snapcare-relay.fly.dev** as its own fly app, deployed from
+`pill_dispenser/cloud_relay` (`fly deploy -a snapcare-relay` from that directory). It holds
+a 1 GB volume for the mailboxes and one always-on machine, because a dispenser holding a
+long poll is by design a connection that never goes idle.
+
+Its address reaches the browser as a **build argument**, recorded in `fly.toml` under
+`[build.args]` so a plain `fly deploy` carries it. It is not a secret and it cannot go in
+`fly.toml`'s `[env]`: anything named `NEXT_PUBLIC_` is baked into the bundle when Next
+builds it, so a value supplied at run time never reaches the phone. Getting this wrong
+fails in a confusing way — the server knows the address and opens the CSP for it, while the
+page tries `localhost` and pairing fails as though the code on the label were wrong. The
+pairing screen says so when the build has no address at all.
+
+## Handwritten prescriptions: what we measured
+
+A reviewer told us this would not work on handwriting, and we had only ever tested printed
+samples. So we measured it, on a public dataset of handwritten drug names cut from real
+Bangladeshi prescriptions ([RxHandBD](https://zenodo.org/records/18478741), MIT).
+
+```bash
+node scripts/handwriting-eval.mjs <path-to-RxHandBD> 200
+```
+
+Over 200 words: **47% read exactly right, 26% off by one or two letters, 26% wrong.** The
+middle band is the dangerous one — `Escilex` → `Eslilex`, `clavutil` → `Clavuxil` — because
+one letter away there is often another real drug. This dataset alone contains both
+`Inderen` and `Indever`.
+
+We also asked whether the model's own confidence could pick out the readings worth trusting.
+It cannot, at any useful rate: at a threshold of 0.6 the surviving readings are 100% correct
+but only 4% of them survive. So the app does not try to be clever. A prescription it judges
+handwritten never gets a confident verdict — it says so, keeps the pictograms, and points at
+the clinic's paper form sheet, which is marks rather than handwriting and reads exactly.
+
+The model does not bluff, which is the one reassuring number here: of 200 readings, none
+that carried a confidence of 0.8 or more was wrong.
+
+Full per-image results: `scripts/handwriting-eval.json`.
 
 ## Data sources
 

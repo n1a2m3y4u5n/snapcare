@@ -339,6 +339,248 @@ CARD = (
 #: that wants to walk the set rather than name one. Not used for lookup by the
 #: bar — that names the constant, so a typo is an ImportError at start-up rather
 #: than a blank rectangle in somebody's kitchen.
+# ── 되살린 것 ──────────────────────────────────────────────────────────────
+#
+# 아래 여덟은 `1354de8` 에 있다가 `631e92e` 에서 사라졌다. 이름이 바뀐 것이 아니라
+# 정의만 빠졌고, screens.py 는 그대로 부르고 있어서 **모듈을 임포트하는 순간 죽었다** —
+# 펌웨어 시험 전체가 한 줄도 못 돌았다. 그 판의 것을 글자 그대로 되돌린다(그림도 함께,
+# `as_art` 가 주석과 숫자를 맞춰 보기 때문이다).
+
+# The prohibition sign, used as the *cause* half of the blocked screen when the
+# cause is the mechanism rather than the clock. Bar from upper left to lower
+# right, per ISO 7010 — drawn the other way it reads as a "no smoking" sign with
+# the smoke missing, which is a surprisingly common way to get this wrong.
+#
+#   .....######.....   0x07E0
+#   ...##########...   0x1FF8
+#   ..####....####..   0x3C3C
+#   .####.......###.   0x780E
+#   .#####.......##.   0x7C06
+#   ##..###.......##   0xCE03
+#   ##...###......##   0xC703
+#   ##....###.....##   0xC383
+#   ##.....###....##   0xC1C3
+#   ##......###...##   0xC0E3
+#   ##.......###..##   0xC073
+#   .##.......#####.   0x603E
+#   .###.......####.   0x701E
+#   ..####....####..   0x3C3C
+#   ...##########...   0x1FF8
+#   .....######.....   0x07E0
+BARRED = (
+    0x07E0, 0x1FF8, 0x3C3C, 0x780E,
+    0x7C06, 0xCE03, 0xC703, 0xC383,
+    0xC1C3, 0xC0E3, 0xC073, 0x603E,
+    0x701E, 0x3C3C, 0x1FF8, 0x07E0,
+)
+# Missed. Corner to corner, three pixels thick, no rounding — it fills the whole
+# box so that on the monochrome panel, where amber does not exist, the *shape*
+# of the lit area is different from every other screen even out of focus. This
+# is the one glyph that is allowed to be aggressive.
+#
+#   ##............##   0xC003
+#   ###..........###   0xE007
+#   .###........###.   0x700E
+#   ..###......###..   0x381C
+#   ...###....###...   0x1C38
+#   ....###..###....   0x0E70
+#   .....######.....   0x07E0
+#   ......####......   0x03C0
+#   ......####......   0x03C0
+#   .....######.....   0x07E0
+#   ....###..###....   0x0E70
+#   ...###....###...   0x1C38
+#   ..###......###..   0x381C
+#   .###........###.   0x700E
+#   ###..........###   0xE007
+#   ##............##   0xC003
+CROSS = (
+    0xC003, 0xE007, 0x700E, 0x381C,
+    0x1C38, 0x0E70, 0x07E0, 0x03C0,
+    0x03C0, 0x07E0, 0x0E70, 0x1C38,
+    0x381C, 0x700E, 0xE007, 0xC003,
+)
+# Two pills in a medicine cup — the "they are out, take them" picture, which is
+# the blue state. The cup tapers and has a heavy rim so that it cannot be read
+# as a box or a tray, and the pills sit *inside* it rather than above it: pills
+# drawn falling would say "it is happening", and by the time this screen is up
+# it has already happened.
+#
+#   ................   0x0000
+#   ................   0x0000
+#   ################   0xFFFF
+#   ################   0xFFFF
+#   #..............#   0x8001
+#   #..............#   0x8001
+#   #....##...##...#   0x8631
+#   #...####.####..#   0x8F79
+#   .#..####.####.#.   0x4F7A
+#   .#...##...##..#.   0x4632
+#   .#............#.   0x4002
+#   ..#..........#..   0x2004
+#   ..#..........#..   0x2004
+#   ...#........#...   0x1008
+#   ...#........#...   0x1008
+#   ...##########...   0x1FF8
+CUP = (
+    0x0000, 0x0000, 0xFFFF, 0xFFFF,
+    0x8001, 0x8001, 0x8631, 0x8F79,
+    0x4F7A, 0x4632, 0x4002, 0x2004,
+    0x2004, 0x1008, 0x1008, 0x1FF8,
+)
+# A hand with one finger coming down onto a button, with two impact ticks
+# beside the fingertip. This is the whole instruction for the green state and it
+# has to work with no caption, because the person it is aimed at is the one who
+# cannot read the caption.
+#
+# The fist is a blob with two knuckle creases rather than an anatomical hand:
+# at 16 px, detail turns to noise the moment it is scaled, and what carries the
+# meaning is the silhouette — mass above, one finger below, a plate under it.
+# The gap between the fingertip and the button is deliberate. A finger already
+# touching reads as "pressed"; a finger a hair above it, with the ticks, reads
+# as "press".
+#
+#   ...##########...   0x1FF8
+#   ..############..   0x3FFC
+#   .##############.   0x7FFE
+#   .##############.   0x7FFE
+#   .##############.   0x7FFE
+#   .###.####.#####.   0x77BE
+#   ..##.####.####..   0x37BC
+#   ......####......   0x03C0
+#   ......####......   0x03C0
+#   ......####......   0x03C0
+#   ..#....##....#..   0x2184
+#   .#............#.   0x4002
+#   ....########....   0x0FF0
+#   ..############..   0x3FFC
+#   ..############..   0x3FFC
+#   ..############..   0x3FFC
+PRESS = (
+    0x1FF8, 0x3FFC, 0x7FFE, 0x7FFE,
+    0x7FFE, 0x77BE, 0x37BC, 0x03C0,
+    0x03C0, 0x03C0, 0x2184, 0x4002,
+    0x0FF0, 0x3FFC, 0x3FFC, 0x3FFC,
+)
+# The bar itself, three columns inside the mask's five.
+#
+#   ##..............   0xC000
+#   ###.............   0xE000
+#   .###............   0x7000
+#   ..###...........   0x3800
+#   ...###..........   0x1C00
+#   ....###.........   0x0E00
+#   .....###........   0x0700
+#   ......###.......   0x0380
+#   .......###......   0x01C0
+#   ........###.....   0x00E0
+#   .........###....   0x0070
+#   ..........###...   0x0038
+#   ...........###..   0x001C
+#   ............###.   0x000E
+#   .............###   0x0007
+#   ..............##   0x0003
+SLASH = (
+    0xC000, 0xE000, 0x7000, 0x3800,
+    0x1C00, 0x0E00, 0x0700, 0x0380,
+    0x01C0, 0x00E0, 0x0070, 0x0038,
+    0x001C, 0x000E, 0x0007, 0x0003,
+)
+# ── the bar that turns any picture into its own negation ────────────────────
+
+# `SLASH_MASK` and `SLASH` are one thing in two halves, and they are the reason
+# the status screen can say "the clock is not to be trusted" without a word of
+# text: draw the mask in the *background* colour over whatever picture is there,
+# then the bar in the foreground colour inside it.
+#
+# Drawing the bar alone does not work and it took a wasted evening to see why.
+# The bar is one ink and so is everything under it, so over a filled glyph —
+# CLOUD, BATTERY, PILL — it lands on pixels that are already lit and vanishes
+# completely. The screen then shows a perfectly clean picture that means the
+# opposite of what it says. The mask cuts a one-pixel gutter either side of the
+# bar first, so the bar reads on any glyph, on either polarity, on both panels.
+#
+# Upper left to lower right, per ISO 7010 and per `BARRED` above.
+#
+#   ###.............   0xE000
+#   ####............   0xF000
+#   #####...........   0xF800
+#   .#####..........   0x7C00
+#   ..#####.........   0x3E00
+#   ...#####........   0x1F00
+#   ....#####.......   0x0F80
+#   .....#####......   0x07C0
+#   ......#####.....   0x03E0
+#   .......#####....   0x01F0
+#   ........#####...   0x00F8
+#   .........#####..   0x007C
+#   ..........#####.   0x003E
+#   ...........#####   0x001F
+#   ............####   0x000F
+#   .............###   0x0007
+SLASH_MASK = (
+    0xE000, 0xF000, 0xF800, 0x7C00,
+    0x3E00, 0x1F00, 0x0F80, 0x07C0,
+    0x03E0, 0x01F0, 0x00F8, 0x007C,
+    0x003E, 0x001F, 0x000F, 0x0007,
+)
+# Accepted — a new schedule arrived and the device believed it. Wide and short,
+# which is what stops it being confused with the cross at a glance: the cross
+# reaches all four corners, the tick reaches none of them and leans right.
+#
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   ................   0x0000
+#   ..............##   0x0003
+#   .............###   0x0007
+#   ............###.   0x000E
+#   ...........###..   0x001C
+#   ###.......###...   0xE038
+#   .###.....###....   0x7070
+#   ..###...###.....   0x38E0
+#   ...###.###......   0x1DC0
+#   ....#####.......   0x0F80
+#   .....###........   0x0700
+#   ................   0x0000
+#   ................   0x0000
+TICK = (
+    0x0000, 0x0000, 0x0000, 0x0000,
+    0x0003, 0x0007, 0x000E, 0x001C,
+    0xE038, 0x7070, 0x38E0, 0x1DC0,
+    0x0F80, 0x0700, 0x0000, 0x0000,
+)
+# ── the two that mean "go and fetch somebody" ───────────────────────────────
+
+# The device will not dispense. A triangle with a bang in it is the one warning
+# shape that survives translation into every language and none, which is exactly
+# what is wanted from a machine that has decided not to give somebody their
+# medication. It sits on a solid base so that it is unmistakably a triangle and
+# not an arrow — an arrow on a screen invites somebody to press something.
+#
+#   .......##.......   0x0180
+#   .......##.......   0x0180
+#   ......####......   0x03C0
+#   ......####......   0x03C0
+#   .....##..##.....   0x0660
+#   .....##..##.....   0x0660
+#   ....##.##.##....   0x0DB0
+#   ....##.##.##....   0x0DB0
+#   ...##..##..##...   0x1998
+#   ...##..##..##...   0x1998
+#   ..##...##...##..   0x318C
+#   ..##........##..   0x300C
+#   .##....##....##.   0x6186
+#   .##....##....##.   0x6186
+#   ################   0xFFFF
+#   ################   0xFFFF
+WARN = (
+    0x0180, 0x0180, 0x03C0, 0x03C0,
+    0x0660, 0x0660, 0x0DB0, 0x0DB0,
+    0x1998, 0x1998, 0x318C, 0x300C,
+    0x6186, 0x6186, 0xFFFF, 0xFFFF,
+)
+
 ALL: dict[str, tuple[int, ...]] = {
     "WIFI": WIFI,
     "WIFI_LOW": WIFI_LOW,
@@ -348,6 +590,14 @@ ALL: dict[str, tuple[int, ...]] = {
     "BOLT": BOLT,
     "BATTERY": BATTERY,
     "CARD": CARD,
+    "CUP": CUP,
+    "PRESS": PRESS,
+    "CROSS": CROSS,
+    "TICK": TICK,
+    "SLASH": SLASH,
+    "SLASH_MASK": SLASH_MASK,
+    "WARN": WARN,
+    "BARRED": BARRED,
 }
 
 

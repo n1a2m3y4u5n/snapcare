@@ -1,13 +1,13 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useProfile } from '@/stores/profile';
 import { CONDITIONS } from '@/lib/snapcare/conditions';
 import { ask, sayable, Speakable } from '@/components/sc/Say';
 import { FACES, freeFaces } from '@/lib/snapcare/accounts';
-import { useMyColor } from '@/lib/hooks';
+import { useIsClient, useMyColor } from '@/lib/hooks';
 import { usePreferences } from '@/stores/preferences';
 import { speak } from '@/lib/voice';
 import type { AgeBand } from '@/lib/snapcare/types';
@@ -112,10 +112,12 @@ function ProfileBody() {
    *
    * 혼자 쓰면 여덟 개가 전부 보인다.
    */
-  const [faces, setFaces] = useState<string[]>(FACES);
-  useEffect(() => {
-    setFaces(FACES.filter((f) => f === profile.emoji || freeFaces().includes(f)));
-  }, [profile.emoji]);
+  // 명단은 브라우저에만 있으므로 붙은 뒤에만 걸러낸다. 서버에서는 여덟 개 전부를
+  // 그려 두고, 붙는 순간 남이 쓰는 얼굴이 빠진다.
+  const isClient = useIsClient();
+  const faces = isClient
+    ? FACES.filter((f) => f === profile.emoji || freeFaces().includes(f))
+    : FACES;
 
   function done() {
     confirm();
