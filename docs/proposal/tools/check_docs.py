@@ -27,6 +27,7 @@
   · 같은 번호의 표가 두 판에서 행 수가 같은가
   · 절마다 문단 수가 두 판에서 같은가
   · 그림 설명이 그림 바로 아래에 있는가
+  · 본문의 검정 횟수와 Bonferroni 문턱이 실제와 같은가
 """
 import re
 import sys
@@ -523,6 +524,48 @@ def caption_place() -> list:
     return out
 
 
+def bonferroni() -> list:
+    """본문이 적은 검정 횟수와 보정 문턱이 실제로 돌린 것과 같은가.
+
+    survey_stats.py 에 TESTS = 5 가 손으로 박혀 있었는데 실제로 돌리는
+    검정은 여섯이었다. 다섯으로 세면 문턱이 0.010 이 되어 실제인
+    0.0083 보다 느슨해진다. 우리에게 유리한 쪽으로 틀린 셈이었다.
+    결론은 바뀌지 않았으나(p = 0.0078) 여유가 0.0005 로 좁다."""
+    src = (DOC / 'tools/survey_stats.py').read_text()
+    n = len(re.findall(r'=\s*stats\.(?:fisher_exact|mannwhitneyu|spearmanr)\(', src))
+    if n == 0:
+        return ['survey_stats.py 에서 검정 호출을 찾지 못했다']
+    thr = 0.05 / n
+    out = []
+
+    ko = (DOC / 'proposal_ko.md').read_text()
+    m = re.search(r'검정을 (\S+) 번 돌렸으므로 Bonferroni 보정 문턱은 (\d+\.\d+)', ko)
+    if not m:
+        out.append('한글판에서 Bonferroni 문장을 찾지 못했다')
+    else:
+        WORD = {'한': 1, '두': 2, '세': 3, '네': 4, '다섯': 5, '여섯': 6,
+                '일곱': 7, '여덟': 8, '아홉': 9, '열': 10}
+        said = WORD.get(m.group(1), None)
+        if said != n:
+            out.append(f'한글판이 검정을 {m.group(1)} 번이라 하는데 실제는 {n}회다')
+        if abs(float(m.group(2)) - thr) > 5e-5:
+            out.append(f'한글판 문턱 {m.group(2)} 인데 0.05/{n} = {thr:.4f} 다')
+
+    en = (DOC / 'proposal_en.md').read_text()
+    m = re.search(r'(\w+) tests were run, so the Bonferroni-corrected '
+                  r'threshold is (\d+\.\d+)', en)
+    if not m:
+        out.append('영어판에서 Bonferroni 문장을 찾지 못했다')
+    else:
+        WORD = {'One': 1, 'Two': 2, 'Three': 3, 'Four': 4, 'Five': 5,
+                'Six': 6, 'Seven': 7, 'Eight': 8, 'Nine': 9, 'Ten': 10}
+        if WORD.get(m.group(1)) != n:
+            out.append(f'영어판이 검정을 {m.group(1)} 이라 하는데 실제는 {n}회다')
+        if abs(float(m.group(2)) - thr) > 5e-5:
+            out.append(f'영어판 문턱 {m.group(2)} 인데 0.05/{n} = {thr:.4f} 다')
+    return out
+
+
 def blocks(path: Path) -> dict:
     """소제목마다 그 아래 문단 수를 센다. 한 판에만 문단이 빠지면 여기서 걸린다."""
     cur, out = None, {}
@@ -615,6 +658,9 @@ def main() -> int:
         note(t)
 
     for t in caption_place():
+        note(t)
+
+    for t in bonferroni():
         note(t)
 
     for f in ('proposal_ko.md', 'proposal_en.md'):

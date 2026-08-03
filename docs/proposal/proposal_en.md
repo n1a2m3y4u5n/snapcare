@@ -1984,7 +1984,7 @@ In the nursing and public health segment, 6 of 9 answered that the patient and t
 
 #### 5.7.5 How far the numbers can be pushed
 
-An n of 34 is small. So rather than recording proportions alone we record how much those proportions move. The intervals below are 95% confidence intervals by the Wilson method. With a small sample the normal approximation produces intervals dropping below 0 or exceeding 1; Wilson does not.
+The sample is small. The judgement question went only to the five qualified segments, so n = 25 there, and questions taking all respondents as the denominator have n = 35. So rather than recording proportions alone we record how much those proportions move. The intervals below are 95% confidence intervals by the Wilson method. With a small sample the normal approximation produces intervals dropping below 0 or exceeding 1; Wilson does not.
 
 [Table 43] Proportions and 95% confidence intervals for the judgement question (n = 25)
 
@@ -2014,7 +2014,7 @@ We then tested whether differences exist between groups. Fisher's exact test was
 | Language vs time taken | median 7.1 min against 24.0 min | Mann-Whitney | 0.029 | below threshold after correction |
 | Time taken vs free-text volume | rho = 0.723 | Spearman | < 0.0001 | significant |
 
-Five tests were run, so the Bonferroni-corrected threshold is 0.010. Two rows exceed it. The last says people who stayed longer wrote more, which is not a finding about content. The fourth is different. Not one of the eleven who answered in Korean answered "possible", while half of the fourteen who answered in English did.
+Six tests were run, so the Bonferroni-corrected threshold is 0.0083. Two rows exceed it. We counted that number as five in an earlier version and wrote the threshold as 0.010. The error ran in our favour, so it is recorded here. The p in the fourth row is 0.0078 against a threshold of 0.0083, so the conclusion did not change, but the margin is 0.0005. That is a width one more response could overturn again. The last says people who stayed longer wrote more, which is not a finding about content. The fourth is different. Not one of the eleven who answered in Korean answered "possible", while half of the fourteen who answered in English did.
 
 Here is why we do not turn that row into a claim. **One person crossed the threshold.** At 34 responses the value was 0.019, short of the corrected threshold; adding one respondent who answered in Korean and chose something other than "possible" brought it to 0.0078. Where a conclusion turns on a single person, that fact is more accurate information than the conclusion. Up to the previous version this section read "nothing in this survey supports a claim of difference between groups", and we set this down as we correct that sentence.
 
