@@ -64,6 +64,29 @@ const PLAIN = ['finish_course', 'hand_wash', 'no_alcohol', 'caffeine', 'warn_ble
  */
 const STATES = ['state_pregnant', 'state_breastfeeding'];
 
+/**
+ * 복용 횟수로 감싼 형태. **이 종류가 통째로 빠져 있었다.**
+ *
+ * `itemToDsl` 은 하루 두 번 이상이면 머리를 횟수로 감싼다 —
+ * `\three_times_daily{\capsule_strip{\food_bowl}}` (lib/snapcare/sigil.ts 의 CADENCE).
+ * 그런데 아래 labels() 는 `\머리` 와 `\머리{\슬롯}` 만 만들고 있었다. 그래서
+ * **하루 두 번 이상 먹는 처방은 전부 캐시에 없는 그림**이 되고, 오프라인에서는
+ * 그 칸이 빈다. 이 앱에서 하루 한 번짜리 처방이 오히려 드물다.
+ *
+ * 알아낸 경위를 적어 둔다: 빌드가 자산 지문이 바뀌었다고 캐시를 비우면서 다섯 장을
+ * 지웠는데, 그 다섯이 전부 이 종류였다. 실행 중에 /api/pictogram 이 만들어 둔
+ * 것들이었고 — 즉 **앱이 실제로 그 그림을 요청하고 있었다는 증거**였다.
+ */
+const CADENCES = ['twice_daily', 'three_times_daily', 'four_times_daily'];
+
+/**
+ * 횟수 안에 들어갈 수 있는 슬롯.
+ *
+ * `itemToDsl` 이 `site ?? meal` 로 고르는 것들이다 — 부위(눈·피부·입)가 있으면
+ * 부위가, 없으면 식사 맥락이 그 자리를 쓴다.
+ */
+const CORE_SLOTS = ['body_eye', 'body_skin', 'body_mouth', 'food_bowl', 'food_empty_bowl'];
+
 function labels() {
   const out = new Set();
   for (const h of HEADS) {
@@ -83,6 +106,23 @@ function labels() {
     out.add(`\\${s}`);         // 설문 데모가 들고 있는 형태
   }
   out.add('\\no{\\contact_lens}');
+
+  /*
+    횟수로 감싼 형태와 회피 형태. 위 주석(CADENCES)에 적은 이유로 둘 다 빠져 있었다.
+
+    회피는 머리만 감싼다 — `if (avoid) labels.push(`\\no{\\${head}}`)` 라
+    슬롯이 붙지 않는다(lib/snapcare/sigil.ts).
+  */
+  for (const h of HEADS) {
+    out.add(`\\no{\\${h}}`);
+    for (const c of CADENCES) {
+      out.add(`\\${c}{\\${h}}`);
+      for (const s of CORE_SLOTS) out.add(`\\${c}{\\${h}{\\${s}}}`);
+    }
+    // 부위 슬롯 중 body_skin 은 위 SLOTS 에 없었다 — 연고가 그 자리를 쓴다.
+    out.add(`\\${h}{\\body_skin}`);
+  }
+
   return [...out];
 }
 
