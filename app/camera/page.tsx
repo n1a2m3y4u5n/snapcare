@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, ChangeEvent } from 'react';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/stores/analysis';
 import { makeThumb } from '@/lib/photos/store';
@@ -9,6 +9,16 @@ import { ocrToScanItem } from '@/lib/snapcare/fromOcr';
 import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } from '@/lib/nutrition/labelOcr';
 import { recognizeText } from '@/lib/ocr';
 import { CameraIcon, FoodIcon, PillIcon, SheetIcon } from '@/components/icons';
+import { decodeEvent } from '@/lib/hardware/protocol';
+import { decodeToGray, RETRY_WORK_DIM } from '@/lib/formsheet/decode';
+import { parseFormSheet } from '@/lib/formsheet/sheet';
+import { scaleTransform } from '@/lib/formsheet/field';
+import { readHandwriting } from '@/lib/formsheet/readName';
+import { readPrescription, toScanItem } from '@/lib/formsheet/prescription';
+import { useScans, nowLabel, todayKey } from '@/stores/scans';
+import { useProfile } from '@/stores/profile';
+import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
+import { useReminders } from '@/stores/reminders';
 import { estimateOnDevice, warmUp } from '@/lib/nutrition/estimateOnDevice';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
 import { useQrWatch } from '@/lib/hardware/useQrWatch';
@@ -30,6 +40,18 @@ export default function CameraPage() {
   const setCurrent = useAnalysis((s) => s.setCurrent);
   const setPhoto = useAnalysis((s) => s.setPhoto);
   const fileRef = useRef<HTMLInputElement>(null);
+  /*
+    상자 화면의 복용 결과를 기록에 남기는 데 필요한 것들. 기기 탭에 있던 것을
+    그대로 옮겼다 — 트레이 번호만으로는 이름을 못 붙이므로, 알람에서 만든 층 배치가
+    이름표를 준다.
+  */
+  const addScan = useScans((st) => st.addScan);
+  const reminders = useReminders((st) => st.reminders);
+  const member = useProfile((st) => st.profile);
+  const trayNames = useMemo(
+    () => planTrays(reminders, FITTED_TRAYS).plan.map((t) => t.name),
+    [reminders],
+  );
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
@@ -162,6 +184,38 @@ export default function CameraPage() {
       return true;
     }
 
+    if (found.kind === 'event') {
+      /*
+        상자 화면에 뜬 복용 결과. 기기 탭에 따로 있던 것을 여기로 옮겼다.
+
+        옮긴 이유는 자리를 줄이려는 것이 아니라 **찍는 자리가 하나여야** 하기
+        때문이다. 사람이 상자 앞에 서서 "이걸 찍어야 하나" 를 물을 때 답이 두 곳이면
+        그 중 하나는 안 찾아진다. 이 앱에서 사진을 찍는 자리는 홈 한가운데 하나다.
+      */
+      const event = decodeEvent(found.sc1);
+      if (!event) { fail('That code from the box was damaged. Photograph it again.'); return true; }
+
+      const name = trayNames[event.slot - 1] ?? `Compartment ${event.slot}`;
+      addScan({
+        id: `dev_${event.seq}_${event.slot}_${event.time}`,
+        itemId: `device_slot_${event.slot}`,
+        name,
+        kind: 'medicine',
+        emoji: '',
+        memberId: member?.id ?? 'you',
+        level: event.taken ? 'safe' : 'caution',
+        timeLabel: nowLabel(),
+        dayKey: todayKey(),
+      });
+      const said = event.taken
+        ? `${name} taken at ${event.time}.`
+        : `${name} was missed at ${event.time}.`;
+      void speak(said);
+      setHint(said);
+      setBusy(false);
+      return true;
+    }
+
     if (found.kind === 'device' || found.kind === 'setup') {
       // 기기 자신의 페이지. 우리가 대신 열어 주는 편이 "아무 일도 안 남" 보다 낫다.
       window.location.href = found.url;
@@ -183,6 +237,54 @@ export default function CameraPage() {
     return false;
   }
 
+  /**
+   * 종이 폼시트를 읽었는가.
+   *
+   * 기기 탭에 따로 있던 것을 옮겼다. 이 종이는 처방전이고, 처방전을 찍는 자리는
+   * 카메라다 — 기기 탭에 있을 때는 "약통을 다루는 화면" 안에 종이 읽기가 들어 있어서,
+   * 처방전을 받아 온 사람이 그 화면을 열 이유가 없었다.
+   */
+  async function handledAsSheet(image: string | File | Blob, shot: string): Promise<boolean> {
+    const blob = typeof image === 'string' ? await (await fetch(image)).blob() : image;
+    let sheet;
+    try {
+      setStatus('Looking for the sheet…');
+      let work = await decodeToGray(blob);
+      sheet = parseFormSheet(work);
+      if (!sheet.foundPage) {
+        work = await decodeToGray(blob, RETRY_WORK_DIM);
+        sheet = parseFormSheet(work);
+      }
+      if (!sheet.foundPage || !sheet.transform) return false;
+
+      // 이름칸은 더 큰 그림에서 읽는다 — 종이의 4.7mm 라 2000px 배율에서는 글자가
+      // 남지 않는다. 마커는 다시 안 찾는다.
+      setStatus('Reading the name…');
+      const full = work.w >= RETRY_WORK_DIM ? work : await decodeToGray(blob, RETRY_WORK_DIM);
+      const M = full === work ? sheet.transform
+        : scaleTransform(sheet.transform, full.w / work.w);
+      const hand = await readHandwriting(full, M,
+        (p) => setStatus(`Reading the name… ${Math.round(p * 100)}%`));
+
+      const rx = readPrescription(sheet.values, hand.name, hand.count, hand.notes);
+      const item = toScanItem(rx);
+      if (!item) {
+        // 종이는 찾았는데 채워진 것이 모자라다. 이것은 **다른 것을 찍은 것이 아니라**
+        // 이 종이를 못 읽은 것이라, 글자 읽기로 넘기지 않고 여기서 말한다.
+        fail(rx.unread
+          ? 'Found the sheet, but could not read the medicine name. Photograph it flat, in good light.'
+          : `Found the sheet, but ${rx.schedule.missing.join(', ') || 'the name'} is missing.`);
+        return true;
+      }
+      goWith(item, shot);
+      return true;
+    } catch (err) {
+      // 이 갈래가 실패해도 사진은 아직 처방전일 수 있다. 글자 읽기로 넘긴다.
+      console.error('[camera] 폼시트를 못 읽었다:', err);
+      return false;
+    }
+  }
+
   /** 셔터. 미리보기가 살아 있으면 그 프레임을, 아니면 시스템 카메라를 쓴다. */
   async function shutter() {
     const frame = await capture();
@@ -202,6 +304,16 @@ export default function CameraPage() {
     try {
       // 상자를 찍었는가. 맞으면 여기서 끝난다 — 아래의 어떤 갈래도 QR 을 읽지 못한다.
       if (await handledAsQr(image)) return;
+
+      /*
+        종이 폼시트인가. QR 다음, 글자 읽기 **전**이다.
+
+        순서에 이유가 있다. 이 종이는 네 귀퉁이에 마커가 있어서 **읽히거나 안 읽히거나**
+        이고 — QR 과 같은 성질이다 — 마커가 없으면 즉시 아니라고 답한다. 반대로 먼저
+        OCR 을 태우면 이 종이의 인쇄된 낱말들("LAYER", "DAYS OF WEEK")이 처방전 글로
+        읽히고, 그 다음은 아무도 못 고치는 오독이다.
+      */
+      if (await handledAsSheet(image, shot)) return;
 
       setStatus('Reading text… 0%');
       const text = await recognizeText(image, (p) => setStatus(`Reading text… ${Math.round(p * 100)}%`));

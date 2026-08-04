@@ -35,6 +35,14 @@ export type QrIntent =
   | { kind: 'setup'; url: string }
   /** 와이파이 접속 정보. 앱이 폰을 다른 망에 붙일 수는 없다. */
   | { kind: 'wifi'; ssid: string }
+  /**
+   * 상자 **화면**에 뜬 복용 결과. 인터넷이 없을 때의 기록 경로다.
+   *
+   * 라벨의 넷과 달리 이것은 종이가 아니라 화면에 뜨고, 그래서 사람이 상자 앞에 서서
+   * 찍는다. 기기 탭에 따로 있던 것을 카메라로 옮기면서 여기 들어왔다 — 이 앱에서
+   * 사진을 찍는 자리는 하나여야 하고, "무엇을 찍었는지" 는 이 파일이 답한다.
+   */
+  | { kind: 'event'; sc1: string }
   /** SnapCare 와 무관하거나 알아볼 수 없는 코드. */
   | { kind: 'unknown' };
 
@@ -72,12 +80,15 @@ export function readQr(text: string | null | undefined): QrIntent {
   const bare = normaliseClaim(raw);
   if (bare) return { kind: 'pair', claim: bare };
 
-  // 3) 와이파이. 우리가 폰을 다른 망에 붙일 수는 없지만, 무엇을 찍었는지는 안다.
+  // 3) 상자 화면의 복용 결과. `SC1*E*` 로 시작하는 것은 이것뿐이다.
+  if (/^SC1\*E\*/i.test(raw)) return { kind: 'event', sc1: raw };
+
+  // 4) 와이파이. 우리가 폰을 다른 망에 붙일 수는 없지만, 무엇을 찍었는지는 안다.
   if (raw.toUpperCase().startsWith(WIFI_PREFIX)) {
     return { kind: 'wifi', ssid: wifiSsid(raw) };
   }
 
-  // 4) 주소 둘. 호스트로 가른다.
+  // 5) 주소 둘. 호스트로 가른다.
   const host = hostOf(raw);
   if (host) {
     if (DEVICE_HOST.test(host)) return { kind: 'device', url: raw };

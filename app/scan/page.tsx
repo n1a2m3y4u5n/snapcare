@@ -13,7 +13,7 @@ import { doseSentence, storageSentence } from '@/lib/snapcare/say';
 import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
-import { BasketIcon, FoodIcon, LEVEL_ICONS, PillIcon } from '@/components/icons';
+import { BasketIcon, FoodIcon, LEVEL_ICONS, PillIcon, SheetIcon } from '@/components/icons';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
 import { useAnalysis } from '@/stores/analysis';
 import { putThumb, prunePhotos } from '@/lib/photos/store';
@@ -355,7 +355,7 @@ function RxResult({
           style={{ background: 'var(--color-caution-bg)' }}
           {...sayable('This is handwritten, so some of it may be read wrong. Ask a person to read it to you. Or ask the clinic to fill in the paper sheet, which this app reads exactly. Tap to open the sheet reader.')}
         >
-          <span className="text-xl" aria-hidden>✍️</span>
+          <span className="flex items-center text-xl leading-none" aria-hidden><SheetIcon /></span>
           <span className="flex-1">
             <span className="block text-sm font-bold" style={{ color: 'var(--color-caution)' }}>
               Handwritten — some of this may be wrong
@@ -385,6 +385,30 @@ function RxResult({
       </div>
 
       {/*
+        약사가 적었는데 **우리가 못 그리는** 주의.
+
+        그림 줄 바로 뒤다. 그림이 말한 것 다음에 "그리고 이것도 적혀 있다" 가 오는
+        순서이고, 버리면 종이에는 있고 화면에는 없는 지시가 생긴다 — 사람은 화면을
+        봤으니 다 봤다고 여긴다.
+      */}
+      {item.rx?.notes && item.rx.notes.length > 0 && (
+        <div className="mt-3 rounded-2xl px-4 py-3" style={{ background: 'var(--color-caution-bg)' }}>
+          <div className="flex items-start gap-2">
+            <span className="flex-1 text-[11px] font-bold tracking-wide"
+                  style={{ color: 'var(--color-caution)' }}>
+              ALSO ON THE SHEET — NO PICTURE FOR THIS
+            </span>
+            <Hear text={`Also written on the sheet, with no picture for it. ${item.rx.notes.join('. ')}.`} />
+          </div>
+          {item.rx.notes.map((line) => (
+            <p key={line} className="mt-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+              {line}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/*
         1회 용량과 보관.
         둘 다 OCR 이 뽑아 픽토그램에는 쓰이고 있었는데 문자·음성에는 어디에도 없었다
         (형성 평가: 처방 16시행 전부). 그림이 통하지 않는 사용자에게는 정보가 통째로
@@ -395,7 +419,7 @@ function RxResult({
         <div className="mt-5 flex flex-col gap-2">
           {doseSentence(item.rx) && (
             <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
-              <span className="text-xl" aria-hidden>💊</span>
+              <span className="flex items-center text-xl leading-none" aria-hidden><PillIcon /></span>
               <Say className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                 {doseSentence(item.rx)!}
               </Say>

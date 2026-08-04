@@ -141,9 +141,14 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
     detectedVia: 'paper form sheet',
     flags,
     rx: {
-      dosageText: rx.count
-        ? `${rx.count} ${rx.drug.form === 'syrup' ? 'spoon' : 'to take'} at ${time}`
-        : `take at ${time}`,
+      /*
+        일정 문장이 그대로 여기 들어간다.
+
+        이 칸은 원래 "어떻게 먹는가" 이고, 화면과 소리가 이미 이것을 읽는다. 문장을
+        따로 들고 다니면 그것을 읽어 줄 자리를 화면마다 새로 만들어야 하고, 그러면
+        어느 화면에서는 빠진다.
+      */
+      dosageText: scheduleSentence(rx),
       durationText: slot.durationDays > 0 ? `for ${slot.durationDays} days` : 'ongoing',
       schedule: [{ time, label, emoji: '' }],
       form: rx.drug.form,
@@ -157,6 +162,7 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
       shake: rx.drug.form === 'syrup' || rx.notes.shake,
       noLens: rx.notes.noLens,
       care: rx.notes.care,
+      notes: rx.notes.unknown,
     },
     chips: [
       { emoji: '', label: `Tray ${slot.slot}` },
