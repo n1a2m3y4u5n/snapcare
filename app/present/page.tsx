@@ -32,6 +32,37 @@ import type { DeviceReport } from '@/lib/dispenser/types';
  * 외울 수 있다.
  */
 
+/**
+ * 상자 자신의 시계로 지금 몇 시인가, 그리고 그것을 믿을 수 있는가.
+ *
+ * 시각을 앞에 두는 이유는 발표자가 이 줄에서 실제로 답을 얻는 질문이 그것이기
+ * 때문이다. **여기서 누르는 알람은 상자의 시계로 지금 이 분에 걸린다.** 그러니
+ * 폰의 시계가 아니라 상자의 시계가 몇 시인지가 눌러도 되는지를 정한다. 둘이
+ * 어긋나 있으면 알람이 엉뚱한 분에 걸리고, 그것을 알아챌 자리가 이 화면밖에 없다.
+ *
+ * 예전에는 믿음 여부만 적었고, 보고가 오기 전에는 줄표 하나였다. 줄표는 아무것도
+ * 말하지 않으면서 뭔가 말하는 것처럼 보이는 최악의 자리 표시라, 발표 중에 저것을
+ * 본 사람은 그게 "모른다" 인지 "없다" 인지 알 수 없다.
+ */
+function clockLine(status: DeviceReport['status'] | undefined): string {
+  if (!status) return '아직 소식 없음';
+  const at = status.clock.now?.slice(11, 16) ?? '';
+  const vouched = status.clock.trusted
+    ? `믿음 · ${status.clock.source}`
+    : '못 믿음, 아무것도 안 나온다';
+  return at ? `${at} · ${vouched}` : vouched;
+}
+
+/**
+ * 기기가 보내는 `"1437"` 을 사람이 읽는 `14:37` 로.
+ *
+ * 네 자리 그대로 두면 옆의 트레이 번호와 붙어 `2번 1437` 이 되고, 그것은 시각이
+ * 아니라 일련번호처럼 읽힌다. 발표 중에 한 번 더 생각하게 만드는 자리가 아니다.
+ */
+function hhmm(time: string): string {
+  return /^\d{4}$/.test(time) ? `${time.slice(0, 2)}:${time.slice(2)}` : time;
+}
+
 /** 짝지은 상자가 마지막으로 보고한 것을 짧게. 발표 중에 상태를 확인하는 용도. */
 function Line({ label, value }: { label: string; value: string }) {
   return (
@@ -115,9 +146,9 @@ export default function PresentPage() {
       {/* ── 지금 상자가 무엇을 하고 있나 ─────────────────────────────────── */}
       <section className="mt-5 rounded-3xl bg-white p-4 shadow-sm">
         <Line label="상자" value={report ? '말하고 있음' : '아직 소식 없음'} />
-        <Line label="시계" value={status ? (status.clock.trusted ? `믿음 · ${status.clock.source}` : '못 믿음 — 아무것도 안 나온다') : '—'} />
-        <Line label="트레이" value={status ? `${status.trayCount}칸 · 서보 ${status.servoUsable ? '정상' : '없음'}` : '—'} />
-        <Line label="지금 밀린 복용" value={waiting.length ? waiting.map((d) => `${d.tray}번 ${d.time}`).join(', ') : '없음'} />
+        <Line label="시계" value={clockLine(status)} />
+        <Line label="트레이" value={status ? `${status.trayCount}칸 · 서보 ${status.servoUsable ? '정상' : '없음'}` : '아직 소식 없음'} />
+        <Line label="지금 밀린 복용" value={waiting.length ? waiting.map((d) => `${d.tray}번 ${hhmm(d.time)}`).join(', ') : '없음'} />
       </section>
 
       {/* ── 알람을 울린다 ────────────────────────────────────────────────── */}
