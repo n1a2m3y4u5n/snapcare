@@ -29,6 +29,8 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
   const color = colorFor(a);
   const unit = NUTRIENT_UNIT[a.key] === 'kcal' ? ' kcal' : ' g';
   const g = gaugeOf(a.pct, a.kind);
+  // 목표인데 아직 모자란 줄. 남은 칸을 채워야 할 자리로 그린다.
+  const need = a.kind === 'target' && a.level !== 'good';
 
   // 듣기 표시를 Speakable 에 맡기지 않고 첫 줄에 직접 둔다. 맡기면 내용 끝 — 막대
   // 아래 — 에 붙어서, 무엇에 대한 소리인지가 한 줄 떨어진다. 누르는 것은 여전히
@@ -53,12 +55,18 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
           읽는 사람에게는 정확한 값이 되고 못 읽는 사람에게는 칸을 세면 같은 답이
           나온다. "62%" 는 아래 그림과 대응시킬 수가 없었다.
         */}
-        <span className="w-11 text-right text-[11px] tabular-nums" style={{ color: 'var(--color-sc-muted)' }}>
-          {g.over > 0 ? `+${g.over}` : `${g.filled}/${g.segments}`}
+        {/*
+          방향을 글자 없이. 넘친 줄은 이미 `+N` 이 빨강으로 서 있고, 모자란 줄에는
+          아무 표시가 없어서 "잘하고 있다" 와 구별되지 않았다. 위 화살표 하나면
+          더 먹으라는 쪽이라는 것이 읽지 않고도 도착한다.
+        */}
+        <span className="w-11 text-right text-[11px] font-bold tabular-nums"
+              style={{ color: need || g.over > 0 ? color : 'var(--color-sc-muted)' }}>
+          {g.over > 0 ? `+${g.over}` : need ? `↑ ${g.filled}/${g.segments}` : `${g.filled}/${g.segments}`}
         </span>
         <Hear text={barSentence(a)} className="sc-hear" />
       </div>
-      <Gauge pct={a.pct} kind={a.kind} color={color} />
+      <Gauge pct={a.pct} kind={a.kind} color={color} need={need} />
     </Speakable>
   );
 }

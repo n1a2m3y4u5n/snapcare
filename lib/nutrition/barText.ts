@@ -22,7 +22,19 @@ export function colorFor(a: NutrientAssessment): string {
       : a.level === 'moderate' ? 'var(--color-caution)'
       : 'var(--color-safe)';
   }
-  return a.level === 'good' ? 'var(--color-safe)' : 'var(--color-sc-muted)';
+  /*
+    모자란 목표는 회색이었다. 회색은 이 앱에서 **부차적인 것**의 색이고(설명 글,
+    보조 줄), 그래서 "단백질이 모자라다" 가 화면에서 각주처럼 보였다. 벤치에서
+    그대로 나온 말: "부족한 것들은 걍 평범해 보임."
+
+    빨강으로 칠할 수는 없다. 결핍은 위험이 아니라 채우면 되는 것이고, 빨강은 글을
+    못 읽는 사람에게 "먹지 말라" 로 도착한다 — 정반대의 지시다.
+
+    그래서 파랑이다. 이 앱에서 파랑은 **누르는 것**, 즉 할 일의 색이다(홈의 카메라
+    버튼, 아래 줄의 두 버튼). 경고가 아니면서 눈에 걸리는 유일한 자리이고, 뜻도
+    맞는다 — 이건 피하라는 말이 아니라 하라는 말이다.
+  */
+  return a.level === 'good' ? 'var(--color-safe)' : 'var(--color-sc-primary)';
 }
 
 /**
