@@ -60,13 +60,13 @@ export function FoodCalendar({ days, picked, onPick }: {
         ))}
       </div>
 
+      {/*
+        그림이 자기 뜻의 색을 입는다. 옆의 네모와 같은 색이라, 달력에서 본 색이 무슨
+        뜻인지가 한 줄에서 닫힌다 — 색을 회색 글자 옆에 놓으면 그림과 색이 서로 다른
+        것을 말하게 된다.
+      */}
       <div className="mt-3 flex items-center justify-center gap-4">
         {LEGEND.map((l) => (
-          {/*
-            그림이 자기 뜻의 색을 입는다. 옆의 네모와 같은 색이라, 달력에서 본 색이
-            무슨 뜻인지가 한 줄에서 닫힌다 — 색을 회색 글자 옆에 놓으면 그림과 색이
-            서로 다른 것을 말하게 된다.
-          */}
           <span key={l.level} className="flex items-center gap-1.5 text-[11px]"
                 style={{ color: LEVEL_COLOR[l.level] }}
                 {...sayable(l.say)}>
