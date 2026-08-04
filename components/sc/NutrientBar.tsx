@@ -6,7 +6,7 @@ import { barSentence, colorFor } from '@/lib/nutrition/barText';
 import { gaugeOf } from '@/lib/nutrition/gauge';
 import { Gauge } from './Gauge';
 import {
-  BowlIcon, ButterIcon, CandyIcon, FlameIcon, MuscleIcon, OilIcon, SaltIcon, WheatIcon,
+  BowlIcon, ButterIcon, CandyIcon, FlameIcon, MeatIcon, OilIcon, SaltIcon, WheatIcon,
 } from '@/components/icons';
 
 // 순수 로직은 lib 에 있다(노드 시험이 .tsx 를 못 읽는다). 부르는 쪽이 바뀌지 않게 다시 내보낸다.
@@ -28,7 +28,7 @@ export const NUTRIENT_ICON: Record<NutrientKey, (p: { size?: number | string }) 
   salt: SaltIcon,
   saturatedFat: ButterIcon,
   fat: OilIcon,
-  protein: MuscleIcon,
+  protein: MeatIcon,
   fiber: WheatIcon,
   carbohydrates: BowlIcon,
 };
@@ -56,8 +56,12 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
         첫 줄은 "🍬 Sugars", 둘째 줄은 "25.9 g · 5/10 · 🔊" 로 나뉜다. 다섯 다 남는다.
       */}
       <div className="flex flex-wrap items-center gap-2">
-        <span aria-hidden className="flex shrink-0 items-center justify-center text-base leading-none"
-              style={{ color }}>
+        {/*
+          20px 이다. 이 파일의 그림들은 24 격자로 그리지만 실제로 서는 자리는 이
+          크기이고, 16px 에서는 사탕 알이 8px 이라 점 하나로 보였다.
+        */}
+        <span aria-hidden className="flex shrink-0 items-center justify-center leading-none"
+              style={{ color, fontSize: 20 }}>
           {NUTRIENT_ICON[a.key]({})}
         </span>
         <span className="min-w-[6rem] flex-1 text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
