@@ -6,6 +6,9 @@ import { NutrientBar } from '@/components/sc/NutrientBar';
 import { useScans } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
 import { ConditionTracking } from './tracking';
+import { SuspectedTriggerCard } from '@/app/home/suspected';
+import { HowDidItSit, pendingFeedback } from '@/app/home/how-did-it-sit';
+import { PROFILE_ID } from '@/stores/profile';
 import { Reactions } from './reactions';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NUTRIENT_LABEL, type NutrientAssessment } from '@/lib/nutrition/types';
@@ -17,6 +20,8 @@ import { ask, Hear, Speakable } from '@/components/sc/Say';
  */
 export default function NutritionPage() {
   const scans = useScans((s) => s.scans);
+  // 반응은 먹은 직후에 나오지 않으므로, 아직 답하지 않은 끼니 중 가장 오래된 것을 묻는다.
+  const pending = pendingFeedback(scans, PROFILE_ID);
   const member = useProfile((s) => s.profile);
   const daily = useDailyIntake(scans, member);
 
@@ -125,6 +130,20 @@ export default function NutritionPage() {
               이쪽은 "그래서 몸이 어땠나" 라, 같은 줄기의 다음 물음이다.
             */}
             <Reactions scans={scans} />
+
+            {/*
+              묻는 것들. 홈에서 옮겨 왔다.
+
+              둘 다 **음식에 대한 물음**이고, 답을 적어 넣을 맥락이 이 화면에 있다 —
+              바로 위가 오늘 먹은 것과 몸의 반응이다. 홈에서 물으면 사람은 무엇에
+              대해 답하는지를 기억으로 채워야 했다.
+
+              위가 아니라 여기인 이유: 이 화면의 맨 위는 오늘 얼마나 먹었나이고,
+              그것은 **지금 결정**에 쓰인다(하나 더 먹어도 되나). 묻는 것들은 오늘
+              안에만 답하면 된다.
+            */}
+            <SuspectedTriggerCard />
+            {pending && <HowDidItSit key={pending.id} record={pending} />}
 
             <Speakable text="Eaten today. Everything you checked since this morning."
                        className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"

@@ -1,30 +1,21 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { DoseRelease } from '@/components/sc/DoseRelease';
 import { useDispenser } from '@/lib/dispenser/useDispenser';
 import { useAutoSend } from '@/lib/dispenser/useAutoSend';
-import { useIsClient } from '@/lib/hooks';
+import { useProfile } from '@/stores/profile';
 import { useDoseLog } from '@/lib/dispenser/useDoseLog';
 import { useDoseAlert } from '@/lib/dispenser/useDoseAlert';
 import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
-import { useScans, todayKey } from '@/stores/scans';
-import { useProfile, PROFILE_ID } from '@/stores/profile';
-import { useAnalysis } from '@/stores/analysis';
+import { useScans } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
-import { finished, nextDue, running } from '@/lib/snapcare/course';
-import type { Reminder } from '@/stores/reminders';
-import { HowDidItSit, pendingFeedback } from './how-did-it-sit';
-import { SuspectedTriggerCard } from './suspected';
 import { TryIt } from './try-it';
 import { Orbit, type Satellite } from './orbit';
-import { sayable, ask, Speakable } from '@/components/sc/Say';
-import { spokenName } from '@/lib/tts/speakable';
+import { ask, sayable } from '@/components/sc/Say';
 
 export default function HomePage() {
-  const router = useRouter();
   // 약통이 짝지어져 있으면 걸린 약을 여기서 보여준다. 짝이 없으면 훅이 조용히
   // 아무것도 안 하고, DoseRelease 는 걸린 약이 없으면 그리지 않는다.
   const box = useDispenser();
@@ -37,11 +28,8 @@ export default function HomePage() {
   */
   const autoSend = useAutoSend(box.report?.status.trayCount ?? FITTED_TRAYS);
   const scans = useScans((s) => s.scans);
-  const profile = useProfile((s) => s.profile);
   const confirmed = useProfile((s) => s.confirmed);
-  const setCurrent = useAnalysis((s) => s.setCurrent);
   const reminders = useReminders((s) => s.reminders);
-  const dropMedicine = useReminders((s) => s.dropMedicine);
 
   // 상자가 약을 내보내거나 놓친 것을 기록에 남긴다. 홈에서도 도는 이유는, 기기 화면을
   // 한 번도 열지 않는 사람이 대부분이기 때문이다 — 짝은 한 번 짓고 나면 끝이다.
@@ -76,37 +64,6 @@ export default function HomePage() {
   // 그리자마자 한 번 더 그리지 않고, 화면이 다시 그려질 때마다 시각을 새로 읽는다.
   // 뒤쪽이 실제로 중요하다 — 예전에는 마운트 때 읽은 날짜를 계속 들고 있어서, 자정을
   // 넘겨 앱을 켜 둔 사람에게 '오늘' 이 어제로 남았다.
-  const isClient = useIsClient();
-  const now = isClient
-    ? (() => {
-        const d = new Date();
-        return { day: todayKey(), hm: `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` };
-      })()
-    : null;
-
-  const live = now ? running(reminders, now.day) : [];
-  const nextDose: Reminder | undefined = now ? nextDue(live, now.hm) : undefined;
-
-  /*
-   * 복약이 끝난 약.
-   *
-   * 조용히 지우지 않는다. 끝났다는 것은 **사용자가 알아야 하는 사실**이고, 이 앱이
-   * 그것을 전할 유일한 자리가 여기다. 처방전에 "7일간" 이 적혀 있어도 그것을 읽을 수
-   * 없는 사람에게, 약이 끝났다고 말해 주는 것은 지금까지 아무도 하지 않던 일이다.
-   *
-   * 확인을 누르면 그때 알람을 걷는다. 확인 전까지는 남아 있지만 `running` 이 이미
-   * 걸러 내므로 울리지는 않는다.
-   */
-  const done: Reminder[] = now ? finished(reminders, now.day) : [];
-
-  // 반응은 먹은 직후에 나오지 않으므로, 아직 답하지 않은 끼니 중 가장 오래된 것을 묻는다.
-  const pending = pendingFeedback(scans, PROFILE_ID);
-
-  function openDose(r: Reminder) {
-    setCurrent(r.item);
-    router.push('/dose');
-  }
-
   /*
     둘레에 놓을 것들 — 홈에서 갈 수 있는 곳 전부.
 
@@ -195,36 +152,13 @@ export default function HomePage() {
         */}
 
         {/*
-          다 먹었다.
+          "다 먹었다" 와 "다음 복용" 은 `Past days` 로 옮겼다. 둘 다 **복약 루틴에
+          대한 것**이고, 그 화면에 이미 지금 정해져 있는 것과 지난 넉 주가 있다 —
+          같은 물음에 답하는 것들이 한 자리에 모이는 편이 낫다.
 
-          그림을 함께 낸다 — `finish_course` 는 "끝까지 드세요" 를 뜻하는 형태소인데,
-          지금까지 그 그림이 화면에 나오는 자리가 처방 판정뿐이었다. 끝났다고 말할 때
-          같은 그림을 다시 쓰면, 처음 볼 때 못 알아봤어도 두 번째에 이어 붙는다.
+          홈에 남는 복약은 배출 카드뿐이다. 그것만 유예가 있다: 한 시간이 지나면
+          트레이는 열리지 않고 '놓침' 이 기록된다. 나머지는 오늘 안에만 답하면 된다.
         */}
-        {done.map((r) => (
-          <div key={r.id} className="mt-4 flex items-center gap-3 rounded-2xl px-4 py-3"
-               style={{ background: 'var(--color-safe-bg)' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/glyphs/finish_course.png" alt="" aria-hidden className="h-10 w-10 shrink-0" />
-            <span className="flex-1">
-              <Speakable
-                text={`You have finished ${spokenName(r.item.name, r.item.kind)}. All the days are done. Do not take any more of it. Tap to clear the reminder.`}
-                className="flex w-full items-center gap-2 text-sm font-semibold"
-                style={{ color: 'var(--color-sc-ink)' }}>
-                <span className="flex-1">{r.item.name} — all done</span>
-              </Speakable>
-              <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-                The course is over — no more reminders
-              </span>
-            </span>
-            <button onClick={() => dropMedicine(r.item.name)}
-                    aria-label={`Clear the reminder for ${r.item.name}`}
-                    className="flex h-11 items-center rounded-xl px-4 text-sm font-bold text-white"
-                    style={{ background: 'var(--color-safe)' }}>
-              OK
-            </button>
-          </div>
-        ))}
 
         {/*
           일정이 상자에 못 닿았을 때만 뜬다.
@@ -243,27 +177,6 @@ export default function HomePage() {
               약통에 아직 안 갔다
             </span>
           </div>
-        )}
-
-        {/* 복약 리마인더 — 실제로 만든 알람이 있을 때만 */}
-        {nextDose && (
-          <button
-            onClick={() => openDose(nextDose)}
-            className="mt-4 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
-            style={{ background: 'var(--color-med-bg)' }}
-          >
-            <span className="text-xl">{nextDose.item.emoji}</span>
-            <span className="flex-1">
-              <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
-                    {...sayable(`Next dose: ${nextDose.item.name} at ${nextDose.time}.`)}>
-                {nextDose.item.name} · {nextDose.time}
-              </span>
-              <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-                {profile.name}
-              </span>
-            </span>
-            <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
-          </button>
         )}
 
         {/*
@@ -299,17 +212,11 @@ export default function HomePage() {
         {scans.length === 0 && <TryIt />}
 
         {/*
-          묻는 것들은 궤도 **아래**다.
-
-          한 번 위에 두었다가 내렸다. 둘 다 통계가 아니라 답해야 하는 것이라 위가
-          맞다고 봤는데, 실제로 그려 보니 이 둘이 뜨는 날에는 카메라가 화면 밖으로
-          밀려났다 — 홈을 다시 짠 이유가 그것이었는데 되돌아간 셈이다.
-
-          위에 남는 것은 배출 카드뿐이다. 그것만 **유예가 있다**: 한 시간이 지나면
-          트레이는 열리지 않고 '놓침' 이 기록된다. 나머지는 오늘 안에만 답하면 된다.
+          묻는 것들은 `Today` 로 옮겼다 — 몸이 어땠는지도, 의심되는 것도 **음식에
+          대한 물음**이고, 그 화면에 이미 오늘 먹은 것과 몸의 반응이 모여 있다.
+          여기서 물으면 답을 적어 넣을 맥락이 화면 밖에 있다.
         */}
-        <SuspectedTriggerCard />
-        {pending && <HowDidItSit key={pending.id} record={pending} />}
+
       </div>
     </MobileScreen>
   );

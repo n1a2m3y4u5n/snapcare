@@ -12,6 +12,11 @@ import { adherence, adherenceSentence, clockOf, doseRows } from '@/lib/history/a
 import { calendar } from '@/lib/history/calendar';
 import { routineSentence, routines } from '@/lib/history/routines';
 import { useReminders } from '@/stores/reminders';
+import type { Reminder } from '@/stores/reminders';
+import { finished, nextDue, running } from '@/lib/snapcare/course';
+import { useAnalysis } from '@/stores/analysis';
+import { useRouter } from 'next/navigation';
+import { spokenName } from '@/lib/tts/speakable';
 import { DoseCalendar } from '@/components/sc/DoseCalendar';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
 import { Thumb } from '@/components/sc/Thumb';
@@ -36,6 +41,10 @@ import { Thumb } from '@/components/sc/Thumb';
 export default function HistoryPage() {
   const scans = useScans((s) => s.scans);
   const reminders = useReminders((s) => s.reminders);
+  const dropMedicine = useReminders((s) => s.dropMedicine);
+  const setCurrent = useAnalysis((s) => s.setCurrent);
+  const router = useRouter();
+
   const member = useProfile((s) => s.profile);
   const ready = useIsClient();
 
@@ -74,6 +83,28 @@ export default function HistoryPage() {
     [ready, scans, today, member],
   );
 
+  /*
+    다음 복용과 다 먹은 처방. 홈에서 옮겨 왔다 — 둘 다 복약 루틴에 대한 것이고,
+    이 화면에 이미 지금 정해져 있는 것과 지난 넉 주가 있다.
+
+    시각은 그릴 때 읽으면 안 된다(서버가 그린 화면과 어긋난다). 붙은 뒤에 읽는다.
+  */
+  const hm = ready
+    ? (() => {
+        const d = new Date();
+        return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      })()
+    : '';
+  const live = ready ? running(reminders, today) : [];
+  const nextDose: Reminder | undefined = ready ? nextDue(live, hm) : undefined;
+  const done: Reminder[] = ready ? finished(reminders, today) : [];
+
+  function openDose(r: Reminder) {
+    setCurrent(r.item);
+    router.push('/dose');
+  }
+
+
   return (
     <MobileScreen bar="inner">
       <div className="px-5 pt-14 pb-4">
@@ -84,6 +115,59 @@ export default function HistoryPage() {
             {...ask('Past days. Everything you have checked, day by day, newest first.')}>
           Past days
         </h1>
+
+        {/*
+          다 먹었다.
+
+          그림을 함께 낸다 — `finish_course` 는 "끝까지 드세요" 를 뜻하는 형태소인데,
+          지금까지 그 그림이 화면에 나오는 자리가 처방 판정뿐이었다. 끝났다고 말할 때
+          같은 그림을 다시 쓰면, 처음 볼 때 못 알아봤어도 두 번째에 이어 붙는다.
+        */}
+        {done.map((r) => (
+          <div key={r.id} className="mt-4 flex items-center gap-3 rounded-2xl px-4 py-3"
+               style={{ background: 'var(--color-safe-bg)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/glyphs/finish_course.png" alt="" aria-hidden className="h-10 w-10 shrink-0" />
+            <span className="flex-1">
+              <Speakable
+                text={`You have finished ${spokenName(r.item.name, r.item.kind)}. All the days are done. Do not take any more of it. Tap to clear the reminder.`}
+                className="flex w-full items-center gap-2 text-sm font-semibold"
+                style={{ color: 'var(--color-sc-ink)' }}>
+                <span className="flex-1">{r.item.name} — all done</span>
+              </Speakable>
+              <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                The course is over — no more reminders
+              </span>
+            </span>
+            <button onClick={() => dropMedicine(r.item.name)}
+                    aria-label={`Clear the reminder for ${r.item.name}`}
+                    className="flex h-11 items-center rounded-xl px-4 text-sm font-bold text-white"
+                    style={{ background: 'var(--color-safe)' }}>
+              OK
+            </button>
+          </div>
+        ))}
+
+        {/* 복약 리마인더 — 실제로 만든 알람이 있을 때만 */}
+        {nextDose && (
+          <button
+            onClick={() => openDose(nextDose)}
+            className="mt-4 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
+            style={{ background: 'var(--color-med-bg)' }}
+          >
+            <span className="text-xl">{nextDose.item.emoji}</span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
+                    {...sayable(`Next dose: ${nextDose.item.name} at ${nextDose.time}.`)}>
+                {nextDose.item.name} · {nextDose.time}
+              </span>
+              <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                {member?.name ?? ''}
+              </span>
+            </span>
+            <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
+          </button>
+        )}
 
         {setNow.length > 0 && <RoutineCard list={setNow} />}
         {week && week.rate !== null && <AdherenceCard span={week} month={month} />}
