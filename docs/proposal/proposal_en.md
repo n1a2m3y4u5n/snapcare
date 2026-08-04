@@ -7,7 +7,7 @@
 | **Web App Name** | SnapCare |
 | **Name of Korean Students** | Yunsu NAM · Dohun KIM |
 | **Name of International Students** | Cristian RUDICO · Daniel STANCHEVICI (Moldova) |
-| **Related SDGs** | Target 3.4 Noncommunicable diseases · Target 3.8 Universal health coverage · Target 3.d Health risk management |
+| **Related SDGs** | Target 3.4 Noncommunicable diseases · Target 3.8 Universal health coverage · Target 3.9 Deaths and illnesses from hazardous substances · Target 3.d Health risk management |
 | **URL** | Github Repository: https://github.com/16th-eicon-contest/h1-SnapCare<br>Deployment URL: https://snapcare.fly.dev |
 
 ---
@@ -611,6 +611,8 @@ In Moldova the shape is different. The population is projected to fall by 31% by
 Placed side by side, the two make the target of this app plain. In Korea it is a problem that exists but is not seen; in Moldova it is a problem that is going to grow. The first needs a route that reaches the people the consulting room missed; the second needs a tool that scales without adding staff. A design in which one photograph produces a picture and a spoken sentence, computed on the device, treats both the same way.
 
 A limit belongs here. We could not find data measuring the relationship between health literacy and primary care use inside Moldova itself. What §1.5 cites is a study of 170 Moldovan migrant women living in Padua, Italy, and being a migrant sample it cannot be carried across to the population inside Moldova. Confirming it in Moldova is part of the field evaluation in §5.10.
+
+Once the target is widened in the next section, the Korean half of this section's argument grows heavier rather than lighter. The grounds given for calling it invisible are that 18 of the 39 respondents in §5.7 said they scarcely meet such patients, and that is an answer about patients who cannot read. The conditions §1.13 adds are counted even less than those. Health literacy at least has a figure of 39.6%, whereas we found no statistic within the range of this document that counts people too worn out to take medicine on time, or people who cannot remember whether they took last night's dose. Nor does that arrive in a consulting room as a diagnosis. Saying that this problem is invisible in Korea becomes truer the further the target is widened.
 
 
 ### 1.13 The range of the target and the design standard
