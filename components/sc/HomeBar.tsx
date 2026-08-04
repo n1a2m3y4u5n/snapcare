@@ -45,7 +45,20 @@ export function HomeBar({ atHome, children }: {
                  bg-white/95 backdrop-blur"
       style={{ borderColor: 'var(--color-sc-line)' }}
     >
-      <div className="flex items-stretch gap-3 px-4 pt-2 pb-6">
+      {/*
+        아래 여백을 기기에 묻는다.
+
+        `pb-6`(24px) 이 박혀 있었다. 아이폰의 홈 인디케이터를 피하려는 값인데, 그것이
+        없는 기기에서도 똑같이 먹어서 막대가 103px 이 됐다 — 그중 버튼은 66px 이고
+        나머지 37px 은 아무것도 아니었다. 벤치에서 그대로 나온 말: "하단 바가 좀
+        필요없이 두꺼워 보이는 느낌."
+
+        `env(safe-area-inset-bottom)` 은 인디케이터가 있는 기기에서만 값을 준다.
+        있으면 예전만큼 비켜 주고, 없으면 10px 만 남는다. 버튼은 그대로 크다 —
+        줄인 것은 버튼이 아니라 버튼이 아닌 자리다.
+      */}
+      <div className="flex items-stretch gap-3 px-4 pt-2"
+           style={{ paddingBottom: 'calc(0.625rem + env(safe-area-inset-bottom, 0px))' }}>
         {atHome ? (
           // 자리를 비워 둔다. 낭독 버튼이 늘 같은 자리에 있어야 한다.
           <span aria-hidden className="flex-1" />
