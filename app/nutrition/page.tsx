@@ -16,7 +16,7 @@ import { foodCalendar } from '@/lib/history/foodCalendar';
 import { byDay } from '@/lib/history/byDay';
 import { todayKey } from '@/stores/scans';
 import { useIsClient } from '@/lib/hooks';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NUTRIENT_LABEL, type NutrientAssessment } from '@/lib/nutrition/types';
 import { ask, Hear, Speakable } from '@/components/sc/Say';
@@ -43,6 +43,8 @@ export default function NutritionPage() {
     () => (ready && member ? foodCalendar(scans, today, member.id) : []),
     [ready, scans, today, member],
   );
+  /* 달력에서 고른 날. 기본은 오늘. 복약 화면과 같은 방식이다. */
+  const [pickedDay, setPickedDay] = useState('');
   const days = useMemo(
     () => (ready && member ? byDay(scans, today, member.id) : []),
     [ready, scans, today, member],
@@ -185,7 +187,7 @@ export default function NutritionPage() {
                   <span className="flex-1">FOOD · THE LAST FOUR WEEKS</span>
                 </Speakable>
                 <div className="mt-3 rounded-3xl bg-white px-5 py-4 shadow-sm">
-                  <FoodCalendar days={month} />
+                  <FoodCalendar days={month} picked={pickedDay || today} onPick={setPickedDay} />
                 </div>
               </>
             )}
@@ -234,10 +236,17 @@ export default function NutritionPage() {
                            style={{ color: 'var(--color-sc-muted)' }}>
                   <span className="flex-1">DAY BY DAY</span>
                 </Speakable>
-                <div className="mt-2 flex flex-col gap-4">
-                  {days.map((day) => (
-                    <DayCard key={day.dayKey} day={day} today={today} only="food" />
-                  ))}
+                <div className="mt-2">
+                  {(() => {
+                    const shown = days.find((d) => d.dayKey === (pickedDay || today));
+                    return shown
+                      ? <DayCard key={shown.dayKey} day={shown} today={today} only="food" />
+                      : (
+                        <p className="text-center text-sm" style={{ color: 'var(--color-sc-muted)' }}>
+                          Nothing on this day.
+                        </p>
+                      );
+                  })()}
                 </div>
               </>
             )}

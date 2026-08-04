@@ -99,6 +99,18 @@ export default function HistoryPage() {
   const nextDose: Reminder | undefined = ready ? nextDue(live, hm) : undefined;
   const done: Reminder[] = ready ? finished(reminders, today) : [];
 
+  /*
+    달력에서 고른 날. 기본은 오늘.
+
+    스물여덟 날을 그대로 늘어놓던 자리다. 한 달이면 읽을 만하지만 이 앱은 몇 달을
+    쓰라고 만든 것이고, 반년이면 그 목록은 아무도 안 내리는 벽이 된다. 달력은 이미
+    화면에 있고 이미 날짜를 가리키고 있으니, 그것을 선택기로 쓰면 목록은 늘 한 날이면
+    된다 — 새 화면도, 새로 배울 것도 없이.
+  */
+  const [pickedDay, setPickedDay] = useState('');
+  const showDay = pickedDay || today;
+  const dayShown = days.find((d) => d.dayKey === showDay);
+
   function openDose(r: Reminder) {
     setCurrent(r.item);
     router.push('/dose');
@@ -148,29 +160,18 @@ export default function HistoryPage() {
           </div>
         ))}
 
-        {/* 복약 리마인더 — 실제로 만든 알람이 있을 때만 */}
-        {nextDose && (
-          <button
-            onClick={() => openDose(nextDose)}
-            className="mt-4 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left"
-            style={{ background: 'var(--color-med-bg)' }}
-          >
-            <span className="text-xl">{nextDose.item.emoji}</span>
-            <span className="flex-1">
-              <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
-                    {...sayable(`Next dose: ${nextDose.item.name} at ${nextDose.time}.`)}>
-                {nextDose.item.name} · {nextDose.time}
-              </span>
-              <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-                {member?.name ?? ''}
-              </span>
-            </span>
-            <span style={{ color: 'var(--color-sc-muted)' }}>›</span>
-          </button>
-        )}
+        {/*
+          "다음 복용" 카드가 여기 있었다. 걷어낸 이유는 **바로 아래가 같은 말을
+          하기 때문**이다 — 루틴 목록에 그 약과 그 시각이 이미 적혀 있어서, 한
+          화면이 같은 처방을 두 번 말하고 있었다. 벤치에서 그대로 나온 말:
+          "복약 스케줄이 중복으로 2번 표시되는 것 같은데."
 
-        {setNow.length > 0 && <RoutineCard list={setNow} />}
-        {week && week.rate !== null && <AdherenceCard span={week} month={month} />}
+          대신 목록 안에서 다음 것을 짚는다. 자리를 하나 덜 쓰면서 같은 것을
+          말하고, 무엇보다 그 시각이 **어느 약의 것인지**가 한 줄 안에서 붙는다.
+        */}
+
+        {setNow.length > 0 && <RoutineCard list={setNow} next={nextDose} onOpen={openDose} />}
+        {week && week.rate !== null && <AdherenceCard span={week} month={month} picked={showDay} onPick={setPickedDay} />}
 
         {/*
           날짜별 복용. 위의 달력이 "어느 날" 을 답한다면 이 목록은 "그 날 무엇을,
@@ -183,8 +184,14 @@ export default function HistoryPage() {
           <span className="flex-1">DAY BY DAY</span>
         </Speakable>
 
-        <div className="mt-4 flex flex-col gap-4">
-          {days.map((day) => <DayCard key={day.dayKey} day={day} today={today} only="dose" />)}
+        <div className="mt-4">
+          {dayShown
+            ? <DayCard key={showDay} day={dayShown} today={today} only="dose" />
+            : (
+              <p className="text-center text-sm" style={{ color: 'var(--color-sc-muted)' }}>
+                Nothing on this day.
+              </p>
+            )}
         </div>
       </div>
     </MobileScreen>
@@ -202,7 +209,12 @@ export default function HistoryPage() {
  * 칸 번호를 같이 적는 이유는 이 목록이 **약을 채워 넣을 때** 펼쳐지는 목록이기도
  * 해서다. 그 번호는 상자로 일정을 보낼 때 쓰는 것과 같은 함수에서 나온다.
  */
-function RoutineCard({ list }: { list: ReturnType<typeof routines> }) {
+function RoutineCard({ list, next, onOpen }: {
+  list: ReturnType<typeof routines>;
+  /** 다음에 올 복용. 그 줄을 짚어 준다. */
+  next?: Reminder;
+  onOpen: (r: Reminder) => void;
+}) {
   const say = list.map(routineSentence).join(' ');
   return (
     <div className="mt-4 rounded-3xl bg-white px-5 py-4 shadow-sm">
@@ -216,9 +228,15 @@ function RoutineCard({ list }: { list: ReturnType<typeof routines> }) {
       </div>
 
       <div className="mt-3 flex flex-col gap-2">
-        {list.map((r) => (
+        {list.map((r) => {
+          const isNext = !!next && next.item.name === r.name;
+          return (
           <div key={r.name} className="sc-row flex items-center rounded-2xl py-2"
-               style={{ background: 'var(--color-sc-bg)' }}>
+               style={{
+                 background: isNext ? 'var(--color-med-bg)' : 'var(--color-sc-bg)',
+                 outline: isNext ? '2px solid var(--color-sc-primary)' : undefined,
+               }}
+               onClick={isNext && next ? () => onOpen(next) : undefined}>
             <span aria-hidden className="sc-icon">{r.emoji}</span>
             <span className="flex-1">
               <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
@@ -226,6 +244,11 @@ function RoutineCard({ list }: { list: ReturnType<typeof routines> }) {
                 {r.name}
               </span>
               <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                {/*
+                  다음에 올 것에는 그 시각만 짚어 준다. 목록은 하루 전체를 적고,
+                  이 표시는 "지금 기준으로 다음" 이라 서로 다른 것을 말한다.
+                */}
+                {isNext && next ? `Next · ${next.time} — ` : ''}
                 {r.times.join(' · ')}
                 {r.endsOn && ` — until ${r.endsOn}`}
               </span>
@@ -241,7 +264,8 @@ function RoutineCard({ list }: { list: ReturnType<typeof routines> }) {
               </span>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -258,9 +282,11 @@ function RoutineCard({ list }: { list: ReturnType<typeof routines> }) {
  * 한 주가 아니라 넉 주인 이유는 요일이다. 한 주에서는 각 요일이 한 번씩만 나와서
  * "주말마다 저녁을 거른다" 가 한 번의 우연과 구별되지 않는다.
  */
-function AdherenceCard({ span, month }: {
+function AdherenceCard({ span, month, picked, onPick }: {
   span: NonNullable<ReturnType<typeof adherence>>;
   month: ReturnType<typeof calendar>;
+  picked: string;
+  onPick: (dayKey: string) => void;
 }) {
   const say = adherenceSentence(span);
   return (
@@ -295,7 +321,7 @@ function AdherenceCard({ span, month }: {
         있으니 "주말마다 저녁을 거른다" 같은 것이 보인다.
       */}
       <div className="mt-3">
-        <DoseCalendar days={month} />
+        <DoseCalendar days={month} picked={picked} onPick={onPick} />
       </div>
 
       {/*

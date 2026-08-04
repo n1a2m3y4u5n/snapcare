@@ -19,7 +19,28 @@ const LEVEL_COLOR: Record<string, string> = {
   avoid: 'var(--color-avoid)',
 };
 
-export function FoodCalendar({ days }: { days: FoodDay[] }) {
+/**
+ * 색이 무슨 뜻인지 그림으로 적어 둔다.
+ *
+ * 복약 달력은 색을 배울 필요가 없다 — 채워진 것이 먹은 것이고 빈 것이 안 먹은
+ * 것이라, 모양만으로 답이 나온다. 음식은 그렇지 않다. 초록·주황·빨강이 무슨 뜻인지
+ * 아는 사람에게만 이 그림이 읽히고, **그 앎을 화면 밖에 두면 안 된다.**
+ *
+ * 그래서 이모지를 쓴다. 이 앱이 판정 화면에서 이미 쓰는 얼굴 그대로라, 여기서
+ * 새로 배울 것이 없고 저기서 배운 것이 여기서 다시 쓰인다.
+ */
+const LEGEND: { level: string; emoji: string; say: string }[] = [
+  { level: 'safe', emoji: '🙂', say: 'Fine' },
+  { level: 'caution', emoji: '😐', say: 'Careful' },
+  { level: 'avoid', emoji: '🚫', say: 'Avoid' },
+];
+
+export function FoodCalendar({ days, picked, onPick }: {
+  days: FoodDay[];
+  /** 지금 펼쳐 놓은 날. 달력이 아래 목록의 선택기로도 쓰인다. */
+  picked?: string;
+  onPick?: (dayKey: string) => void;
+}) {
   if (!days.length) return null;
   const blanks = leadingBlanks(days[0].dayKey);
 
@@ -32,26 +53,50 @@ export function FoodCalendar({ days }: { days: FoodDay[] }) {
 
       <div className="mt-1 grid grid-cols-7 gap-1">
         {Array.from({ length: blanks }, (_, i) => <span key={`b${i}`} aria-hidden />)}
-        {days.map((day) => <Cell key={day.dayKey} day={day} />)}
+        {days.map((day) => (
+          <Cell key={day.dayKey} day={day}
+                picked={day.dayKey === picked} onPick={onPick} />
+        ))}
+      </div>
+
+      <div className="mt-3 flex items-center justify-center gap-4">
+        {LEGEND.map((l) => (
+          <span key={l.level} className="flex items-center gap-1.5 text-[11px]"
+                style={{ color: 'var(--color-sc-muted)' }}
+                {...sayable(l.say)}>
+            <span aria-hidden className="h-3 w-3 rounded-[3px]"
+                  style={{ background: LEVEL_COLOR[l.level] }} />
+            <span aria-hidden>{l.emoji}</span>
+          </span>
+        ))}
       </div>
     </div>
   );
 }
 
-function Cell({ day }: { day: FoodDay }) {
+function Cell({ day, picked, onPick }: {
+  day: FoodDay;
+  picked: boolean;
+  onPick?: (dayKey: string) => void;
+}) {
   const say = foodDaySentence(day);
-  const ring = day.today ? { boxShadow: '0 0 0 2px var(--color-sc-ink)' } : undefined;
+  const ring = picked
+    ? { boxShadow: '0 0 0 3px var(--color-sc-primary)' }
+    : day.today
+      ? { boxShadow: '0 0 0 2px var(--color-sc-ink)' }
+      : undefined;
+  const pick = onPick ? { onClick: () => onPick(day.dayKey), role: 'button', tabIndex: 0 } : {};
 
   if (!day.levels.length) {
     return (
-      <span {...sayable(say)} title={say} className="aspect-square rounded-md"
+      <span {...pick} {...sayable(say)} title={say} className="aspect-square rounded-md"
             style={{ background: 'var(--color-sc-bg)', ...ring }} />
     );
   }
 
   if (day.countable) {
     return (
-      <span {...sayable(say)} title={say}
+      <span {...pick} {...sayable(say)} title={say}
             className="flex aspect-square flex-col gap-[2px] overflow-hidden rounded-md p-[2px]"
             style={{ background: 'var(--color-sc-bg)', ...ring }}>
         {day.levels.map((level, i) => (
@@ -72,7 +117,7 @@ function Cell({ day }: { day: FoodDay }) {
   */
   const worst = day.levels[0];
   return (
-    <span {...sayable(say)} title={say}
+    <span {...pick} {...sayable(say)} title={say}
           className="relative flex aspect-square items-center justify-center rounded-md"
           style={{ background: LEVEL_COLOR[worst] ?? 'var(--color-sc-bg)', ...ring }}>
       <span aria-hidden className="text-[9px] font-bold" style={{ color: '#fff' }}>
