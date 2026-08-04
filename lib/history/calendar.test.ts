@@ -107,3 +107,26 @@ test('거른 것이 어느 때였는지 소리로도 말한다', () => {
     TODAY, 1)[0];
   assert.match(daySentence(day), /evening one was missed/);
 });
+
+test('시각을 못 읽으면 아무 때로도 부르지 않는다', () => {
+  /*
+    처음에는 못 읽는 값을 `night` 으로 떨어뜨렸다. 그러면 시각이 비어 온 기록이
+    화면에서 **밤에 먹은 약**이 되고, 그것을 알아챌 방법이 없다. 이 저장소가 세
+    군데에서 되풀이해 적어 둔 규칙이 그것이다 — 그럴듯한 틀린 값이 물음표보다 나쁘다.
+  */
+  assert.equal(partOf(''), 'unknown');
+  assert.equal(partOf('8'), 'unknown');
+  assert.equal(partOf('8 PM'), 'unknown');
+  assert.equal(partOf('9900'), 'unknown');
+  assert.equal(partOf(undefined as unknown as string), 'unknown');
+});
+
+test('때를 모르는 것은 거른 이유로 말하지 않는다', () => {
+  // "The unrecorded one was missed" 는 문장이 아니다. 모르는 것에 대해서는 숫자만 말한다.
+  const day = calendar(
+    [{ dayKey: TODAY, due: '', taken: false, tray: 1, name: 'x', reason: 'not-released' },
+     { dayKey: TODAY, due: '0800', taken: true, tray: 2, name: 'x', reason: 'released' }],
+    TODAY, 1)[0];
+  assert.match(daySentence(day), /1 of 2 doses/);
+  assert.doesNotMatch(daySentence(day), /unrecorded/);
+});

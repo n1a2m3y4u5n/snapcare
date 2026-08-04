@@ -38,13 +38,26 @@ export const MAX_SEGMENTS = 6;
  *
  * `night` 이 따로 있는 이유는 실제로 밤에 먹는 약이 있어서다. 안압약 처방
  * (`G. Xalatan nocte`)이 이 앱이 실제로 읽어 본 처방전에 들어 있었다.
+ *
+ * `unknown` 은 때가 아니다 — **때를 모른다**는 뜻이다. 그것을 아무 때로나 넣지
+ * 않는 것이 이 타입에서 제일 중요한 값이다. 처음 쓸 때 못 읽는 값을 `night` 으로
+ * 떨어뜨렸는데, 그러면 시각이 비어 온 기록이 화면에서 **밤에 먹은 약**이 되고
+ * 그것을 알아챌 방법이 없다. 이 저장소가 세 군데에서 되풀이해 적어 둔 규칙이
+ * 그것이다: 그럴듯한 틀린 값이 물음표보다 나쁘다.
  */
-export type DayPart = 'morning' | 'midday' | 'evening' | 'night';
+export type DayPart = 'morning' | 'midday' | 'evening' | 'night' | 'unknown';
 
-/** `'0800'` → `'morning'`. 못 읽는 값은 아침으로 두지 않고 밤으로 둔다 — 아래 참고. */
+/** 실제 하루의 때들, 이른 것부터. `unknown` 은 여기 없다 — 때가 아니니까. */
+export const DAY_PARTS = ['morning', 'midday', 'evening', 'night'] as const;
+
+/** `'0800'` → `'morning'`. 못 읽으면 `'unknown'`. */
 export function partOf(due: string): DayPart {
-  const hour = Number(String(due ?? '').slice(0, 2));
-  if (!Number.isFinite(hour)) return 'night';
+  const text = String(due ?? '');
+  // 네 자리 숫자여야 한다. `'8'`, `''`, `'8 PM'` 은 이 자료원이 내는 모양이 아니고,
+  // 그런 것이 왔다는 것은 위쪽 어딘가가 이미 틀렸다는 뜻이다.
+  if (!/^\d{4}$/.test(text)) return 'unknown';
+  const hour = Number(text.slice(0, 2));
+  if (hour > 23) return 'unknown';
   if (hour >= 5 && hour < 11) return 'morning';
   if (hour >= 11 && hour < 16) return 'midday';
   if (hour >= 16 && hour < 20) return 'evening';
@@ -159,7 +172,9 @@ export function daySentence(day: CalendarDay): string {
     같은 것을 말해야 한다 — 눈으로 읽는 사람과 귀로 듣는 사람이 다른 사실을 받으면
     그 둘은 같은 화면을 본 것이 아니다.
   */
-  const missed = day.slots.filter((s) => !s.taken).map((s) => PART_WORD[s.part]);
+  const missed = day.slots
+    .filter((s) => !s.taken && s.part !== 'unknown')
+    .map((s) => PART_WORD[s.part]);
   const unique = [...new Set(missed)];
   if (unique.length > 0 && unique.length <= 2) {
     return `${when}: ${day.taken} of ${day.offered} doses were taken. The ${unique.join(' and ')} one was missed.`;
@@ -173,4 +188,5 @@ export const PART_WORD: Record<DayPart, string> = {
   midday: 'midday',
   evening: 'evening',
   night: 'night',
+  unknown: 'unrecorded',
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { MAX_SEGMENTS, PART_WORD, type CalendarDay, type DayPart, daySentence, leadingBlanks } from '@/lib/history/calendar';
+import { DAY_PARTS, MAX_SEGMENTS, PART_WORD, type CalendarDay, type DayPart, daySentence, leadingBlanks } from '@/lib/history/calendar';
 import { sayable } from './Say';
 
 /**
@@ -12,6 +12,8 @@ const PART_COLOR: Record<DayPart, string> = {
   midday: 'var(--color-part-midday)',
   evening: 'var(--color-part-evening)',
   night: 'var(--color-part-night)',
+  // 때가 아니라 "때를 모른다" 다. 갈래 밖의 회색이라야 갈래로 안 읽힌다.
+  unknown: 'var(--color-sc-muted)',
 };
 
 /**
@@ -95,8 +97,7 @@ export function DoseCalendar({ days, picked, onPick }: {
  * 색만 설명하면 반만 읽힌다.
  */
 function Legend({ days }: { days: CalendarDay[] }) {
-  const parts = ['morning', 'midday', 'evening', 'night'] as const;
-  const present = parts.filter((p) => days.some((d) => d.slots.some((s) => s.part === p)));
+  const present = DAY_PARTS.filter((p) => days.some((d) => d.slots.some((s) => s.part === p)));
   if (present.length < 2) return null;
 
   return (
