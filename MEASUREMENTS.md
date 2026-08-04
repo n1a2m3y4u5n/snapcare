@@ -1037,8 +1037,8 @@ NO DISPLAY (ili9341: [Errno 2] No such file or directory: '/dev/spidev0.0')
 DS3231 이 아니라 GPIO 3선식 DS1302 이고 (`kind: "ds1302"`, `trustworthy: true`),
 I2C 에 뜨지 않는 것이 맞다.
 
-물리 버튼은 여전히 없다. GPIO 24 도 15초 내내 HIGH 였다. 유리가 살아났으니 급하지는
-않다.
+물리 버튼은 없다. GPIO 24 도 15초 내내 HIGH 였다. 달지 않기로 했으므로 이 기계의
+조작부는 유리 하나이고, 그것이 `touch.py` 가 처음부터 적어둔 설계다.
 
 ### 아직 못 잰 것
 
