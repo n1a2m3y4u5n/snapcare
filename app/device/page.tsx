@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { DispenserPanel } from '@/components/sc/DispenserPanel';
+import { isDemo } from '@/lib/snapcare/demo';
+import { useIsClient } from '@/lib/hooks';
 import { BenchTest } from '@/components/sc/BenchTest';
 import { DoseRelease } from '@/components/sc/DoseRelease';
 import { useDispenser } from '@/lib/dispenser/useDispenser';
@@ -57,6 +59,12 @@ export default function DevicePage() {
   // 클라우드 경로 — 같은 WiFi 가 아니어도 닿는다. 아래 LAN 경로는 인터넷이 없을
   // 때의 대체로 남는다.
   const box = useDispenser();
+  /*
+    시연인가. 주소와 브라우저 저장소를 읽으므로 화면이 붙은 뒤에 판단한다 —
+    그리기 중에 부르면 서버가 그린 화면과 어긋난다.
+  */
+  const ready = useIsClient();
+  const demo = ready && isDemo();
 
   const [host, setHost] = useState(DEFAULT_HOST);
   const [reading, setReading] = useState(false);
@@ -132,6 +140,14 @@ export default function DevicePage() {
   // (server.py 의 `_link_schedule`) — POST 가 아니므로 HTTPS 페이지에서 최상위
   // 이동으로 부를 수 있고, SC1*W* 페이로드가 통째로 실리므로 요일도 기간도 살아서
   // 도착한다.
+  /*
+    손으로 보내는 자리를 펼칠 것인가.
+
+    종이를 읽었으면 펼친다. 요일과 기간은 알람에 없고 종이에만 있어서, 자동 전송이
+    그 둘을 실을 수 없다 — 그때는 사람이 눌러야 도착한다.
+  */
+  const advanced = demo || !!sheet?.schedule.length;
+
   const payload = sheet?.schedule.length
     ? encodeWeekly(sheet.schedule)
     : slots.length > 0 ? encodeSchedule(slots) : null;
@@ -332,10 +348,29 @@ export default function DevicePage() {
             기계가 도는지 직접 확인하는 자리. 짝이 있어야 명령을 봉할 수 있고,
             칸 수는 상자가 스스로 말한 것을 쓴다 — 없으면 화면에서 고른 값이다.
           */}
-          {box.paired && <BenchTest paired={box.paired} trays={trays} />}
+          {/*
+            시연에서만 낸다. 여기 있는 것들 — 트레이를 열고 부저를 울리는 것 — 은
+            **기계가 도는지 확인하는** 물건이지 약을 먹는 사람이 쓰는 물건이 아니다.
+            실제로 쓰는 사람에게 "아무 칸이나 여는 버튼" 은 있어서는 안 되는 것이고,
+            눌러서 나온 알약은 다음 복용에서 비게 된다.
+          */}
+          {demo && box.paired && <BenchTest paired={box.paired} trays={trays} />}
         </div>
 
-        {/* 폰 → 기기 (WiFi) */}
+        {/*
+          일정을 손으로 보내는 자리 — 이제 **평소에는 안 보인다.**
+
+          알람이 바뀌면 저절로 사서함으로 가므로(`useAutoSend`), 이 화면에 있던
+          "보내기" 는 사람이 눌러야 하는 것이 아니라 눌러도 되는 것이 됐다. 칸 수를
+          고르는 자리, 같은 Wi-Fi 로 보내는 링크, 광학 QR 도 마찬가지다 — 전부
+          "안 될 때의 다른 길" 이고, 안 될 때가 아닌데 늘 펼쳐 두면 이 화면이 무엇을
+          하는 곳인지가 흐려진다.
+
+          두 경우에는 남는다. 시연에서는 그 경로들 자체가 보여줄 것이고, **종이
+          폼시트를 읽었을 때**는 자동 전송이 못 하는 일이 있다 — 요일과 기간은
+          알람에 없고 종이에만 적혀 있다.
+        */}
+        {advanced && (<>
         <Speakable text="Send the schedule to the box."
                    className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2">
           <span className="flex-1">SEND THE SCHEDULE</span>
@@ -559,6 +594,8 @@ export default function DevicePage() {
             </div>
           </details>
         )}
+
+        </>)}
 
         {/* 종이 → 폰 : 의사가 채운 폼시트 */}
         <Speakable text="Or read the paper sheet the clinic filled in."
