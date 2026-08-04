@@ -828,6 +828,37 @@ def warm_in_shell() -> list:
     return []
 
 
+def links_open() -> list:
+    """표지의 주소가 익명으로 열리는가.
+
+    `links_live` 는 주소가 문서에 있는지와 부호가 딸려 있지 않은지만
+    본다. 열리는지는 아무도 보지 않았다. 심사자는 그 주소를 누르고,
+    로그인하지 않은 채로 누른다.
+
+    2026-08-04 기준 저장소는 비공개라 익명으로 404 다. 공개로 바꿀지
+    말지는 사람이 정할 일이지만, 정하지 않은 채로 제출되는 것을 막는
+    것은 기계가 할 수 있다. 망이 없으면 건너뛴다."""
+    import urllib.error
+    import urllib.request
+    urls = ('https://github.com/16th-eicon-contest/h1-SnapCare',
+            'https://snapcare.fly.dev')
+    out = []
+    for u in urls:
+        req = urllib.request.Request(u, method='GET',
+                                     headers={'User-Agent': 'snapcare-check'})
+        try:
+            with urllib.request.urlopen(req, timeout=15) as r:
+                code = r.status
+        except urllib.error.HTTPError as e:
+            code = e.code
+        except Exception as e:
+            return skip(f'표지 주소 확인 — 망에 닿지 못했다 ({e.__class__.__name__})')
+        if code != 200:
+            out.append(f'표지의 {u} 가 익명으로 열리지 않는다 (HTTP {code}). '
+                       '심사자는 로그인하지 않은 채로 누른다')
+    return out
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1977,6 +2008,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in links_open():
+        note(t)
 
     for t in warm_in_shell():
         note(t)
