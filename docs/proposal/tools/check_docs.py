@@ -392,6 +392,36 @@ def dash_aside() -> list:
     return out
 
 
+def toc_drift() -> list:
+    """목차가 실제 제목과 같은가.
+
+    목차는 낡기 가장 쉬운 자리다. 절을 하나 넣거나 이름을 고치면
+    본문만 바뀌고 목차는 그대로 남는데, 읽는 사람은 목차를 먼저 믿는다.
+    `tools/toc.py` 로 다시 만들 수 있으므로 어긋나면 그것을 돌리면 된다."""
+    out = []
+    for f, head in (('proposal_ko.md', '## □ 목차'), ('proposal_en.md', '## □ Contents')):
+        s = (DOC / f).read_text()
+        if head not in s:
+            out.append(f'{f}: 목차가 없다')
+            continue
+        i = s.index(head)
+        j = s.index('\n---\n', i)
+        listed = re.findall(r'^  (\d+\.\d+)  (.+)$', s[i:j], re.M)
+        real = [(m.group(1), m.group(2).strip())
+                for m in re.finditer(r'^### (\d+\.\d+) (.+)$', s, re.M)]
+        if [x[0] for x in listed] != [x[0] for x in real]:
+            miss = sorted(set(x[0] for x in real) - set(x[0] for x in listed),
+                          key=lambda v: [int(z) for z in v.split('.')])
+            extra = sorted(set(x[0] for x in listed) - set(x[0] for x in real),
+                           key=lambda v: [int(z) for z in v.split('.')])
+            out.append(f'{f}: 목차와 본문의 절이 다르다 — 빠진 것 {miss[:5]} · 없는 것 {extra[:5]}')
+            continue
+        for (a, at), (b, bt) in zip(listed, real):
+            if at != bt:
+                out.append(f'{f}: §{a} 의 이름이 목차와 다르다 — 목차 "{at}" · 본문 "{bt}"')
+    return out
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1541,6 +1571,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in toc_drift():
+        note(t)
 
     for t in dash_aside():
         note(t)

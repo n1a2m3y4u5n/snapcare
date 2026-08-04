@@ -17,6 +17,75 @@ SnapCare is a web app that answers a single photograph of a prescription, a nutr
 
 ---
 
+## □ Contents
+
+No page numbers are given; sections are found by their number.
+
+**Problem Statement and Background**
+
+  1.1  The size and trend of the non-literate population
+  1.2  The distribution of health literacy
+  1.3  The types of medication error and what they cost
+  1.4  International policy and its blind spot
+  1.5  The undiagnosed population as a precondition
+  1.6  How widely the delivery medium has spread
+  1.7  The scale of population ageing and its geographic shift
+  1.8  The effect and the limits of visual delivery
+  1.9  Structural constraints of the existing pictogram standard
+  1.10  Prior work on interfaces for low-literate users
+  1.11  The problem in summary
+  1.12  How this problem looks in our own two countries
+  1.13  The range of the target and the design standard
+
+**Solution and Main Functions**
+
+  2.1  Design principle
+  2.2  SIGIL, the pictogram composition engine
+  2.3  VOCA, the spoken instruction engine
+  2.4  Deriving a per-person verdict threshold
+  2.5  Collecting conditions and inferring allergies
+  2.6  How this differs from existing approaches
+  2.7  The three core functions
+
+**User Flow of the Web App**
+
+  3.1  The overall flow
+  3.2  First run and profile setup
+  3.3  From capture to verdict
+  3.4  The path when recognition fails
+  3.5  Routes to the audio
+  3.6  Sharing a device and separating household members
+  3.7  Channels other than colour
+  3.8  Checking that it was understood
+  3.9  Medication routine and the last four weeks
+
+**Development and Implementation**
+
+  4.1  Overview of the stack
+  4.2  Physical checks in the verdict engine
+  4.3  Choosing the hardware link
+  4.4  Reading the paper form
+  4.5  Offline operation
+  4.6  Privacy
+  4.7  The repository and how the team worked
+
+**Results and Expected Impact (SDG 3 Contribution)**
+
+  5.1  Formative evaluation: whether the information arrives
+  5.2  A procedure for verifying pictogram comprehension
+  5.3  Morphemes judged unimprovable
+  5.4  Limits of the measurement
+  5.5  Measured performance of the nutrition estimation model
+  5.6  Measured offline operation
+  5.7  Expert opinion survey
+  5.8  Contribution to SDG 3
+  5.9  Unverified items
+  5.10  Future plans
+  5.11  Appendix. Every free-text response
+  5.12  Appendix. Every multiple-choice response
+
+---
+
 ## □ Problem Statement and Background
 
 Taking medicine as directed is hard for anyone. In a meta-analysis pooling 22 studies and 92,443 subjects on hypertension in low- and middle-income countries, non-adherence ranged from 25.45% to 63.35% depending on the instrument used (Nielsen, J. Ø., Shrestha, A. D., Neupane, D. & Kallestrup, P., "Non-adherence to anti-hypertensive medication in low- and middle-income countries: a systematic review and meta-analysis of 92443 subjects," *Journal of Human Hypertension*, 31(1):14–21, 2017, doi:10.1038/jhh.2016.31), and in the United States the avoidable health care costs arising from medication non-adherence are estimated at $100 billion to $300 billion a year (Iuga, A. O. & McGuire, M. J., "Adherence and health care costs," *Risk Management and Healthcare Policy*, 7:35–44, 2014, doi:10.2147/RMHP.S19801). This is not the problem of one group. From finding in the evening the supplement meant for the morning, to stopping an antibiotic on the day the symptoms fade, the same kind of failure runs through.
@@ -94,7 +163,6 @@ What this distribution indicates is not that the target should be narrowed but w
 
 **[Figure 2]** Literacy rate and number of non-literate adults in sub-Saharan Africa (UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). Bars are absolute numbers, the line is the rate. The two axes moving in opposite directions is the point of this section. The rate rose 4 percentage points while the head count grew by 29 million. By the rate this is improvement, by the head count it is deterioration. This is the evidence that the problem is not one that time will resolve.
 
-
 ### 1.2 The distribution of health literacy
 
 Being able to read letters and being able to understand health information are different things. The HLS19 survey, which interviewed 42,445 people across 17 European countries, measured general health literacy on four levels (excellent, sufficient, problematic, inadequate) and reported that a substantial share of low health literacy remained in every participating country (HLS19 Consortium of the WHO Action Network M-POHL, *International Report on the Methodology, Results, and Recommendations of the European Health Literacy Population Survey 2019–2021*, Austrian National Public Health Institute, Vienna, 2021). That report states explicitly, however, that collection period and method differed by country and that cross-country comparison should be made with caution, and it does not put forward a single pooled figure for the 17 countries. Korean data are therefore used here in place of a pooled percentage.
@@ -115,7 +183,6 @@ What Table 3 shows is that this problem divides more sharply within a country th
 ![Figure 3](fig/chart02_health_literacy.png)
 
 **[Figure 3]** Share of Korean adults without sufficient health literacy (Korea Disease Control and Prevention Agency, *Korea National Health and Nutrition Examination Survey, 9th cycle, year 2*, 2023). Against 39.6% overall, the figure for those aged 65 and over is 59.7%, higher by 20.1 percentage points. Splitting by income gives a difference of 11.9 percentage points. That this problem divides more sharply within a country than between countries is the point of this figure.
-
 
 Measuring literacy directly rather than by self-report makes the picture worse. In the Programme for the International Assessment of Adult Competencies (PIAAC), covering 31 developed countries, **18% of adults did not reach the most elementary level in literacy, numeracy and adaptive problem solving**, and adult literacy in these countries has stagnated or declined since 2012 (OECD, *Programme for the International Assessment of Adult Competencies*, cited in UNESCO, *Youth and Adult Literacy: International Literacy Day 2025 Factsheet*, UNESCO, 2025). The distance between the self-report "I can read" and the ability "I can follow the instruction on a medicine packet" appears here.
 
@@ -174,7 +241,6 @@ One qualification is needed here. This distribution covers errors made on the di
 ![Figure 4](fig/chart03_error_types.png)
 
 **[Figure 4]** Distribution by type of 155 dispensing errors found by pharmacists (Anacleto, T. A., Perini, E., Rosa, M. B. & César, C. C., "Medication dispensing errors in a Brazilian hospital pharmacy," *Clinics*, 62(3):243–250, 2007). Omission, dose and timing account for 84.5%. That all three are information which can be carried in a picture is the starting point of the SIGIL morpheme design, and `finish_course`, `qty_*` and `time_*` correspond to them respectively.
-
 
 #### 1.3.1 Misreading measured on the patient side
 
@@ -349,7 +415,6 @@ The offline operation of §4.5 handles a connection being cut; it does not handl
 
 Those 2.6 billion split SnapCare's design at one point. The verdict has to be produced on the device in the user's hand, because a structure that yields an answer only by asking a server is, for these people, the same as no app at all. The offline operation described in §4.5 and §5.6 is therefore not a convenience but a premise. Regions with low literacy and regions where people do not use the internet are largely the same places, so this app has to work where the two conditions overlap.
 
-
 ### 1.7 The scale of population ageing and its geographic shift
 
 The population aged 60 and over will grow from 1 billion in 2020 to 1.4 billion in 2030, at which point one person in six worldwide will be 60 or older. By 2050 it doubles again to 2.1 billion, and its share of the world population rises from 12% in 2015 to 22% in 2050. More important is the distribution. **By 2050 two thirds of the population aged 60 and over will live in low- and middle-income countries** (World Health Organization, *Ageing and health* fact sheet).
@@ -467,7 +532,6 @@ Rather than close this section on the literature alone, we put the limitation to
 What the studies above measured and what this answer says are the same thing. It differs in having been written after looking at what we made. The pass rates in Table 6 are values for other people's sets; this is the word of someone who actually looked at the 78 morphemes of §2.2. In the same answer he singled out four of our morphemes as particularly abstract: completion, quantity, timing and prohibition. The first three coincide exactly with the three types where errors concentrate in Table 4 of §1.3 (omission 32.9%, dose 28.4%, timing 23.2%). The fourth, prohibition, is not in Table 4. That table counts errors pharmacists made while dispensing, so contraindication marking was never among the things counted. That the response nonetheless lists it fourth is because prohibition is separately dangerous seen from the patient side, and §1.3.1 takes up that misreading on its own. That the places most needed are the hardest is the conclusion of this section, and the literature and the survey pointed at it separately.
 
 This is why the present work does not stop at making pictograms but designs a procedure for measuring their comprehension alongside.
-
 
 ### 1.9 Structural constraints of the existing pictogram standard
 
@@ -613,7 +677,6 @@ Placed side by side, the two make the target of this app plain. In Korea it is a
 A limit belongs here. We could not find data measuring the relationship between health literacy and primary care use inside Moldova itself. What §1.5 cites is a study of 170 Moldovan migrant women living in Padua, Italy, and being a migrant sample it cannot be carried across to the population inside Moldova. Confirming it in Moldova is part of the field evaluation in §5.10.
 
 Once the target is widened in the next section, the Korean half of this section's argument grows heavier rather than lighter. The grounds given for calling it invisible are that 18 of the 39 respondents in §5.7 said they scarcely meet such patients, and that is an answer about patients who cannot read. The conditions §1.13 adds are counted even less than those. Health literacy at least has a figure of 39.6%, whereas we found no statistic within the range of this document that counts people too worn out to take medicine on time, or people who cannot remember whether they took last night's dose. Nor does that arrive in a consulting room as a diagnosis. Saying that this problem is invisible in Korea becomes truer the further the target is widened.
-
 
 ### 1.13 The range of the target and the design standard
 
@@ -782,7 +845,6 @@ def _pictogram(self, in_slot: bool = False) -> Node:
 ```
 
 Design intent. Each of the three branches is one clause of the grammar. A modifier outside a slot fails to parse unless it is marked `standalone` (the four in §2.2 are morning, noon, evening and night; a time of day stands on its own without modifying anything, so it is allowed to stand alone), a head placed in another head's slot fails as well, and a name absent from the dictionary becomes an error rather than a picture. This matters because the DSL is not written by hand but produced by a language model reading a prescription. If the model invents a plausible name, that has to become a parse error rather than a plausible picture on screen. Putting a deterministic verification layer over probabilistic output on a safety-critical screen is what this parser is for, and the same structure is used for the nutrition verdict in §4.2.
-
 
 ![Figure 17](fig/fig02_sigil_sheet.png)
 
@@ -1383,7 +1445,6 @@ The same principle repeats in the nutrient bars. One fact is expressed five time
 
 The line currently being read gains an outline. Where the audio has reached has to be visible as well as audible, so that someone who lost the thread can press that spot again.
 
-
 #### 3.7.1 Whether the colours themselves can be read was measured separately
 
 If everything so far concerns the layers that substitute for colour, whether the colour itself can be read is a separate question. In §5.7, E. A. Draffan, retired speech and language therapist and visiting accessibility researcher at Global Symbols and the University of Southampton, wrote that the WCAG 2.2 mobile criteria should be checked. The reason given was that AAC users frequently have visual difficulties as well and operate by scanning, which makes an audio button hard to reach. Working through the criteria, two items failed.
@@ -1598,7 +1659,6 @@ export function validateDensity(per100: NutrientAmounts): ValidationResult {
 Design intent. The checks were gathered in one place rather than placed on each route. Placing them per route means reattaching them every time a route is added, and a route where someone forgot to attach them immediately becomes an unverified channel. The third route (photograph estimation) did in fact arrive later in this app, and no additional verification code was written for it. It was simply made to pass through the gate that already existed.
 
 Returning `problems` as an array of strings rather than a boolean is also deliberate. When a value is rejected the screen has to be able to say what went wrong rather than "could not read it," and during development those strings become the log directly. It was these strings that surfaced the case of the fat value read at ten times its figure.
-
 
 ### 4.3 Choosing the hardware link
 
@@ -1840,7 +1900,6 @@ There is a weak point in that policy and it belongs here too. `script-src` and `
 
 Deriving the household ID as the SHA-256 hash of the public key follows the same reasoning. It removes the registration step, and requesting someone else's data would require their private key, which cannot leave their device. Access control becomes structural rather than a rule.
 
-
 ### 4.7 The repository and how the team worked
 
 The web app, the hardware firmware and the training code are managed in a single repository. It will be transferred to the contest organisation's GitHub organisation for final submission.
@@ -1946,7 +2005,6 @@ It should be made clear that what this evaluation measured is the arrival of inf
 
 **[Figure 37]** Formative evaluation before and after the fix (n = 28). The left pair is the number of runs satisfying all six items, the right pair the number of runs ending without a single pictogram appearing. More than 0 becoming 27, **the move from 8 to 0 on zero pictograms** is what this evaluation yielded. Those eight arose from an empty cache rather than a missing feature, and without measuring we would have discovered them first during the demonstration.
 
-
 ### 5.2 A procedure for verifying pictogram comprehension
 
 As established in §1.8, making a pictogram does not mean it will be read. When 108 international standard pictograms were tested on 52 Filipino adults, only 17 passed the ANSI 85% criterion (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022).
@@ -1979,7 +2037,6 @@ Whether this procedure is justified we asked directly in §5.7. Both respondents
 The two conditions differ. The first asks whether the result can be thrown away; the second asks whether the criteria stand in advance. The second is answered to a degree by this section writing the criteria of both gates down beforehand, but the first cannot be answered because it has not been tested. If the field evaluation of §5.10 produces morphemes where the machine verdict and people's answers diverge, that is when this condition is tested. Being able to discard the machine's side at that point is what makes the procedure justified.
 
 The 512px original and the 32px reduction are also shown together, with the answer given against the reduction, because the reduction is the size actually seen in a list.
-
 
 #### 5.2.1 The retry strategy
 
@@ -2036,7 +2093,6 @@ Of the 24 read differently, 7 are actually exposed on screen, while the remainin
 ![Figure 39](fig/chart07_glyph_check.png)
 
 **[Figure 39]** First-pass semantic check results for the 78 morphemes and the breakdown of the 24 misread. The misreadings are split rather than pooled because the two are different in nature. The 7 exposed on screen are actually seen by users and have to be fixed, while the 17 that exist only in the dictionary are not yet seen by anyone. Fixing the former first is a matter of allocating effort and does not mean the latter are acceptable.
-
 
 [Table 36] Morphemes improved by rework
 
