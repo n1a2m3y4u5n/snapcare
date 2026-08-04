@@ -399,13 +399,13 @@ def toc_drift() -> list:
     본문만 바뀌고 목차는 그대로 남는데, 읽는 사람은 목차를 먼저 믿는다.
     `tools/toc.py` 로 다시 만들 수 있으므로 어긋나면 그것을 돌리면 된다."""
     out = []
-    for f, head in (('proposal_ko.md', '## □ 목차'), ('proposal_en.md', '## □ Contents')):
+    for f in ('proposal_ko.md', 'proposal_en.md'):
         s = (DOC / f).read_text()
-        if head not in s:
+        if '<!-- toc -->' not in s:
             out.append(f'{f}: 목차가 없다')
             continue
-        i = s.index(head)
-        j = s.index('\n---\n', i)
+        i = s.index('<!-- toc -->')
+        j = s.index('<!-- /toc -->', i)
         listed = re.findall(r'^  (\d+\.\d+)  (.+)$', s[i:j], re.M)
         real = [(m.group(1), m.group(2).strip())
                 for m in re.finditer(r'^### (\d+\.\d+) (.+)$', s, re.M)]
@@ -419,6 +419,52 @@ def toc_drift() -> list:
         for (a, at), (b, bt) in zip(listed, real):
             if at != bt:
                 out.append(f'{f}: §{a} 의 이름이 목차와 다르다 — 목차 "{at}" · 본문 "{bt}"')
+    return out
+
+
+def toc_built() -> list:
+    """빌드된 문서 안에 목차가 실려 있는가.
+
+    마크다운만 보면 놓친다. 실제로 목차를 넣고 검사를 통과시킨 뒤에도
+    docx 에는 들어가 있지 않았다. 서식이 받는 칸이 여섯뿐이라 빌더가
+    "템플릿에 없는 절: 목차" 로 멈췄는데, 빌드 출력을 버리고 있어서
+    아무도 보지 못했고 docx 는 예전 것이 그대로 남아 있었다."""
+    try:
+        import docx
+    except ImportError:
+        return skip('빌드된 목차 검사 — python-docx 가 없다')
+
+    def walk(doc):
+        for p in doc.paragraphs:
+            yield p.text
+        for t in doc.tables:
+            for r in t.rows:
+                for c in r.cells:
+                    for p in c.paragraphs:
+                        yield p.text
+                    for it in c.tables:
+                        for rr in it.rows:
+                            for cc in rr.cells:
+                                for pp in cc.paragraphs:
+                                    yield pp.text
+
+    out = []
+    for name, kw, src in (('SnapCare_H1_Final_Proposal_KO.docx', '목차', 'proposal_ko.md'),
+                          ('SnapCare_H1_Final_Proposal_EN.docx', 'Contents', 'proposal_en.md')):
+        path = DOC / name
+        if not path.exists():
+            out.append(f'{name}: 파일이 없다')
+            continue
+        txt = list(walk(docx.Document(str(path))))
+        if kw not in [t.strip() for t in txt]:
+            out.append(f'{name}: 목차가 실리지 않았다 — 빌드가 실패한 채로 남아 있을 수 있다')
+            continue
+        # 중첩 표를 두 번 훑게 되므로 줄을 세면 배수가 된다. 가짓수로 센다.
+        n = len({m.group(1) for t in txt
+                 for m in [re.match(r'^\s*(\d+\.\d+)\s\s', t)] if m})
+        real = len(re.findall(r'^### \d+\.\d+ ', (DOC / src).read_text(), re.M))
+        if n != real:
+            out.append(f'{name}: 목차의 절이 {n} 인데 본문의 절은 {real} 이다')
     return out
 
 
@@ -1571,6 +1617,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in toc_built():
+        note(t)
 
     for t in toc_drift():
         note(t)

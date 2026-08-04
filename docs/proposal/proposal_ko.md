@@ -17,9 +17,16 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
 
 ---
 
-## □ 목차
+## □ Problem Statement and Background
+
+<!-- toc -->
+
+**목차**
 
 쪽 번호를 적지 않았다. 절 번호로 찾는다.
+
+**목차**
+
 
 **Problem Statement and Background**
 
@@ -84,9 +91,7 @@ SnapCare 는 처방전·영양성분표·의약품·음식을 사진 한 장으�
   5.11  부록. 자유 서술 전문
   5.12  부록. 선택형 응답 전수
 
----
-
-## □ Problem Statement and Background
+<!-- /toc -->
 
 약을 정해진 대로 먹는 일은 누구에게나 어렵다. 저·중소득국의 고혈압 환자를 다룬 22편 92,443명의 메타분석에서 비순응 비율은 측정 도구에 따라 25.45%에서 63.35%까지 나왔고 (Nielsen, J. Ø., Shrestha, A. D., Neupane, D. & Kallestrup, P., "Non-adherence to anti-hypertensive medication in low- and middle-income countries: a systematic review and meta-analysis of 92443 subjects," *Journal of Human Hypertension*, 31(1):14–21, 2017, doi:10.1038/jhh.2016.31), 미국에서는 복약 비순응으로 생기는 회피 가능한 의료비가 연 1,000억에서 3,000억 달러로 추정된다 (Iuga, A. O. & McGuire, M. J., "Adherence and health care costs," *Risk Management and Healthcare Policy*, 7:35–44, 2014, doi:10.2147/RMHP.S19801). 이것은 특정 집단의 문제가 아니다. 아침에 먹기로 한 영양제를 저녁에 발견하는 일에서부터 항생제를 증상이 가시는 날 그만두는 일까지, 같은 종류의 실패가 이어져 있다.
 

@@ -17,9 +17,16 @@ SnapCare is a web app that answers a single photograph of a prescription, a nutr
 
 ---
 
-## □ Contents
+## □ Problem Statement and Background
+
+<!-- toc -->
+
+**Contents**
 
 No page numbers are given; sections are found by their number.
+
+**Contents**
+
 
 **Problem Statement and Background**
 
@@ -84,9 +91,7 @@ No page numbers are given; sections are found by their number.
   5.11  Appendix. Every free-text response
   5.12  Appendix. Every multiple-choice response
 
----
-
-## □ Problem Statement and Background
+<!-- /toc -->
 
 Taking medicine as directed is hard for anyone. In a meta-analysis pooling 22 studies and 92,443 subjects on hypertension in low- and middle-income countries, non-adherence ranged from 25.45% to 63.35% depending on the instrument used (Nielsen, J. Ø., Shrestha, A. D., Neupane, D. & Kallestrup, P., "Non-adherence to anti-hypertensive medication in low- and middle-income countries: a systematic review and meta-analysis of 92443 subjects," *Journal of Human Hypertension*, 31(1):14–21, 2017, doi:10.1038/jhh.2016.31), and in the United States the avoidable health care costs arising from medication non-adherence are estimated at $100 billion to $300 billion a year (Iuga, A. O. & McGuire, M. J., "Adherence and health care costs," *Risk Management and Healthcare Policy*, 7:35–44, 2014, doi:10.2147/RMHP.S19801). This is not the problem of one group. From finding in the evening the supplement meant for the morning, to stopping an antibiotic on the day the symptoms fade, the same kind of failure runs through.
 
