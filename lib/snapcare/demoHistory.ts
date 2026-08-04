@@ -32,13 +32,37 @@ import type { ScanRecord } from './types.ts';
  *    화면이 그대로 빈다.
  */
 
-/** public/nutrition/ 에 실제로 담겨 있는 제품들. */
+/**
+ * public/nutrition/ 에 실제로 담겨 있는 제품들.
+ *
+ * 단것뿐이었다 — 에너지음료, 초콜릿, 콜라, 스프레드. 그러면 화면이 **설탕 말고는
+ * 전부 0** 이 된다. 단백질 0g, 섬유 0g, 지방 0g 짜리 막대 다섯이 줄지어 서 있고,
+ * 그것은 이 사람이 아무것도 안 먹었다는 뜻이 아니라 **우리가 밥을 안 넣었다**는
+ * 뜻이다. 영양 화면이 무엇을 하는지가 그 화면에서 안 보였다.
+ *
+ * 그래서 끼니를 넣었다. 빵·죽·요거트·참치·닭가슴살·렌틸·콩·수프·치즈·땅콩버터·
+ * 사과주스. 값은 전부 OpenFoodFacts 에서 받아 온 실제 제품이다 — 지어내면 화면의
+ * 숫자가 그럴듯한 거짓말이 되고, 이 앱은 그 숫자로 "더 먹어라" 를 말한다.
+ */
 const PRODUCTS = {
   redbull: { barcode: '9002490100070', name: 'Energy drink 250 mL', emoji: '🥤', grams: 250, kind: 'drink' as const },
   snickers: { barcode: '5000159461122', name: 'Peanut chocolate bar', emoji: '🍫', grams: 50, kind: 'food' as const },
   mars: { barcode: '5000159407236', name: 'Chocolate bar', emoji: '🍫', grams: 51, kind: 'food' as const },
   cola: { barcode: '5449000000996', name: 'Cola 330 mL', emoji: '🥤', grams: 330, kind: 'drink' as const },
   nutella: { barcode: '3017620422003', name: 'Hazelnut spread', emoji: '🍞', grams: 30, kind: 'food' as const },
+
+  // 끼니. 이쪽이 단백질·섬유·지방을 채운다.
+  bread: { barcode: '3760049790214', name: 'Bread', emoji: '🍞', grams: 60, kind: 'food' as const },
+  oats: { barcode: '5000108022152', name: 'Porridge oats', emoji: '🥣', grams: 40, kind: 'food' as const },
+  yoghurt: { barcode: '20047559', name: 'Yoghurt', emoji: '🥛', grams: 150, kind: 'food' as const },
+  tuna: { barcode: '00192125', name: 'Tuna', emoji: '🐟', grams: 80, kind: 'food' as const },
+  chicken: { barcode: '3302740059186', name: 'Chicken', emoji: '🍗', grams: 100, kind: 'food' as const },
+  lentils: { barcode: '5018095011271', name: 'Lentils', emoji: '🫘', grams: 120, kind: 'food' as const },
+  beans: { barcode: '5000157024671', name: 'Beans', emoji: '🫘', grams: 200, kind: 'food' as const },
+  soup: { barcode: '8714100766576', name: 'Vegetable soup', emoji: '🍲', grams: 250, kind: 'food' as const },
+  cheese: { barcode: '5202390015885', name: 'Cheese', emoji: '🧀', grams: 30, kind: 'food' as const },
+  peanutButter: { barcode: '3327272107259', name: 'Peanut butter', emoji: '🥜', grams: 20, kind: 'food' as const },
+  juice: { barcode: '3254691592086', name: 'Apple juice', emoji: '🧃', grams: 200, kind: 'drink' as const },
 };
 
 /**
@@ -115,13 +139,14 @@ function missed(back: number, due: string): boolean {
  * 뼈대이고, 옛날 주에는 거기에 단것이 하나 더 붙는다.
  */
 const WEEK: (keyof typeof PRODUCTS)[][] = [
-  ['cola'],                  // 일
-  ['snickers'],              // 월 — 땅콩
-  [],                        // 화 — 아무것도 안 찍은 날. 이런 날이 있어야 진짜다.
-  ['nutella'],               // 수
-  ['snickers'],              // 목 — 땅콩
-  ['redbull'],               // 금
-  ['cola', 'mars'],          // 토
+  // 아침 · 점심 · 저녁(또는 간식). 하루 두셋이면 실제로 사람이 찍는 수쯤이다.
+  ['oats', 'soup', 'cola'],                 // 일
+  ['bread', 'peanutButter', 'chicken'],     // 월 — 땅콩
+  ['yoghurt', 'lentils'],                   // 화
+  ['bread', 'tuna', 'nutella'],             // 수
+  ['oats', 'peanutButter', 'beans'],        // 목 — 땅콩
+  ['yoghurt', 'cheese', 'redbull'],         // 금
+  ['bread', 'chicken', 'cola', 'mars'],     // 토 — 주말이 가장 무겁다
 ];
 
 /**
@@ -146,19 +171,32 @@ function ateOn(day: string, back: number): (keyof typeof PRODUCTS)[] {
     것으로 보였다.
   */
   if (back >= 28 && !menu.includes('redbull')) menu.push('redbull');
-  if (back < 14 && menu.length > 1) menu.pop();
+  // 최근 두 주는 단것 하나를 끊었다. 끼니는 안 건드린다 — 줄어든 것은 설탕이다.
+  if (back < 14) {
+    const sweets: (keyof typeof PRODUCTS)[] = ['cola', 'mars', 'redbull', 'nutella', 'snickers'];
+    const last = [...menu].reverse().find((k) => sweets.includes(k));
+    if (last && menu.filter((k) => sweets.includes(k)).length > 1) {
+      menu.splice(menu.lastIndexOf(last), 1);
+    }
+  }
   return menu;
 }
 
 /** 그 음식을 몇 시에 먹었나. 요일과 자리에서 결정적으로 — 무작위를 안 쓴다. */
 function ateAt(day: string, index: number): { hhmm: string; label: string } {
+  /*
+    끼니 시각이다. 자리 순서대로 아침·점심·저녁이고 넷째는 밤 간식이다.
+
+    예전에는 요일로 자리를 돌렸다 — 같은 날의 셋이 아침·저녁·점심 순으로 앉을 수
+    있었고, 목록이 시각 순이 아니게 됐다. 자리 번호를 그대로 쓰면 그 일이 안 생긴다.
+  */
   const slots = [
     { hhmm: '0820', label: '8:20 AM' },
-    { hhmm: '1505', label: '3:05 PM' },
-    { hhmm: '1940', label: '7:40 PM' },
+    { hhmm: '1245', label: '12:45 PM' },
+    { hhmm: '1910', label: '7:10 PM' },
+    { hhmm: '2130', label: '9:30 PM' },
   ];
-  const weekday = new Date(`${day}T00:00:00Z`).getUTCDay();
-  return slots[(weekday + index) % slots.length];
+  return slots[Math.min(index, slots.length - 1)];
 }
 
 /**
@@ -262,9 +300,19 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
     Array.from({ length: Math.min(21, days) }, (_, back) => isoDay(today, back)),
   );
 
+  /*
+    땅콩이 든 것들. **제품 이름이 아니라 성분으로** 고른다.
+
+    `itemId === 'snickers'` 였다. 식단에 땅콩버터가 들어오자 그 줄이 조용히 아무것도
+    안 잡게 됐고 — 일지가 결론을 못 내는데 시험은 통과했다 — 데모의 간판 기능이
+    비어 버렸다. 성분으로 물으면 새 제품이 들어와도 따라온다.
+  */
+  const PEANUT: (keyof typeof PRODUCTS)[] = ['snickers', 'peanutButter'];
+  const peanutIds = new Set<string>(PEANUT);
+
   for (const rec of out) {
     if (!answered.has(rec.dayKey)) continue;
-    if (rec.itemId === 'snickers') {
+    if (peanutIds.has(rec.itemId)) {
       rec.reaction = 'unwell';
       rec.symptoms = ['gut'];
       rec.tags = ['en:peanuts'];

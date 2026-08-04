@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CheckIcon, SpeakerOffIcon } from '@/components/icons';
 import { LANGUAGES, languageByCode, voiceAvailable } from '@/lib/i18n/languages';
 import { usePreferences } from '@/stores/preferences';
 import { speak, voicesReady } from '@/lib/voice';
@@ -72,8 +73,8 @@ export function LanguagePicker() {
                   {mute ? `${l.english} — no voice on this phone` : l.english}
                 </span>
               </span>
-              {mute && <span aria-hidden className="sc-end">🔇</span>}
-              {on && <span aria-hidden className="sc-end">✓</span>}
+              {mute && <span aria-hidden className="sc-end flex items-center"><SpeakerOffIcon /></span>}
+              {on && <span aria-hidden className="sc-end flex items-center"><CheckIcon /></span>}
             </button>
           );
         })}

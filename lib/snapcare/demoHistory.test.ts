@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 import { DEMO_DAYS, demoHistory } from './demoHistory.ts';
 import { MAX_BACK, WINDOW_DAYS } from '../history/window.ts';
@@ -75,8 +78,15 @@ test('저녁을 주로 거르는 것이 드러난다', () => {
 test('설탕이 줄어드는 이야기가 들어 있다', () => {
   // 주별 막대가 내려가는 것이 보여야 그 화면이 존재하는 이유가 증명된다.
   const h = demoHistory(TODAY, ME);
+  /*
+    **단것만** 센다. 예전에는 바코드가 있는 것을 다 셌는데, 그때는 자료에 단것밖에
+    없어서 같은 답이 나왔다. 끼니가 들어오면서 그 어림이 깨진다 — 빵과 렌틸이
+    설탕 추세에 섞이면 방향이 안 보인다.
+  */
+  const SWEET = new Set(['9002490100070', '5000159461122', '5000159407236',
+                         '5449000000996', '3017620422003']);
   const sweetsIn = (from: number, to: number) => h.filter((r) => {
-    if (!r.barcode) return false;
+    if (!r.barcode || !SWEET.has(r.barcode)) return false;
     const back = Math.round((new Date(`${TODAY}T00:00:00Z`).getTime()
       - new Date(`${r.dayKey}T00:00:00Z`).getTime()) / 86400000);
     return back >= from && back < to;
@@ -90,10 +100,14 @@ test('설탕이 줄어드는 이야기가 들어 있다', () => {
 test('영양 수치가 나오는 제품만 쓴다', () => {
   // public/nutrition/ 에 없는 바코드를 쓰면 오프라인에서 합산이 비고, 이 자료가
   // 채우려던 화면이 그대로 빈 채로 남는다.
-  const CACHED = new Set([
-    '3017620422003', '5000159407236', '5000159461122',
-    '5449000000996', '8001505005707', '9002490100070',
-  ]);
+  /*
+    목록을 손으로 적지 않는다. 적어 두면 캐시에 파일을 넣고 여기를 안 고친 날,
+    시험이 **있는 것을 없다고** 말한다 — 진짜 결함과 구별이 안 되는 실패다.
+  */
+  const dir = join(dirname(fileURLToPath(import.meta.url)), '../../public/nutrition');
+  const CACHED = new Set(readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => f.replace(/\.json$/, '')));
   for (const r of demoHistory(TODAY, ME)) {
     if (r.barcode) assert.ok(CACHED.has(r.barcode), `${r.barcode} 는 캐시에 없다`);
   }

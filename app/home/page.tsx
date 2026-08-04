@@ -106,7 +106,7 @@ export default function HomePage() {
 
 
   return (
-    <MobileScreen bar="home">
+    <MobileScreen bar="home" fit>
       {/*
         세로 공간을 실제로 쓴다.
 
@@ -118,7 +118,7 @@ export default function HomePage() {
         날에는 그만큼 자리가 줄고 궤도가 알아서 위로 붙는다 — 카드가 궤도를 화면
         밖으로 밀어내던 것을 이 구조가 대신 막는다.
       */}
-      <div className="flex flex-1 flex-col px-5 pt-14">
+      <div className="flex min-h-0 flex-1 flex-col px-5 pt-14">
         {/*
           제목과 얼굴이 한 줄이다.
 
@@ -176,7 +176,7 @@ export default function HomePage() {
         {autoSend.error && (
           <div className="mt-4 flex items-center gap-3 rounded-2xl px-4 py-3"
                style={{ background: 'var(--color-med-bg)' }}>
-            <span aria-hidden className="text-xl">📦</span>
+            <span aria-hidden className="flex items-center text-xl"><BoxIcon /></span>
             <span className="flex-1 text-sm font-semibold"
                   style={{ color: 'var(--color-sc-ink)' }}
                   {...sayable('The schedule has not reached the box yet.')}>
@@ -206,7 +206,7 @@ export default function HomePage() {
           되찾으면 위성 지름이 그만큼 커지고, 그것이 이 화면에서 제일 겨누기 어려운
           표적이다.
         */}
-        <div className="-mx-5 flex flex-1 items-center justify-center py-2">
+        <div className="-mx-5 flex min-h-0 flex-1 items-center justify-center py-2">
           <Orbit satellites={satellites} />
         </div>
 

@@ -41,14 +41,24 @@ export interface Language {
   rtl?: boolean;
 }
 
+/*
+  차례.
+
+  글자 크기를 셋째 단계 위로 올리면 이 목록에서 한 화면에 두세 줄밖에 안 보인다.
+  그러면 순서는 "정리" 가 아니라 **누가 스크롤을 해야 하는가** 를 정하는 일이 된다.
+
+  루마니아어가 셋째다. 이 앱이 실제로 쓰이는 곳이 몰도바이고, 그 사람이 자기 언어를
+  찾으려고 여섯 줄을 내려야 할 이유가 없다. 위의 둘은 화면 언어(영어)와 만든 사람의
+  언어(한국어)라 남긴다.
+*/
 export const LANGUAGES: Language[] = [
   { code: 'en', tag: 'en-US', native: 'English', english: 'English', flag: '🌐' },
   { code: 'ko', tag: 'ko-KR', native: '한국어', english: 'Korean', flag: '🇰🇷' },
+  { code: 'ro', tag: 'ro-RO', native: 'Română', english: 'Romanian', flag: '🇲🇩' },
   { code: 'id', tag: 'id-ID', native: 'Bahasa Indonesia', english: 'Indonesian', flag: '🇮🇩' },
   { code: 'ur', tag: 'ur-PK', native: 'اردو', english: 'Urdu', flag: '🇵🇰', rtl: true },
   { code: 'bn', tag: 'bn-BD', native: 'বাংলা', english: 'Bengali', flag: '🇧🇩' },
   { code: 'ha', tag: 'ha-NG', native: 'Hausa', english: 'Hausa', flag: '🇳🇬' },
-  { code: 'ro', tag: 'ro-RO', native: 'Română', english: 'Romanian', flag: '🇲🇩' },
 ];
 
 export const DEFAULT_LANGUAGE = 'en';

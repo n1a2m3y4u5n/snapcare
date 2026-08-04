@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
+import { AlarmIcon, CheckIcon, CloseIcon, DotIcon, SnowIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
@@ -229,7 +230,7 @@ function FoodResult({
         {/* 바코드가 없는 경우의 정성 폴백 */}
         {!item.barcode && item.nutrition?.note && (
           <div className="flex items-start gap-2 rounded-2xl bg-white px-4 py-3 shadow-sm">
-            <span className="text-lg" style={{ color: 'var(--color-caution)' }}>●</span>
+            <span className="mt-0.5 flex items-center text-lg" style={{ color: 'var(--color-caution)' }}><DotIcon /></span>
             <Say className="text-sm" style={{ color: 'var(--color-sc-ink)' }}>{item.nutrition.note}</Say>
           </div>
         )}
@@ -249,8 +250,8 @@ function FoodResult({
           하나도 없었다. 화면에서 가장 값진 자리를 반복에 쓴 셈이다.
 
           IKEA 설명서의 오래된 수법이 이 자리에 맞는다: **틀린 것과 맞는 것을 나란히**
-          놓는다. 왼쪽은 지금 손에 든 바로 그 물건이고(✕), 오른쪽은 다음에 고를 기준
-          이다(✓). 그러면 두 그림이 서로 다른 것을 말하고, 화살표가 둘을 잇는다 —
+          놓는다. 왼쪽은 지금 손에 든 바로 그 물건이고(가위표), 오른쪽은 다음에 고를 기준
+          이다(체크). 그러면 두 그림이 서로 다른 것을 말하고, 화살표가 둘을 잇는다 —
           글자 없이 "이거 말고 저거" 가 성립한다.
         */}
         {alternative && (
@@ -262,7 +263,7 @@ function FoodResult({
             </Speakable>
             <div className="mt-2 flex items-center gap-3">
               <SwapSide
-                mark="✕"
+                mark={<CloseIcon />}
                 color="var(--color-avoid)"
                 say={`Not this one. ${spokenName(item.name, item.kind)}.`}
               >
@@ -275,7 +276,7 @@ function FoodResult({
 
               <span className="text-2xl" style={{ color: 'var(--color-sc-muted)' }} aria-hidden>→</span>
 
-              <SwapSide mark="✓" color="var(--color-safe)" say={alternative.text}>
+              <SwapSide mark={<CheckIcon />} color="var(--color-safe)" say={alternative.text}>
                 {alternative.glyph
                   ? <OneGlyph line={`\\no{\\${alternative.glyph}}`} className="h-10 w-10" />
                   : <span className="text-3xl" style={{ color: 'var(--color-safe)' }} aria-hidden><BasketIcon /></span>}
@@ -292,7 +293,7 @@ function FoodResult({
 
       <div className="mt-auto px-5 pb-8 pt-4">
         {/* 체크 표시. 이 버튼이 하는 일은 "확인했다, 기록에 남긴다" 다. */}
-        <PrimaryButton onClick={onDone} level={verdict.level} icon="✔️"
+        <PrimaryButton onClick={onDone} level={verdict.level} icon={<CheckIcon />}
                        say="Done. This is saved to your history, and you go back to the start.">
           Done
         </PrimaryButton>
@@ -427,7 +428,7 @@ function RxResult({
           )}
           {storageSentence(item.rx) && (
             <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
-              <span className="text-xl" aria-hidden>🧊</span>
+              <span className="flex items-center text-xl" aria-hidden><SnowIcon /></span>
               <Say className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                 {storageSentence(item.rx)!}
               </Say>
@@ -456,7 +457,10 @@ function RxResult({
             */}
             {item.rx.schedule.map((s, i) => (
               <div key={i} className="flex flex-wrap items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
-                <span className="shrink-0 text-xl">{s.emoji}</span>
+                {/*
+                  때 그림이 둘이었다 — 이모지 하나와 그 옆의 `TimeGlyph`. 같은 것을
+                  두 번 말하면서 한쪽만 우리 그림이었다. 이모지 쪽을 뺀다.
+                */}
                 <Say className="min-w-[8rem] flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{`${s.label} at ${s.time}`}</Say>
                 <TimeGlyph label={s.time} className="text-sm" />
               </div>
@@ -485,7 +489,7 @@ function RxResult({
       */}
       <div className="mt-auto pb-8 pt-6">
         {/* 알람 시계. 이 버튼이 만드는 것이 정확히 그것이다 — 시각마다 폰이 부른다. */}
-        <PrimaryButton onClick={onDone} level={item.handwritten ? 'caution' : 'safe'} icon="⏰"
+        <PrimaryButton onClick={onDone} level={item.handwritten ? 'caution' : 'safe'} icon={<AlarmIcon />}
                        say={item.handwritten
                          ? 'Create reminders from what we read. This was handwritten, so check the times with a person first.'
                          : 'Create reminders. The phone will tell you at each time on the list above.'}>
@@ -504,7 +508,7 @@ function RxResult({
  * 흐려지고, 이 칸은 두 그림이 서로 반대라는 것 하나로 뜻이 성립하는 자리다.
  */
 function SwapSide({ mark, color, say, children }: {
-  mark: string; color: string; say: string; children: React.ReactNode;
+  mark: React.ReactNode; color: string; say: string; children: React.ReactNode;
 }) {
   return (
     <Speakable text={say} bare className="relative flex h-14 w-14 shrink-0 items-center justify-center
@@ -552,7 +556,7 @@ function PrimaryButton({ children, onClick, level, say, icon }: {
   level: 'safe' | 'caution' | 'avoid';
   say: string;
   /** 글자를 못 읽는 사람이 이 버튼을 알아볼 그림 */
-  icon?: string;
+  icon?: React.ReactNode;
 }) {
   const bg = level === 'avoid' ? 'var(--color-avoid)' : level === 'caution' ? 'var(--color-caution)' : 'var(--color-sc-primary)';
   return (

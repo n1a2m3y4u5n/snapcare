@@ -12,7 +12,7 @@ import { setDemo } from '@/lib/snapcare/demo';
 import { useIsClient, useIsDemo } from '@/lib/hooks';
 import { activeAccountId, listAccounts, switchTo, type Account } from '@/lib/snapcare/accounts';
 import { TILE_ICONS, TILE_NAMES } from '@/components/icons/tiles';
-import { FaceIcon, LockIcon } from '@/components/icons';
+import { BackspaceIcon, FaceIcon, LockIcon } from '@/components/icons';
 
 /** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개 순서 (bcrypt로 실제 설정·검증). */
 /*
@@ -128,7 +128,7 @@ export default function LoginPage() {
                     key={p.id}
                     onClick={() => { if (!on) switchTo(p.id); }}
                     aria-pressed={on}
-                    aria-label={`Person ${p.emoji}`}
+                    aria-label="Person"
                     className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-3xl
                                transition-transform active:scale-95"
                     style={{
@@ -241,7 +241,7 @@ export default function LoginPage() {
             style={{ border: '1.5px solid var(--color-sc-line)' }}
             aria-label="Undo last picture"
           >
-            <span className="text-lg leading-none">⌫</span>
+            <span className="flex items-center text-lg leading-none"><BackspaceIcon /></span>
             <span className="text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>Undo</span>
           </button>
         )}

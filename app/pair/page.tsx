@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { BoxIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 
 import { claimFromPairUrl } from '@/lib/dispenser/claim';
@@ -72,7 +73,7 @@ export default function PairPage() {
          style={{ background: 'var(--color-sc-bg)' }}>
       {state === 'working' ? (
         <>
-          <span aria-hidden className="text-6xl">📦</span>
+          <span aria-hidden className="flex items-center text-6xl"><BoxIcon /></span>
           <p className="text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}>
             Connecting to your box…
           </p>

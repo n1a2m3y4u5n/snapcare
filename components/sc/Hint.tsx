@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { NoSignalIcon, PhoneIcon, RetryIcon, SheetIcon, SpeakerIcon, ZoomIcon } from '@/components/icons';
 import { speak } from '@/lib/voice';
 import { Speakable } from './Say';
 
@@ -17,17 +18,17 @@ import { Speakable } from './Say';
  */
 
 /** 안내 문구 → 무엇을 하라는 것인지의 그림. 못 찾으면 그림 없이 문장만 남는다. */
-const ADVICE: { match: RegExp; emoji: string; hint: string }[] = [
+const ADVICE: { match: RegExp; icon: React.ReactNode; hint: string }[] = [
   // 프레임을 채우라는 것
-  { match: /fill the frame|hold steady/i, emoji: '🔍', hint: 'Move closer' },
+  { match: /fill the frame|hold steady/i, icon: <ZoomIcon />, hint: 'Move closer' },
   // 종이를 평평하게, 네 귀퉁이가 다 들어오게
-  { match: /lay it flat|corner marks/i, emoji: '📄', hint: 'Lay it flat' },
+  { match: /lay it flat|corner marks/i, icon: <SheetIcon />, hint: 'Lay it flat' },
   // 기기 화면을 흔들리지 않게
-  { match: /device screen steady|no code found/i, emoji: '📱', hint: 'Hold steady' },
+  { match: /device screen steady|no code found/i, icon: <PhoneIcon />, hint: 'Hold steady' },
   // 인터넷이 필요하다
-  { match: /needs a connection|not available on this server/i, emoji: '📡', hint: 'No connection' },
+  { match: /needs a connection|not available on this server/i, icon: <NoSignalIcon />, hint: 'No connection' },
   // 다시 찍어라
-  { match: /try again|could not/i, emoji: '🔄', hint: 'Try again' },
+  { match: /try again|could not/i, icon: <RetryIcon />, hint: 'Try again' },
 ];
 
 export function Hint({ text, tone = 'warn' }: { text: string; tone?: 'warn' | 'info' }) {
@@ -43,12 +44,12 @@ export function Hint({ text, tone = 'warn' }: { text: string; tone?: 'warn' | 'i
     <Speakable text={text} className="flex items-center gap-2" style={{ color }}>
       {advice && (
         <span className="flex items-center gap-1">
-          <span aria-hidden className="text-xl leading-none">{advice.emoji}</span>
+          <span aria-hidden className="flex items-center text-xl leading-none">{advice.icon}</span>
           <span className="text-[11px] font-semibold">{advice.hint}</span>
         </span>
       )}
       <span className="text-xs opacity-80">{text}</span>
-      <span aria-hidden className="text-xs opacity-50">🔊</span>
+      <span aria-hidden className="flex items-center text-xs opacity-50"><SpeakerIcon /></span>
     </Speakable>
   );
 }

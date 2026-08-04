@@ -1,6 +1,7 @@
 'use client';
 
 import type { ScanItem, Verdict } from '@/lib/snapcare/types';
+import { GlyphIcon } from '@/components/icons';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
 import { Say } from './Say';
 import { spokenName } from '@/lib/tts/speakable';
@@ -66,7 +67,7 @@ export function VerdictHero({ item, verdict, photo }: {
               className="flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-medium shadow-sm"
               style={{ color: 'var(--color-sc-ink)' }}
             >
-              <span>{c.emoji}</span> <Say bare>{c.label}</Say>
+              <GlyphIcon emoji={c.emoji} aria-hidden /> <Say bare>{c.label}</Say>
             </span>
           ))}
         </div>

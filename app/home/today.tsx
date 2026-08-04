@@ -1,6 +1,7 @@
 'use client';
 
 import { useProfile } from '@/stores/profile';
+import { BowlIcon } from '@/components/icons';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NutrientBar } from '@/components/sc/NutrientBar';
 import { Hear, Speakable } from '@/components/sc/Say';
@@ -61,7 +62,7 @@ export function Today({ scans }: { scans: ScanRecord[] }) {
           ? `${thingsPhrase}. About ${Math.round(energy.amount)} calories, ${Math.round(energy.pct)} percent of the day.`
           : `${thingsPhrase}.`}
       >
-        <span className="text-base" aria-hidden>🍽️</span>
+        <span className="flex items-center text-base" aria-hidden><BowlIcon /></span>
         <span className="flex-1 text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
           {thingsPhrase}
         </span>

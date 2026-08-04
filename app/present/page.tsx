@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BellIcon, BoxIcon } from '@/components/icons';
 
 import { clientFor, loadPaired, type PairedDevice } from '@/lib/dispenser/paired';
 import { useReminders } from '@/stores/reminders';
@@ -150,7 +151,7 @@ export default function PresentPage() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-8 text-center"
             style={{ background: 'var(--color-sc-bg)' }}>
-        <span aria-hidden className="text-5xl">📦</span>
+        <span aria-hidden className="flex items-center text-5xl"><BoxIcon /></span>
         <p className="text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}>
           이 폰은 아직 상자와 짝이 없다
         </p>
@@ -259,7 +260,7 @@ export default function PresentPage() {
           className="sc-row mt-2 flex w-full items-center rounded-2xl py-3 text-left disabled:opacity-40"
           style={{ background: 'var(--color-sc-bg)' }}
         >
-          <span className="sc-icon" aria-hidden>🔔</span>
+          <span className="sc-icon flex items-center" aria-hidden><BellIcon /></span>
           <span className="flex-1 font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
             {busy === '부저' ? '보내는 중…' : '부저를 울린다'}
           </span>

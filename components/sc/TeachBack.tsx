@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { FineIcon, SkipIcon, UndoIcon } from '@/components/icons';
 import { dslSentence } from '@/lib/snapcare/dslSpeech';
 import { buildQuestions } from '@/lib/snapcare/teachBack';
 import { usePreferences } from '@/stores/preferences';
@@ -48,7 +49,7 @@ export function TeachBack({ item }: { item: ScanItem }) {
       <Speakable text="You went through it. The pictures above say the same thing whenever you need them."
                  className="mt-4 flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-sm"
                  style={{ background: 'var(--color-safe-bg)', color: 'var(--color-sc-ink)' }}>
-        <span aria-hidden className="text-xl">✅</span>
+        <span aria-hidden className="flex items-center text-xl"><FineIcon /></span>
         <span className="flex-1">You went through it — the pictures above stay here.</span>
       </Speakable>
     );
@@ -118,7 +119,7 @@ export function TeachBack({ item }: { item: ScanItem }) {
         <Speakable text={q.again}
                    className="mt-3 flex w-full items-center gap-2 text-sm font-semibold"
                    style={{ color: right ? 'var(--color-safe)' : 'var(--color-caution)' }}>
-          <span aria-hidden className="text-lg">{right ? '✅' : '↺'}</span>
+          <span aria-hidden className="flex items-center text-lg">{right ? <FineIcon /> : <UndoIcon />}</span>
           <span className="flex-1">{q.again}</span>
         </Speakable>
       )}
@@ -131,7 +132,7 @@ export function TeachBack({ item }: { item: ScanItem }) {
         >
           {/* 되말하기를 건너뛰는 자리. 글자뿐이면 못 읽는 사람은 이 확인 절차에
               **갇힌다** — 나가는 길이 딱 하나인데 그게 글자다. */}
-          <span aria-hidden className="no-underline">⏭️</span>
+          <span aria-hidden className="flex items-center no-underline"><SkipIcon /></span>
           Skip
         </button>
         <span className="flex-1" />

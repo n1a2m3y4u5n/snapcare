@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { CloseIcon } from '@/components/icons';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { DispenserPanel } from '@/components/sc/DispenserPanel';
 import { useIsClient } from '@/lib/hooks';
@@ -222,7 +223,7 @@ export default function DevicePage() {
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-white"
                       style={{ background: 'var(--color-avoid)' }}>
-                  ✕
+                  <CloseIcon />
                 </span>
                 <span className="flex-1 text-left">
                   <span className="block text-base font-bold" style={{ color: 'var(--color-avoid)' }}>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BellIcon, BellOffIcon } from '@/components/icons';
 
 import { isSubscribed, pushSupported, subscribeToDevice, unsubscribeFromDevice } from '@/lib/push/client';
 import { Speakable } from '@/components/sc/Say';
@@ -71,7 +72,7 @@ export function PushToggle({ deviceId }: { deviceId: string }) {
         // 이 앱의 사용자는 손이 떨리는 사람을 포함한다).
         className="sc-row flex min-h-[44px] w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm disabled:opacity-60"
       >
-        <span aria-hidden className="sc-icon">{on ? '🔔' : '🔕'}</span>
+        <span aria-hidden className="sc-icon flex items-center">{on ? <BellIcon /> : <BellOffIcon />}</span>
         <span className="flex-1">
           <Speakable
             text={on

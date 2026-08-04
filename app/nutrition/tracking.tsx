@@ -147,6 +147,28 @@ export function ConditionTracking({ scans }: { scans: ScanRecord[] }) {
  * 한참 아래를 구별하지 못한다. 선이 있으면 그 사이가 눈에 보인다 — 그리고 색을
  * 못 보는 사람에게는 선이 유일한 답이다.
  */
+/**
+ * 값 하나의 색.
+ *
+ * 두 색이었다 — 한도 아래면 초록, 넘으면 주황. 그러면 자료의 대부분이 한 덩어리로
+ * 칠해진다. 설탕을 줄여 가는 열두 주가 여덟 칸 주황, 네 칸 초록이 되고, 그 여덟 칸
+ * 안에서 **줄어들고 있다는 사실**은 색이 말해 주지 않는다. 높이가 말하지 않느냐 —
+ * 눈금이 자료에 맞춰 늘어나므로 높이차는 작을 수 있고, 12픽셀 차이를 읽으라고 하는
+ * 것은 이 앱이 하지 않기로 한 일이다.
+ *
+ * 세 띠로 가른다. 경계는 이 앱이 이미 쓰는 판정 세 단계와 같은 자리다 — 넉넉하다,
+ * 한도에 다가간다, 넘었다. 색도 그 셋을 그대로 쓴다. 화면마다 초록이 다른 뜻이면
+ * 색은 배울 수 없는 기호가 된다.
+ *
+ * 색이 유일한 답이 되지 않게 한도선(점선)이 늘 같이 있다. 색을 못 보는 사람은 선
+ * 위인지 아래인지로 같은 것을 읽는다.
+ */
+function bandColor(pct: number): string {
+  if (pct >= 100) return 'var(--color-avoid)';
+  if (pct >= 70) return 'var(--color-caution)';
+  return 'var(--color-safe)';
+}
+
 function Bars({ points, height }: {
   /*
     `over` 를 안 받는다. 주별 점의 `over` 는 **넘긴 날의 수**(number)이고 날별 점의
@@ -173,7 +195,7 @@ function Bars({ points, height }: {
             <div className="w-full rounded-sm"
                  style={{
                    height: `${Math.max(4, (p.pct / top) * 100)}%`,
-                   background: p.pct >= 100 ? 'var(--color-caution)' : 'var(--color-safe)',
+                   background: bandColor(p.pct),
                  }} />
           )}
         </div>

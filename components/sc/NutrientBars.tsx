@@ -1,6 +1,7 @@
 'use client';
 
 import type { Member } from '@/lib/snapcare/types';
+import { SpeakerIcon } from '@/components/icons';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
 import { NUTRIENT_LABEL, type NutrientProfile } from '@/lib/nutrition/types';
 import { NutrientBar } from './NutrientBar';
@@ -65,8 +66,8 @@ export function NutrientBars(
         <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
           {grams} G · SHARE OF {possessive(member.name)} DAY
         </p>
-        <button onClick={() => speak(spoken, 'en-US')} aria-label="Read nutrition aloud" className="text-base leading-none">
-          🔊
+        <button onClick={() => speak(spoken, 'en-US')} aria-label="Read nutrition aloud" className="flex items-center text-base leading-none">
+          <SpeakerIcon />
         </button>
       </div>
 

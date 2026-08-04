@@ -11,7 +11,7 @@ import { useIsClient, useMyColor } from '@/lib/hooks';
 import { usePreferences } from '@/stores/preferences';
 import { speak } from '@/lib/voice';
 import type { AgeBand } from '@/lib/snapcare/types';
-import { FaceIcon } from '@/components/icons';
+import { ConditionIcon, ClockIcon, FaceIcon, FaceUnwellIcon, StethoscopeIcon } from '@/components/icons';
 
 /**
  * 내 프로필 — 키보드를 한 번도 쓰지 않는다.
@@ -57,10 +57,10 @@ const AGE_BANDS: { band: AgeBand; glyph: string; label: string; role: string }[]
  * 의사가 말했다(의사). 셋 다 아래 칸의 어떤 답과도 겹치지 않으므로, 그림을 답으로
  * 오해할 자리가 없다.
  */
-const GROUPS: { key: 'now' | 'experience' | 'diagnosis'; title: string; emoji: string; say: string }[] = [
-  { key: 'now', title: 'RIGHT NOW', emoji: '🕐', say: 'Right now. Things that are true today.' },
-  { key: 'experience', title: 'MADE ME SICK BEFORE', emoji: '🤢', say: 'Made me sick before. Things that made you feel bad after eating them.' },
-  { key: 'diagnosis', title: 'A DOCTOR TOLD ME', emoji: '👩‍⚕️', say: 'A doctor told me.' },
+const GROUPS: { key: 'now' | 'experience' | 'diagnosis'; title: string; icon: React.ReactNode; say: string }[] = [
+  { key: 'now', title: 'RIGHT NOW', icon: <ClockIcon hour={10} minute={10} />, say: 'Right now. Things that are true today.' },
+  { key: 'experience', title: 'MADE ME SICK BEFORE', icon: <FaceUnwellIcon />, say: 'Made me sick before. Things that made you feel bad after eating them.' },
+  { key: 'diagnosis', title: 'A DOCTOR TOLD ME', icon: <StethoscopeIcon />, say: 'A doctor told me.' },
 ];
 
 /**
@@ -257,14 +257,14 @@ function ProfileBody() {
               {/*
                 머리글이 **고를 것들까지 읽는다.**
                 묶음의 뜻만 들려주면 "뭘 고르라는 건지" 는 알아도 "무엇 중에" 는 모른다.
-                🩸 이 당뇨이고 🌾 가 글루텐이라는 것은 그림만으로는 알 수 없어서,
+                피 한 방울이 당뇨이고 밀 이삭이 글루텐이라는 것은 그림만으로는 알 수 없어서,
                 이 목록이 없으면 진단 묶음은 통째로 닿지 않는다.
               */}
               <div className="mt-6 flex items-center gap-2">
                 <Speakable text={`${g.say} ${items.map((c) => c.label).join(', ')}.`}
                            className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
                            style={{ color: 'var(--color-sc-muted)' }}>
-                  <span className="text-xl" aria-hidden>{g.emoji}</span>
+                  <span className="flex items-center text-xl" aria-hidden>{g.icon}</span>
                   <span className="flex-1">{g.title}</span>
                 </Speakable>
                 <Hear text={`${g.say} ${items.map((c) => c.label).join(', ')}.`} className="sc-hear" />
@@ -282,7 +282,7 @@ function ProfileBody() {
                       aria-label={c.label}
                       {...sayable(`${c.label}. ${on ? 'On.' : 'Off.'}`)}
                     >
-                      <span className="text-2xl">{c.emoji}</span>
+                      <span className="flex items-center text-2xl" aria-hidden><ConditionIcon id={c.id} /></span>
                       <span className="text-center text-[11px] font-semibold leading-tight"
                             style={{ color: on ? 'var(--color-caution)' : 'var(--color-sc-muted)' }}>
                         {c.label}

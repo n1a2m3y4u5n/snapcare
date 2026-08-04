@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { BackIcon, CheckIcon, FaceIcon, TrashIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { sayable, ask, Speakable } from '@/components/sc/Say';
@@ -78,7 +79,7 @@ export default function PeoplePage() {
       }}>
         <button onClick={() => router.push('/settings')} className="text-sm font-semibold"
                 style={{ color: 'var(--color-sc-primary)' }}>
-          <span aria-hidden>◀️</span> Back
+          <BackIcon className="inline align-[-0.1em]" /> Back
         </button>
 
         <h1 className="mt-3 text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
@@ -103,12 +104,12 @@ export default function PeoplePage() {
                 <button
                   onClick={() => { if (!on) switchTo(p.id); }}
                   className="flex flex-1 items-center gap-3 text-left"
-                  aria-label={on ? `You, ${p.emoji}` : `Switch to ${p.emoji}`}
+                  aria-label={on ? 'This is you' : 'Switch to this person'}
                   {...sayable(on ? 'This is you.' : 'Tap to switch to this person.')}
                 >
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-2xl"
-                        style={{ background: p.color, opacity: on ? 1 : 0.55 }}>
-                    {p.emoji}
+                        style={{ background: p.color, opacity: on ? 1 : 0.55, color: '#fff' }}>
+                    <FaceIcon face={p.emoji} />
                   </span>
                   <span className="flex-1">
                     {/* 지금 사람만 나이와 조건을 보여줄 수 있다 — 남의 자료는 이 자리에서
@@ -139,8 +140,8 @@ export default function PeoplePage() {
                       color: danger ? '#fff' : 'var(--color-sc-muted)',
                     }}
                   >
-                    <span>🗑</span>
-                    {danger && <span className="text-sm font-bold">✓</span>}
+                    <TrashIcon />
+                    {danger && <span className="text-sm font-bold"><CheckIcon /></span>}
                   </button>
                 )}
               </div>

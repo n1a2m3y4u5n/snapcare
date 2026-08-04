@@ -10,7 +10,7 @@ import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
 import { TEXT_SIZES, TEXT_SIZE_LABEL, ROOT_PX } from '@/lib/a11y/textSize';
 import { ask, Speakable, Hear } from '@/components/sc/Say';
 import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
-import { HareIcon, SpeakerIcon, SpeakerOffIcon, TortoiseIcon, UndoIcon } from '@/components/icons';
+import { DotIcon, HareIcon, SpeakerIcon, SpeakerOffIcon, TortoiseIcon, UndoIcon } from '@/components/icons';
 
 /**
  * 설정 — 판정에 실제로 영향을 주는 것만 둔다.
@@ -169,7 +169,16 @@ export default function SettingsPage() {
                     color: on ? '#fff' : 'var(--color-sc-muted)',
                   }}
                 >
-                  {'▪'.repeat(SPEECH_RATES.indexOf(r) + 1)}
+                  {/*
+                    네모 한 글자를 되풀이하고 있었다(`'▪'.repeat`). 글꼴이 가진
+                    도형이라 기기마다 크기와 무게가 다르고, 이 앱이 이모지를 걷어낸
+                    이유와 같은 문제다. 같은 수만큼 우리 점을 찍는다.
+                  */}
+                  <span className="flex items-center justify-center gap-0.5">
+                    {Array.from({ length: SPEECH_RATES.indexOf(r) + 1 }, (_, i) => (
+                      <DotIcon key={i} size="0.5em" />
+                    ))}
+                  </span>
                 </button>
               );
             })}
