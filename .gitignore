@@ -98,3 +98,4 @@ public/ocr/
 .venv-disp/
 # 발송 기록 — 1103명의 주소가 한 줄씩 들어간다. 저장소에 올리지 않는다.
 scratchpad/contacts/sent.jsonl
+docs/proposal/fig/*_FAIL.png
