@@ -172,6 +172,11 @@ class CloudLink:
         #: 폰이 이 상자를 자기 것이라고 말한 시각, 또는 "". 짝짓기 화면을 내리는
         #: 유일한 증거다 — `display/health` 가 읽는다.
         self._claimed_at = str(stored.get("claimedAt") or "")
+        #: 폰이 짝을 **푼** 시각, 또는 "". `claimedAt` 이 비었다는 것만으로는
+        #: 부족해서 따로 남긴다: 한 번도 짝지은 적 없는 상자와 방금 풀린 상자가
+        #: 그 필드에서는 똑같이 보이는데, 짝짓기 QR 을 다시 띄워야 하는 쪽은
+        #: 뒤엣것뿐이다. `display/health` 가 읽는다.
+        self._released_at = str(stored.get("releasedAt") or "")
         self._applied_at = str(stored.get("appliedAt") or "")
 
         #: The current generation's control events. See `_Ctl`.
@@ -222,6 +227,7 @@ class CloudLink:
                 "commandRev": self._command_rev,
                 "appliedAt": self._applied_at,
                 "claimedAt": self._claimed_at,
+                "releasedAt": self._released_at,
                 "lastContactSecondsAgo": round(age) if age is not None else None,
                 "lastError": self._last_error,
                 "attempts": self._attempts,
@@ -561,10 +567,16 @@ class CloudLink:
         띄운다. 새 보호자, 새 폰, 다음에 그 앞에 서는 누구든 할 수 있는 일이 없어진다.
         """
         with self._lock:
-            now = datetime.now().isoformat(timespec="seconds") if held else ""
+            stamp = datetime.now().isoformat(timespec="seconds")
             if bool(self._claimed_at) == held:
                 return
-            self._claimed_at = now
+            # 푼 시각을 남기고, 다시 맺으면 지운다. 이것이 없으면 `claimedAt` 을
+            # 비우는 것만으로는 위 독스트링이 약속한 일이 일어나지 않는다 —
+            # `appliedAt` 은 한 번 찍히면 안 지워지므로, 클라우드 일정을 한 번이라도
+            # 받은 상자는 짝을 푼 뒤에도 계속 "처방된 상자" 로 보이고 QR 은 영영
+            # 안 돌아온다.
+            self._claimed_at = stamp if held else ""
+            self._released_at = "" if held else stamp
         self._save_state()
         self.nudge()
 
@@ -874,6 +886,7 @@ class CloudLink:
                 "commandRev": self._command_rev,
                 "appliedAt": self._applied_at,
                 "claimedAt": self._claimed_at,
+                "releasedAt": self._released_at,
             }
         try:
             write_atomic(self._state_path(), json.dumps(data, indent=2))

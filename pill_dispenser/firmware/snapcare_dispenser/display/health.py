@@ -432,10 +432,28 @@ def _read(dispenser, network, cloud, display=None) -> Health:
     # And a schedule that came over the LAN or off a paper sheet never touches
     # the relay at all — a machine that is dispensing correctly must not be
     # asking to be set up.
-    prescribed = (bool(relay_status.get("claimedAt"))
-                  or bool(relay_status.get("appliedAt"))
-                  or _try("the loaded trays",
-                          lambda: bool(dispenser.scheduler.slots), False))
+    #
+    # And one thing outranks all three: somebody unpairing in the app. `_claim`
+    # clears `claimedAt` for exactly that reason and says so in its docstring —
+    # "새 보호자, 새 폰, 다음에 그 앞에 서는 누구든 할 수 있는 일이 없어진다" — but
+    # clearing it achieved nothing on its own, because `appliedAt` is never
+    # cleared and the schedule stays on the card. So a box that had ever taken a
+    # cloud schedule went on calling itself prescribed after it had been let go,
+    # and the pairing code never came back to the panel. Seen on the bench: the
+    # app unpaired, the relay agreed (`claimedAt: ""`), and the screen carried on
+    # as though nothing had happened.
+    #
+    # `releasedAt` is set only by a `goodbye` and cleared by the next `hello`, so
+    # this leaves the LAN-only and paper-sheet builds exactly as they were: they
+    # never send one, and a machine that is dispensing correctly still must not
+    # be asking to be set up.
+    released = (bool(relay_status.get("releasedAt"))
+                and not relay_status.get("claimedAt"))
+    prescribed = (not released) and (
+        bool(relay_status.get("claimedAt"))
+        or bool(relay_status.get("appliedAt"))
+        or _try("the loaded trays",
+                lambda: bool(dispenser.scheduler.slots), False))
 
     next_tray, next_at = _next_dose(dispenser, at)
 

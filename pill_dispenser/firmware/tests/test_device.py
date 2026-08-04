@@ -5,6 +5,7 @@ from datetime import datetime
 
 import pytest
 
+from snapcare_dispenser.display import health
 from snapcare_dispenser import config, sc1
 from snapcare_dispenser.device import Dispenser
 from snapcare_dispenser.servo import MockBackend, TrayServos
@@ -596,3 +597,60 @@ def test_a_single_dose_waits_for_nothing(dispenser, servos, clock, monkeypatch):
 
     assert config.SERVO_BETWEEN_S not in waits[2:], "혼자인데 기다렸다"
     assert waits == [config.SERVO_STEP_S, config.SERVO_STEP_S]
+
+
+# ── 짝을 푼 상자는 다시 짝짓기를 청한다 ───────────────────────────────────────
+
+class _FakeRelay:
+    """`cloud.CloudLink.status()` 중 이 판단이 읽는 부분만."""
+
+    def __init__(self, **fields):
+        self._fields = {"state": "connected", "claimedAt": "", "appliedAt": "",
+                        "releasedAt": "", "relayUrl": "https://relay.example",
+                        **fields}
+
+    def status(self):
+        return dict(self._fields)
+
+
+def _prescribed(dispenser, **relay):
+    return health.snapshot(dispenser, cloud=_FakeRelay(**relay)).prescribed
+
+
+def test_unpairing_brings_the_pairing_code_back(dispenser):
+    """The failure `_claim(False)` was written to prevent, and did not.
+
+    Clearing `claimedAt` was supposed to make the box ask to be paired again so
+    that a new carer or a new phone has something to scan. It never did:
+    `appliedAt` is set the first time a cloud schedule is applied and is never
+    cleared, and the schedule itself stays on the card — so a box that had ever
+    been used went on calling itself prescribed after it had been let go, and
+    the panel never showed the code again.
+
+    Seen on the bench with the relay agreeing: `claimedAt: ""`, and the screen
+    carrying on as though nothing had happened.
+    """
+    dispenser.apply_payload("SC1*W*2:0800-127-000", source="api")
+
+    assert _prescribed(dispenser, claimedAt="2026-08-04T13:00:00") is True
+    # 짝을 풀었다. 일정도 `appliedAt` 도 그대로 남아 있다.
+    assert _prescribed(dispenser, appliedAt="2026-08-04T12:00:00",
+                       releasedAt="2026-08-04T13:30:00") is False
+
+
+def test_pairing_again_takes_the_code_back_down(dispenser):
+    """`hello` clears the release, or the box asks forever after one unpair."""
+    dispenser.apply_payload("SC1*W*2:0800-127-000", source="api")
+    assert _prescribed(dispenser, claimedAt="2026-08-04T14:00:00",
+                       releasedAt="") is True
+
+
+def test_a_box_nobody_ever_paired_is_unaffected(dispenser):
+    """The LAN-only and paper-sheet builds never send a goodbye.
+
+    They were the reason the loaded schedule counts at all — a machine that is
+    dispensing correctly must not be asking to be set up — so the new rule has
+    to be invisible to them.
+    """
+    dispenser.apply_payload("SC1*W*2:0800-127-000", source="api")
+    assert _prescribed(dispenser) is True

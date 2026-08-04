@@ -20,6 +20,7 @@ from dataclasses import replace
 import pytest
 
 from snapcare_dispenser.display.health import Health
+from snapcare_dispenser.display import health
 from snapcare_dispenser.display.presence import Presence
 
 
