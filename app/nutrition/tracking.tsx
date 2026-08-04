@@ -71,25 +71,17 @@ export function ConditionTracking({ scans }: { scans: ScanRecord[] }) {
               <Hear text={trackingSentence(s.label, s.summary, tracking.span)} />
             </div>
 
-            {/* 일곱 칸. 높이가 상한 대비 비율이고, 넘긴 날만 색이 다르다. */}
-            <div className="mt-2 flex items-end gap-1" style={{ height: 34 }}>
-              {s.points.map((p, i) => (
-                <div key={i} className="flex flex-1 flex-col justify-end" style={{ height: '100%' }}>
-                  {p.pct === null ? (
-                    // 기록 없음 — 바닥에 옅은 선만 남긴다
-                    <div className="w-full rounded-sm" style={{ height: 2, background: 'var(--color-sc-bg)' }} />
-                  ) : (
-                    <div
-                      className="w-full rounded-sm"
-                      style={{
-                        height: `${Math.max(6, Math.min(100, p.pct))}%`,
-                        background: p.over ? 'var(--color-caution)' : 'var(--color-safe)',
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
+            {/*
+              일곱 칸. 34px 상자에 100% 를 꽉 채우는 눈금이었다.
+
+              그러면 값들이 좁은 띠 안에 몰릴 때 — 실제 자료가 대개 그렇다 — 막대가
+              전부 비슷한 높이가 되어 **추세가 안 보인다.** 추세를 보라고 만든 그림이
+              추세를 안 보여주는 셈이었다.
+
+              상자를 키우고 눈금을 자료에 맞춘다. 다만 눈금은 100% 아래로 안 내려간다 —
+              한도가 늘 그림 안에 있어야 "얼마나 가까운가" 를 읽을 수 있다.
+            */}
+            <Bars points={s.points} height={56} />
 
             <div className="mt-1 flex items-center justify-between">
               <span className="text-[10px]" style={{ color: 'var(--color-sc-muted)' }}>
@@ -124,23 +116,7 @@ export function ConditionTracking({ scans }: { scans: ScanRecord[] }) {
                   </span>
                   <Hear text={weeklySentence(s.label, s.weeks)} />
                 </div>
-                <div className="mt-1 flex items-end gap-1" style={{ height: 26 }}>
-                  {s.weeks.map((w, i) => (
-                    <div key={i} className="flex flex-1 flex-col justify-end" style={{ height: '100%' }}>
-                      {w.pct === null ? (
-                        <div className="w-full rounded-sm" style={{ height: 2, background: 'var(--color-sc-bg)' }} />
-                      ) : (
-                        <div
-                          className="w-full rounded-sm"
-                          style={{
-                            height: `${Math.max(6, Math.min(100, w.pct))}%`,
-                            background: w.pct >= 50 ? 'var(--color-caution)' : 'var(--color-safe)',
-                          }}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <Bars points={s.weeks} height={44} />
                 <p className="mt-1 text-[10px]" style={{ color: 'var(--color-sc-muted)' }}>
                   {weeklySentence(s.label, s.weeks)}
                 </p>
@@ -150,5 +126,58 @@ export function ConditionTracking({ scans }: { scans: ScanRecord[] }) {
         ))}
       </div>
     </section>
+  );
+}
+
+/**
+ * 막대 줄 하나 — 날별이든 주별이든.
+ *
+ * 눈금이 자료에 맞춰 늘어난다
+ * ---------------------------
+ * 전에는 상자 높이가 곧 한도(100%)였다. 값들이 좁은 띠에 몰리면 — 실제 자료가 대개
+ * 그렇다 — 막대가 전부 비슷해져서 **추세를 보라고 만든 그림이 추세를 안 보여줬다.**
+ *
+ * 그렇다고 자료에만 맞추면 한도가 그림 밖으로 나간다. 그러면 "얼마나 가까운가" 를
+ * 읽을 수 없고, 그것이 이 그림의 나머지 절반이다. 그래서 눈금은 **100% 와 가장 큰
+ * 값 중 큰 쪽**이다 — 한도는 늘 그림 안에 있고, 넘긴 날이 있으면 그만큼 늘어난다.
+ *
+ * 한도선을 긋는다
+ * ---------------
+ * 넘겼는지를 색만으로 말하고 있었다. 색은 넘긴 **뒤에야** 말하고, 넘기기 직전과
+ * 한참 아래를 구별하지 못한다. 선이 있으면 그 사이가 눈에 보인다 — 그리고 색을
+ * 못 보는 사람에게는 선이 유일한 답이다.
+ */
+function Bars({ points, height }: {
+  /*
+    `over` 를 안 받는다. 주별 점의 `over` 는 **넘긴 날의 수**(number)이고 날별 점의
+    것은 넘겼는가(boolean)라, 같은 이름이 다른 것을 뜻한다. 그 둘을 한 자리에서 받으면
+    언젠가 하나가 다른 하나로 읽힌다 — 여기서는 비율 하나로만 정한다.
+  */
+  points: { pct: number | null }[];
+  height: number;
+}) {
+  const top = Math.max(100, ...points.map((p) => p.pct ?? 0));
+  return (
+    <div className="relative mt-2 flex items-end gap-1" style={{ height }}>
+      {/* 한도. 자료가 그것을 안 넘으면 맨 위에 앉는다. */}
+      <span aria-hidden
+            className="pointer-events-none absolute inset-x-0"
+            style={{ bottom: `${(100 / top) * 100}%`,
+                     borderTop: '1px dashed var(--color-sc-muted)', opacity: 0.6 }} />
+      {points.map((p, i) => (
+        <div key={i} className="flex flex-1 flex-col justify-end" style={{ height: '100%' }}>
+          {p.pct === null ? (
+            // 기록 없음 — 바닥에 옅은 선만 남긴다. 0 과 구별되어야 한다.
+            <div className="w-full rounded-sm" style={{ height: 2, background: 'var(--color-sc-bg)' }} />
+          ) : (
+            <div className="w-full rounded-sm"
+                 style={{
+                   height: `${Math.max(4, (p.pct / top) * 100)}%`,
+                   background: p.pct >= 100 ? 'var(--color-caution)' : 'var(--color-safe)',
+                 }} />
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

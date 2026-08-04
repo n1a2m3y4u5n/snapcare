@@ -2,6 +2,7 @@
 
 import { useProfile, PROFILE_ID } from '@/stores/profile';
 import { feedbackFrom, surveyTriggers, type SurveyRow } from '@/lib/pattern/infer';
+import { useLearnedConditions } from '@/lib/pattern/useLearned';
 import { Hear, sayable, Speakable } from '@/components/sc/Say';
 import type { ScanRecord } from '@/lib/snapcare/types';
 
@@ -40,8 +41,18 @@ export function Reactions({ scans }: { scans: ScanRecord[] }) {
   const member = useProfile((s) => s.profile);
   const toggleCondition = useProfile((s) => s.toggleCondition);
 
+  /*
+    훅은 이르게 돌아오기 **전**에 다 불러야 한다. 조건부로 부르면 렌더마다 훅의
+    개수가 달라지고, 리액트는 그것을 순서로 짝지어서 다른 훅의 상태를 잘못 읽는다.
+  */
+  const survey = surveyTriggers(feedbackFrom(scans, PROFILE_ID), member?.conditionIds ?? []);
+  /*
+    알아낸 것을 스스로 목록에 넣는다. 물어보지 않는 이유는 그 훅의 머리말에 있다 —
+    "Add to my list" 를 누를 수 있는 사람은 그 글자를 읽을 수 있는 사람이다.
+  */
+  useLearnedConditions(survey.rows);
+
   if (!member) return null;
-  const survey = surveyTriggers(feedbackFrom(scans, PROFILE_ID), member.conditionIds);
   // 답한 끼니가 없으면 이 화면은 할 말이 없다. 빈 표를 그리면 "찾은 게 없다" 로 읽히는데,
   // 실제로는 "아직 아무것도 안 물어봤다" 이고 둘은 다르다.
   if (survey.answered === 0 || survey.rows.length === 0) return null;
@@ -130,16 +141,22 @@ export function Reactions({ scans }: { scans: ScanRecord[] }) {
                 </button>
               )}
 
-              {r.state === 'watching' && r.significant && (
-                <button
-                  onClick={() => toggleCondition(r.condition.id)}
-                  className="mt-2 h-11 w-full rounded-xl text-xs font-bold text-white"
-                  style={{ background: 'var(--color-caution)' }}
-                  {...sayable(`Add ${r.condition.label} to your list, so we check every food for it.`)}
-                >
-                  Add to my list
-                </button>
-              )}
+              {/*
+                "Add to my list" 버튼이 여기 있었다. 앱이 스스로 넣으므로 없앴다 —
+                누를 수 있는 사람은 읽을 수 있는 사람이고, 이 앱은 못 읽는 사람을
+                위해 만들어졌다.
+
+                남은 것은 **뗄 수 있는 길**이다. 그것까지 없애면 앱이 내린 진단이
+                되고, 끌 수 없는 경고는 사람이 앱을 끄게 만든다.
+              */}
+              {/*
+                "Add to my list" 버튼이 여기 있었다. 앱이 스스로 넣으므로 없앴다 —
+                누를 수 있는 사람은 읽을 수 있는 사람이고, 이 앱은 못 읽는 사람을
+                위해 만들어졌다(`lib/pattern/useLearned.ts`).
+
+                남은 것은 **뗄 수 있는 길**이다. 그것까지 없애면 앱이 내린 진단이
+                되고, 끌 수 없는 경고는 사람이 앱을 끄게 만든다.
+              */}
             </div>
           );
         })}

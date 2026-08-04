@@ -50,6 +50,24 @@ interface ProfileState {
   /** 프로필을 확인했다고 표시한다 (건너뛰기로는 서지 않는다). */
   confirm: () => void;
   toggleCondition: (conditionId: string) => void;
+  /**
+   * 일지가 스스로 알아낸 것을 목록에 넣는다. **이미 뗀 적이 있으면 안 넣는다.**
+   *
+   * 넣는 쪽은 그냥 `toggleCondition` 이어도 되는데, 이 함수가 따로 있는 이유는
+   * 그 조건 하나다 — 사람이 뗐는데 앱이 다음 끼니에 다시 붙이면 그것은 **끌 수 없는
+   * 경고**가 되고, 끌 수 없는 경고는 사람이 앱을 끄게 만든다.
+   */
+  learnCondition: (conditionId: string) => void;
+  /**
+   * 일지가 붙인 것 — 사람이 직접 고른 것과 갈라 둔다.
+   *
+   * 화면이 그 둘을 다르게 말해야 한다. 사람이 고른 것은 "당신이 알려 준 것" 이고,
+   * 일지가 붙인 것은 "당신 기록에서 보인 것" 이라 근거를 같이 보여야 하고 뗄 수
+   * 있어야 한다.
+   */
+  learned: string[];
+  /** 일지가 붙였다가 사람이 뗀 것. 다시 안 붙인다. */
+  refused: string[];
   /** 신원은 그림으로 정한다 (타이핑 없음) */
   setFace: (emoji: string) => void;
   /** 나이대는 기준치 산출의 입력이다 */
@@ -60,6 +78,8 @@ export const useProfile = create<ProfileState>()(
   persist(
     (set) => ({
       profile: SEED,
+      learned: [],
+      refused: [],
       toggleCondition: (conditionId) =>
         set((s) => {
           const has = s.profile.conditionIds.includes(conditionId);
@@ -70,6 +90,26 @@ export const useProfile = create<ProfileState>()(
                 ? s.profile.conditionIds.filter((c) => c !== conditionId)
                 : [...s.profile.conditionIds, conditionId],
             },
+            /*
+              뗀 것이 일지가 붙인 것이었으면 기억해 둔다. 이 기억이 없으면 다음
+              끼니에 일지가 같은 결론을 내고 다시 붙인다 — 사람이 끌 수 없는 경고다.
+            */
+            learned: has ? s.learned.filter((c) => c !== conditionId) : s.learned,
+            refused: has && s.learned.includes(conditionId)
+              ? [...new Set([...s.refused, conditionId])]
+              : s.refused,
+          };
+        }),
+      learnCondition: (conditionId) =>
+        set((s) => {
+          if (s.profile.conditionIds.includes(conditionId)) return s;
+          if (s.refused.includes(conditionId)) return s;
+          return {
+            profile: {
+              ...s.profile,
+              conditionIds: [...s.profile.conditionIds, conditionId],
+            },
+            learned: [...new Set([...s.learned, conditionId])],
           };
         }),
       // 얼굴은 두 곳에 필요하다. 판정 화면이 보여주는 것은 이 프로필이고, 잠금화면과
