@@ -503,6 +503,46 @@ def built_fresh() -> list:
     return out
 
 
+def affil_invent() -> list:
+    """응답자를 부를 때 명단에 없는 소속을 붙이지 않았는가.
+
+    `title_drift` 가 직책은 보지만 소속은 보지 않는다. 실제로 §5.7 에
+    "국립공주대학교 특수교육 김은경 교수" 라고 적은 적이 있는데 명단에는
+    학과가 없다. 실명으로 부르는 문서에서 없는 소속을 지어 붙이는 것은
+    직책을 틀리는 것보다 무겁다.
+
+    이름 바로 앞의 낱말만 본다. 그것이 기관이나 학과처럼 생겼는데 명단의
+    소속 칸에 없으면 알린다. 지금 문서에서 오탐은 없다."""
+    s = (DOC / 'proposal_ko.md').read_text()
+    if '### 5.11' not in s or not table_no('전원이 실명'):
+        return skip('소속 대조 — 부록 §5.11 이나 응답자 명단 표가 없다')
+    roster = {}
+    for ln in s[s.index(f'[표 {table_no("전원이 실명")}]'):].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if roster:
+                break
+            continue
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        if len(c) >= 4 and c[0] and c[0] != '성함' and '---' not in c[0]:
+            roster[c[0]] = c[2]
+    body = s[:s.index('### 5.11')]
+    suf = re.compile(r'[가-힣A-Za-z·]*(대학교|대학|연구원|진흥원|개발원|공사|재단'
+                     r'|병원|연구소|센터|학과|교육)$')
+    out = []
+    for name, aff in roster.items():
+        if not re.search(r'[가-힣]', name) or not aff:
+            continue
+        for m in re.finditer(re.escape(name), body):
+            pre = body[max(0, m.start() - 30):m.start()].strip().split()
+            tok = pre[-1].strip('의,·()') if pre else ''
+            if not tok or not suf.match(tok):
+                continue
+            if tok not in aff and aff not in tok:
+                out.append(f'{name} 앞의 "{tok}" 이 명단의 소속("{aff}")에 없다')
+                break
+    return out
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1652,6 +1692,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in affil_invent():
+        note(t)
 
     for t in built_fresh():
         note(t)
