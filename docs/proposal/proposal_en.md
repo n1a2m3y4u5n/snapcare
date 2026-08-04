@@ -475,6 +475,8 @@ The most widely used pharmaceutical pictogram standard at present is the 81-symb
 
 How the set arrived at its present 81 we could not confirm at a primary source. Several secondary works record a start in the 1980s and the present count reached during the 1990s, but we could not open the originals, so no years are given here. The argument of this section is not when the set was made but that it does not compose, and the grounds for that are the licence conditions below.
 
+One discrepancy in the numbers inside this document should be stated as well. Gutierrez et al. in Table 6 counted and tested the USP set as 82 symbols, and this section says 81. The set may have grown or shrunk over time, but we could not confirm at a primary source which figure belongs to which date. Each source's own count has therefore been left as it stands. A difference of one does not change the argument of this section or of Table 6.
+
 The limitation of this standard lies in its expressive power. A single prescription instruction such as **"three times a day, 30 minutes after meals, keep refrigerated, contraindicated in pregnancy"** cannot be expressed by any one USP pictogram and can only be conveyed by listing five or six symbols.
 
 This is an explicit constraint rather than a design shortcoming. USP grants free use subject to four conditions: that, because of the potential for misinterpretation, the pictograms are not used as the sole means of conveying information to the patient; that they are not modified or used together with symbols USP did not develop without USP's permission; that only the latest versions are used, because the pictograms are subject to change; and that a notice of USP copyright accompanies them. USP also reserves the right to withdraw permission where it judges the pictograms to be used inappropriately (U.S. Pharmacopeia, *USP Pictograms*).
@@ -650,6 +652,10 @@ There is a reason for carrying the table even so. Setting the design standard at
 ### 2.1 Design principle
 
 SnapCare has one design principle. At no point on the path by which a user arrives at a judgement are they required to read or type.
+
+That principle is the design standard fixed in §1.13 carried onto the screen. Because the standard sits at the harshest condition, only one set of screens is built. There is no separate set for people who can read and another for people who cannot; the latter alone covers both. That is why no accessibility mode or simplified view appears anywhere in this document. A mode switch works only for someone who knows it has to be turned on, and if that has to be read to be known, it is already too late.
+
+The same principle carries beyond reading. What was removed to demand no letters was a demand on memory and attention as well. With the hierarchy gone there is nothing to hold in mind about how far down one has come; with the steps gone there is nothing to count about what has already been done; with the options gone there is nothing to keep hold of about what is being asked right now. Those three sentences are the grounds on which Table 7 of §1.13 claims that one screen covers eleven conditions.
 
 The principle follows from two facts established in the previous section. First, removing text is a necessary condition. For someone who cannot read a prescription, a text interface is no different from the paper one. Second, removing text is not sufficient. Pictures too can fail to be read (Gutierrez, M. M., Patikorn, C. & Anantachoti, P., "Evaluation of pharmaceutical pictogram comprehension among adults in the Philippines," *Journal of Pharmaceutical Policy and Practice*, 15:30, 2022), and a hierarchy is itself a barrier (Medhi, I., Toyama, K., Joshi, A., Athavankar, U. & Cutrell, E., "A Comparison of List vs. Hierarchical UIs on Mobile Phones for Non-literate Users," *INTERACT 2013*, LNCS 8118:497–504).
 
@@ -1007,19 +1013,27 @@ This section sets out how SnapCare differs from what already exists. Two compara
 
 [Table 13] Existing approaches compared with SnapCare
 
-| Item | General health app | USP pictogram standard | SnapCare |
-|---|---|---|---|
-| Input | Typing and search | (not applicable) | One photograph |
-| Output | Mostly text | 81 static pictures | Composed pictogram + speech + colour |
-| Combination | — | **Prohibited by licence** | Combined by grammar |
-| Verdict threshold | Fixed table or none | (not applicable) | Derived from personal energy requirement |
-| Assumption | User knows their diagnosis | — | No diagnosis assumed |
-| Comprehension check | None | Only post hoc studies | Measured automatically before release |
-| Network | Required | — | Verdict computed on device |
+| Item | General health app | Medication reminder app | USP pictogram standard | SnapCare |
+|---|---|---|---|---|
+| Input | Typing and search | The person types in medicine name, dose and time | (not applicable) | One photograph |
+| Output | Mostly text | Notification text | 81 static pictures | Composed pictogram + speech + colour |
+| What it answers | Information for a search term | When | (not applicable) | What, how much, when, and what to avoid |
+| Combination | — | — | **Prohibited by licence** | Combined by grammar |
+| Verdict threshold | Fixed table or none | None | (not applicable) | Derived from personal energy requirement |
+| Assumption | User knows their diagnosis | User can read a prescription and copy it across | — | Neither diagnosis nor reading assumed |
+| Adherence record | — | The person taps to say so | — | Also comes from a paired box's dispense log |
+| Comprehension check | None | None | Only post hoc studies | Measured automatically before release |
+| Network | Required | Notification on device | — | Verdict computed on device |
 
 The rows of the table are not independent of one another. Fixing the input as a single photograph in the first row means the user does not say what they photographed, so the app has to determine it itself (§3.3), and deciding in the fifth row not to assume a diagnosis changes how conditions are asked altogether (§2.5). Settling one brings the rest with it, and the starting point is the first constraint in §2.1.
 
-The heaviest row in the table is the third, composition. As §1.9 showed, the USP set's licence forbids derivative works, so those 81 symbols cannot be joined to one another. Given that one prescription usually carries several instructions, that is not a small constraint. "Three times a day, with food, for a week" is three instructions, and with a fixed set there is nothing to do but place three pictures side by side. Composing by grammar means the combinations available from the same 78 morphemes are settled by a rule rather than by a list (§2.2).
+The middle column was added because §1.13 widened the target. The moment one speaks of people who find it hard to take medicine as directed, what stands immediately alongside is the medication reminder app, and without setting down how this differs from that category, the proposal reads as one more reminder app.
+
+There is work that actually counted that category. Across two app stores, 272 medication reminder apps were found and scored against seventeen desirable features: the median number of features per app was 3.0 (interquartile range 4.0), and only 18 apps had nine or more. The most common features were flexible scheduling at 56.3% (153/272), medication tracking history at 54.8% (149/272), a snooze option at 34.9% (95/272), and **visual aids at 32.4% (88/272)** (Santo, K., Richtering, S. S., Chalmers, J., Thiagalingam, A., Chow, C. K. & Redfern, J., "Mobile Phone Apps to Improve Medication Adherence: A Systematic Stepwise Process to Identify High-Quality Apps," *JMIR mHealth and uHealth*, 4(4):e132, 2016, doi:10.2196/mhealth.6742). Two things go with those figures: it is from 2016 and from Australian app stores, so it cannot be said to describe the category today, and we found no more recent census than this.
+
+Even so, what the middle column states is a difference in kind rather than in number of features. A reminder app works only after the user has typed in the medicine name, the dose and the time, which is to assume that a prescription can be read and copied across. The person this document has dealt with since §1.1 does not meet that assumption, and the people added in §1.13 are in conditions where that copying across is itself the burden. And what a reminder app answers is when, one thing, whereas the errors shown in Table 4 of §1.3 cluster into three: what, how much and when.
+
+The heaviest row in the table is the fourth, composition. As §1.9 showed, the USP set's licence forbids derivative works, so those 81 symbols cannot be joined to one another. Given that one prescription usually carries several instructions, that is not a small constraint. "Three times a day, with food, for a week" is three instructions, and with a fixed set there is nothing to do but place three pictures side by side. Composing by grammar means the combinations available from the same 78 morphemes are settled by a rule rather than by a list (§2.2).
 
 The fourth row is larger than it looks as well. An app that judges from a fixed table applies one threshold, say "warn above 25 g of sugar", to every user. The WHO recommendation is itself written as a proportion of total energy, so that approach is the source rounded once. Derived as in §2.4, the same can of drink is a warning for a seven-year-old and not for an adult. This is a question of what is being measured, not of precision.
 
