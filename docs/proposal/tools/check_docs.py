@@ -576,6 +576,43 @@ def engine_facts() -> list:
     return out
 
 
+def dsl_parses() -> list:
+    """본문이 인용한 SIGIL 문자열이 실제로 파싱되는가.
+
+    아무도 보지 않던 자리다. 실제로 §1.9 가 "문법은 이것을 막지 않는다"
+    는 예로 `\\bandage{allergen_peanut}` 을 들고 있었는데, `bandage` 는
+    사전에 없는 이름이고 인자에 역슬래시도 빠져 있어 문법이 막는다.
+    막지 않는다는 것을 보이려고 든 예가 막히는 것이었다."""
+    import sys
+    root = DOC.parent.parent
+    eng = root / 'engine'
+    if not (eng / 'engine.py').is_file() or not (eng / 'dictionary.json').is_file():
+        return skip('DSL 파싱 검사 — engine/ 이 없다')
+    sys.path.insert(0, str(eng))
+    try:
+        import engine as E
+    except Exception as e:
+        return skip(f'DSL 파싱 검사 — 엔진을 부르지 못했다 ({e.__class__.__name__})')
+    man = E.Manifest.load(eng / 'dictionary.json')
+    out = []
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        body = (DOC / f).read_text()
+        body = body[:body.index('### 5.11')]
+        for m in re.finditer(r'`(\\[a-z_]+(?:\{[^`]*?\})*)`', body):
+            src = m.group(1)
+            if '{' not in src:          # 이름만 적은 것은 대상이 아니다
+                continue
+            # 연산자를 도식으로 적은 자리(`\no{}`·`\no{...}`)는 문장이지 DSL 이
+            # 아니다. 빈 괄호나 줄임표가 들어 있으면 넘긴다.
+            if re.search(r'\{\s*(\.{3}|…)?\s*\}', src):
+                continue
+            try:
+                E.parse(src, man)
+            except Exception as ex:
+                out.append(f'{f}: 인용한 DSL 이 파싱되지 않는다 — `{src}` ({ex})')
+    return out
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1725,6 +1762,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in dsl_parses():
+        note(t)
 
     for t in engine_facts():
         note(t)
