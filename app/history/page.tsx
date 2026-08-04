@@ -395,13 +395,61 @@ function AdherenceCard({ span, month, each, back, onBack }: {
             </div>
           </div>
         ))}
-        <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-ink)' }}>{say}</p>
       </div>
 
+      {/*
+        문장 하나로 내던 자리다 — "Out of 83 doses, you missed 10 times. Most often at
+        7:00 PM."
+
+        읽을 수 있는 사람에게도 그 문장은 **세 개의 수를 문장 속에서 찾아내는 일**이다.
+        진료실에서 오가는 것은 그 셋이지 문장이 아니고, 표로 세우면 눈이 값만 훑는다.
+
+        문장은 안 버린다 — 위의 소리 버튼과 `sayable` 이 그대로 읽는다. 글을 못 읽는
+        사람에게는 여전히 문장이 답이고, 표는 그 사람에게 아무것도 아니다. 둘을 같이
+        두는 것이 이 앱의 방식이다.
+      */}
+      {span && span.rate !== null && (
+        <dl className="mt-3 grid grid-cols-3 gap-2">
+          {[
+            { k: 'Given', v: String(span.offered), tone: 'var(--color-sc-ink)' },
+            { k: 'Taken', v: String(span.offered - span.missed), tone: 'var(--color-safe)' },
+            { k: 'Missed', v: String(span.missed),
+              tone: span.missed > 0 ? 'var(--color-caution)' : 'var(--color-sc-muted)' },
+          ].map((cell) => (
+            <div key={cell.k} className="rounded-2xl px-3 py-2"
+                 style={{ background: 'var(--color-sc-bg)' }}>
+              <dt className="text-[10px] font-bold tracking-wide"
+                  style={{ color: 'var(--color-sc-muted)' }}>
+                {cell.k.toUpperCase()}
+              </dt>
+              <dd className="text-lg font-extrabold tabular-nums" style={{ color: cell.tone }}>
+                {cell.v}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      {/*
+        가장 자주 거른 시각은 위 셋과 다른 종류의 값이다 — 개수가 아니라 **어디를
+        고쳐야 하는가**다. 그래서 칸에 안 넣고 한 줄로 세운다.
+      */}
       {span?.worstTime && (
-        <p className="mt-1 text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-          Most often missed at {clockOf(span.worstTime)}.
-        </p>
+        <div className="mt-2 flex items-baseline gap-2 rounded-2xl px-3 py-2"
+             style={{ background: 'var(--color-caution-bg)' }}>
+          <span className="text-[10px] font-bold tracking-wide"
+                style={{ color: 'var(--color-caution)' }}>
+            MOST OFTEN AT
+          </span>
+          <span className="text-sm font-extrabold tabular-nums"
+                style={{ color: 'var(--color-caution)' }}>
+            {clockOf(span.worstTime)}
+          </span>
+        </div>
+      )}
+
+      {!span && (
+        <p className="mt-3 text-sm" style={{ color: 'var(--color-sc-muted)' }}>{say}</p>
       )}
 
       {/*

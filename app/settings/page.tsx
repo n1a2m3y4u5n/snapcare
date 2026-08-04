@@ -10,6 +10,7 @@ import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
 import { TEXT_SIZES, TEXT_SIZE_LABEL, ROOT_PX } from '@/lib/a11y/textSize';
 import { ask, Speakable, Hear } from '@/components/sc/Say';
 import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
+import { HareIcon, SpeakerIcon, SpeakerOffIcon, TortoiseIcon, UndoIcon } from '@/components/icons';
 
 /**
  * 설정 — 판정에 실제로 영향을 주는 것만 둔다.
@@ -119,7 +120,10 @@ export default function SettingsPage() {
           className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
           aria-pressed={autoTts}
         >
-          <span className="sc-icon">{autoTts ? '🔊' : '🔇'}</span>
+          <span aria-hidden className="sc-icon flex items-center justify-center"
+                style={{ color: autoTts ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)' }}>
+            {autoTts ? <SpeakerIcon /> : <SpeakerOffIcon />}
+          </span>
           <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
             Read results aloud
           </span>
@@ -144,7 +148,8 @@ export default function SettingsPage() {
           설명을 읽는 대신 들어보고 고르게 하는 편이 이 앱의 방식이다.
         */}
         <div className="mt-2 flex items-center gap-2 rounded-2xl bg-white px-4 py-3 shadow-sm">
-          <span className="text-lg">🐢</span>
+          <span aria-hidden className="flex items-center text-lg leading-none"
+                style={{ color: 'var(--color-sc-muted)' }}><TortoiseIcon /></span>
           <div className="flex flex-1 gap-1.5">
             {SPEECH_RATES.map((r) => {
               const on = Math.abs(speechRate - r) < 0.01;
@@ -169,7 +174,8 @@ export default function SettingsPage() {
               );
             })}
           </div>
-          <span className="text-lg">🐇</span>
+          <span aria-hidden className="flex items-center text-lg leading-none"
+                style={{ color: 'var(--color-sc-muted)' }}><HareIcon /></span>
         </div>
 
         {/*
@@ -212,7 +218,8 @@ export default function SettingsPage() {
               }}
               className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
             >
-              <span className="sc-icon">↩️</span>
+              <span aria-hidden className="sc-icon flex items-center justify-center"
+                    style={{ color: 'var(--color-sc-primary)' }}><UndoIcon /></span>
               <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                 Reset the demo data
               </span>
