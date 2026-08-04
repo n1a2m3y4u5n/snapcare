@@ -801,3 +801,21 @@ def test_an_action_this_firmware_does_not_do_is_ignored(link, dispenser):
     never guessed at, because every guess here moves a servo."""
     link._carry_out({"action": "launch", "tray": 1}, 10)       # noqa: SLF001
     assert _events(dispenser) == []
+
+
+def test_a_beep_on_a_build_with_no_buzzer_is_not_an_error(link, dispenser):
+    """A screen-only build is a valid build, and so is one with neither.
+
+    The `Indicator` protocol therefore has no method for making a noise — which
+    is how the first version of this shipped calling one that does not exist:
+
+        ERROR  a beep from the cloud failed:
+               'FittedIndicator' object has no attribute 'beep'
+
+    Found by pressing the button, not by the suite, because the suite's indicator
+    happened to be a different class. So the shape is pinned here instead.
+    """
+    assert not hasattr(dispenser.indicator, "beep"), \
+        "if Indicator grows a beep(), simplify _bench to call it"
+    link._carry_out({"action": "beep"}, 11)                    # noqa: SLF001
+    assert _events(dispenser) == []

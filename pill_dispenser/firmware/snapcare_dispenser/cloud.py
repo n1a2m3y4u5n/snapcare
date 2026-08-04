@@ -579,8 +579,16 @@ class CloudLink:
         the adherence figures can tell it from a scheduled dose.
         """
         if action == "beep":
+            # `Indicator` 프로토콜에는 소리를 내는 메서드가 없다. 화면만 달린 빌드,
+            # 부저만 달린 빌드, 둘 다 없는 빌드가 전부 유효하기 때문이다. 그래서
+            # 부저가 실제로 있을 때만 울린다 — 없으면 조용히 아무 일도 안 한다.
+            buzzer = getattr(self.dispenser.indicator, "buzzer", None)
+            if buzzer is None:
+                log.info("a beep arrived (revision %d) but this build has no "
+                         "buzzer — nothing to sound", rev)
+                return
             try:
-                self.dispenser.indicator.beep()
+                buzzer.beep()
             except Exception as exc:  # noqa: BLE001 - never onto the poller
                 log.error("a beep from the cloud failed: %s", exc)
                 return
