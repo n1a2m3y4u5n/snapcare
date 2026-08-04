@@ -762,26 +762,14 @@ def chart_field_answers():
 
 
 if __name__ == '__main__':
-    chart_literacy()
-    chart_health_literacy()
-    chart_errors()
-    chart_smartphone()
-    chart_pictogram()
-    chart_eval()
-    chart_glyphs()
-    chart_expressive()
-    chart_ageing()
-    chart_evidence()
-    chart_handwriting()
-    chart_pageeval()
-    chart_model()
-    chart_country()
-    chart_survey()
-    chart_harm_stage()
-    chart_policy_depth()
-    chart_three_layers()
-    chart_amr_region()
-    chart_survey_who()
-    chart_symbol_country()
-    chart_morpheme_map()
-    chart_field_answers()
+    # 설문 원자료(xlsx)가 있어야 그려지는 것이 셋 있다. 그 폴더가 기기에서
+    # 사라졌으므로(README) 하나가 멈추면 나머지가 안 그려지는 구조는 곤란하다.
+    # 무엇을 못 그렸는지 알리고 나머지를 마저 그린다.
+    skipped = []
+    for fn in (chart_literacy, chart_health_literacy, chart_errors, chart_smartphone, chart_pictogram, chart_eval, chart_glyphs, chart_expressive, chart_ageing, chart_evidence, chart_handwriting, chart_pageeval, chart_model, chart_country, chart_survey, chart_harm_stage, chart_policy_depth, chart_three_layers, chart_amr_region, chart_survey_who, chart_symbol_country, chart_morpheme_map, chart_field_answers):
+        try:
+            fn()
+        except FileNotFoundError as e:
+            skipped.append((fn.__name__, str(e).split('/')[-1]))
+    for n, why in skipped:
+        print(f'  건너뜀 {n} — {why} 가 없다')

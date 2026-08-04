@@ -40,9 +40,16 @@ INK, MUTED, GRIDC, SPINE = '#000000', '#595959', '#D9D9D9', '#BFBFBF'
 plt.rcParams.update({
     # 학술 도판의 첫 규칙은 **문서 본문과 같은 글꼴을 쓰는 것**이다. 본문이
     # 바탕 + Times New Roman 인데 도판만 고딕이면, 아무리 잘 그려도 문서에
-    # 붙여넣은 남의 그림처럼 보인다. 라틴은 Times, 한글은 바탕으로 떨어지게
+    # 붙여넣은 남의 그림처럼 보인다. 라틴은 Times, 한글은 명조로 떨어지게
     # 목록으로 준다.
-    'font.family': ['Times New Roman', 'Batang'],
+    #
+    # 한글 자리를 바탕에서 나눔명조로 옮겼다. 바탕에는 굵은 자족이 없어서
+    # `fontweight='bold'` 가 조용히 400 으로 떨어지는데, 그러면 한 라벨
+    # 안에서 숫자와 영문만 굵고 한글만 보통 굵기로 나온다. 강조가 사라지는
+    # 것보다 그 뒤섞임이 더 나쁘다 — 설계가 아니라 고장으로 읽힌다. 나눔명조는
+    # 같은 명조 계열이라 본문과의 거리가 크지 않고 700·800 을 갖고 있다.
+    # 바탕은 마지막 대비로 남겨 둔다.
+    'font.family': ['Times New Roman', 'NanumMyeongjo', 'Batang'],
     'axes.unicode_minus': False,
     'font.size': 10.0, 'axes.labelsize': 10.4,
     'xtick.labelsize': 9.6, 'ytick.labelsize': 9.6, 'legend.fontsize': 9.6,
