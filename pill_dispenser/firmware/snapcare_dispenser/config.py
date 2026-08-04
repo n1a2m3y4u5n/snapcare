@@ -132,6 +132,25 @@ SERVO_STEP_S = 1.0
 #: only has to reach 0° before releasing the pin. The floor for `SERVO_STEP_S`.
 SERVO_TRAVEL_S = 0.5
 
+#: Quiet between one tray closing and the next one opening, when a release owes
+#: more than one dose.
+#:
+#: **The trays are stacked, so a pill from an upper one falls past the ones
+#: below it.** If the next gate opens while that pill is still in the column it
+#: can enter the wrong tray — a dose that the log says was given, sitting in a
+#: hopper nobody will open until next week.
+#:
+#: A gap of about this length already existed, and that was the problem: it was
+#: the *return sweep* of the previous drop, an accident of `SERVO_STEP_S` rather
+#: than anything anybody had decided. Tuning that value down — which its own
+#: comment invites, for a fast servo — would have removed the protection
+#: silently, and the symptom would have been pills in the wrong tray weeks later.
+#:
+#: One second against a fall of a few tens of centimetres is generous, and it is
+#: meant to be: a pill can bounce off a wall on the way down rather than falling
+#: freely, and the cost of being wrong here is not paid by the person who tuned it.
+SERVO_BETWEEN_S = 1.0
+
 #: Per-tray trim, for a servo whose mechanical zero is not the electrical one.
 #: `{3: (520, 2450)}` overrides only tray 3. Leave empty unless a tray is
 #: visibly not reaching its stop, or is buzzing because it is being driven past

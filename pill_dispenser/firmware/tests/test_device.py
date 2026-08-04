@@ -5,7 +5,7 @@ from datetime import datetime
 
 import pytest
 
-from snapcare_dispenser import sc1
+from snapcare_dispenser import config, sc1
 from snapcare_dispenser.device import Dispenser
 from snapcare_dispenser.servo import MockBackend, TrayServos
 from snapcare_dispenser.store import Store
@@ -551,3 +551,48 @@ def test_a_store_backed_by_an_unwritable_path_fails_loudly(tmp_path):
     blocker.write_text("I am a file, not a directory")
     with pytest.raises(OSError):
         Store(blocker)
+
+
+def test_two_doses_at_once_open_one_tray_at_a_time_with_a_gap(dispenser, servos,
+                                                              clock, monkeypatch):
+    """트레이는 위아래로 쌓여 있다. 겹치면 약이 엉뚱한 칸으로 들어간다.
+
+    위 칸에서 떨어진 알약이 아래 칸을 지나가는 동안 그 칸이 열리면, 기록에는 내줬다고
+    적히고 실제로는 다음 주까지 아무도 안 여는 칸에 들어가 있다. 눈으로는 몇 주 뒤에나
+    드러나는 종류라 여기서 잡는다.
+
+    두 가지를 함께 본다. **순서** — 두 게이트가 동시에 열리지 않는다. 그리고 **간격** —
+    앞 칸이 닫히고 다음 칸이 열리기까지 쉼이 있다. 간격은 전에도 사실상 있었지만 앞선
+    배출의 복귀 스윕이었을 뿐이라, `SERVO_STEP_S` 를 줄이면 조용히 사라졌다.
+    """
+    waits: list[float] = []
+    monkeypatch.setattr(servos, "_sleep", waits.append)
+
+    dispenser.apply_payload("SC1*S*1:0800/2:0800")
+    clock.set(clock.now().replace(hour=8, minute=0))
+    dispenser.tick()
+    assert len(dispenser.awaiting_release) == 2, "두 칸이 다 밀려 있어야 한다"
+
+    released = dispenser.release()
+    assert [r["tray"] for r in released] == [1, 2]
+
+    # 배출마다 두 번(열림·복귀), 그 사이에 쉼 하나.
+    assert waits == [config.SERVO_STEP_S, config.SERVO_STEP_S,
+                     config.SERVO_BETWEEN_S,
+                     config.SERVO_STEP_S, config.SERVO_STEP_S], \
+        f"게이트 사이에 쉼이 없다: {waits}"
+
+
+def test_a_single_dose_waits_for_nothing(dispenser, servos, clock, monkeypatch):
+    """쉼은 **칸 사이**의 것이다. 하나만 내줄 때 1초를 더 세우면 그것은 사람이 손을
+    내밀고 서 있는 시간이고, 막을 것이 없는 자리에서 치르는 값이다."""
+    waits: list[float] = []
+    monkeypatch.setattr(servos, "_sleep", waits.append)
+
+    dispenser.apply_payload("SC1*S*1:0800")
+    clock.set(clock.now().replace(hour=8, minute=0))
+    dispenser.tick()
+    dispenser.release()
+
+    assert config.SERVO_BETWEEN_S not in waits[2:], "혼자인데 기다렸다"
+    assert waits == [config.SERVO_STEP_S, config.SERVO_STEP_S]

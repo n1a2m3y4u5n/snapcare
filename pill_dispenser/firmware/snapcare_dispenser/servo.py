@@ -364,6 +364,18 @@ class TrayServos:
             raise KeyError(f"tray {tray} is not wired — see TRAY_GPIO in config.py")
         return self.pins[tray]
 
+    def settle(self, seconds: float) -> None:
+        """조용히 기다린다. 알약이 칸을 다 통과할 때까지.
+
+        여기 있는 이유는 하나뿐이다 — 시험이 진짜로 기다리지 않게 하려고. 이 클래스는
+        `sleep` 을 주입받고(`__init__`), 시험은 그것을 무동작으로 바꿔 놓는다. 호출부가
+        `time.sleep` 을 직접 부르면 배출이 여럿 걸린 시험 하나가 몇 초씩 걸린다.
+
+        서보 락을 잡지 않는다. 아무것도 안 움직이는 시간이고, 다른 스레드가 이 사이에
+        트레이를 열어야 한다면 그것은 이 대기가 막을 수 있는 종류의 문제가 아니다.
+        """
+        self._sleep(seconds)
+
     def drop(self, tray: int) -> None:
         """One pill drop: out, hold, back, then silence.
 

@@ -800,7 +800,17 @@ class Dispenser:
                 raise RuntimeError(blocked)
 
             records = []
-            for dose in wanted:
+            for index, dose in enumerate(wanted):
+                if index:
+                    # 트레이는 위아래로 쌓여 있다. 위 칸에서 떨어진 알약이 아래 칸을
+                    # 지나가는 동안 그 칸이 열리면, 약이 엉뚱한 트레이로 들어간다 —
+                    # 기록에는 내줬다고 적히고 실제로는 다음 주까지 아무도 안 여는
+                    # 칸에 들어가 있는 상태가 된다.
+                    #
+                    # 이만큼의 여유는 전에도 사실상 있었는데, 그게 문제였다. 앞선
+                    # 배출의 **복귀 스윕**이었을 뿐 누가 정한 값이 아니라서,
+                    # `SERVO_STEP_S` 를 줄이면 조용히 사라진다.
+                    self.servos.settle(config.SERVO_BETWEEN_S)
                 # Written down *before* the horn moves. The sweep is about two
                 # seconds and the gate is open for one of them, and everything
                 # that makes the dose durable happens after it — so a cut
