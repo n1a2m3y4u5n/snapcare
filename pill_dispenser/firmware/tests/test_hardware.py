@@ -63,13 +63,18 @@ class SpyScreens:
 
     def __init__(self):
         self.painted = []
+        #: 프레임마다 딸려 온 키워드. 지금은 `beat` 하나이고, 박동이 어떤 내용으로
+        #: 그려졌는지를 `painted` 와 나란히 보려고 따로 담는다. `painted` 의 모양을
+        #: 바꾸면 이 파일의 언패킹 스무 곳이 같이 깨진다.
+        self.extras = []
 
     def __getattr__(self, name):
         # `theme` is keyword-only and swallowed: every real screen takes the
         # packed palette, and what this spy is here to record is which frame was
         # asked for and with what facts, not what colour it came out.
-        def screen(canvas, *args, theme=None):
+        def screen(canvas, *args, theme=None, **extra):
             self.painted.append((name, args))
+            self.extras.append(extra)
         return screen
 
     @property
@@ -490,7 +495,40 @@ def test_silence_stops_the_chirp_and_leaves_the_screen(monkeypatch, screens):
         settled = buzzer.beeps
         _sleep(0.1)
         assert buzzer.beeps == settled, "the chirp continued after being silenced"
-        assert screens.names == ["due"], "the screen must stand while the dose does"
+        # 장수가 아니라 내용을 본다. 알람이 우는 동안 화면이 같은 박자로 뛰므로
+        # `due` 가 여러 장 나오는 것은 정상이고, 이 시험이 지키려는 것은 그 사이에
+        # **다른 화면이 끼어들지 않는다**는 쪽이다.
+        assert set(screens.names) == {"due"}, "the screen must stand while the dose does"
+    finally:
+        indicator.close()
+
+
+def test_the_pulse_paints_the_same_dose_the_standing_frame_did(screens, monkeypatch):
+    """벤치에서 실제로 나온 것. 박동이 좋은 프레임을 빈 시계로 덧칠했다.
+
+        due frame: waiting=1 tray=2 at='14:27' frac=0 beat=False -> '14:27'
+        due frame: waiting=0 tray=None at=''    frac=0 beat=True  -> '--:--'
+
+    복용은 스냅샷보다 먼저 화면에 존재한다. 틱이 `Dispenser.tick` 안에서
+    `dose_due` 를 부르고 `_show` 는 그 뒤에 다음 스냅샷을 뜨기 때문이고, `presence`
+    는 그 틈을 알려진 복용을 붙들어(latch) 메운다. 박동이 그것을 지나쳐 `_health`
+    를 새로 읽으면 그 보정이 통째로 버려지고, 기계 앞에 선 사람이 보는 것은 시각도
+    트레이도 없는 초록 화면이다.
+    """
+    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    indicator = FittedIndicator(display=FakeDisplay(), buzzer=FakeBuzzer())
+    try:
+        indicator.dose_due(2, "14:27")
+        _wait_until(lambda: len(screens.painted) >= 2, "the pulse never painted")
+
+        standing = screens.painted[0][1][0]
+        for name, args in screens.painted[1:]:
+            assert name == "due"
+            drawn = args[0]
+            assert (drawn.waiting_tray, drawn.waiting_at) == \
+                   (standing.waiting_tray, standing.waiting_at), \
+                   "the pulse drew a different dose from the frame it beats against"
+        assert (standing.waiting_tray, standing.waiting_at) == (2, "14:27")
     finally:
         indicator.close()
 

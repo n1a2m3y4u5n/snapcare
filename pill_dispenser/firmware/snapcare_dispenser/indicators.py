@@ -472,18 +472,33 @@ class FittedIndicator(Indicator):
         Never raises. This is decoration on top of a working alert — the sound
         and the release path do not depend on it — so a panel that has gone
         away must not take the chirp with it.
+
+        **Repaints the standing plan's own snapshot, not a fresh reading.** The
+        first version read `self._health`, and on the bench the beat frame came
+        out as
+
+            due frame: waiting=0 tray=None at='' frac=0 beat=True -> '--:--'
+
+        painted one line after the correct frame. A dose exists on the panel
+        before it exists in a snapshot — the tick calls `dose_due` from inside
+        `Dispenser.tick`, and `_show` takes the next reading afterwards — and
+        `presence` already solves that by latching the announced dose into the
+        health it hands to the screen. Reading around it threw that away, so
+        the pulse overwrote a good frame with a blank clock and no tray, which
+        is what somebody standing at the machine was looking at.
         """
-        if self._showing is not Tone.DUE:
+        plan = self._last_plan
+        if plan is None or getattr(plan, "screen", "") != "due":
             self._lit = False
             return
-        if only_if_lit and not getattr(self, "_lit", False):
+        if only_if_lit and not self._lit:
             return
-        if getattr(self, "_lit", False) == lit:
+        if self._lit == lit:
             return
         self._lit = lit
         try:
             palette = theme.pack(self._surface(), night=self._night)
-            self._paint(screens.due, self._health, palette=palette, beat=lit)
+            self._paint(screens.due, *plan.args, palette=palette, beat=lit)
         except Exception:  # noqa: BLE001 - a pulse is never worth a traceback
             log.debug("could not paint the pulse")
 
