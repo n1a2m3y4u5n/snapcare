@@ -13,7 +13,7 @@ import { doseSentence, storageSentence } from '@/lib/snapcare/say';
 import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
-import { BasketIcon, FoodIcon, PillIcon } from '@/components/icons';
+import { BasketIcon, FoodIcon, LEVEL_ICONS, PillIcon } from '@/components/icons';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
 import { useAnalysis } from '@/stores/analysis';
 import { putThumb, prunePhotos } from '@/lib/photos/store';
@@ -332,7 +332,7 @@ function RxResult({
       {/* 안전 배지 / 충돌 경고 */}
       <div className="mt-5 flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold"
         style={{ background: meta.bg, color: meta.color }}>
-        <span className="text-lg">{meta.emoji}</span>
+        <span className="shrink-0 text-lg" aria-hidden>{LEVEL_ICONS[verdict.level]({})}</span>
         {/* 복약 지시는 잘못 들으면 바로 위험해지는 문장이라 반드시 누를 수 있어야 한다 */}
         <Say>{conflict ? verdict.summary : `Take as prescribed. ${item.rx?.dosageText ?? ''}`}</Say>
       </div>

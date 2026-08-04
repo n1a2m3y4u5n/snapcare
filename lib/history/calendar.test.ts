@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_SEGMENTS, calendar, daySentence, leadingBlanks } from './calendar.ts';
+import { MAX_SEGMENTS, calendar, daySentence, leadingBlanks, partOf } from './calendar.ts';
 import type { DoseRow } from './adherence.ts';
 
 function dose(dayKey: string, taken: boolean): DoseRow {
@@ -61,4 +61,49 @@ test('칸마다 소리로 읽을 말이 있다', () => {
   const days = calendar([dose(TODAY, true), dose(TODAY, false)], TODAY, 1);
   assert.match(daySentence(days[0]), /1 of 2/);
   assert.match(daySentence(calendar([], TODAY, 1)[0]), /nothing from the box/);
+});
+
+// ── 때 ──────────────────────────────────────────────────────────────────────
+
+test('칸 안이 시각 순으로 늘어선다', () => {
+  /*
+    이것이 이 기능의 핵심이다. 예전에는 그리는 쪽이 먹은 것을 위에서부터 채웠고,
+    그래서 **아침을 거르고 저녁을 먹은 날이 아침을 먹고 저녁을 거른 날과 똑같이
+    생겼다.** 두 날은 전혀 다른 날이고, 어느 쪽인지가 이 화면을 보는 이유다.
+  */
+  const at = (due: string, taken: boolean): DoseRow =>
+    ({ dayKey: TODAY, due, taken, tray: 1, name: 'x', reason: taken ? 'released' : 'not-released' });
+
+  const morningMissed = calendar([at('1900', true), at('0800', false)], TODAY, 1);
+  const eveningMissed = calendar([at('0800', true), at('1900', false)], TODAY, 1);
+
+  assert.deepEqual(morningMissed[0].slots.map((s) => [s.part, s.taken]),
+                   [['morning', false], ['evening', true]]);
+  assert.deepEqual(eveningMissed[0].slots.map((s) => [s.part, s.taken]),
+                   [['morning', true], ['evening', false]]);
+  // 두 날의 조각 차례가 같고 채움만 다르다 — 그림이 갈리는 것은 그래서다.
+  assert.notDeepEqual(morningMissed[0].slots.map((s) => s.taken),
+                      eveningMissed[0].slots.map((s) => s.taken));
+});
+
+test('때의 경계가 홈 화면과 같다', () => {
+  // 같은 8시를 두 화면이 다른 때로 부르면, 그 둘이 같은 복용이라는 것을 알 방법이 없다.
+  assert.equal(partOf('0500'), 'morning');
+  assert.equal(partOf('1059'), 'morning');
+  assert.equal(partOf('1100'), 'midday');
+  assert.equal(partOf('1559'), 'midday');
+  assert.equal(partOf('1600'), 'evening');
+  assert.equal(partOf('1959'), 'evening');
+  assert.equal(partOf('2000'), 'night');
+  assert.equal(partOf('0300'), 'night');
+});
+
+test('거른 것이 어느 때였는지 소리로도 말한다', () => {
+  // 눈으로 읽는 사람과 귀로 듣는 사람이 다른 사실을 받으면 그 둘은 같은 화면을 본
+  // 것이 아니다. 색으로 때를 보이기로 한 이상 소리도 때를 말해야 한다.
+  const day = calendar(
+    [{ dayKey: TODAY, due: '0800', taken: true, tray: 1, name: 'x', reason: 'released' },
+     { dayKey: TODAY, due: '1900', taken: false, tray: 2, name: 'x', reason: 'not-released' }],
+    TODAY, 1)[0];
+  assert.match(daySentence(day), /evening one was missed/);
 });

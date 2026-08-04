@@ -25,6 +25,7 @@ import { parseFormSheet } from '@/lib/formsheet/sheet';
 import { DEFAULT_HOST, FITTED_TRAYS, MAX_TRAYS, planTrays, saveUrl, scheduleUrl, releaseUrl, weeklyFrom, looksLikeHost } from '@/lib/hardware/dispenser';
 import { speak } from '@/lib/voice';
 import { PushToggle } from './push-toggle';
+import { shortName } from '@/lib/snapcare/shortName';
 
 /**
  * 디스펜서와 주고받는 화면.
@@ -385,8 +386,19 @@ export default function DevicePage() {
                         style={{ background: 'var(--color-sc-primary)' }}>
                     {t.tray}
                   </span>
-                  <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-                    {t.name}
+                  {/*
+                    짧은 이름. 원문은 이 줄의 소리(위 `Speakable`)와 `title` 에 그대로
+                    남아 있다 — 줄이는 것과 지우는 것은 다르다.
+
+                    한 줄로 묶어 두는 것도 같이 필요하다. 규칙이 못 줄이는 이름이
+                    반드시 있고(약 이름 한 낱말이 스물다섯 자인 것들이 있다), 그때
+                    두 줄로 넘치면 트레이 번호와 시각이 서로 다른 줄에 앉는다. 어느
+                    약이 몇 번 칸인지가 이 화면의 유일한 요점인데.
+                  */}
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold"
+                        title={t.name}
+                        style={{ color: 'var(--color-sc-ink)' }}>
+                    {shortName(t.name)}
                   </span>
                   <span className="text-xs" style={{ color: 'var(--color-sc-muted)' }}>{t.time}</span>
                 </Speakable>
@@ -409,7 +421,7 @@ export default function DevicePage() {
                 style={{ background: 'var(--color-caution-bg)', color: 'var(--color-caution)' }}>
                 <span className="flex-1">
                   ⚠️ {trayPlan.dropped.length} dose{trayPlan.dropped.length > 1 ? 's' : ''} did not fit — this device has {trays} tray{trays > 1 ? 's' : ''}.
-                  {' '}{trayPlan.dropped.map((r) => r.item.name).join(', ')} must still be taken by hand.
+                  {' '}{trayPlan.dropped.map((r) => shortName(r.item.name)).join(', ')} must still be taken by hand.
                 </span>
               </Speakable>
             )}

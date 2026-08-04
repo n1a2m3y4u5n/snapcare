@@ -20,6 +20,7 @@ import { DoseCalendar } from '@/components/sc/DoseCalendar';
 import { byMedicine, medicineSentence } from '@/lib/history/byMedicine';
 import { MonthNav, anchorFor, windowLabel } from '@/components/sc/MonthNav';
 import { ListIcon, PillIcon } from '@/components/icons';
+import { shortName } from '@/lib/snapcare/shortName';
 
 /**
  * 지난 날들.
@@ -234,10 +235,12 @@ function RoutineCard({ list, next, onOpen }: {
                   style={{ color: isNext ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)' }}>
               <PillIcon />
             </span>
-            <span className="flex-1">
-              <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
+            <span className="min-w-0 flex-1">
+              {/* 짧은 이름. 원문은 소리(`routineSentence`)와 `title` 에 그대로 있다. */}
+              <span className="block truncate text-sm font-semibold" title={r.name}
+                    style={{ color: 'var(--color-sc-ink)' }}
                     {...sayable(routineSentence(r))}>
-                {r.name}
+                {shortName(r.name)}
               </span>
               <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
                 {/*

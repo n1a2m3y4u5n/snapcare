@@ -64,13 +64,28 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
         가운데. DOM 에서 맨 앞이라 키보드·스캐닝이 여기부터 만난다.
         컨테이너의 40% — 340px 상자에서 136px 이다. 전에는 96px 였다.
       */}
+      {/*
+        가운데는 **검정**이다. 파랑이었다.
+
+        둘레의 다섯이 이미 파랑이라, 가운데도 파랑이면 여섯 개가 한 색으로 앉는다.
+        한 벌로 읽히는 것은 맞는데 그 대가로 **가운데가 다른 것들 중 하나**가 된다.
+        이 화면은 여섯 중 하나를 고르라는 화면이 아니라 사진을 찍으라는 화면이고,
+        나머지 다섯은 그 결과를 되짚는 곳이다.
+
+        크기로는 부족했다 — 가운데가 이미 두 배 넘게 큰데도 같은 색이면 "같은 것들
+        중 큰 것" 으로 읽힌다. 색이 갈려야 종류가 갈린다.
+
+        검정을 고른 것은 이 앱에서 뜻이 안 붙은 유일한 진한 색이어서다. 초록·주황·
+        빨강은 판정이고, 파랑은 "누르는 것", 크림색은 복약이다. 검정은 글자 색이라
+        어디에도 안 묶여 있고, 흰 그림과 20:1 로 붙는다.
+      */}
       <button
         onClick={() => router.push('/camera')}
         aria-label="Scan something with the camera. Point it at food or medicine."
         className="absolute left-1/2 top-1/2 flex aspect-square w-[46%] -translate-x-1/2 -translate-y-1/2
                    flex-col items-center justify-center gap-1 rounded-full text-white shadow-lg
                    active:scale-95 transition-transform"
-        style={{ background: 'var(--color-sc-primary)' }}
+        style={{ background: 'var(--color-sc-ink)' }}
       >
         {/*
           이 카메라만 외곽선이었다. 둘레의 다섯이 채운 실루엣인데 가운데 하나가
@@ -99,11 +114,13 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
           style={{ left: `${spots[i].left}%`, top: `${spots[i].top}%` }}
         >
           {/*
-            그림은 가운데 버튼과 같은 파랑이다.
+            둘레는 파랑이다.
 
-            검정으로 두면 다섯이 배경 위의 얼룩처럼 앉는다. 같은 파랑을 쓰면 가운데의
-            큰 버튼과 둘레의 다섯이 **한 벌**로 읽히고, 그 파랑은 이 앱에서 이미
-            "누르는 것" 의 색이다 — 뜻과 색이 맞는다.
+            검정으로 두면 다섯이 배경 위의 얼룩처럼 앉는다. 파랑은 이 앱에서 이미
+            "누르는 것" 의 색이라 뜻과 색이 맞고, 다섯이 한 벌로 읽힌다.
+
+            가운데가 검정이 되면서 이 파랑이 하는 일이 하나 늘었다 — **가운데와 다른
+            색**인 것 자체가 "저기가 본론이고 여기는 곁" 이라는 말이 된다.
 
             이름은 파랑으로 안 칠한다. 색을 다 파랑으로 덮으면 그림과 글자의 무게가
             같아져서 어느 쪽을 먼저 보는지가 안 정해진다.

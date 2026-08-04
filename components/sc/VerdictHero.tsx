@@ -4,7 +4,7 @@ import type { ScanItem, Verdict } from '@/lib/snapcare/types';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
 import { Say } from './Say';
 import { spokenName } from '@/lib/tts/speakable';
-import { FoodIcon, PillIcon } from '@/components/icons';
+import { FoodIcon, LEVEL_ICONS, PillIcon } from '@/components/icons';
 
 /**
  * 신호등 판정 히어로 — 큰 아이콘 + headline + 요약 배지.
@@ -76,7 +76,7 @@ export function VerdictHero({ item, verdict, photo }: {
         className="mt-5 flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-left text-sm font-semibold"
         style={{ background: meta.bg, color: meta.color }}
       >
-        <span className="text-lg">{meta.emoji}</span>
+        <span className="shrink-0 text-lg" aria-hidden>{LEVEL_ICONS[verdict.level]({})}</span>
         {/* 왜 이 판정이 나왔는지 — 화면에서 가장 중요한 문장이라 반드시 들려야 한다 */}
         <Say>{verdict.summary}</Say>
       </div>

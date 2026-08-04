@@ -29,6 +29,36 @@ import { windowDays } from './adherence.ts';
 /** 한 칸을 몇 조각까지 쪼갤 것인가. 이보다 많으면 이어진 게이지로 바뀐다. */
 export const MAX_SEGMENTS = 6;
 
+/**
+ * 하루의 어느 때인가.
+ *
+ * 경계는 `lib/snapcare/clock.ts` 의 `dayPart` 와 같다. 같은 8시를 두 화면이 다른
+ * 때로 부르면 안 된다 — 홈에서 "아침" 이라고 말한 복용이 달력에서 다른 색으로
+ * 앉아 있으면, 그 둘이 같은 복용이라는 것을 알 방법이 없다.
+ *
+ * `night` 이 따로 있는 이유는 실제로 밤에 먹는 약이 있어서다. 안압약 처방
+ * (`G. Xalatan nocte`)이 이 앱이 실제로 읽어 본 처방전에 들어 있었다.
+ */
+export type DayPart = 'morning' | 'midday' | 'evening' | 'night';
+
+/** `'0800'` → `'morning'`. 못 읽는 값은 아침으로 두지 않고 밤으로 둔다 — 아래 참고. */
+export function partOf(due: string): DayPart {
+  const hour = Number(String(due ?? '').slice(0, 2));
+  if (!Number.isFinite(hour)) return 'night';
+  if (hour >= 5 && hour < 11) return 'morning';
+  if (hour >= 11 && hour < 16) return 'midday';
+  if (hour >= 16 && hour < 20) return 'evening';
+  return 'night';
+}
+
+/** 그 날의 복용 하나. 달력 칸 안의 조각 하나이기도 하다. */
+export interface DoseSlot {
+  /** 예정 시각 `'0800'`. 칸 안의 **차례를 정하는 값**이다. */
+  due: string;
+  part: DayPart;
+  taken: boolean;
+}
+
 export interface CalendarDay {
   /** `YYYY-MM-DD`. */
   dayKey: string;
@@ -45,6 +75,17 @@ export interface CalendarDay {
    * 화면 넓이에 대한 것이 아니어서다. 같은 날을 두 화면이 다르게 세면 안 된다.
    */
   countable: boolean;
+  /**
+   * 그 날의 복용들, **시각 순으로**.
+   *
+   * 예전에는 이 자리가 숫자 둘뿐이었다(`offered`, `taken`). 그리는 쪽은 먹은 것을
+   * 위에서부터 채웠고, 그래서 아침을 거르고 저녁을 먹은 날이 **아침을 먹고 저녁을
+   * 거른 날과 똑같이 생겼다.** 두 날은 전혀 다른 날이고, 어느 쪽인지가 이 화면을
+   * 보는 이유다.
+   *
+   * 차례는 자료가 정한다. 그리는 쪽이 정렬하게 두면 다른 화면이 다르게 정렬한다.
+   */
+  slots: DoseSlot[];
 }
 
 /**
@@ -60,25 +101,27 @@ export interface CalendarDay {
  */
 export function calendar(rows: DoseRow[], anchor: string, days = 28,
                          today = anchor): CalendarDay[] {
-  const byDay = new Map<string, { offered: number; taken: number }>();
+  const byDay = new Map<string, DoseSlot[]>();
   for (const row of rows) {
-    const cell = byDay.get(row.dayKey) ?? { offered: 0, taken: 0 };
-    cell.offered += 1;
-    if (row.taken) cell.taken += 1;
+    const cell = byDay.get(row.dayKey) ?? [];
+    cell.push({ due: row.due, part: partOf(row.due), taken: row.taken });
     byDay.set(row.dayKey, cell);
   }
+  // 시각 순. `'0800'` 은 자리수가 고정이라 글자 비교가 곧 시각 비교다.
+  for (const cell of byDay.values()) cell.sort((a, b) => a.due.localeCompare(b.due));
 
   return windowDays(anchor, days)
     .slice()
     .reverse()
     .map((dayKey) => {
-      const cell = byDay.get(dayKey) ?? { offered: 0, taken: 0 };
+      const slots = byDay.get(dayKey) ?? [];
       return {
         dayKey,
-        offered: cell.offered,
-        taken: cell.taken,
+        offered: slots.length,
+        taken: slots.filter((s) => s.taken).length,
         today: dayKey === today,
-        countable: cell.offered > 0 && cell.offered <= MAX_SEGMENTS,
+        countable: slots.length > 0 && slots.length <= MAX_SEGMENTS,
+        slots,
       };
     });
 }
@@ -108,5 +151,26 @@ export function daySentence(day: CalendarDay): string {
       ? `${when}: the one dose was taken.`
       : `${when}: all ${day.offered} doses were taken.`;
   }
+  /*
+    거른 것이 **어느 때**였는지 말한다.
+
+    "3번 중 2번" 은 숫자만 맞고 아무것도 알려주지 않는다. 이 화면을 보는 사람이
+    알고 싶은 것은 "저녁을 자꾸 거른다" 이고, 색으로 그것을 보이기로 한 이상 소리도
+    같은 것을 말해야 한다 — 눈으로 읽는 사람과 귀로 듣는 사람이 다른 사실을 받으면
+    그 둘은 같은 화면을 본 것이 아니다.
+  */
+  const missed = day.slots.filter((s) => !s.taken).map((s) => PART_WORD[s.part]);
+  const unique = [...new Set(missed)];
+  if (unique.length > 0 && unique.length <= 2) {
+    return `${when}: ${day.taken} of ${day.offered} doses were taken. The ${unique.join(' and ')} one was missed.`;
+  }
   return `${when}: ${day.taken} of ${day.offered} doses were taken.`;
 }
+
+/** 때를 사람이 듣는 말로. */
+export const PART_WORD: Record<DayPart, string> = {
+  morning: 'morning',
+  midday: 'midday',
+  evening: 'evening',
+  night: 'night',
+};

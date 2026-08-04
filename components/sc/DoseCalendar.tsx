@@ -1,7 +1,18 @@
 'use client';
 
-import { MAX_SEGMENTS, type CalendarDay, daySentence, leadingBlanks } from '@/lib/history/calendar';
+import { MAX_SEGMENTS, PART_WORD, type CalendarDay, type DayPart, daySentence, leadingBlanks } from '@/lib/history/calendar';
 import { sayable } from './Say';
+
+/**
+ * 때마다 한 색. 밝기 순으로 늘어놓은 한 갈래다 — 값은 `globals.css` 에 있고,
+ * 왜 무지개가 아니라 한 줄인지도 거기 적혀 있다.
+ */
+const PART_COLOR: Record<DayPart, string> = {
+  morning: 'var(--color-part-morning)',
+  midday: 'var(--color-part-midday)',
+  evening: 'var(--color-part-evening)',
+  night: 'var(--color-part-night)',
+};
 
 /**
  * 복약 달력. 한 칸이 하루이고, 칸 안이 그 날의 횟수다.
@@ -15,10 +26,23 @@ import { sayable } from './Say';
  * 요일 머리글자만 남긴다. 그것이 없으면 세로줄이 무슨 요일인지 알 수 없고, 세로줄을
  * 읽는 것이 이 그림의 요점이다.
  *
- * 색이 두 가지뿐이다
- * ------------------
- * 채워진 조각은 먹은 것, 테두리만 있는 조각은 거른 것. 이 앱이 이미 쓰는 초록과
- * 주황 그대로다 — 순응도 카드에서 배운 뜻을 여기서 다시 배우게 하지 않는다.
+ * 한 조각이 무엇을 말하는가 — 두 가지를 두 채널로
+ * ------------------------------------------------
+ * 색은 **때**를 말한다. 아침·점심·저녁·밤이 옅은 하늘에서 깊은 남색까지 내려가는
+ * 한 갈래다. 채웠느냐 비웠느냐는 **먹었느냐**를 말한다. 두 사실이 두 채널을 하나씩
+ * 갖고, 서로 섞이지 않는다.
+ *
+ * 예전에는 색이 "먹었나" 를 맡고 있었고(초록·주황) 때는 아무데도 없었다. 그래서
+ * 세 조각짜리 날을 보면서도 어느 것이 아침인지 알 수 없었고 — 더 나쁘게는, 먹은
+ * 것을 위에서부터 채우고 있어서 **아침을 거르고 저녁을 먹은 날이 아침을 먹고
+ * 저녁을 거른 날과 똑같이 생겼다.** 두 날은 전혀 다른 날이다.
+ *
+ * 차례는 이제 자료가 정한다(`calendar.ts` 의 `slots`, 시각 오름차순). 위가 이르고
+ * 아래가 늦다. 색의 밝기도 같은 방향으로 내려가므로, 범례를 안 읽어도 그 방향이
+ * 보인다.
+ *
+ * 초록·주황·빨강을 안 쓰는 이유는 그 셋이 이 앱에서 **판정**이기 때문이다. 판정이
+ * 아닌 것에 판정의 색을 쓰면 두 뜻이 한 색을 나눠 갖는다.
  *
  * 기록이 없는 날은 **회색 바탕 하나**이고 거른 것과 구별된다. 상자를 꺼 두었거나
  * 여행을 간 날을 실패로 칠하면, 사람이 보는 그림이 조용히 자기를 나무라게 된다.
@@ -55,6 +79,44 @@ export function DoseCalendar({ days, picked, onPick }: {
                 picked={day.dayKey === picked} onPick={onPick} />
         ))}
       </div>
+
+      <Legend days={days} />
+    </div>
+  );
+}
+
+/**
+ * 범례 — 어느 색이 어느 때인가.
+ *
+ * **그 달에 실제로 나온 때만** 싣는다. 밤에 먹는 약이 없는 사람에게 밤 색을 보여
+ * 주면, 달력에 없는 색을 찾느라 한 번 헤매고 그 다음부터 범례를 안 읽는다.
+ *
+ * 채운 것과 비운 것도 여기서 한 번 말한다. 그것이 이 그림의 나머지 절반인데
+ * 색만 설명하면 반만 읽힌다.
+ */
+function Legend({ days }: { days: CalendarDay[] }) {
+  const parts = ['morning', 'midday', 'evening', 'night'] as const;
+  const present = parts.filter((p) => days.some((d) => d.slots.some((s) => s.part === p)));
+  if (present.length < 2) return null;
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+      {present.map((part) => (
+        <span key={part} className="flex items-center gap-1 text-[10px] font-bold tracking-wide"
+              style={{ color: 'var(--color-sc-muted)' }}
+              {...sayable(`${PART_WORD[part]} doses are ${part === 'morning' ? 'the lightest' : part === 'night' ? 'the darkest' : 'in between'}.`)}>
+          <span aria-hidden className="h-2.5 w-2.5 rounded-[2px]"
+                style={{ background: PART_COLOR[part] }} />
+          {PART_WORD[part].toUpperCase()}
+        </span>
+      ))}
+      <span className="flex items-center gap-1 text-[10px] font-bold tracking-wide"
+            style={{ color: 'var(--color-sc-muted)' }}
+            {...sayable('A hollow block is a dose that was not taken.')}>
+        <span aria-hidden className="h-2.5 w-2.5 rounded-[2px]"
+              style={{ border: '1.5px solid var(--color-sc-muted)' }} />
+        MISSED
+      </span>
     </div>
   );
 }
@@ -97,11 +159,11 @@ function Cell({ day, picked, onPick }: {
       <span {...pick} {...sayable(say)} title={say}
             className="flex aspect-square flex-col gap-[2px] overflow-hidden rounded-md p-[2px]"
             style={{ background: 'var(--color-sc-bg)', ...ring }}>
-        {Array.from({ length: day.offered }, (_, i) => (
+        {day.slots.map((slot, i) => (
           <span key={i} className="flex-1 rounded-[2px]"
-                style={i < day.taken
-                  ? { background: 'var(--color-safe)' }
-                  : { border: '1.5px solid var(--color-caution)' }} />
+                style={slot.taken
+                  ? { background: PART_COLOR[slot.part] }
+                  : { border: `1.5px solid ${PART_COLOR[slot.part]}` }} />
         ))}
       </span>
     );
@@ -113,7 +175,15 @@ function Cell({ day, picked, onPick }: {
     <span {...pick} {...sayable(say)} title={say}
           className="relative flex aspect-square items-end overflow-hidden rounded-md"
           style={{ background: 'var(--color-sc-bg)', ...ring }}>
-      <span className="w-full" style={{ height: `${filled}%`, background: 'var(--color-safe)' }} />
+      {/*
+        쪼개기를 그만둔 칸. 때 색을 못 쓴다 — 일곱 조각 이상을 색으로 갈라 봐야
+        1px 짜리 띠 일곱 개일 뿐이다. 여기서는 그 날 **가장 이른 복용**의 색으로
+        칸 전체를 칠한다. 뜻이 얇아지는 것은 맞지만, 아무 색이나 쓰는 것보다는
+        그 날이 언제 시작했는지라도 남는다.
+      */}
+      <span className="w-full"
+            style={{ height: `${filled}%`,
+                     background: PART_COLOR[day.slots[0]?.part ?? 'midday'] }} />
       {/*
         게이지로 바뀌었다는 것을 한 눈에 알리는 표시. 없으면 "하루 한 번 먹고 반쯤
         채워진 칸" 과 "하루 스무 번 중 열 번" 이 똑같이 생긴다.

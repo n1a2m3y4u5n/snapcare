@@ -205,6 +205,20 @@ export const ListIcon = (p: IconProps) => (
   </Svg>
 );
 
+/**
+ * 판정 하나에 도형 하나. `LEVEL_META` 옆에 두지 않고 여기 두는 이유는, 저 파일이
+ * 색과 말만 들고 있는 자료 파일이고 여기가 그림이 사는 곳이기 때문이다.
+ *
+ * 원·삼각형·팔각형은 기기 화면이 쓰는 바로 그 세 도형이다(`display/shapes.py`).
+ * 상자 앞에서 배운 모양이 폰에서도 같은 뜻이어야 한다 — 두 화면이 같은 판정을
+ * 다른 그림으로 말하면 그 둘이 같은 것을 말하고 있다는 것을 알 방법이 없다.
+ */
+export const LEVEL_ICONS: Record<'safe' | 'caution' | 'avoid', (p: IconProps) => React.ReactNode> = {
+  safe: (p) => <FineIcon {...p} />,
+  caution: (p) => <CarefulIcon {...p} />,
+  avoid: (p) => <AvoidIcon {...p} />,
+};
+
 /** 좋다 — 판정에서. */
 export const FineIcon = (p: IconProps) => (
   <Svg {...p}>
