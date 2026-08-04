@@ -797,6 +797,37 @@ def config_claims() -> list:
     return out
 
 
+def warm_in_shell() -> list:
+    """예열하는 화면이 모두 셸 목록에 들어 있는가.
+
+    §4.5 가 오프라인 동작을 주장하는 근거가 이 둘의 관계다. 예열은 화면
+    HTML 을 `fetch()` 로 받는데 그 요청의 mode 는 `navigate` 가 아니라
+    `cors` 라, 서비스워커의 셸 목록에 없으면 걸리지 않고 그냥 망으로
+    나간다. 받아 놓고 아무 데도 안 담는다는 뜻이다.
+
+    설치 때 담은 HTML 이 있어서 겉으로는 동작하므로, 새 화면을 예열
+    목록에만 넣으면 그 화면만 조용히 오프라인에서 빠진다. 실제로 그
+    모양의 결함이 한 번 있었고 §4.5 에 적어 두었다."""
+    import re as _re
+    root = DOC.parent.parent
+    sw, warm = root / 'public/sw.js', root / 'lib/offline/warm.ts'
+    if not sw.is_file() or not warm.is_file():
+        return skip('예열 목록 대조 — sw.js 나 warm.ts 가 없다')
+
+    def paths(text, name):
+        m = _re.search(rf'{name}\s*(?::[^=]*)?=\s*\[(.*?)\]', text, _re.S)
+        return {x for x in _re.findall(r"'([^']+)'", m.group(1))} if m else set()
+
+    shell = paths(sw.read_text(), 'SHELL_URLS')
+    w = {x for x in _re.findall(r"'(/[a-z-]*)'", warm.read_text())}
+    if not shell or not w:
+        return skip('예열 목록 대조 — 목록을 읽지 못했다')
+    gap = sorted(w - shell)
+    if gap:
+        return [f'예열하지만 셸 목록에 없는 화면 {gap} — 담기지 않고 망으로 나간다']
+    return []
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1946,6 +1977,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in warm_in_shell():
+        note(t)
 
     for t in config_claims():
         note(t)
