@@ -708,6 +708,54 @@ def reference_table() -> list:
     return out
 
 
+def model_table() -> list:
+    """표 38 이 저장해 둔 평가 결과와 같은가.
+
+    이 값은 다시 잴 수 없다. Nutrition5k 원본을 우리가 더는 갖고 있지
+    않기 때문이고 본문도 그렇게 밝힌다. 다시 잴 수 없을수록 옮겨 적은
+    값이 원본과 같은지는 기계가 봐야 한다. 표의 마지막 열(테스트 집합의
+    평균)은 결과 파일에 없으므로 MAE 를 MAE% 로 나누어 검산한다."""
+    import json
+    res = DOC / 'tools/model_eval_result.json'
+    if not res.is_file():
+        return skip('모델 표 대조 — model_eval_result.json 이 없다')
+    d = json.loads(res.read_text())
+    body = (DOC / 'proposal_ko.md').read_text()
+    n = table_no('영양 추정 모델의 항목별 오차')
+    if not n:
+        return skip('모델 표 대조 — 표를 찾지 못했다')
+    key = {'열량': 'calories', '질량': 'mass', '지방': 'fat',
+           '탄수화물': 'carb', '단백질': 'protein'}
+    out, seen = [], False
+    for ln in body[body.index(f'[표 {n}]'):].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if seen:
+                break
+            continue
+        seen = True
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        k = key.get(c[0]) if c else None
+        if not k:
+            continue
+        try:
+            mae = float(c[1].split()[0])
+            pct = float(c[2].rstrip('%'))
+            mean = float(c[3].split()[0])
+        except (ValueError, IndexError):
+            continue
+        if abs(mae - d['mae'][k]) > 0.005:
+            out.append(f'표 {n}: {c[0]} 의 MAE 가 {mae} 인데 결과는 {d["mae"][k]} 다')
+        if abs(pct - d['mae_pct'][k]) > 0.005:
+            out.append(f'표 {n}: {c[0]} 의 MAE% 가 {pct} 인데 결과는 {d["mae_pct"][k]} 다')
+        want = d['mae'][k] / (d['mae_pct'][k] / 100)
+        if abs(mean - want) > 0.15:
+            out.append(f'표 {n}: {c[0]} 의 테스트 평균 {mean} 이 MAE÷MAE% 인 '
+                       f'{want:.2f} 와 다르다')
+    if f'n = {d["n"]}' not in body:
+        out.append(f'본문에 n = {d["n"]} 이 없다')
+    return out
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1857,6 +1905,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in model_table():
+        note(t)
 
     for t in reference_table():
         note(t)
