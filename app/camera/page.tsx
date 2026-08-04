@@ -411,12 +411,29 @@ export default function CameraPage() {
         {/* 머리글. 영상 위라 검은 그라데이션을 깔아 글자가 읽히게 한다. */}
         <div className="relative z-10 flex items-center justify-between px-5 pt-14 pb-3"
              style={{ background: 'linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0))' }}>
-          <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none">×</button>
+          {/*
+            나가는 문. 있었지만 **보이지 않았다** — 영상 위에 얹힌 얇은 글자 하나라
+            장면에 따라 묻혔고, 그래서 "나갈 버튼도 있어야겠다" 는 말을 들었다.
+            있는 것과 보이는 것은 같지 않다.
+
+            둥근 어두운 바탕을 깔아 어떤 장면 위에서도 버튼으로 읽히게 한다. 56px 인
+            것은 이 앱의 다른 누를 곳들과 같은 이유다 — 손이 떨리는 사람이 쓴다.
+
+            홈으로 간다. 탭끼리 이어지지 않고 모든 이동이 홈을 지나는 구조라, 여기서
+            나가는 곳은 홈 하나뿐이다.
+          */}
+          <button onClick={() => router.push('/home')} aria-label="Close the camera"
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full
+                             text-3xl leading-none active:scale-95 transition-transform"
+                  style={{ background: 'rgba(0,0,0,0.45)' }}>
+            ×
+          </button>
           <span className="text-sm font-semibold"
                 {...ask('Point at something. Hold the camera over a prescription, a label, or your food.')}>
             Point at something
           </span>
-          <span className="w-6" />
+          {/* 제목이 가운데 오도록 반대쪽에 같은 자리를 비운다. */}
+          <span className="h-14 w-14 shrink-0" />
         </div>
 
         {/*
