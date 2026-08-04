@@ -103,7 +103,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full flex justify-center" style={{ background: 'var(--color-sc-bg)' }}>
-      <div className="relative w-full max-w-[440px] min-h-screen flex flex-col items-center px-6 pt-10">
+      <div className="relative w-full max-w-[440px] min-h-screen flex flex-col items-center px-6 pt-6">
         {people.length > 1 && (
           <>
             <Speakable text="Who are you? Tap your picture."
@@ -111,7 +111,7 @@ export default function LoginPage() {
                        style={{ color: 'var(--color-sc-muted)' }}>
               <span>WHO ARE YOU?</span>
             </Speakable>
-            <div className="mt-3 mb-6 flex flex-wrap justify-center gap-4">
+            <div className="mt-3 mb-4 flex flex-wrap justify-center gap-4">
               {people.map((p) => {
                 const on = p.id === meId;
                 return (
@@ -185,16 +185,7 @@ export default function LoginPage() {
           })}
         </div>
 
-        {/* 시연용 힌트. 시연 모드에서만 — 실제 사용자에게 잠금 답이 보이면 잠금이 아니다. */}
-        {!setup && demo && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--color-caution-bg)' }}>
-            <span className="rounded-md px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--color-caution)', color: '#fff' }}>DEMO</span>
-            <span className="text-sm" style={{ color: 'var(--color-sc-ink)' }}>Tap in order:</span>
-            <span className="text-lg tracking-wide">{DEMO_KEY.map((i) => TILES[i]).join(' ')}</span>
-          </div>
-        )}
-
-        <div className="mt-6 grid w-full max-w-[22rem] grid-cols-4 gap-3">
+        <div className="mt-4 grid w-full max-w-[22rem] grid-cols-4 gap-3">
           {TILES.map((t, idx) => (
             <button
               key={idx}
@@ -207,6 +198,22 @@ export default function LoginPage() {
             </button>
           ))}
         </div>
+
+        {/*
+          시연용 힌트. 시연 모드에서만 — 실제 사용자에게 잠금 답이 보이면 잠금이 아니다.
+
+          **키패드 아래**다. 위에 있었는데, 그러면 이 줄이 키패드를 그만큼 아래로
+          밀어내고 작은 폰에서는 눌러야 할 것이 화면 밖으로 나간다. 시연에서 이
+          화면이 하는 일은 "네 개를 순서대로 누르는 것" 이고, 힌트는 그것을 못 찾을
+          때 보는 것이지 먼저 읽는 것이 아니다.
+        */}
+        {!setup && demo && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--color-caution-bg)' }}>
+            <span className="rounded-md px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--color-caution)', color: '#fff' }}>DEMO</span>
+            <span className="text-sm" style={{ color: 'var(--color-sc-ink)' }}>Tap in order:</span>
+            <span className="text-lg tracking-wide">{DEMO_KEY.map((i) => TILES[i]).join(' ')}</span>
+          </div>
+        )}
 
         {/*
           지울 게 없으면 아예 숨긴다 — 비활성 상태의 흐린 글씨보다
@@ -240,7 +247,7 @@ export default function LoginPage() {
             정작 처음으로 무언가를 해야 하는 화면이 여기다. */}
         <ReadScreen />
 
-        <div className="mt-auto pt-8 flex items-center gap-2 text-[11px]"
+        <div className="mt-auto pt-5 flex items-center gap-2 text-[11px]"
              style={{ color: 'var(--color-sc-muted)' }}>
           <button
             onClick={() => { setDemo(false); location.href = '/'; }}
