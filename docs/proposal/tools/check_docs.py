@@ -868,7 +868,10 @@ def test_counts() -> list:
         if said is None:
             out.append(f'표 28 에 "{k}" 행이 없다')
         elif said != n:
-            out.append(f'표 {tn} 의 {k} 이 {said} 인데 돌려 보니 {n} 이다')
+            way = '늘었다' if n > said else '줄었다'
+            out.append(f'표 {tn} 의 {k} 이 {said} 인데 돌려 보니 {n} 이다 ({way}). '
+                       '앱을 고치는 동안 이 수는 자주 움직인다. 늘어난 것이면 '
+                       '값만 맞추면 되고, 줄어든 것이면 시험이 어디서 멈추었는지 먼저 본다')
     return out
 
 
