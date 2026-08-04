@@ -7,7 +7,6 @@ import { Hear, Speakable, ask, sayable } from '@/components/sc/Say';
 import { useScans, todayKey } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
 import { useIsClient } from '@/lib/hooks';
-import { byDay, dayLabel, daySentence, type DaySummary } from '@/lib/history/byDay';
 import { adherence, adherenceSentence, clockOf, doseRows } from '@/lib/history/adherence';
 import { calendar } from '@/lib/history/calendar';
 import { routineSentence, routines } from '@/lib/history/routines';
@@ -18,7 +17,6 @@ import { useAnalysis } from '@/stores/analysis';
 import { useRouter } from 'next/navigation';
 import { spokenName } from '@/lib/tts/speakable';
 import { DoseCalendar } from '@/components/sc/DoseCalendar';
-import { LEVEL_META } from '@/lib/snapcare/verdict';
 import { byMedicine, medicineSentence } from '@/lib/history/byMedicine';
 import { MonthNav, anchorFor, windowLabel } from '@/components/sc/MonthNav';
 
@@ -51,17 +49,17 @@ export default function HistoryPage() {
 
   // 기록은 브라우저에만 있다. 그릴 때 읽으면 서버가 그린 화면과 어긋난다.
   const today = ready ? todayKey() : '';
-  const days = useMemo(
-    () => (ready && member ? byDay(scans, today, member.id) : []),
-    [ready, scans, today, member],
-  );
+  /* 몇 창 뒤로 와 있는가. 0 이면 오늘이 든 창. */
+  const [back, setBack] = useState(0);
+  const anchor = anchorFor(today, back);
+
   /*
     달력과 같은 창을 센다. 그림이 넉 주인데 숫자가 한 주면, 같은 카드 안에서
     그림과 말이 서로 다른 것을 가리키게 된다.
   */
   const week = useMemo(
     () => (ready && member ? adherence(doseRows(scans, member.id), anchor, 28) : null),
-    [ready, scans, today, member],
+    [ready, scans, anchor, member],
   );
   /*
     달력은 넉 주를 본다.
@@ -87,17 +85,13 @@ export default function HistoryPage() {
     그리고 이 기계에는 이미 그 단위가 있다 — 트레이가 층으로 쌓여 있고 한 층이 한
     약이라, 화면이 층별로 말하면 약통을 열어 그 층을 보면 되는 것이 된다.
   */
-  /* 몇 창 뒤로 와 있는가. 0 이면 오늘이 든 창. */
-  const [back, setBack] = useState(0);
-  const anchor = anchorFor(today, back);
-
   const perMedicine = useMemo(
     () => (ready && member ? byMedicine(doseRows(scans, member.id), anchor, 28) : []),
     [ready, scans, anchor, member],
   );
   const month = useMemo(
     () => (ready && member ? calendar(doseRows(scans, member.id), anchor, 28, today) : []),
-    [ready, scans, today, member],
+    [ready, scans, anchor, today, member],
   );
 
   /*
@@ -115,18 +109,6 @@ export default function HistoryPage() {
   const live = ready ? running(reminders, today) : [];
   const nextDose: Reminder | undefined = ready ? nextDue(live, hm) : undefined;
   const done: Reminder[] = ready ? finished(reminders, today) : [];
-
-  /*
-    달력에서 고른 날. 기본은 오늘.
-
-    스물여덟 날을 그대로 늘어놓던 자리다. 한 달이면 읽을 만하지만 이 앱은 몇 달을
-    쓰라고 만든 것이고, 반년이면 그 목록은 아무도 안 내리는 벽이 된다. 달력은 이미
-    화면에 있고 이미 날짜를 가리키고 있으니, 그것을 선택기로 쓰면 목록은 늘 한 날이면
-    된다 — 새 화면도, 새로 배울 것도 없이.
-  */
-  const [pickedDay, setPickedDay] = useState('');
-  const showDay = pickedDay || today;
-  const dayShown = days.find((d) => d.dayKey === showDay);
 
   function openDose(r: Reminder) {
     setCurrent(r.item);
