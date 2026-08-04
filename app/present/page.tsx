@@ -37,36 +37,7 @@ import type { DeviceReport } from '@/lib/dispenser/types';
  * 외울 수 있다.
  */
 
-/**
- * 상자 자신의 시계로 지금 몇 시인가, 그리고 그것을 믿을 수 있는가.
- *
- * 시각을 앞에 두는 이유는 발표자가 이 줄에서 실제로 답을 얻는 질문이 그것이기
- * 때문이다. **여기서 누르는 알람은 상자의 시계로 지금 이 분에 걸린다.** 그러니
- * 폰의 시계가 아니라 상자의 시계가 몇 시인지가 눌러도 되는지를 정한다. 둘이
- * 어긋나 있으면 알람이 엉뚱한 분에 걸리고, 그것을 알아챌 자리가 이 화면밖에 없다.
- *
- * 예전에는 믿음 여부만 적었고, 보고가 오기 전에는 줄표 하나였다. 줄표는 아무것도
- * 말하지 않으면서 뭔가 말하는 것처럼 보이는 최악의 자리 표시라, 발표 중에 저것을
- * 본 사람은 그게 "모른다" 인지 "없다" 인지 알 수 없다.
- */
-function clockLine(status: DeviceReport['status'] | undefined): string {
-  if (!status) return '아직 소식 없음';
-  const at = status.clock.now?.slice(11, 16) ?? '';
-  const vouched = status.clock.trusted
-    ? `믿음 · ${status.clock.source}`
-    : '못 믿음, 아무것도 안 나온다';
-  return at ? `${at} · ${vouched}` : vouched;
-}
 
-/**
- * 기기가 보내는 `"1437"` 을 사람이 읽는 `14:37` 로.
- *
- * 네 자리 그대로 두면 옆의 트레이 번호와 붙어 `2번 1437` 이 되고, 그것은 시각이
- * 아니라 일련번호처럼 읽힌다. 발표 중에 한 번 더 생각하게 만드는 자리가 아니다.
- */
-function hhmm(time: string): string {
-  return /^\d{4}$/.test(time) ? `${time.slice(0, 2)}:${time.slice(2)}` : time;
-}
 
 /**
  * 마지막 보고가 몇 초 전 것인가.
@@ -83,22 +54,13 @@ function hhmm(time: string): string {
  * 구별할 것이 없었다. 그래서 위에 상자 번호도 같이 적는다.
  */
 function heardOf(report: DeviceReport | null): string {
-  if (!report?.at) return '아직 소식 없음';
+  if (!report?.at) return 'no word yet';
   const age = Math.round((Date.now() - new Date(report.at).getTime()) / 1000);
   if (!Number.isFinite(age) || age < 0) return report.at.slice(11, 16);
-  if (age < 60) return `${age}초 전`;
-  return `${Math.floor(age / 60)}분 전 — 멈춰 있다`;
+  if (age < 60) return `${age}s ago`;
+  return `${Math.floor(age / 60)}m ago — stalled`;
 }
 
-/** 짝지은 상자가 마지막으로 보고한 것을 짧게. 발표 중에 상태를 확인하는 용도. */
-function Line({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 text-sm">
-      <span style={{ color: 'var(--color-sc-muted)' }}>{label}</span>
-      <span className="font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{value}</span>
-    </div>
-  );
-}
 
 export default function PresentPage() {
   const [paired, setPaired] = useState<PairedDevice | null>(null);
@@ -176,10 +138,10 @@ export default function PresentPage() {
     setNote(null);
     try {
       await run();
-      setNote(`보냈다 — ${label}`);
+      setNote(`Sent · ${label}`);
     } catch (err) {
       console.error('[present] 명령 실패:', err);
-      setNote('사서함에 닿지 못했다.');
+      setNote('Did not reach the mailbox.');
     } finally {
       setBusy(null);
     }
@@ -190,33 +152,20 @@ export default function PresentPage() {
       <main className="flex min-h-screen flex-col items-center justify-center gap-3 px-8 text-center"
             style={{ background: 'var(--color-sc-bg)' }}>
         <span aria-hidden className="flex items-center text-5xl"><BoxIcon /></span>
-        <p className="text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}>
-          이 폰은 아직 상자와 짝이 없다
-        </p>
-        <p className="text-sm" style={{ color: 'var(--color-sc-muted)' }}>
-          카메라로 상자 화면의 코드를 찍으면 된다.
-        </p>
+        <p className="text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}>Not paired</p>
         {/*
-          왜 한 번은 찍어야 하는가.
-
-          상자 열쇠는 꺼낼 수 없게 만들어 두었고(`paired.ts`), 그래서 이미 짝을 맺은
-          폰에서 그것을 뽑아 나눠 줄 방법이 없다. 나눌 수 있는 것은 **코드**뿐이고,
-          코드는 짝을 맺는 그 순간에만 손에 있다.
-
-          그러니 시연 모드에서 **한 번** 짝을 맺어야 그 코드가 시연 블롭에 적히고,
-          그때부터 다른 폰들이 스스로 이어받는다. 이 문장이 없으면 발표자는 "된다고
-          했는데 왜 또 짝지으라고 하지" 에서 멈춘다.
+          한 줄만 남긴다. 왜 한 번은 찍어야 하는지(상자 열쇠는 꺼낼 수 없고, 나눌 수
+          있는 것은 코드뿐이며, 코드는 짝을 맺는 순간에만 손에 있다)는 `demoBox.ts` 에
+          적혀 있다. 이 화면은 무대에서 보는 화면이라, 읽을 것이 아니라 할 것을 준다.
         */}
-        <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
-          한 번만 하면 된다. 시연 모드에서 맺은 짝은 다른 폰이 이어받는다 —
-          이미 짝이 있는 폰이라도, 그 짝을 맺을 때 코드가 안 남았으면 여기서 한 번 더 찍어야 한다.
+        <p className="text-sm" style={{ color: 'var(--color-sc-muted)' }}>
+          Photograph the code on the dispenser.
         </p>
       </main>
     );
   }
 
   const status = report?.status;
-  const waiting = status?.awaitingRelease ?? [];
 
   /*
     **약이 실제로 든 칸만** 낸다.
@@ -239,42 +188,41 @@ export default function PresentPage() {
   const nameOf = Object.fromEntries(planned.map((t) => [t.tray, t.name]));
 
   return (
+    /*
+      **단추만 남긴다.**
+
+      설명 문단이 넷 있었다 — 이 화면이 무엇인지, 누르면 무슨 일이 생기는지, 시연용
+      우회로가 없다는 것. 전부 맞는 말인데 **읽을 사람이 없다.** 이 화면을 보는 순간은
+      발표자가 무대에서 다음 동작을 찾는 순간이고, 그때 글은 단추를 찾는 시간을 늘리기만
+      한다. 그 이야기들은 발표 대본과 이 파일의 주석에 있으면 된다.
+
+      상태도 한 줄로 줄였다. 무대에서 필요한 것은 "상자가 살아 있나" 하나다 — 시계·
+      트레이 수·서보 상태는 상자가 죽었을 때 원인을 찾는 값이고, 그건 무대에서 할 일이
+      아니다.
+    */
     <main className="mx-auto min-h-screen w-full max-w-[520px] px-5 py-8"
           style={{ background: 'var(--color-sc-bg)' }}>
-      <h1 className="text-xl font-bold" style={{ color: 'var(--color-sc-ink)' }}>발표자 콘솔</h1>
-      <p className="mt-1 text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-        심사위원 태블릿에는 이 화면이 없다. 여기서 누르면 상자가 진짜로 복용 시각을
-        맞은 것처럼 움직인다.
-      </p>
+      <div className="flex items-baseline justify-between">
+        <h1 className="text-xl font-bold" style={{ color: 'var(--color-sc-ink)' }}>Console</h1>
+        <span className="text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+          {paired.deviceId.slice(0, 8)} · {heardOf(report)}
+        </span>
+      </div>
 
-      {/* ── 지금 상자가 무엇을 하고 있나 ─────────────────────────────────── */}
       <section className="mt-5 rounded-3xl bg-white p-4 shadow-sm">
-        <Line label="상자" value={paired.deviceId.slice(0, 8)} />
-        <Line label="마지막 소식" value={heardOf(report)} />
-        <Line label="시계" value={clockLine(status)} />
-        <Line label="트레이" value={status ? `${status.trayCount}칸 · 서보 ${status.servoUsable ? '정상' : '없음'}` : '아직 소식 없음'} />
-        <Line label="지금 밀린 복용" value={waiting.length ? waiting.map((d) => `${d.tray}번 ${hhmm(d.time)}`).join(', ') : '없음'} />
-      </section>
-
-      {/* ── 알람을 울린다 ────────────────────────────────────────────────── */}
-      <section className="mt-4 rounded-3xl bg-white p-4 shadow-sm">
         <h2 className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-          복용 알람을 지금 울린다
+          RING
         </h2>
-        <p className="mt-1 text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-          누르면 부저가 울고 화면이 초록이 되고 심사위원 태블릿에 배출 버튼이 뜬다.
-          그 다음은 그들이 누른다.
-        </p>
         <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(4rem,1fr))] gap-2">
           {numbers.map((tray) => (
             <button
               key={tray}
-              onClick={() => send(`${tray}번 알람`, () => clientFor(paired).ringNow(tray))}
+              onClick={() => send(`Ring ${tray}`, () => clientFor(paired).ringNow(tray))}
               disabled={busy !== null}
               className="flex aspect-square flex-col items-center justify-center gap-0.5 rounded-2xl text-white disabled:opacity-40"
               style={{ background: 'var(--color-safe)' }}
             >
-              <span className="text-xl font-bold">{busy === `${tray}번 알람` ? '…' : tray}</span>
+              <span className="text-xl font-bold">{busy === `Ring ${tray}` ? '…' : tray}</span>
               {/* 칸 번호만으로는 무대에서 어느 약인지 안 떠오른다. */}
               {nameOf[tray] && (
                 <span className="px-1 text-[9px] font-semibold leading-tight opacity-80">
@@ -286,46 +234,35 @@ export default function PresentPage() {
         </div>
       </section>
 
-      {/* ── 기계가 도는지 (알람 없이) ─────────────────────────────────────── */}
       <section className="mt-4 rounded-3xl bg-white p-4 shadow-sm">
         <h2 className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
-          알람 없이 바로
+          OPEN ONLY
         </h2>
-        <p className="mt-1 text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-          복용 모델을 거치지 않고 트레이만 연다. 기계가 도는지 확인할 때.
-        </p>
         <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(4rem,1fr))] gap-2">
           {numbers.map((tray) => (
             <button
               key={tray}
-              onClick={() => send(`${tray}번 배출`, () => clientFor(paired).drop(tray))}
+              onClick={() => send(`Open ${tray}`, () => clientFor(paired).drop(tray))}
               disabled={busy !== null}
               className="flex aspect-square items-center justify-center rounded-2xl text-xl font-bold disabled:opacity-40"
               style={{ background: 'var(--color-sc-bg)', color: 'var(--color-sc-ink)' }}
             >
-              {busy === `${tray}번 배출` ? '…' : tray}
+              {busy === `Open ${tray}` ? '…' : tray}
             </button>
           ))}
         </div>
         <button
-          onClick={() => send('부저', () => clientFor(paired).beep())}
+          onClick={() => send('Beep', () => clientFor(paired).beep())}
           disabled={busy !== null}
           className="sc-row mt-2 flex w-full items-center rounded-2xl py-3 text-left disabled:opacity-40"
           style={{ background: 'var(--color-sc-bg)' }}
         >
           <span className="sc-icon flex items-center" aria-hidden><BellIcon /></span>
-          <span className="flex-1 font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-            {busy === '부저' ? '보내는 중…' : '부저를 울린다'}
-          </span>
+          <span className="flex-1 font-semibold" style={{ color: 'var(--color-sc-ink)' }}>Beep</span>
         </button>
       </section>
 
       {note && <p className="mt-3 text-sm" style={{ color: 'var(--color-sc-muted)' }}>{note}</p>}
-
-      <p className="mt-6 text-[11px] leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
-        여기서 나온 알람은 기기가 진짜 복용 시각에 도는 것과 **같은 코드**를 돌린다.
-        시연을 위해 만든 우회로가 없으므로, 보여준 것이 곧 실제로 돌아가는 것이다.
-      </p>
     </main>
   );
 }

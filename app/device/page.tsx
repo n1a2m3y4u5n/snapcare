@@ -227,7 +227,7 @@ export default function DevicePage() {
                 </span>
                 <span className="flex-1 text-left">
                   <span className="block text-base font-bold" style={{ color: 'var(--color-avoid)' }}>
-                    Forget this box
+                    Forget this dispenser
                   </span>
                   <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
                     Your history stays. Pair again any time with its code.

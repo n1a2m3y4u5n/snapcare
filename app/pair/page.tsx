@@ -75,7 +75,7 @@ export default function PairPage() {
         <>
           <span aria-hidden className="flex items-center text-6xl"><BoxIcon /></span>
           <p className="text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}>
-            Connecting to your box…
+            Connecting to your dispenser…
           </p>
         </>
       ) : (
