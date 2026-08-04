@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { HandIcon, HourglassIcon } from '@/components/icons';
 import { cachedPictogramPath } from '@/lib/snapcare/dsl';
 import { Speakable } from '@/components/sc/Say';
 import { speak } from '@/lib/voice';
@@ -123,7 +124,7 @@ export function DoseRelease({ report, onRelease }: {
                    font-bold text-white active:scale-[0.98] transition-transform disabled:opacity-70"
         style={{ background: 'var(--color-sc-primary)' }}
       >
-        <span aria-hidden className="text-2xl">{phase === 'opening' ? '⏳' : '🖐️'}</span>
+        <span aria-hidden className="flex items-center text-2xl">{phase === 'opening' ? <HourglassIcon /> : <HandIcon />}</span>
         {phase === 'opening' ? 'Opening…' : many ? 'Open them all' : 'Open the tray'}
       </button>
 

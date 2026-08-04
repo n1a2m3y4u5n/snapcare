@@ -103,11 +103,16 @@ export function HowDidItSit({ record }: { record: ScanRecord }) {
               <button
                 key={s.key}
                 onClick={() => pick(s.key)}
-                className="flex items-center gap-2 rounded-2xl bg-[var(--color-sc-bg)] px-3 py-3 text-left"
+                className="flex min-w-0 items-center gap-2 rounded-2xl bg-[var(--color-sc-bg)] px-3 py-3 text-left"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/glyphs/${s.glyph}.png`} alt="" aria-hidden className="h-7 w-7 shrink-0" />
-                <span className="text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}
+                {/*
+                  `min-w-0`. 격자 칸과 flex 칸은 둘 다 기본이 `min-width: auto` 라서 제일
+                  긴 낱말보다 좁아지지 않는다 — 글자를 키우면 "Hard to breathe" 가 둥근
+                  상자 **밖으로** 삐져나갔다. 접힐 수 있게 해 두면 상자 안에서 두 줄이 된다.
+                */}
+                <span className="min-w-0 flex-1 text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}
                       {...sayable(s.label)}>
                   {s.label}
                 </span>

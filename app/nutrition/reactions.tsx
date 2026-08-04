@@ -4,6 +4,7 @@ import { useProfile, PROFILE_ID } from '@/stores/profile';
 import { feedbackFrom, surveyTriggers, type SurveyRow } from '@/lib/pattern/infer';
 import { useLearnedConditions } from '@/lib/pattern/useLearned';
 import { Hear, sayable, Speakable } from '@/components/sc/Say';
+import { ConditionIcon } from '@/components/icons';
 import type { ScanRecord } from '@/lib/snapcare/types';
 
 /**
@@ -73,17 +74,26 @@ export function Reactions({ scans }: { scans: ScanRecord[] }) {
           const s = STATE_STYLE[r.state];
           return (
             <div key={r.condition.id} className="rounded-2xl bg-white px-3 py-3 shadow-sm">
-              <div className="flex items-center gap-2">
+              {/*
+                `flex-wrap`. 이 줄에는 안 줄어드는 것이 셋이다 — 그림, "On your list"
+                배지, 듣기 버튼. 제일 큰 글자에서 그 셋이 폭을 다 먹고 이름 칸에 한
+                글자 폭만 남아, "Peanuts" 가 세로로 한 글자씩 쌓였다. 이름에 최소폭을
+                주고(globals.css 의 빠져나갈 문) 자리가 모자라면 배지와 버튼이 아랫줄로
+                내려가게 한다. 이름이 먼저다 — 사람이 판단할 대상의 이름이다.
+              */}
+              <div className="flex flex-wrap items-center gap-2">
                 {/*
-                  조건 그림. 이모지를 그대로 쓰고 있었다 — 🥜🌰🥛… 열셋이고, 이 화면은
-                  그 중 하나를 프로필에 넣을지 묻는 화면이다. 아직 우리 그림이 없어서
-                  남겨 두는데, 남은 곳이 여기와 프로필 둘뿐이라는 것을 적어 둔다.
+                  조건 그림. 이모지를 그대로 쓰고 있었다 — 기기마다 다른 그림으로,
+                  하필 **사람이 판단을 내리는 카드**에서. `id` 로 찾는다(이모지로
+                  찾으면 조건의 이모지를 바꾸는 날 그림이 조용히 사라진다).
                 */}
-                <span className="text-lg" aria-hidden>{r.condition.emoji}</span>
-                <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+                <span className="flex items-center text-lg" aria-hidden>
+                  <ConditionIcon id={r.condition.id} />
+                </span>
+                <span className="min-w-[8rem] flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                   {r.condition.label}
                 </span>
-                <span className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
                       style={{ background: s.bg, color: s.color }}>
                   {r.state === 'watching' && r.significant ? 'Found' : s.chip}
                 </span>

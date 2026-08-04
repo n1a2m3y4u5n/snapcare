@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CloseIcon, TapIcon } from '@/components/icons';
 
 import { speak } from '@/lib/voice';
 import { useIsClient } from '@/lib/hooks';
@@ -55,21 +56,21 @@ export function HoldToHear() {
       /*
         가로줄이 아니라 한 문단이다.
 
-        전에는 손가락 · 글 · ✕ 를 flex 로 나란히 놓았다. 기본 크기에서는 멀쩡한데,
+        전에는 손가락 · 글 · 닫기를 flex 로 나란히 놓았다. 기본 크기에서는 멀쩡한데,
         글자를 가장 크게 두면 좌우 여백과 두 그림이 231px 중 108px 을 가져가고 남은
         99px 안에서 문장이 **한 낱말씩 일곱 줄로** 쏟아졌다.
 
         손가락을 문장 앞에 붙여 같이 흐르게 하면 그 다툼이 없어진다 — 글자가 커져도
-        칸을 나눠 갖는 일이 없으니 문장이 폭을 다 쓴다. ✕ 는 줄 흐름에서 빼서 오른쪽
+        칸을 나눠 갖는 일이 없으니 문장이 폭을 다 쓴다. 닫기 표시는 줄 흐름에서 빼서 오른쪽
         위에 얹고, 글이 그 밑으로 들어가지 않게 오른쪽만 비워 둔다.
       */
       className="relative mx-5 mt-2 block w-[calc(100%-2.5rem)] rounded-2xl px-4 py-3 pr-12 text-left text-sm font-semibold"
       style={{ background: 'color-mix(in srgb, var(--color-sc-primary) 12%, white)', color: 'var(--color-sc-ink)' }}
     >
-      <span aria-hidden>👆 </span>
+      <TapIcon className="inline align-[-0.15em]" aria-hidden />{' '}
       Press and hold any words to hear them
       {/* 닫기 표시. 누르면 사라진다는 것이 보여야 이 줄이 영구 장식으로 안 읽힌다. */}
-      <span aria-hidden className="absolute right-4 top-3 text-lg" style={{ color: 'var(--color-sc-muted)' }}>✕</span>
+      <span aria-hidden className="absolute right-4 top-3 flex items-center text-lg" style={{ color: 'var(--color-sc-muted)' }}><CloseIcon /></span>
     </button>
   );
 }

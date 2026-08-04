@@ -775,3 +775,330 @@ export const LockIcon = (p: IconProps) => (
     />
   </Svg>
 );
+
+/* ── 조건 그림 ─────────────────────────────────────────────────────────────
+ *
+ * 프로필에 담기는 열셋. 여기까지 이모지로 남아 있었고, 그 자리가 하필 **사람이
+ * 판단을 내리는 자리**다 — "이 성분을 내 목록에 넣을까" 를 묻는 카드. 기기마다
+ * 다른 그림으로 그 질문을 하고 있었던 셈이다.
+ *
+ * 알레르기 그림은 그 음식 자체를 그린다. 사선이나 금지 표시를 얹지 않는다 — 이
+ * 그림들은 "먹지 마라" 가 아니라 "이것이 무엇인가" 를 말하는 자리에 쓰이고(내
+ * 목록, 반응 카드), 금지의 뜻은 옆의 색과 글이 이미 싣고 있다.
+ */
+
+/** 임신. 옆모습에 배. */
+export const PregnantIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="10.5" cy="4" r="2.6" />
+    <path d="M10 7.4c-2 0-3.2 1.4-3.4 3.2l-.5 4.3a1.2 1.2 0 0 0 2.4.3l.3-2.5V22h2.1v-5.6h.6V22h2.1v-6.7c2 0 3.4-1.3 3.4-3.1 0-2.1-1.9-3.2-3.7-3.6-1-.2-1.9-1.2-3.3-1.2Z" />
+  </Svg>
+);
+
+/** 수유. 어른 품에 안긴 아기. */
+export const BreastfeedingIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="8" cy="4.2" r="2.6" />
+    <path d="M7.6 7.6C5.5 7.6 4 9.2 4 11.4V22h2.3v-6.2h.7V22h2.3V12.6c1 .9 2.2 1.5 3.6 1.7l4.9.7a1.3 1.3 0 0 0 .4-2.6l-4.7-.7c-1.6-.3-2.4-1.6-2.8-2.6-.4-1-1.3-1.5-3.1-1.5Z" />
+    <circle cx="17.4" cy="9.4" r="2.2" />
+  </Svg>
+);
+
+/** 땅콩. 허리가 잘록한 껍질. */
+export const PeanutIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M8.6 2.2c2.6 0 4.6 1.9 4.6 4.3 0 1.4-.5 2.2-.5 3.2 0 1.1.9 1.7 2 2.3 1.9 1 3.1 2.6 3.1 4.8 0 2.9-2.3 5-5.2 5s-5.1-2.1-5.1-5c0-1.4.5-2.2.5-3.2 0-1.1-.9-1.7-2-2.3C4.1 10.3 3 8.7 3 6.5 3 4.2 5.9 2.2 8.6 2.2Z" />
+  </Svg>
+);
+
+/** 견과. 도토리. */
+export const NutIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M5 7.4h14a1.2 1.2 0 0 0 0-2.4c-.4-1.6-2-2.8-3.9-2.8h-6.2C7 2.2 5.4 3.4 5 5a1.2 1.2 0 0 0 0 2.4Z" />
+    <path d="M6.1 9h11.8c-.3 6.6-2.6 12.8-5.9 12.8S6.4 15.6 6.1 9Z" />
+  </Svg>
+);
+
+/** 우유. 지붕이 있는 갑. */
+export const MilkIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M8 2h8v2.6l3 3.6V22H5V8.2l3-3.6V2Zm2.2 8.4h3.6v3.4h-3.6v-3.4Z" />
+  </Svg>
+);
+
+/** 달걀. */
+export const EggIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 2c4 0 7 6.1 7 11 0 4.4-3.1 7.4-7 7.4S5 17.4 5 13C5 8.1 8 2 12 2Z" />
+  </Svg>
+);
+
+/** 갑각류. 새우. */
+export const ShrimpIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M20.4 4.2c-3.6 0-6.4.9-8.6 2.4H5.6A2.6 2.6 0 0 0 3 9.2c0 4.6 2.7 8.4 6.6 9.9l-1.5 2.1a1 1 0 0 0 1.6 1.2l2-2.8c.4 0 .8.1 1.3.1 4.4 0 7-3 7-6.4 0-2.2-1.2-3.8-2.9-4.6 1-.5 2.1-.8 3.3-.9a1.2 1.2 0 0 0 0-2.4ZM7.4 9.9a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z" />
+  </Svg>
+);
+
+/** 당뇨. 피 한 방울. */
+export const BloodIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M12 2.2c3.2 4 6.6 7.6 6.6 11.4A6.6 6.6 0 0 1 12 20.2a6.6 6.6 0 0 1-6.6-6.6C5.4 9.8 8.8 6.2 12 2.2Zm-1.1 8.1v2h-2v2.2h2v2h2.2v-2h2v-2.2h-2v-2h-2.2Z" />
+  </Svg>
+);
+
+/** 혈압. 심장. */
+export const HeartIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 21C6.5 17 2.6 13.6 2.6 9.4A5.2 5.2 0 0 1 12 6.3a5.2 5.2 0 0 1 9.4 3.1c0 4.2-3.9 7.6-9.4 11.6Z" />
+  </Svg>
+);
+
+/** 콩. 꼬투리. */
+export const BeanIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M18.6 3.6c2.4 2.4 1.6 6.6-1.8 10L9.4 21c-2 2-5 .4-4.4-2.2.3-1.2 0-1.9-.9-2.4-2.2-1.2-1.8-4.4.7-5l1.5-.4c.9-.3 1.3-.9 1.4-1.8C8 6.4 11.4 5 13 6.9l.5.6c.6.7 1.3.8 2.1.4l1-.5c1.8-.9 3.4 1.2 2 2.6M9 13.8a2 2 0 1 0 2.8 2.8A2 2 0 0 0 9 13.8Zm3.6-3.6a2 2 0 1 0 2.8 2.8 2 2 0 0 0-2.8-2.8Z" />
+  </Svg>
+);
+
+/** 참깨. 씨 셋. */
+export const SeedIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 2.6c2.2 1.6 3.4 3.6 3.4 5.6S14.2 12 12 13.6c-2.2-1.6-3.4-3.4-3.4-5.4S9.8 4.2 12 2.6Z" />
+    <path d="M5.6 12.4c2.6.4 4.4 1.6 5.2 3.2.8 1.6.5 3.4-.7 5.2-2.6-.4-4.3-1.5-5.1-3.1-.8-1.6-.6-3.5.6-5.3Z" />
+    <path d="M18.4 12.4c1.2 1.8 1.4 3.7.6 5.3-.8 1.6-2.5 2.7-5.1 3.1-1.2-1.8-1.5-3.6-.7-5.2.8-1.6 2.6-2.8 5.2-3.2Z" />
+  </Svg>
+);
+
+/**
+ * 조건 → 그림. 이모지가 아니라 **조건의 id** 로 찾는다.
+ *
+ * 이모지로 키를 잡으면 조건의 이모지를 바꾸는 순간 그림이 조용히 사라진다. id 는
+ * 저장된 프로필이 들고 있는 값이라 바뀌지 않는다.
+ */
+export const CONDITION_ICONS: Record<string, (p: IconProps) => React.ReactNode> = {
+  pregnant: PregnantIcon,
+  breastfeeding: BreastfeedingIcon,
+  peanut_allergy: PeanutIcon,
+  tree_nut_allergy: NutIcon,
+  lactose_intolerant: MilkIcon,
+  egg_allergy: EggIcon,
+  shellfish_allergy: ShrimpIcon,
+  diabetic: BloodIcon,
+  hypertension: HeartIcon,
+  gluten_sensitivity: WheatIcon,
+  blood_thinner_conflict: PillIcon,
+  soy_allergy: BeanIcon,
+  sesame_allergy: SeedIcon,
+};
+
+/**
+ * 조건 그림 하나.
+ *
+ * 모르는 조건이면 점 하나로 떨어진다. 빈칸으로 두면 줄이 어긋나 보이고, 다른 그림을
+ * 빌려 쓰면 **틀린 것을 말한다** — 알레르기 카드에서 그건 값싼 실수가 아니다.
+ */
+export const DotIcon = (p: IconProps) => (
+  <Svg {...p}><circle cx="12" cy="12" r="5" /></Svg>
+);
+
+export function ConditionIcon({ id, ...rest }: IconProps & { id: string }) {
+  const Found = CONDITION_ICONS[id] ?? DotIcon;
+  return <Found {...rest} />;
+}
+
+/* ── 화면에 남아 있던 자잘한 이모지들 ─────────────────────────────────────── */
+
+/** 닫기. ✕ 였다. */
+export const CloseIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m12 9.9 5.7-5.7 2.1 2.1-5.7 5.7 5.7 5.7-2.1 2.1-5.7-5.7-5.7 5.7-2.1-2.1 5.7-5.7-5.7-5.7 2.1-2.1 5.7 5.7Z" />
+  </Svg>
+);
+
+/** 맞다. ✓ 였다. */
+export const CheckIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M9.6 18.4 3 11.8l2.2-2.2 4.4 4.4L18.8 4.8 21 7l-11.4 11.4Z" />
+  </Svg>
+);
+
+/** 소리 없음(종). 🔕 였다. */
+export const BellOffIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 22.4a2.6 2.6 0 0 0 2.6-2.4H9.4a2.6 2.6 0 0 0 2.6 2.4Z" />
+    <path fillRule="evenodd" d="M4.3 2.7 21.3 19.7l-1.6 1.6-2.1-2.1H4v-2.1l1.9-1.9v-4.4c0-1 .2-1.9.5-2.7L2.7 4.3l1.6-1.6ZM8.2 4.5A6 6 0 0 1 18 9.2v4.4l.6.6-10-10Z" />
+  </Svg>
+);
+
+/** 지운다. 🗑 였다. */
+export const TrashIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M9 2h6l1 2h4v2.4H4V4h4l1-2ZM5.6 8h12.8l-.9 12.2a2 2 0 0 1-2 1.8H8.5a2 2 0 0 1-2-1.8L5.6 8Zm3.6 2.6v8.6h1.9v-8.6H9.2Zm3.7 0v8.6h1.9v-8.6h-1.9Z" />
+  </Svg>
+);
+
+/** 뒤로. ◀️ 였다. */
+export const BackIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M14.9 2.8 5.7 12l9.2 9.2 2.3-2.3L10.3 12l6.9-6.9-2.3-2.3Z" />
+  </Svg>
+);
+
+/** 한 글자 지우기. ⌫ 였다. */
+export const BackspaceIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M8.6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-11L1.6 12l7-8Zm3.9 4.2-1.6 1.6 2.2 2.2-2.2 2.2 1.6 1.6 2.2-2.2 2.2 2.2 1.6-1.6-2.2-2.2 2.2-2.2-1.6-1.6-2.2 2.2-2.2-2.2Z" />
+  </Svg>
+);
+
+/** 시간이 간다. ⏳ 였다. */
+export const HourglassIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M5 2h14v2.2h-1.2v2.2c0 2-1.3 3.8-3.2 4.6v2c1.9.8 3.2 2.6 3.2 4.6v2.2H19V22H5v-2.2h1.2v-2.2c0-2 1.3-3.8 3.2-4.6v-2c-1.9-.8-3.2-2.6-3.2-4.6V4.2H5V2Zm3.4 15.8v1.8h7.2v-1.8c0-1.7-1.6-3-3.6-3s-3.6 1.3-3.6 3Z" />
+  </Svg>
+);
+
+/** 손. 🖐️ 였다 — 상자에 손을 대라는 뜻. */
+export const HandIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12.9 1.6c.7 0 1.2.6 1.2 1.3v7h.7V4.3a1.25 1.25 0 0 1 2.5 0v6.4h.7V6.6a1.25 1.25 0 0 1 2.5 0V15c0 4.2-2.6 7.4-6.6 7.4-2.6 0-4.3-1-5.7-2.8L4 14.3a1.4 1.4 0 0 1 2-2l2.6 2.2V4.3a1.25 1.25 0 0 1 2.5 0v5.6h.6v-7c0-.7.5-1.3 1.2-1.3Z" />
+  </Svg>
+);
+
+/** 폰. 📱 였다. */
+export const PhoneIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M7 1h10a2 2 0 0 1 2 2v18a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2Zm0 4v14h10V5H7Z" />
+  </Svg>
+);
+
+/** 신호가 없다. 📡 였다. */
+export const NoSignalIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M2.7 3.1 20.9 21.3l-1.6 1.6-3.5-3.5H3.4v-2.6h4v-2.4l-4.7-4.7L2.7 3.1Zm7.6 11.8v2.5h2.5l-2.5-2.5Z" />
+    <path d="M12 6.6c2.9 0 5.4 1.6 6.8 3.9l-1.9 1.2A6.1 6.1 0 0 0 12 9c-.3 0-.6 0-.9.1L9.4 7.2c.8-.4 1.7-.6 2.6-.6Z" />
+    <path d="M12 2.2c4.3 0 8.1 2.3 10.2 5.7l-1.9 1.2A9.8 9.8 0 0 0 12 4.6c-1.2 0-2.4.2-3.4.6L7 3.4c1.5-.8 3.2-1.2 5-1.2Z" />
+  </Svg>
+);
+
+/** 다시. 🔄 였다. */
+export const RetryIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 3.6c4.6 0 8.4 3.8 8.4 8.4 0 4.6-3.8 8.4-8.4 8.4a8.4 8.4 0 0 1-7.9-5.6l2.5-.9a5.8 5.8 0 1 0 1.5-6.1l2.5 2.5H3.4V2.7l2.4 2.4A8.3 8.3 0 0 1 12 3.6Z" />
+  </Svg>
+);
+
+/** 건너뛴다. ⏭️ 였다. */
+export const SkipIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 4.6 15 12 4 19.4V4.6ZM16.8 4.6H20v14.8h-3.2V4.6Z" />
+  </Svg>
+);
+
+/** 잇는다. 🔗 였다. */
+export const LinkIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M9.4 14.6a1.4 1.4 0 0 1 0-2l4.2-4.2a1.4 1.4 0 0 1 2 2l-4.2 4.2a1.4 1.4 0 0 1-2 0Z" />
+    <path d="M7.9 19.6a5 5 0 0 1-3.5-8.5l2.8-2.8 1.8 1.8-2.8 2.8a2.4 2.4 0 0 0 3.4 3.4l2.8-2.8 1.8 1.8-2.8 2.8a5 5 0 0 1-3.5 1.5ZM16.1 4.4a5 5 0 0 1 3.5 8.5l-2.8 2.8-1.8-1.8 2.8-2.8a2.4 2.4 0 0 0-3.4-3.4l-2.8 2.8-1.8-1.8 2.8-2.8a5 5 0 0 1 3.5-1.5Z" />
+  </Svg>
+);
+
+/** 아무것도 안 왔다. 📭 였다. */
+export const EmptyInboxIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M3 11.4 12 5l9 6.4V20a1.6 1.6 0 0 1-1.6 1.6H4.6A1.6 1.6 0 0 1 3 20v-8.6Zm2.6 1.3v6.3h12.8v-6.3L12 17.2 5.6 12.7Z" />
+  </Svg>
+);
+
+/** 전원이 빠졌다. 🔌 였다. */
+export const PlugIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M8.4 1.6h2.2v5.2H8.4V1.6ZM13.4 1.6h2.2v5.2h-2.2V1.6Z" />
+    <path d="M5.6 8.2h12.8v3.2c0 3-2 5.5-4.8 6.2v4.8h-3.2v-4.8c-2.8-.7-4.8-3.2-4.8-6.2V8.2Z" />
+  </Svg>
+);
+
+/** 통조림. 🥫 였다 — 바코드를 찍는 물건. */
+export const CanIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M12 1.6c3.6 0 6.4 1 6.4 2.4v16c0 1.4-2.8 2.4-6.4 2.4S5.6 21.4 5.6 20V4c0-1.4 2.8-2.4 6.4-2.4Zm-3.6 8v6.8h1.5V9.6H8.4Zm2.8 0v6.8h1.5V9.6h-1.5Zm2.9 0v6.8h1.5V9.6H14Z" />
+  </Svg>
+);
+
+/** 차게 둔다. 🧊 였다. */
+export const SnowIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M10.9 1.6h2.2v4.1l2.6-2.6 1.6 1.6-4.2 4.2v2.0h2l4.2-4.2 1.6 1.6-2.6 2.6h4.1v2.2h-4.1l2.6 2.6-1.6 1.6-4.2-4.2h-2v2l4.2 4.2-1.6 1.6-2.6-2.6v4.1h-2.2v-4.1l-2.6 2.6-1.6-1.6 4.2-4.2v-2h-2l-4.2 4.2-1.6-1.6 2.6-2.6H1.6v-2.2h4.1L3.1 8.9l1.6-1.6 4.2 4.2h2v-2L6.7 5.3l1.6-1.6 2.6 2.6V1.6Z" />
+  </Svg>
+);
+
+/** 때가 됐다. ⏰ 였다. */
+export const AlarmIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M5.3 1.6 7 3.3a9.9 9.9 0 0 0-3.7 3.7L1.6 5.3a12 12 0 0 1 3.7-3.7ZM18.7 1.6a12 12 0 0 1 3.7 3.7L20.7 7A9.9 9.9 0 0 0 17 3.3l1.7-1.7Z" />
+    <path fillRule="evenodd" d="M12 3.8a9.1 9.1 0 1 0 0 18.2 9.1 9.1 0 0 0 0-18.2Zm1.1 3.6v5.1l3.5 2.1-1.1 1.9-4.6-2.8V7.4h2.2Z" />
+  </Svg>
+);
+
+/** 모르겠다. ❓ 였다. */
+export const QuestionIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 1.8c3.4 0 6 2.2 6 5.2 0 2.3-1.3 3.5-2.8 4.6-1.3 1-1.9 1.6-1.9 2.8v.6h-3v-.9c0-2.1 1-3.2 2.5-4.3 1.2-.9 1.9-1.5 1.9-2.7 0-1.4-1.1-2.4-2.7-2.4-1.7 0-2.8 1.1-2.9 2.8H6C6.1 4.3 8.5 1.8 12 1.8ZM11.8 17.4a2 2 0 1 1 0 4.1 2 2 0 0 1 0-4.1Z" />
+  </Svg>
+);
+
+/** 눈. 안약 표본. */
+export const EyeIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M12 4.6c5 0 9.2 3.1 11 7.4-1.8 4.3-6 7.4-11 7.4S2.8 16.3 1 12c1.8-4.3 6-7.4 11-7.4Zm0 3a4.4 4.4 0 1 0 0 8.8 4.4 4.4 0 0 0 0-8.8Zm0 2.3a2.1 2.1 0 1 1 0 4.2 2.1 2.1 0 0 1 0-4.2Z" />
+  </Svg>
+);
+
+/** 물약 병. 🧴 였다. */
+export const BottleIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M9 1.6h6v2.8h-6V1.6ZM8.4 5.8h7.2l1.6 3.1V20a2 2 0 0 1-2 2H8.8a2 2 0 0 1-2-2V8.9l1.6-3.1Zm.8 6.4v2.3h5.6v-2.3H9.2Z" />
+  </Svg>
+);
+
+/** 과자. 표본 목록의 비스킷. */
+export const BiscuitIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path fillRule="evenodd" d="M12 2.6a9.4 9.4 0 1 0 0 18.8 9.4 9.4 0 0 0 0-18.8ZM8.6 7.6a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm5.6.6a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Zm-4.4 5.4a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8Zm5 .6a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Z" />
+  </Svg>
+);
+
+/** 의사가 그렇게 말했다. 👩‍⚕️ 였다 — 청진기. */
+export const StethoscopeIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M5 2.2v5.2a4.6 4.6 0 0 0 3.5 4.5v1.5a4.2 4.2 0 0 0 8.4 0v-1.1a3.2 3.2 0 1 0-2.4 0v1.1a1.8 1.8 0 0 1-3.6 0v-1.5A4.6 4.6 0 0 0 14.4 7.4V2.2h-2.3v5.2a2.3 2.3 0 0 1-4.6 0V2.2H5Z" />
+  </Svg>
+);
+
+/** 카페인 같은 것. ⚡ 였다. */
+export const BoltIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M13.6 1.6 4.4 13.4h5.2l-.8 9 9.6-12.2h-5.4l.6-8.6Z" />
+  </Svg>
+);
+
+/**
+ * 자료가 들고 있는 이모지 → 그림.
+ *
+ * 조건과 얼굴은 각각 제 표가 있다(`CONDITION_ICONS`, `FACE_ICONS`). 이것은 그 둘에
+ * 안 들어가는 나머지 — 판정 칩처럼 자료 쪽에 이모지 한 글자가 박혀 있는 자리들이다.
+ * 모르는 값이면 **아무것도 안 그린다.** 점 하나를 대신 그리면 뜻 없는 표시가 붙고,
+ * 이 자리는 옆에 이미 글이 있어서 그림이 없어도 문장이 성립한다.
+ */
+const GLYPH_ICONS: Record<string, (p: IconProps) => React.ReactNode> = {
+  '⚡': BoltIcon,
+  '💊': PillIcon,
+  '🔥': FlameIcon,
+  '🍽️': BowlIcon,
+};
+
+export function GlyphIcon({ emoji, ...rest }: IconProps & { emoji: string }) {
+  const Found = GLYPH_ICONS[emoji];
+  return Found ? <Found {...rest} /> : null;
+}

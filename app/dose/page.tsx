@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { CheckIcon, CloseIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/stores/analysis';
 import { useProfile } from '@/stores/profile';
@@ -63,11 +64,11 @@ export default function DosePage() {
 
         <div className="mt-12 flex items-center gap-10">
           <button onClick={() => log(false)} className="flex flex-col items-center gap-2" aria-label="Missed">
-            <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full text-3xl text-white shadow-md active:scale-95 transition-transform" style={{ background: 'var(--color-avoid)' }}>✕</span>
+            <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full text-3xl text-white shadow-md active:scale-95 transition-transform" style={{ background: 'var(--color-avoid)' }}><CloseIcon /></span>
             <span className="text-sm font-semibold" style={{ color: 'var(--color-sc-muted)' }}>Missed</span>
           </button>
           <button onClick={() => log(true)} className="flex flex-col items-center gap-2" aria-label="Taken">
-            <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full text-3xl text-white shadow-md active:scale-95 transition-transform" style={{ background: 'var(--color-safe)' }}>✓</span>
+            <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full text-3xl text-white shadow-md active:scale-95 transition-transform" style={{ background: 'var(--color-safe)' }}><CheckIcon /></span>
             <span className="text-sm font-semibold" style={{ color: 'var(--color-sc-muted)' }}>Taken</span>
           </button>
         </div>

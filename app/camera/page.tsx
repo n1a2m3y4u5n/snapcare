@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { CanIcon, QuestionIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/stores/analysis';
 import { makeThumb } from '@/lib/photos/store';
@@ -639,7 +640,7 @@ export default function CameraPage() {
                   글자뿐이었다. 사진을 못 찍는 이유에는 손이 떨리는 것도, 종이가 너무
                   작은 것도 있고(이번 조사에서 AAC 응답자가 짚었다), 그 사람들이
                   정확히 글자로 된 출구를 못 찾는 사람과 겹친다. */}
-              <span aria-hidden className="no-underline">❓</span>
+              <span aria-hidden className="flex items-center no-underline"><QuestionIcon /></span>
               <span {...sayable('Cannot take a photo? Tap here for things you can try instead.')}>Can&apos;t take a photo?</span>
             </button>
           </div>
@@ -653,7 +654,7 @@ export default function CameraPage() {
               <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
                 {SAMPLE_LABELS.map((s) => (
                   <button key={s.src} onClick={() => scanSample(s.src)} disabled={busy} className="shrink-0 rounded-2xl px-3 py-2 text-xs font-semibold disabled:opacity-40" style={{ background: 'rgba(255,255,255,0.12)' }}>
-                    🥫 {s.label}
+                    <CanIcon className="mr-1 inline align-[-0.1em]" /> {s.label}
                   </button>
                 ))}
               </div>

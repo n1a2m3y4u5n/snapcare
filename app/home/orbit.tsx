@@ -59,7 +59,12 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
       상한이 여전히 있는 이유: 태블릿에서 지름 400px 짜리 원이 되면 위성 사이가
       한 엄지로 닿지 않는 거리가 된다.
     */
-    <div className="relative mx-auto aspect-square w-full"
+    /*
+      `max-height: 100%` 가 같이 있어야 한다. 홈이 높이를 못박고부터 이 상자는 줄어들
+      수 있는 칸 안에 있는데, `aspect-square` 는 폭에서 높이를 만든다 — 폭만 재면 칸
+      보다 키가 큰 정사각형이 나오고 아래가 잘린다. 둘 다 걸어 두면 좁은 쪽이 이긴다.
+    */
+    <div className="relative mx-auto aspect-square h-auto max-h-full w-full"
          style={{ maxWidth: 'min(100%, 68vh, 420px)' }}>
       {/*
         가운데. DOM 에서 맨 앞이라 키보드·스캐닝이 여기부터 만난다.

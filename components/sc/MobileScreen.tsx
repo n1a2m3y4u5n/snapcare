@@ -24,6 +24,22 @@ interface Props {
    * 속도 적용이 여기 걸려 있어서, 빼면 그 화면만 조용히 다르게 동작한다.
    */
   ownRead?: boolean;
+  /**
+   * 한 화면에 담고 스크롤을 없앤다.
+   *
+   * 홈만 이것을 켠다. 홈에 들어가는 것은 정해져 있고(제목·얼굴·궤도, 그리고 가끔
+   * 카드 한 장) 목록이 아니다. 그런데 셸이 `min-h-screen` 이라 화면 높이는 바닥일
+   * 뿐이었고, 카드가 한 장 뜨는 날 궤도가 아래로 밀려 **이 앱에서 사람이 하는 일
+   * 하나가 화면 밖으로 나갔다.**
+   *
+   * 켜면 높이가 `100dvh` 로 못 박히고, 남는 자리를 궤도가 받는다(`min-h-0`) —
+   * 카드가 뜨면 궤도가 그만큼 줄어든다. 밀려나는 대신 작아진다.
+   *
+   * 그래도 `overflow-y-auto` 는 남긴다. 글자를 가장 크게 두고 카드가 둘 뜨는 날처럼
+   * 정말 안 들어가는 조합이 있고, 그때 넘친 것을 **잘라내면 되돌릴 방법이 없다**
+   * (WCAG 1.4.4). 평소에는 넘칠 것이 없으니 스크롤도 안 생긴다.
+   */
+  fit?: boolean;
 }
 
 /**
@@ -31,7 +47,7 @@ interface Props {
  * tab 지정 시 하단 탭바 렌더.
  */
 export function MobileScreen({
-  children, bar, bg = 'var(--color-sc-bg)', className = '', ownRead = false,
+  children, bar, bg = 'var(--color-sc-bg)', className = '', ownRead = false, fit = false,
 }: Props) {
   /*
    * 낭독 버튼은 모든 화면의 같은 자리에 있다 — 읽지 못하는 사람이 버튼을 찾는 방법은
@@ -41,14 +57,16 @@ export function MobileScreen({
    */
   const variant = ownRead ? 'none' : bar ? 'tab' : 'float';
   return (
-    <div className="min-h-screen w-full flex justify-center" style={{ background: bg }}>
-      <div className="relative w-full max-w-[440px] min-h-screen flex flex-col" style={{ background: bg }}>
+    <div className={`w-full flex justify-center ${fit ? 'h-[100dvh]' : 'min-h-screen'}`}
+         style={{ background: bg }}>
+      <div className={`relative w-full max-w-[440px] flex flex-col ${fit ? 'h-full' : 'min-h-screen'}`}
+           style={{ background: bg }}>
         {/*
           아래 줄이 화면에 고정(fixed)이라, 본문 끝이 그 밑으로 들어간다. 여백을
           rem 으로 준다 — 글자를 키우면 줄도 같이 커지므로 px 로 박으면 가장 큰
           크기에서 마지막 줄이 가려진다.
         */}
-        <main className={`flex-1 flex flex-col ${bar ? 'pb-[7rem]' : ''} ${className}`}>{children}</main>
+        <main className={`flex-1 flex flex-col ${fit ? 'min-h-0 overflow-y-auto' : ''} ${bar ? 'pb-[7rem]' : ''} ${className}`}>{children}</main>
         {!bar && <ReadScreen variant={variant} />}
         {bar && <HomeBar atHome={bar === 'home'}>{!ownRead && <ReadScreen variant="tab" wide={bar === 'home'} />}</HomeBar>}
         {bar && ownRead && <ReadScreen variant="none" />}

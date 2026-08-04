@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CameraIcon, CarefulIcon, ClockIcon, EmptyInboxIcon, LinkIcon, PlugIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { Speakable, sayable } from '@/components/sc/Say';
 import { formatClaim, isValidClaim } from '@/lib/dispenser/claim';
@@ -106,7 +107,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
           className="sc-row mt-3 flex w-full items-center rounded-2xl py-3 text-left"
           style={{ background: 'var(--color-sc-primary)', color: '#fff' }}
         >
-          <span className="sc-icon" aria-hidden>📷</span>
+          <span className="sc-icon flex items-center" aria-hidden><CameraIcon /></span>
           <span className="flex-1">
             <Speakable text="Photograph the box. Its screen is showing a code — point the camera at it."
                        className="block font-semibold" bare>
@@ -147,7 +148,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
             {/* 사슬 고리. 이 버튼이 하는 일이 폰과 상자를 잇는 것이다. 글자만 있으면
                 글을 못 읽는 사람은 여기서 멈추는데, 하필 이 화면은 약통을 처음
                 붙이는 자리라 그 앞의 모든 그림이 소용없어진다. */}
-            <span aria-hidden className="text-lg leading-none">🔗</span>
+            <span aria-hidden className="flex items-center text-lg leading-none"><LinkIcon /></span>
             Connect
           </button>
         </details>
@@ -156,7 +157,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
           <Speakable text="This app was built without a mailbox address, so the box cannot be reached from here. Ask for the address and type it below."
                      className="mt-3 flex w-full items-center gap-2 rounded-2xl p-3 text-sm font-semibold"
                      style={{ background: 'var(--color-sc-bg)', color: 'var(--color-caution)' }}>
-            <span aria-hidden className="text-xl">📭</span>
+            <span aria-hidden className="flex items-center text-xl"><EmptyInboxIcon /></span>
             <span className="flex-1">No mailbox address in this build — type one below.</span>
           </Speakable>
         )}
@@ -205,7 +206,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
         <Speakable text={`The pill box has not been heard from since ${sinceWords(report.at)}. It may be unplugged.`}
                    className="mt-3 flex w-full items-center gap-2 rounded-2xl p-3 text-sm font-semibold"
                    style={{ background: 'var(--color-sc-bg)', color: 'var(--color-avoid)' }}>
-          <span aria-hidden className="text-xl">🔌</span>
+          <span aria-hidden className="flex items-center text-xl"><PlugIcon /></span>
           <span className="flex-1">No word since {sinceWords(report.at)} — it may be unplugged.</span>
         </Speakable>
       )}
@@ -218,7 +219,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
         <Speakable text={`The box does not know the time, so it will not release anything. ${s?.blockedReason ?? ''}`}
                    className="mt-3 flex w-full items-center gap-2 rounded-2xl p-3 text-sm font-semibold"
                    style={{ background: 'var(--color-sc-bg)', color: 'var(--color-caution)' }}>
-          <span aria-hidden className="text-xl">🕐</span>
+          <span aria-hidden className="flex items-center text-xl"><ClockIcon hour={10} minute={10} /></span>
           <span className="flex-1">It does not know the time — nothing will come out.</span>
         </Speakable>
       )}
@@ -249,7 +250,8 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
       {s?.payload?.toUpperCase().startsWith('SC1*S*') && s.notes?.length ? (
         <ul className="mt-3 space-y-1">
           {s.notes.map((n, i) => (
-            <li key={i} {...sayable(n)} className="text-xs" style={{ color: 'var(--color-caution)' }}>⚠ {n}</li>
+            <li key={i} {...sayable(n)} className="flex items-start gap-1 text-xs" style={{ color: 'var(--color-caution)' }}>
+              <CarefulIcon className="mt-0.5 shrink-0" /> <span>{n}</span></li>
           ))}
         </ul>
       ) : null}
