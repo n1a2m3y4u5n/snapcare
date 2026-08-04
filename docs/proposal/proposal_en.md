@@ -1971,7 +1971,9 @@ There is a condition attached here as well. This project used AI coding tools th
 
 The first thing to ask once the app was built was whether the necessary information actually reaches the screen.
 
-To measure this reproducibly, 28 runs were constructed from four sample prescriptions crossed with seven user conditions, and the output of each run was scored on six items. Scoring is done by matching rules against the strings and speech targets actually present on the screen rather than by human judgement. It is therefore reproducible, and if a scoring rule is wrong the rule can be corrected and the whole thing rerun.
+Twenty-eight runs were constructed from four sample prescriptions crossed with seven user conditions, and the output of each run was scored on six items. Scoring is done by matching rules against the strings and speech targets actually present on the screen rather than by human judgement, which is to say that the same rules against the same screens give the same values.
+
+One correction belongs here. The previous version described this measurement as "reproducible", and what that word means to a reader is that it can be run again. The tool that did the scoring is not in the repository. What remains is the record of each run and its summary, and with those the values can be checked but not remade. That no human judgement entered into it and that a reader can rerun it are two different claims, and the one that holds here is the first.
 
 The record left by one run looks like this.
 
