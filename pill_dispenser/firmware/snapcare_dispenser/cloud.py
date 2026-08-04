@@ -116,6 +116,27 @@ _HOLD_MARGIN_S = 10
 _MIN_CYCLE_S = 2.0
 
 
+def _find_me(buzzer) -> None:
+    """"이게 그 상자다" 를 3초 동안 말한다.
+
+    복용 알림 칩(0.12초)을 그대로 쓰면 시끄러운 방에서 놓친다. 저 값은 20초마다
+    반복되므로 짧아야 하고, 이 소리는 한 번 울리고 끝이라 사람이 고개를 돌릴 시간을
+    줘야 한다 — 다른 목적이면 다른 값이다.
+
+    이어진 한 음이 아니라 끊어서 낸다. 같은 3초라도 삑—— 하나보다 삑·삑·삑 이 훨씬
+    잘 잡히고, 세상의 모든 경보가 그렇게 하는 이유가 그것이다. 피에조는 음량을
+    소프트웨어로 못 키우므로(듀티는 이미 최대), 끊는 것이 실제로 쓸 수 있는 유일한
+    "더 눈에 띄게" 수단이다.
+    """
+    on, off = config.BUZZER_FIND_ON_S, config.BUZZER_FIND_OFF_S
+    ends = time.monotonic() + config.BUZZER_FIND_S
+    while time.monotonic() < ends:
+        buzzer.beep(on)
+        if time.monotonic() >= ends:
+            break
+        time.sleep(off)
+
+
 class _Ctl:
     """One generation of loop threads, and the events only they may look at.
 
@@ -588,7 +609,7 @@ class CloudLink:
                          "buzzer — nothing to sound", rev)
                 return
             try:
-                buzzer.beep()
+                _find_me(buzzer)
             except Exception as exc:  # noqa: BLE001 - never onto the poller
                 log.error("a beep from the cloud failed: %s", exc)
                 return

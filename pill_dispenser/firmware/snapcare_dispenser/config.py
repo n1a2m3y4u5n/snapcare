@@ -358,10 +358,37 @@ BUZZER_GPIO = 23
 
 #: The chirp: frequency in Hz, and how long each beep lasts.
 #:
-#: 2.7 kHz is where a small piezo element is loudest, and it is also where
-#: age-related hearing loss has bitten least compared with anything higher.
-BUZZER_HZ = 2700
+#: 2 kHz, and it was 2700 until somebody listened to the actual part.
+#:
+#: 2.7 kHz is the number the datasheets suggest — "where a small piezo element
+#: is loudest" — and it was written here on that authority rather than on any
+#: measurement. Swept on the bench, this element disagrees: from 2000 Hz upward
+#: it gets steadily quieter all the way to 4.1 kHz, and sweeping *down* from
+#: 2000 to 600 it gets quieter in that direction too. The peak is 2 kHz.
+#:
+#: The move is a gain on both counts that mattered, which is why it is worth the
+#: paragraph. Louder on this hardware, and **lower** — age-related hearing loss
+#: takes the high end first, and this device's user is exactly the person it has
+#: taken it from. The old value was worse for them twice over.
+#:
+#: The lesson generalises: piezo volume cannot be raised in software (the duty
+#: cycle is already at the loudest a square wave has), so the resonant frequency
+#: is the only real control, and it belongs to the part rather than to the
+#: family. Sweep it again if the element is ever changed.
+BUZZER_HZ = 2000
 BUZZER_BEEP_S = 0.12
+
+#: "이게 그 상자인가" 를 답하는 소리 — 앱의 시험 칸에서 부르는 것.
+#:
+#: 복용 알림 칩(`BUZZER_BEEP_S`, 0.12초)과 **다른 값이어야 한다.** 저쪽은 20초마다
+#: 반복되므로 짧아야 하고, 이쪽은 한 번 울리고 끝이므로 사람이 방 건너에서 듣고
+#: 어느 상자인지 고개를 돌릴 시간이 있어야 한다. 0.12초는 시끄러운 방에서 놓친다.
+#:
+#: 이어진 한 음이 아니라 끊어서 낸다. 같은 3초라도 삑—— 하나보다 삑·삑·삑 이
+#: 훨씬 잘 잡히고, 그것이 세상의 모든 경보가 그렇게 하는 이유다.
+BUZZER_FIND_S = 3.0
+BUZZER_FIND_ON_S = 0.30
+BUZZER_FIND_OFF_S = 0.18
 
 #: Seconds between chirps while a dose is waiting to be released.
 #:
