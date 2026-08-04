@@ -39,6 +39,7 @@ const SHELL_URLS = [
   '/provider',
   '/history',
   '/text-size',
+  '/pair',
   '/manifest.webmanifest',
   '/icons/icon-192.png',
 ];
