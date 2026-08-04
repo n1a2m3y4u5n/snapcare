@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { speak, stopSpeaking, setSayLang, setSpeechRate } from '@/lib/voice';
 import { usePreferences } from '@/stores/preferences';
 import { languageByCode } from '@/lib/i18n/languages';
+import { SpeakerIcon, StopIcon } from '@/components/icons';
 
 /**
  * 화면에 있는 것을 처음부터 끝까지 읽어준다.
@@ -164,7 +165,7 @@ export function ReadScreen({ variant = 'float', wide = false }: {
           borderColor: playing ? 'var(--color-caution)' : 'var(--color-sc-line)',
         }}
       >
-        <span className="text-xl leading-none" aria-hidden>{playing ? '⏹' : '🔊'}</span>
+        <span className="flex items-center justify-center text-xl leading-none" aria-hidden>{playing ? <StopIcon /> : <SpeakerIcon />}</span>
         <span className="text-[11px] font-semibold">{playing ? 'Stop' : 'Listen'}</span>
       </button>
     );
@@ -190,7 +191,7 @@ export function ReadScreen({ variant = 'float', wide = false }: {
         bottom: 96, left: 16, width: 56, height: 56, fontSize: 24,
       }}
     >
-      {playing ? '⏹' : '🔊'}
+      {playing ? <StopIcon /> : <SpeakerIcon />}
     </button>
   );
 }

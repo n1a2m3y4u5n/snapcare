@@ -19,6 +19,7 @@ import { useMemo, useState } from 'react';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NUTRIENT_LABEL, type NutrientAssessment } from '@/lib/nutrition/types';
 import { ask, Hear, Speakable } from '@/components/sc/Say';
+import { FoodIcon } from '@/components/icons';
 
 /**
  * 하루 누적 분석 — 오늘 이 사람이 먹은 것을 합산해 하루 기준치와 대조한다.
@@ -186,7 +187,7 @@ export default function NutritionPage() {
                   <Speakable text="The last four weeks. What you checked, day by day."
                              className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
                              style={{ color: 'var(--color-sc-muted)' }}>
-                    <span aria-hidden className="text-lg leading-none">🥗</span>
+                    <span aria-hidden className="flex items-center justify-center text-lg leading-none"><FoodIcon /></span>
                     <span className="flex-1">FOOD</span>
                   </Speakable>
                   <Hear text="The last four weeks. What you checked, day by day." className="sc-hear" />

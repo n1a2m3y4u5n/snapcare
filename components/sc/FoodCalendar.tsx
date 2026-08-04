@@ -3,6 +3,7 @@
 import { type FoodDay, foodDaySentence } from '@/lib/history/foodCalendar';
 import { leadingBlanks } from '@/lib/history/calendar';
 import { sayable } from './Say';
+import { AvoidIcon, CarefulIcon, FineIcon } from '@/components/icons';
 
 /**
  * 음식 달력. 복약 달력과 **같은 격자, 같은 규칙.**
@@ -29,10 +30,10 @@ const LEVEL_COLOR: Record<string, string> = {
  * 그래서 이모지를 쓴다. 이 앱이 판정 화면에서 이미 쓰는 얼굴 그대로라, 여기서
  * 새로 배울 것이 없고 저기서 배운 것이 여기서 다시 쓰인다.
  */
-const LEGEND: { level: string; emoji: string; say: string }[] = [
-  { level: 'safe', emoji: '🙂', say: 'Fine' },
-  { level: 'caution', emoji: '😐', say: 'Careful' },
-  { level: 'avoid', emoji: '🚫', say: 'Avoid' },
+const LEGEND = [
+  { level: 'safe', Icon: FineIcon, say: 'Fine' },
+  { level: 'caution', Icon: CarefulIcon, say: 'Careful' },
+  { level: 'avoid', Icon: AvoidIcon, say: 'Avoid' },
 ];
 
 export function FoodCalendar({ days, picked, onPick }: {
@@ -66,7 +67,7 @@ export function FoodCalendar({ days, picked, onPick }: {
                 {...sayable(l.say)}>
             <span aria-hidden className="h-3 w-3 rounded-[3px]"
                   style={{ background: LEVEL_COLOR[l.level] }} />
-            <span aria-hidden>{l.emoji}</span>
+            <l.Icon aria-hidden />
           </span>
         ))}
       </div>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 
 import { sayable } from './Say';
+import { HomeIcon } from '@/components/icons';
 
 /**
  * 화면 아래 고정 줄 — 집으로 가는 길과 낭독 버튼.
@@ -79,7 +80,7 @@ export function HomeBar({ atHome, children }: {
                        active:scale-95 transition-transform"
             style={{ background: 'var(--color-sc-primary)' }}
           >
-            <span aria-hidden className="text-xl leading-none">🏠</span>
+            <span aria-hidden className="flex items-center justify-center text-xl leading-none"><HomeIcon /></span>
             <span className="text-[11px] font-bold"
                   {...sayable('Go back to the home screen. Everything starts there.')}>
               Home

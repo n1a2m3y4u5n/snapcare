@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { speak, stopSpeaking } from '@/lib/voice';
+import { PauseIcon, SpeakerIcon } from '@/components/icons';
 
 /**
  * 눌러서 듣는 텍스트.
@@ -78,7 +79,7 @@ function SpeakerMark({ speaking }: { speaking: boolean }) {
         color: speaking ? '#fff' : 'var(--color-sc-ink)',
       }}
     >
-      {speaking ? '⏸' : '🔊'}
+      {speaking ? <PauseIcon /> : <SpeakerIcon />}
     </span>
   );
 }
@@ -224,7 +225,7 @@ export function Hear({ text, className = '' }: { text: string; className?: strin
         color: speaking ? '#fff' : 'var(--color-sc-ink)',
       }}
     >
-      {speaking ? '⏸' : '🔊'}
+      {speaking ? <PauseIcon /> : <SpeakerIcon />}
     </button>
   );
 }
@@ -251,7 +252,7 @@ export function SayButton({ text, label = 'Read aloud', className = '' }: {
       aria-label={label}
       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl shadow-sm ${className}`}
     >
-      {speaking ? '⏸' : '🔊'}
+      {speaking ? <PauseIcon /> : <SpeakerIcon />}
     </button>
   );
 }

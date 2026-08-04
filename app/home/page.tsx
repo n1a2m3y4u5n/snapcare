@@ -13,6 +13,7 @@ import { useScans } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
 import { TryIt } from './try-it';
 import { Orbit, type Satellite } from './orbit';
+import { BoxIcon, FoodIcon, GearIcon, PersonIcon, PillIcon } from '@/components/icons';
 import { ask, sayable } from '@/components/sc/Say';
 
 export default function HomePage() {
@@ -85,26 +86,26 @@ export default function HomePage() {
   */
   const satellites: Satellite[] = [
     {
-      emoji: '🥗', label: 'Food', href: '/nutrition',
+      icon: FoodIcon, label: 'Food', href: '/nutrition',
       say: 'Food. What you have eaten today, and the last four weeks day by day.',
     },
     {
-      emoji: '💊', label: 'Medicine', href: '/history',
+      icon: PillIcon, label: 'Medicine', href: '/history',
       say: 'Medicine. What is set right now, and how the last four weeks went.',
     },
     {
-      emoji: '📦', label: 'Pill box', href: '/device',
+      icon: BoxIcon, label: 'Pill box', href: '/device',
       say: 'The pill box. Send the schedule, and see what it has done.',
     },
     {
-      emoji: '🧑', label: 'Who', href: '/profile',
+      icon: PersonIcon, label: 'Who', href: '/profile',
       say: 'Who we are checking for. Your age, your conditions and your allergies.',
       // 프로필을 한 번도 확인하지 않았으면 점을 붙인다. 판정이 전부 이 값에서
       // 나오는데 기본값('어른, 조건 없음')이 아무 표시 없이 정해져 있었다.
       badge: confirmed ? 0 : 1,
     },
     {
-      emoji: '⚙️', label: 'Settings', href: '/settings',
+      icon: GearIcon, label: 'Settings', href: '/settings',
       say: 'Settings. Who we check for, the voice, and the pill box.',
     },
   ];

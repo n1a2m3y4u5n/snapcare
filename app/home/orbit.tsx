@@ -25,7 +25,14 @@ import { orbitSpots } from '@/lib/home/orbit';
  */
 
 export interface Satellite {
-  emoji: string;
+  /**
+   * 그림. 이모지가 아니라 우리가 그린 것을 받는다.
+   *
+   * 이모지는 기기마다 다르게 생기고 크기와 광학 무게를 우리가 못 정한다. 다섯 개를
+   * 나란히 놓으면 저마다 다른 화가가 그린 것들이 한 줄에 서고, 그 줄은 곧 "아무도
+   * 디자인하지 않았다" 로 읽힌다.
+   */
+  icon: (props: { size?: number | string }) => React.ReactNode;
   label: string;
   href: string;
   /** 소리로 읽어 줄 문장. 이름만으로는 무엇을 하는 곳인지 안 서는 것들이 있다. */
@@ -89,7 +96,7 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
                      active:scale-95 transition-transform"
           style={{ left: `${spots[i].left}%`, top: `${spots[i].top}%` }}
         >
-          <span aria-hidden className="text-2xl leading-none">{s.emoji}</span>
+          <span aria-hidden className="flex items-center justify-center text-2xl leading-none">{s.icon({})}</span>
           <span aria-hidden className="mt-0.5 px-1 text-center text-[9px] font-bold leading-tight"
                 style={{ color: 'var(--color-sc-muted)' }}>
             {s.label}

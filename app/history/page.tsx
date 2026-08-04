@@ -19,6 +19,7 @@ import { spokenName } from '@/lib/tts/speakable';
 import { DoseCalendar } from '@/components/sc/DoseCalendar';
 import { byMedicine, medicineSentence } from '@/lib/history/byMedicine';
 import { MonthNav, anchorFor, windowLabel } from '@/components/sc/MonthNav';
+import { ListIcon, PillIcon } from '@/components/icons';
 
 /**
  * 지난 날들.
@@ -211,7 +212,7 @@ function RoutineCard({ list, next, onOpen }: {
   return (
     <div className="mt-4 rounded-3xl bg-white px-5 py-4 shadow-sm">
       <div className="flex items-center gap-2">
-        <span aria-hidden className="text-lg leading-none">📋</span>
+        <span aria-hidden className="flex items-center justify-center text-lg leading-none"><ListIcon /></span>
         <Speakable text={say} className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
                    style={{ color: 'var(--color-sc-muted)' }}>
           <span className="flex-1">SET RIGHT NOW</span>
@@ -296,7 +297,7 @@ function AdherenceCard({ span, month, each, back, onBack }: {
         표시하므로, 여기서 새로 배울 것도 없다.
       */}
       <div className="flex items-center gap-2">
-        <span aria-hidden className="text-lg leading-none">💊</span>
+        <span aria-hidden className="flex items-center justify-center text-lg leading-none"><PillIcon /></span>
         <Speakable text={say} className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
                    style={{ color: 'var(--color-sc-muted)' }}>
           <span className="flex-1">MEDICINE</span>
