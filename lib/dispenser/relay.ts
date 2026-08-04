@@ -282,6 +282,20 @@ export class DispenserClient {
     return this.command({ action: 'drop', tray });
   }
 
+  /**
+   * Make this tray's dose due **now**, for a demonstration.
+   *
+   * Not a fake. The device runs the same code a real scheduled minute runs, so
+   * the buzzer, the screen, the phone's alert, the release button, the servo and
+   * the record are all the ordinary ones. Nothing here exists only for a demo,
+   * which is the only way a demonstration is worth watching.
+   *
+   * Use {@link release} to complete it, exactly as a person would.
+   */
+  async ringNow(tray: number): Promise<number> {
+    return this.command({ action: 'due', tray });
+  }
+
   /** Sound the buzzer. Moves nothing — it answers "is this the right box". */
   async beep(): Promise<number> {
     return this.command({ action: 'beep' });

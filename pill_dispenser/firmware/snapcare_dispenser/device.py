@@ -684,6 +684,50 @@ class Dispenser:
                  dose.deadline.strftime("%H:%M"))
         self._notify_change()
 
+    def offer_now(self, tray: int) -> None:
+        """이 트레이의 복용을 **지금** 밀린 것으로 만든다. 발표에서 쓴다.
+
+        왜 필요한가
+        -----------
+        이 기계가 하는 일의 핵심은 "시각이 되면 알리고, 사람이 누르면 내준다" 인데,
+        그것을 보여주려면 그 시각까지 기다려야 한다. 심사위원 앞에서 아침 8시를
+        기다릴 수는 없고, 미리 일정을 지금으로 맞춰 두는 것도 발표 시각이 몇 분만
+        밀리면 무너진다.
+
+        무엇을 **하지 않는가**
+        ---------------------
+        가짜 화면을 그리지 않는다. `tick` 이 진짜 복용 시각에 부르는 것과 **같은
+        `_offer`** 를 부르고, 그 뒤는 전부 평소 경로다 — 부저가 울고, 화면이 초록이
+        되고, `awaiting_release` 에 올라가고, 앱에 알림이 가고, 누르면 서보가 돌고,
+        기록이 남는다. 시연을 위해 따로 만든 길이 하나도 없으므로, 보여준 것이
+        곧 실제로 돌아가는 것이다.
+
+        막힌 기계에서는 거절한다
+        -----------------------
+        시계를 못 믿거나 서보가 없으면 `release` 가 어차피 거절한다. 그때 알람만
+        울리게 두면 심사위원이 버튼을 눌렀는데 아무 일도 안 일어나는 장면이 나온다 —
+        발표에서 가장 나쁜 종류의 실패이고, 여기서 막으면 안 일어난다.
+        """
+        with self._lock:
+            if tray not in self.servos.pins:
+                raise KeyError(f"tray {tray} is not wired")
+            blocked = self.blocked_reason()
+            if blocked:
+                raise RuntimeError(blocked)
+
+            now = self.clock.now()
+            minutes = now.hour * 60 + now.minute
+            day = self.clock.day_number()
+
+            # 이미 밀려 있으면 두 번 만들지 않는다. 같은 칸을 두 번 눌렀을 때 알람이
+            # 겹쳐 울리고 배출이 두 번 되는 것은 시연에서든 실제에서든 틀린 일이다.
+            key = (tray, minutes)
+            if key in self._due:
+                log.info("tray %d 은 이미 밀려 있다 — 다시 만들지 않는다", tray)
+                return
+
+            self._offer(Decision(what=Due.DISPENSE, slot=tray, minutes=minutes), day)
+
     def _expire_due(self) -> list[dict]:
         """Close the window on every dose that was offered and never tapped.
 

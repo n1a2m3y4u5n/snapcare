@@ -249,9 +249,27 @@ export interface GoodbyeCommand {
   action: 'goodbye';
 }
 
+/**
+ * 이 칸의 복용을 **지금** 밀린 것으로 만든다. 발표에서 쓴다.
+ *
+ * 이 기계가 하는 일의 핵심은 "시각이 되면 알리고, 사람이 누르면 내준다" 인데, 그것을
+ * 보여주려면 그 시각까지 기다려야 한다. 심사위원 앞에서 아침 8시를 기다릴 수는 없고,
+ * 미리 일정을 발표 시각으로 맞춰 두는 것도 몇 분만 밀리면 무너진다.
+ *
+ * **가짜가 아니다.** 기기는 진짜 복용 시각에 부르는 것과 같은 코드를 부르고, 그 뒤는
+ * 전부 평소 경로다 — 부저, 화면, 앱 알림, 배출 버튼, 서보, 기록. 시연을 위해 따로
+ * 만든 길이 없으므로 보여준 것이 곧 실제로 돌아가는 것이다.
+ */
+export interface DueCommand {
+  action: 'due';
+  /** 1–8. */
+  tray: number;
+}
+
 /** Anything the phone can put in the command slot. */
 export type DeviceCommand =
-  | ReleaseCommand | DropCommand | BeepCommand | HelloCommand | GoodbyeCommand;
+  | ReleaseCommand | DropCommand | BeepCommand
+  | HelloCommand | GoodbyeCommand | DueCommand;
 
 /** The relay's own view of a mailbox — revisions and timestamps, no plaintext. */
 export interface MailboxMeta {

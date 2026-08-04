@@ -650,7 +650,21 @@ class CloudLink:
 
         tray = _optional_int(opened.get("tray"))
         if tray is None:
-            log.warning("a drop from the cloud (revision %d) named no tray", rev)
+            log.warning("a %s from the cloud (revision %d) named no tray", action, rev)
+            return
+
+        if action == "due":
+            # 발표용. 이 칸의 복용을 지금 밀린 것으로 만든다 — 그 뒤는 전부 평소
+            # 경로다. `device.offer_now` 에 왜 가짜 화면을 안 그리는지 적어 뒀다.
+            try:
+                self.dispenser.offer_now(tray)
+            except (KeyError, RuntimeError) as exc:
+                log.error("a demo alarm from the cloud could not be raised: %s", exc)
+                self._remember(self._desired_rev, applied=False, error=f"refused: {exc}")
+                self.nudge()
+                return
+            log.info("tray %d is due now, from the cloud (revision %d)", tray, rev)
+            self.nudge()
             return
 
         try:
@@ -692,7 +706,7 @@ class CloudLink:
             log.info("the phone let go of this box (revision %d)", rev)
             return
 
-        if action in ("drop", "beep"):
+        if action in ("drop", "beep", "due"):
             self._bench(action, opened, rev)
             return
 

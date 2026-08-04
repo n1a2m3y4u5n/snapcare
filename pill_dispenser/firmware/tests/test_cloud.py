@@ -862,3 +862,31 @@ def test_a_goodbye_lets_the_box_be_claimed_again(link):
     # And it can be taken again. This is the whole loop a demonstration needs.
     link._carry_out({"action": "hello"}, 22)                   # noqa: SLF001
     assert link.status()["claimedAt"]
+
+
+def test_a_demo_alarm_makes_a_dose_due_through_the_ordinary_path(link, dispenser):
+    """발표에서 쓰는 것. 가짜 화면이 아니라 진짜로 밀린 복용을 만든다.
+
+    이 기계가 하는 일의 핵심은 "시각이 되면 알리고, 사람이 누르면 내준다" 인데, 그것을
+    보여주려면 그 시각까지 기다려야 한다. 심사위원 앞에서 아침 8시를 기다릴 수는 없다.
+
+    그래서 `tick` 이 진짜 복용 시각에 부르는 것과 같은 `_offer` 를 부른다. 여기서
+    확인하는 것은 그 결과가 **평소와 구별되지 않는다**는 것이다 — 밀린 복용 목록에
+    올라가고, 평범한 `release()` 로 나온다. 시연용 배출 경로 같은 것은 없다.
+    """
+    link._carry_out({"action": "due", "tray": 3}, 30)          # noqa: SLF001
+    waiting = dispenser.awaiting_release
+    assert [d.tray for d in waiting] == [3], "복용이 밀리지 않았다"
+
+    released = dispenser.release()
+    assert [r["tray"] for r in released] == [3]
+    assert dispenser.store.read_events()[-1]["reason"] == "released", \
+        "시연 배출이 평소 복용과 다르게 기록됐다"
+
+
+def test_a_demo_alarm_twice_on_one_tray_does_not_double(link, dispenser):
+    """같은 칸을 두 번 누르는 것은 발표에서 실제로 일어난다. 알람이 겹쳐 울리고
+    배출이 두 번 되는 것은 시연에서든 실제에서든 틀린 일이다."""
+    link._carry_out({"action": "due", "tray": 2}, 31)          # noqa: SLF001
+    link._carry_out({"action": "due", "tray": 2}, 32)          # noqa: SLF001
+    assert len(dispenser.awaiting_release) == 1
