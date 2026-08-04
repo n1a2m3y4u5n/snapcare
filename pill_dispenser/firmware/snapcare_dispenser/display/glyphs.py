@@ -15,10 +15,14 @@ it is what stops this file growing again. A glyph used to be the whole message
 of a dose screen — a cup, a hand coming down on a button, a cross. It is not any
 more. A dose state is now a field colour, a solid shape and a printed time, and
 the glyphs that survive do one job each: they name the *subsystem* a status-bar
-chip is about. Severity is the solid shape drawn underneath the icon, out of
-`shapes.py`, and none of it is carried in here. That separation is the whole
-reason the bar can be learnt at all — the picture never moves and never changes
-meaning, and only the shape below it does.
+chip is about. Severity is the **colour the icon is drawn in** — `bar.py` picks
+it, out of `theme.SEVERITY` — and none of it is carried in here. That separation
+is the whole reason the bar can be learnt at all: the picture never moves, never
+changes size and never changes meaning, and only its ink does.
+
+It was a solid shape under the icon until recently, and these bitmaps did not
+change when it went. That is the point of the separation — a glyph is a name,
+and how the bar says "this one is in trouble" is not this file's business.
 
 That still makes this file a load-bearing one. A driver that transposes a byte
 shows a corrupt screen and somebody notices in a second. A glyph that reads as
@@ -52,10 +56,9 @@ because with one ink and no room for a word there was nothing else. They are
 gone with the monochrome panel. At the scale the bar draws these the bar itself
 would be three pixels across a 16 px picture — 1.8 arcmin at a metre, near
 enough to the acuity floor that it would be a smudge on the icon rather than a
-line through it — and all it can ever say is "not". The solid octagon that now
-sits under the icon says which of three levels it is instead, is the same
-silhouette the hero band is showing at that moment, and costs one shape rather
-than two blits.
+line through it — and all it can ever say is "not". The icon's own colour says
+which of three levels it is instead, which says more than "not" and costs no
+pixels at all.
 
 Why the ASCII art is here
 -------------------------

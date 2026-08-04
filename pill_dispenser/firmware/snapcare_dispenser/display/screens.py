@@ -72,6 +72,7 @@ in it is a far worse bug than an ugly screen.
 """
 from __future__ import annotations
 
+from .. import config
 from . import (PANEL_HEIGHT, PANEL_WIDTH, bar, font, numerals, qr_art, shapes,
                strip, theme as theme_mod)
 from .canvas import Canvas, Tone
@@ -133,28 +134,32 @@ def _tray_text(tray: object) -> str:
     return "?"
 
 
-def _tray_list_text(trays: object) -> str:
-    """The trays a schedule names, as one drawable string.
+def _tray_set(trays: object) -> frozenset[int] | None:
+    """The trays a schedule names, as numbers — or `None` for "nobody said".
 
-    Separated by a thin space rather than a comma or a dot: the numeral face
-    has digits and a colon and nothing else, and a separator that has to be
-    invented is a separator somebody has to learn. Position does the work.
+    `None` and an empty list are the same answer here and it is not "no trays":
+    it is that this frame was given nothing to describe. The two are worth one
+    return value because the picture draws them identically and must — see
+    `_tray_stack`, where an unknown plan is eight grey pillars and never eight
+    red ones.
 
-    Long lists shrink rather than truncate — `_big_number` fits whatever it is
-    given — because a schedule naming six trays that renders as three is the
-    exact failure this frame exists to catch.
+    Out-of-range numbers are dropped rather than clamped. `config` refuses a
+    slot outside 1..MAX_TRAYS long before a frame is painted, so anything
+    arriving here is already a bug upstream, and a 9 nudged onto pillar 8 would
+    be this screen inventing a tray the machine does not have.
     """
     if trays is None:
-        return "?"
-    if isinstance(trays, int) and not isinstance(trays, bool):
-        return _tray_text(trays)
+        return None
+    found = [trays] if isinstance(trays, int) and not isinstance(trays, bool) else trays
     try:
-        found = list(trays)
+        numbers = list(found)
     except TypeError:
-        return "?"
-    if not found:
-        return "?"
-    return " ".join(_tray_text(t) for t in found)
+        return None
+    wanted = frozenset(
+        tray for tray in numbers
+        if isinstance(tray, int) and not isinstance(tray, bool)
+        and 1 <= tray <= config.MAX_TRAYS)
+    return wanted or None
 
 
 def _clock_text(when: object) -> str:
@@ -403,6 +408,77 @@ def _big_number(canvas: Canvas, text: str, value: int) -> None:
                           HERO_RW, size, text, value)
 
 
+#: The hoppers, drawn as a stack of flat pillars — the machine's own shape.
+#:
+#: `config.MAX_TRAYS` rather than `INSTALLED_TRAYS`, and the difference matters:
+#: the picture is the *firmware's* eight positions, so the stack is the same
+#: height on every machine and a tray lights up in the place it physically is.
+#: Sizing it to the fitted count instead would draw a two-pillar stack on a
+#: two-tray box, and then tray 2 of eight and tray 2 of two would be the same
+#: picture in different places.
+_PILLARS = config.MAX_TRAYS                     # 8
+#: Between the plate's edge and the pillars, and between the pillars. Both are
+#: the ink colour showing through, which is what makes eight bars read as eight
+#: rather than as one striped block.
+_PILLAR_PAD = 5
+_PILLAR_GAP = 4
+_PLATE_H = HERO_H - 2 * PAD                     # 124
+#: Three quarters of the right column, centred in it. Full width was tried and
+#: is worse: eight bars 196 px long and 11 px tall is a 18:1 rectangle eight
+#: times over, and it reads as a grille rather than as a stack of trays. Kept
+#: wide enough to carry the colour across a room, narrow enough that a pillar
+#: still looks like an object.
+_PLATE_W = HERO_RW * 3 // 4                     # 159
+_PLATE_X = HERO_RX + (HERO_RW - _PLATE_W) // 2
+#: 11 rows each: (124 - 2*5 - 7*4) // 8. Written as arithmetic so that changing
+#: the padding cannot silently push the last pillar through the plate.
+_PILLAR_H = (_PLATE_H - 2 * _PILLAR_PAD - (_PILLARS - 1) * _PILLAR_GAP) // _PILLARS
+
+if _PILLAR_H < 4:
+    raise ValueError("the tray stack does not fit the hero band")
+
+
+def _tray_stack(canvas: Canvas, theme: dict, wanted: frozenset[int] | None) -> None:
+    """Eight hoppers, top to bottom, each one green or red — the whole plan.
+
+    Green is a tray this schedule covers and red is one it does not, which on a
+    machine with two hoppers loaded is two green pillars and six red. It
+    replaced a printed list of tray numbers (`2`, or `1 2`), and the reason is
+    that the list needed reading: it named the trays in digits somebody had to
+    know the meaning of, in a row whose length changed with the plan. The stack
+    is the machine's own shape — eight hoppers, top to bottom, in the order they
+    are stacked in the case — so *where* the green is says which tray without
+    anybody counting, and the picture is the same size and in the same place
+    whatever the plan says.
+
+    **On a black plate, not on the violet.** This is the one screen where a
+    severity colour cannot be drawn on the field it lands on: `FAULT` red
+    measures 1.03:1 against the `SCHEDULE` violet — the two are within a
+    percent of the same luminance, so a red pillar on the flood would be
+    genuinely invisible, not merely low contrast. On the plate they are 5.1:1
+    and 10.8:1. The plate is drawn in the field's own ink, the same black as the
+    circle beside it, so it reads as part of the frame rather than as a second
+    surface.
+
+    An unknown plan is eight **grey** pillars, and this is the same rule the bar
+    keeps: absence is not a verdict. Eight red ones would say the machine has
+    lost every hopper, which is a far more alarming claim than "nobody told this
+    frame what arrived".
+    """
+    left, top = _PLATE_X, HERO_Y + PAD
+    canvas.rect(left, top, _PLATE_W, _PLATE_H, theme["BLACK"])
+
+    width = _PLATE_W - 2 * _PILLAR_PAD
+    for index in range(_PILLARS):
+        if wanted is None:
+            ink = theme["TEXT_MUTE"]
+        else:
+            ink = theme["OK"] if index + 1 in wanted else theme["FAULT"]
+        canvas.rect(left + _PILLAR_PAD,
+                    top + _PILLAR_PAD + index * (_PILLAR_H + _PILLAR_GAP),
+                    width, _PILLAR_H, ink)
+
+
 def _frame(canvas: Canvas, health: Health, theme: dict, *,
            focal: object = None) -> None:
     """The two permanent bands. Every screen but `network` starts here."""
@@ -582,21 +658,24 @@ def schedule(canvas: Canvas, health: Health, trays: object = None, *,
     *which* tells the person where the pills go, and makes a schedule naming
     tray 5 on a two-tray machine visible here and nowhere else in the room.
 
-    It used to be the count, and the count was ambiguous on top of being thin:
-    a lone `2` could mean two trays or tray 2, and the frame gave no way to
-    tell. A list never has that problem. It was also, in practice, a lie —
-    both callers passed nothing and the fallback printed the *machine's* tray
-    count, a confident `8` on a frame whose whole job is to describe a schedule.
+    It was the count once, and the count was ambiguous on top of being thin: a
+    lone `2` could mean two trays or tray 2. It became a list of tray numbers,
+    which fixed the ambiguity and left the reading — `1 2` is two digits that
+    only mean something to somebody who knows the hoppers are numbered, and
+    nothing at all to somebody who does not read. It is a picture now:
+    `_tray_stack` draws the machine's eight hoppers as they are stacked in the
+    case, green for the ones this plan covers and red for the ones it does not.
+    Where the green is *is* the answer, and it needs no digits.
 
     The stronger acknowledgement is underneath, in the strip, which has already
     been rebuilt from the new plan — every mark a pending square at its new
-    time. Showing the plan beats naming it, and the names are still there.
+    time. Showing the plan beats naming it, and now both halves of this frame
+    show it.
     """
     theme = _palette(canvas, theme)
     _flood(canvas, theme, "SCHEDULE")
-    ink = theme["BLACK"]
-    _hero_shape(canvas, Shape.SAFE, ink)
-    _big_number(canvas, _tray_list_text(trays), ink)
+    _hero_shape(canvas, Shape.SAFE, theme["BLACK"])
+    _tray_stack(canvas, theme, _tray_set(trays))
     _frame(canvas, health, theme)
 
 

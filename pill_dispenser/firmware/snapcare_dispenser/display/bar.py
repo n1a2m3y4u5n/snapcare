@@ -19,32 +19,49 @@ The cost is that the row is full. A new subsystem does not get a slot: it goes t
 an existing chip through `PROBLEM_SLOT`. That is a real constraint on future work
 and it is the point of the file rather than an oversight in it.
 
-Two elements per chip, and only one of them ever moves
-------------------------------------------------------
-A chip is a 16x16 identity glyph and, under it, a solid severity shape:
+One element per chip, and it never moves
+----------------------------------------
+A chip is a 16x16 identity glyph, drawn in the colour of its own severity:
 
-    absent     dim icon, **no mark at all**
-    ok         bright icon, solid circle
-    attention  bright icon, solid triangle
-    fault      bright icon, solid octagon
+    absent     the icon in `TEXT_MUTE` — grey, and no claim
+    ok         the icon in `OK` — green
+    attention  the icon in `ATTN` — amber
+    fault      the icon in `FAULT` — red
 
-The picture says *which subsystem* and never *how bad*; the shape says *how bad*
-and never *which*. Keeping those in two channels is what lets somebody read the
-bar peripherally — the icons are a constant they stop seeing, and a shape
-appearing under one of them is the whole message.
+The picture says *which subsystem* and the ink it is drawn in says *how bad*.
+One element, so the row is one row of pictures at one size in fixed places, and
+a fault is a picture somebody already knows the position of changing colour
+under their eye rather than a second thing appearing beneath it.
+
+This replaced a two-element chip — the same glyph with a solid severity shape
+under it, circle/triangle/octagon — and the swap is worth writing down because
+of what it costs. The shape was the channel that did not depend on hue: roughly
+one man in twelve cannot use the red-green difference, and `OK` green and `ATTN`
+amber sit at 8.93:1 and 8.99:1 on this plane, which is to say they are the same
+grey. So on the bar, ok and attention are now told apart by hue alone. Three
+things carry that weight instead, and none of them is on this row: `FAULT` is
+half the luminance of the other two and reads as a dark chip in any vision;
+anything that actually stops the machine also floods the hero band, which still
+draws the full circle/triangle/octagon vocabulary out of `shapes.py` at 59 px;
+and `--selftest` prints the row in words. If the shape has to come back, it
+comes back on the hero and in the report — not as a second element here, which
+is the arrangement this row was moved off.
 
 **Absence is not a fault and it is not a tick.** A subsystem that has told us
-nothing keeps its dim icon and draws no mark, so a blank `Health()` is six dim
-icons, no marks, no date and `--:--`. Blanking the slot instead was considered and is
-worse twice over: the gap makes the row's geometry look broken, and it moves
-every icon after it, which is the reordering this file exists to prevent. A green
-tick on no evidence is not on the table at all — `health.py` defaults every field
-to the honest empty value precisely so that nothing downstream can invent one.
+nothing keeps a grey icon, so a blank `Health()` is six grey icons, no date and
+`--:--`. Grey is the palette's "no claim is being made" and it is the one
+severity colour that is not a colour, which is what stops absence reading as a
+verdict. Blanking the slot instead was considered and is worse twice over: the
+gap makes the row's geometry look broken, and it moves every icon after it,
+which is the reordering this file exists to prevent. A green icon on no evidence
+is not on the table at all — `health.py` defaults every field to the honest
+empty value precisely so that nothing downstream can invent one.
 
 An unrecognised value is treated as absence too. The cost is worth stating: a
 state added to `network.py` or to the relay client and not added to the maps
-below shows as a dim icon until somebody does. That is the failure this direction
-should have — silence about a subsystem, rather than a confident circle under it.
+below shows as a grey icon until somebody does. That is the failure this
+direction should have — silence about a subsystem, rather than a confident green
+one.
 
 Why the geometry is module constants
 ------------------------------------
@@ -63,10 +80,9 @@ the new one.
 """
 from __future__ import annotations
 
-from . import PANEL_HEIGHT, PANEL_WIDTH, glyphs, numerals
+from . import PANEL_HEIGHT, PANEL_WIDTH, glyphs, numerals, theme
 from .canvas import Canvas
 from .health import PRECEDENCE, Health
-from .shapes import Shape, fill
 
 __all__ = ["BAR_H", "SLOTS", "SLOT_X", "PROBLEM_SLOT", "draw", "key"]
 
@@ -100,23 +116,19 @@ SLOT_PITCH = W * 13 // 160                              # 26
 #: as one 32 px picture, and the row's whole value is that they do not.
 SLOT_W = SLOT_PITCH - 4                                 # 22
 
-#: Severity radius. Small on purpose and it works because the shapes are solid:
-#: at r=6 the circle, triangle and octagon are 113, 52 and 129 lit pixels, and
-#: the octagon has a 5 px flat top against the circle's single-pixel apex.
-#: Filled shapes separate *better* at small radii than outlines do, which is the
-#: opposite of the reasoning that produced `shapes.MIN_RADIUS`.
-MARK_R = 6
-#: One row between the picture and the mark. They are two facts about one
-#: subsystem, so they are one stack with a hairline in it rather than two things
-#: sharing a slot; more air here and the mark starts to look like it belongs to
-#: the chip below rather than the one above.
-ICON_GAP = 1
-
-_STACK_H = glyphs.ROWS + ICON_GAP + 2 * MARK_R + 1      # 30
-#: The stack, centred in the face: 2 above, 2 below.
-ICON_Y = (FACE_H - _STACK_H) // 2                       # 2
+#: The picture, centred in the face. It is the whole of the chip now — the
+#: severity mark that used to sit under it took fourteen of these rows, and
+#: giving them back to the air around the icon is what stops the row reading as
+#: a stack with its bottom half missing.
+#:
+#: The band did not shrink with the mark, and that is a decision rather than an
+#: oversight: `screens` starts the hero at `BAR_H`, `strip` is laid out against
+#: what is left, and both the clock and the date are sized to `FACE_H`. Nine
+#: rows of air above a 16 px icon on the same line as a 20 px clock is a band
+#: that reads as one row; trading them to the hero is a re-proportioning of all
+#: three bands and belongs in its own change.
+ICON_Y = (FACE_H - glyphs.ROWS) // 2                    # 9
 ICON_X = (SLOT_W - glyphs.SPAN) // 2                    # 3
-MARK_CY = ICON_Y + glyphs.ROWS + ICON_GAP + MARK_R      # 25
 
 #: The clock, and the date beside it. One row, bottoms aligned, right-aligned
 #: against the band's own edge.
@@ -192,12 +204,26 @@ OK = "ok"
 ATTENTION = "attention"
 FAULT = "fault"
 
-#: What each state draws under the icon, as `(shape, palette name)`. `ABSENT` is
-#: deliberately not in here: the absence of an entry is the absence of a mark.
-_SEVERITY: dict[str, tuple[Shape, str]] = {
-    OK: (Shape.SAFE, "OK"),
-    ATTENTION: (Shape.CAUTION, "ATTN"),
-    FAULT: (Shape.AVOID, "FAULT"),
+#: The ink each state draws its icon in, as a palette name.
+#:
+#: `ABSENT` is in the table rather than left to a default, because it is the one
+#: entry that is a *rendering* and not a severity: `TEXT_MUTE` is the palette's
+#: "no claim is being made", already used for the dashes the clock shows when
+#: nothing has vouched for the time. Every state the bar can be in names its own
+#: ink here, and `draw` looks up rather than branching — a slot with no entry is
+#: a `KeyError` at the top of a repaint rather than an invisible chip.
+#:
+#: The three severity colours are the ones `theme.SEVERITY` measured against
+#: `BAR_BG` for a 13 px mark, and a glyph is thinner than a solid shape: what
+#: was 113 lit pixels of green is 60-odd pixels of stroke. That is why they were
+#: lifted off the hero's amber and red in the first place — at 8.93:1, 8.99:1
+#: and 4.22:1 they carry a 1 px stroke on this plane, which the field colours
+#: they came from would not have.
+_SEVERITY_INK: dict[str, str] = {
+    ABSENT: "TEXT_MUTE",
+    OK: "OK",
+    ATTENTION: "ATTN",
+    FAULT: "FAULT",
 }
 
 #: Every picture the bar can draw. The constants are named directly, so a typo
@@ -319,6 +345,19 @@ if set(PROBLEM_SLOT.values()) - set(SLOTS) or set(_SLOT_ICON) != set(SLOTS):
 
 if (set(_SLOT_ICON.values()) | {"WIFI_LOW"}) - set(_ICONS):
     raise ValueError("a status-bar slot names a picture that does not exist")
+
+if set(_SEVERITY_INK) != {ABSENT, OK, ATTENTION, FAULT}:
+    # The severity is the ink now, so a state with no ink is a chip that is not
+    # drawn at all — a slot that silently goes missing out of a row whose whole
+    # value is that it never changes shape. A fifth state added above lands here
+    # at import instead.
+    raise ValueError("a status-bar state has no ink to draw its icon in")
+
+if set(_SEVERITY_INK.values()) - set(theme.PALETTE):
+    # A palette typo would otherwise be a `KeyError` from inside `draw`, which
+    # on this device means a repaint that dies half-way and leaves the last
+    # frame's bar standing over the new hero.
+    raise ValueError("a status-bar state names a colour that is not in the palette")
 
 if (numerals.text_width(_WIDEST_CLOCK, CLOCK_H) + DATE_GAP
         + numerals.text_width(_WIDEST_DATE, DATE_H)) > W - BAR_PAD - (
@@ -519,14 +558,8 @@ def draw(canvas: Canvas, health: Health, theme: dict[str, int]) -> None:
     canvas.rect(0, BAR_H - RULE_H, canvas.width, RULE_H, theme["RULE"])
 
     for index, (icon, state) in enumerate(_read(health)):
-        left = SLOT_X(index)
-        canvas.blit(left + ICON_X, ICON_Y, _ICONS[icon], glyphs.SPAN,
-                    theme["TEXT_MUTE"] if state == ABSENT else theme["TEXT"])
-        severity = _SEVERITY.get(state)
-        if severity is not None:
-            shape, colour = severity
-            fill(canvas, left + SLOT_W // 2, MARK_CY, MARK_R, shape,
-                 theme[colour])
+        canvas.blit(SLOT_X(index) + ICON_X, ICON_Y, _ICONS[icon], glyphs.SPAN,
+                    theme[_SEVERITY_INK[state]])
 
     # The clock keeps the right edge. It was there before the date was, people
     # who have used this machine know where it is, and the date arriving must

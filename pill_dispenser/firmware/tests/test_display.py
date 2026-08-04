@@ -33,7 +33,7 @@ import pytest
 from snapcare_dispenser.display import NoDisplay, make_display, screens
 from snapcare_dispenser.display.health import Health
 from snapcare_dispenser.display.canvas import Rgb565, Tone
-from snapcare_dispenser.display import font, glyphs
+from snapcare_dispenser.display import font, glyphs, theme
 
 
 # ── the bus, faked at the syscall boundary ──────────────────────────────────
@@ -537,30 +537,72 @@ def test_the_released_frame_says_when_not_which_tray(canvas, monkeypatch):
 
 # ── 새 일정이 왔을 때 ───────────────────────────────────────────────────────
 
+def _pillar_inks(canvas) -> list[int]:
+    """The colour of each of the eight pillars, read off the rendered frame.
+
+    Sampled from the pixels rather than from a spy on the drawing helper: the
+    thing this screen has to get right is *which* pillar is green, and a spy on
+    a call that takes a set would pass just as happily with the stack drawn
+    upside down.
+    """
+    pixels = _pixels(canvas)
+    middle = screens.HERO_RX + screens.HERO_RW // 2
+    inks = []
+    for index in range(screens._PILLARS):        # noqa: SLF001
+        row = (screens.HERO_Y + screens.PAD + screens._PILLAR_PAD  # noqa: SLF001
+               + index * (screens._PILLAR_H + screens._PILLAR_GAP)  # noqa: SLF001
+               + screens._PILLAR_H // 2)         # noqa: SLF001
+        inks.append(pixels[row * canvas.width + middle])
+    return inks
+
+
 @pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
-def test_the_schedule_frame_names_the_trays_it_got(canvas, monkeypatch):
-    """개수가 아니라 **어느 칸**이다.
+def test_the_schedule_frame_shows_which_trays_as_a_stack(canvas):
+    """개수가 아니라 **어느 칸**이고, 이제 숫자가 아니라 그림이다.
 
     이 화면은 일정을 보낸 사람에게 하는 답이고, 두 칸짜리 기계에서 "몇 칸" 은 1
-    아니면 2 라 알려주는 것이 거의 없다. 게다가 숫자 하나로는 모호하다 — `2` 가
-    두 칸인지 2번 칸인지 화면만 봐서는 못 가른다.
+    아니면 2 라 알려주는 것이 거의 없다. 숫자 하나로는 모호하기까지 했다 — `2` 가
+    두 칸인지 2번 칸인지 화면만 봐서는 못 갈랐다.
+
+    번호 목록도 읽어야 한다는 문제가 남아 있었다. 지금은 기계 모양 그대로 여덟 칸을
+    위에서 아래로 쌓아 놓고, 이번 일정이 쓰는 칸만 초록으로 칠한다. **초록이 어디
+    있느냐**가 답이므로 세어 볼 것도, 읽을 것도 없다.
+
+    픽셀에서 읽는다. 위아래가 뒤집힌 스택은 호출을 엿보는 테스트로는 절대 안 잡힌다.
     """
-    drawn = []
-    monkeypatch.setattr(screens, "_big_number",
-                        lambda c, text, ink: drawn.append(text))
+    palette = theme.pack(canvas)
+
     screens.schedule(canvas, WELL, (2,))
+    assert _pillar_inks(canvas) == [palette["FAULT"], palette["OK"]] + \
+        [palette["FAULT"]] * 6, "2번 칸 하나짜리 일정이 다른 칸을 켰다"
+
     screens.schedule(canvas, WELL, (1, 2))
-    assert drawn == ["2", "1 2"]
+    assert _pillar_inks(canvas) == [palette["OK"]] * 2 + [palette["FAULT"]] * 6
+
+    # 여덟 번째 칸은 스택의 맨 아래다. 오프바이원이면 여기서 걸린다.
+    screens.schedule(canvas, WELL, (8,))
+    assert _pillar_inks(canvas) == [palette["FAULT"]] * 7 + [palette["OK"]]
 
 
-def test_the_schedule_frame_does_not_invent_a_number():
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_an_unknown_plan_is_eight_grey_trays_and_not_eight_broken_ones(canvas):
     """예전에는 호출부가 아무것도 안 넘기면 **기계의 칸 수**가 떴다.
 
     두 호출부가 실제로 그랬고, 그래서 일정을 설명해야 할 자리에 `8` 이 자신 있게
-    떠 있었다. 모르면 모른다고 해야 한다.
+    떠 있었다. 모르면 모른다고 해야 한다 — 그런데 그림에서 "모른다" 를 빨강으로
+    칠하면 이번에는 여덟 칸이 전부 빠졌다는 훨씬 센 주장이 된다. 회색이다.
     """
-    assert screens._tray_list_text(None) == "?"  # noqa: SLF001
-    assert screens._tray_list_text(()) == "?"    # noqa: SLF001
+    assert screens._tray_set(None) is None       # noqa: SLF001
+    assert screens._tray_set(()) is None         # noqa: SLF001
+    assert screens._tray_set("nonsense") is None  # noqa: SLF001
+    # 이 기계에 없는 칸은 8번으로 끌어다 붙이지 않고 버린다.
+    assert screens._tray_set((9, 0, -1)) is None  # noqa: SLF001
+    assert screens._tray_set((1, 99)) == frozenset({1})  # noqa: SLF001
+
+    palette = theme.pack(canvas)
+    screens.schedule(canvas, WELL, None)
+    assert _pillar_inks(canvas) == [palette["TEXT_MUTE"]] * 8
+    assert palette["FAULT"] not in _pillar_inks(canvas)
 
 
 # ── the bar's date ──────────────────────────────────────────────────────────

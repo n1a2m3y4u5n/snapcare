@@ -595,7 +595,7 @@ for ever. `--display-test` is the way to settle it with your eyes.
 ```
 
 **The bar** is seven fixed slots — wifi, relay, clock, tray, power, cell, card —
-each an icon with a solid severity shape under it, and the wall clock on the
+each an icon drawn in the colour of its own state, and the wall clock on the
 right. It never reorders, reflows, shrinks or truncates. That is the rule, not
 an observation: the status *screen* it replaced sorted faults to the front and
 dropped healthy subsystems off the end, so the same machine showed the same
@@ -626,11 +626,21 @@ skull. A 16x16 glyph scaled to fit inside a triangle's usable area is a smudge a
 any distance worth designing for. The shape is solid now and the numbers beside
 it carry what the picture was failing to.
 
-**Colour is never the only channel.** Every severity is a shape as well —
-circle safe, triangle caution, octagon will-not-dispense, square not-yet — at
-13 px on the bar and 59 px on the hero. Roughly one man in twelve cannot use the
-red-green difference, and filled shapes are told apart by mass, which survives
-both that and being across the room.
+**On the hero and the strip, colour is never the only channel.** Every severity
+is a shape as well — circle safe, triangle caution, octagon will-not-dispense,
+square not-yet — at 59 px on the hero and 21 px on the strip. Roughly one man in
+twelve cannot use the red-green difference, and filled shapes are told apart by
+mass, which survives both that and being across the room.
+
+**On the bar it now is.** The status chips carried the same vocabulary at 13 px
+under each icon, and the icons carry it in their own ink instead: one element
+per chip, green/amber/red/grey. The cost is stated rather than hidden — `OK`
+green and `ATTN` amber measure 8.93:1 and 8.99:1 on the bar's plane, which is to
+say they are the same grey, so *fine* and *needs somebody* are told apart by hue
+alone on that row. `FAULT` red is half their luminance and still separates in
+any vision; anything that actually stops the machine floods the hero, where the
+shape vocabulary is intact; and `--selftest` prints the whole row in words. It
+is a real trade and the bar's own docstring argues it at length.
 
 Two things here were measured rather than judged, and both had shipped wrong:
 
