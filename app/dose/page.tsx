@@ -27,7 +27,7 @@ export default function DosePage() {
       return;
     }
     if (autoTts) {
-      speak(`${spokenName(item.name, item.kind)}. For ${member?.name ?? 'you'}. ${item.rx?.dosageText ?? ''}`, 'en-US');
+      speak(`${spokenName(item.name, item.kind)}. For ${member?.name ?? 'you'}. ${item.rx?.dosageText ?? ''}`);
     }
   }, [item, member, autoTts, router]);
 

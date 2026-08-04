@@ -5,6 +5,15 @@ export const id: SayPack = {
   order: 'head-first',
   join: ', ',
   phrases: {
+    /*
+      판정 세 단계. 그림에는 없는 말이라 여기 둔다 — 그림은 "무엇이 들었나" 를
+      말하고, 이 셋은 "그래서 어떻게 하라" 를 말한다. 문장을 짧게 두는 것이 규칙이다:
+      되감기가 없는 매체에서 첫마디가 행동이어야 한다.
+    */
+    'verdict.avoid': 'Jangan dikonsumsi.',
+    'verdict.caution': 'Hati-hati.',
+    'verdict.safe.eat': 'Aman dimakan.',
+    'verdict.safe.drink': 'Aman diminum.',
     'allergen_peanut.yes': 'Mengandung kacang tanah.',
     'allergen_peanut.no': 'Jangan dimakan. Mengandung kacang tanah.',
     'allergen_tree_nut.yes': 'Mengandung kacang pohon.',

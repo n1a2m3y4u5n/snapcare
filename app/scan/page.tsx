@@ -41,6 +41,9 @@ export default function ScanResultPage() {
   const addReminders = useReminders((s) => s.addReminders);
 
   const autoTts = usePreferences((s) => s.autoTts);
+  // 판정을 **고른 언어로** 읽는다. 화면 글은 영어로 남고 소리만 바뀐다 —
+  // 그 판단의 이유는 lib/i18n/languages.ts 에 적혀 있다.
+  const sayLang = usePreferences((s) => s.sayLang);
   const member = useProfile((s) => s.profile);
 
   // 영양 엔진이 이 사람 기준으로 계산한 플래그를 아이템에 합쳐 판정한다.
@@ -63,7 +66,7 @@ export default function ScanResultPage() {
 
   useEffect(() => {
     if (!scanned || !member || !autoTts) return;
-    speak(itemVoiceScript(scanned, computeVerdict(scanned, member, nutrition.assessments), member), 'en-US');
+    speak(itemVoiceScript(scanned, computeVerdict(scanned, member, nutrition.assessments), member, sayLang));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanned?.id, derivedKey, member?.id, autoTts]);
 
@@ -197,7 +200,7 @@ export default function ScanResultPage() {
         <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>{header}</span>
         {/* 20px 이모지였다. 이 화면에서 판정 전체를 다시 듣는 유일한 버튼인데 손끝보다
             작았다. 다른 화면과 같은 44 짜리로 맞춘다. */}
-        <Hear text={itemVoiceScript(scanned, verdict, member)} />
+        <Hear text={itemVoiceScript(scanned, verdict, member, sayLang)} />
       </div>
 
       {/*

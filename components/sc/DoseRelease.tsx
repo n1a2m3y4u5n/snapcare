@@ -68,7 +68,7 @@ export function DoseRelease({ report, onRelease }: {
     const what = due.length === 1
       ? `Your ${hhmmLabel(due[0].time)} medicine is ready. Press to open the tray.`
       : `${due.length} medicines are ready. Press once to open them all.`;
-    void speak(what, 'en-US');
+    void speak(what);
   }, [key, due]);
 
   // 걸린 약이 사라지면(우리가 열었든, 유예가 지났든) 다음 것을 다시 말할 수 있게 둔다.
@@ -87,13 +87,13 @@ export function DoseRelease({ report, onRelease }: {
       // 아니다. 확인은 awaitingRelease 가 빈 채로 오는 다음 보고이고, 그러면 이
       // 카드가 통째로 사라진다.
       setPhase('opened');
-      void speak('Opening the tray now.', 'en-US');
+      void speak('Opening the tray now.');
     } catch (err) {
       // 기기가 아예 움직일 수 없는 경우(GPIO 없음)와, 이미 지나 버려 열 것이 없는
       // 경우는 사용자가 할 일이 다르다. 앞은 사람을 불러야 하고 뒤는 아무 일도 아니다.
       console.error('[dose] 배출 실패:', err);
       setPhase('blocked');
-      void speak('The dispenser could not open. Please ask someone for help.', 'en-US');
+      void speak('The dispenser could not open. Please ask someone for help.');
     }
   }
 

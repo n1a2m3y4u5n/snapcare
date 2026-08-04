@@ -66,7 +66,7 @@ export function NutrientBars(
         <p className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}>
           {grams} G · SHARE OF {possessive(member.name)} DAY
         </p>
-        <button onClick={() => speak(spoken, 'en-US')} aria-label="Read nutrition aloud" className="flex items-center text-base leading-none">
+        <button onClick={() => speak(spoken)} aria-label="Read nutrition aloud" className="flex items-center text-base leading-none">
           <SpeakerIcon />
         </button>
       </div>

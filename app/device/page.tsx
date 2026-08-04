@@ -120,7 +120,7 @@ export default function DevicePage() {
         ? 'One dose time was sent to the dispenser.'
         : `${trayPlan.plan.length} dose times were sent to the dispenser.`;
       setResult(what);
-      speak(what, 'en-US');
+      speak(what);
     } catch (err) {
       console.error('[dispenser] 일정 전송 실패:', err);
       setSending('failed');
@@ -128,7 +128,7 @@ export default function DevicePage() {
       // 것이라고 믿고, 그 믿음은 아무 일도 일어나지 않는 아침에 깨진다.
       const what = 'The schedule did not reach the dispenser. Try again.';
       setResult(what);
-      speak(what, 'en-US');
+      speak(what);
     }
   }
 

@@ -10,6 +10,15 @@ export const ha: SayPack = {
   order: 'head-first',
   join: ', ',
   phrases: {
+    /*
+      판정 세 단계. 그림에는 없는 말이라 여기 둔다 — 그림은 "무엇이 들었나" 를
+      말하고, 이 셋은 "그래서 어떻게 하라" 를 말한다. 문장을 짧게 두는 것이 규칙이다:
+      되감기가 없는 매체에서 첫마디가 행동이어야 한다.
+    */
+    'verdict.avoid': 'Kada a sha ko a ci.',
+    'verdict.caution': 'A yi hankali.',
+    'verdict.safe.eat': 'Yana da lafiya a ci.',
+    'verdict.safe.drink': 'Yana da lafiya a sha.',
     'allergen_peanut.yes': 'Yana da gyada.',
     'allergen_peanut.no': 'Kada ka ci wannan. Yana da gyada.',
     'allergen_tree_nut.yes': 'Yana da goro.',

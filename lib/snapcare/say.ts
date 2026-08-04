@@ -2,12 +2,54 @@ import type { Member, ScanItem, Verdict } from './types';
 // 확장자를 붙인 상대 경로인 이유: 이 모듈을 node --test 로 번들러 없이 직접 돌린다.
 // (@/ 별칭은 그 자리에서 풀리지 않는다)
 import { spokenName } from '../tts/speakable.ts';
+import { packFor } from '../i18n/index.ts';
+import { dslSentence } from './dslSpeech.ts';
+import { itemToDsl } from './sigil.ts';
+import { splitDslLines } from './dsl.ts';
 
 /**
  * VOCA 음성 스크립트 — 결과를 짧고 핵심만 읽어준다 (접근성 코어).
  * 픽토그램·텍스트와 같은 의미를 세 번째 채널(음성)로 전달한다.
  */
-export function itemVoiceScript(item: ScanItem, verdict: Verdict, member: Member): string {
+export function itemVoiceScript(item: ScanItem, verdict: Verdict, member: Member,
+                                lang = 'en'): string {
+  /*
+    고른 언어로 **말이 실제로 바뀌는 곳.**
+
+    무엇이 문제였나: 언어를 바꿔도 미리보기만 그 언어로 나오고 나머지는 영어였다.
+    까닭이 둘이었고 둘 다 여기서 만난다.
+
+      1. 부르는 쪽이 `speak(..., 'en-US')` 로 못박고 있었다 — 열 곳쯤. 고친 뒤에도
+      2. **읽을 문장 자체가 영어**였다. 이 앱의 화면 글은 영어 하나뿐이고, 번역이
+         있는 것은 그림말 사전(`lib/i18n/say`)뿐이다. 한국어 목소리에 영어 문장을
+         주면 `voiceLangFor` 가 알아채고 영어 목소리로 되돌린다 — 그게 옳다.
+         한국 사람이 영어를 소리 나는 대로 읽는 소리는 알아들을 수 없다.
+
+    그래서 번역이 있는 언어에서는 **그림과 같은 문장으로 말한다.** 화면의 픽토그램
+    줄이 이미 그렇게 하고 있고(`PictogramStrip`), 그 사전이 이 앱에서 뜻을 정하는
+    자리다. 소리와 그림이 같은 표에서 나오면 둘이 어긋날 수도 없다.
+
+    번역이 없는 조각은 넣지 않는다. 빠진 자리를 영어로 메우면 한 문장 안에서 언어가
+    섞이고, 그건 못 알아듣는 것보다 나쁘다 — 알아들은 절반으로 행동하게 된다.
+  */
+  const pack = lang === 'en' ? null : packFor(lang);
+  if (pack) {
+    const parts: string[] = [spokenName(item.name, item.kind) + '.'];
+    const levelKey = verdict.level === 'safe'
+      ? (item.kind === 'drink' ? 'verdict.safe.drink' : 'verdict.safe.eat')
+      : `verdict.${verdict.level}`;
+    const level = pack.phrases[levelKey];
+    if (level) parts.push(level);
+    for (const line of splitDslLines(itemToDsl(item, verdict.level === 'avoid'))) {
+      const said = dslSentence(line, lang);
+      if (said) parts.push(said);
+    }
+    return parts.join(' ');
+  }
+  return englishVoiceScript(item, verdict, member);
+}
+
+function englishVoiceScript(item: ScanItem, verdict: Verdict, member: Member): string {
   // 포장지에서 읽어온 이름은 그 포장지의 언어다. 영어 음성이 못 읽는 이름은
   // 종류를 가리키는 말로 바꾼다 — 화면에는 원래 이름이 그대로 남는다.
   const parts: string[] = [spokenName(item.name, item.kind) + '.'];

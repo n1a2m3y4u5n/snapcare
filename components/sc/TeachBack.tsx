@@ -38,7 +38,7 @@ export function TeachBack({ item }: { item: ScanItem }) {
   useEffect(() => {
     if (!q || said.current === at) return;
     said.current = at;
-    void speak(q.ask, 'en-US');
+    void speak(q.ask);
   }, [q, at]);
 
   if (questions.length === 0 || skipped) return null;
@@ -63,7 +63,7 @@ export function TeachBack({ item }: { item: ScanItem }) {
     // 맞았든 틀렸든 **같은 문장**을 말한다. 맞은 사람에게는 확인이고 틀린 사람에게는
     // 정정인데, 어느 쪽이든 마지막으로 듣는 말이 옳은 지시여야 한다. 틀렸다는 말을
     // 앞에 붙이지 않는 이유도 같다 — 앞말이 기억에 남는다.
-    void speak(option === q.correct ? q.again : `${q.again} Look at the picture that is lit up.`, 'en-US');
+    void speak(option === q.correct ? q.again : `${q.again} Look at the picture that is lit up.`);
   }
 
   function next() {

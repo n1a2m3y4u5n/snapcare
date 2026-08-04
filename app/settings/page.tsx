@@ -249,7 +249,7 @@ export default function SettingsPage() {
               onClick={() => {
                 const ok = resetDemo();
                 setReset(ok ? 'The demo data is back to how it started.' : '');
-                if (ok) speak('The demo data is back to how it started.', 'en-US');
+                if (ok) speak('The demo data is back to how it started.');
               }}
               className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
             >

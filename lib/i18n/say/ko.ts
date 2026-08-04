@@ -15,6 +15,15 @@ export const ko: SayPack = {
   order: 'mod-first',
   join: ' ',
   phrases: {
+    /*
+      판정 세 단계. 그림에는 없는 말이라 여기 둔다 — 그림은 "무엇이 들었나" 를
+      말하고, 이 셋은 "그래서 어떻게 하라" 를 말한다. 문장을 짧게 두는 것이 규칙이다:
+      되감기가 없는 매체에서 첫마디가 행동이어야 한다.
+    */
+    'verdict.avoid': '드시지 마세요.',
+    'verdict.caution': '주의하세요.',
+    'verdict.safe.eat': '드셔도 됩니다.',
+    'verdict.safe.drink': '마셔도 됩니다.',
     'allergen_peanut.yes': '땅콩이 들어 있습니다.',
     'allergen_peanut.no': '드시지 마세요. 땅콩이 들어 있습니다.',
     'allergen_tree_nut.yes': '견과류가 들어 있습니다.',
