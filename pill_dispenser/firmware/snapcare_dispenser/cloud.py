@@ -116,32 +116,6 @@ _HOLD_MARGIN_S = 10
 _MIN_CYCLE_S = 2.0
 
 
-def _find_me(buzzer) -> None:
-    """"이게 그 상자다" 를 3초 동안 말한다.
-
-    복용 알림 칩(0.12초)을 그대로 쓰면 시끄러운 방에서 놓친다. 저 값은 20초마다
-    반복되므로 짧아야 하고, 이 소리는 한 번 울리고 끝이라 사람이 고개를 돌릴 시간을
-    줘야 한다 — 다른 목적이면 다른 값이다.
-
-    이어진 한 음이 아니라 끊어서 낸다. 같은 3초라도 삑—— 하나보다 삑·삑·삑 이 훨씬
-    잘 잡히고, 세상의 모든 경보가 그렇게 하는 이유가 그것이다. 피에조는 음량을
-    소프트웨어로 못 키우므로(듀티는 이미 최대), 끊는 것이 실제로 쓸 수 있는 유일한
-    "더 눈에 띄게" 수단이다.
-    """
-    on, off = config.BUZZER_FIND_ON_S, config.BUZZER_FIND_OFF_S
-    ends = time.monotonic() + config.BUZZER_FIND_S
-    try:
-        while time.monotonic() < ends:
-            buzzer.beep(on)
-            if time.monotonic() >= ends:
-                break
-            time.sleep(off)
-    except Exception as exc:  # noqa: BLE001
-        # 자기 스레드에서 도니 스스로 삼킨다. 여기서 새는 예외는 아무도 못 잡고,
-        # 파이썬이 스레드 죽음을 stderr 로 뱉는 것으로 끝난다.
-        log.error("the buzzer stopped mid-beep: %s", exc)
-
-
 class _Ctl:
     """One generation of loop threads, and the events only they may look at.
 
@@ -643,8 +617,7 @@ class CloudLink:
             # 따로 내보내고 루프는 다음 명령을 보러 간다.
             #
             # daemon=True: 이것 때문에 종료가 3초 늦어질 이유가 없다.
-            threading.Thread(target=_find_me, args=(buzzer,),
-                             name="snapcare-beep", daemon=True).start()
+            threading.Thread(target=run, name="snapcare-beep", daemon=True).start()
             log.info("beeped from the cloud (revision %d)", rev)
             return
 

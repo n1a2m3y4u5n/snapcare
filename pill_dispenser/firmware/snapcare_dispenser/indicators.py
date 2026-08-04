@@ -251,6 +251,25 @@ class Buzzer:
             time.sleep(duration)
         self.off()
 
+    def pattern(self, on_s: float, off_s: float, total_s: float) -> None:
+        """삑·삑·삑 — `total_s` 동안 끊어서 낸다.
+
+        이어진 한 음보다 훨씬 잘 잡힌다. 세상의 모든 경보가 그렇게 하는 이유이고,
+        피에조는 음량을 소프트웨어로 못 키우므로(듀티는 이미 사각파 최대) **끊는 것이
+        실제로 쓸 수 있는 유일한 "더 눈에 띄게" 수단**이기도 하다.
+
+        복용 알람과 "이게 그 상자인가" 소리가 둘 다 이걸 부른다. 길이만 다르고 하는
+        일은 같아서, 두 벌로 두면 한쪽만 고쳐지는 날이 온다.
+        """
+        import time  # noqa: PLC0415
+
+        ends = time.monotonic() + total_s
+        while time.monotonic() < ends:
+            self.beep(on_s)
+            if time.monotonic() >= ends:
+                break
+            time.sleep(off_s)
+
     def off(self) -> None:
         if self.backend == "pigpio":
             self._pi.set_PWM_dutycycle(self.gpio, 0)
@@ -381,7 +400,12 @@ class FittedIndicator(Indicator):
             # Waits without spinning, and wakes the instant an alert starts.
             if self._alerting.wait(timeout=1.0):
                 try:
-                    self.buzzer.beep()
+                    # 한 번 삑 하고 마는 것이 아니라 **울린다.** 0.12초짜리 딸깍
+                    # 소리를 20초마다 내는 것은 알람이 아니었고, 난청이 있는 사람은
+                    # 통째로 놓친다 — 그리고 이 기기의 사용자가 정확히 그 사람이다.
+                    self.buzzer.pattern(config.BUZZER_BEEP_S,
+                                        config.BUZZER_GAP_S,
+                                        config.BUZZER_CHIRP_S)
                 except Exception:  # noqa: BLE001
                     strikes += 1
                     if strikes == 1 or strikes >= self._CHIRP_STRIKES:

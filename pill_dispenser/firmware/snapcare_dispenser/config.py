@@ -395,7 +395,19 @@ BUZZER_GPIO = 23
 #: is the only real control, and it belongs to the part rather than to the
 #: family. Sweep it again if the element is ever changed.
 BUZZER_HZ = 2000
-BUZZER_BEEP_S = 0.12
+
+#: 한 번의 삑. 아래 `BUZZER_CHIRP_S` 동안 이것이 반복된다.
+BUZZER_BEEP_S = 0.25
+
+#: 삑과 삑 사이.
+BUZZER_GAP_S = 0.18
+
+#: 복용 알람 한 차례의 길이.
+#:
+#: 0.12초 **한 번**이었다. 그것은 알람이 아니라 딸깍 소리이고, 난청이 있는 사람은
+#: 통째로 놓친다 — 이 기기의 사용자가 정확히 그 사람이다. 벤치에서 그대로 나온 말:
+#: "복약 알람이 너무 짧음."
+BUZZER_CHIRP_S = 1.4
 
 #: "이게 그 상자인가" 를 답하는 소리 — 앱의 시험 칸에서 부르는 것.
 #:
@@ -411,11 +423,15 @@ BUZZER_FIND_OFF_S = 0.18
 
 #: Seconds between chirps while a dose is waiting to be released.
 #:
-#: Long enough not to be maddening, short enough that somebody in the next room
-#: hears it again before they have forgotten the first one. It stops when the
-#: dose is released, when somebody silences it from the app or the device's own
-#: page, or when the grace window closes.
-BUZZER_REPEAT_S = 20
+#: 20 초였다. 1.4 초를 울리고 20 초를 쉬면 소리가 나는 시간이 전체의 7% 다 — 옆
+#: 방에 있는 사람은 그 7% 를 놓치기 쉽고, 놓친 뒤에는 다음 것을 기다릴 이유를 모른다.
+#:
+#: 8 초면 대략 15% 이고, 알람 시계가 실제로 쓰는 간격에 가깝다. 여전히 이어진 소리는
+#: 아니다 — 한 시간 내내 울릴 수 있는 소리라(유예 창이 그만큼이다) 끊기지 않으면
+#: 사람이 끄는 법을 찾게 되고, 그건 다음 복용도 못 듣게 만든다.
+#:
+#: 복용이 나가거나, 앱이나 기기 화면에서 조용히 시키거나, 유예가 끝나면 멈춘다.
+BUZZER_REPEAT_S = 8
 
 
 # ═══════════════════════════════════════════════════════════════════════════

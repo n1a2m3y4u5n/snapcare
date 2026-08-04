@@ -87,8 +87,23 @@ def screens(monkeypatch):
 class FakeBuzzer:
     def __init__(self):
         self.beeps = 0
+        self.patterns = 0
 
     def beep(self, seconds=None):
+        self.beeps += 1
+
+    def pattern(self, on_s, off_s, total_s):
+        """진짜 `Buzzer.pattern` 과 같은 모양이어야 한다.
+
+        복용 알람이 이걸 부르게 바뀌었을 때 여기가 없어서 세 시험이 깨졌고, 증상은
+        `AttributeError` 였다 — 즉 **가짜가 진짜와 다른 모양이면 시험은 없는 기능을
+        통과시키거나 있는 기능을 실패시킨다.** 실제로 부저를 `indicator.beep()` 로
+        부르던 버그도 시험이 못 잡았는데, 이유가 정확히 같았다.
+
+        시간은 재지 않는다. 몇 번 울렸는지만 세면 이 파일이 묻는 것에는 충분하고,
+        진짜로 기다리면 시험 하나가 1.4초씩 걸린다.
+        """
+        self.patterns += 1
         self.beeps += 1
 
     def off(self):
