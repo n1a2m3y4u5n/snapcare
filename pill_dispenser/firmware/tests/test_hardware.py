@@ -88,6 +88,7 @@ class FakeBuzzer:
     def __init__(self):
         self.beeps = 0
         self.patterns = 0
+        self.calls = []
 
     def beep(self, seconds=None):
         self.beeps += 1
@@ -105,6 +106,9 @@ class FakeBuzzer:
         """
         self.patterns += 1
         self.beeps += 1
+        #: What it was actually asked for, so a test can tell the alarm's
+        #: shape from the acknowledgement's without timing anything.
+        self.calls.append((on_s, off_s, total_s))
 
     def off(self):
         pass
@@ -289,6 +293,88 @@ def test_the_buzzer_sounds_while_a_dose_waits_and_stops_when_confirmed(monkeypat
         settled = buzzer.beeps
         _sleep(0.1)
         assert buzzer.beeps == settled, "the chirp continued after confirmation"
+    finally:
+        indicator.close()
+
+
+def test_a_dose_left_untaken_gets_more_insistent(monkeypatch):
+    """One intensity cannot serve an hour.
+
+    Start at the urgent setting and it is too much for somebody walking past a
+    dose that has just come due; hold the gentle one for the whole grace window
+    and the person in the next room never comes. Time is the only lever that
+    separates those two, because a dose ignored for a minute really is a
+    different situation from one that appeared five seconds ago.
+    """
+    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    monkeypatch.setattr(config, "BUZZER_URGENT_REPEAT_S", 0.01)
+    monkeypatch.setattr(config, "BUZZER_URGENT_AFTER_S", 0)  # 처음부터 급하게
+    buzzer = FakeBuzzer()
+    indicator = FittedIndicator(display=None, buzzer=buzzer)
+    try:
+        indicator.dose_due(1)
+        _wait_until(lambda: buzzer.calls, "the buzzer never sounded")
+        on_s, off_s, total_s = buzzer.calls[0]
+        assert total_s == config.BUZZER_URGENT_CHIRP_S
+        assert off_s == config.BUZZER_URGENT_GAP_S
+    finally:
+        indicator.close()
+
+
+def test_the_urgent_setting_is_actually_more_urgent():
+    """Checked on the shipped values, with nothing patched.
+
+    The test above proves the loop *switches*; this proves the thing it
+    switches to is worse to ignore. Without it somebody tuning these numbers
+    can leave the urgent phase quieter than the gentle one and both tests still
+    pass, which is a machine that gets calmer the longer a dose sits.
+    """
+    assert config.BUZZER_URGENT_CHIRP_S > config.BUZZER_CHIRP_S
+    assert config.BUZZER_URGENT_REPEAT_S < config.BUZZER_REPEAT_S
+    assert config.BUZZER_URGENT_GAP_S < config.BUZZER_GAP_S
+    # 소리 나는 시간의 비율. 이것이 실제로 사람이 "더 심해졌다" 고 느끼는 값이다.
+    gentle = config.BUZZER_CHIRP_S / (config.BUZZER_CHIRP_S + config.BUZZER_REPEAT_S)
+    urgent = (config.BUZZER_URGENT_CHIRP_S
+              / (config.BUZZER_URGENT_CHIRP_S + config.BUZZER_URGENT_REPEAT_S))
+    assert urgent > gentle * 1.5
+
+
+def test_the_urgency_resets_for_the_next_dose(monkeypatch):
+    """Or the first chirp of the morning arrives at the pitch of last night's."""
+    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    monkeypatch.setattr(config, "BUZZER_URGENT_AFTER_S", 0)
+    buzzer = FakeBuzzer()
+    indicator = FittedIndicator(display=None, buzzer=buzzer)
+    try:
+        indicator.dose_due(1)
+        _wait_until(lambda: buzzer.calls, "the buzzer never sounded")
+        indicator.dose_released(1)
+        _sleep(1.2)          # 루프가 쉬는 쪽으로 한 바퀴 돌 시간
+        monkeypatch.setattr(config, "BUZZER_URGENT_AFTER_S", 3600)
+        buzzer.calls.clear()
+        indicator.dose_due(2)
+        _wait_until(lambda: buzzer.calls, "the second dose never sounded")
+        assert buzzer.calls[0][2] == config.BUZZER_CHIRP_S
+    finally:
+        indicator.close()
+
+
+def test_a_press_is_answered_before_the_servo_finishes(monkeypatch):
+    """The two seconds people press twice in.
+
+    A tap starts a sweep and nothing else changes until it ends, so the machine
+    feels broken at the moment it is working. The tick has to be unmistakably
+    not the alarm, or it teaches somebody that the alarm means "done".
+    """
+    buzzer = FakeBuzzer()
+    indicator = FittedIndicator(display=None, buzzer=buzzer)
+    try:
+        indicator.acknowledge()
+        _wait_until(lambda: buzzer.calls, "the press was never acknowledged")
+        on_s, off_s, total_s = buzzer.calls[0]
+        assert total_s == config.BUZZER_ACK_S
+        assert total_s < config.BUZZER_CHIRP_S
+        assert on_s < config.BUZZER_BEEP_S
     finally:
         indicator.close()
 

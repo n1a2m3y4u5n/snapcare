@@ -334,8 +334,30 @@ def _frame(canvas: Canvas, health: Health, theme: dict, *,
 
 # ── the dose states ─────────────────────────────────────────────────────────
 
-def due(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
+def due(canvas: Canvas, health: Health, *, theme: dict | None = None,
+        beat: bool = False) -> None:
     """A dose is waiting on a press. Green, a solid circle, black ink.
+
+    `beat` swaps the hero's two colours: the green becomes the ink and the black
+    becomes the ground. Painted alternately with the ordinary frame it is a
+    pulse, and the pulse is the answer to the one thing this screen could not
+    say — **that it wants to be pressed.**
+
+    A still panel reads as a display. Somebody who has been told the machine
+    will tell them when to take a pill sees a green picture with a time on it,
+    which is a machine reporting, and reporting is not asking. There is no
+    button to draw: the whole glass is the target by design (see `touch.py`),
+    and the one affordance a target that large can carry is *motion*, which
+    needs no reading and survives being across a room.
+
+    Not a new pictogram. A hand pressing a button was tried on this panel and
+    read as a face — that is why the pictograms are gone at all — and a pulse
+    costs no glyph, no legibility and no contrast: the same pair swapped is the
+    same 10.79:1 either way round.
+
+    Only the hero flips. The bar and the strip hold still, so the flashing part
+    is exactly the part being asked about and the status a person may need
+    *while* it flashes stays readable.
 
     The ink is black and that is a measurement, not a preference: white on the
     green this screen used to use is 2.25:1, which is below even the large-text
@@ -353,8 +375,9 @@ def due(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
     a dose twelve hours away.
     """
     theme = _palette(canvas, theme)
-    _flood(canvas, theme, "DUE")
-    ink = theme["BLACK"]
+    ground, mark = ("BLACK", "DUE") if beat else ("DUE", "BLACK")
+    _flood(canvas, theme, ground)
+    ink = theme[mark]
     _hero_shape(canvas, Shape.SAFE, ink, with_tray=True)
     _hero_tray(canvas, _field(health, "waiting_tray", None), ink)
 
@@ -371,7 +394,7 @@ def due(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
         top = HERO_Y + (HERO_H - stack) // 2
         shapes.fill(canvas, SPLIT // 2 - HERO_R // 4, top + HERO_R - HERO_R // 4,
                     HERO_R, Shape.SAFE,
-                    canvas.mix(theme["DUE"], theme["BLACK"], 45))
+                    canvas.mix(theme[ground], theme[mark], 45))
         shapes.fill(canvas, SPLIT // 2, top + HERO_R, HERO_R, Shape.SAFE, ink)
         _hero_tray(canvas, _field(health, "waiting_tray", None), ink)
 

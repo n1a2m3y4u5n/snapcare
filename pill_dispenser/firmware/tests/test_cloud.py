@@ -297,6 +297,49 @@ def test_a_release_from_the_relay_opens_the_tray(link, dispenser, session,
     assert link.status()["commandRev"] == 1
 
 
+def test_a_beep_from_the_relay_actually_reaches_the_buzzer(link, dispenser,
+                                                           session, identity):
+    """The one that shipped broken.
+
+    `_carry_out` spawned its sound thread with `target=run`, and no `run`
+    existed — a rename that left the reference behind. Every failure inside
+    `_carry_out` is caught and logged so a bad command cannot take the link
+    down, so the only trace was one warning line
+
+        cloud: name 'run' is not defined
+
+    and the app's own "ring the buzzer" button did nothing at all for anyone
+    who pressed it. Nothing in this file asked whether the sound happened,
+    only whether the command was consumed, so the suite stayed green.
+    """
+    sounded = []
+
+    class OnlyABuzzer:
+        buzzer = type("B", (), {
+            "pattern": lambda _self, on_s, off_s, total_s:
+                sounded.append((on_s, off_s, total_s)),
+        })()
+
+    dispenser.indicator = OnlyABuzzer()
+    command(session, identity, 1, action="beep")
+
+    link._command_once()
+
+    _wait_for(lambda: sounded, "the beep never reached the buzzer")
+    assert sounded[0] == (config.BUZZER_FIND_ON_S, config.BUZZER_FIND_OFF_S,
+                          config.BUZZER_FIND_S)
+
+
+def _wait_for(done, message: str, timeout: float = 2.0) -> None:
+    """The sound runs on its own thread, so the assertion has to wait for it."""
+    ends = time.monotonic() + timeout
+    while time.monotonic() < ends:
+        if done():
+            return
+        time.sleep(0.01)
+    raise AssertionError(message)
+
+
 def test_a_release_with_no_tray_releases_everything_due(link, dispenser, session,
                                                         identity, clock):
     """What the app's main-screen button sends."""

@@ -617,7 +617,16 @@ class CloudLink:
             # 따로 내보내고 루프는 다음 명령을 보러 간다.
             #
             # daemon=True: 이것 때문에 종료가 3초 늦어질 이유가 없다.
-            threading.Thread(target=run, name="snapcare-beep", daemon=True).start()
+            def sound() -> None:
+                try:
+                    buzzer.pattern(config.BUZZER_FIND_ON_S,
+                                   config.BUZZER_FIND_OFF_S,
+                                   config.BUZZER_FIND_S)
+                except Exception:  # noqa: BLE001 - 소리가 명령 루프를 죽이지 않는다
+                    log.exception("the buzzer failed on a beep from the cloud")
+
+            threading.Thread(target=sound, name="snapcare-beep",
+                             daemon=True).start()
             log.info("beeped from the cloud (revision %d)", rev)
             return
 

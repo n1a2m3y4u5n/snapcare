@@ -65,6 +65,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 from datetime import datetime
 
 from . import config, gpiochip, provisioning
@@ -111,6 +112,7 @@ class Indicator:
     def blocked(self, kind: str) -> None: ...
     def boot(self) -> None: ...
     def attention(self) -> None: ...
+    def acknowledge(self) -> None: ...
 
     def refresh(self, health) -> None:  # noqa: ARG002
         """Take a fresh reading of the machine. A no-op without a panel.
@@ -163,6 +165,9 @@ class LogIndicator(Indicator):
 
     def attention(self) -> None:
         log.debug("indicator: somebody is at the machine")
+
+    def acknowledge(self) -> None:
+        log.info("indicator: press acknowledged")
 
     def silence(self) -> None:
         log.info("indicator: chirp silenced; the screen stands")
@@ -343,6 +348,10 @@ class FittedIndicator(Indicator):
         self._bar_key = None
         self._strip_key = None
         self._night = False
+        #: Whether the due frame is currently on its flipped half. Tracked so a
+        #: pulse never repaints a frame that already looks like that, which on a
+        #: 38 ms panel is the difference between a beat and a flicker.
+        self._lit = False
         self._panel_strikes = 0
         #: The last plan painted, so a palette change can redraw the frame that
         #: is up rather than dropping to the resting one.
@@ -396,17 +405,32 @@ class FittedIndicator(Indicator):
 
     def _chirp_loop(self) -> None:
         strikes = 0
+        since = None
         while not self._stop.is_set():
             # Waits without spinning, and wakes the instant an alert starts.
             if self._alerting.wait(timeout=1.0):
+                if since is None:
+                    since = time.monotonic()
+                # 안 가져갈수록 심해진다. 한 가지 세기로 한 시간을 우는 알람은
+                # 방금 지나가는 사람에게 과하거나 딴 방에 있는 사람에게 모자라거나
+                # 둘 중 하나이고, 그 둘을 동시에 피하는 손잡이는 시간뿐이다.
+                urgent = time.monotonic() - since >= config.BUZZER_URGENT_AFTER_S
+                on_s, gap_s, chirp_s, rest_s = (
+                    (config.BUZZER_URGENT_BEEP_S, config.BUZZER_URGENT_GAP_S,
+                     config.BUZZER_URGENT_CHIRP_S, config.BUZZER_URGENT_REPEAT_S)
+                    if urgent else
+                    (config.BUZZER_BEEP_S, config.BUZZER_GAP_S,
+                     config.BUZZER_CHIRP_S, config.BUZZER_REPEAT_S))
+                # 화면이 같은 박자로 뛴다. 소리와 그림이 따로 놀면 둘 다 배경이
+                # 되지만, 함께 뛰면 하나의 사건이 되고 **눌러야 할 것처럼 보인다.**
+                self._beat(True)
                 try:
                     # 한 번 삑 하고 마는 것이 아니라 **울린다.** 0.12초짜리 딸깍
                     # 소리를 20초마다 내는 것은 알람이 아니었고, 난청이 있는 사람은
                     # 통째로 놓친다 — 그리고 이 기기의 사용자가 정확히 그 사람이다.
-                    self.buzzer.pattern(config.BUZZER_BEEP_S,
-                                        config.BUZZER_GAP_S,
-                                        config.BUZZER_CHIRP_S)
+                    self.buzzer.pattern(on_s, gap_s, chirp_s)
                 except Exception:  # noqa: BLE001
+                    self._beat(False)
                     strikes += 1
                     if strikes == 1 or strikes >= self._CHIRP_STRIKES:
                         # Logged on the first failure and on the last, not on
@@ -422,10 +446,79 @@ class FittedIndicator(Indicator):
                         # a part that is not working.
                         self.buzzer = None
                         return
-                    self._stop.wait(config.BUZZER_REPEAT_S)
+                    self._stop.wait(rest_s)
                     continue
                 strikes = 0
-                self._stop.wait(config.BUZZER_REPEAT_S)
+                self._beat(False)
+                self._stop.wait(rest_s)
+            else:
+                # Nothing owed. The next dose starts its own clock, so a person
+                # is never met at full urgency by a dose that has just come due.
+                since = None
+                self._beat(False, only_if_lit=True)
+
+    def _beat(self, lit: bool, *, only_if_lit: bool = False) -> None:
+        """Flip the due frame's two colours, or put it back.
+
+        Only ever touches the due screen. Every other frame is a statement about
+        something that has already happened and has nothing to ask for, and a
+        panel that flashes at anything would teach a person to stop reading it.
+
+        Runs on the chirp thread, which is why it goes through `_paint` and its
+        lock rather than poking the panel: the scheduler tick repaints from the
+        other side and a half-written frame is a tray number from one dose over
+        a colour from another.
+
+        Never raises. This is decoration on top of a working alert — the sound
+        and the release path do not depend on it — so a panel that has gone
+        away must not take the chirp with it.
+        """
+        if self._showing is not Tone.DUE:
+            self._lit = False
+            return
+        if only_if_lit and not getattr(self, "_lit", False):
+            return
+        if getattr(self, "_lit", False) == lit:
+            return
+        self._lit = lit
+        try:
+            palette = theme.pack(self._surface(), night=self._night)
+            self._paint(screens.due, self._health, palette=palette, beat=lit)
+        except Exception:  # noqa: BLE001 - a pulse is never worth a traceback
+            log.debug("could not paint the pulse")
+
+    def acknowledge(self) -> None:
+        """Say "I felt that" the instant the glass is pressed.
+
+        The gap this fills is two seconds long and it is the whole reason people
+        press twice. A tap starts a servo sweep, and until that sweep finishes
+        nothing on the machine changes at all — no colour, no sound, no movement
+        a person standing over it can see. So they press again, and on a machine
+        where a second press is meaningless that is harmless, and on a person it
+        is the machine feeling broken at the exact moment it is working.
+
+        Two things at once, because the two failures are different: somebody who
+        cannot hear it needs the panel to move, and somebody looking away from
+        the panel needs the sound. Neither is the alarm — the tick is far shorter
+        and far faster than any chirp, and the frame is the pulse's lit half held
+        for a moment, so nothing new has to be learned to read either of them.
+        """
+        buzzer = getattr(self, "buzzer", None)
+        if buzzer is not None:
+            # On its own thread: a release must not wait on a sound, and this
+            # runs while the servo is already turning.
+            threading.Thread(
+                target=self._ack_tone, args=(buzzer,),
+                name="snapcare-ack", daemon=True).start()
+        self._beat(True)
+
+    @staticmethod
+    def _ack_tone(buzzer) -> None:
+        try:
+            buzzer.pattern(config.BUZZER_ACK_ON_S, config.BUZZER_ACK_OFF_S,
+                           config.BUZZER_ACK_S)
+        except Exception:  # noqa: BLE001
+            log.debug("could not sound the acknowledgement")
 
     def _ssid(self) -> str:
         if not self._ssid_cache:
@@ -560,7 +653,7 @@ class FittedIndicator(Indicator):
                 return
             self._strike(ok)
 
-    def _paint(self, screen_fn, *args, palette=None) -> None:
+    def _paint(self, screen_fn, *args, palette=None, **extra) -> None:
         """Draw a whole frame and push it.
 
         Redrawn rather than patched: the drawing is a few milliseconds against a
@@ -573,7 +666,7 @@ class FittedIndicator(Indicator):
                 return
             try:
                 canvas = self._surface()
-                screen_fn(canvas, *args, theme=palette)
+                screen_fn(canvas, *args, theme=palette, **extra)
                 ok = self.display.show(canvas)
             except Exception:  # noqa: BLE001
                 log.exception("the screen failed; carrying on without it")

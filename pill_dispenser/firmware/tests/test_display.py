@@ -23,6 +23,7 @@ It is asserted below against the bytes, not against a rendering.
 """
 from __future__ import annotations
 
+import collections
 import dataclasses
 import os
 import struct
@@ -410,3 +411,57 @@ def test_the_full_panel_frames_never_get_a_bar_painted_over_them():
     source = inspect.getsource(indicators)
     assert "screens.FULL_PANEL" in source, \
         "the partial-repaint path stopped asking whether the frame has a bar"
+
+
+# ── the pulse ───────────────────────────────────────────────────────────────
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_the_due_frame_has_a_second_half_to_beat_against(canvas):
+    """A still panel reads as a display, and a display is not asking for a press.
+
+    There is no button to draw — the whole glass is the target by design — so
+    the only affordance a target that size can carry is motion, and motion needs
+    two frames. This is the second one.
+    """
+    still = _frame(canvas, screens.due, WAITING)
+    lit = bytes(_beat(canvas))
+    assert lit != still, "the beat frame is identical, so nothing would move"
+
+
+def _beat(canvas):
+    screens.due(canvas, WAITING, beat=True)
+    return canvas.buffer()
+
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_the_pulse_swaps_the_pair_rather_than_dimming_it(canvas):
+    """The same two colours the other way round, so contrast survives the beat.
+
+    Black on this green measures 10.79:1 and the swap is the same pair, so both
+    halves of the pulse are legible. A beat drawn by fading or by a third colour
+    would spend the contrast this frame was built around — and it is the one
+    frame the product cannot afford to make harder to read.
+    """
+    screens.due(canvas, WAITING)
+    still = collections.Counter(_pixels(canvas))
+    screens.due(canvas, WAITING, beat=True)
+    lit = collections.Counter(_pixels(canvas))
+
+    # 히어로 영역에서 두 색이 자리를 맞바꾼다. 정확한 화소 수까지 같을 필요는 없다
+    # (도형과 숫자가 차지하는 면적이 그대로라 대략 뒤집힌다). 확인할 것은 새로운
+    # 색이 끼어들지 않았다는 것 — 즉 흐리게 만들거나 제3의 색을 쓰지 않았다는 것이다.
+    assert set(lit) <= set(still), "the beat introduced a colour that is not the pair"
+    assert lit != still, "nothing swapped"
+
+
+def _pixels(canvas):
+    """The frame as pixel values rather than bytes.
+
+    A 16-bit panel's buffer counted byte by byte answers a question nobody
+    asked: every colour becomes two numbers in 0..255 and two different colours
+    can share both of them.
+    """
+    raw = bytes(canvas.buffer())
+    if isinstance(canvas, Rgb565):
+        return struct.unpack(f">{len(raw) // 2}H", raw)
+    return raw

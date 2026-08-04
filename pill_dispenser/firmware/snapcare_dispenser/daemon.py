@@ -148,6 +148,18 @@ class Daemon:
           **no GPIO library** — `release` refuses rather than claiming a dose it
           could not deliver. Logged, because the person is standing right there.
         """
+        # Before the servo, not after. The sweep takes about two seconds, and
+        # until it finishes nothing a person standing over the machine can see
+        # or hear has changed — so they press again, and the machine feels
+        # broken at the moment it is working. Asked of the dispenser rather
+        # than of the release's return value because by then the two seconds
+        # have already been spent.
+        try:
+            if self.dispenser.awaiting_release:
+                self.dispenser.indicator.acknowledge()
+        except Exception:  # noqa: BLE001 - never onto a release
+            log.debug("could not acknowledge the press")
+
         try:
             released = self.dispenser.release()
         except RuntimeError as exc:
