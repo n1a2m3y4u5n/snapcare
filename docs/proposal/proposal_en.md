@@ -1855,9 +1855,9 @@ In practice three kinds of test in this repository each require something differ
 
 | Kind | Tests | Result | What it needs |
 |---|---:|---|---|
-| Web app (`node --test`) | 569 | 569 pass · 0 fail | Node · `npm ci` |
+| Web app (`node --test`) | 576 | 576 pass · 0 fail | Node · `npm ci` |
 | Paper form and cloud relay (`pytest`) | 182 | 179 pass · 3 skipped | OpenCV |
-| Device firmware (`pytest`) | 736 | 648 pass · 88 skipped | Python only |
+| Device firmware (`pytest`) | 741 | 653 pass · 88 skipped | Python only |
 
 These are counts from running the suites on 4 August 2026. The previous version had a single web-app failure here, and how it was fixed is left below as it stands.
 
@@ -1865,7 +1865,7 @@ What failed was `pill_dispenser/webapp_kit/tests/kit.test.ts`, and the cause lay
 
 It was set down because something heavier than one failure rode along with it. Since the file never loaded, **not one** of the tests inside it ran. The total at that time did not count that file's tests, so what looked like a single failure was in fact an entire file going unmeasured. It is the same shape of failure as the eight display constants in §5.4: the tool showed green while what it was measuring was empty.
 
-This passage is kept rather than deleted because how it ended attaches here. Replacing the constructor parameter property with a declared and assigned field made the file load, and the 30 tests inside came back and all passed. We ran them to check. The 569 in the table above includes those 30. Because the failure was written down, its fix can be written down too, and this document has now met twice the case of a test that looked green while being empty, and written it down both times.
+This passage is kept rather than deleted because how it ended attaches here. Replacing the constructor parameter property with a declared and assigned field made the file load, and the 30 tests inside came back and all passed. We ran them to check. The 576 in the table above includes those 30. Because the failure was written down, its fix can be written down too, and this document has now met twice the case of a test that looked green while being empty, and written it down both times.
 
 That the firmware suite was for a while not running at all is also set down. Eight screen constants disappeared in one commit, and since every test file goes through that module, all of them stopped at import. Restoring them revealed 35 failures, and those 35 went away when the screen was redesigned around a single panel. They were missed not for want of tests but because the tests were not running, which is to say that counting passes and checking that the tests actually run are two different jobs.
 
@@ -2707,7 +2707,7 @@ The dispenser now calls the phone when it presents a dose. The same respondent p
 
 A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Pasteur Institute of Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
 
-The web app test count went from 231 before the survey to 569 (Table 31).
+The web app test count went from 231 before the survey to 576 (Table 31).
 
 #### 5.7.14 Limits of this survey
 

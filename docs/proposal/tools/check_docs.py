@@ -803,11 +803,12 @@ def test_counts() -> list:
     py = DOC / '.venv-doc/bin/python'
     if not (root / 'package.json').is_file():
         return []
-    # 의존성이 없으면 세 파일이 zustand 에서 멈춰 시험이 360 에서 335 로
-    # 준다. 그 상태로 세면 표가 틀렸다고 잘못 말한다. 표 28 이 적어 둔
+    # 의존성이 없으면 세 파일이 zustand 에서 멈춰 시험 스물다섯 개가
+    # 사라진다. 그 상태로 세면 표가 틀렸다고 잘못 말한다. 표가 적어 둔
     # 조건(`npm ci`)과 같은 자리에서 재야 한다.
     if not (root / 'node_modules').exists():
-        return ['node_modules 가 없어 시험 수를 셀 수 없다 — 표 28 이 '
+        n = table_no('세 갈래의 시험') or 31
+        return [f'node_modules 가 없어 시험 수를 셀 수 없다 — 표 {n} 이 '
                 '`npm ci` 를 조건으로 적고 있으므로 먼저 설치해야 한다']
 
     got = {}
