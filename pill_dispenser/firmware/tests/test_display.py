@@ -491,3 +491,31 @@ def test_the_released_frame_says_when_not_which_tray(canvas, monkeypatch):
     assert ("time", "09:14") in drawn
     assert not any(kind == "number" for kind, _ in drawn), \
         "the tray number is back, and this machine has one cup"
+
+
+# ── 새 일정이 왔을 때 ───────────────────────────────────────────────────────
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_the_schedule_frame_names_the_trays_it_got(canvas, monkeypatch):
+    """개수가 아니라 **어느 칸**이다.
+
+    이 화면은 일정을 보낸 사람에게 하는 답이고, 두 칸짜리 기계에서 "몇 칸" 은 1
+    아니면 2 라 알려주는 것이 거의 없다. 게다가 숫자 하나로는 모호하다 — `2` 가
+    두 칸인지 2번 칸인지 화면만 봐서는 못 가른다.
+    """
+    drawn = []
+    monkeypatch.setattr(screens, "_big_number",
+                        lambda c, text, ink: drawn.append(text))
+    screens.schedule(canvas, WELL, (2,))
+    screens.schedule(canvas, WELL, (1, 2))
+    assert drawn == ["2", "1 2"]
+
+
+def test_the_schedule_frame_does_not_invent_a_number():
+    """예전에는 호출부가 아무것도 안 넘기면 **기계의 칸 수**가 떴다.
+
+    두 호출부가 실제로 그랬고, 그래서 일정을 설명해야 할 자리에 `8` 이 자신 있게
+    떠 있었다. 모르면 모른다고 해야 한다.
+    """
+    assert screens._tray_list_text(None) == "?"  # noqa: SLF001
+    assert screens._tray_list_text(()) == "?"    # noqa: SLF001

@@ -270,7 +270,7 @@ class Plan:
         boot    (health,)            blocked  (health,)
         due     (health,)            network  (health,)
         missed  (health, tray, at)   idle     (health,)
-        schedule(health, count)
+        schedule(health, trays)
 
     `screens.released` is not among them. A release takes no screen — see
     `_transient` — and that frame now exists only for the commissioning colour
@@ -449,7 +449,7 @@ class Presence:
         self._event_at = float("-inf")
         self._ev_tray: int | None = None
         self._ev_at = ""
-        self._ev_count: int | None = None
+        self._ev_trays: tuple[int, ...] = ()
         self._ev_ssid = ""
         self._due_seen = float("-inf")
         self._due_tray: int | None = None
@@ -467,7 +467,7 @@ class Presence:
     # ── being told things ───────────────────────────────────────────────────
 
     def event(self, kind: str, *, tray: int | None = None, at: str = "",
-              count: int | None = None, ssid: str = "") -> None:
+              trays: tuple[int, ...] = (), ssid: str = "") -> None:
         """Something happened. Marks it; does not decide anything.
 
         Nothing is painted here — `tick` is the only thing that produces a
@@ -479,7 +479,7 @@ class Presence:
         *which* screen, never to draw one: every number a screen prints comes off
         the snapshot in `args`. `released` and `missed` still carry a tray
         because the event reaches this file before the snapshot that will confirm
-        it, and `schedule` still carries a count because the accepted plan is not
+        it, and `schedule` still carries its trays because the accepted plan is not
         on the machine's own health at all.
 
         An unrecognised `kind` is ignored rather than raised on. This is called
@@ -540,7 +540,7 @@ class Presence:
             self._event_at = now
             self._ev_tray = tray
             self._ev_at = at
-            self._ev_count = count
+            self._ev_trays = trays
             self._ev_ssid = ssid
             if kind in ("released", "missed"):
                 # That dose is finished with, one way or the other. Keeping the
@@ -788,7 +788,7 @@ class Presence:
                     (self._ev_tray, self._ev_at,
                      earlier_day(self._ev_at, _field(health, "now", ""))))
         if kind == "schedule":
-            return (health, self._ev_count), (self._ev_count,)
+            return (health, self._ev_trays), (self._ev_trays,)
         if kind == "network":
             # An SSID on the event is the supervisor saying it has just raised
             # the hotspot, and that is better evidence than the snapshot, which

@@ -98,6 +98,26 @@ def hhmm(when=None) -> str:
     return when
 
 
+def _tray_tuple(trays: object) -> tuple[int, ...]:
+    """Whatever the caller had, as tray numbers. Never raises.
+
+    Takes a sequence of ints (what `Dispenser` has), a bare int (what an older
+    caller passed as a *count* — read as one tray, which is the only reading
+    that is ever right), or nothing.
+    """
+    if trays is None:
+        return ()
+    if isinstance(trays, bool):
+        return ()
+    if isinstance(trays, int):
+        return (trays,)
+    try:
+        found = [int(t) for t in trays]
+    except (TypeError, ValueError):
+        return ()
+    return tuple(sorted({t for t in found if 0 <= t <= 99}))
+
+
 class Indicator:
     """No-op base. Every method must be safe to call from any thread."""
 
@@ -107,7 +127,7 @@ class Indicator:
     def dose_due(self, tray: int, when=None) -> None: ...
     def dose_released(self, tray: int) -> None: ...
     def dose_missed(self, tray: int, when=None) -> None: ...
-    def schedule_accepted(self, trays: int | None = None) -> None: ...
+    def schedule_accepted(self, trays: object = None) -> None: ...
     def network_needs_setup(self, ssid: str = "") -> None: ...
     def network_online(self) -> None: ...
     def blocked(self, kind: str) -> None: ...
@@ -149,8 +169,8 @@ class LogIndicator(Indicator):
     def dose_missed(self, tray: int, when=None) -> None:
         log.info("indicator: amber — tray %d was missed", tray)
 
-    def schedule_accepted(self, trays: int | None = None) -> None:
-        log.info("indicator: violet — new schedule accepted")
+    def schedule_accepted(self, trays: object = None) -> None:
+        log.info("indicator: violet — new schedule accepted for tray(s) %s", trays)
 
     def network_needs_setup(self, ssid: str = "") -> None:
         log.info("indicator: cyan — waiting to be put on a network")
@@ -767,16 +787,22 @@ class FittedIndicator(Indicator):
         self._showing = Tone.MISSED
         self._signal("missed", tray=tray, at=hhmm(when))
 
-    def schedule_accepted(self, trays: int | None = None) -> None:
-        log.info("indicator: violet — new schedule accepted")
+    def schedule_accepted(self, trays: object = None) -> None:
+        log.info("indicator: violet — new schedule accepted for tray(s) %s", trays)
         self._showing = Tone.SCHEDULE
-        # How many hoppers the new plan covers, which is the one number that
-        # makes this screen worth more than a flash of colour: a schedule that
-        # arrives naming three trays on a two-tray machine is visible here and
-        # nowhere else in the room. A caller without the schedule to hand gets
-        # the machine's own count, which is at least never a lie about the
-        # machine.
-        self._signal("schedule", count=trays if trays is not None else config.INSTALLED_TRAYS)
+        # **Which** hoppers the new plan covers, not how many.
+        #
+        # This screen answers whoever sent the schedule, and what they need to
+        # know is whether the plan that landed is the plan they meant. On a
+        # two-tray machine "how many" is 1 or 2 and says almost nothing; "which"
+        # tells the person where the pills go, and a schedule that arrives
+        # naming tray 5 on a two-tray machine is visible here and nowhere else
+        # in the room.
+        #
+        # It also stops the number lying. Both callers used to pass nothing, so
+        # this fell back to the machine's own tray count — a confident `8` on a
+        # frame whose whole job is to describe the schedule.
+        self._signal("schedule", trays=_tray_tuple(trays))
 
     def network_needs_setup(self, ssid: str = "") -> None:
         log.info("indicator: cyan — waiting to be put on a network")

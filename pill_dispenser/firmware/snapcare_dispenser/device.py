@@ -402,7 +402,7 @@ class Dispenser:
                 # a schedule that differs from the one it should be running.
                 self._source = source
                 self.store.save_schedule(slots, source=source)
-                self.indicator.schedule_accepted()
+                self.indicator.schedule_accepted(sorted(s.slot for s in slots))
                 log.info("the schedule from %s is the one already running; "
                          "keeping what has been dispensed: %s", source, payload)
                 return
@@ -447,7 +447,7 @@ class Dispenser:
                 for key in withdrawn:
                     del self._due[key]
                 self.indicator.clear()
-            self.indicator.schedule_accepted()
+            self.indicator.schedule_accepted(sorted(s.slot for s in slots))
             # A dose still owed outranks a card about a plan. Without this the
             # acknowledgement would sit on the panel over a tray that is still
             # waiting on a tap.

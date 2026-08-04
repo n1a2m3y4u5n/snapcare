@@ -133,6 +133,30 @@ def _tray_text(tray: object) -> str:
     return "?"
 
 
+def _tray_list_text(trays: object) -> str:
+    """The trays a schedule names, as one drawable string.
+
+    Separated by a thin space rather than a comma or a dot: the numeral face
+    has digits and a colon and nothing else, and a separator that has to be
+    invented is a separator somebody has to learn. Position does the work.
+
+    Long lists shrink rather than truncate — `_big_number` fits whatever it is
+    given — because a schedule naming six trays that renders as three is the
+    exact failure this frame exists to catch.
+    """
+    if trays is None:
+        return "?"
+    if isinstance(trays, int) and not isinstance(trays, bool):
+        return _tray_text(trays)
+    try:
+        found = list(trays)
+    except TypeError:
+        return "?"
+    if not found:
+        return "?"
+    return " ".join(_tray_text(t) for t in found)
+
+
 def _clock_text(when: object) -> str:
     """A time of day as `HH:MM`, from any of the shapes this project uses.
 
@@ -498,23 +522,31 @@ def missed(canvas: Canvas, health: Health, tray: object = None,
     _frame(canvas, health, theme, focal=_clock_text(when))
 
 
-def schedule(canvas: Canvas, health: Health, count: object = None, *,
+def schedule(canvas: Canvas, health: Health, trays: object = None, *,
              theme: dict | None = None) -> None:
-    """A new plan was accepted. Violet, a solid circle, and the tray count.
+    """A new plan was accepted. Violet, a solid circle, and **which** trays.
 
-    The count is for whoever is holding the phone that sent it: it is the one
-    number that says the schedule they meant is the schedule that landed, and a
-    QR that half-decoded is a QR that programs half the trays.
+    For whoever is holding the phone that sent it. What they need to know is
+    whether the plan that landed is the plan they meant, and on a machine with
+    two hoppers fitted "how many" is 1 or 2 and says almost nothing — while
+    *which* tells the person where the pills go, and makes a schedule naming
+    tray 5 on a two-tray machine visible here and nowhere else in the room.
+
+    It used to be the count, and the count was ambiguous on top of being thin:
+    a lone `2` could mean two trays or tray 2, and the frame gave no way to
+    tell. A list never has that problem. It was also, in practice, a lie —
+    both callers passed nothing and the fallback printed the *machine's* tray
+    count, a confident `8` on a frame whose whole job is to describe a schedule.
 
     The stronger acknowledgement is underneath, in the strip, which has already
     been rebuilt from the new plan — every mark a pending square at its new
-    time. Showing the plan beats counting it, and the count is still there.
+    time. Showing the plan beats naming it, and the names are still there.
     """
     theme = _palette(canvas, theme)
     _flood(canvas, theme, "SCHEDULE")
     ink = theme["BLACK"]
     _hero_shape(canvas, Shape.SAFE, ink)
-    _big_number(canvas, _tray_text(count), ink)
+    _big_number(canvas, _tray_list_text(trays), ink)
     _frame(canvas, health, theme)
 
 
