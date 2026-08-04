@@ -130,11 +130,16 @@ def _find_me(buzzer) -> None:
     """
     on, off = config.BUZZER_FIND_ON_S, config.BUZZER_FIND_OFF_S
     ends = time.monotonic() + config.BUZZER_FIND_S
-    while time.monotonic() < ends:
-        buzzer.beep(on)
-        if time.monotonic() >= ends:
-            break
-        time.sleep(off)
+    try:
+        while time.monotonic() < ends:
+            buzzer.beep(on)
+            if time.monotonic() >= ends:
+                break
+            time.sleep(off)
+    except Exception as exc:  # noqa: BLE001
+        # 자기 스레드에서 도니 스스로 삼킨다. 여기서 새는 예외는 아무도 못 잡고,
+        # 파이썬이 스레드 죽음을 stderr 로 뱉는 것으로 끝난다.
+        log.error("the buzzer stopped mid-beep: %s", exc)
 
 
 class _Ctl:
@@ -608,11 +613,16 @@ class CloudLink:
                 log.info("a beep arrived (revision %d) but this build has no "
                          "buzzer — nothing to sound", rev)
                 return
-            try:
-                _find_me(buzzer)
-            except Exception as exc:  # noqa: BLE001 - never onto the poller
-                log.error("a beep from the cloud failed: %s", exc)
-                return
+            # 울리는 동안 이 스레드를 붙잡지 않는다.
+            #
+            # 3초는 소리로는 짧고 커맨드 루프에서는 길다. 실제로 부저와 트레이를
+            # 잇달아 보냈더니 트레이가 그만큼 늦게 돌았다 — 실패가 아니라 지연이고,
+            # 누른 사람에게는 구별이 안 된다. 소리는 아무것도 기다리지 않으므로
+            # 따로 내보내고 루프는 다음 명령을 보러 간다.
+            #
+            # daemon=True: 이것 때문에 종료가 3초 늦어질 이유가 없다.
+            threading.Thread(target=_find_me, args=(buzzer,),
+                             name="snapcare-beep", daemon=True).start()
             log.info("beeped from the cloud (revision %d)", rev)
             return
 
