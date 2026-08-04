@@ -42,8 +42,12 @@ export default function HistoryPage() {
     () => (ready && member ? byDay(scans, today, member.id) : []),
     [ready, scans, today, member],
   );
+  /*
+    달력과 같은 창을 센다. 그림이 넉 주인데 숫자가 한 주면, 같은 카드 안에서
+    그림과 말이 서로 다른 것을 가리키게 된다.
+  */
   const week = useMemo(
-    () => (ready && member ? adherence(doseRows(scans, member.id), today, 7) : null),
+    () => (ready && member ? adherence(doseRows(scans, member.id), today, 28) : null),
     [ready, scans, today, member],
   );
   /*
@@ -69,7 +73,7 @@ export default function HistoryPage() {
           Past days
         </h1>
 
-        {week && week.rate !== null && <AdherenceCard week={week} month={month} />}
+        {week && week.rate !== null && <AdherenceCard span={week} month={month} />}
 
         {days.length === 0 && (
           <p className="mt-10 text-center text-sm" style={{ color: 'var(--color-sc-muted)' }}>
@@ -86,23 +90,27 @@ export default function HistoryPage() {
 }
 
 /**
- * 이번 주 복약.
+ * 지난 넉 주의 복약.
  *
  * 백분율을 크게 쓰지 않는다. 숫자를 못 읽는 사람에게 86% 는 도착하지 않고, 그
- * 사람이 이 앱의 사용자다. 대신 **칸을 그린다** — 한 칸이 한 번의 복용이고, 채워진
- * 칸은 먹은 것, 빈 칸은 거른 것이다. 세면 된다.
+ * 사람이 이 앱의 사용자다. 대신 **그림을 그린다** — 달력은 어느 날 걸렀는지를,
+ * 그 아래 게이지는 전체에서 얼마나 채웠는지를 보인다. 둘 다 세거나 눈대중할 수
+ * 있는 것이고, 둘이 답하는 물음이 다르다.
+ *
+ * 한 주가 아니라 넉 주인 이유는 요일이다. 한 주에서는 각 요일이 한 번씩만 나와서
+ * "주말마다 저녁을 거른다" 가 한 번의 우연과 구별되지 않는다.
  */
-function AdherenceCard({ week, month }: {
-  week: NonNullable<ReturnType<typeof adherence>>;
+function AdherenceCard({ span, month }: {
+  span: NonNullable<ReturnType<typeof adherence>>;
   month: ReturnType<typeof calendar>;
 }) {
-  const say = adherenceSentence(week);
+  const say = adherenceSentence(span);
   return (
     <div className="mt-4 rounded-3xl bg-white px-5 py-4 shadow-sm">
       <div className="flex items-center gap-2">
         <Speakable text={say} className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
                    style={{ color: 'var(--color-sc-muted)' }}>
-          <span className="flex-1">THIS WEEK&apos;S MEDICINE</span>
+          <span className="flex-1">THE LAST FOUR WEEKS</span>
         </Speakable>
         <Hear text={say} />
       </div>
@@ -120,11 +128,31 @@ function AdherenceCard({ week, month }: {
         <DoseCalendar days={month} />
       </div>
 
-      <p className="mt-3 text-sm" style={{ color: 'var(--color-sc-ink)' }}>{say}</p>
+      {/*
+        달력 아래의 게이지 — 넉 주를 통틀어 몇 번 중 몇 번인가.
 
-      {week.worstTime && (
+        달력은 "어느 날" 을 답하지만 "전체로 보면 어떤가" 는 답하지 못한다. 칸이
+        스물여덟이라 눈으로 합산이 안 되기 때문이고, 그 합이 진료실에서 실제로
+        오가는 값이다. 게이지 하나면 그것이 한 눈에 들어온다.
+
+        여기서도 백분율은 안 쓴다. 채워진 길이가 곧 답이고, 옆의 두 수는 그것을
+        읽을 수 있는 사람을 위한 것이다.
+      */}
+      <div className="mt-4">
+        <div className="h-4 w-full overflow-hidden rounded-full"
+             style={{ background: 'var(--color-sc-bg)' }}>
+          <div className="h-full rounded-full"
+               style={{
+                 width: `${span.offered ? Math.round((span.taken / span.offered) * 100) : 0}%`,
+                 background: 'var(--color-safe)',
+               }} />
+        </div>
+        <p className="mt-2 text-sm" style={{ color: 'var(--color-sc-ink)' }}>{say}</p>
+      </div>
+
+      {span.worstTime && (
         <p className="mt-1 text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-          Most often missed at {clockOf(week.worstTime)}.
+          Most often missed at {clockOf(span.worstTime)}.
         </p>
       )}
 
