@@ -1,5 +1,7 @@
 import type { Reminder } from '@/stores/reminders';
 import { EVERY_DAY, type WeeklySlot } from './protocol.ts';   // 확장자 필수 — 시험이 --experimental-strip-types 로 돈다
+// 상대 경로 — 시험에서 @/ 별칭이 안 통한다.
+import { medicineKey } from '../snapcare/course.ts';
 
 /**
  * 실제 디스펜서와 이야기하는 법.
@@ -48,7 +50,18 @@ export interface TrayPlan {
   tray: number;
   /** 기기 화면에 뜰 이름 */
   name: string;
-  /** HH:MM 24시간 */
+  /**
+   * 이 칸이 열리는 시각들. HH:MM 24시간, 이른 것부터.
+   *
+   * 하나였다. 그래서 하루 두 번 먹는 약이 **칸을 둘** 먹었다 — 1번 Metformin 08:00,
+   * 3번 Metformin 19:00. 상자는 그렇게 안 생겼다. 칸은 층이고 **한 층에 한 약**이
+   * 쌓여 있으며, 같은 약을 아침저녁으로 먹는다는 것은 같은 층이 두 번 열린다는 뜻이다.
+   *
+   * 그 어긋남이 화면 세 곳에 새어 나오고 있었다. 기기 탭의 일정이 약 둘을 세 줄로
+   * 냈고, 복약률이 Metformin 을 두 번 세었고, 발표자 콘솔의 버튼이 셋이었다.
+   */
+  times: string[];
+  /** HH:MM 24시간. 이 칸이 처음 열리는 시각 — 옛 `/save` 경로가 하나만 받는다. */
   time: string;
   /** 0..7 */
   color: number;
@@ -80,16 +93,34 @@ export function planTrays(reminders: Reminder[], maxTrays = MAX_TRAYS): {
   dropped: Reminder[];
 } {
   const sorted = [...reminders].sort((a, b) => to24h(a.time).localeCompare(to24h(b.time)));
+
+  /*
+    **약마다 한 칸.** 시각마다가 아니다.
+
+    상자는 층으로 쌓여 있고 한 층에 한 약이 든다. 같은 약을 아침저녁으로 먹는다는
+    것은 같은 층이 두 번 열린다는 뜻이지 층이 둘이라는 뜻이 아니다.
+
+    묶는 열쇠는 `medicineKey` 다 — 이름을 그대로 쓰면 "Metformin 500mg" 과
+    "Metformin" 이 다른 약이 되고, 그 정규화는 이미 한 곳에 있다.
+  */
+  const byMedicine = new Map<string, Reminder[]>();
+  for (const r of sorted) {
+    const key = medicineKey(r.item.name);
+    byMedicine.set(key, [...(byMedicine.get(key) ?? []), r]);
+  }
+
   const plan: TrayPlan[] = [];
   const dropped: Reminder[] = [];
-  for (const r of sorted) {
-    if (plan.length >= maxTrays) { dropped.push(r); continue; }
+  for (const group of byMedicine.values()) {
+    if (plan.length >= maxTrays) { dropped.push(...group); continue; }
+    const times = [...new Set(group.map((r) => to24h(r.time)))].sort();
     plan.push({
       tray: plan.length + 1,
       // 기기 화면은 좁다. 약 이름을 자르되 어느 약인지는 남아야 한다.
-      name: r.item.name.slice(0, 16),
-      source: r,
-      time: to24h(r.time),
+      name: group[0].item.name.slice(0, 16),
+      source: group[0],
+      times,
+      time: times[0],
       color: TRAY_COLORS.green,
     });
   }
@@ -212,7 +243,9 @@ export function weeklyFrom(reminders: Reminder[], maxTrays = FITTED_TRAYS): {
   const { plan, dropped } = planTrays(reminders, maxTrays);
   const slots: WeeklySlot[] = plan.map((p) => ({
     slot: p.tray,
-    times: [p.time.replace(':', '')],
+    // 그 칸이 열리는 **모든** 시각. 하나만 실으면 하루 두 번 먹는 약이 상자에서
+    // 한 번만 나온다 — 앱에는 두 번으로 보이고 상자는 한 번만 연다.
+    times: p.times.map((t) => t.replace(':', '')),
     days: EVERY_DAY,
     durationDays: durationDays(p.source?.item?.rx?.durationText),
   }));

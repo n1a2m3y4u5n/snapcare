@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 
 import { clientFor, loadPaired, type PairedDevice } from '@/lib/dispenser/paired';
+import { useReminders } from '@/stores/reminders';
+import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
+import { shortName } from '@/lib/snapcare/shortName';
 import type { DeviceReport } from '@/lib/dispenser/types';
 
 /**
@@ -100,6 +103,7 @@ export default function PresentPage() {
   const [report, setReport] = useState<DeviceReport | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const reminders = useReminders((st) => st.reminders);
   //: 마지막으로 물어본 시각. 값 자체는 안 쓰고, 소식이 끊겨도 나이 표시가 계속
   //: 흐르게 하려고 다시 그리는 용도로만 둔다.
   const [, setSeen] = useState(0);
@@ -159,8 +163,26 @@ export default function PresentPage() {
 
   const status = report?.status;
   const waiting = status?.awaitingRelease ?? [];
-  const trays = status?.trayCount ?? 8;
-  const numbers = Array.from({ length: trays }, (_, i) => i + 1);
+
+  /*
+    **약이 실제로 든 칸만** 낸다.
+
+    상자가 스스로 말한 칸 수(8)로 버튼을 만들고 있었다. 그런데 이 콘솔에서 누르는
+    일은 "그 약의 알람을 지금 울린다" 이고, 약이 안 든 칸을 울리면 상자는 빈 칸을
+    열려고 서보를 돌린다 — 시연에서 그것은 아무 일도 안 일어난 것처럼 보인다.
+
+    그리고 여덟 개를 늘어놓으면 발표자가 **어느 것을 눌러야 하는지 그 자리에서
+    골라야 한다.** 무대에서 고르게 만드는 화면은 잘못 만든 화면이다.
+
+    칸은 알람에서 온다 — 자동 전송이 상자로 보내는 것과 같은 배치라(`planTrays`),
+    화면에 보이는 칸과 상자가 아는 칸이 어긋날 수 없다. 알람이 하나도 없으면 상자가
+    말한 수로 떨어진다.
+  */
+  const planned = planTrays(reminders, status?.trayCount ?? FITTED_TRAYS).plan;
+  const numbers = planned.length > 0
+    ? [...new Set(planned.map((t) => t.tray))].sort((a, b) => a - b)
+    : Array.from({ length: status?.trayCount ?? FITTED_TRAYS }, (_, i) => i + 1);
+  const nameOf = Object.fromEntries(planned.map((t) => [t.tray, t.name]));
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-[520px] px-5 py-8"
@@ -195,10 +217,16 @@ export default function PresentPage() {
               key={tray}
               onClick={() => send(`${tray}번 알람`, () => clientFor(paired).ringNow(tray))}
               disabled={busy !== null}
-              className="flex aspect-square items-center justify-center rounded-2xl text-xl font-bold text-white disabled:opacity-40"
+              className="flex aspect-square flex-col items-center justify-center gap-0.5 rounded-2xl text-white disabled:opacity-40"
               style={{ background: 'var(--color-safe)' }}
             >
-              {busy === `${tray}번 알람` ? '…' : tray}
+              <span className="text-xl font-bold">{busy === `${tray}번 알람` ? '…' : tray}</span>
+              {/* 칸 번호만으로는 무대에서 어느 약인지 안 떠오른다. */}
+              {nameOf[tray] && (
+                <span className="px-1 text-[9px] font-semibold leading-tight opacity-80">
+                  {shortName(nameOf[tray], 12)}
+                </span>
+              )}
             </button>
           ))}
         </div>
