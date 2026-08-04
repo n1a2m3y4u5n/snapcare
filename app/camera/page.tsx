@@ -408,7 +408,9 @@ export default function CameraPage() {
   return (
     <div className="min-h-screen w-full flex justify-center bg-black">
       <div className="relative w-full max-w-[440px] min-h-screen flex flex-col text-white">
-        <div className="flex items-center justify-between px-5 pt-14 pb-3">
+        {/* 머리글. 영상 위라 검은 그라데이션을 깔아 글자가 읽히게 한다. */}
+        <div className="relative z-10 flex items-center justify-between px-5 pt-14 pb-3"
+             style={{ background: 'linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0))' }}>
           <button onClick={() => router.push('/home')} aria-label="Close" className="text-2xl leading-none">×</button>
           <span className="text-sm font-semibold"
                 {...ask('Point at something. Hold the camera over a prescription, a label, or your food.')}>
@@ -417,29 +419,60 @@ export default function CameraPage() {
           <span className="w-6" />
         </div>
 
-        {/* 프리뷰 */}
-        <div className="relative flex-1 mx-5 my-3 rounded-3xl overflow-hidden min-h-[180px]" style={{ background: '#1b1b1e' }}>
-          {/*
-            진짜 미리보기. 여기 비추는 동안 QR 은 셔터 없이 읽힌다 — 상자를 향하면
-            그 순간 짝이 맺힌다. 카메라를 못 열었으면 이 자리는 비고, 아래의 이모지와
-            안내가 그대로 보인다.
-          */}
-          <video ref={videoRef} playsInline muted
-                 className="absolute inset-0 h-full w-full object-cover"
-                 style={{ opacity: live ? 1 : 0 }} />
-          <div className="absolute inset-6 rounded-2xl" style={{ border: '2px solid rgba(255,255,255,0.35)' }} />
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-8">
-            <span className="text-5xl" style={{ opacity: live ? 0 : 1 }}>📷</span>
-            <span className="text-xs opacity-70"
-                  {...sayable(busy ? (status ?? 'Working on it.') : 'The camera is pointed here. Press the big round button below to take the photograph.')}>
-              {busy ? (status ?? 'Analyzing…') : 'camera preview'}
-            </span>
-            {hint && <Hint text={hint} />}
-          </div>
-        </div>
+        {/*
+          미리보기는 **화면 전체**다.
 
-        {/* 캡처 */}
-        <div className="flex justify-center pb-2">
+          전에는 여백 안의 둥근 창이었는데, 그건 미리보기가 이모지 하나였을 때의
+          모양이다. 진짜 영상이 들어온 뒤로는 그 여백이 그대로 손해가 됐다 — 찍을
+          것을 보는 면적이 작아지고, 작아진 만큼 사람이 가까이 대기 어려워진다.
+          그리고 가까이 대는 것이 이 앱에서 QR 과 작은 글자가 읽히느냐를 가른다.
+
+          그래서 영상을 바닥에 깔고 조작을 그 위에 얹는다. 카메라 앱이 전부 이렇게
+          생긴 이유이기도 하고, 홈 화면이 카메라 버튼을 한가운데 크게 둔 것과 같은
+          판단이다 — 이 앱에서 가장 중요한 것은 지금 무엇이 보이는가다.
+        */}
+        <video ref={videoRef} playsInline muted
+               className="absolute inset-0 h-full w-full object-cover"
+               style={{ opacity: live ? 1 : 0 }} />
+
+        {/*
+          조준 틀. 영상 위에 얹으니 위아래 조작 띠를 피해 가운데에만 둔다.
+        */}
+        {live && (
+          <div className="pointer-events-none absolute inset-x-8 top-1/4 bottom-1/4 rounded-3xl"
+               style={{ border: '2px solid rgba(255,255,255,0.35)' }} />
+        )}
+
+        {/*
+          카메라를 못 열었을 때만 나오는 자리. 영상이 있으면 화면을 가리지 않는다.
+        */}
+        {!live && (
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 px-8 text-center">
+            <span className="text-5xl">📷</span>
+            <span className="text-xs opacity-70"
+                  {...sayable('The camera is pointed here. Press the big round button below to take the photograph.')}>
+              camera preview
+            </span>
+          </div>
+        )}
+
+        {/* 처리 중이거나 할 말이 있을 때. 영상 위에 뜨되 셔터를 가리지 않는다. */}
+        {(busy || hint) && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-32 flex flex-col items-center gap-2 px-6 text-center">
+            {busy && (
+              <span className="rounded-full px-4 py-2 text-xs font-semibold"
+                    style={{ background: 'rgba(0,0,0,0.6)' }}
+                    {...sayable(status ?? 'Working on it.')}>
+                {status ?? 'Analyzing…'}
+              </span>
+            )}
+            {hint && <div className="pointer-events-auto"><Hint text={hint} /></div>}
+          </div>
+        )}
+
+        {/* 캡처. 화면 아래에 얹고, 영상이 끝까지 보이도록 자리만 차지한다. */}
+        <div className="relative z-10 mt-auto flex justify-center pb-2 pt-10"
+             style={{ background: 'linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.55))' }}>
           {/*
             보고 있는 것을 찍는다.
 
@@ -462,7 +495,8 @@ export default function CameraPage() {
           완전히 막아두면 카메라를 못 쓰는 상황에서 갇히므로, 눈에 띄지 않는 링크로만 열어둔다.
         */}
         {!showOptions ? (
-          <div className="px-5 pb-8 pt-3 text-center">
+          <div className="relative z-10 px-5 pb-8 text-center"
+               style={{ background: 'rgba(0,0,0,0.55)' }}>
             <button
               onClick={() => setShowOptions(true)}
               className="inline-flex items-center gap-1 text-xs underline underline-offset-4 opacity-60"
@@ -476,7 +510,8 @@ export default function CameraPage() {
             </button>
           </div>
         ) : (
-          <>
+          /* 대안 목록. 열리면 영상을 덮는다 — 여기서 고르는 동안 미리보기는 방해다. */
+          <div className="relative z-10 min-h-screen" style={{ background: '#000' }}>
             <div className="px-5 pt-1">
               <Speakable text={'Try a nutrition label. Tap one and it will be read like a photograph.'} className="text-[11px] font-bold tracking-wide opacity-60 flex w-full items-center gap-2">
           <span className="flex-1">SCAN A NUTRITION LABEL (OCR)</span>
@@ -528,7 +563,7 @@ export default function CameraPage() {
                 })}
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
