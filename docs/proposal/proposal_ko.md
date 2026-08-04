@@ -627,6 +627,8 @@ Medhi 등은 방갈로르 빈민가의 비문해 가사노동자와의 민족지
 
 그 부하가 걸린 집단에서 복약이 실제로 어떻게 무너지는지도 재어져 있다. 주의력결핍 과잉행동장애가 있는 아동·청소년을 다룬 66편의 체계적 문헌고찰에서, 가장 흔히 쓰이는 정의(약물 보유 비율 80% 이상)로 12개월 시점에 양호한 순응을 보인 비율은 22.9%였고 12개월 동안의 평균 치료 지속 기간은 170일이었다 (Ferrin, M., Häge, A., Swanson, J., Wong, K. H. T. W., Dittmann, R. W., Banaschewski, T., Coghill, D., Santosh, P. J., Romanos, M., Simonoff, E. & Buitelaar, J. K. (European ADHD Guidelines Group), "Medication adherence and persistence in children and adolescents with attention deficit hyperactivity disorder (ADHD): a systematic review and qualitative update," *European Child & Adolescent Psychiatry*, 34(3):867–882, 2025, doi:10.1007/s00787-024-02538-z). 하루 세 번 이상 복용하는 파킨슨병 환자 124명을 조사한 연구에서는 36.3%가 낮은 순응, 29.8%가 중간, 33.9%만이 높은 순응을 보고했다 (Straka, I., Minár, M., Škorvánek, M. et al., "Adherence to Pharmacotherapy in Patients With Parkinson's Disease Taking Three and More Daily Doses of Medication," *Frontiers in Neurology*, 10:799, 2019, doi:10.3389/fneur.2019.00799). 뒤의 연구가 이 절에 특히 곧게 닿는데, 저자들이 찾아낸 비순응의 독립 위험인자가 주간 과다 졸림, 무쾌감, 그리고 건망이었기 때문이다. 진단명은 파킨슨병이지만 실제로 순응을 무너뜨린 것은 졸리고, 의욕이 없고, 잊는 상태였다. 이 셋은 진단과 무관하게 누구에게나 오는 상태이기도 하다.
 
+두 자료를 옮기며 건너뛴 곳을 밝혀 둔다. 앞의 것은 아동·청소년을 본 자료인데 이 앱이 겨냥하는 사용자는 대체로 성인이다. 주의력결핍 과잉행동장애가 성인에게 이어지는 경우가 있다는 것과 아동의 순응 수치를 성인에게 옮길 수 있다는 것은 다른 말이며, 우리는 뒤엣것을 보이는 자료를 갖고 있지 않다. 여기서 취하는 것은 비율이 아니라 이 집단에서 복약이 실제로 무너진다는 사실이다. 뒤의 것은 치매가 없는 파킨슨병 환자만 본 표본이므로 기억 손상이 큰 사람에게는 그대로 옮길 수 없다. 저자들이 찾은 위험인자가 우리 논지와 맞는다고 해서 그 표본이 우리 대상과 같아지지는 않는다.
+
 [표 7] 대상 조건과 막히는 지점, 그리고 대응하는 기능
 
 | 조건 | 무엇이 막는가 | 이 앱의 어느 부분이 닿는가 | 근거 |
