@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { DoseRelease } from '@/components/sc/DoseRelease';
 import { useDispenser } from '@/lib/dispenser/useDispenser';
+import { useAutoSend } from '@/lib/dispenser/useAutoSend';
 import { useIsClient } from '@/lib/hooks';
 import { useDoseLog } from '@/lib/dispenser/useDoseLog';
 import { useDoseAlert } from '@/lib/dispenser/useDoseAlert';
@@ -27,6 +28,14 @@ export default function HomePage() {
   // 약통이 짝지어져 있으면 걸린 약을 여기서 보여준다. 짝이 없으면 훅이 조용히
   // 아무것도 안 하고, DoseRelease 는 걸린 약이 없으면 그리지 않는다.
   const box = useDispenser();
+  /*
+    알람을 만들면 상자가 저절로 안다.
+
+    예전에는 기기 화면까지 가서 전송 버튼을 눌러야 했고, 안 누르면 앱에는 알람이
+    있고 상자에는 아무 일정도 없었다 — 그리고 그 어긋남이 화면 어디에도 없었다.
+    보냈다고 믿은 사람이 그것을 알게 되는 자리는 약이 안 나오는 아침이다.
+  */
+  const autoSend = useAutoSend(box.report?.status.trayCount ?? FITTED_TRAYS);
   const scans = useScans((s) => s.scans);
   const profile = useProfile((s) => s.profile);
   const confirmed = useProfile((s) => s.confirmed);
@@ -216,6 +225,25 @@ export default function HomePage() {
             </button>
           </div>
         ))}
+
+        {/*
+          일정이 상자에 못 닿았을 때만 뜬다.
+
+          성공하면 아무것도 안 나온다. 잘 된 일을 알리는 줄은 화면을 늘리기만 하고,
+          이 앱에서 사람이 확인해야 하는 것은 **안 된 것**뿐이다. 반대로 못 닿은
+          것을 조용히 두면 앱에는 알람이 있고 상자에는 없는 상태가 그대로 굳는다.
+        */}
+        {autoSend.error && (
+          <div className="mt-4 flex items-center gap-3 rounded-2xl px-4 py-3"
+               style={{ background: 'var(--color-med-bg)' }}>
+            <span aria-hidden className="text-xl">📦</span>
+            <span className="flex-1 text-sm font-semibold"
+                  style={{ color: 'var(--color-sc-ink)' }}
+                  {...sayable('The schedule has not reached the box yet.')}>
+              약통에 아직 안 갔다
+            </span>
+          </div>
+        )}
 
         {/* 복약 리마인더 — 실제로 만든 알람이 있을 때만 */}
         {nextDose && (
