@@ -1093,7 +1093,7 @@ The whole flow is the following five steps.
 
 | Step | Screen | What the user does | Text to read |
 |---|---|---|---|
-| 1 | First-run guide | Press next (skippable) | None (picture + speech) |
+| 1 | Choosing text size and setting a picture key | Press the line you can read, tap four pictures in order | None (picture + speech) |
 | 2 | Profile setup | Choose age and conditions | None (picture selection) |
 | 3 | Home | Press the capture button | None |
 | 4 | Capture | Point and shoot | None |
@@ -1107,7 +1107,13 @@ One thing should be noted, though. The shortness of this flow is a constraint as
 
 ### 3.2 First run and profile setup
 
-Opening the app for the first time leads through five guide cards to profile setup. This step is needed because of the verdict method described in §2.4. Since thresholds are derived from the user's energy requirement, no verdict is possible without knowing the age band.
+Opening the app for the first time asks two things and then goes straight to a screen that does something. It asks for a text size and it sets a picture key. The text size is settled by one action, "tap the smallest line you can read". Rather than reading the names of sizes and choosing among them, the user answers by tapping what is in fact legible, which is the structure of an eye chart.
+
+Five guide cards used to stand between those two steps, and they were removed. Four of the five are already said by the screens themselves. The camera is the largest circle in the middle of the home screen; the verdict colour is shown as colour by the verdict screen; that it is judged for you is said by the person satellite and its badge; and reminders are offered on the spot when a prescription is photographed. To explain again what has been built so as to need no explanation is to say one does not believe in the building. And for the users of this app five slides are a wall to climb before starting, when those five slides were the first screen of an app that says it demands no reading.
+
+The remaining one could not be removed. The gesture of pressing and holding text to hear it (§3.5) appears nowhere on screen. The read-aloud button in the bottom bar reads the whole screen, so sound itself is not blocked, but hearing one line again is only possible through that gesture, and wanting to hear one medicine name or one dose time again is exactly that case. So instead of removing it, it was moved to where it is used. It appears once on first arrival at the verdict screen and does not appear again. That is the first place the gesture is actually useful, and what has been learned can be tried on that same screen.
+
+Age and conditions are set on the person screen. That step is needed because of the verdict method described in §2.4. Since thresholds are derived from the user's energy requirement, no verdict is possible without knowing the age band.
 
 Age is not entered as a number. Four bands (child, teenager, adult, older adult) are chosen through our own morphemes (`state_child`, `state_teen`, `state_adult`, `state_elderly`). There is a reason emoji were not used. Emoji are drawn differently on every device, and the emoji that might stand for a teenager (🧑‍🎓) actually means "graduate," which means nothing at all to a child who does not attend school. The four morphemes are drawn as one family, so placed side by side the difference in age is visible as form. Conditions are likewise offered as picture cards along the three branches of §2.5 (what you know now, what you have experienced, what you have been told).
 
@@ -1121,14 +1127,14 @@ The list of household members sits on this same lock screen (§3.6). It has the 
 
 ![Figure 26](fig/panelC_onboarding.png)
 
-**[Figure 26]** First run. (a) Five guide cards. Each is a picture and one sentence, and on arrival the screen reads that sentence aloud by itself. (b) Profile setup. The age band is chosen through our morphemes and conditions through picture cards, with no input field on either. This step is needed because of the verdict method in §2.4. Since thresholds are derived from the user's energy requirement, no verdict is possible without knowing the age band.
+**[Figure 26]** First run. (a) Text size. Rather than reading the name of a size, the user taps the line that is legible. (b) Picture key. Four of twelve pictures are tapped in order. (c) Profile setup. The age band is chosen through our morphemes and conditions through picture cards, with no input field on either. This step is needed because of the verdict method in §2.4. Since thresholds are derived from the user's energy requirement, no verdict is possible without knowing the age band.
 
 Two answers in §5.7 split exactly on this screen. Asked where a first run gets stuck, one of the two HCI respondents chose granting camera permission and the other chose that it does not get stuck. Myojung Choi, researcher at the Korea Disabled People's Development Institute, set down the reason for the first.
 
 > "A user who has difficulty reading may struggle with the subsequent steps if spoken guidance is not provided at the initial permission stage, and their actions may be constrained as a result."
 > (Myojung Choi, researcher, Korea Disabled People's Development Institute)
 
-The permission dialogue is drawn by the browser, so we cannot put speech inside it. Saying in advance what is about to be asked is all we can do, and the five guide screens occupy that place now. From the moment the dialogue appears after the guide, however, it is no longer our screen. It belongs to the unverified items in §5.9.
+The permission dialogue is drawn by the browser, so we cannot put speech inside it. It should be stated that our answer to this point has grown weaker since. When this response arrived, five guide cards stood in front of the dialogue and we took them as the answer, and for the reasons set out above those five cards were removed. What remains is that the camera screen falls back to choosing an already-taken photograph when permission is not granted, and that is a provision for after the blockage rather than guidance before it. It also remains true that from the moment the dialogue appears it is no longer our screen. It belongs to the unverified items in §5.9.
 
 Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, looked at it the other way. Someone who seeks this app out already knows roughly how it works, and if so a procedure of this length is perfectly possible with pictures and speech alongside. The two responses do not contradict each other. The first is about someone opening it for the first time, the second about someone who came looking. How this app reaches whom has not been settled, so both are possible conditions.
 
@@ -1440,6 +1446,8 @@ No percentage is written large on this screen. The number 86% does not arrive fo
 
 What groups the gauges is worth noting as well: not the name of a medicine but the tray layer in the box. What the box reports is the layer, and the name is something the app attaches from the prescription, so it may be absent. This machine also stacks its trays in layers, so when the screen speaks in layers that leads straight into opening the box and looking at that layer. The place on the screen and the place the hand reaches point at the same thing.
 
+The calendar shows four weeks but the window can be moved. There are two arrows and no date picker, because offering a date picker to someone who came to look at a calendar amounts to handing them a second calendar. Moving forward stops at today. The future is an empty grid, and a button that does nothing when pressed reads as broken. Moving the window does not move the "today" marker, which stays on the real today. If some past day were marked as today on a paged-back screen, that screen would be lying.
+
 There is no list laying out the records day by day. There was one and it was taken out. Showing records back one at a time is not what this app does with that data. The calendar, the gauge, what is suspected and how the body responded all come out of it. The list only added twenty-eight more rows on top, and after a few months it becomes a wall nobody scrolls.
 
 This is why the screen spans several conditions in Table 7 of §1.13. What someone carrying a load on executive function needs is "what do I take now", and that is the first part. What someone with damage to memory needs is "did I already take it", and that is the second. What the consulting room needs is "when did the missing start", and that is the third. One screen answers three questions, and it was built so that those answers are not obtained by reading. The difference between a filled bar and an empty one is not a letter, and the shape of a column going blank is seen rather than read.
@@ -1742,6 +1750,8 @@ Because health information is involved, measures were needed on both storage and
 | Identity | Requests signed with an ECDSA private key generated on the device. The key is `extractable: false` and cannot leave the browser |
 | Access control | The storage location is derived from the public key. There is no way to request another person's data |
 | Transmission | Signatures travel in a request header. They do not appear in the address bar or in access logs |
+
+The second row of the table has a correction in it as well. Ninety-day retention was written down while records were in fact being cut off at 200. Someone using the box takes in two or three dose records a day before meals are added, so 200 fills up in about forty days. For as long as the document said ninety days the actual retention was forty, and because nothing marks that a record was cut, a person looking for something from two months ago learns instead that they did not use the app that day. The cap was raised to 1,500 so that the date limit binds first. The cap was not removed, because it is a ceiling on storage rather than a floor under the retention period: a date cannot stop browser storage from filling when records run away.
 
 The last three of these are fixes for problems found during development. The initial implementation passed a random string as a query parameter, which meant the key granting access to health information accumulated in server logs, and anyone who observed the value once could reproduce it.
 

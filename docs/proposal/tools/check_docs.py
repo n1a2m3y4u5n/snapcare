@@ -271,7 +271,8 @@ def built_faults(path: Path) -> list:
 # 적은 스피커 원과 본문이 고쳤다고 적은 냉장 오류를 그대로 담고 있었다.
 SHOT_FILES = ('fig01_home.png', 'fig04_camera.png', 'fig05_processing.png',
               'fig06_verdict_rx.png', 'fig07_verdict_label.png', 'fig08_today.png',
-              'fig09_device.png', 'fig12_onboarding.png', 'fig13_profile.png')
+              'fig09_device.png', 'fig12_textsize.png', 'fig16_picturekey.png',
+              'fig13_profile.png')
 UI_PATHS = ('app', 'components')
 
 

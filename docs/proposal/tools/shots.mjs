@@ -60,7 +60,8 @@ async function waitForPictograms(page, ms = 90000) {
 const SHOTS = [
   // fold: 전폭으로 실리는 도판에만 접힘을 표시한다. 패널로 묶이는 것은
   // 430px 높이로 줄어들어 딱지가 4px 가 되고 붉은 얼룩만 남는다.
-  { fold: true, file: 'fig01_home.png', path: '/home?demo=1', wait: 'TODAY' },
+  // 홈이 위성 배치로 바뀌면서 'TODAY' 가 사라졌다. 가운데 큰 원의 이름을 기다린다.
+  { fold: true, file: 'fig01_home.png', path: '/home?demo=1', wait: 'Pill box' },
   { file: 'fig04_camera.png', path: '/camera?demo=1', wait: 'Point at something' },
   // 이 한 장만 **끝나기 전** 을 찍는다. 그래서 픽토그램을 기다리지 않는다
   // (noWait). 기다리면 판정 화면이 찍히고, 본문(§3.3)이 서술하는 "감추지
@@ -74,7 +75,10 @@ const SHOTS = [
   // 첫 실행 화면을 찍는다(setup=1). 그냥 /profile 은 설정에서 들어온 화면이라
   // 얼굴 고르기가 함께 나오는데, 본문(§3.2)이 서술하는 것은 그것을 뺀 첫 실행이다.
   { file: 'fig13_profile.png', path: '/profile?setup=1&demo=1', wait: 'HOW OLD' },
-  { file: 'fig12_onboarding.png', path: '/onboarding?demo=1', wait: 'Point & scan' },
+  // 안내 다섯 장은 없어졌고(ef8c97b) /onboarding 은 404 다. 첫 실행은 이제
+  // 글자 크기와 픽처키 두 단계다.
+  { file: 'fig12_textsize.png', path: '/text-size?demo=1', wait: 'smallest line' },
+  { file: 'fig16_picturekey.png', path: '/login?demo=1', wait: 'picture key' },
   // 언어 고르기. 없는 목소리를 미리 알리는 자리와, 검수를 받지 않았다는
   // 고지가 한 화면에 함께 있어야 §5.7 의 서술이 그림으로 확인된다.
   //

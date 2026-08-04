@@ -78,6 +78,7 @@ if __name__ == '__main__':
 
     # 첫 실행 — 안내에서 프로필까지. 홈 화면은 §2.1 에서 따로 쓰므로 여기 넣지 않는다.
     panel('panelC_onboarding', [
-        ('fig12_onboarding', T('(a) 첫 실행 안내')),
-        ('fig13_profile', T('(b) 프로필 설정')),
+        ('fig12_textsize', T('(a) 글자 크기')),
+        ('fig16_picturekey', T('(b) 픽처키')),
+        ('fig13_profile', T('(c) 프로필 설정')),
     ])
