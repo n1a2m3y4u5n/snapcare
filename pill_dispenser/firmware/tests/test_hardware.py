@@ -224,7 +224,7 @@ def test_the_network_hint_never_sounds(monkeypatch):
     """A chirp has meant "there are pills in the cup" since the Arduino build.
     Spending it on a network problem teaches the one person this project is built
     around to walk over and find nothing there."""
-    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    monkeypatch.setattr(config, "PULSE_DARK_S", 0.01)
     buzzer = FakeBuzzer()
     indicator = FittedIndicator(display=None, buzzer=buzzer)
     try:
@@ -293,7 +293,7 @@ def test_the_buzzer_sounds_while_a_dose_waits_and_stops_when_confirmed(monkeypat
     """The chirp is what fetches somebody from another room. Without it the
     confirm button is close to useless — nobody acknowledges what they never
     noticed — and the log fills with unconfirmed doses."""
-    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    monkeypatch.setattr(config, "PULSE_DARK_S", 0.01)
     buzzer = FakeBuzzer()
     indicator = FittedIndicator(display=None, buzzer=buzzer)
 
@@ -318,8 +318,8 @@ def test_a_dose_left_untaken_gets_more_insistent(monkeypatch):
     separates those two, because a dose ignored for a minute really is a
     different situation from one that appeared five seconds ago.
     """
-    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
-    monkeypatch.setattr(config, "BUZZER_URGENT_REPEAT_S", 0.01)
+    monkeypatch.setattr(config, "PULSE_DARK_S", 0.01)
+    monkeypatch.setattr(config, "PULSE_URGENT_DARK_S", 0.01)
     monkeypatch.setattr(config, "BUZZER_URGENT_AFTER_S", 0)  # 처음부터 급하게
     buzzer = FakeBuzzer()
     indicator = FittedIndicator(display=None, buzzer=buzzer)
@@ -327,7 +327,7 @@ def test_a_dose_left_untaken_gets_more_insistent(monkeypatch):
         indicator.dose_due(1)
         _wait_until(lambda: buzzer.calls, "the buzzer never sounded")
         on_s, off_s, total_s = buzzer.calls[0]
-        assert total_s == config.BUZZER_URGENT_CHIRP_S
+        assert total_s == config.PULSE_URGENT_LIT_S
         assert off_s == config.BUZZER_URGENT_GAP_S
     finally:
         indicator.close()
@@ -341,25 +341,26 @@ def test_the_urgent_setting_is_actually_more_urgent():
     can leave the urgent phase quieter than the gentle one and both tests still
     pass, which is a machine that gets calmer the longer a dose sits.
     """
-    assert config.BUZZER_URGENT_REPEAT_S <= config.BUZZER_REPEAT_S
     assert config.BUZZER_URGENT_GAP_S < config.BUZZER_GAP_S
 
-    # 묶음 사이에는 이제 양쪽 다 쉼이 없다. 그래서 "더 급하다" 는 삑과 삑 **사이**가
-    # 좁다는 뜻이고, 재는 값은 소리 나는 시간의 비율이다.
+    # 귀로: "더 급하다" 는 삑과 삑 **사이**가 좁다는 뜻이고, 재는 값은 소리 나는
+    # 시간의 비율이다.
     def duty(on_s, off_s):
         return on_s / (on_s + off_s)
 
     assert duty(config.BUZZER_URGENT_BEEP_S, config.BUZZER_URGENT_GAP_S) > \
            duty(config.BUZZER_BEEP_S, config.BUZZER_GAP_S)
 
-    # 그리고 순한 쪽도 쉬지 않아야 한다. 쉼이 돌아오면 옆 방에 있는 사람에게는
-    # 그 구간이 통째로 놓칠 자리가 되고, 이 소리는 알림이 아니라 프롬프트다.
-    assert config.BUZZER_REPEAT_S == 0
+    # 눈으로: 박자가 **더 자주** 뛴다. 재는 것은 한 박자의 길이가 아니라 주기다 —
+    # 급한 쪽의 밝은 시간이 더 짧은 것은 뒤집힌 것이 아니라 더 자주 뛴다는 뜻이다.
+    gentle = config.PULSE_LIT_S + config.PULSE_DARK_S
+    urgent = config.PULSE_URGENT_LIT_S + config.PULSE_URGENT_DARK_S
+    assert urgent < gentle, "급해졌는데 화면이 더 느리게 뛴다"
 
 
 def test_the_urgency_resets_for_the_next_dose(monkeypatch):
     """Or the first chirp of the morning arrives at the pitch of last night's."""
-    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    monkeypatch.setattr(config, "PULSE_DARK_S", 0.01)
     monkeypatch.setattr(config, "BUZZER_URGENT_AFTER_S", 0)
     buzzer = FakeBuzzer()
     indicator = FittedIndicator(display=None, buzzer=buzzer)
@@ -372,7 +373,7 @@ def test_the_urgency_resets_for_the_next_dose(monkeypatch):
         buzzer.calls.clear()
         indicator.dose_due(2)
         _wait_until(lambda: buzzer.calls, "the second dose never sounded")
-        assert buzzer.calls[0][2] == config.BUZZER_CHIRP_S
+        assert buzzer.calls[0][2] == config.PULSE_LIT_S
     finally:
         indicator.close()
 
@@ -391,14 +392,14 @@ def test_a_press_is_answered_before_the_servo_finishes(monkeypatch):
         _wait_until(lambda: buzzer.calls, "the press was never acknowledged")
         on_s, off_s, total_s = buzzer.calls[0]
         assert total_s == config.BUZZER_ACK_S
-        assert total_s < config.BUZZER_CHIRP_S
+        assert total_s < config.PULSE_LIT_S
         assert on_s < config.BUZZER_BEEP_S
     finally:
         indicator.close()
 
 
 def test_dismissing_also_silences_the_chirp(monkeypatch):
-    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    monkeypatch.setattr(config, "PULSE_DARK_S", 0.01)
     buzzer = FakeBuzzer()
     indicator = FittedIndicator(display=None, buzzer=buzzer)
     try:
@@ -413,7 +414,7 @@ def test_dismissing_also_silences_the_chirp(monkeypatch):
 
 
 def test_nothing_sounds_when_no_dose_is_waiting(monkeypatch):
-    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    monkeypatch.setattr(config, "PULSE_DARK_S", 0.01)
     buzzer = FakeBuzzer()
     indicator = FittedIndicator(display=None, buzzer=buzzer)
     try:
@@ -497,7 +498,7 @@ def test_silence_stops_the_chirp_and_leaves_the_screen(monkeypatch, screens):
     """A person who silences a chime has asked for quiet, not withdrawn their
     medication. The dose is still owed and still releasable, so the screen has to
     go on saying so — a blank screen over a waiting dose is the device lying."""
-    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    monkeypatch.setattr(config, "PULSE_DARK_S", 0.01)
     buzzer = FakeBuzzer()
     indicator = FittedIndicator(display=FakeDisplay(), buzzer=buzzer)
     try:
@@ -528,7 +529,7 @@ def test_the_pulse_paints_the_same_dose_the_standing_frame_did(screens, monkeypa
     를 새로 읽으면 그 보정이 통째로 버려지고, 기계 앞에 선 사람이 보는 것은 시각도
     트레이도 없는 초록 화면이다.
     """
-    monkeypatch.setattr(config, "BUZZER_REPEAT_S", 0.01)
+    monkeypatch.setattr(config, "PULSE_DARK_S", 0.01)
     indicator = FittedIndicator(display=FakeDisplay(), buzzer=FakeBuzzer())
     try:
         indicator.dose_due(2, "14:27")
@@ -880,3 +881,40 @@ def test_the_status_page_says_which_of_the_two_reasons_it_is(tmp_path, monkeypat
     assert working.status()["dispensing"] is False
     assert "clock" in working.status()["blockedReason"]
     assert "GPIO" not in working.status()["blockedReason"]
+
+
+def test_the_pulse_has_a_dark_phase_with_an_actual_length():
+    """0 이면 검정 프레임의 길이는 패널을 칠하는 시간이고, 그건 정해진 값이 아니다.
+
+    이것이 실제로 일어난 일이다. 이 값은 소리 쪽 논리만 보고 0 으로 정해졌는데 —
+    "부저 울리는 시간 사이에 텀이 너무 길다" — 화면도 같은 값을 쓴다. 그래서 남은
+    검정 시간은 패널을 두 번 칠하는 시간(한 장에 38ms)뿐이었고, 그건 프레임마다
+    달랐다. 어떤 박자에는 검정이 보이고 어떤 박자에는 안 보였다.
+
+    벤치에서 그대로 나온 말: "알람 울릴 때 화면 깜빡이는게 좀 불안정함."
+    """
+    for dark in (config.PULSE_DARK_S, config.PULSE_URGENT_DARK_S):
+        # 패널 한 장이 38ms 다. 그 몇 배는 되어야 칠하는 시간이 박자를 흔들지 않는다.
+        assert dark >= 0.15, "검정 프레임이 패널을 칠하는 시간과 구별되지 않는다"
+
+
+def test_the_green_outweighs_the_black():
+    """초록은 **상태**(복용이 기다린다)이고 검정은 박자일 뿐이다.
+
+    반반이면 이 화면은 초록이 뛰는 것이 아니라 두 색이 번갈아 드는 것이 되고,
+    그러면 무슨 상태인지가 흐려진다. 벤치에서 나온 말이 그것이다 — "초록색을
+    띄우는 시간이 살짝 더 길거나 균형이 있어야 될듯."
+    """
+    for lit, dark in ((config.PULSE_LIT_S, config.PULSE_DARK_S),
+                      (config.PULSE_URGENT_LIT_S, config.PULSE_URGENT_DARK_S)):
+        assert lit > dark * 2, "검정이 박자가 아니라 절반이 됐다"
+
+
+def test_the_pulse_stays_under_the_photosensitivity_line():
+    """WCAG 2.3.1 의 3Hz. 이 패널은 사람 얼굴 앞 30cm 에서 한 시간을 깜빡일 수 있다.
+
+    유예 창이 60분이고 그 내내 이 박자가 돈다. 넘길 여지가 있는 값이 아니다.
+    """
+    for lit, dark in ((config.PULSE_LIT_S, config.PULSE_DARK_S),
+                      (config.PULSE_URGENT_LIT_S, config.PULSE_URGENT_DARK_S)):
+        assert 1.0 / (lit + dark) < 3.0

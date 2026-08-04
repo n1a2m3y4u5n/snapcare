@@ -456,12 +456,15 @@ class FittedIndicator(Indicator):
                 # 방금 지나가는 사람에게 과하거나 딴 방에 있는 사람에게 모자라거나
                 # 둘 중 하나이고, 그 둘을 동시에 피하는 손잡이는 시간뿐이다.
                 urgent = time.monotonic() - since >= config.BUZZER_URGENT_AFTER_S
-                on_s, gap_s, chirp_s, rest_s = (
+                # 네 값이 한 박자다: 밝고 우는 동안(`lit_s`)과 어둡고 조용한
+                # 동안(`dark_s`). 소리와 그림이 같은 두 값을 나눠 쓰는 것은 이 고리의
+                # 구조 자체다 — 부저가 우는 것은 화면이 초록인 바로 그 동안이다.
+                on_s, gap_s, lit_s, dark_s = (
                     (config.BUZZER_URGENT_BEEP_S, config.BUZZER_URGENT_GAP_S,
-                     config.BUZZER_URGENT_CHIRP_S, config.BUZZER_URGENT_REPEAT_S)
+                     config.PULSE_URGENT_LIT_S, config.PULSE_URGENT_DARK_S)
                     if urgent else
                     (config.BUZZER_BEEP_S, config.BUZZER_GAP_S,
-                     config.BUZZER_CHIRP_S, config.BUZZER_REPEAT_S))
+                     config.PULSE_LIT_S, config.PULSE_DARK_S))
                 # 화면이 같은 박자로 뛴다. 소리와 그림이 따로 놀면 둘 다 배경이
                 # 되지만, 함께 뛰면 하나의 사건이 되고 **눌러야 할 것처럼 보인다.**
                 self._beat(True)
@@ -469,7 +472,7 @@ class FittedIndicator(Indicator):
                     # 한 번 삑 하고 마는 것이 아니라 **울린다.** 0.12초짜리 딸깍
                     # 소리를 20초마다 내는 것은 알람이 아니었고, 난청이 있는 사람은
                     # 통째로 놓친다 — 그리고 이 기기의 사용자가 정확히 그 사람이다.
-                    self.buzzer.pattern(on_s, gap_s, chirp_s)
+                    self.buzzer.pattern(on_s, gap_s, lit_s)
                 except Exception:  # noqa: BLE001
                     self._beat(False)
                     strikes += 1
@@ -487,11 +490,14 @@ class FittedIndicator(Indicator):
                         # a part that is not working.
                         self.buzzer = None
                         return
-                    self._stop.wait(rest_s)
+                    self._stop.wait(dark_s)
                     continue
                 strikes = 0
                 self._beat(False)
-                self._stop.wait(rest_s)
+                # 검정의 길이는 **여기서** 정해진다. 예전에는 이 값이 0 이라 검정
+                # 프레임이 패널을 두 번 칠하는 시간만큼만 서 있었고, 그 시간은
+                # 프레임마다 달라서 깜빡임이 박자가 아니라 잡음으로 보였다.
+                self._stop.wait(dark_s)
             else:
                 # Nothing owed. The next dose starts its own clock, so a person
                 # is never met at full urgency by a dose that has just come due.

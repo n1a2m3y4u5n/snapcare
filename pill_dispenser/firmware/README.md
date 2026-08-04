@@ -689,8 +689,12 @@ characters or any alphabetic run over nine, so the rule is enforced rather than
 remembered. Anything that wants a sentence belongs in the app, where there is a
 reader.
 
-The chirp repeats every `BUZZER_REPEAT_S` (20 s) until the dose is released, the
-chime is silenced, or the grace window closes. That pairing is the point rather
+The alarm is one beat repeated: `PULSE_LIT_S` (1.4 s) of green screen and
+sounding buzzer, then `PULSE_DARK_S` (0.28 s) of black and silence, until the
+dose is released, the chime is silenced, or the grace window closes. The two
+channels share those numbers because the loop sounds the buzzer *during* the lit
+phase — which is why the dark phase needs a length of its own rather than
+whatever is left over, and why the config for it says so at length. That pairing is the point rather
 than redundancy: a screen alone only works if somebody is looking at it, and on
 this build the sound is the *prompt* rather than an announcement — a device that
 cannot chirp waits out the hour in silence and records a miss.
