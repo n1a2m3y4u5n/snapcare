@@ -32,7 +32,7 @@
   · 본문이 든 형태소 이름이 사전에 그대로 있는가
   · 그림 33 의 채움 점수가 파서가 내는 값과 같은가
   · 같은 출처가 두 가지 모양으로 적히지 않았는가
-  · 표 29 의 시험 수가 실제로 돌린 결과와 같은가
+  · 시험 표의 수가 실제로 돌린 결과와 같은가
   · 우리 산문의 표기가 한 가지로 통일되어 있는가
   · 응답자를 부를 때 직책이 표 41 과 같은가
   · 빌드된 문서에서 주소가 눌리는가
@@ -276,6 +276,19 @@ SHOT_FILES = ('fig01_home.png', 'fig04_camera.png', 'fig05_processing.png',
 UI_PATHS = ('app', 'components')
 
 
+# 검사가 전제 조건이 없을 때 조용히 빈 목록을 돌려주면, 통과와 "재지 않음"
+# 이 화면에서 구별되지 않는다. 이 문서에서 그 모양의 결함을 세 번 겪었다.
+# 시험이 임포트에서 멈춘 것(§4.7), 접근성 훑기가 없어진 주소를 잰 것(§3.7),
+# 그리고 도판 스크립트가 중간에 죽어 뒤의 여덟 장이 안 그려진 것이다.
+# 그래서 빠져나갈 때는 왜 빠져나가는지를 남기고 끝에 모아 알린다.
+SKIPPED: list = []
+
+
+def skip(why: str) -> list:
+    SKIPPED.append(why)
+    return []
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -306,7 +319,8 @@ def stale_shots() -> list:
         import datetime as dt
         d = dt.datetime.fromtimestamp(ui).date()
         return [f'화면 코드가 {d} 에 바뀐 뒤 다시 뜨지 않은 캡처 {len(out)}장: '
-                + ', '.join(out[:4]) + (' …' if len(out) > 4 else '')]
+                + ', '.join(out[:4]) + (' …' if len(out) > 4 else '')
+                + ' (커밋 시각으로 견주므로 다시 뜬 뒤 커밋해야 풀린다)']
     return []
 
 
@@ -388,7 +402,7 @@ def roster_count() -> list:
         # 값은 실제 응답 수 이하이며, 명단이 그보다 적으면 확실히 틀렸다.
         doc = (DOC / 'proposal_ko.md').read_text()
         if '### 5.11' not in doc:
-            return []
+            return skip('명단 수 대조 — 원자료도 부록 §5.11 도 없다')
         seg = doc[doc.index('### 5.11'):doc.index('### 5.12')]
         who = set()
         for ln in seg.splitlines():
@@ -675,7 +689,7 @@ def morpheme_names() -> list:
     dic = root / 'engine/dictionary.json'
     typ = root / 'lib/snapcare/types.ts'
     if not dic.is_file() or not typ.is_file():
-        return []
+        return skip('형태소 이름 검사 — engine/dictionary.json 또는 형 파일이 없다')
     d = json.loads(dic.read_text())
     names = set()
     for k in ('heads', 'modifiers', 'composition_operators', 'frame'):
@@ -716,7 +730,7 @@ def sheet_scores() -> list:
     cli = root / 'pill_dispenser/form_sheet_parser/parse_cli.py'
     py = DOC / '.venv-doc/bin/python'
     if not (photo.is_file() and cli.is_file() and py.is_file()):
-        return []
+        return skip('종이 서식 점수 검사 — 합성 사진·파서·파이썬 가운데 없는 것이 있다')
     try:
         r = json.loads(subprocess.run([str(py), str(cli), str(photo)],
                                       capture_output=True, text=True,
@@ -785,7 +799,7 @@ def cite_shape() -> list:
 
 
 def test_counts() -> list:
-    """표 29 의 시험 수가 실제로 돌린 결과와 같은가.
+    """시험 표의 수가 실제로 돌린 결과와 같은가.
 
     표가 웹 앱 347개(346 통과·1 실패)라고 적고 있었는데 돌려 보니
     360개(359 통과·1 실패)였다. 실패의 설명도 달랐다 — 표는 "조건
@@ -798,11 +812,11 @@ def test_counts() -> list:
     import os
     import subprocess
     if os.environ.get('SNAPCARE_SKIP_TESTS'):
-        return []
+        return skip('시험 수 대조 — SNAPCARE_SKIP_TESTS 로 껐다')
     root = DOC.parent.parent
     py = DOC / '.venv-doc/bin/python'
     if not (root / 'package.json').is_file():
-        return []
+        return skip('시험 수 대조 — package.json 이 없다')
     # 의존성이 없으면 세 파일이 zustand 에서 멈춰 시험 스물다섯 개가
     # 사라진다. 그 상태로 세면 표가 틀렸다고 잘못 말한다. 표가 적어 둔
     # 조건(`npm ci`)과 같은 자리에서 재야 한다.
@@ -836,7 +850,8 @@ def test_counts() -> list:
                 pass
 
     body = (DOC / 'proposal_ko.md').read_text()
-    i = body.index(f'[표 {table_no("세 갈래의 시험") or 28}]')
+    tn = table_no("세 갈래의 시험") or 31
+    i = body.index(f'[표 {tn}]')
     rows = {}
     for ln in body[i:].splitlines()[1:]:
         if not ln.startswith('|'):
@@ -853,7 +868,7 @@ def test_counts() -> list:
         if said is None:
             out.append(f'표 28 에 "{k}" 행이 없다')
         elif said != n:
-            out.append(f'표 29 의 {k} 이 {said} 인데 돌려 보니 {n} 이다')
+            out.append(f'표 {tn} 의 {k} 이 {said} 인데 돌려 보니 {n} 이다')
     return out
 
 
@@ -899,8 +914,10 @@ def title_drift() -> list:
     문자열로 대조하면 오탐이 난다."""
     out = []
     s = (DOC / 'proposal_ko.md').read_text()
-    if '### 5.11' not in s or '[표 41]' not in s:
-        return []
+    # 표 번호를 박아 두면 표가 밀렸을 때 이 검사가 조용히 꺼지거나 엉뚱한
+    # 표를 읽는다. 실제로 표가 두 번 밀렸다. 제목으로 찾는다.
+    if '### 5.11' not in s or not table_no('전원이 실명'):
+        return skip('직책 대조 — 부록 §5.11 이나 응답자 명단 표가 없다')
     body = s[:s.index('### 5.11')]
     roster = {}
     for ln in s[s.index(f'[표 {table_no("전원이 실명") or 42}]'):].splitlines()[1:]:
@@ -919,7 +936,8 @@ def title_drift() -> list:
         for m in re.finditer(re.escape(name), body):
             seg = body[max(0, m.start() - 24):m.end() + 14]
             if title not in seg:
-                out.append(f'{name} 을 부르는 자리의 직책이 표 42("{title}")과 다르다 '
+                rn = table_no('전원이 실명') or 44
+                out.append(f'{name} 을 부르는 자리의 직책이 표 {rn}("{title}")과 다르다 '
                            f'— …{seg.strip()[:44]}…')
                 break
     return out
@@ -1095,7 +1113,7 @@ def item_refs() -> list:
     out = []
     s = (DOC / 'proposal_ko.md').read_text()
     if '### 5.9' not in s:
-        return []
+        return skip('미검증 항목 참조 검사 — §5.9 가 없다')
     nxt = re.search(r'^### 5\.1[0-9]', s[s.index('### 5.9'):], re.M)
     seg = s[s.index('### 5.9'):][:nxt.start() if nxt else None]
     have = [o for o in ORDINAL if re.search(rf'^{o},', seg, re.M)]
@@ -1147,7 +1165,7 @@ def built_order() -> list:
     try:
         import docx
     except ImportError:
-        return []
+        return skip('빌드된 문서 검사 — python-docx 가 없다')
     from docx.oxml.ns import qn
     out = []
     for name, fw, tw in (('SnapCare_H1_Final_Proposal_KO.docx', '그림', '표'),
@@ -1224,7 +1242,7 @@ def len_ratio() -> list:
                 continue
             rows.append((len(y) / len(x), k, i, x[:44]))
     if len(rows) < 30:
-        return []
+        return skip('문단 길이 비 검사 — 견줄 문단이 서른에 못 미친다')
     med = statistics.median(r[0] for r in rows)
     # 문턱은 실제로 찾았던 값에 맞춘다. §5.8 의 빠진 인용이 0.05,
     # §5.5 의 빠진 문장이 4.43 이었다. 반대로 3.2~3.4 는 정상이다 —
@@ -1246,7 +1264,7 @@ def en_figures() -> list:
     import zipfile
     path = DOC / 'SnapCare_H1_Final_Proposal_EN.docx'
     if not path.exists() or not (DOC / 'fig_en').is_dir():
-        return []
+        return skip('영어판 도판 대조 — 빌드된 영어 문서나 fig_en 이 없다')
     md5 = lambda b: hashlib.md5(b).hexdigest()
     ko = {q.name: md5(q.read_bytes()) for q in (DOC / 'fig').glob('*.png')}
     en = {q.name: md5(q.read_bytes()) for q in (DOC / 'fig_en').glob('*.png')}
@@ -1485,7 +1503,12 @@ def main() -> int:
                 note(f'{f}: 마크다운이 샜다 — {leak[:3]}')
             print(f'  {f}: 문단 {len(txt):,} · 그림 {len(d.inline_shapes)}')
 
-    print('\n' + ('모든 검사 통과' if not fail else f'{len(fail)}건 걸렸다'))
+    if SKIPPED:
+        print()
+        for why in SKIPPED:
+            print(f'   건너뜀 · {why}')
+    print('\n' + ('모든 검사 통과' if not fail else f'{len(fail)}건 걸렸다')
+          + (f' · 건너뛴 검사 {len(SKIPPED)}개' if SKIPPED else ''))
     return 1 if fail else 0
 
 
