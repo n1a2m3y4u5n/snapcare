@@ -1632,7 +1632,7 @@ Nutrition information arrives by three routes: OCR of a nutrition label, a produ
 
 How large an energy error of 253.7 kcal is becomes clear against the thresholds in §2.4. Against a daily 1,800 kcal at age 70 it is **14%**, and taken against a 700 kcal meal it is more than a third. That is not accuracy sufficient to judge "may I eat this" from a single photograph. This route was kept anyway because local food in the target regions is in no product database, and for that reason values from this route reach the screen only after passing exactly the same physical checks as the other two.
 
-SnapCare therefore applies the same checks regardless of which route a value came in by.
+SnapCare therefore applies the same checks regardless of which route a value came in by. The tolerances are written into the table so that how loose these checks are is stated alongside them. A sum of up to 105 g per 100 g passes, and Atwater passes to within 30%. Labels are printed with rounding and fibre is often counted inside carbohydrate, so a tighter bound would catch ordinary labels. What this gate asks, though, is whether a value is plausible rather than whether it is right. The 253.7 kcal error of photo estimation passes straight through it.
 
 [Table 26] Checks a value must pass before it is accepted
 
@@ -1640,8 +1640,8 @@ SnapCare therefore applies the same checks regardless of which route a value cam
 |---|---|
 | Range | Is each nutrient within a physically possible range |
 | Subset | Saturated fat ≤ total fat, sugars ≤ carbohydrates |
-| Mass balance | Does the sum of nutrients exceed the total mass |
-| Atwater identity | 4·carbohydrate + 4·protein + 9·fat ≈ energy |
+| Mass balance | Do the nutrients per 100 g sum to no more than 105 g |
+| Atwater identity | Does 4·carbohydrate + 4·protein + 9·fat agree with energy to within 30% |
 
 ![Figure 31](fig/fig17_gate.png)
 
