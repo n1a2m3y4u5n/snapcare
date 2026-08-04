@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { DispenserPanel } from '@/components/sc/DispenserPanel';
+import { BenchTest } from '@/components/sc/BenchTest';
 import { DoseRelease } from '@/components/sc/DoseRelease';
 import { useDispenser } from '@/lib/dispenser/useDispenser';
 import { toCloudSlots } from '@/lib/dispenser/fromApp';
@@ -320,6 +321,11 @@ export default function DevicePage() {
             먼저 보이면 켜 놓고 아무 일도 안 일어나는 상태가 된다.
           */}
           {box.paired && <PushToggle deviceId={box.paired.deviceId} />}
+          {/*
+            기계가 도는지 직접 확인하는 자리. 짝이 있어야 명령을 봉할 수 있고,
+            칸 수는 상자가 스스로 말한 것을 쓴다 — 없으면 화면에서 고른 값이다.
+          */}
+          {box.paired && <BenchTest paired={box.paired} trays={trays} />}
         </div>
 
         {/* 폰 → 기기 (WiFi) */}

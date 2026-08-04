@@ -196,6 +196,32 @@ export interface ReleaseCommand {
   minutes?: number;
 }
 
+/**
+ * Open a tray now, regardless of the schedule.
+ *
+ * Not a dose request. `release` is bounded by what the device is currently
+ * offering, which is right for medication and useless for the other question a
+ * person has in front of an assembled machine: *does tray 3 turn.* A bench with
+ * no prescription loaded has nothing due, so `release` can answer nothing there.
+ *
+ * The device runs this through the same call its own page uses, which
+ * deliberately leaves the scheduler alone — checking the machine must not
+ * cancel a real dose. The drop is recorded, marked manual.
+ */
+export interface DropCommand {
+  action: 'drop';
+  /** 1–8. Required — there is no "every tray" here, and there should not be. */
+  tray: number;
+}
+
+/** Sound the buzzer. Moves nothing; it answers "is this the right box". */
+export interface BeepCommand {
+  action: 'beep';
+}
+
+/** Anything the phone can put in the command slot. */
+export type DeviceCommand = ReleaseCommand | DropCommand | BeepCommand;
+
 /** The relay's own view of a mailbox — revisions and timestamps, no plaintext. */
 export interface MailboxMeta {
   ok: boolean;

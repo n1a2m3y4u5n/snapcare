@@ -756,3 +756,48 @@ def test_the_device_will_not_read_an_unbounded_body():
 
     with pytest.raises(cloud._RelayError):
         cloud._read_json(Huge())
+
+
+def _events(dispenser):
+    """What the device wrote down. A drop that moved nothing leaves nothing."""
+    return [e["tray"] for e in dispenser.store.read_events()]
+
+
+def test_a_drop_from_the_cloud_opens_the_tray(link, dispenser):
+    """The question `release` cannot answer: does this machine work.
+
+    `release` is bounded by what the device is currently offering, which is right
+    for medication and useless on a bench with no prescription loaded — there is
+    nothing due, so nothing to release. Somebody who has just assembled a machine,
+    or is demonstrating one, is asking whether tray 3 turns.
+    """
+    link._carry_out({"action": "drop", "tray": 2}, 7)          # noqa: SLF001
+    assert _events(dispenser) == [2], "the tray did not open"
+
+
+def test_a_drop_from_the_cloud_is_marked_manual(link, dispenser):
+    """Something left the hopper, so the record must not omit it — and it was not
+    a scheduled dose, so the adherence figures must be able to tell."""
+    link._carry_out({"action": "drop", "tray": 3}, 7)          # noqa: SLF001
+    assert dispenser.store.read_events()[-1]["reason"] == "manual"
+
+
+def test_a_drop_with_no_tray_is_refused_rather_than_guessed(link, dispenser):
+    """There is no "every tray" here and there should not be. A command that
+    names nothing is a bug upstream, and opening all eight is not a recovery."""
+    link._carry_out({"action": "drop"}, 8)                     # noqa: SLF001
+    assert _events(dispenser) == []
+
+
+def test_a_beep_moves_nothing(link, dispenser):
+    """It answers "is this the right box" — the one question that must not cost
+    a pill to ask."""
+    link._carry_out({"action": "beep"}, 9)                     # noqa: SLF001
+    assert _events(dispenser) == []
+
+
+def test_an_action_this_firmware_does_not_do_is_ignored(link, dispenser):
+    """A newer app, or a relay handing back something odd. Ignored and logged —
+    never guessed at, because every guess here moves a servo."""
+    link._carry_out({"action": "launch", "tray": 1}, 10)       # noqa: SLF001
+    assert _events(dispenser) == []

@@ -35,6 +35,7 @@ import type {
   DeviceReport,
   MailboxMeta,
   ReleaseCommand,
+  DeviceCommand,
   WeeklySlot,
 } from './types.ts';
 
@@ -261,7 +262,40 @@ export class DispenserClient {
       if (minutes === null) throw new Error(`"${dose.at}" is not an HHMM time`);
       command.minutes = minutes;
     }
+    return this.command(command);
+  }
 
+  /**
+   * Open a tray now, whatever the schedule says.
+   *
+   * Different from {@link release}, and the difference is the whole point.
+   * `release` asks for a dose that is **owed**, and a bench with no prescription
+   * loaded has none — so it is no use to somebody who has just assembled a
+   * machine and wants to know whether tray 3 turns. This asks the other
+   * question: *does this thing work.*
+   *
+   * It does not touch the scheduler, so checking the machine cannot cancel a
+   * real dose. What comes out is still recorded, marked `manual`, because
+   * something did leave the hopper.
+   */
+  async drop(tray: number): Promise<number> {
+    return this.command({ action: 'drop', tray });
+  }
+
+  /** Sound the buzzer. Moves nothing — it answers "is this the right box". */
+  async beep(): Promise<number> {
+    return this.command({ action: 'beep' });
+  }
+
+  /**
+   * Seal a command into the mailbox at the next revision.
+   *
+   * The revision dance is shared by every command rather than copied per verb:
+   * read what the relay holds, write one past it, and on a 409 read again and
+   * retry once. Two phones tapping at the same moment need no merge here —
+   * unlike a schedule, both taps are asking for the same thing.
+   */
+  private async command(command: DeviceCommand): Promise<number> {
     let currentRev = 0;
     try {
       const meta = await this.meta();

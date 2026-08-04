@@ -546,8 +546,73 @@ class CloudLink:
 
         self._carry_out(opened, rev)
 
+    def _bench(self, action: str, opened: dict, rev: int) -> None:
+        """Move a tray, or sound the buzzer, because somebody asked from the app.
+
+        Why these are separate from `release`
+        ------------------------------------
+        `release` answers "give me the dose that is owed", and the device's own
+        sense of what is due is the authority — a release naming a dose that is
+        not currently offered does nothing, which is what stops a notification
+        tapped four hours late from dropping a second pill.
+
+        These two answer a different question: **does this machine work.** They
+        are what somebody standing in front of an assembled dispenser needs, and
+        what a demonstration needs, and neither is answerable through `release`
+        because a bench with no prescription loaded has nothing due. `drop`
+        therefore goes to `drop_now`, which is the same call the device's own
+        page makes and which deliberately does not touch the scheduler: checking
+        the machine must not cancel a real dose.
+        `beep` moves nothing at all.
+
+        Who can ask
+        -----------
+        Only whoever holds the printed code. The command arrives sealed under
+        the box key, and the relay cannot make one — it carries ciphertext it
+        has never been able to read. So "operate this dispenser from anywhere"
+        is exactly as strong as "hold the sticker", which is the security model
+        this device already has.
+
+        A drop is still recorded as a dose (`reason: "manual"`), because
+        something did leave the hopper and a record that omits it is a record
+        that undercounts what the person actually has. It is marked manual so
+        the adherence figures can tell it from a scheduled dose.
+        """
+        if action == "beep":
+            try:
+                self.dispenser.indicator.beep()
+            except Exception as exc:  # noqa: BLE001 - never onto the poller
+                log.error("a beep from the cloud failed: %s", exc)
+                return
+            log.info("beeped from the cloud (revision %d)", rev)
+            return
+
+        tray = _optional_int(opened.get("tray"))
+        if tray is None:
+            log.warning("a drop from the cloud (revision %d) named no tray", rev)
+            return
+
+        try:
+            self.dispenser.drop_now(tray)
+        except (KeyError, RuntimeError) as exc:
+            # A tray that is not wired, or no GPIO library. Reported up the same
+            # channel the tap came down — the person who tapped needs to hear it,
+            # and on this path they are not in the room.
+            log.error("a drop from the cloud could not be carried out: %s", exc)
+            self._remember(self._desired_rev, applied=False, error=f"refused: {exc}")
+            self.nudge()
+            return
+
+        log.info("dropped tray %d from the cloud (revision %d)", tray, rev)
+        self.nudge()
+
     def _carry_out(self, opened: dict, rev: int) -> None:
         action = str(opened.get("action") or "").strip().lower()
+
+        if action in ("drop", "beep"):
+            self._bench(action, opened, rev)
+            return
+
         if action != "release":
             log.warning("command revision %d asks for %r, which this firmware "
                         "does not do", rev, action or "nothing")
