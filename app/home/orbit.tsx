@@ -18,8 +18,9 @@ import { CameraIcon } from '@/components/icons';
  *    키보드와 스위치 스캐닝은 DOM 순서를 따른다. 그래서 카메라를 DOM 에서 맨 앞에
  *    둔다 — 훑어 나가는 사람이 가장 먼저 만나는 것이 이 앱의 요점이어야 한다.
  *  · **위성이 44px 보다 훨씬 크다.** 원 위에 놓인 표적은 사각형 목록보다 겨누기
- *    어렵다. 손이 떨리는 사람을 포함하는 앱이라 그만큼 키웠다(컨테이너의 20%,
- *    440px 폭에서 88px).
+ *    어렵다. 손이 떨리는 사람을 포함하는 앱이라 그만큼 키웠다(컨테이너의 18%,
+ *    340px 폭에서 61px, 440px 에서 79px). 20% 에서 18% 로 줄인 것은 가장자리에
+ *    여백을 내기 위해서고, 61px 은 여전히 44 의 한 배 반이다.
  *  · **글자를 지우지 않았다.** 그림 밑에 이름이 붙는다. 위성이 그림뿐이면 무엇인지
  *    아는 방법이 눌러 보는 것밖에 없고, 이 화면에서 잘못 누르면 되돌아오는 길을
  *    또 찾아야 한다.
@@ -62,7 +63,11 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
          style={{ maxWidth: 'min(100%, 68vh, 420px)' }}>
       {/*
         가운데. DOM 에서 맨 앞이라 키보드·스캐닝이 여기부터 만난다.
-        컨테이너의 40% — 340px 상자에서 136px 이다. 전에는 96px 였다.
+        컨테이너의 52% — 340px 상자에서 177px 이다. 96 → 136 → 177 로 두 번 커졌다.
+
+        이번에 키운 것은 자리를 남겨서가 아니라 **위성과의 사이를 좁히려고**다. 위성이
+        가장자리에 붙어 있으면 가운데와 멀어지고, 멀어지면 여섯이 한 덩어리로 안 읽힌다.
+        가운데를 키우고 궤도를 당기면 같은 상자 안에서 사이가 좁아진다.
       */}
       {/*
         가운데는 **검정**이다. 파랑이었다.
@@ -82,7 +87,7 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
       <button
         onClick={() => router.push('/camera')}
         aria-label="Scan something with the camera. Point it at food or medicine."
-        className="absolute left-1/2 top-1/2 flex aspect-square w-[46%] -translate-x-1/2 -translate-y-1/2
+        className="absolute left-1/2 top-1/2 flex aspect-square w-[52%] -translate-x-1/2 -translate-y-1/2
                    flex-col items-center justify-center gap-1 rounded-full text-white shadow-lg
                    active:scale-95 transition-transform"
         style={{ background: 'var(--color-sc-ink)' }}
@@ -108,7 +113,7 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
           key={s.href}
           onClick={() => router.push(s.href)}
           aria-label={s.say}
-          className="absolute flex aspect-square w-[20%] -translate-x-1/2 -translate-y-1/2 flex-col
+          className="absolute flex aspect-square w-[18%] -translate-x-1/2 -translate-y-1/2 flex-col
                      items-center justify-center rounded-full bg-white shadow-sm
                      active:scale-95 transition-transform"
           style={{ left: `${spots[i].left}%`, top: `${spots[i].top}%` }}

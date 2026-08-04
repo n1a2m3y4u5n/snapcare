@@ -8,8 +8,8 @@ import { orbitSpots, overlaps } from './orbit.ts';
   것을 재게 된다** — 가운데 버튼을 40%에서 46%로 키웠을 때 이 상수가 40 으로
   남아 있어서, 위성이 버튼에 파고들어도 통과할 수 있는 상태였다.
 */
-const SATELLITE_PCT = 20;   // w-[20%]
-const CENTER_PCT = 46;      // w-[46%]
+const SATELLITE_PCT = 18;   // w-[20%]
+const CENTER_PCT = 52;      // w-[46%]
 
 test('12시에서 시작해 고르게 나눈다', () => {
   // 처음에는 6시를 비우려고 각도를 좁혔다. "Scan something" 이라는 이름을 원 안에
@@ -40,11 +40,20 @@ test('위성끼리 겹치지 않는다', () => {
 });
 
 test('상자 밖으로 나가지 않는다', () => {
-  // 픽셀로 박으면 좁은 화면에서 위성이 잘린다. 백분율로 내는 이유다.
+  /*
+    픽셀로 박으면 좁은 화면에서 위성이 잘린다. 백분율로 내는 이유다.
+
+    **딱 맞는 것은 안 된다.** 궤도 반지름이 0.8 일 때 위성의 바깥 모서리가 상자
+    모서리에 정확히 닿았고 — 산수로는 통과다 — 실제 화면에서는 그림자와 배지가
+    상자 밖으로 나가 끝이 잘려 보였다. 그래서 여백을 요구한다.
+  */
   const half = SATELLITE_PCT / 2;
   for (const s of orbitSpots(4)) {
-    assert.ok(s.left - half >= 0 && s.left + half <= 100, `가로로 넘친다: ${s.left}`);
-    assert.ok(s.top - half >= 0 && s.top + half <= 100, `세로로 넘친다: ${s.top}`);
+    const margin = 1;   // 그림자와 배지가 나갈 자리
+    assert.ok(s.left - half >= margin && s.left + half <= 100 - margin,
+              `가로로 여백이 없다: ${s.left}`);
+    assert.ok(s.top - half >= margin && s.top + half <= 100 - margin,
+              `세로로 여백이 없다: ${s.top}`);
   }
 });
 
