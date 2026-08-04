@@ -63,6 +63,28 @@ function hhmm(time: string): string {
   return /^\d{4}$/.test(time) ? `${time.slice(0, 2)}:${time.slice(2)}` : time;
 }
 
+/**
+ * 마지막 보고가 몇 초 전 것인가.
+ *
+ * 이 화면은 실패를 조용히 삼킨다 — 발표 중에 붉은 글씨를 띄우지 않으려고 그렇게
+ * 만들었고, 그 판단 자체는 옳다. 대신 **멈춘 화면과 살아 있는 화면이 똑같이
+ * 생겼다**는 대가를 치른다. 발표자는 6분 전 상태를 보면서 지금이라고 믿게 된다.
+ *
+ * 나이를 적으면 그 대가가 사라진다. 붉은 글씨도, 경고도, 사람을 놀라게 하는 것도
+ * 없이 숫자 하나가 커지는 것으로 끝난다.
+ *
+ * 실제로 이것이 없어서 한참을 헤맸다. 이 화면이 6분 전 스냅샷을 붙들고 있었고,
+ * 원인은 화면이 **다른 상자**를 보고 있었다는 것이었는데, 화면 어디에도 그 둘을
+ * 구별할 것이 없었다. 그래서 위에 상자 번호도 같이 적는다.
+ */
+function heardOf(report: DeviceReport | null): string {
+  if (!report?.at) return '아직 소식 없음';
+  const age = Math.round((Date.now() - new Date(report.at).getTime()) / 1000);
+  if (!Number.isFinite(age) || age < 0) return report.at.slice(11, 16);
+  if (age < 60) return `${age}초 전`;
+  return `${Math.floor(age / 60)}분 전 — 멈춰 있다`;
+}
+
 /** 짝지은 상자가 마지막으로 보고한 것을 짧게. 발표 중에 상태를 확인하는 용도. */
 function Line({ label, value }: { label: string; value: string }) {
   return (
@@ -78,6 +100,9 @@ export default function PresentPage() {
   const [report, setReport] = useState<DeviceReport | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  //: 마지막으로 물어본 시각. 값 자체는 안 쓰고, 소식이 끊겨도 나이 표시가 계속
+  //: 흐르게 하려고 다시 그리는 용도로만 둔다.
+  const [, setSeen] = useState(0);
 
   useEffect(() => { void loadPaired().then(setPaired); }, []);
 
@@ -94,7 +119,10 @@ export default function PresentPage() {
     const client = clientFor(paired);
     const pull = () => client.getReport()
       .then((found) => { if (alive && found) setReport(found.report); })
-      .catch(() => { /* 발표 중에 붉은 글씨를 띄우지 않는다 */ });
+      .catch(() => { /* 발표 중에 붉은 글씨를 띄우지 않는다 */ })
+      // 실패해도 다시 그린다. 이것이 없으면 소식이 끊긴 순간 나이 표시도 같이
+      // 멈추고, 멈춘 화면이 다시 살아 있는 화면과 똑같아진다.
+      .finally(() => { if (alive) setSeen(Date.now()); });
     void pull();
     const timer = setInterval(pull, 3000);
     return () => { alive = false; clearInterval(timer); };
@@ -145,7 +173,8 @@ export default function PresentPage() {
 
       {/* ── 지금 상자가 무엇을 하고 있나 ─────────────────────────────────── */}
       <section className="mt-5 rounded-3xl bg-white p-4 shadow-sm">
-        <Line label="상자" value={report ? '말하고 있음' : '아직 소식 없음'} />
+        <Line label="상자" value={paired.deviceId.slice(0, 8)} />
+        <Line label="마지막 소식" value={heardOf(report)} />
         <Line label="시계" value={clockLine(status)} />
         <Line label="트레이" value={status ? `${status.trayCount}칸 · 서보 ${status.servoUsable ? '정상' : '없음'}` : '아직 소식 없음'} />
         <Line label="지금 밀린 복용" value={waiting.length ? waiting.map((d) => `${d.tray}번 ${hhmm(d.time)}`).join(', ') : '없음'} />
