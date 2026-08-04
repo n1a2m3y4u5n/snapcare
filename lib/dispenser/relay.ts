@@ -301,6 +301,18 @@ export class DispenserClient {
   }
 
   /**
+   * Tell the box nobody has it any more. The other half of {@link hello}.
+   *
+   * Must be sent **before** the keys are thrown away — after that there is
+   * nothing left to seal an envelope with. Without it the box is orphaned:
+   * claimed by a phone that has forgotten it, and therefore never showing its
+   * pairing code to the next person who stands in front of it.
+   */
+  async goodbye(): Promise<number> {
+    return this.command({ action: 'goodbye' });
+  }
+
+  /**
    * Seal a command into the mailbox at the next revision.
    *
    * The revision dance is shared by every command rather than copied per verb:

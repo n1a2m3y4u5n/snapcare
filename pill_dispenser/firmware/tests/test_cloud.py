@@ -842,3 +842,23 @@ def test_a_hello_marks_the_box_claimed_and_survives_a_restart(link, dispenser, t
     # A second phone, or the same one re-paired. The first moment stands.
     link._carry_out({"action": "hello"}, 13)                   # noqa: SLF001
     assert link.status()["claimedAt"] == claimed
+
+
+def test_a_goodbye_lets_the_box_be_claimed_again(link):
+    """Both halves, because the first version only had one.
+
+    `hello` alone left the box orphaned: the phone throws its keys away on
+    unpair and the box cannot see that, so a machine nobody owns went on
+    believing it was owned and never showed its pairing code again. The next
+    person in front of it — a new carer, a new phone, somebody demonstrating —
+    had nothing they could do.
+    """
+    link._carry_out({"action": "hello"}, 20)                   # noqa: SLF001
+    assert link.status()["claimedAt"]
+
+    link._carry_out({"action": "goodbye"}, 21)                 # noqa: SLF001
+    assert not link.status()["claimedAt"], "the box still thinks it is owned"
+
+    # And it can be taken again. This is the whole loop a demonstration needs.
+    link._carry_out({"action": "hello"}, 22)                   # noqa: SLF001
+    assert link.status()["claimedAt"]

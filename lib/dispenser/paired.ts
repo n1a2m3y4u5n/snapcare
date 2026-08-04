@@ -109,6 +109,26 @@ export async function loadPaired(): Promise<PairedDevice | null> {
 /** 짝을 잊는다. 다시 쓰려면 코드를 다시 읽어야 한다. */
 export async function forgetPaired(): Promise<void> {
   if (!isSupported()) return;
+
+  /*
+    상자에게 먼저 말하고 나서 잊는다. 순서가 바뀌면 말할 수단이 없어진다 — 봉투는
+    상자 열쇠로 봉하는데, 그 열쇠가 지금 지우려는 것이다.
+
+    **기다린다.** `hello` 와 반대다. 저쪽은 화면이 이미 넘어가는 중이라 사람을 세워
+    둘 이유가 없었지만, 이쪽은 이 한마디가 실패하면 상자가 **아무도 가지지 않은 채
+    짝짓기 코드를 영영 안 띄우는** 상태로 남는다. 다음 사람이 그 앞에서 할 수 있는
+    일이 없어지므로, 몇백 밀리초는 치를 값이다.
+
+    실패해도 짝은 푼다. 망이 없는 자리에서 폰을 정리하지 못하게 막는 것은 더 나쁘고,
+    상자는 다음 `hello` 로 어차피 주인이 바뀐다.
+  */
+  try {
+    const paired = await loadPaired();
+    if (paired) await clientFor(paired).goodbye();
+  } catch (err) {
+    console.warn('[dispenser] 상자에게 작별을 못 보냈다 (짝은 푼다):', err);
+  }
+
   try {
     await tx('readwrite', (s) => s.delete(KEY));
   } catch {

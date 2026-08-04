@@ -236,8 +236,22 @@ export interface HelloCommand {
   action: 'hello';
 }
 
+/**
+ * "이제 내 것이 아니다" — 짝을 풀 때 앱이 보내는 마지막 한마디.
+ *
+ * `hello` 의 짝이고, 없으면 비대칭이 남는다. 폰에서 짝을 풀면 폰은 열쇠를 버리는데
+ * 상자는 그것을 볼 수 없어서, 아무도 가지지 않은 상자가 짝짓기 코드를 영영 안 띄운다.
+ * 다음 사람 — 새 보호자, 새 폰, 시연하는 사람 — 이 그 앞에서 할 수 있는 일이 없다.
+ *
+ * 열쇠를 버리기 **전에** 보내야 한다. 버린 뒤에는 봉투를 만들 수 없다.
+ */
+export interface GoodbyeCommand {
+  action: 'goodbye';
+}
+
 /** Anything the phone can put in the command slot. */
-export type DeviceCommand = ReleaseCommand | DropCommand | BeepCommand | HelloCommand;
+export type DeviceCommand =
+  | ReleaseCommand | DropCommand | BeepCommand | HelloCommand | GoodbyeCommand;
 
 /** The relay's own view of a mailbox — revisions and timestamps, no plaintext. */
 export interface MailboxMeta {

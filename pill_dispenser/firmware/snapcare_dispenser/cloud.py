@@ -576,17 +576,21 @@ class CloudLink:
 
         self._carry_out(opened, rev)
 
-    def _claim(self) -> None:
-        """누군가 이 상자를 자기 것이라고 말했다. SD 카드에 남긴다.
+    def _claim(self, held: bool) -> None:
+        """주인이 생겼거나(`hello`), 없어졌다(`goodbye`). SD 카드에 남긴다.
 
-        메모리에만 두면 재부팅 뒤에 상자가 다시 짝을 맺자고 한다 — 짝은 폰 안에
-        그대로 있는데. 한 번 일어난 일은 되돌아가지 않으므로 지우지 않는다. 짝을
-        푸는 것은 폰 쪽의 일이고, 그때 상자는 아무 말도 듣지 못한다.
+        카드에 쓰는 이유: 메모리에만 두면 재부팅 뒤에 상자가 다시 짝을 맺자고 한다 —
+        짝은 폰 안에 그대로 있는데.
+
+        되돌릴 수 있어야 하는 이유: 처음에는 한 번 찍히면 안 지웠다. 그러면 폰에서
+        짝을 푼 뒤에도 상자는 자기가 누군가의 것이라고 믿고 짝짓기 코드를 영영 안
+        띄운다. 새 보호자, 새 폰, 다음에 그 앞에 서는 누구든 할 수 있는 일이 없어진다.
         """
         with self._lock:
-            if self._claimed_at:
+            now = datetime.now().isoformat(timespec="seconds") if held else ""
+            if bool(self._claimed_at) == held:
                 return
-            self._claimed_at = datetime.now().isoformat(timespec="seconds")
+            self._claimed_at = now
         self._save_state()
         self.nudge()
 
@@ -675,8 +679,17 @@ class CloudLink:
             #
             # 이것이 증거가 되는 이유: 상자 열쇠로 봉해져 오므로 만들 수 있는 것은
             # 코드를 쥔 쪽뿐이다. 릴레이는 이 봉투를 열지 못하고 지어내지도 못한다.
-            self._claim()
+            self._claim(True)
             log.info("a phone claimed this box (revision %d)", rev)
+            return
+
+        if action == "goodbye":
+            # 짝을 푼 폰의 마지막 한마디. `hello` 의 짝이고, 없으면 비대칭이 남는다 —
+            # 폰은 열쇠를 버렸는데 상자는 그것을 볼 수 없어서, 아무도 가지지 않은
+            # 상자가 짝짓기 코드를 영영 안 띄운다. 다음 사람이 그 앞에서 할 수 있는
+            # 일이 없어진다.
+            self._claim(False)
+            log.info("the phone let go of this box (revision %d)", rev)
             return
 
         if action in ("drop", "beep"):
