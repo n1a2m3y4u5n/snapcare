@@ -664,7 +664,7 @@ def boot(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
     device that starts deliberately rather than one that flickers.
 
     The bar is drawn normally and every field on it is empty, which is the
-    truth: seven dim icons and `--:--`. Nothing here is conditional on "are we
+    truth: six dim icons and `--:--`. Nothing here is conditional on "are we
     booting", so there is no second rendering of the machine's state to keep in
     step with the first.
     """

@@ -519,3 +519,89 @@ def test_the_schedule_frame_does_not_invent_a_number():
     """
     assert screens._tray_list_text(None) == "?"  # noqa: SLF001
     assert screens._tray_list_text(()) == "?"    # noqa: SLF001
+
+
+# ── the bar's date ──────────────────────────────────────────────────────────
+
+def test_the_bar_carries_a_date():
+    """The panel knew the minute and not the day.
+
+    That is fine for the minute you are standing in front of it and wrong for
+    every other question this machine gets asked — "did it give the Tuesday
+    dose", "how long has it been sitting like that", "is it even running today".
+    The strip underneath draws a whole day of doses and, without this, that day
+    was *some* day.
+    """
+    from snapcare_dispenser.display import bar
+
+    assert bar._date(Health(known=True, today="04-08", clock_source="ntp")) == "04-08"
+
+
+def test_the_date_does_not_outlive_the_clock_that_made_it():
+    """A machine that will not vouch for the time cannot name the day either.
+
+    `--:--` beside a confident `04-08` would be the panel disclaiming the easy
+    half of a fact and asserting the hard half of the same one.
+    """
+    from snapcare_dispenser.display import bar
+
+    blind = Health(known=True, now="14:32", today="04-08", clock_source="untrusted")
+    assert bar._clock(blind) == ("--:--", True)
+    assert bar._date(blind) == "", "the date survived a clock nobody vouches for"
+    assert bar._date(Health()) == ""
+
+
+def test_the_date_is_blank_rather_than_dashes():
+    """Five dashes read as a rule, not as a date.
+
+    The clock gets away with `--:--` because the colon survives and it still
+    reads as a clock with nothing in it. `-----` reads as a rendering fault, and
+    the clock's own dashes two centimetres away are already saying the whole of
+    what there is to say.
+    """
+    from snapcare_dispenser.display import bar
+
+    assert "-" not in bar._date(Health(known=True))
+
+
+def test_the_coin_cell_borrows_the_clock_chip_rather_than_keeping_its_own():
+    """Six chips, and the sixth slot became the date.
+
+    The coin cell is not a subsystem — it is the battery of the chip the CLOCK
+    slot already names, read out of the same `rtc.read_status()`. Two pictures
+    over one subsystem is the redundancy this row spends its docstring arguing
+    against, and it was the only slot that could be given up without losing a
+    subsystem.
+
+    Worst of the two wins, in severity order: a stopped clock shuts the tray
+    today, a flat cell shuts it after the next power cut.
+    """
+    from snapcare_dispenser.display import bar
+
+    assert "CELL" not in bar.SLOTS
+    assert bar.PROBLEM_SLOT["cell"] == "CLOCK"
+
+    def chip(**kw):
+        return dict(zip(bar.SLOTS, bar._read(Health(known=True, **kw))))["CLOCK"][1]
+
+    assert chip(clock_source="ntp", cell="ok") == bar.OK
+    assert chip(clock_source="ntp", cell="flat") == bar.ATTENTION, \
+        "a good clock with a flat cell lost its warning"
+    assert chip(clock_source="untrusted", cell="ok") == bar.FAULT
+    assert chip(clock_source="untrusted", cell="flat") == bar.FAULT
+
+
+def test_the_date_and_the_clock_clear_the_last_chip():
+    """The check that makes the bar's empty right-hand end a proof.
+
+    Both strings are five characters by construction, so this is arithmetic
+    rather than a hope — and it runs at import, which is why widening the row
+    back to seven slots fails with a traceback naming the line rather than with
+    a date drawn across the SD-card chip on the 30th.
+    """
+    from snapcare_dispenser.display import bar, numerals
+
+    used = (numerals.text_width("00:00", bar.CLOCK_H) + bar.DATE_GAP
+            + numerals.text_width("00-00", bar.DATE_H))
+    free = bar.W - bar.BAR_PAD - (bar.SLOT_X(len(bar.SLOTS) - 1) + bar.SLOT_W)
+    assert used <= free, f"the right-hand end needs {used} px and has {free}"

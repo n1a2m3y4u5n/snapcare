@@ -186,7 +186,7 @@ def undervoltage(pattern: str = _HWMON_NAMES, now=time.monotonic) -> str:
 def storage(path=None, now=time.monotonic) -> str:
     """`"ok"` | `"low"` | `"readonly"` | `""` — can this device still write down what it did?
 
-    Not a cosmetic warning, which is why it earns a slot on a seven-slot bar.
+    Not a cosmetic warning, which is why it earns one of the bar's six slots.
     `Dispenser._save_state` writes `scheduler.json` through an fsync-and-replace;
     on a full or read-only card that raises, the daemon's tick catches it and the
     machine carries on dispensing — with no record reaching the card. After the

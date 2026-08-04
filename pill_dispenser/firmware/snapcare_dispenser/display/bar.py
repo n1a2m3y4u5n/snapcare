@@ -1,4 +1,4 @@
-"""The status band — seven chips and a clock, in the same seven places forever.
+"""The status band — six chips, a date and a clock, in the same places forever.
 
 What this replaced, and why it is nailed down
 ---------------------------------------------
@@ -8,7 +8,7 @@ the same machine showed the same subsystem in three different places on three
 different days. A row that moves cannot be learnt, and a row nobody has learnt
 has to be read — which on this device is the one thing that cannot be assumed.
 
-So the bar is static in the strongest sense available. Seven slots, fixed order,
+So the bar is static in the strongest sense available. Six slots, fixed order,
 fixed x, fixed size. It never reorders, never reflows, never shrinks, never
 truncates and is never tinted by whatever the hero band is flooding with. The
 person who has learnt that the fourth picture is the trays has learnt it for the
@@ -34,8 +34,8 @@ bar peripherally — the icons are a constant they stop seeing, and a shape
 appearing under one of them is the whole message.
 
 **Absence is not a fault and it is not a tick.** A subsystem that has told us
-nothing keeps its dim icon and draws no mark, so a blank `Health()` is seven dim
-icons, no marks and `--:--`. Blanking the slot instead was considered and is
+nothing keeps its dim icon and draws no mark, so a blank `Health()` is six dim
+icons, no marks, no date and `--:--`. Blanking the slot instead was considered and is
 worse twice over: the gap makes the row's geometry look broken, and it moves
 every icon after it, which is the reordering this file exists to prevent. A green
 tick on no evidence is not on the table at all — `health.py` defaults every field
@@ -92,8 +92,8 @@ FACE_H = BAR_H - RULE_H                                 # 34
 
 #: Side inset, and the same air the clock keeps on the right.
 BAR_PAD = W // 40                                       # 8
-#: Slot to slot. Seven of these plus both insets is 202 px of a 320 px band,
-#: which is what leaves the clock its own end of the bar.
+#: Slot to slot. Six of these plus both insets is 176 px of a 320 px band,
+#: which is what leaves the date and the clock their own end of the bar.
 SLOT_PITCH = W * 13 // 160                              # 26
 #: The chip itself: four pixels narrower than the pitch, so there are two pixels
 #: of air on each side of it. Two 16 px pictures with nothing between them read
@@ -130,10 +130,41 @@ CLOCK_PAD = 2 * ICON_Y                                  # 4
 CLOCK_H = FACE_H - 2 * CLOCK_PAD                        # 26
 CLOCK_Y = (FACE_H - CLOCK_H) // 2                       # 4
 
+#: The date, left of the clock and smaller than it. Five eighths — the ratio is
+#: chosen for what it does to the *pair*, not for the date on its own.
+#:
+#: Two numbers the same size beside each other are one number with a space in
+#: it, and `04-08 14:32` read that way is eleven digits of nothing. Making one
+#: of them plainly smaller is what splits them into two facts, and it also says
+#: which is which without a label: the minute is what you came to the machine
+#: for, the date is what you check once.
+DATE_H = CLOCK_H * 5 // 8                               # 16
+#: Bottoms aligned, not centres. They sit on one line, which is how a person
+#: reads them as one reading rather than as two floating elements.
+DATE_Y = CLOCK_Y + CLOCK_H - DATE_H                     # 14
+#: Between the date and the clock. Wider than the space inside either of them so
+#: the pair does not fuse back into one string.
+DATE_GAP = 10
+
 #: The order, forever. Connectivity first — that is the journey that breaks —
 #: then whether a dose can be trusted to come out, then the machine's own health.
-SLOTS: tuple[str, ...] = ("WIFI", "RELAY", "CLOCK", "TRAY", "POWER", "CELL",
-                          "CARD")
+#:
+#: There were seven. `CELL` — the RTC's coin cell — has folded into `CLOCK`, and
+#: it is the one merge this row can take without breaking its own rule. The rule
+#: is that a picture names a **subsystem**; the coin cell is not a subsystem, it
+#: is the battery of the chip the third picture already names. `health._cell`
+#: reads it out of the same `rtc.read_status()` that `clock_source` comes from.
+#: Two chips over one subsystem is the redundancy this file warns about
+#: elsewhere — "a third rendering of one fact is how somebody ends up acting on
+#: the wrong one" — and it was sitting in the row the whole time.
+#:
+#: What the slot bought back is the date. The panel had a time and no date, so
+#: the strip's row of doses meant *some* day, and a device that had been sitting
+#: stopped since Tuesday looked exactly like one that stopped a minute ago. The
+#: detail the merge gives up — flat cell versus a clock vouched for by the
+#: network — is still whole in `/api/status` and `--selftest`, which is where
+#: this file has always said that detail belongs.
+SLOTS: tuple[str, ...] = ("WIFI", "RELAY", "CLOCK", "TRAY", "POWER", "CARD")
 
 #: The four renderings. Strings rather than an enum because they are half of
 #: what `key` returns, and a repaint decision that can be read in a log line is
@@ -175,7 +206,6 @@ _SLOT_ICON: dict[str, str] = {
     "CLOCK": "CLOCK",
     "TRAY": "PILL",
     "POWER": "BOLT",
-    "CELL": "BATTERY",
     "CARD": "CARD",
 }
 
@@ -238,13 +268,18 @@ PROBLEM_SLOT: dict[str, str] = {
     "power": "POWER",
     "wifi": "WIFI",
     "relay": "RELAY",
-    "cell": "CELL",
+    # The coin cell has no chip of its own any more. It borrows the one for the
+    # subsystem it powers, which is what `PROBLEM_SLOT` is for.
+    "cell": "CLOCK",
 }
 
 #: The widest string the clock can ever be. Every digit and `?` advance by 0.72
 #: of the size and `-` and `:` by less, so five characters of `0` is the
 #: worst case — and `_clock` guarantees five characters.
 _WIDEST_CLOCK = "00:00"
+#: Same argument for the date: `_date` guarantees five characters, and `00-00`
+#: is the widest five this face can draw.
+_WIDEST_DATE = "00-00"
 
 
 def SLOT_X(index: int) -> int:  # noqa: N802 - a geometry constant that takes an index
@@ -267,13 +302,19 @@ if set(PROBLEM_SLOT.values()) - set(SLOTS) or set(_SLOT_ICON) != set(SLOTS):
 if (set(_SLOT_ICON.values()) | {"WIFI_LOW"}) - set(_ICONS):
     raise ValueError("a status-bar slot names a picture that does not exist")
 
-if numerals.text_width(_WIDEST_CLOCK, CLOCK_H) > W - BAR_PAD - (
+if (numerals.text_width(_WIDEST_CLOCK, CLOCK_H) + DATE_GAP
+        + numerals.text_width(_WIDEST_DATE, DATE_H)) > W - BAR_PAD - (
         SLOT_X(len(SLOTS) - 1) + SLOT_W):
-    # The 41 px between the last chip and the clock is deliberate empty space
-    # and nothing may be placed in it — but the reason it is *safe* is this
-    # inequality, and geometry gets edited. Without the check, the first sign
-    # would be a clock overlapping the SD-card chip at four minutes past ten.
-    raise ValueError("the status bar's clock does not clear the last slot")
+    # The space between the last chip and the clock is deliberate and nothing
+    # else may be placed in it — but the reason it is *safe* is this inequality,
+    # and geometry gets edited. Without the check, the first sign would be a
+    # date overlapping the SD-card chip at four minutes past ten on the 30th.
+    #
+    # Both strings are bounded by construction (`_clock` and `_date` each return
+    # exactly five characters), which is what makes this a proof rather than a
+    # hope. Widening the row back to seven slots trips it here, at import, with
+    # a traceback that names this line.
+    raise ValueError("the status bar's clock and date do not clear the last slot")
 
 
 def _tray(health: Health) -> str:
@@ -301,6 +342,32 @@ def _tray(health: Health) -> str:
     return OK
 
 
+def _clock_chip(health: Health) -> str:
+    """The third chip, which now answers for the clock *and* its battery.
+
+    Worst of the two, and the order matters rather than being arithmetic: a
+    stopped clock is a shut tray today, a flat cell is a shut tray after the next
+    power cut. So `untrusted` outranks `flat` outranks a time vouched for by
+    something off-device.
+
+    A flat cell against a perfectly good `ntp` clock is the case this merge
+    exists to keep: it is exactly the state where nothing is wrong yet and
+    something is about to be, and losing it was the only real cost of giving the
+    battery's slot to the date.
+    """
+    own = _CLOCK.get(str(health.clock_source or ""), ABSENT)
+    if own == FAULT:
+        return own
+    cell = _CELL.get(str(health.cell or ""), ABSENT)
+    return cell if PRECEDENCE_MARK.index(cell) > PRECEDENCE_MARK.index(own) else own
+
+
+#: The four renderings, least to most severe. Only `_clock_chip` needs them
+#: ordered, and it needs them ordered rather than nested in ifs because the
+#: point it is making is "worst of two".
+PRECEDENCE_MARK: tuple[str, ...] = (ABSENT, OK, ATTENTION, FAULT)
+
+
 def _reads_as_time(text: str) -> bool:
     """Is this five characters shaped like `HH:MM`?
 
@@ -309,7 +376,7 @@ def _reads_as_time(text: str) -> bool:
     rejects something that has already gone wrong upstream — but it is what makes
     the clock's width *bounded*, and a bounded width is what makes the
     no-collision check above a proof rather than an expectation. A `now` of
-    `"an hour ago"` would otherwise run 300 px left across all seven chips.
+    `"an hour ago"` would otherwise run 300 px left across every chip.
     """
     return (len(text) == 5 and text[2] == ":"
             and text[:2].isdigit() and text[3:].isdigit())
@@ -331,6 +398,37 @@ def _clock(health: Health) -> tuple[str, bool]:
     return "--:--", True
 
 
+def _reads_as_date(text: str) -> bool:
+    """Is this five characters shaped like `DD-MM`? Same job as `_reads_as_time`."""
+    return (len(text) == 5 and text[2] == "-"
+            and text[:2].isdigit() and text[3:].isdigit())
+
+
+def _date(health: str | Health) -> str:
+    """Today as `DD-MM`, or `""` when this machine has no business naming a day.
+
+    Tied to the same trust the clock is tied to, and that is why it is a
+    function rather than a read of `health.today`. A machine whose clock nothing
+    vouches for does not know what day it is either, and a confident `04-08`
+    beside a `--:--` would be the panel claiming the harder half of a fact it
+    has just disclaimed the easier half of.
+
+    Empty rather than dashes, and this is the one place the date does *not*
+    copy the clock. `--:--` works because the colon survives — it still reads as
+    a clock with nothing in it. `-----` is five dashes: it reads as a rule, or
+    as a rendering fault, and it certainly does not read as a date. The clock's
+    own dashes are already saying the whole of what there is to say, and a
+    second disclaimer of one fact is the redundancy this file spends its
+    docstring arguing against.
+    """
+    if isinstance(health, str):  # pragma: no cover - guard against a typo'd call
+        raise TypeError("_date takes a Health")
+    today = str(health.today or "")
+    if _reads_as_date(today) and str(health.clock_source or "") != "untrusted":
+        return today
+    return ""
+
+
 def _read(health: Health) -> tuple[tuple[str, str], ...]:
     """`(picture, state)` per slot, in slot order. The whole of what is drawn.
 
@@ -341,8 +439,8 @@ def _read(health: Health) -> tuple[tuple[str, str], ...]:
     subsystem under it has failed.
     """
     if not health.known:
-        # Nothing has been read yet, so nothing here is a claim: seven dim
-        # pictures, no marks, and the clock's dashes. `known` is the only field
+        # Nothing has been read yet, so nothing here is a claim: six dim
+        # pictures, no marks, no date, and the clock's dashes. `known` is the only field
         # that separates "we asked and the answer was nothing" from "nobody has
         # asked yet", and this is the bar saying the second one.
         #
@@ -359,11 +457,9 @@ def _read(health: Health) -> tuple[tuple[str, str], ...]:
         "WIFI": ("WIFI_LOW" if wifi == "hotspot" else "WIFI",
                  _WIFI.get(wifi, ABSENT)),
         "RELAY": (_SLOT_ICON["RELAY"], _RELAY.get(str(health.relay or ""), ABSENT)),
-        "CLOCK": (_SLOT_ICON["CLOCK"],
-                  _CLOCK.get(str(health.clock_source or ""), ABSENT)),
+        "CLOCK": (_SLOT_ICON["CLOCK"], _clock_chip(health)),
         "TRAY": (_SLOT_ICON["TRAY"], _tray(health)),
         "POWER": (_SLOT_ICON["POWER"], _POWER.get(str(health.power or ""), ABSENT)),
-        "CELL": (_SLOT_ICON["CELL"], _CELL.get(str(health.cell or ""), ABSENT)),
         "CARD": (_SLOT_ICON["CARD"], _CARD.get(str(health.storage or ""), ABSENT)),
     }
 
@@ -390,7 +486,7 @@ def key(health: Health) -> tuple:
     rather than expecting this to notice; folding it in here would mean every
     band carrying the same field for one twice-daily event.
     """
-    return _read(health) + (_clock(health),)
+    return _read(health) + (_clock(health), _date(health))
 
 
 def draw(canvas: Canvas, health: Health, theme: dict[str, int]) -> None:
@@ -414,8 +510,19 @@ def draw(canvas: Canvas, health: Health, theme: dict[str, int]) -> None:
             fill(canvas, left + SLOT_W // 2, MARK_CY, MARK_R, shape,
                  theme[colour])
 
+    # The clock keeps the right edge. It was there before the date was, people
+    # who have used this machine know where it is, and the date arriving must
+    # not move it — a fixed place is the whole argument of this file.
     text, muted = _clock(health)
-    numerals.draw(canvas,
-                  canvas.width - BAR_PAD - numerals.text_width(text, CLOCK_H),
-                  CLOCK_Y, CLOCK_H, text,
+    clock_x = canvas.width - BAR_PAD - numerals.text_width(text, CLOCK_H)
+    numerals.draw(canvas, clock_x, CLOCK_Y, CLOCK_H, text,
                   theme["TEXT_MUTE"] if muted else theme["TEXT"])
+
+    # And the date hangs off its left. Muted always, even when it is a real
+    # date: it is the element you look at on purpose, never the one that should
+    # catch an eye that was passing.
+    day = _date(health)
+    if day:
+        numerals.draw(canvas,
+                      clock_x - DATE_GAP - numerals.text_width(day, DATE_H),
+                      DATE_Y, DATE_H, day, theme["TEXT_DIM"])

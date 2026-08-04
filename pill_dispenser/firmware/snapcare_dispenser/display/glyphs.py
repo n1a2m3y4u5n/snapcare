@@ -1,4 +1,4 @@
-"""The pictures in the status bar — seven slots, eight glyphs, because the radio
+"""The pictures in the status bar — six slots, eight glyphs, because the radio
 slot has one for a house network and one for the device's own hotspot. Each of
 them says *which subsystem*, and never *how bad*.
 
@@ -119,7 +119,7 @@ WIFI = (
 # the one thing every phone on earth has already taught everybody.
 #
 # It is *not* drawn as WIFI-with-the-top-blanked, tempting as that is. That
-# leaves the picture hanging off the bottom of its box, and next to seven icons
+# leaves the picture hanging off the bottom of its box, and next to six icons
 # that are all centred, a bottom-heavy one looks like a rendering fault rather
 # than a weak signal.
 #

@@ -259,6 +259,18 @@ class Health:
     next_tray: int | None = None
     next_at: str = ""      # "20:00", or "" when nothing is scheduled
     now: str = ""          # "12:34"
+    #: Today, as `DD-MM`. "" when no clock could be read.
+    #:
+    #: The panel had a time and no date. That is fine for the minute you are
+    #: standing in front of it and wrong for every other question a person asks
+    #: this machine — "did it give the Tuesday dose", "how long has it been
+    #: sitting like this", "is this thing even running today". A clock alone
+    #: cannot answer any of them, and the strip's day of doses silently means
+    #: *some* day.
+    #:
+    #: No year. Five characters is what the bar has room for, and the year is
+    #: the digit nobody in a kitchen is unsure about.
+    today: str = ""        # "04-08"
     #: How many doses have been offered and are waiting on a press. Not a
     #: problem and not a caution — see `shape_for`.
     waiting: int = 0
@@ -469,6 +481,7 @@ def _read(dispenser, network, cloud, display=None) -> Health:
         next_tray=next_tray,
         next_at=next_at,
         now=f"{at.hour:02d}:{at.minute:02d}" if at is not None else "",
+        today=f"{at.day:02d}-{at.month:02d}" if at is not None else "",
         waiting=len(owed),
         known=True,
         day=_try("today's doses", lambda: _day(dispenser, at, owed), ()),

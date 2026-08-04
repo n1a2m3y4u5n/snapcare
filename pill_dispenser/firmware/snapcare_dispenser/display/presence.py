@@ -48,7 +48,7 @@ not to offer a dose it cannot release — and if they ever do, that contradictio
 is itself the fault worth showing.
 
 Layer 0 is new and is the cheapest of the six. Before the first snapshot lands
-every field on `Health` is its honest empty, and a bar drawn from those is seven
+every field on `Health` is its honest empty, and a bar drawn from those is six
 grey chips and `--:--`: true, but indistinguishable from a machine that has
 answered and had nothing to say. `known` tells those apart, and a machine that
 has just been plugged in owes the person standing over it a frame that says
