@@ -22,7 +22,9 @@ import type { DeviceReport } from './types.ts';
  *  · **약 이름은 알면 쓰고 모르면 칸 번호로 부른다.** 이름을 지어내면 기록이
  *    거짓말을 하고, 그 기록은 나중에 식이 일지가 원인을 찾는 재료가 된다.
  */
-export function useDoseLog(report: DeviceReport | null, names?: Record<number, string>) {
+export function useDoseLog(report: DeviceReport | null,
+                           names?: Record<number, string>,
+                           doses?: Record<number, string>) {
   const addScan = useScans((s) => s.addScan);
   /** 이번 화면에서 이미 넣은 것. 폴링마다 저장소를 훑지 않기 위한 것뿐이다. */
   const filed = useRef<Set<string>>(new Set());
@@ -45,7 +47,11 @@ export function useDoseLog(report: DeviceReport | null, names?: Record<number, s
       const id = eventId(e);
       if (filed.current.has(id) || already.has(id)) continue;
       filed.current.add(id);
-      addScan(toScanRecord(e, { today, memberId, name: names?.[e.tray] }));
+      addScan(toScanRecord(e, {
+        today, memberId,
+        name: names?.[e.tray],
+        doseText: doses?.[e.tray],
+      }));
     }
-  }, [report, addScan, names]);
+  }, [report, addScan, names, doses]);
 }

@@ -106,7 +106,14 @@ export default function DevicePage() {
     () => Object.fromEntries(trayPlan.plan.map((t) => [t.tray, t.name])),
     [trayPlan],
   );
-  useDoseLog(box.report, trayNames);
+  // 그 칸의 1회 복용량. 이름과 같은 자리에서 온다 — 상자는 둘 다 모른다.
+  const trayDoses = useMemo(
+    () => Object.fromEntries(
+      trayPlan.plan.flatMap((t) => (t.source?.item?.rx?.doseText ? [[t.tray, t.source.item.rx.doseText]] : [])),
+    ),
+    [trayPlan],
+  );
+  useDoseLog(box.report, trayNames, trayDoses);
   // 앱을 보고 있지 않을 때는 알림이 부른다 — 배출 버튼은 화면을 봐야 보인다.
   useDoseAlert(box.report);
 

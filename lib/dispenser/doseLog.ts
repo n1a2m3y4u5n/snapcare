@@ -52,6 +52,8 @@ export function toScanRecord(e: DoseEvent, opts: {
   today: string;
   memberId: string;
   name?: string;
+  /** 그 칸의 1회 복용량 원문. 처방에서 온다 — 상자는 이것을 모른다. */
+  doseText?: string;
 }): ScanRecord {
   const day = eventDayKey(e);
   const when = clockLabel(e.at);
@@ -59,6 +61,9 @@ export function toScanRecord(e: DoseEvent, opts: {
     id: eventId(e),
     itemId: `device_tray_${e.tray}`,
     name: opts.name ?? `Compartment ${e.tray}`,
+    // 처방에 적혀 있으면 함께 남긴다. 없으면 아예 넣지 않는다 — 빈 문자열을 남기면
+    // "용량이 없는 약" 과 "용량을 모르는 약" 이 같아진다.
+    ...(opts.doseText ? { doseText: opts.doseText } : {}),
     kind: 'medicine',
     emoji: '💊',
     memberId: opts.memberId,
