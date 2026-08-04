@@ -48,6 +48,15 @@ export interface QrWatch {
    * 화면으로 끌려가는 일도 그래서 안 생긴다.
    */
   recent(): string | null;
+  /**
+   * 지금 보이는 화면을 그대로 사진으로 잡는다. 카메라가 안 켜져 있으면 null.
+   *
+   * 이것이 없으면 화면이 거짓말을 한다 — 실시간 미리보기를 띄워 놓고 셔터를 누르면
+   * **시스템 카메라 앱**이 열려서, 사람이 방금 맞춰 놓은 구도를 버리고 처음부터 다시
+   * 찍게 된다. 미리보기가 가짜 이모지였을 때는 말이 됐지만, 진짜 영상이 보이는
+   * 지금은 셔터가 그 영상을 찍어야 한다.
+   */
+  capture(): Promise<Blob | null>;
 }
 
 /** 읽은 QR 을 얼마나 오래 유효하다고 볼 것인가. 이보다 오래되면 다른 것을 보고 있다. */
@@ -81,7 +90,14 @@ export function useQrWatch(enabled = true): QrWatch {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           // 뒤쪽 카메라. 상자는 사람 쪽에 있지 않다.
-          video: { facingMode: { ideal: 'environment' } },
+          video: {
+          facingMode: { ideal: 'environment' },
+          // 셔터가 이 스트림에서 사진을 뜨므로 판독 품질이 여기에 걸린다. 성분표와
+          // 처방전을 OCR 로 읽어야 하고, 그 글자는 640x480 에서 살아남지 못한다.
+          // `ideal` 이라 못 주는 기기는 줄 수 있는 만큼 준다.
+          width: { ideal: 2560 },
+          height: { ideal: 1440 },
+        },
           audio: false,
         });
       } catch (err) {
@@ -130,5 +146,20 @@ export function useQrWatch(enabled = true): QrWatch {
     return hit && Date.now() - hit.at < FRESH_MS ? hit.text : null;
   };
 
-  return { videoRef, live, recent };
+  const capture = async (): Promise<Blob | null> => {
+    const video = videoRef.current;
+    if (!video?.videoWidth) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(video, 0, 0);
+    // JPEG 0.92 — 나머지 경로가 전부 사진 파일을 받으므로 형식을 맞춘다. 무손실로
+    // 두면 4메가짜리 PNG 가 OCR 과 판별 요청에 실린다.
+    return new Promise((resolve) =>
+      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.92));
+  };
+
+  return { videoRef, live, recent, capture };
 }

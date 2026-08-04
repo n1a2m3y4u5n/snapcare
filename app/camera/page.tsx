@@ -52,7 +52,7 @@ export default function CameraPage() {
 
     이유는 useQrWatch 에 적었다 — 사진 한 장은 QR 을 읽는 도구로 최악이다.
   */
-  const { videoRef, live, recent } = useQrWatch(!busy);
+  const { videoRef, live, recent, capture } = useQrWatch(!busy);
 
   /**
    * 홈의 "TRY IT" 에서 표본을 눌러 들어온 경우, 도착하자마자 그 표본을 읽는다.
@@ -180,6 +180,13 @@ export default function CameraPage() {
     }
 
     return false;
+  }
+
+  /** 셔터. 미리보기가 살아 있으면 그 프레임을, 아니면 시스템 카메라를 쓴다. */
+  async function shutter() {
+    const frame = await capture();
+    if (frame) { void runOcr(frame); return; }
+    fileRef.current?.click();
   }
 
   /** 실제 OCR (Tesseract, 오프라인) → 구조화 처방 */
@@ -433,7 +440,20 @@ export default function CameraPage() {
 
         {/* 캡처 */}
         <div className="flex justify-center pb-2">
-          <button onClick={() => fileRef.current?.click()} disabled={busy} className="h-16 w-16 shrink-0 rounded-full bg-white/90 active:scale-95 transition-transform disabled:opacity-50" aria-label="Capture" />
+          {/*
+            보고 있는 것을 찍는다.
+
+            미리보기가 살아 있으면 그 프레임을 그대로 뜬다. 예전에는 여기서 언제나
+            시스템 카메라 앱이 열렸는데, 그건 미리보기가 이모지 하나였을 때의 이야기다.
+            진짜 영상이 보이는 화면에서 셔터가 다른 앱을 열면, 사람이 방금 맞춰 놓은
+            구도를 버리고 처음부터 다시 찍게 된다 — 한 번에 끝나야 할 동작이 두 번이 된다.
+
+            카메라를 못 열었으면 예전 길 그대로다. 권한을 거절했거나 안전하지 않은
+            출처이거나 카메라가 없는 기기가 거기로 간다.
+          */}
+          <button onClick={() => void shutter()} disabled={busy}
+                  className="h-16 w-16 shrink-0 rounded-full bg-white/90 active:scale-95 transition-transform disabled:opacity-50"
+                  aria-label="Capture" />
           <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
         </div>
 
