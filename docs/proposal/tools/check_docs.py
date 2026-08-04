@@ -756,6 +756,47 @@ def model_table() -> list:
     return out
 
 
+def config_claims() -> list:
+    """본문이 백틱으로 적은 설정 값이 실제 설정과 같은가.
+
+    이 부류가 되풀이해서 어긋났다. 팀원이 설정을 고치고 문서에 옮기지
+    않으면 문서만 옛 값을 들고 있게 된다. 실제로 fly.toml 이
+    `auto_stop_machines = "off"` 로 바뀐 뒤에도 문서는
+    `min_machines_running = 0` 과 "쉬면 멈춘다" 를 적고 있었다.
+
+    옛 값을 일부러 적는 자리가 있다. 무엇을 왜 바꿨는지를 쓰는 자리다.
+    같은 문장에 과거를 가리키는 말이 있으면 넘긴다."""
+    import re as _re
+    root = DOC.parent.parent
+    files = ('fly.toml', 'package.json', 'next.config.ts', 'public/sw.js',
+             'pill_dispenser/firmware/snapcare_dispenser/config.py',
+             'pill_dispenser/form_sheet_parser/schedule.py')
+    srcs = {p: (root / p).read_text() for p in files if (root / p).is_file()}
+    if not srcs:
+        return skip('설정 값 대조 — 설정 파일을 찾지 못했다')
+    PAST = ('처음에는', '예전에는', '앞 판', '옛', 'at the outset', 'used to',
+            'previously', 'at first', 'earlier')
+    out = []
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        body = (DOC / f).read_text()
+        body = body[:body.index('### 5.11')]
+        for m in _re.finditer(r'`([A-Za-z_][A-Za-z0-9_.]{2,40})\s*=\s*([^`]{1,30})`', body):
+            name, val = m.group(1), m.group(2).strip().strip('"\'')
+            where = [p for p, t in srcs.items() if _re.search(rf'\b{_re.escape(name)}\b', t)]
+            if not where:
+                continue
+            if any(_re.search(rf'{_re.escape(name)}\s*[:=]\s*["\']?{_re.escape(val)}\b', srcs[p])
+                   for p in where):
+                continue
+            # 같은 문장에 과거를 가리키는 말이 있으면 옛 값을 적은 자리다
+            head = body.rfind('.', 0, m.start())
+            seg = body[max(0, head):m.end() + 40]
+            if any(k in seg.lower() for k in PAST):
+                continue
+            out.append(f'{f}: `{name} = {val}` 이 {where[0]} 의 값과 다르다')
+    return out
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1905,6 +1946,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in config_claims():
+        note(t)
 
     for t in model_table():
         note(t)
