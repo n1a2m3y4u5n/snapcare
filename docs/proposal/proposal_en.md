@@ -1596,9 +1596,13 @@ This section first sets out what was built with which tools, and the sections th
 | Product data | OpenFoodFacts API | Via server |
 | Image recognition | Claude Vision | Via server |
 | Hardware | Raspberry Pi 3B · 3 servos · WS2812 · DS1302 | Three trays fitted, eight layers reserved in firmware |
-| Deployment | fly.io (Tokyo) · 1 GB persistent volume | Stops when idle, wakes on request |
+| Deployment | fly.io (Tokyo) · 1 GB persistent volume | Always on (`auto_stop_machines = off`) |
 
-The last row should be set down first. To avoid leaving a machine idle we set `min_machines_running = 0`, so it stops when nobody is using it and wakes on the first request. Anyone opening it for the first time therefore waits a few seconds. Measured on 3 August 2026, the first request took 6.5 seconds and the ones after it 0.17. That 6.5 seconds is what someone who reads this document and opens the deployment meets first, so it is recorded. Running it always-on would remove it, but that is a question of cost rather than of design.
+The last row should be set down first. At the outset, to avoid leaving a machine idle, we set `min_machines_running = 0`, which stops the machine when nobody is using it and wakes it on the first request. Measured on 3 August 2026, the first request took 6.5 seconds and the ones after it 0.17.
+
+We then decided to remove that 6.5 seconds and changed the configuration. `min_machines_running = 1` was not enough on its own, because that value is the minimum number to keep while there is traffic and does not start a machine that is already stopped. Immediately after a deploy the machine sat stopped and the first request took 6.4 seconds. With `auto_stop_machines` set to `off` and 5 minutes 30 seconds of idling, the measurement was 0.50 seconds.
+
+As of 4 August 2026, opening the deployment three times in a row measures 0.22, 0.20 and 0.17 seconds. That is what someone who reads this document and opens the deployment meets. It should also be said that this is a configuration that spends money. Setting the machine back to stopping would bring back the six seconds for whoever opens it first.
 
 Reading the last column on its own shows how this stack is put together. The heavy things are on the device and the light things are on the server. A 16 MB nutrition estimation model runs in the browser, while recognising what a photograph shows goes out to the server. This is the reverse of an ordinary web app. Sending heavy computation to the server is the conventional choice, and it lets the device be old and makes the model easy to swap.
 
