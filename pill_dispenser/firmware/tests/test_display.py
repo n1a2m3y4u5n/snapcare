@@ -534,7 +534,7 @@ def test_the_bar_carries_a_date():
     """
     from snapcare_dispenser.display import bar
 
-    assert bar._date(Health(known=True, today="04-08", clock_source="ntp")) == "04-08"
+    assert bar._date(Health(known=True, today="26-08-04", clock_source="ntp")) == "26-08-04"
 
 
 def test_the_date_does_not_outlive_the_clock_that_made_it():
@@ -545,10 +545,13 @@ def test_the_date_does_not_outlive_the_clock_that_made_it():
     """
     from snapcare_dispenser.display import bar
 
-    blind = Health(known=True, now="14:32", today="04-08", clock_source="untrusted")
+    blind = Health(known=True, now="14:32", today="26-08-04", clock_source="untrusted")
     assert bar._clock(blind) == ("--:--", True)
     assert bar._date(blind) == "", "the date survived a clock nobody vouches for"
     assert bar._date(Health()) == ""
+    # 옛 `DD-MM` 은 이제 날짜가 아니다. 다섯 자를 여덟 자 자리에 그리면 그것은
+    # 연도가 빠진 날짜가 아니라 **다른 날짜**로 읽힌다.
+    assert bar._date(Health(known=True, today="04-08", clock_source="ntp")) == ""
 
 
 def test_the_date_is_blank_rather_than_dashes():
@@ -594,14 +597,36 @@ def test_the_coin_cell_borrows_the_clock_chip_rather_than_keeping_its_own():
 def test_the_date_and_the_clock_clear_the_last_chip():
     """The check that makes the bar's empty right-hand end a proof.
 
-    Both strings are five characters by construction, so this is arithmetic
-    rather than a hope — and it runs at import, which is why widening the row
-    back to seven slots fails with a traceback naming the line rather than with
-    a date drawn across the SD-card chip on the 30th.
+    Both strings are a fixed length by construction (`_clock` five, `_date`
+    eight), so this is arithmetic rather than a hope — and it runs at import,
+    which is why widening the row back fails with a traceback naming the line
+    rather than with a date drawn across the SD-card chip on the 30th.
     """
     from snapcare_dispenser.display import bar, numerals
 
     used = (numerals.text_width("00:00", bar.CLOCK_H) + bar.DATE_GAP
-            + numerals.text_width("00-00", bar.DATE_H))
+            + numerals.text_width("00-00-00", bar.DATE_H))
     free = bar.W - bar.BAR_PAD - (bar.SLOT_X(len(bar.SLOTS) - 1) + bar.SLOT_W)
     assert used <= free, f"the right-hand end needs {used} px and has {free}"
+
+
+def test_the_when_block_keeps_clear_of_the_rule():
+    """A numeral's ink runs past its own box, so the rows at each end are ink.
+
+    Stacking the clock over the date was tried and this is the test that would
+    have caught it: 20 + 1 + 11 fits 34 rows on paper and puts the clock against
+    the band's top edge and the date's feet through the rule. Rendered, it reads
+    as a rendering fault rather than as a design.
+
+    Three rows of clearance rather than one. One is what the arithmetic allows;
+    three is what survives a pen radius at both ends plus a font that is not this
+    one.
+    """
+    from snapcare_dispenser.display import bar
+
+    assert bar.CLOCK_Y >= 3, "the clock is against the band's top edge"
+    assert bar.DATE_Y + bar.DATE_H <= bar.FACE_H - 3, "the date reaches the rule"
+    assert bar.CLOCK_Y + bar.CLOCK_H <= bar.FACE_H - 3
+    assert bar.CLOCK_H > bar.DATE_H, "the minute must be the bigger of the two"
+    # 밑선을 맞춘다. 가운데를 맞추면 둘이 한 줄에 앉은 것으로 안 읽힌다.
+    assert bar.DATE_Y + bar.DATE_H == bar.CLOCK_Y + bar.CLOCK_H

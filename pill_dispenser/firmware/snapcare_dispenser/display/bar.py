@@ -118,33 +118,43 @@ ICON_Y = (FACE_H - _STACK_H) // 2                       # 2
 ICON_X = (SLOT_W - glyphs.SPAN) // 2                    # 3
 MARK_CY = ICON_Y + glyphs.ROWS + ICON_GAP + MARK_R      # 25
 
-#: Twice the chip inset, and that is a measurement rather than a taste. A
-#: numeral is a round pen stamped along a path, so its ink reaches a pen radius
-#: *outside* the nominal box — at this size the strokes of `0` run about a pixel
-#: past the top and bottom of their own 26 px cell. Four rows of air keeps them
-#: off the rule; two would have the clock touching it on some minutes and not on
-#: others, which reads as a rendering fault.
-CLOCK_PAD = 2 * ICON_Y                                  # 4
-#: 26 px of cap height: 15.9 arcmin at a metre, which is what declares the bar an
-#: arm's-length-to-1.5 m element. The hero is the three-metre one.
-CLOCK_H = FACE_H - 2 * CLOCK_PAD                        # 26
-CLOCK_Y = (FACE_H - CLOCK_H) // 2                       # 4
-
-#: The date, left of the clock and smaller than it. Five eighths — the ratio is
-#: chosen for what it does to the *pair*, not for the date on its own.
+#: The clock, and the date beside it. One row, bottoms aligned, right-aligned
+#: against the band's own edge.
 #:
-#: Two numbers the same size beside each other are one number with a space in
-#: it, and `04-08 14:32` read that way is eleven digits of nothing. Making one
-#: of them plainly smaller is what splits them into two facts, and it also says
-#: which is which without a label: the minute is what you came to the machine
-#: for, the date is what you check once.
-DATE_H = CLOCK_H * 5 // 8                               # 16
-#: Bottoms aligned, not centres. They sit on one line, which is how a person
-#: reads them as one reading rather than as two floating elements.
-DATE_Y = CLOCK_Y + CLOCK_H - DATE_H                     # 14
-#: Between the date and the clock. Wider than the space inside either of them so
-#: the pair does not fuse back into one string.
-DATE_GAP = 10
+#: The clock was 26 px. The date grew a year — `26-08-04`, the descending order
+#: being the one nobody misreads — and eight characters plus a clock at 26 want
+#: 183 px against the 152 the band has left after six chips. So one of the two
+#: had to give up size, and it is the clock.
+#:
+#: Stacking them was tried first and is worse than it sounds. The face is 34 rows
+#: and a numeral's ink reaches a pen radius *outside* its nominal box, so two rows
+#: that fit on paper have the clock grazing the band's top edge and the date's
+#: feet cut off by the rule. Two rows need a taller band, and every row this band
+#: takes is a row the hero loses — and the hero is the element read from three
+#: metres.
+#:
+#: 20 px of cap height: 12.2 arcmin at a metre, against 15.9 for the 26 px it
+#: used to be. Still an arm's-length-to-1.5 m element, which is all this band ever
+#: claimed to be — the three-metre element is the hero and always was.
+CLOCK_H = 20
+
+#: The date, left of the clock and smaller than it. Three fifths.
+#:
+#: Two numbers the same size beside each other are one number with a space in it,
+#: and `26-08-04 17:26` read that way is thirteen digits of nothing. Making one
+#: plainly smaller is what splits them into two facts, and it says which is which
+#: without a label: the minute is what you came to the machine for, the date is
+#: what you check once.
+DATE_H = 12
+#: Between them. Wider than the space inside either so the pair does not fuse
+#: back into one string.
+DATE_GAP = 8
+
+#: Centred in the face, and the date's **bottom** on the clock's. Bottoms rather
+#: than centres: they sit on one line, which is how a person reads them as one
+#: reading rather than as two things that happen to be near each other.
+CLOCK_Y = (FACE_H - CLOCK_H) // 2                       # 7
+DATE_Y = CLOCK_Y + CLOCK_H - DATE_H                     # 15
 
 #: The order, forever. Connectivity first — that is the journey that breaks —
 #: then whether a dose can be trusted to come out, then the machine's own health.
@@ -399,13 +409,13 @@ def _clock(health: Health) -> tuple[str, bool]:
 
 
 def _reads_as_date(text: str) -> bool:
-    """Is this five characters shaped like `DD-MM`? Same job as `_reads_as_time`."""
-    return (len(text) == 5 and text[2] == "-"
-            and text[:2].isdigit() and text[3:].isdigit())
+    """Is this eight characters shaped like `YY-MM-DD`? Same job as `_reads_as_time`."""
+    return (len(text) == 8 and text[2] == "-" and text[5] == "-"
+            and text[:2].isdigit() and text[3:5].isdigit() and text[6:].isdigit())
 
 
 def _date(health: str | Health) -> str:
-    """Today as `DD-MM`, or `""` when this machine has no business naming a day.
+    """Today as `YY-MM-DD`, or `""` when this machine has no business naming a day.
 
     Tied to the same trust the clock is tied to, and that is why it is a
     function rather than a read of `health.today`. A machine whose clock nothing
@@ -518,9 +528,8 @@ def draw(canvas: Canvas, health: Health, theme: dict[str, int]) -> None:
     numerals.draw(canvas, clock_x, CLOCK_Y, CLOCK_H, text,
                   theme["TEXT_MUTE"] if muted else theme["TEXT"])
 
-    # And the date hangs off its left. Muted always, even when it is a real
-    # date: it is the element you look at on purpose, never the one that should
-    # catch an eye that was passing.
+    # And the date off its left, dimmer. It is the element you look at on
+    # purpose, never the one that should catch an eye that was passing.
     day = _date(health)
     if day:
         numerals.draw(canvas,

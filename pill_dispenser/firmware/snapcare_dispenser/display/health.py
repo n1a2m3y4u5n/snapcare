@@ -259,7 +259,7 @@ class Health:
     next_tray: int | None = None
     next_at: str = ""      # "20:00", or "" when nothing is scheduled
     now: str = ""          # "12:34"
-    #: Today, as `DD-MM`. "" when no clock could be read.
+    #: Today, as `YY-MM-DD`. "" when no clock could be read.
     #:
     #: The panel had a time and no date. That is fine for the minute you are
     #: standing in front of it and wrong for every other question a person asks
@@ -268,9 +268,18 @@ class Health:
     #: cannot answer any of them, and the strip's day of doses silently means
     #: *some* day.
     #:
-    #: No year. Five characters is what the bar has room for, and the year is
-    #: the digit nobody in a kitchen is unsure about.
-    today: str = ""        # "04-08"
+    #: Big end first — year, then month, then day. Two digits each.
+    #:
+    #: `DD-MM` first, and it was ambiguous in exactly the way dates always are:
+    #: `04-08` is the fourth of August in most of the world and April the eighth
+    #: in some of it, and a panel cannot tell you which convention it meant. The
+    #: descending order has no such reading — nothing puts the year in the middle
+    #: — so `26-08-04` is one date rather than two.
+    #:
+    #: The year is two digits. Four would cost the width of a whole chip to say
+    #: something nobody in a kitchen is unsure about; two is enough to tell this
+    #: year from the one a stopped machine is still showing.
+    today: str = ""        # "26-08-04"
     #: How many doses have been offered and are waiting on a press. Not a
     #: problem and not a caution — see `shape_for`.
     waiting: int = 0
@@ -481,7 +490,7 @@ def _read(dispenser, network, cloud, display=None) -> Health:
         next_tray=next_tray,
         next_at=next_at,
         now=f"{at.hour:02d}:{at.minute:02d}" if at is not None else "",
-        today=f"{at.day:02d}-{at.month:02d}" if at is not None else "",
+        today=f"{at.year % 100:02d}-{at.month:02d}-{at.day:02d}" if at is not None else "",
         waiting=len(owed),
         known=True,
         day=_try("today's doses", lambda: _day(dispenser, at, owed), ()),
