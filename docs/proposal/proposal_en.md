@@ -427,7 +427,7 @@ Beyond that, a statistically significant positive correlation between health lit
 
 One line from that paper's conclusion matches our own judgement. **For safety-related information, 67% comprehension may not be enough.** Passing a criterion and being safe to rely on are different things, which is why SnapCare keeps speech and colour alongside a picture even when the picture passes.
 
-Evidence in the opposite direction is equally clear at the same spot, however. The liquid-medicine trial cited earlier (§1.3) was a randomised controlled trial, and what separated it from the control arm was instructions containing pictograms. Among caregivers who received pictograms, dosing errors greater than 20% fell from 47.8% to **5.4%** (absolute risk reduction 42.4 percentage points). That figure covers only the 99 caregivers given a daily medicine. For the 158 given an as-needed medicine it was 40.0% to 15.6%, an absolute risk reduction of 24.4 points. Quoting only the larger of the two would inflate the effect, so both are given. Non-adherence fell from 38.0% to 9.3% across everyone followed up (Yin, H. S. et al., "Randomized controlled trial of a pictogram-based intervention to reduce liquid medication dosing errors and improve adherence among caregivers of young children," *Archives of Pediatrics & Adolescent Medicine*, 162(9):814–822, 2008).
+Evidence in the opposite direction is equally clear at the same spot, however. The liquid-medicine trial cited earlier (§1.3) was a randomised controlled trial, and what separated it from the control arm was instructions containing pictograms. Among caregivers who received pictograms, dosing errors greater than 20% fell from 47.8% to **5.4%** (absolute risk reduction 42.4 percentage points). That figure covers only the 99 caregivers given a daily medicine. For the 158 given an as-needed medicine it was 40.0% to 15.6%, an absolute risk reduction of 24.4 percentage points. Quoting only the larger of the two would inflate the effect, so both are given. Non-adherence fell from 38.0% to 9.3% across everyone followed up (Yin, H. S. et al., "Randomized controlled trial of a pictogram-based intervention to reduce liquid medication dosing errors and improve adherence among caregivers of young children," *Archives of Pediatrics & Adolescent Medicine*, 162(9):814–822, 2008).
 
 In a South African trial randomly allocating 60 low-literate adults, with seven years of schooling or less and English as a second language, to a control and an experimental group, **significantly more participants exceeded 80% comprehension on both the medicine label and the patient information leaflet** in the group that also received pictures (Mansoor, L. E. & Dowse, R., "Effect of pictograms on readability of patient information materials," *Annals of Pharmacotherapy*, 37:1003–1009, 2003).
 
@@ -1866,7 +1866,7 @@ In practice three kinds of test in this repository each require something differ
 |---|---:|---|---|
 | Web app (`node --test`) | 589 | 589 pass · 0 fail | Node · `npm ci` |
 | Paper form and cloud relay (`pytest`) | 182 | 179 pass · 3 skipped | OpenCV |
-| Device firmware (`pytest`) | 741 | 653 pass · 88 skipped | Python only |
+| Device firmware (`pytest`) | 742 | 654 pass · 88 skipped | Python only |
 
 These are counts from running the suites on 4 August 2026. The previous version had a single web-app failure here, and how it was fixed is left below as it stands.
 
@@ -2722,7 +2722,7 @@ The web app test count went from 231 before the survey to 589 (Table 31).
 
 The sample is self-selected. Thirty-nine of 1,103 answered, and those who answered are people with an interest in the subject. The judgement of the 1,068 who did not answer is unknown.
 
-The denominators are small. The largest segment, pharmacy, is 12 people. Written as a percentage, one person moves 8 points, so this section records numerator and denominator together.
+The denominators are small. The largest segment, pharmacy, is 12 people. Written as a percentage, one person moves 8 percentage points, so this section records numerator and denominator together.
 
 **There was no response from the 41 chosen by hand.** The 41 with the clearest selection basis were put at the front of the sending order and all received it within seven minutes, and the response count is zero. This result cannot be used as "the judgement of the 41 we considered most important."
 

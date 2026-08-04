@@ -39,6 +39,7 @@
   · 표 20 의 명도 대비가 계산과 같고 그 색이 실제로 쓰이는가
 """
 import re
+from collections import Counter
 import sys
 import sys
 from pathlib import Path
@@ -287,6 +288,81 @@ SKIPPED: list = []
 def skip(why: str) -> list:
     SKIPPED.append(why)
     return []
+
+
+def pct_parity() -> list:
+    """두 판의 백분율이 절마다 같은가.
+
+    두 판을 나란히 고치는 일이 잦아 한쪽에만 값이 들어가거나 옮기다
+    자릿수가 흐를 수 있다. 문단 수와 표 행 수는 이미 보고 있으나 값
+    자체는 보지 않고 있었다.
+
+    표기가 언어마다 다르므로 맞춰 놓고 견준다. 한글은 범위를 물결로
+    적고(3~10%) 영어는 to 로 적으며(3% to 10%), 백분율 차이를 한글은
+    %p 로 영어는 percentage points 로 적는다. 이 셋을 같은 모양으로
+    바꾼 뒤에야 견줄 수 있다."""
+    # 영어판은 문장을 숫자로 시작하지 않으려고 백분율을 글자로 푼다
+    # ("Forty-three percent"). 한글판은 늘 숫자다. 풀어 쓴 것을 숫자로
+    # 되돌리지 않으면 이 검사가 온통 오탐이 된다. 실제로 일곱 절이
+    # 걸렸고 일곱 다 이것이었다.
+    ONES = {'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+            'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+            'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14,
+            'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18,
+            'nineteen': 19}
+    TENS = {'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60,
+            'seventy': 70, 'eighty': 80, 'ninety': 90}
+
+    def spelled(t: str) -> str:
+        def one(m):
+            w = m.group(1).lower().replace('\u2013', '-')
+            if w in ONES:
+                return f'{ONES[w]}%'
+            if w in TENS:
+                return f'{TENS[w]}%'
+            if '-' in w:
+                a_, b_ = w.split('-', 1)
+                if a_ in TENS and b_ in ONES:
+                    return f'{TENS[a_] + ONES[b_]}%'
+            return m.group(0)
+        return re.sub(r'\b([A-Za-z]+(?:-[a-z]+)?)\s+per\s?cent(?:age)?\b(?!\s+points)',
+                      one, t)
+
+    def norm(t: str) -> list:
+        t = spelled(t)
+        t = re.sub(r'(\d+(?:\.\d+)?)\s*(?:percentage points|퍼센트포인트)', r'\1%p', t)
+        t = re.sub(r'(\d+(?:\.\d+)?)\s*[~–—]\s*(\d+(?:\.\d+)?)%', r'\1% \2%', t)
+        t = re.sub(r'(\d+(?:\.\d+)?)%\s*(?:to|~)\s*(\d+(?:\.\d+)?)%', r'\1% \2%', t)
+        # 영어는 범위의 앞 숫자에 기호를 붙이지 않는 일이 잦다("3 to 5%").
+        # 백분율은 세 자리를 넘지 않는다. 자리를 묶지 않으면 연도 범위
+        # ("from 2015 to 2024")가 걸려 2015% 라는 값이 생긴다.
+        t = re.sub(r'(?<![\d.%])(\d{1,3}(?:\.\d+)?)\s+to\s+(\d{1,3}(?:\.\d+)?)%', r'\1% \2%', t)
+        t = re.sub(r'doi:[^\s)]+', ' ', t)
+        return [x.rstrip('p') for x in re.findall(r'\d+(?:\.\d+)?%p?', t)]
+
+    def secs(name):
+        body = (DOC / name).read_text()
+        out, cur, buf = {}, None, []
+        for ln in body.splitlines():
+            m = re.match(r'^### (\d+\.\d+)', ln)
+            if m:
+                if cur:
+                    out[cur] = '\n'.join(buf)
+                cur, buf = m.group(1), []
+            elif cur is not None:
+                buf.append(ln)
+        if cur:
+            out[cur] = '\n'.join(buf)
+        return out
+
+    ko, en = secs('proposal_ko.md'), secs('proposal_en.md')
+    out = []
+    for k in sorted(set(ko) & set(en), key=lambda x: [int(v) for v in x.split('.')]):
+        a, b = Counter(norm(ko[k])), Counter(norm(en[k]))
+        only_ko, only_en = sorted((a - b).elements()), sorted((b - a).elements())
+        if only_ko or only_en:
+            out.append(f'§{k} 의 백분율이 두 판에서 다르다 — 한글만 {only_ko[:5]} · 영어만 {only_en[:5]}')
+    return out
 
 
 def _last_commit(path: str) -> str:
@@ -1438,6 +1514,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in pct_parity():
+        note(t)
 
     for t in fig_faults():
         note(t)
