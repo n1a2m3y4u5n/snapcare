@@ -21,6 +21,7 @@ const FIG = new URL('../fig/', import.meta.url).pathname;
 const CLEANUP = `
   nextjs-portal { display: none !important; }
   button.fixed.bottom-28 { position: absolute !important; }
+  nav.fixed.bottom-0 { position: absolute !important; }
 `;
 
 /** 이 문구가 화면에 보일 때까지 기다린다. */
@@ -79,6 +80,8 @@ const SHOTS = [
   // 글자 크기와 픽처키 두 단계다.
   { file: 'fig12_textsize.png', path: '/text-size?demo=1', wait: 'smallest line' },
   { file: 'fig16_picturekey.png', path: '/login?demo=1', wait: 'picture key' },
+  // §3.9 의 화면. 넉 주 달력이 화면보다 길어 접힘을 표시한다.
+  { fold: true, file: 'fig17_history.png', path: '/history?demo=1', wait: 'SET RIGHT NOW' },
   // 언어 고르기. 없는 목소리를 미리 알리는 자리와, 검수를 받지 않았다는
   // 고지가 한 화면에 함께 있어야 §5.7 의 서술이 그림으로 확인된다.
   //

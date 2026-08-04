@@ -272,7 +272,7 @@ def built_faults(path: Path) -> list:
 SHOT_FILES = ('fig01_home.png', 'fig04_camera.png', 'fig05_processing.png',
               'fig06_verdict_rx.png', 'fig07_verdict_label.png', 'fig08_today.png',
               'fig09_device.png', 'fig12_textsize.png', 'fig16_picturekey.png',
-              'fig13_profile.png')
+              'fig13_profile.png', 'fig17_history.png')
 UI_PATHS = ('app', 'components')
 
 
