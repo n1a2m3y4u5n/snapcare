@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { useProfile } from '@/stores/profile';
 import { CONDITIONS } from '@/lib/snapcare/conditions';
-import { ask, sayable, Speakable } from '@/components/sc/Say';
+import { Hear, ask, sayable, Speakable } from '@/components/sc/Say';
 import { FACES, freeFaces } from '@/lib/snapcare/accounts';
 import { useIsClient, useMyColor } from '@/lib/hooks';
 import { usePreferences } from '@/stores/preferences';
@@ -131,9 +131,16 @@ function ProfileBody() {
       <div className="px-5 pt-14 pb-8">
         {setup ? (
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}
+            <span className="flex items-center gap-2 text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}
                   {...ask('Who are we checking for? Tap how old you are, and anything you must stay away from.')}>
               Who are we checking for?
+              {/*
+                처음 여는 사람이 만나는 첫 질문이다. 읽지 못하면 여기서 멈추고,
+                멈추면 앱 전체가 기본값('어른, 조건 없음')으로 굴러간다 — 판정이
+                전부 이 값에서 나오는데.
+              */}
+              <Hear text="Who are we checking for? Tap how old you are, and anything you must stay away from."
+                    className="sc-hear" />
             </span>
             {/* 건너뛰기를 남겨 둔다 — 첫 화면에서 막히면 앱을 아예 못 쓴다.
                 건너뛰면 홈이 계속 누구 기준인지 보여준다. */}
@@ -164,10 +171,21 @@ function ProfileBody() {
                 style={{ background: myColor }}>
             {profile.emoji}
           </span>
-          <span className="text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
+          <span className="flex-1 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
                 {...sayable('Tap a picture. No typing needed.')}>
             TAP A PICTURE — NO TYPING
           </span>
+          {/*
+            낭독 버튼. 이 화면에만 없었다.
+
+            제목을 누르면 읽어 주기는 했지만, **눌러도 되는 것인지 보이지 않았다** —
+            글자는 그냥 글자처럼 생겼다. 다른 화면들은 제목 옆에 이 버튼이 서 있어서
+            "여기 소리가 있다" 가 눈에 걸리고, 그 규칙이 이 화면에서만 깨져 있었다.
+
+            읽지 못하는 사람에게 이 화면은 특히 중요하다. 여기서 고르는 값이 앱의
+            모든 판정을 정하는데, 무엇을 묻는지가 글자로만 있었다.
+          */}
+          <Hear text="Tap a picture. No typing needed." className="sc-hear" />
         </div>
         )}
 
@@ -195,12 +213,16 @@ function ProfileBody() {
           지팡이 짚은 사람까지 한 줄로 놓이면 무엇을 묻는지가 보인다. 머리글에 또
           그림을 얹으면 답과 겹쳐서, 그중 하나를 고르라는 뜻으로 읽힐 수 있다.
         */}
-        <Speakable
-          text={`How old. This decides how much is too much. ${AGE_BANDS.map((b) => b.label).join(', ')}.`}
-          className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
-          style={{ color: 'var(--color-sc-muted)' }}>
-          <span className="flex-1">HOW OLD</span>
-        </Speakable>
+        <div className="mt-6 flex items-center gap-2">
+          <Speakable
+            text={`How old. This decides how much is too much. ${AGE_BANDS.map((b) => b.label).join(', ')}.`}
+            className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
+            style={{ color: 'var(--color-sc-muted)' }}>
+            <span className="flex-1">HOW OLD</span>
+          </Speakable>
+          <Hear text={`How old. This decides how much is too much. ${AGE_BANDS.map((b) => b.label).join(', ')}.`}
+                className="sc-hear" />
+        </div>
         <div className="mt-2 grid grid-cols-4 gap-2">
           {AGE_BANDS.map((b) => {
             const on = currentBand === b.band;
@@ -237,12 +259,15 @@ function ProfileBody() {
                 🩸 이 당뇨이고 🌾 가 글루텐이라는 것은 그림만으로는 알 수 없어서,
                 이 목록이 없으면 진단 묶음은 통째로 닿지 않는다.
               */}
-              <Speakable text={`${g.say} ${items.map((c) => c.label).join(', ')}.`}
-                         className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
-                         style={{ color: 'var(--color-sc-muted)' }}>
-                <span className="text-xl" aria-hidden>{g.emoji}</span>
-                <span className="flex-1">{g.title}</span>
-              </Speakable>
+              <div className="mt-6 flex items-center gap-2">
+                <Speakable text={`${g.say} ${items.map((c) => c.label).join(', ')}.`}
+                           className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
+                           style={{ color: 'var(--color-sc-muted)' }}>
+                  <span className="text-xl" aria-hidden>{g.emoji}</span>
+                  <span className="flex-1">{g.title}</span>
+                </Speakable>
+                <Hear text={`${g.say} ${items.map((c) => c.label).join(', ')}.`} className="sc-hear" />
+              </div>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {items.map((c) => {
                   const on = profile.conditionIds.includes(c.id);
