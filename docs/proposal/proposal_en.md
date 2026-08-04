@@ -993,7 +993,7 @@ What this derivation actually produces is set down here for the four age bands. 
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Child (7) | 1,800 kcal | 45 g | 20.0 g | 60 g | 4.5 g | 22.5 g | 23.2 g |
 | Teenager (15) | 2,400 kcal | 60 g | 26.7 g | 80 g | 5.0 g | 25.0 g | 48.1 g |
-| Adult (35) | 2,000 kcal | 50 g | 22.2 g | 67 g | 5.0 g | 25.0 g | 51.5 g |
+| Adult (35) | 2,000 kcal | 50 g | 22.2 g | 66.7 g | 5.0 g | 25.0 g | 51.5 g |
 | Older adult (70) | 1,800 kcal | 45 g | 20.0 g | 60 g | 4.5 g | 22.5 g | 49.8 g |
 
 The table is included so that a reviewer can check the arithmetic. On the deployment, the home screen in Figure 15 shows 27.5 g of free sugars as 61%, and 27.5 divided by 45 is 61.1%. The percentage on screen comes straight out of the derivation in this table.

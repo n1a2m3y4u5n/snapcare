@@ -661,6 +661,53 @@ def voca_verbs() -> list:
     return out
 
 
+def reference_table() -> list:
+    """표 11 이 정말 그 코드의 출력인가.
+
+    제목에 "위 코드의 출력" 이라고 적어 두었으니 손으로 옮긴 값이 아니라
+    돌려서 나온 값이어야 한다. 실제로 성인 지방 한 칸이 67 이었고 코드는
+    66.7 을 준다. 다른 칸은 소수 한 자리까지 그대로였다."""
+    import json
+    import subprocess
+    root = DOC.parent.parent
+    probe = DOC / 'tools/ref_probe.mjs'
+    if not probe.is_file() or not (root / 'node_modules').exists():
+        return skip('기준치 표 대조 — probe 나 node_modules 가 없다')
+    try:
+        r = subprocess.run(['node', '--experimental-strip-types', str(probe)],
+                           cwd=root, capture_output=True, text=True, timeout=120)
+        got = json.loads(r.stdout.strip().splitlines()[-1])
+    except Exception as e:
+        return [f'기준치를 얻지 못했다: {e.__class__.__name__}']
+
+    body = (DOC / 'proposal_ko.md').read_text()
+    n = table_no('나이대별 하루 기준치')
+    if not n:
+        return skip('기준치 표 대조 — 표를 찾지 못했다')
+    band = {'아동': 'child', '청소년': 'teen', '성인': 'adult', '고령': 'senior'}
+    cols = ['energy', 'sugars', 'saturatedFat', 'fat', 'salt', 'fiber', 'protein']
+    out, seen = [], False
+    for ln in body[body.index(f'[표 {n}]'):].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if seen:
+                break
+            continue
+        seen = True
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        key = band.get(c[0].split()[0]) if c else None
+        if not key or key not in got:
+            continue
+        for i, col in enumerate(cols, start=1):
+            said = c[i].replace(',', '').split()[0]
+            try:
+                a, b = float(said), float(got[key][col])
+            except (ValueError, IndexError):
+                continue
+            if abs(a - b) > 0.05:
+                out.append(f'표 {n}: {c[0]} 의 {col} 이 {said} 인데 코드는 {got[key][col]} 을 준다')
+    return out
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1810,6 +1857,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in reference_table():
+        note(t)
 
     for t in voca_verbs():
         note(t)
