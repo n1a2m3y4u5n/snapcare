@@ -1,9 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { LanguagePicker } from '@/components/sc/LanguagePicker';
 import { useProfile } from '@/stores/profile';
+import { resetDemo } from '@/stores/scans';
+import { isDemo } from '@/lib/snapcare/demo';
+import { useIsClient } from '@/lib/hooks';
 import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
 import { TEXT_SIZES, TEXT_SIZE_LABEL, ROOT_PX } from '@/lib/a11y/textSize';
 import { sayable, ask, Speakable } from '@/components/sc/Say';
@@ -23,6 +27,13 @@ import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
 export default function SettingsPage() {
   const router = useRouter();
   const profile = useProfile((s) => s.profile);
+  /*
+    `isDemo()` 는 주소와 브라우저 저장소를 읽으므로 서버에는 없다. 그리기 중에
+    부르면 서버가 그린 화면과 어긋나서, 화면이 붙은 뒤에 판단한다.
+  */
+  const ready = useIsClient();
+  const demo = ready && isDemo();
+  const [reset, setReset] = useState('');
   const myColor = useMyColor(profile.color);
   const autoTts = usePreferences((s) => s.autoTts);
   const speechRate = usePreferences((s) => s.speechRate);
@@ -222,6 +233,43 @@ export default function SettingsPage() {
           </span>
           <span className="sc-end" style={{ color: 'var(--color-sc-muted)' }}>›</span>
         </button>
+
+        {/*
+          시연용 자료 되돌리기 — **시연 모드에서만** 보인다.
+
+          시연 자료는 한 번 넣고 마는 것이 아니라 쌓인다. 짝지은 상자가 배출할
+          때마다 복용 기록이 하나씩 들어오고, 그것은 진짜 기록이라 지워지지 않는다.
+          리허설로 알람을 열 번 울리면 열 칸이 남는다. 벤치에서는 하루 시험한 끝에
+          이번 주 복약 카드가 칸 128개를 그렸다.
+
+          실제로 쓰는 사람에게는 이 버튼이 **없어야 한다.** 자기 복약 기록을 한 번에
+          지우는 버튼은 이 앱에 있어서는 안 되는 것이고, `?demo=1` 로 연 브라우저가
+          아니면 `resetDemo()` 는 아무 일도 하지 않는다. 여기서 숨기는 것은 그
+          거절을 사람에게 미리 보여주는 것뿐이다.
+        */}
+        {demo && (
+          <>
+            <Speakable text={'Demo.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+              <span className="flex-1">DEMO</span>
+            </Speakable>
+            <button
+              onClick={() => {
+                const ok = resetDemo();
+                setReset(ok ? 'The demo data is back to how it started.' : '');
+                if (ok) speak('The demo data is back to how it started.', 'en-US');
+              }}
+              className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
+            >
+              <span className="sc-icon">↩️</span>
+              <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }} {...sayable('Put the demo data back to how it started.')}>Reset the demo data
+              </span>
+              <span className="sc-end" style={{ color: 'var(--color-sc-muted)' }}>›</span>
+            </button>
+            {reset && (
+              <p className="mt-2 text-xs" style={{ color: 'var(--color-sc-muted)' }}>{reset}</p>
+            )}
+          </>
+        )}
       </div>
     </MobileScreen>
   );
