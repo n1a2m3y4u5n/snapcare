@@ -365,6 +365,33 @@ def pct_parity() -> list:
     return out
 
 
+def dash_aside() -> list:
+    """부연설명 자리에 줄표를 쓰지 않았는가.
+
+    이 문서의 규칙이다. 문장을 끊거나 쉼표·괄호로 적는다. 예전에 105곳을
+    고쳤고, 새 문단을 넣을 때마다 되돌아가기 쉬운 자리라 검사로 굳힌다.
+
+    범위 표기는 대상이 아니다(14–21 쪽, 2019–2021년). 걸리는 것은 양옆에
+    공백을 둔 줄표와 낱말에 붙은 줄표다. 기울임 안은 서지의 제목이므로
+    빼둔다. ISO 9186-1 의 정식 제목에 줄표가 들어 있다."""
+    out = []
+    for f in ('proposal_ko.md', 'proposal_en.md'):
+        s = (DOC / f).read_text()
+        s = s[:s.index('### 5.11')]
+        inb = False
+        for i, ln in enumerate(s.splitlines(), 1):
+            if ln.startswith('```'):
+                inb = not inb
+                continue
+            if inb or ln.startswith(('|', '>', '![', '    ')):
+                continue
+            bare = re.sub(r'\*[^*]+\*', ' ', ln)          # 서지 제목을 뺀다
+            bare = re.sub(r'`[^`]+`', ' ', bare)           # 코드 조각도 뺀다
+            for m in re.finditer(r'.{0,36}(?:\s[\u2014\u2013]\s|\S\u2014\S).{0,26}', bare):
+                out.append(f'{f}:{i} 부연설명에 줄표 — …{m.group(0).strip()}…')
+    return out
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1514,6 +1541,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in dash_aside():
+        note(t)
 
     for t in pct_parity():
         note(t)
