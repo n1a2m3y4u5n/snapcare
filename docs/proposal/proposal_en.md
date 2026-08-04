@@ -1855,19 +1855,21 @@ In practice three kinds of test in this repository each require something differ
 
 | Kind | Tests | Result | What it needs |
 |---|---:|---|---|
-| Web app (`node --test`) | 360 | 359 pass · 1 fail | Node · `npm ci` |
-| Paper form and cloud relay (`pytest`) | 172 | 169 pass · 3 skipped | OpenCV |
-| Device firmware (`pytest`) | 668 | 591 pass · 77 skipped | Python only |
+| Web app (`node --test`) | 569 | 569 pass · 0 fail | Node · `npm ci` |
+| Paper form and cloud relay (`pytest`) | 182 | 179 pass · 3 skipped | OpenCV |
+| Device firmware (`pytest`) | 736 | 648 pass · 88 skipped | Python only |
 
-These are counts from running the suites on 3 August 2026, and the single web-app failure is set down as it stands.
+These are counts from running the suites on 4 August 2026. The previous version had a single web-app failure here, and how it was fixed is left below as it stands.
 
-What failed is `pill_dispenser/webapp_kit/tests/kit.test.ts`, and the cause lies not in the test but in loading it. `relay.ts` uses a constructor parameter property (`constructor(readonly status: number)`), and Node's type stripping removes types without emitting code, so it does not support that syntax. The import stops with `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`.
+What failed was `pill_dispenser/webapp_kit/tests/kit.test.ts`, and the cause lay not in the test but in loading it. `relay.ts` uses a constructor parameter property (`constructor(readonly status: number)`), and Node's type stripping removes types without emitting code, so it does not support that syntax. The import stops with `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`.
 
-It is set down because something heavier than one failure rides along with it. Since the file never loads, **not one** of the tests inside it runs. The 360 above does not count that file's tests, so what looks like a single failure is in fact an entire file going unmeasured. It is the same shape of failure as the eight display constants in §5.4: the tool showed green while what it was measuring was empty.
+It was set down because something heavier than one failure rode along with it. Since the file never loaded, **not one** of the tests inside it ran. The total at that time did not count that file's tests, so what looked like a single failure was in fact an entire file going unmeasured. It is the same shape of failure as the eight display constants in §5.4: the tool showed green while what it was measuring was empty.
+
+This passage is kept rather than deleted because how it ended attaches here. Replacing the constructor parameter property with a declared and assigned field made the file load, and the 30 tests inside came back and all passed. We ran them to check. The 569 in the table above includes those 30. Because the failure was written down, its fix can be written down too, and this document has now met twice the case of a test that looked green while being empty, and written it down both times.
 
 That the firmware suite was for a while not running at all is also set down. Eight screen constants disappeared in one commit, and since every test file goes through that module, all of them stopped at import. Restoring them revealed 35 failures, and those 35 went away when the screen was redesigned around a single panel. They were missed not for want of tests but because the tests were not running, which is to say that counting passes and checking that the tests actually run are two different jobs.
 
-The "needs" column was measured and corrected. The web app was recorded as "Node only" for a while; with the dependencies removed the count falls from 360 to 335, because three files stop at an import of `zustand`. Twenty-five tests disappear quietly and the rest finish green, so from the outside it looks like a pass. It is the same shape as what §5.4 records.
+The "needs" column was measured and corrected. The web app was recorded as "Node only" for a while; with the dependencies removed, twenty-five tests quietly disappeared, because three files stop at an import of `zustand`. That measurement was taken when the total was lower than it is now and has not been repeated since, so this document does not know how many disappear today. Only the fact that they disappear, and the reason, are unchanged. Twenty-five tests disappear quietly and the rest finish green, so from the outside it looks like a pass. It is the same shape as what §5.4 records.
 
 All three run without the hardware. No servo, no Raspberry Pi and no network is needed. Making code that runs on a device you cannot attach a debugger to verifiable by anyone in a few seconds is the purpose of this arrangement, and bringing the whole firmware up on a laptop with `make run` (Figure 23, right) comes from the same principle.
 
@@ -2705,7 +2707,7 @@ The dispenser now calls the phone when it presents a dose. The same respondent p
 
 A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Pasteur Institute of Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
 
-The web app test count went from 231 to 360 (Table 31).
+The web app test count went from 231 before the survey to 569 (Table 31).
 
 #### 5.7.14 Limits of this survey
 
