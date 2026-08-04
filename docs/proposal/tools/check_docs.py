@@ -613,6 +613,54 @@ def dsl_parses() -> list:
     return out
 
 
+def voca_verbs() -> list:
+    """§2.3 의 제형별 동사·부위 표가 구현과 같은가.
+
+    안약을 "드세요" 라고 말하는 것은 어색한 표현이 아니라 잘못된 지시다.
+    그런 표를 눈으로 맞출 수는 없으므로 실제로 돌려 견준다."""
+    import json
+    import subprocess
+    root = DOC.parent.parent
+    probe = DOC / 'tools/voca_probe.mjs'
+    if not probe.is_file() or not (root / 'node_modules').exists():
+        return skip('VOCA 동사 대조 — probe 나 node_modules 가 없다')
+    try:
+        r = subprocess.run(['node', '--experimental-strip-types', str(probe)],
+                           cwd=root, capture_output=True, text=True, timeout=120)
+        got = json.loads(r.stdout.strip().splitlines()[-1])
+    except Exception as e:
+        return [f'VOCA 문장을 얻지 못했다: {e.__class__.__name__}']
+
+    body = (DOC / 'proposal_ko.md').read_text()
+    n = table_no('제형에서 유도되는')
+    if not n:
+        return skip('VOCA 동사 대조 — 제형 표를 찾지 못했다')
+    out = []
+    seen = False
+    for ln in body[body.index(f'[표 {n}]'):].splitlines()[1:]:
+        if not ln.startswith('|'):
+            if seen:            # 표가 끝났다
+                break
+            continue            # 제목과 표 사이의 빈 줄
+        seen = True
+        c = [x.strip() for x in ln.strip('|').split('|')]
+        if len(c) < 5 or '---' in c[0] or c[0] == '제형':
+            continue
+        form = c[0].split()[-1]              # "점안액 eyedrop" → eyedrop
+        said = got.get(form)
+        if said is None:
+            continue
+        verb, site = c[2], c[3]
+        if not said.startswith(verb):
+            out.append(f'표 {n}: {form} 의 동사가 "{verb}" 인데 실제로는 "{said}" 다')
+        want_site = '' if site in ('없음', '-', '') else site
+        if want_site and want_site not in said:
+            out.append(f'표 {n}: {form} 의 부위가 "{site}" 인데 실제로는 "{said}" 다')
+        if not want_site and any(k in said for k in (' in the ', ' on the ')):
+            out.append(f'표 {n}: {form} 은 부위가 없다고 적혔는데 실제로는 "{said}" 다')
+    return out
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1762,6 +1810,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in voca_verbs():
+        note(t)
 
     for t in dsl_parses():
         note(t)
