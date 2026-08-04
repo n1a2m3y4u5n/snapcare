@@ -92,12 +92,12 @@ export default function HomePage() {
       say: 'Medicine. What is set right now, and how the last four weeks went.',
     },
     {
-      icon: BoxIcon, label: 'Pill box', href: '/device',
-      say: 'The pill box. Send the schedule, and see what it has done.',
+      icon: BoxIcon, label: 'Dispenser', href: '/device',
+      say: 'The dispenser. Send the schedule, and see what it has done.',
     },
     {
       icon: GearIcon, label: 'Settings', href: '/settings',
-      say: 'Settings. Who we check for, the voice, and the pill box.',
+      say: 'Settings. Who we check for, the voice, and the dispenser.',
     },
   ];
 
@@ -188,8 +188,8 @@ export default function HomePage() {
             <span aria-hidden className="flex items-center text-xl"><BoxIcon /></span>
             <span className="flex-1 text-sm font-semibold"
                   style={{ color: 'var(--color-sc-ink)' }}
-                  {...sayable('The schedule has not reached the box yet.')}>
-              약통에 아직 안 갔다
+                  {...sayable('The schedule has not reached the dispenser yet.')}>
+              Not sent to the dispenser yet
             </span>
           </div>
         )}

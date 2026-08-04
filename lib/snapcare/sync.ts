@@ -115,7 +115,18 @@ export async function pull(): Promise<PersonBlob | null> {
   const blob = await pullBlob();
   if (!isUsable(blob)) return null;
   remote = blob;
-  if (blob.roster?.length) mergeRoster(blob.roster);
+  /*
+    시연에서는 명단을 **되살리지 않는다.**
+
+    되살리는 이유는 실제 자료에만 있다 — 저장소만 지워지고 기기 열쇠가 남았을 때
+    "누가 있었는지" 를 서버에서 꺼내는 것. 시연의 명단은 코드에 박힌 두 사람이라
+    꺼낼 것이 없다.
+
+    그리고 시연 파일은 여럿이 함께 쓴다. 어느 폰이 자기 실제 명단을 한 번 올려
+    두면 — `/present` 가 시연 모드를 켜면서 실제로 그렇게 됐다 — 그 뒤로 시연을
+    여는 **모든 폰**에 모르는 사람들이 붙는다. 배포된 파일에 넷이 쌓여 있었다.
+  */
+  if (blob.roster?.length && !isDemo()) mergeRoster(blob.roster);
   return blob.people?.[activeAccountId()] ?? null;
 }
 
@@ -170,7 +181,12 @@ export async function setDemoBox(claim: string, relayUrl: string): Promise<boole
 
 /** 지금 사람 몫을 올린다. 나머지 사람은 받아 둔 것을 그대로 되올린다. */
 export async function push(mine: PersonBlob): Promise<boolean> {
-  return pushBlob(withPerson(remote, listAccounts(), activeAccountId(), mine));
+  /*
+    시연 파일에는 **시연 명단만** 올린다. 받는 쪽을 막는 것으로는 모자란다 — 이미
+    한 번 새어 들어간 폰이 그것을 계속 되올리기 때문이다. 올리는 쪽도 막아야 멎는다.
+  */
+  const roster = isDemo() ? listAccounts().filter((a) => a.id.startsWith('demo_')) : listAccounts();
+  return pushBlob(withPerson(remote, roster, activeAccountId(), mine));
 }
 
 /**

@@ -76,8 +76,8 @@ export function PushToggle({ deviceId }: { deviceId: string }) {
         <span className="flex-1">
           <Speakable
             text={on
-              ? 'Notifications are on. Your phone will ring when the box has your medicine ready, even if SnapCare is closed.'
-              : 'Notifications are off. Turn them on to be told when the box has your medicine ready, even if SnapCare is closed.'}
+              ? 'Notifications are on. Your phone will ring when the dispenser has your medicine ready, even if SnapCare is closed.'
+              : 'Notifications are off. Turn them on to be told when the dispenser has your medicine ready, even if SnapCare is closed.'}
             className="block text-sm font-semibold"
             style={{ color: 'var(--color-sc-ink)' }}
           >

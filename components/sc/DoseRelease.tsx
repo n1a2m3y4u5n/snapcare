@@ -93,7 +93,7 @@ export function DoseRelease({ report, onRelease }: {
       // 경우는 사용자가 할 일이 다르다. 앞은 사람을 불러야 하고 뒤는 아무 일도 아니다.
       console.error('[dose] 배출 실패:', err);
       setPhase('blocked');
-      void speak('The box could not open. Please ask someone for help.', 'en-US');
+      void speak('The dispenser could not open. Please ask someone for help.', 'en-US');
     }
   }
 
@@ -129,10 +129,10 @@ export function DoseRelease({ report, onRelease }: {
       </button>
 
       {phase === 'blocked' && (
-        <Speakable text="The box could not open. Please ask someone for help."
+        <Speakable text="The dispenser could not open. Please ask someone for help."
                    className="mt-2 flex w-full items-center gap-2 text-sm font-semibold"
                    style={{ color: 'var(--color-avoid)' }}>
-          <span className="flex-1">The box could not open — ask someone for help.</span>
+          <span className="flex-1">The dispenser could not open — ask someone for help.</span>
         </Speakable>
       )}
     </section>

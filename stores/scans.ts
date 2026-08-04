@@ -6,7 +6,7 @@ import { prune } from '@/lib/snapcare/retention';
 import { demoHistory, demoReminders } from '@/lib/snapcare/demoHistory';
 import { useReminders } from './reminders';
 import { isDemo } from '@/lib/snapcare/demo';
-import { accountStorage, activeAccountId, DEMO_KID, DEMO_PRIMARY } from '@/lib/snapcare/accounts';
+import { accountStorage, activeAccountId, listAccounts, removeAccount, DEMO_KID, DEMO_PRIMARY } from '@/lib/snapcare/accounts';
 
 /**
  * 시드 최근 스캔 (와이어프레임 홈 RECENT 피드 기준).
@@ -117,9 +117,23 @@ export const useScans = create<ScansState>()(
        * 이제 존재하지 않는 구성원을 가리키므로 하루 누적·식이 일지에서 통째로
        * 빠진다 — 화면이 비는 것이 아니라 조용히 일부만 세는 쪽이라 더 나쁘다.
        */
-      version: 4,
-      // 옛 저장분은 버린다. 시연용 자료가 필요하면 아래 onRehydrateStorage 가 넣는다.
-      migrate: () => ({ scans: [] }),
+      /**
+       * v5: 시연 자료를 석 달치로 다시 짰다(끼니가 하루 서넛→넷다섯, 식단이 두 주
+       * 주기). 그런데 저장된 것이 있으면 `seedDemoIfEmpty` 가 "이미 있다" 며 넘어가서,
+       * 이미 시연을 열어 본 폰은 **영영 옛 자료를 본다.** 그 폰이 서버에 그것을 도로
+       * 올리기까지 한다.
+       */
+      version: 5,
+      /**
+       * 옛 저장분을 버린다 — **시연에서만.**
+       *
+       * 전에는 판을 올릴 때마다 무조건 비웠다. 그때는 이 자료가 시연용뿐이라 맞는
+       * 판단이었는데, 지금은 실제 사용자의 복약·식사 기록이 같은 자리에 있다. 서버에
+       * 사본이 있으니 대개 돌아오지만, 하필 그 순간 오프라인이면 돌아올 곳이 없다.
+       *
+       * 4보다 낮은 판은 그대로 버린다. 그 모양들은 지금 화면이 읽을 수 없다.
+       */
+      migrate: (persisted, from) => (from >= 4 && !isDemo() ? (persisted as ScansState) : { scans: [] }),
     },
   ),
 );
@@ -163,6 +177,19 @@ export function isToday(rec: ScanRecord, today: string): boolean {
  */
 export function seedDemoIfEmpty(): void {
   if (!isDemo()) return;
+  /*
+    시연 명단을 먼저 바로잡는다.
+
+    배포된 시연 파일에 모르는 사람이 일곱 쌓여 있었다 — 시연 파일은 폰들이 함께
+    쓰는데, 어느 폰이 자기 실제 명단을 한 번 올리면 그 뒤로 시연을 여는 모든 폰에
+    붙는다. 새는 길은 `sync.ts` 에서 막았지만 이미 들어온 것은 지워야 없어지고,
+    사람에게 설정 화면의 단추를 찾아 누르게 할 일이 아니다.
+
+    지우는 것은 시연 표가 아닌 것뿐이고, 이 함수는 시연 모드에서만 돈다.
+  */
+  for (const a of listAccounts()) {
+    if (!a.id.startsWith('demo_')) removeAccount(a.id);
+  }
   if (useScans.getState().scans.length > 0) return;
   const seed = DEMO_SCANS[activeAccountId()];
   if (!seed) return;
@@ -221,6 +248,20 @@ export function seedDemoIfEmpty(): void {
  */
 export function resetDemo(): boolean {
   if (!isDemo()) return false;
+  /*
+    명단부터 되돌린다.
+
+    시연 명단은 코드에 박힌 두 사람인데, 배포된 시연 파일에 모르는 사람이 넷 쌓여
+    있었다. 시연 파일은 폰들이 함께 쓰고, 어느 폰이 자기 실제 명단을 한 번 올리면
+    그 뒤로 시연을 여는 **모든 폰**에 그 사람들이 붙는다. 새는 길은 `sync.ts` 에서
+    막았지만, 이미 들어온 것은 지워야 없어진다.
+
+    지우는 것은 시연 표(`demo_` 로 시작하지 않는 것)뿐이다. 그리고 그 사람들의
+    자료도 같이 지운다 — `removeAccount` 가 그 사람 몫의 저장 열쇠까지 치운다.
+  */
+  for (const a of listAccounts()) {
+    if (!a.id.startsWith('demo_')) removeAccount(a.id);
+  }
   useScans.setState({ scans: [] });
   // 알람도 비운다. 안 비우면 `seedDemoIfEmpty` 가 "이미 있다" 며 넘어가고, 리허설
   // 중에 손댄 알람이 그대로 남는다 — 되돌린다고 해 놓고 절반만 되돌리는 셈이다.

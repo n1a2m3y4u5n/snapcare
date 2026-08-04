@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { FITTED_TRAYS } from '../hardware/dispenser.ts';
 import { useReminders } from '../../stores/reminders.ts';
 import { pending } from './autoSend.ts';
-import { clientFor, loadPaired } from './paired.ts';
+import { PAIRED_EVENT, clientFor, loadPaired } from './paired.ts';
 import { toCloudSlots } from './fromApp.ts';
 
 /**
@@ -69,6 +69,24 @@ export function useAutoSend(trays: number = FITTED_TRAYS): AutoSend {
   const lastSent = useRef<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /*
+    짝이 **나중에** 생기는 경우가 있다.
+
+    시연에서 새 폰이 열리면 두 가지가 거의 동시에 도착한다 — 서버에서 온 알람과,
+    시연 블롭을 보고 스스로 맺는 짝. 알람이 먼저 오면 아래 이펙트가 돌면서
+    `loadPaired()` 가 아직 `null` 이라 조용히 돌아선다. 그리고 알람은 더 안 바뀌므로
+    **다시 돌 일이 없다** — 그 폰에서 만든 일정은 영영 상자에 안 간다.
+
+    실패도 아니고 오류도 아니라 화면에는 아무 표시가 없다. 짝이 생기면 다시 세어
+    본다.
+  */
+  const [afterPairing, setAfterPairing] = useState(0);
+  useEffect(() => {
+    const again = () => setAfterPairing((n) => n + 1);
+    window.addEventListener(PAIRED_EVENT, again);
+    return () => window.removeEventListener(PAIRED_EVENT, again);
+  }, []);
+
   useEffect(() => {
     // 빈 일정은 보내지 않는다. 그것은 상자에 실린 것을 지우라는 뜻인데, 앱을 새
     // 폰에 깔아 알람이 아직 비어 있는 상태와 사람이 전부 지운 상태가 이 자리에서
@@ -99,7 +117,7 @@ export function useAutoSend(trays: number = FITTED_TRAYS): AutoSend {
     }, SETTLE_MS);
 
     return () => { if (timer.current) clearTimeout(timer.current); };
-  }, [reminders, trays]);
+  }, [reminders, trays, afterPairing]);
 
   return state;
 }

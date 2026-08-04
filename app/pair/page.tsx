@@ -63,7 +63,7 @@ export default function PairPage() {
       }
       /* 상자를 방금 자기 것이라고 말한 사람에게 이어지는 말이다. */
       void requestPermission();
-      void speak('This box is now yours. It will tell you when your medicine is ready.');
+      void speak('This dispenser is now yours. It will tell you when your medicine is ready.');
       router.replace('/device');
     })();
   }, [router]);
@@ -94,7 +94,7 @@ export default function PairPage() {
             style={{ background: 'var(--color-sc-primary)' }}
           >
             <span aria-hidden className="flex items-center text-xl leading-none"><CameraIcon /></span>
-            Photograph the box
+            Photograph the dispenser
           </button>
         </>
       )}

@@ -58,7 +58,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
     try {
       await pairWith(claim, relay);
       setCode('');
-      setNote('Paired. Waiting for the box to say hello…');
+      setNote('Paired. Waiting for the dispenser to say hello…');
       onChanged();
       /*
         알림 권한은 **여기서** 묻는다.
@@ -84,10 +84,10 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
     const typed = formatClaim(code);
     return (
       <section className="rounded-3xl bg-white p-4 shadow-sm">
-        <Speakable text="Connect the pill box. Photograph it with the camera — its screen is showing a code."
+        <Speakable text="Connect the dispenser. Photograph it with the camera — its screen is showing a code."
                    className="flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
                    style={{ color: 'var(--color-sc-muted)' }}>
-          <span className="flex-1">CONNECT THE PILL BOX</span>
+          <span className="flex-1">CONNECT THE DISPENSER</span>
         </Speakable>
 
         {/*
@@ -109,9 +109,9 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
         >
           <span className="sc-icon flex items-center" aria-hidden><CameraIcon /></span>
           <span className="flex-1">
-            <Speakable text="Photograph the box. Its screen is showing a code — point the camera at it."
+            <Speakable text="Photograph the dispenser. Its screen is showing a code — point the camera at it."
                        className="block font-semibold" bare>
-              Photograph the box
+              Photograph the dispenser
             </Speakable>
             <span className="block text-xs opacity-80">Its screen is showing a code</span>
           </span>
@@ -154,7 +154,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
         </details>
 
         {RELAY_MISSING && (
-          <Speakable text="This app was built without a mailbox address, so the box cannot be reached from here. Ask for the address and type it below."
+          <Speakable text="This app was built without a mailbox address, so the dispenser cannot be reached from here. Ask for the address and type it below."
                      className="mt-3 flex w-full items-center gap-2 rounded-2xl p-3 text-sm font-semibold"
                      style={{ background: 'var(--color-sc-bg)', color: 'var(--color-caution)' }}>
             <span aria-hidden className="flex items-center text-xl"><EmptyInboxIcon /></span>
@@ -187,14 +187,14 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
 
   return (
     <section className="rounded-3xl bg-white p-4 shadow-sm">
-      <Speakable text="The pill box. What it is doing right now."
+      <Speakable text="The dispenser. What it is doing right now."
                  className="flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
                  style={{ color: 'var(--color-sc-muted)' }}>
-        <span className="flex-1">THE PILL BOX</span>
+        <span className="flex-1">THE DISPENSER</span>
       </Speakable>
 
       {loading && !report && (
-        <p className="mt-3 text-sm" style={{ color: 'var(--color-sc-muted)' }}>Listening for the box…</p>
+        <p className="mt-3 text-sm" style={{ color: 'var(--color-sc-muted)' }}>Listening for the dispenser…</p>
       )}
 
       {/*
@@ -203,7 +203,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
         소식이 없습니다" 가 돌보는 사람에게 해 줄 수 있는 가장 쓸모 있는 말이다.
       */}
       {report && stale && (
-        <Speakable text={`The pill box has not been heard from since ${sinceWords(report.at)}. It may be unplugged.`}
+        <Speakable text={`The dispenser has not been heard from since ${sinceWords(report.at)}. It may be unplugged.`}
                    className="mt-3 flex w-full items-center gap-2 rounded-2xl p-3 text-sm font-semibold"
                    style={{ background: 'var(--color-sc-bg)', color: 'var(--color-avoid)' }}>
           <span aria-hidden className="flex items-center text-xl"><PlugIcon /></span>
@@ -216,7 +216,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
         중요한 불리언이고, 폰이 시각을 보증해 주면 풀린다.
       */}
       {untrusted && (
-        <Speakable text={`The box does not know the time, so it will not release anything. ${s?.blockedReason ?? ''}`}
+        <Speakable text={`The dispenser does not know the time, so it will not release anything. ${s?.blockedReason ?? ''}`}
                    className="mt-3 flex w-full items-center gap-2 rounded-2xl p-3 text-sm font-semibold"
                    style={{ background: 'var(--color-sc-bg)', color: 'var(--color-caution)' }}>
           <span aria-hidden className="flex items-center text-xl"><ClockIcon hour={10} minute={10} /></span>
@@ -257,7 +257,7 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
       ) : null}
 
       {report?.lastError ? (
-        <p {...sayable(`The box reported a problem: ${report.lastError}`)}
+        <p {...sayable(`The dispenser reported a problem: ${report.lastError}`)}
            className="mt-2 text-xs" style={{ color: 'var(--color-avoid)' }}>
           {report.lastError}
         </p>

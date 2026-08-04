@@ -216,7 +216,7 @@ export default function SettingsPage() {
         {/*
           여기 두 묶음이 있었다 — PILL DEVICE 와 AT THE CLINIC. 둘 다 걷었다.
 
-          약통은 홈 궤도에 "Pill box" 위성으로 이미 있다. 설정에 또 두면 같은 곳으로
+          약통은 홈 궤도에 "Dispenser" 위성으로 이미 있다. 설정에 또 두면 같은 곳으로
           가는 문이 둘이 되고, 문이 둘이면 어느 쪽이 최신인지 사람이 알 수 없다 —
           실제로 이 버튼은 `/device` 의 옛 이름("일정을 기기로 보낸다")을 그대로
           달고 있었는데, 그 일은 이제 알람을 만들면 저절로 된다(`useAutoSend`).

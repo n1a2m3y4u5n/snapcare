@@ -457,7 +457,7 @@ function AdherenceCard({ span, month, each, back, onBack }: {
         그 사실을 안 적으면 이 화면은 "약을 다 드셨네요" 라고 잘못 말하게 된다.
       */}
       <p className="mt-2 text-[10px] leading-snug" style={{ color: 'var(--color-sc-muted)' }}>
-        Counted from the pill box only. Medicines you take without it are not in this number.
+        Counted from the dispenser only. Medicines you take without it are not in this number.
       </p>
     </div>
   );

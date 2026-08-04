@@ -166,7 +166,7 @@ export default function CameraPage() {
   async function actOnQr(found: ReturnType<typeof readQr>): Promise<boolean> {
 
     if (found.kind === 'pair') {
-      setStatus('Connecting to the box…');
+      setStatus('Connecting to the dispenser…');
       try {
         await pairWith(found.claim, DEFAULT_RELAY);
       } catch (err) {
@@ -180,7 +180,7 @@ export default function CameraPage() {
         자리에서 같은 이유로 묻는다.
       */
       void requestPermission();
-      void speak('This box is now yours. It will tell you when your medicine is ready.');
+      void speak('This dispenser is now yours. It will tell you when your medicine is ready.');
       router.push('/device');
       return true;
     }
@@ -194,7 +194,7 @@ export default function CameraPage() {
         그 중 하나는 안 찾아진다. 이 앱에서 사진을 찍는 자리는 홈 한가운데 하나다.
       */
       const event = decodeEvent(found.sc1);
-      if (!event) { fail('That code from the box was damaged. Photograph it again.'); return true; }
+      if (!event) { fail('That code from the dispenser was damaged. Photograph it again.'); return true; }
 
       const name = trayNames[event.slot - 1] ?? `Compartment ${event.slot}`;
       addScan({
@@ -230,8 +230,8 @@ export default function CameraPage() {
         아무 반응이 없는 것과의 차이다.
       */
       fail(found.ssid
-        ? `That code joins the box's own WiFi (${found.ssid}). For the app, photograph the code next to it.`
-        : "That is the box's WiFi code. For the app, photograph the code next to it.");
+        ? `That code joins the dispenser's own WiFi (${found.ssid}). For the app, photograph the code next to it.`
+        : "That is the dispenser's WiFi code. For the app, photograph the code next to it.");
       return true;
     }
 
@@ -520,8 +520,19 @@ export default function CameraPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex justify-center bg-black">
-      <div className="relative w-full sc-shell min-h-screen flex flex-col text-white">
+    /*
+      화면 높이에 **못박는다.**
+
+      `min-h-screen` 이었다. 최소값이라 안의 것들이 커지면 기둥이 화면보다 길어지고,
+      그러면 페이지가 스크롤되면서 셔터가 아래로 조금 밀려 잘린다. 이 화면에서 잘리면
+      안 되는 것이 정확히 그 하나다 — 여기서 사람이 하는 일은 셔터를 누르는 것뿐이고,
+      영상은 어차피 뒤에 깔려 있어서 스크롤해도 새로 보이는 것이 없다.
+
+      그래서 스크롤을 없애고 자리를 나눈다. 머리글과 셔터 띠는 제 높이를 갖고, 남는
+      자리는 영상이 받는다. 대안 목록을 펼쳤을 때만 그 안이 따로 스크롤한다.
+    */
+    <div className="h-[100dvh] w-full flex justify-center overflow-hidden bg-black">
+      <div className="relative w-full sc-shell h-full flex flex-col text-white">
         {/* 머리글. 영상 위라 검은 그라데이션을 깔아 글자가 읽히게 한다. */}
         <div className="relative z-10 flex items-center justify-between px-5 pt-14 pb-3"
              style={{ background: 'linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0))' }}>
@@ -537,9 +548,9 @@ export default function CameraPage() {
             나가는 곳은 홈 하나뿐이다.
           */}
           <button onClick={() => router.push('/home')} aria-label="Close the camera"
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full
-                             text-3xl leading-none active:scale-95 transition-transform"
-                  style={{ background: 'rgba(0,0,0,0.45)' }}>
+                  className="flex shrink-0 items-center justify-center rounded-full
+                             leading-none active:scale-95 transition-transform"
+                  style={{ background: 'rgba(0,0,0,0.45)', width: 56, height: 56, fontSize: 28 }}>
             ×
           </button>
           <span className="text-sm font-semibold"
@@ -620,7 +631,11 @@ export default function CameraPage() {
             출처이거나 카메라가 없는 기기가 거기로 간다.
           */}
           <button onClick={() => void shutter()} disabled={busy}
-                  className="h-16 w-16 shrink-0 rounded-full bg-white/90 active:scale-95 transition-transform disabled:opacity-50"
+                  /* 셔터는 틀이다. rem 이면 가장 큰 글자에서 지름 128px 이 되어
+                     그것만으로 화면 아래를 다 먹는다 — 그리고 이 단추는 커진다고
+                     더 잘 눌리지도 않는다. 64px 은 이 앱의 다른 어떤 표적보다 크다. */
+                  className="shrink-0 rounded-full bg-white/90 active:scale-95 transition-transform disabled:opacity-50"
+                  style={{ width: 64, height: 64 }}
                   aria-label="Capture" />
           <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
         </div>
@@ -646,7 +661,7 @@ export default function CameraPage() {
           </div>
         ) : (
           /* 대안 목록. 열리면 영상을 덮는다 — 여기서 고르는 동안 미리보기는 방해다. */
-          <div className="relative z-10 min-h-screen" style={{ background: '#000' }}>
+          <div className="relative z-10 h-full overflow-y-auto" style={{ background: '#000' }}>
             <div className="px-5 pt-1">
               <Speakable text={'Try a nutrition label. Tap one and it will be read like a photograph.'} className="text-[11px] font-bold tracking-wide opacity-60 flex w-full items-center gap-2">
           <span className="flex-1">SCAN A NUTRITION LABEL (OCR)</span>

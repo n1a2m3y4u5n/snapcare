@@ -13,6 +13,19 @@ import { KEEP_COUNT } from './retention.ts';
 const TODAY = '2026-08-03';
 const ME = 'me';
 
+/*
+  시각을 못박는다.
+
+  `demoHistory` 는 **오늘 지나간 것만** 넣는다(아침 여덟 시 약은 아홉 시에 앱을 열어야
+  보인다). 그래서 시각을 안 넘기면 이 파일의 시험이 **몇 시에 도는지에 따라** 달라진다 —
+  자정과 새벽 여덟 시 사이에 돌리면 오늘이 통째로 비어서 "84일" 이 83 이 된다. 실제로
+  그렇게 한 번 빨갛게 났고, 그때 의심한 것은 방금 고친 코드였다.
+
+  23:30 은 하루가 다 지난 시각이다. 그 시각의 자료가 이 시험들이 말하려는 것 —
+  하루가 몇 건이고 석 달이 며칠인지 — 을 재는 데 맞다.
+*/
+const LATE = 23 * 60 + 30;
+
 test('달력의 세 창이 정확히 채워진다', () => {
   /*
     길이가 두 번 바뀌었다. 다섯 주였다가 — 넉 주짜리 달력이 생기면서 한 번만 뒤로
@@ -22,7 +35,7 @@ test('달력의 세 창이 정확히 채워진다', () => {
     창이므로 세 창이 정확히 84일이다. 90 이면 마지막 창의 엿새가 자료 밖으로 나가서
     반쯤 빈 달력이 되고, **반만 채워진 달력은 "이때 안 먹었다" 로 읽힌다.**
   */
-  const h = demoHistory(TODAY, ME);
+  const h = demoHistory(TODAY, ME, DEMO_DAYS, LATE);
   const days = byDay(h, TODAY, ME);
   assert.equal(days.length, DEMO_DAYS);
   assert.equal(DEMO_DAYS % WINDOW_DAYS, 0, '창에 딱 안 맞으면 반쯤 빈 달력이 생긴다');
@@ -35,13 +48,13 @@ test('보관 한도 안에 들어간다', () => {
   //
   // 상한을 숫자로 적지 않고 가져다 쓴다. 예전에는 200이 여기 박혀 있었고, 그
   // 값이 바뀌었을 때 이 시험은 **바뀐 쪽이 아니라 자기 자신을** 지켰다.
-  const h = demoHistory(TODAY, ME);
+  const h = demoHistory(TODAY, ME, DEMO_DAYS, LATE);
   assert.ok(h.length <= KEEP_COUNT, `${h.length} 개는 보관 한도(${KEEP_COUNT})를 넘는다`);
 });
 
 test('열 때마다 같은 자료가 나온다', () => {
   // 무작위를 쓰면 화면 캡처가 흔들리고 "어제는 이랬는데" 를 말할 수가 없다.
-  assert.deepEqual(demoHistory(TODAY, ME), demoHistory(TODAY, ME));
+  assert.deepEqual(demoHistory(TODAY, ME, DEMO_DAYS, LATE), demoHistory(TODAY, ME, DEMO_DAYS, LATE));
 });
 
 test('오늘은 지금까지 지나간 것만 들어 있다', () => {
@@ -63,7 +76,7 @@ test('오늘은 지금까지 지나간 것만 들어 있다', () => {
 });
 
 test('순응도가 셀 것이 생긴다', () => {
-  const a = adherence(doseRows(demoHistory(TODAY, ME), ME), TODAY, 7);
+  const a = adherence(doseRows(demoHistory(TODAY, ME, DEMO_DAYS, LATE), ME), TODAY, 7);
   assert.ok(a.offered > 15, `일주일에 ${a.offered} 번뿐이다`);
   assert.ok(a.missed > 0, '한 번도 안 거르면 이 화면이 무엇을 하는지 안 보인다');
   assert.ok(a.rate !== null && a.rate > 0.7, '너무 나쁘면 시연 자료로 안 맞는다');
@@ -72,12 +85,12 @@ test('순응도가 셀 것이 생긴다', () => {
 test('저녁을 주로 거르는 것이 드러난다', () => {
   // 아침을 거르는 사람과 저녁을 거르는 사람은 고칠 곳이 다르다. 그 구별을 짚는
   // 것이 이 기능의 값이고, 무작위로 흩뿌리면 화면에 안 나온다.
-  assert.equal(adherence(doseRows(demoHistory(TODAY, ME), ME), TODAY, 14).worstTime, '1900');
+  assert.equal(adherence(doseRows(demoHistory(TODAY, ME, DEMO_DAYS, LATE), ME), TODAY, 14).worstTime, '1900');
 });
 
 test('설탕이 줄어드는 이야기가 들어 있다', () => {
   // 주별 막대가 내려가는 것이 보여야 그 화면이 존재하는 이유가 증명된다.
-  const h = demoHistory(TODAY, ME);
+  const h = demoHistory(TODAY, ME, DEMO_DAYS, LATE);
   /*
     **단것만** 센다. 예전에는 바코드가 있는 것을 다 셌는데, 그때는 자료에 단것밖에
     없어서 같은 답이 나왔다. 끼니가 들어오면서 그 어림이 깨진다 — 빵과 렌틸이
@@ -108,7 +121,7 @@ test('영양 수치가 나오는 제품만 쓴다', () => {
   const CACHED = new Set(readdirSync(dir)
     .filter((f) => f.endsWith('.json'))
     .map((f) => f.replace(/\.json$/, '')));
-  for (const r of demoHistory(TODAY, ME)) {
+  for (const r of demoHistory(TODAY, ME, DEMO_DAYS, LATE)) {
     if (r.barcode) assert.ok(CACHED.has(r.barcode), `${r.barcode} 는 캐시에 없다`);
   }
 });
@@ -116,13 +129,13 @@ test('영양 수치가 나오는 제품만 쓴다', () => {
 test('식이 일지가 추론할 만큼 반응이 쌓인다', () => {
   // 반응이 하나뿐이면 화면이 "아직 모른다" 만 말하고, 그 기능이 있다는 것조차
   // 안 보인다.
-  const reacted = demoHistory(TODAY, ME).filter((r) => r.reaction === 'unwell');
+  const reacted = demoHistory(TODAY, ME, DEMO_DAYS, LATE).filter((r) => r.reaction === 'unwell');
   assert.ok(reacted.length >= 3, `반응이 ${reacted.length} 번뿐이다`);
   assert.ok(reacted.every((r) => r.tags?.includes('en:peanuts')));
 });
 
 test('기록마다 id 가 겹치지 않는다', () => {
-  const h = demoHistory(TODAY, ME);
+  const h = demoHistory(TODAY, ME, DEMO_DAYS, LATE);
   assert.equal(new Set(h.map((r) => r.id)).size, h.length);
 });
 
@@ -130,7 +143,7 @@ test('괜찮았던 끼니도 답이 달려 있다', () => {
   // 피셔 정확검정에는 네 칸이 필요하다 — 먹고 아팠다, 먹고 괜찮았다, 안 먹고
   // 아팠다, 안 먹고 괜찮았다. 아픈 날에만 답을 달면 아랫줄이 통째로 0 이라
   // 화면이 "0 of 0" 을 띄운 채 영원히 "지켜보는 중" 에 머문다.
-  const h = demoHistory(TODAY, ME);
+  const h = demoHistory(TODAY, ME, DEMO_DAYS, LATE);
   const fine = h.filter((r) => r.reaction === 'fine');
   const unwell = h.filter((r) => r.reaction === 'unwell');
   assert.ok(fine.length >= 5, `괜찮았다는 답이 ${fine.length} 개뿐이다`);

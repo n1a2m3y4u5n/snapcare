@@ -117,8 +117,8 @@ export default function DevicePage() {
       await box.setSchedule(toCloudSlots(sendSlots));
       setSending('sent');
       const what = trayPlan.plan.length === 1
-        ? 'One dose time was sent to the box.'
-        : `${trayPlan.plan.length} dose times were sent to the box.`;
+        ? 'One dose time was sent to the dispenser.'
+        : `${trayPlan.plan.length} dose times were sent to the dispenser.`;
       setResult(what);
       speak(what, 'en-US');
     } catch (err) {
@@ -126,7 +126,7 @@ export default function DevicePage() {
       setSending('failed');
       // 조용히 실패하면 안 되는 자리다. 보냈다고 믿은 사람은 상자가 약을 내보낼
       // 것이라고 믿고, 그 믿음은 아무 일도 일어나지 않는 아침에 깨진다.
-      const what = 'The schedule did not reach the box. Try again.';
+      const what = 'The schedule did not reach the dispenser. Try again.';
       setResult(what);
       speak(what, 'en-US');
     }
@@ -148,18 +148,18 @@ export default function DevicePage() {
         {/* 뒤로가기를 걷어냈다. 이 화면은 홈의 위성이라 **들어온 길이 홈**인데
             나가는 길만 설정으로 갔다. 아래 줄의 Home 버튼이 들어온 길로 돌려보낸다. */}
         <h1 className=" text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
-            {...ask('Pill device. Send your dose times to the box, or read what it shows.')}>Pill device</h1>
+            {...ask('Dispenser. Send your dose times to the dispenser, or read what it shows.')}>Dispenser</h1>
         {/*
           짝을 지으면 이 말이 더 이상 참이 아니다 — 사서함을 거치므로 같은 공유기 뒤에
           있을 필요가 없다. 화면이 사실과 다른 말을 하고 있으면, 그 말을 믿고 상자 옆으로
           걸어가는 사람이 생긴다.
         */}
         <Speakable text={box.paired
-          ? 'The box has its own mailbox. You can send from anywhere.'
-          : 'The phone and the box are on the same Wi-Fi. Nothing else is needed.'}
+          ? 'The dispenser has its own mailbox. You can send from anywhere.'
+          : 'The phone and the dispenser are on the same Wi-Fi. Nothing else is needed.'}
                    className="mt-1 text-sm flex w-full items-center gap-2">
           <span className="flex-1">
-            {box.paired ? 'Anywhere — the box has its own mailbox.' : 'Same Wi-Fi — nothing else needed.'}
+            {box.paired ? 'Anywhere — the dispenser has its own mailbox.' : 'Same Wi-Fi — nothing else needed.'}
           </span>
         </Speakable>
 
@@ -205,10 +205,10 @@ export default function DevicePage() {
                     {sending === 'sending' ? 'Sending…' : 'Send everything again'}
                   </span>
                   <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-                    Replaces what the box has with what this phone has
+                    Replaces what the dispenser has with what this phone has
                   </span>
                 </span>
-                <Hear text="Send everything again. This replaces the times in the box with the times on this phone. Use it if the box seems to have the wrong schedule." />
+                <Hear text="Send everything again. This replaces the times in the dispenser with the times on this phone. Use it if the dispenser seems to have the wrong schedule." />
               </button>
 
               {/*
@@ -233,7 +233,7 @@ export default function DevicePage() {
                     Your history stays. Pair again any time with its code.
                   </span>
                 </span>
-                <Hear text="Forget this box. This phone stops talking to it. Your history stays, and you can pair again any time with the code on the box." />
+                <Hear text="Forget this dispenser. This phone stops talking to it. Your history stays, and you can pair again any time with the code on the dispenser." />
               </button>
             </div>
           )}

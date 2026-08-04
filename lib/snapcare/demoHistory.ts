@@ -63,6 +63,18 @@ const PRODUCTS = {
   cheese: { barcode: '5202390015885', name: 'Cheese', emoji: '🧀', grams: 30, kind: 'food' as const },
   peanutButter: { barcode: '3327272107259', name: 'Peanut butter', emoji: '🥜', grams: 20, kind: 'food' as const },
   juice: { barcode: '3254691592086', name: 'Apple juice', emoji: '🧃', grams: 200, kind: 'drink' as const },
+
+  /*
+    넷을 더 붙였다. 이유는 갯수가 아니라 **되풀이**다 — 이레짜리 식단을 열두 주 돌리면
+    같은 날에 늘 같은 것이 앉고, 지난 달로 넘겨 봐도 이번 주와 똑같이 생겼다. 석 달을
+    보여주는 화면에서 그것은 자료가 많다는 인상을 주지 못한다.
+
+    이것들도 전부 OpenFoodFacts 의 실제 제품이고 수치는 받아 온 그대로다.
+  */
+  pasta: { barcode: '8076800195057', name: 'Spaghetti', emoji: '🍝', grams: 90, kind: 'food' as const },
+  milk: { barcode: '5000436589457', name: 'Milk 250 mL', emoji: '🥛', grams: 250, kind: 'drink' as const },
+  sardines: { barcode: '3263670162219', name: 'Sardines', emoji: '🐟', grams: 90, kind: 'food' as const },
+  veg: { barcode: '3083680482042', name: 'Peas and carrots', emoji: '🥕', grams: 150, kind: 'food' as const },
 };
 
 /**
@@ -138,15 +150,36 @@ function missed(back: number, due: string): boolean {
  * 설탕이 줄어드는 이야기는 요일이 아니라 **주**가 진다(`sweeter`). 요일 메뉴는
  * 뼈대이고, 옛날 주에는 거기에 단것이 하나 더 붙는다.
  */
+/*
+  두 주가 한 바퀴다.
+
+  이레였다. 그러면 열두 주 내내 월요일마다 같은 것을 먹고, 달력을 한 창 뒤로 넘겨도
+  이번 주와 똑같이 생긴 격자가 나온다 — 석 달치를 보여주는 화면인데 자료는 이레치로
+  보인다. 두 주로 돌리면 같은 요일이 두 가지 얼굴을 갖는다.
+
+  하루 서넛에서 넷다섯으로 늘렸다. 아침·점심·간식·저녁이 실제 하루의 모양이고, 하루
+  두 줄짜리 목록으로는 "먹은 것을 되짚는 화면" 이 무엇을 하는지가 안 보인다.
+
+  땅콩은 두 주에 네 번 남긴다. 식이 일지가 결론을 내려면 먹은 날이 넷은 있어야 하고
+  (`infer.ts` 의 `MIN_EATEN`), 그것이 이 자료가 증명하려는 기능이다.
+*/
 const WEEK: (keyof typeof PRODUCTS)[][] = [
-  // 아침 · 점심 · 저녁(또는 간식). 하루 두셋이면 실제로 사람이 찍는 수쯤이다.
-  ['oats', 'soup', 'cola'],                 // 일
-  ['bread', 'peanutButter', 'chicken'],     // 월 — 땅콩
-  ['yoghurt', 'lentils'],                   // 화
-  ['bread', 'tuna', 'nutella'],             // 수
-  ['oats', 'peanutButter', 'beans'],        // 목 — 땅콩
-  ['yoghurt', 'cheese', 'redbull'],         // 금
-  ['bread', 'chicken', 'cola', 'mars'],     // 토 — 주말이 가장 무겁다
+  // ── 첫째 주 ──
+  ['oats', 'soup', 'juice', 'cola'],                    // 일
+  ['bread', 'peanutButter', 'chicken', 'veg'],          // 월 — 땅콩
+  ['yoghurt', 'lentils', 'milk'],                       // 화
+  ['bread', 'tuna', 'veg', 'nutella'],                  // 수
+  ['oats', 'peanutButter', 'beans', 'milk'],            // 목 — 땅콩
+  ['yoghurt', 'cheese', 'pasta', 'redbull'],            // 금
+  ['bread', 'chicken', 'cola', 'mars'],                 // 토 — 주말이 가장 무겁다
+  // ── 둘째 주 ──
+  ['yoghurt', 'pasta', 'veg', 'juice'],                 // 일
+  ['oats', 'sardines', 'beans', 'milk'],                // 월
+  ['bread', 'peanutButter', 'soup'],                    // 화 — 땅콩
+  ['oats', 'chicken', 'veg', 'cheese'],                 // 수
+  ['yoghurt', 'tuna', 'pasta', 'juice'],                // 목
+  ['bread', 'peanutButter', 'lentils', 'milk'],         // 금 — 땅콩
+  ['oats', 'sardines', 'soup', 'cola', 'nutella'],      // 토
 ];
 
 /**
@@ -156,8 +189,18 @@ const WEEK: (keyof typeof PRODUCTS)[][] = [
  * 이야기가 주별 막대에서 보여야 하고, 그것이 이 화면이 존재하는 이유다.
  */
 function ateOn(day: string, back: number): (keyof typeof PRODUCTS)[] {
-  const weekday = new Date(`${day}T00:00:00Z`).getUTCDay();
-  const menu = [...WEEK[weekday]];
+  /*
+    요일과 **어느 주인지**로 고른다. 요일만 보면 두 주짜리 표의 앞쪽 이레만 계속
+    쓰인다 — 표를 늘려 놓고 절반을 안 쓰는 셈이 된다.
+
+    주 번호는 날짜 자체에서 뽑는다(에포크 기준 주차). `back` 으로 세면 오늘이
+    무슨 요일이냐에 따라 같은 날짜가 다른 주로 잡히고, 그러면 자료가 만들어진 날에
+    따라 달라져서 이 파일의 규칙(무작위도 시계도 안 쓴다)이 깨진다.
+  */
+  const at = new Date(`${day}T00:00:00Z`);
+  const weekday = at.getUTCDay();
+  const week = Math.floor(at.getTime() / 86400000 / 7) % 2;
+  const menu = [...WEEK[week * 7 + weekday]];
 
   /*
     시대가 셋이다. 요일이 뼈대를 정하고 주가 무게를 정한다.
