@@ -236,6 +236,56 @@ def _hero_shape(canvas: Canvas, shape: Shape, value: int) -> None:
     shapes.fill(canvas, SPLIT // 2, top + HERO_R, HERO_R, shape, value)
 
 
+def _hero_smile(canvas: Canvas, face: int, ink: int) -> None:
+    """오늘 할 일이 끝났다 — 웃는 얼굴.
+
+    여기 회색 네모가 있었다. 뜻으로는 맞았다(`PENDING` 은 "아직" 이고 남은 것이
+    없으니 아무 등급도 아니다). 그런데 이 패널이 하루 중 **가장 오래 서 있는 화면**이
+    이것이다. 복용은 하루에 서너 번이고 나머지 스무 시간은 이 프레임이 떠 있는데,
+    그 스무 시간 동안 부엌에 서 있는 그림이 회색 네모였다.
+
+    회색 네모가 말하는 것도 사실 없었다. 등급이 아니라는 것을 말하려고 등급의 모양을
+    빌려 쓰고 있었으니, 보는 사람에게는 "무언가 대기 중" 으로 읽힌다.
+
+    웃는 얼굴은 **번 것이다**
+    -------------------------
+    아무 때나 웃지 않는다. `idle` 이 이 자리에 오는 경우가 둘이고 — 오늘 것을 다
+    먹었다, 오늘 것을 다 걸렀다 — 둘 다 "다음이 없다" 이다. 거른 날에 웃으면 그것은
+    이 기계가 할 수 있는 가장 나쁜 거짓말이다. 부르는 쪽이 그것을 가른다.
+
+    그림
+    ----
+    채운 원에 배경색으로 눈과 입을 파낸다. 이 패널에 구멍을 뚫는 연산이 없어서,
+    얼굴을 칠한 뒤 그 위에 배경색을 덮는 것이 구멍이다.
+
+    입은 포물선이다. 호를 그리는 함수가 없기도 하고, 세로 막대를 열 몇 개 세우는
+    쪽이 더 정확하다 — 이 크기에서 원호를 근사하면 양 끝이 계단으로 남는다.
+
+    비율은 실루엣이 3m 에서 견디도록 잡았다. 눈이 작으면 원 하나로 뭉치고, 입이
+    얕으면 웃는지 아닌지가 안 보인다.
+    """
+    top = HERO_Y + (HERO_H - (2 * HERO_R + 1)) // 2
+    cx, cy = SPLIT // 2, top + HERO_R
+    r = HERO_R
+
+    shapes.fill(canvas, cx, cy, r, Shape.SAFE, face)
+
+    eye_r = max(2, r * 7 // 50)                      # 4
+    for side in (-1, 1):
+        shapes.fill(canvas, cx + side * (r * 2 // 5), cy - r * 7 // 25, eye_r,
+                    Shape.SAFE, ink)
+
+    # 입. `half` 는 가로 반지름, `depth` 는 가운데가 얼마나 내려앉는가.
+    half = r * 13 // 25                              # 15
+    depth = r * 7 // 25                              # 8
+    thick = max(3, r * 3 // 25)                      # 3
+    base = cy + r * 4 // 25                          # 아래 눈보다 충분히 내려서
+    for dx in range(-half, half + 1):
+        # y = base + depth - depth * (dx/half)^2 — 가운데가 가장 낮고 끝이 올라간다.
+        lift = (depth * dx * dx + half * half // 2) // (half * half)
+        canvas.rect(cx + dx, base + depth - lift, 1, thick, ink)
+
+
 def _hero_time(canvas: Canvas, text: str, value: int, *,
                secondary: str = "", secondary_value: int | None = None) -> None:
     """The right column: a time as large as it will go, and an optional line.
@@ -590,7 +640,11 @@ def idle(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
     # falls back to the wall clock — the panel still has a large time on it, and
     # the strip underneath says whether the day is done or was never planned.
     loaded = _field(health, "trays_loaded", 0)
-    if loaded:
+    if loaded and _day_is_done(health):
+        # 오늘 것을 다 먹었다. 이 패널이 하루 중 가장 오래 서 있는 화면이고,
+        # 그 스무 시간이 회색 네모였다.
+        _hero_smile(canvas, theme["MARK_TAKEN"], theme["INK"])
+    elif loaded:
         _hero_shape(canvas, Shape.PENDING, theme["TEXT_MUTE"])
     else:
         # No prescription at all: an outline, because solid means "we know" and
@@ -603,6 +657,24 @@ def idle(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
                theme["TEXT"], secondary=address,
                secondary_value=theme["TEXT_DIM"])
     _frame(canvas, health, theme)
+
+
+def _day_is_done(health: Health) -> bool:
+    """오늘 것을 **다 먹었나.** 웃어도 되는지를 정하는 값이다.
+
+    "다음이 없다" 로는 모자란다. 오늘 것을 다 걸러도 다음은 없고, 거른 날에 웃는
+    것은 이 기계가 할 수 있는 가장 나쁜 거짓말이다 — 약을 안 먹었는데 화면이 잘했다고
+    말하는 것이라, 그 사람은 자기가 먹었다고 믿게 된다.
+
+    `taken` 만 센다. `unknown` — 장부에 없는 지난 복용 — 도 웃지 않는다. 그것은
+    "안 먹었다" 가 아니라 "모른다" 이고, 모르는 것 위에 웃는 얼굴을 얹는 것은 확신
+    없는 자리에 확신을 그리는 일이다. 이 패널이 외곽선 도형을 남겨 둔 이유와 같다.
+
+    하루가 비어 있으면 웃지 않는다. 처방이 없는 기계와 오늘 것을 끝낸 기계는 다르고,
+    그 둘이 같은 얼굴을 하면 얼굴이 아무것도 말하지 않는 것이 된다.
+    """
+    day = _field(health, "day", ()) or ()
+    return len(day) > 0 and all(getattr(d, "state", "") == "taken" for d in day)
 
 
 def _next_upcoming(health: Health):

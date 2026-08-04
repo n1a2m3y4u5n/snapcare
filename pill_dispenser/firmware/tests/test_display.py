@@ -630,3 +630,79 @@ def test_the_when_block_keeps_clear_of_the_rule():
     assert bar.CLOCK_H > bar.DATE_H, "the minute must be the bigger of the two"
     # 밑선을 맞춘다. 가운데를 맞추면 둘이 한 줄에 앉은 것으로 안 읽힌다.
     assert bar.DATE_Y + bar.DATE_H == bar.CLOCK_Y + bar.CLOCK_H
+
+
+# ── 하루가 끝난 얼굴 ────────────────────────────────────────────────────────
+
+def _idle_of(day, **over):
+    base = dict(known=True, dispensing=True, wifi="online", relay="connected",
+                clock_source="ntp", cell="ok", power="ok", storage="ok",
+                trays_loaded=3, prescribed=True, now="22:40", today="26-08-04")
+    base.update(over)
+    return Health(day=day, **base)
+
+
+def _dose(at, minutes, state):
+    from snapcare_dispenser.display.health import Dose
+    return Dose(tray=1, minutes=minutes, at=at, state=state)
+
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_a_finished_day_does_not_look_like_a_waiting_one(canvas):
+    """오늘 것을 다 먹은 화면과 아직 남은 화면이 달라야 한다.
+
+    이 프레임이 하루 중 가장 오래 서 있다 — 복용은 서너 번이고 나머지 스무 시간은
+    이것이 떠 있다. 그 스무 시간 동안 부엌에 서 있던 그림이 회색 네모였고, 그것은
+    등급이 아니라는 것을 말하려고 등급의 모양을 빌려 쓴 것이라 보는 사람에게는
+    "무언가 대기 중" 으로 읽혔다.
+    """
+    done = (_dose("07:00", 420, "taken"), _dose("12:00", 720, "taken"))
+    waiting = (_dose("07:00", 420, "taken"), _dose("23:00", 1380, "upcoming"))
+
+    assert _frame(canvas, screens.idle, _idle_of(done)) \
+        != _frame(canvas, screens.idle, _idle_of(waiting))
+
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_the_machine_does_not_smile_at_a_missed_day(canvas):
+    """이 기계가 할 수 있는 가장 나쁜 거짓말이다.
+
+    "다음이 없다" 로는 웃을 근거가 안 된다 — 오늘 것을 다 걸러도 다음은 없다. 약을
+    안 먹었는데 화면이 잘했다고 말하면 그 사람은 자기가 먹었다고 믿게 된다.
+
+    `unknown` 도 웃지 않는다. 장부에 없는 지난 복용은 "안 먹었다" 가 아니라 "모른다"
+    이고, 모르는 것 위에 웃는 얼굴을 얹는 것은 확신 없는 자리에 확신을 그리는 일이다.
+    """
+    done = (_dose("07:00", 420, "taken"), _dose("12:00", 720, "taken"))
+    smiling = _frame(canvas, screens.idle, _idle_of(done))
+
+    for spoilt in ("missed", "unknown"):
+        day = (_dose("07:00", 420, "taken"), _dose("12:00", 720, spoilt))
+        assert _frame(canvas, screens.idle, _idle_of(day)) != smiling, spoilt
+
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_an_empty_day_is_not_a_finished_day(canvas):
+    """처방이 없는 기계와 오늘 것을 끝낸 기계는 다르다.
+
+    둘이 같은 얼굴을 하면 그 얼굴이 아무것도 말하지 않는 것이 된다 — 공장 초기화
+    직후의 기계가 하루를 잘 마친 것처럼 보인다.
+    """
+    done = (_dose("07:00", 420, "taken"),)
+    assert _frame(canvas, screens.idle, _idle_of(())) \
+        != _frame(canvas, screens.idle, _idle_of(done))
+
+
+def test_the_smile_stays_inside_its_column():
+    """왼쪽 칸 밖으로 새면 시각을 덮는다. 시각은 이 프레임에서 가장 큰 요소다."""
+    from snapcare_dispenser.display import screens as scr
+
+    canvas = Rgb565(320, 240)
+    canvas.fill(0)
+    scr._hero_smile(canvas, 0xFFFF, 0x0000)
+
+    raw = bytes(canvas.buffer())
+    for y in range(scr.HERO_Y, scr.HERO_Y + scr.HERO_H):
+        for x in range(scr.SPLIT, 320):
+            i = 2 * (y * 320 + x)
+            assert raw[i] == 0 and raw[i + 1] == 0, f"얼굴이 {x},{y} 까지 샜다"
