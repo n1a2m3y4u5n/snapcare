@@ -1154,7 +1154,9 @@ Whichever path a value arrives by, it has to pass the same physical checks befor
 
 **Function 3. Automatic pill dispenser link (Device Link)**
 
-The dosing schedule produced by the app is sent to the device. The device is based on a Raspberry Pi 3B with three trays, an LED ring, a buzzer, a confirmation button and a real-time clock (DS1302).
+The dosing schedule produced by the app is sent to the device. The device is based on a Raspberry Pi 3B with three trays, an LED ring, a buzzer, a confirmation button and a real-time clock (DS1302). Three is the number of servos fitted to the machine we built; the firmware reserves pins for eight layers and the paper form accepts eight as well, so plugging a fourth servo into the pin already reserved for it is the whole job, with no configuration to edit.
+
+The risk that comes with it is written down by the firmware itself, so it is carried across here. An SG90 servo reports nothing, so the machine has no way of knowing whether a hopper is fitted in a given position. Accepting all eight therefore means accepting a schedule that names a tray which does not exist, and that dose is then never dispensed while raising no error at all: no jam, no indication, a machine that looks perfectly healthy. Recording the number actually fitted in `SNAPCARE_TRAYS` blocks such a schedule at the point where it is accepted, and the machine this document measures has three.
 
 The design of the transmission path is the result of several constraints applying at once. This is detailed in §4.
 
@@ -1593,7 +1595,7 @@ This section first sets out what was built with which tools, and the sections th
 | Nutrition estimation | EfficientNet-B0 224px (trained on Nutrition5k) · onnxruntime-web | On-device inference |
 | Product data | OpenFoodFacts API | Via server |
 | Image recognition | Claude Vision | Via server |
-| Hardware | Raspberry Pi 3B · 3 servos · WS2812 · DS1302 | 3 trays |
+| Hardware | Raspberry Pi 3B · 3 servos · WS2812 · DS1302 | Three trays fitted, eight layers reserved in firmware |
 | Deployment | fly.io (Tokyo) · 1 GB persistent volume | Stops when idle, wakes on request |
 
 The last row should be set down first. To avoid leaving a machine idle we set `min_machines_running = 0`, so it stops when nobody is using it and wakes on the first request. Anyone opening it for the first time therefore waits a few seconds. Measured on 3 August 2026, the first request took 6.5 seconds and the ones after it 0.17. That 6.5 seconds is what someone who reads this document and opens the deployment meets first, so it is recorded. Running it always-on would remove it, but that is a question of cost rather than of design.
