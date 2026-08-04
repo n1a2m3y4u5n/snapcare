@@ -8,8 +8,8 @@ import { orbitSpots, overlaps } from './orbit.ts';
   것을 재게 된다** — 가운데 버튼을 40%에서 46%로 키웠을 때 이 상수가 40 으로
   남아 있어서, 위성이 버튼에 파고들어도 통과할 수 있는 상태였다.
 */
-const SATELLITE_PCT = 18;   // w-[20%]
-const CENTER_PCT = 52;      // w-[46%]
+const SATELLITE_PCT = 18;   // w-[18%]
+const CENTER_PCT = 52;      // w-[52%]
 
 test('12시에서 시작해 고르게 나눈다', () => {
   // 처음에는 6시를 비우려고 각도를 좁혔다. "Scan something" 이라는 이름을 원 안에

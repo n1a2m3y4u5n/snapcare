@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { MAX_SEGMENTS, calendar, daySentence, leadingBlanks, partOf } from './calendar.ts';
+import { DAY_PARTS, MAX_SEGMENTS, calendar, daySentence, leadingBlanks, partOf } from './calendar.ts';
 import type { DoseRow } from './adherence.ts';
 
 function dose(dayKey: string, taken: boolean): DoseRow {
@@ -86,16 +86,33 @@ test('칸 안이 시각 순으로 늘어선다', () => {
                       eveningMissed[0].slots.map((s) => s.taken));
 });
 
-test('때의 경계가 홈 화면과 같다', () => {
-  // 같은 8시를 두 화면이 다른 때로 부르면, 그 둘이 같은 복용이라는 것을 알 방법이 없다.
+test('셋이 하루를 빠짐없이 덮는다', () => {
+  /*
+    넷이었다 — 밤이 따로 있었다. 6×12px 짜리 조각에서 넷을 갈라내는 것은 눈이
+    안정적으로 못 하는 일이고, 범례가 안 배워지면 색을 나눈 일 자체가 헛일이 된다.
+
+    셋으로 줄이면서 **덮는 것이 더 중요해졌다.** 넷일 때는 밤이 나머지를 받았는데,
+    이제 저녁이 그 일을 한다. 어느 시각이 아무 때에도 안 들면 그 복용은 화면에서
+    사라진다.
+  */
+  for (let h = 0; h < 24; h++) {
+    const part = partOf(`${String(h).padStart(2, '0')}00`);
+    assert.notEqual(part, 'unknown', `${h}시가 어느 때에도 안 든다`);
+  }
   assert.equal(partOf('0500'), 'morning');
   assert.equal(partOf('1059'), 'morning');
   assert.equal(partOf('1100'), 'midday');
-  assert.equal(partOf('1559'), 'midday');
-  assert.equal(partOf('1600'), 'evening');
-  assert.equal(partOf('1959'), 'evening');
-  assert.equal(partOf('2000'), 'night');
-  assert.equal(partOf('0300'), 'night');
+  assert.equal(partOf('1659'), 'midday');
+  assert.equal(partOf('1700'), 'evening');
+  // 밤에 먹는 약은 저녁에 든다. 안압약의 `nocte` 처방이 실제로 있고, 그것을
+  // "저녁" 이라고 부르는 것은 틀린 말이 아니다.
+  assert.equal(partOf('2200'), 'evening');
+  assert.equal(partOf('0300'), 'evening');
+});
+
+test('범례에 실리는 때가 셋이다', () => {
+  // 색을 외워야 하는 자리라 개수가 곧 비용이다.
+  assert.equal(DAY_PARTS.length, 3);
 });
 
 test('거른 것이 어느 때였는지 소리로도 말한다', () => {

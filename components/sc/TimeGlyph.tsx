@@ -1,6 +1,7 @@
 'use client';
 
-import { clockFace, dayPart, parseClock, speakTime } from '@/lib/snapcare/clock';
+import { parseClock, speakTime } from '@/lib/snapcare/clock';
+import { ClockIcon, MiddayIcon, MoonIcon, SunriseIcon, SunsetIcon } from '@/components/icons';
 import { Speakable } from './Say';
 
 /**
@@ -12,6 +13,14 @@ import { Speakable } from './Say';
  *
  * 시각을 못 읽어내면 그림을 그리지 않는다. 틀린 시계는 없는 시계보다 나쁘다.
  */
+/** 하루의 때 — `dayPart` 와 같은 경계다. 같은 8시를 두 화면이 다르게 부르면 안 된다. */
+function PartIcon({ hour }: { hour: number }) {
+  if (hour >= 5 && hour < 11) return <SunriseIcon />;
+  if (hour >= 11 && hour < 16) return <MiddayIcon />;
+  if (hour >= 16 && hour < 20) return <SunsetIcon />;
+  return <MoonIcon />;
+}
+
 export function TimeGlyph({ label, className = '', mute = false, compact = false }: {
   label: string;
   className?: string;
@@ -32,17 +41,26 @@ export function TimeGlyph({ label, className = '', mute = false, compact = false
 }) {
   const t = parseClock(label);
   if (!t) return <span className={className}>{label}</span>;
-
-  const part = dayPart(t.hour);
   // 'Today · 2:14 PM' 에서 날짜 부분만 남긴다 — 시각은 그림이 맡았다
   const day = label.includes('·') ? label.split('·')[0].trim() : '';
 
   const face = (
     <>
       {!compact && (
-        <span aria-hidden className="text-[17px] leading-none">{clockFace(t.hour, t.minute)}</span>
+        <span aria-hidden className="text-[17px] leading-none">
+          <ClockIcon hour={t.hour} minute={t.minute} />
+        </span>
       )}
-      <span aria-hidden className="text-[17px] leading-none">{part.emoji}</span>
+      {/*
+        때 그림. 🌅☀️🌆🌙 였다.
+
+        이모지는 기기마다 다르게 생기는데, 이 넷은 **서로 갈려야만 뜻이 있는** 그림이다.
+        어떤 기기에서는 🌅 와 🌆 가 색만 다른 같은 그림이고, 그 둘이 아침과 저녁이다.
+        복약 시각을 두고 그것이 안 갈리면 그림이 없는 것보다 나쁘다.
+      */}
+      <span aria-hidden className="text-[17px] leading-none">
+        <PartIcon hour={t.hour} />
+      </span>
       <span className="text-[10px] opacity-50">{label}</span>
     </>
   );

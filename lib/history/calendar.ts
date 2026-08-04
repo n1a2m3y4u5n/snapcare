@@ -36,8 +36,16 @@ export const MAX_SEGMENTS = 6;
  * 때로 부르면 안 된다 — 홈에서 "아침" 이라고 말한 복용이 달력에서 다른 색으로
  * 앉아 있으면, 그 둘이 같은 복용이라는 것을 알 방법이 없다.
  *
- * `night` 이 따로 있는 이유는 실제로 밤에 먹는 약이 있어서다. 안압약 처방
- * (`G. Xalatan nocte`)이 이 앱이 실제로 읽어 본 처방전에 들어 있었다.
+ * 셋인 이유
+ * ---------
+ * 넷이었다 — 밤을 따로 두었다. 6×12px 짜리 조각에서 **넷을 서로 갈라내는 것은 눈이
+ * 안정적으로 못 하는 일**이고, 범례가 배워지지 않으면 색을 나눈 일 자체가 헛일이
+ * 된다. 밤에 먹는 약은 드물고 — 안압약 처방(`G. Xalatan nocte`)처럼 실제로 있기는
+ * 하다 — 그것을 "저녁" 으로 부르는 것은 틀린 말이 아니다.
+ *
+ * 그래서 `clock.ts` 의 `dayPart` 와 갈린다. 그쪽은 넷이고 여기는 셋이다. 실수가
+ * 아니라 하는 일이 달라서다 — 저쪽은 **문장**을 만들고("밤에 드세요") 하나 더
+ * 있어도 사람이 외울 것이 안 늘지만, 여기는 색을 외워야 하는 자리다.
  *
  * `unknown` 은 때가 아니다 — **때를 모른다**는 뜻이다. 그것을 아무 때로나 넣지
  * 않는 것이 이 타입에서 제일 중요한 값이다. 처음 쓸 때 못 읽는 값을 `night` 으로
@@ -45,10 +53,10 @@ export const MAX_SEGMENTS = 6;
  * 그것을 알아챌 방법이 없다. 이 저장소가 세 군데에서 되풀이해 적어 둔 규칙이
  * 그것이다: 그럴듯한 틀린 값이 물음표보다 나쁘다.
  */
-export type DayPart = 'morning' | 'midday' | 'evening' | 'night' | 'unknown';
+export type DayPart = 'morning' | 'midday' | 'evening' | 'unknown';
 
 /** 실제 하루의 때들, 이른 것부터. `unknown` 은 여기 없다 — 때가 아니니까. */
-export const DAY_PARTS = ['morning', 'midday', 'evening', 'night'] as const;
+export const DAY_PARTS = ['morning', 'midday', 'evening'] as const;
 
 /** `'0800'` → `'morning'`. 못 읽으면 `'unknown'`. */
 export function partOf(due: string): DayPart {
@@ -58,10 +66,10 @@ export function partOf(due: string): DayPart {
   if (!/^\d{4}$/.test(text)) return 'unknown';
   const hour = Number(text.slice(0, 2));
   if (hour > 23) return 'unknown';
+  // 셋이 하루를 다 덮는다. 밤(20시 이후와 새벽)은 저녁에 든다 — 위 머리말 참고.
   if (hour >= 5 && hour < 11) return 'morning';
-  if (hour >= 11 && hour < 16) return 'midday';
-  if (hour >= 16 && hour < 20) return 'evening';
-  return 'night';
+  if (hour >= 11 && hour < 17) return 'midday';
+  return 'evening';
 }
 
 /** 그 날의 복용 하나. 달력 칸 안의 조각 하나이기도 하다. */
@@ -187,6 +195,5 @@ export const PART_WORD: Record<DayPart, string> = {
   morning: 'morning',
   midday: 'midday',
   evening: 'evening',
-  night: 'night',
   unknown: 'unrecorded',
 };

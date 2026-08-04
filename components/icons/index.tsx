@@ -266,6 +266,40 @@ export const SunIcon = (p: IconProps) => (
 );
 
 /**
+ * 시계 문자판 — **바늘이 진짜 시각을 가리킨다.**
+ *
+ * 🕐~🕧 이모지를 쓰고 있었다. 그 스물넷은 30분 단위밖에 없어서 `clockFace` 가 가장
+ * 가까운 반시간으로 반올림했고, 8시 20분과 8시 40분이 같은 그림이 됐다. 복약
+ * 시각에서 20분은 뜻이 있는 차이다.
+ *
+ * 그리고 이모지 문자판은 기기마다 바늘 굵기와 문자판 색이 달라서, 작게 줄이면
+ * 어느 폰에서는 바늘이 아예 안 보인다.
+ *
+ * 바늘은 계산해서 그린다. 12시간제 — 아침과 밤은 옆의 해·달 그림이 가른다.
+ */
+export const ClockIcon = ({ hour, minute, ...p }: IconProps & { hour: number; minute: number }) => {
+  const h = ((hour % 12) + minute / 60) * 30 - 90;   // 화면 좌표에서 -90도가 12시
+  const m = minute * 6 - 90;
+  const at = (deg: number, len: number) => [
+    12 + Math.cos((deg * Math.PI) / 180) * len,
+    12 + Math.sin((deg * Math.PI) / 180) * len,
+  ];
+  const [hx, hy] = at(h, 4.6);
+  const [mx, my] = at(m, 6.8);
+  return (
+    <Svg {...p}>
+      {/* 테두리는 채운 원에서 가운데를 파낸다 — 이 파일의 다른 그림들과 같은 방식이다. */}
+      <path fillRule="evenodd"
+            d="M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22Zm0 2.2a8.8 8.8 0 1 0 0 17.6 8.8 8.8 0 0 0 0-17.6Z" />
+      <path d={`M12 12L${hx.toFixed(2)} ${hy.toFixed(2)}`} strokeWidth="2.2"
+            stroke="currentColor" strokeLinecap="round" />
+      <path d={`M12 12L${mx.toFixed(2)} ${my.toFixed(2)}`} strokeWidth="1.6"
+            stroke="currentColor" strokeLinecap="round" />
+    </Svg>
+  );
+};
+
+/**
  * 하루의 때 — 뜨는 해, 떠 있는 해, 지는 해.
  *
  * 복약 달력의 범례가 `MORNING` · `MIDDAY` · `EVENING` 이라는 **글자**였다. 글을

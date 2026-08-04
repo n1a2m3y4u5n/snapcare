@@ -2,7 +2,7 @@
 
 import { DAY_PARTS, MAX_SEGMENTS, PART_WORD, type CalendarDay, type DayPart, daySentence, leadingBlanks } from '@/lib/history/calendar';
 import { sayable } from './Say';
-import { MiddayIcon, MoonIcon, SunriseIcon, SunsetIcon } from '@/components/icons';
+import { MiddayIcon, SunriseIcon, SunsetIcon } from '@/components/icons';
 
 /**
  * 때마다 그림 하나.
@@ -18,7 +18,6 @@ const PART_ICON: Record<DayPart, (p: { size?: number | string }) => React.ReactN
   morning: SunriseIcon,
   midday: MiddayIcon,
   evening: SunsetIcon,
-  night: MoonIcon,
   unknown: MiddayIcon,
 };
 
@@ -30,7 +29,6 @@ const PART_COLOR: Record<DayPart, string> = {
   morning: 'var(--color-part-morning)',
   midday: 'var(--color-part-midday)',
   evening: 'var(--color-part-evening)',
-  night: 'var(--color-part-night)',
   // 때가 아니라 "때를 모른다" 다. 갈래 밖의 회색이라야 갈래로 안 읽힌다.
   unknown: 'var(--color-sc-muted)',
 };
@@ -49,9 +47,8 @@ const PART_COLOR: Record<DayPart, string> = {
  *
  * 한 조각이 무엇을 말하는가 — 두 가지를 두 채널로
  * ------------------------------------------------
- * 색은 **때**를 말한다. 아침·점심·저녁·밤이 옅은 하늘에서 깊은 남색까지 내려가는
- * 한 갈래다. 채웠느냐 비웠느냐는 **먹었느냐**를 말한다. 두 사실이 두 채널을 하나씩
- * 갖고, 서로 섞이지 않는다.
+ * 색은 **때**를 말한다 — 아침·점심·저녁 셋. 채웠느냐 비웠느냐는 **먹었느냐**를
+ * 말한다. 두 사실이 두 채널을 하나씩 갖고, 서로 섞이지 않는다.
  *
  * 예전에는 색이 "먹었나" 를 맡고 있었고(초록·주황) 때는 아무데도 없었다. 그래서
  * 세 조각짜리 날을 보면서도 어느 것이 아침인지 알 수 없었고 — 더 나쁘게는, 먹은
@@ -59,8 +56,9 @@ const PART_COLOR: Record<DayPart, string> = {
  * 저녁을 거른 날과 똑같이 생겼다.** 두 날은 전혀 다른 날이다.
  *
  * 차례는 이제 자료가 정한다(`calendar.ts` 의 `slots`, 시각 오름차순). 위가 이르고
- * 아래가 늦다. 색의 밝기도 같은 방향으로 내려가므로, 범례를 안 읽어도 그 방향이
- * 보인다.
+ * 아래가 늦다 — **순서는 자리가 지고 색은 안 진다.** 한때 색을 밝기 순으로 늘어놓아
+ * 순서까지 지게 했는데, 그러면 셋이 너무 닮아서 정작 갈리지가 않았다. 색은 서로
+ * 멀어지는 데 쓰고, 순서는 이미 자리가 말한다.
  *
  * 초록·주황·빨강을 안 쓰는 이유는 그 셋이 이 앱에서 **판정**이기 때문이다. 판정이
  * 아닌 것에 판정의 색을 쓰면 두 뜻이 한 색을 나눠 갖는다.
