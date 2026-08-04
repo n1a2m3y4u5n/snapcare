@@ -12,6 +12,7 @@ import { setDemo } from '@/lib/snapcare/demo';
 import { useIsClient, useIsDemo } from '@/lib/hooks';
 import { activeAccountId, listAccounts, switchTo, type Account } from '@/lib/snapcare/accounts';
 import { TILE_ICONS, TILE_NAMES } from '@/components/icons/tiles';
+import { FaceIcon, LockIcon } from '@/components/icons';
 
 /** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개 순서 (bcrypt로 실제 설정·검증). */
 /*
@@ -139,14 +140,14 @@ export default function LoginPage() {
                       outlineOffset: '3px',
                     }}
                   >
-                    {p.emoji}
+                    <FaceIcon face={p.emoji} />
                   </button>
                 );
               })}
             </div>
           </>
         )}
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-2xl" style={{ background: 'color-mix(in srgb, var(--color-sc-primary) 12%, white)' }}>🔒</div>
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-2xl" style={{ background: 'color-mix(in srgb, var(--color-sc-primary) 12%, white)', color: 'var(--color-sc-primary)' }}><LockIcon /></div>
         <h1 className="mt-4 text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}
             {...ask(setup ? 'Create your picture key. Tap four pictures in an order you will remember.' : 'Enter your picture key. Tap your four pictures, in the order you chose.')}>
           {setup ? 'Create your picture key' : 'Enter your picture key'}

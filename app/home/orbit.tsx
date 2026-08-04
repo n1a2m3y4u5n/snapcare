@@ -98,7 +98,18 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
                      active:scale-95 transition-transform"
           style={{ left: `${spots[i].left}%`, top: `${spots[i].top}%` }}
         >
-          <span aria-hidden className="flex items-center justify-center text-2xl leading-none">{s.icon({})}</span>
+          {/*
+            그림은 가운데 버튼과 같은 파랑이다.
+
+            검정으로 두면 다섯이 배경 위의 얼룩처럼 앉는다. 같은 파랑을 쓰면 가운데의
+            큰 버튼과 둘레의 다섯이 **한 벌**로 읽히고, 그 파랑은 이 앱에서 이미
+            "누르는 것" 의 색이다 — 뜻과 색이 맞는다.
+
+            이름은 파랑으로 안 칠한다. 색을 다 파랑으로 덮으면 그림과 글자의 무게가
+            같아져서 어느 쪽을 먼저 보는지가 안 정해진다.
+          */}
+          <span aria-hidden className="flex items-center justify-center text-2xl leading-none"
+                style={{ color: 'var(--color-sc-primary)' }}>{s.icon({})}</span>
           <span aria-hidden className="mt-0.5 px-1 text-center text-[9px] font-bold leading-tight"
                 style={{ color: 'var(--color-sc-muted)' }}>
             {s.label}
