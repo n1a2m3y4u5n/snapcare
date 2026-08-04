@@ -3,13 +3,15 @@
 import { useMemo, useState } from 'react';
 
 import { MobileScreen } from '@/components/sc/MobileScreen';
-import { Hear, Speakable, ask } from '@/components/sc/Say';
+import { Hear, Speakable, ask, sayable } from '@/components/sc/Say';
 import { useScans, todayKey } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
 import { useIsClient } from '@/lib/hooks';
 import { byDay, dayLabel, daySentence, type DaySummary } from '@/lib/history/byDay';
 import { adherence, adherenceSentence, clockOf, doseRows } from '@/lib/history/adherence';
 import { calendar } from '@/lib/history/calendar';
+import { routineSentence, routines } from '@/lib/history/routines';
+import { useReminders } from '@/stores/reminders';
 import { DoseCalendar } from '@/components/sc/DoseCalendar';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
 import { Thumb } from '@/components/sc/Thumb';
@@ -33,6 +35,7 @@ import { Thumb } from '@/components/sc/Thumb';
  */
 export default function HistoryPage() {
   const scans = useScans((s) => s.scans);
+  const reminders = useReminders((s) => s.reminders);
   const member = useProfile((s) => s.profile);
   const ready = useIsClient();
 
@@ -57,6 +60,15 @@ export default function HistoryPage() {
     한 번의 우연과 구별되지 않는다. 넉 주면 같은 요일이 네 번 줄지어 서고, 그때
     비로소 세로줄이 뜻을 갖는다. 그 이상은 폰 화면에서 칸이 너무 작아진다.
   */
+  /*
+    지금 정해져 있는 것. 아래 그림보다 먼저 온다 — 거른 칸이 둘인 것은 하루 두
+    번짜리 처방에서는 하루를 통째로 건너뛴 것이고 하루 다섯 번짜리에서는 한 끼를
+    늦게 먹은 것이라, 무엇이 일어났어야 하는지를 모르면 같은 그림이 다른 뜻이 된다.
+  */
+  const setNow = useMemo(
+    () => (ready ? routines(reminders, today) : []),
+    [ready, reminders, today],
+  );
   const month = useMemo(
     () => (ready && member ? calendar(doseRows(scans, member.id), today, 28) : []),
     [ready, scans, today, member],
@@ -73,6 +85,7 @@ export default function HistoryPage() {
           Past days
         </h1>
 
+        {setNow.length > 0 && <RoutineCard list={setNow} />}
         {week && week.rate !== null && <AdherenceCard span={week} month={month} />}
 
         {days.length === 0 && (
@@ -86,6 +99,62 @@ export default function HistoryPage() {
         </div>
       </div>
     </MobileScreen>
+  );
+}
+
+/**
+ * 지금 정해져 있는 복약 루틴.
+ *
+ * 아래의 달력과 게이지가 "무엇이 일어났나" 라면 이 카드는 "무엇이 일어났어야
+ * 하나" 다. 둘 중 하나만 있으면 나머지가 안 읽힌다 — 거른 칸이 둘인 것은 하루 두
+ * 번짜리 처방에서는 하루를 통째로 건너뛴 것이고, 하루 다섯 번짜리에서는 한 끼를
+ * 늦게 먹은 것이다.
+ *
+ * 칸 번호를 같이 적는 이유는 이 목록이 **약을 채워 넣을 때** 펼쳐지는 목록이기도
+ * 해서다. 그 번호는 상자로 일정을 보낼 때 쓰는 것과 같은 함수에서 나온다.
+ */
+function RoutineCard({ list }: { list: ReturnType<typeof routines> }) {
+  const say = list.map(routineSentence).join(' ');
+  return (
+    <div className="mt-4 rounded-3xl bg-white px-5 py-4 shadow-sm">
+      <div className="flex items-center gap-2">
+        <span aria-hidden className="text-lg leading-none">📋</span>
+        <Speakable text={say} className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
+                   style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">SET RIGHT NOW</span>
+        </Speakable>
+        <Hear text={say} />
+      </div>
+
+      <div className="mt-3 flex flex-col gap-2">
+        {list.map((r) => (
+          <div key={r.name} className="sc-row flex items-center rounded-2xl py-2"
+               style={{ background: 'var(--color-sc-bg)' }}>
+            <span aria-hidden className="sc-icon">{r.emoji}</span>
+            <span className="flex-1">
+              <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
+                    {...sayable(routineSentence(r))}>
+                {r.name}
+              </span>
+              <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                {r.times.join(' · ')}
+                {r.endsOn && ` — until ${r.endsOn}`}
+              </span>
+            </span>
+            {/*
+              어느 칸에 넣는가. 숫자 하나지만 이 화면에서 유일하게 **손으로 하는
+              일**을 가리키는 값이다.
+            */}
+            {r.tray !== null && (
+              <span className="sc-end flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold"
+                    style={{ background: 'var(--color-med-bg)', color: 'var(--color-sc-ink)' }}>
+                {r.tray}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -107,10 +176,22 @@ function AdherenceCard({ span, month }: {
   const say = adherenceSentence(span);
   return (
     <div className="mt-4 rounded-3xl bg-white px-5 py-4 shadow-sm">
+      {/*
+        무엇에 대한 그림인지 제목이 말해야 한다.
+
+        이 화면에는 복약과 음식이 같이 있고, 한때 이 카드의 제목이 그냥 "지난 넉
+        주" 였다. 그러면 아래의 초록 칸들이 약 이야기인지 끼니 이야기인지 구별이
+        안 된다 — 벤치에서 그대로 나온 말이다.
+
+        그리고 글자에만 기대지 않는다. 알약 그림이 앞에 서면 읽지 못하는 사람도
+        이 카드가 무엇에 대한 것인지 안다. 아래 날짜별 목록이 같은 그림으로 약을
+        표시하므로, 여기서 새로 배울 것도 없다.
+      */}
       <div className="flex items-center gap-2">
+        <span aria-hidden className="text-lg leading-none">💊</span>
         <Speakable text={say} className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
                    style={{ color: 'var(--color-sc-muted)' }}>
-          <span className="flex-1">THE LAST FOUR WEEKS</span>
+          <span className="flex-1">MEDICINE · THE LAST FOUR WEEKS</span>
         </Speakable>
         <Hear text={say} />
       </div>
