@@ -309,6 +309,12 @@ export default function DevicePage() {
     }
   }
 
+  /** 종이 없이 시트 경로를 보여주기 위한 표본 — 실제로 채워 찍은 것과 같은 그림이다. */
+  async function readSampleSheet() {
+    const blob = await (await fetch('/form-sheet-demo.jpg')).blob();
+    await readFormSheet(new File([blob], 'sheet.jpg', { type: 'image/jpeg' }));
+  }
+
   /** 하드웨어 없이 읽기 경로를 보여주기 위한 샘플 (기기가 표시할 크기 그대로 만든 QR) */
   async function readSample() {
     const blob = await (await fetch('/device-code-demo.png')).blob();
@@ -684,6 +690,24 @@ export default function DevicePage() {
             }}
           />
         </label>
+
+        {/*
+          종이가 없는 자리에서 이 경로를 보여주기 위한 표본. 시연에서만 낸다.
+
+          진짜 폼시트를 인쇄해 채운 것을 찍은 것과 **같은 그림**이다 — 버블도
+          손글씨도 실제로 들어 있고, 판독기는 이것이 표본이라는 것을 모른다.
+          우회로를 만들면 보여준 것이 돌아가는 것이 아니게 된다.
+        */}
+        {demo && !reading && (
+          <button
+            onClick={() => void readSampleSheet()}
+            className="mt-2 flex w-full items-center justify-center gap-1 text-center text-xs
+                       underline underline-offset-4"
+            style={{ color: 'var(--color-sc-muted)' }}
+          >
+            No sheet here — try a filled one
+          </button>
+        )}
 
         {rx && <SheetCard rx={rx} />}
 
