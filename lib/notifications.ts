@@ -11,15 +11,35 @@
  * 그래서 알림이 버튼만큼 중요하다. dh 의 타입 문서도 `awaitingRelease` 가 비지 않으면
  * "화면의 배출 버튼 **그리고 푸시 알림**" 이라고 적어 두었다.
  *
- * 무엇을 할 수 있고 무엇을 못 하는가
- * ----------------------------------
- * 여기 있는 것은 **앱이 살아 있는 동안의 알림**이다. 탭이 배경에 있어도 긴 폴링이
- * 도는 한 알림은 뜬다. 앱을 완전히 닫은 폰에는 닿지 않는다 — 그러려면 Web Push
- * (VAPID 열쇠 + 밀어 주는 서버)가 필요하고, 그것은 릴레이가 올라간 뒤의 일이다.
+ * 이 파일은 알림을 **띄우는** 일만 한다
+ * -------------------------------------
+ * 언제 띄울지는 여기 없다. 그것이 세 군데에 있고, 세 군데인 데에 이유가 있다.
  *
- * 이 한계를 코드에 적어 두는 이유: 알림이 "된다" 고만 적어 놓으면 다음 사람이 그 위에
- * 기대를 쌓는다. 지금 되는 것은 여기까지다.
+ *   lib/reminders/useDoseReminders.ts  복약 시각마다. 앱이 열려 있는 동안.
+ *   lib/dispenser/useDoseAlert.ts      상자가 약을 내밀었을 때. 긴 폴링이 본다.
+ *   app/api/push/notify/route.ts       상자 → 릴레이 → Web Push. **앱이 닫혀 있어도.**
+ *
+ * 예약을 여기 두었던 적이 있고 그때 문제가 생겼다. `scheduleNotification` 이라는
+ * 함수가 있었는데, 그것을 부르는 자리가 처방전을 스캔한 화면 하나뿐이었고 거기서
+ * **첫 복용 하나**만 걸었다. 하루 세 번 먹는 약을 등록하면 아침만 울렸다. 예약을
+ * 스토어를 보는 훅으로 옮기면서 그 함수는 지웠다 — 남겨 두면 다음 사람이 다시
+ * 화면 안에서 부른다.
+ *
+ * 여전히 못 하는 것: 상자 없이 앱만 쓰는 사람은 앱을 완전히 닫으면 알림을 못 받는다.
+ * 서버가 그 사람의 복약 시각을 알아야 하는 별개의 일이다. 알림이 "된다" 고만 적어
+ * 놓으면 다음 사람이 그 위에 기대를 쌓으므로, 한계는 여기 적어 둔다.
  */
+
+/**
+ * 권한을 막 얻었다는 신호.
+ *
+ * 복약 알람은 `canNotify()` 가 참일 때만 걸린다. 그런데 권한을 묻는 순간과 알람을
+ * 걸어야 하는 순간이 서로 다른 곳에 있어서 — 묻는 것은 처방전을 스캔한 화면,
+ * 거는 것은 뿌리에 상주하는 훅 — 허락한 직후에는 걸 것이 없었고, 훅이 다음에
+ * 깨어날 때(화면을 껐다 켜거나 약을 하나 더 등록할 때)까지 그날 알람이 통째로
+ * 비었다. 허락한 바로 그 순간이 알람을 걸 순간이다.
+ */
+export const PERMISSION_EVENT = 'snapcare:notify-permission';
 
 /** 알림 권한을 묻는다. 이미 거절했으면 다시 묻지 않는다 — 브라우저가 막는다. */
 export async function requestPermission(): Promise<boolean> {
@@ -27,6 +47,9 @@ export async function requestPermission(): Promise<boolean> {
   if (Notification.permission === 'granted') return true;
   if (Notification.permission === 'denied') return false;
   const result = await Notification.requestPermission();
+  if (result === 'granted' && typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(PERMISSION_EVENT));
+  }
   return result === 'granted';
 }
 
@@ -83,25 +106,4 @@ export async function notify(title: string, body: string, options: NotifyOptions
 /** 즉시 알림을 표시한다. 오래된 부름 자리를 위해 남겨 둔다. */
 export function showNotification(title: string, body: string, tag = 'snapcare'): void {
   void notify(title, body, { tag });
-}
-
-/**
- * 앞으로 있을 한 번의 알림을 예약한다. **탭이 살아 있는 동안만** 유효하다.
- *
- * 예전에는 이 함수가 8초 뒤에 알림을 하나 띄우는 데 쓰였다 — 처방을 찍으면 곧바로
- * "아침 8시" 라고 적힌 알림이 8초 만에 떴다. 시연으로는 그럴듯하지만 사람에게는
- * 거짓말이고, 그 거짓말이 향하는 곳이 하필 복약 시각이다.
- *
- * 지금은 **진짜 시각까지** 기다린다. 그 사이에 탭이 닫히면 알림은 오지 않는다 —
- * 그것이 지금의 한계이고, 오지 않는 편이 엉뚱한 때 오는 것보다 낫다.
- */
-export function scheduleNotification(
-  title: string,
-  body: string,
-  delayMs: number,
-  tag = 'snapcare-dose',
-): ReturnType<typeof setTimeout> | null {
-  // setTimeout 은 2^31-1 ms(약 24.8일)를 넘으면 **즉시** 실행된다. 넘으면 예약하지 않는다.
-  if (delayMs <= 0 || delayMs > 2_147_483_647) return null;
-  return setTimeout(() => { void notify(title, body, { tag, sticky: true }); }, delayMs);
 }

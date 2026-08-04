@@ -4,6 +4,7 @@ import { RegisterSW } from './register-sw';
 import { WarmOffline } from './warm-offline';
 import { TextSize } from './text-size';
 import { SyncProvider } from "./sync-provider";
+import { DoseReminders } from "./dose-reminders";
 import { SweepToHear } from "@/components/sc/SweepToHear";
 
 export const metadata: Metadata = {
@@ -35,6 +36,8 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body className="min-h-full bg-white">
         <SyncProvider />
+        {/* 복약 시각마다 부른다. 화면과 무관한 일이라 뿌리에 있다. */}
+        <DoseReminders />
         {/* 어느 화면이든 글 근처를 꾹 누르면 읽어주고, 누른 채 미끄러뜨리면 지나가는
             것을 차례로 읽는다. 화면마다 붙일 것이 아니라 앱 전체에 한 번 건다 —
             빠뜨린 화면이 생기면 그 화면만 조용해진다. */}

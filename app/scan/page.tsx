@@ -21,8 +21,7 @@ import { useProfile } from '@/stores/profile';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
 import { usePreferences } from '@/stores/preferences';
-import { requestPermission, scheduleNotification } from '@/lib/notifications';
-import { msUntil } from '@/lib/snapcare/clock';
+import { requestPermission } from '@/lib/notifications';
 import { computeVerdict, LEVEL_META } from '@/lib/snapcare/verdict';
 import { checkInteractions } from '@/lib/medication/interactions';
 import { itemToDsl } from '@/lib/snapcare/sigil';
@@ -147,25 +146,22 @@ export default function ScanResultPage() {
         })),
       );
       /*
-        첫 복용 시각에 알린다.
+        여기서는 **허락만 받는다.**
 
-        전에는 **8초 뒤**에 띄웠다. 시연으로는 그럴듯한데, 뜨는 알림에는 "아침 8시"
-        라고 적혀 있었다 — 사람에게 하는 거짓말이고, 하필 복약 시각을 두고 하는
-        거짓말이다. 지금은 그 시각까지 기다린다.
+        예전에는 이 자리에서 `setTimeout` 을 하나 걸었고, 그 하나가 이 처방의 첫
+        복용이었다. 하루 세 번 먹는 약을 등록하면 아침만 울리고 점심·저녁은 앱이
+        아무 말도 하지 않았다 — 그것을 알아채려면 저녁까지 앱을 켜 두고 기다려야
+        해서 아무도 알아채지 못했다.
 
-        탭이 닫히면 오지 않는다. 그것이 지금의 한계이고 lib/notifications.ts 에 적어
-        두었다. 상자와 짝지은 사람에게는 이것 말고 다른 길이 있다 — 상자가 약을 내밀면
-        useDoseAlert 가 알린다.
+        알람은 **스캔한 순간**이 아니라 **먹기로 한 시각들**에 딸린 것이고, 그
+        목록은 스토어에 있다. 그래서 거는 일은 뿌리에 상주하는 훅으로 옮겼다
+        (lib/reminders/useDoseReminders.ts). 여기 남는 것은 허락을 물을 자리다 —
+        브라우저는 사람이 무언가 누른 직후에만 그것을 묻게 해 주고, 이 화면의
+        "다 됐다" 가 앱 전체에서 그 조건을 만족하는 가장 자연스러운 순간이다.
+
+        허락이 떨어지면 그 훅이 신호를 받아 그 자리에서 알람을 건다.
       */
-      void requestPermission().then((granted) => {
-        if (!granted) return;
-        const delay = msUntil(sched[0].time);
-        scheduleNotification(
-          'SnapCare · Dose reminder',
-          `${scanned!.name} — ${sched[0].label} (${sched[0].time})`,
-          delay,
-        );
-      });
+      void requestPermission();
     }
     finish();
   }
