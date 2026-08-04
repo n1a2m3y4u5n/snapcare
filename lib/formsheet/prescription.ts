@@ -1,6 +1,7 @@
 // 상대 경로 — 시험에서 @/ 별칭이 안 통한다 (lib/snapcare/course.ts 와 같은 이유).
 import type { Drug } from '../formulary/who.ts';
 import { matchDrug } from '../formulary/match.ts';
+import { readNotes, type NotesReading } from '../formulary/notes.ts';
 import { toSchedule, type FormSheetValues } from '../hardware/formSheet.ts';
 import type { ItemFlag, ScanItem } from '../snapcare/types.ts';
 
@@ -42,6 +43,14 @@ export interface SheetPrescription {
   count?: number;
   /** 버블에서 나온 일정. 비어 있으면 칸을 안 채운 것이다. */
   schedule: ReturnType<typeof toSchedule>;
+  /**
+   * Notes 칸에서 읽은 주의.
+   *
+   * 종이는 이미 다 인쇄되어 있어서 칸을 새로 팔 수 없다. 그런데 이 종이에는 폭
+   * 전체를 쓰는 빈 줄이 이미 있고 아무도 읽지 않고 있었다 — 약사가 봉투에 손으로
+   * 적던 것을 거기 적으면 된다. 종이를 안 고치고 자리를 얻는 유일한 길이다.
+   */
+  notes: NotesReading;
 }
 
 /** OCR 이 낸 글자에서 숫자 하나. `"2 tablets"` → 2. */
@@ -65,6 +74,7 @@ export function readPrescription(
   values: FormSheetValues,
   nameText: string,
   countText = '',
+  notesText = '',
 ): SheetPrescription {
   const read = String(nameText ?? '').replace(/\s+/g, ' ').trim();
   const match = matchDrug(read);
@@ -77,6 +87,7 @@ export function readPrescription(
     unread: read.replace(/[^A-Za-z]/g, '').length < 3,
     count: readCount(countText),
     schedule: toSchedule(values),
+    notes: readNotes(notesText),
   };
 }
 
@@ -111,7 +122,14 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
   const days = Object.keys(DAY_WORD).filter((d) => slot.days & (1 << Object.keys(DAY_WORD).indexOf(d)));
   const everyDay = days.length === 7;
 
-  const flags: ItemFlag[] = [...(rx.drug.flags ?? [])];
+  /*
+    표의 플래그와 종이의 플래그를 합친다.
+
+    둘 다 필요하다. 표는 그 약에 언제나 참인 것을 알고(ACE 억제제의 임신 금기),
+    종이는 이 조제에만 해당하는 것을 안다(약사가 이 환자에게 금주를 적은 경우).
+    한쪽만 쓰면 나머지 절반이 화면에 못 온다.
+  */
+  const flags: ItemFlag[] = [...new Set([...(rx.drug.flags ?? []), ...rx.notes.flags])];
 
   return {
     id: `sheet_${rx.drug.inn.replace(/[^a-z]/g, '')}_${slot.slot}_${hour}`,
@@ -133,10 +151,12 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
       doseText: rx.count ? `${rx.count}` : undefined,
       // 안약·연고는 쓰기 전에 손을 씻어야 한다. 표가 제형을 아니까 여기서 나온다 —
       // OCR 이 그 문장을 못 읽어도 그림에는 뜬다.
-      handwash: rx.drug.form === 'eyedrop' || rx.drug.form === 'cream',
+      handwash: rx.drug.form === 'eyedrop' || rx.drug.form === 'cream' || rx.notes.handwash,
       // 현탁액은 흔들어야 한다. 가라앉은 채로 따르면 앞쪽 몇 회분은 묽고 바닥은
       // 진하다 — 같은 5mL 를 재도 들어가는 약의 양이 다르다.
-      shake: rx.drug.form === 'syrup',
+      shake: rx.drug.form === 'syrup' || rx.notes.shake,
+      noLens: rx.notes.noLens,
+      care: rx.notes.care,
     },
     chips: [
       { emoji: '', label: `Tray ${slot.slot}` },
@@ -144,4 +164,81 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
       { emoji: '', label: slot.durationDays > 0 ? `${slot.durationDays} days` : 'Ongoing' },
     ],
   };
+}
+
+/**
+ * 일정을 **문장으로**. 그림으로 안 그린다.
+ *
+ * 왜 이것만 글인가
+ * ----------------
+ * 이 앱의 규칙은 "글을 못 읽어도 지시가 도착한다" 이지 "모든 것을 그림으로 그린다"
+ * 가 아니다. 둘은 다르고, 그 차이가 여기서 드러난다.
+ *
+ * 그림이 글보다 나은 것은 **말로 옮기면 길어지는 것**들이다 — 안약을 눈에 넣는다,
+ * 흔들고 쓴다, 운전하지 않는다. 한 장이면 끝나고 언어가 필요 없다.
+ *
+ * 요일과 시각과 며칠치는 반대다. `\time_morning` 한 장은 "아침" 까지만 말하고
+ * 7시인지 9시인지는 못 말한다. 요일은 형태소가 아예 없어서 그릴 방법이 없고,
+ * 30일치는 `\finish_course` 한 장으로 뭉개진다. 그림으로 옮기면 **정확도를 잃으면서
+ * 자리는 더 먹는다.**
+ *
+ * 그리고 이 앱에는 이미 답이 있다. 화면의 모든 글에는 소리가 붙어 있고, 글을 못
+ * 읽는 사람은 누르면 듣는다. 문장은 요일 셋과 정확한 시각과 정확한 날수를 다
+ * 담으면서 그 통로를 그대로 탄다.
+ *
+ * 그래서 그림은 **약과 주의**를 지고, 문장은 **일정**을 진다. 겹치지 않는다.
+ */
+export function scheduleSentence(rx: SheetPrescription): string {
+  const slot = rx.schedule.schedule[0];
+  if (!slot) return '';
+
+  const hour = Number(slot.times[0].slice(0, 2));
+  const clock = hour === 0 ? '12 at night'
+    : hour < 12 ? `${hour} in the morning`
+      : hour === 12 ? '12 midday'
+        : hour < 18 ? `${hour - 12} in the afternoon`
+          : `${hour - 12} in the evening`;
+
+  const days = Object.keys(DAY_WORD).filter((d, i) => slot.days & (1 << i));
+  const when = days.length === 7 ? 'every day'
+    : days.length === 0 ? ''
+      : `on ${listWords(days.map((d) => DAY_WORD[d]))}`;
+
+  const how = rx.count ? `Take ${rx.count}` : 'Take it';
+  const parts = [`${how}${when ? ` ${when}` : ''} at ${clock}.`];
+
+  // 며칠치인지. 끝이 없는 처방은 "언제까지" 가 없는 것이 정보다 — 그것을 안 말하면
+  // 사람은 남은 날을 세려고 종이를 다시 본다.
+  parts.push(slot.durationDays > 0
+    ? `There are ${slot.durationDays} days of it in the box.`
+    : 'This one keeps going — there is no end date.');
+
+  parts.push(`It comes out of tray ${slot.slot}.`);
+  return parts.join(' ');
+}
+
+/** `A, B and C` — 마지막만 and 로. 목록을 소리로 들을 때 끝이 어디인지 알려 준다. */
+function listWords(words: string[]): string {
+  if (words.length <= 1) return words[0] ?? '';
+  return `${words.slice(0, -1).join(', ')} and ${words.at(-1)}`;
+}
+
+/**
+ * 그림에 넘길 때 **일정을 뺀 사본**.
+ *
+ * 문장이 이미 말한 것을 그림이 다시 말하지 않는다. `Take 2 ... at 7 in the morning`
+ * 옆에 `\qty_two` 와 `\time_morning` 이 나란히 서면 같은 사실이 두 번이고, 그 둘은
+ * 서로를 확인해 주지도 않는다 — 그림 쪽이 덜 정확하기 때문이다(`time_morning` 은
+ * 7시인지 9시인지를 못 말한다).
+ *
+ * `durationText` 는 **남긴다.** 문장의 "30일치가 있다" 와 `\finish_course` 는 다른
+ * 말이다 — 앞은 몇 개가 있는가이고 뒤는 **증상이 가셔도 끝까지 먹으라**는 것이다.
+ * 항생제 내성의 주요 경로가 그 지점이라, 이 그림은 일정이 아니라 주의다.
+ *
+ * 나머지 — 제형, 부위, 손 씻기, 흔들기, 보관, 약사가 적은 주의 — 도 그대로다.
+ * 말로 옮기면 길어지는 것들이고, 그림이 글보다 나은 자리가 정확히 거기다.
+ */
+export function forPictograms(item: ScanItem): ScanItem {
+  if (!item.rx) return item;
+  return { ...item, rx: { ...item.rx, schedule: [], doseCount: undefined } };
 }

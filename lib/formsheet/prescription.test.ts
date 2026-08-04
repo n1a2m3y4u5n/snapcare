@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { readCount, readPrescription, toScanItem } from './prescription.ts';
+import { forPictograms, readCount, readPrescription, scheduleSentence, toScanItem } from './prescription.ts';
 import type { FormSheetValues } from '../hardware/formSheet.ts';
 
 const SHEET: FormSheetValues = {
@@ -97,4 +97,93 @@ test('요일이 일부면 그 요일들이 칩에 적힌다', () => {
   assert.match(days, /Wed/);
   assert.match(days, /Fri/);
   assert.doesNotMatch(days, /Tue/);
+});
+
+// ── 약사가 적은 주의 ────────────────────────────────────────────────────────
+
+test('Notes 칸의 주의가 그림과 판정 양쪽으로 간다', () => {
+  /*
+    종이가 이미 다 인쇄되어 있어 칸을 새로 팔 수 없다. 그런데 이 종이에는 폭 전체를
+    쓰는 빈 줄이 처음부터 있었고 아무도 읽지 않고 있었다 — 약사가 봉투에 손으로
+    적던 것을 거기 적으면 된다.
+  */
+  const rx = readPrescription(SHEET, 'Metformin', '1',
+                              'After food. May cause drowsiness. No alcohol.');
+  const item = toScanItem(rx)!;
+
+  assert.deepEqual(item.rx?.care, ['with_food', 'drowsy']);
+  assert.ok(item.flags?.includes('alcohol'), '금주는 판정까지 가야 한다');
+});
+
+test('표의 경고와 종이의 경고를 합친다', () => {
+  /*
+    둘 다 필요하다. 표는 그 약에 언제나 참인 것을 알고(ACE 억제제의 임신 금기),
+    종이는 이 조제에만 해당하는 것을 안다(약사가 이 환자에게 적은 것).
+  */
+  const item = toScanItem(readPrescription(SHEET, 'Enalapril', '1', 'No alcohol'))!;
+  assert.ok(item.flags?.includes('unsafe_pregnancy'), '표에서 온 것');
+  assert.ok(item.flags?.includes('alcohol'), '종이에서 온 것');
+});
+
+test('못 알아들은 주의는 항목이 아니라 화면이 진다', () => {
+  // 그림으로 못 그리는 것을 항목에 넣으면 그리는 쪽이 조용히 버린다. 화면이 글자로
+  // 내야 하므로 `notes.unknown` 에 남는다.
+  const rx = readPrescription(SHEET, 'Metformin', '1', 'Check blood sugar weekly');
+  assert.deepEqual(rx.notes.unknown, ['Check blood sugar weekly']);
+  assert.deepEqual(toScanItem(rx)!.rx?.care, []);
+});
+
+// ── 일정은 문장으로 ─────────────────────────────────────────────────────────
+
+test('일정을 문장으로 말한다', () => {
+  /*
+    요일은 형태소가 아예 없고, `\time_morning` 한 장은 7시인지 9시인지를 못 말하고,
+    30일치는 `\finish_course` 한 장으로 뭉개진다. 그림으로 옮기면 정확도를 잃으면서
+    자리는 더 먹는다 — 그리고 글을 못 읽는 사람에게는 이미 소리가 있다.
+  */
+  const say = scheduleSentence(readPrescription(
+    { layer: '3', days: ['MON', 'TUE', 'WED'], duration: '30d', hour: '7' },
+    'Amoxicillin', '2'));
+  assert.match(say, /Take 2/);
+  assert.match(say, /Monday, Tuesday and Wednesday/);
+  assert.match(say, /7 in the morning/);
+  assert.match(say, /30 days/);
+  assert.match(say, /tray 3/);
+});
+
+test('끝이 없는 처방은 없다고 말한다', () => {
+  // 안 말하면 사람은 남은 날을 세려고 종이를 다시 본다.
+  const say = scheduleSentence(readPrescription({ ...SHEET, duration: 'ongoing' }, 'Metformin'));
+  assert.match(say, /no end date/);
+});
+
+test('오후 시각을 24시제로 읽지 않는다', () => {
+  // "19시" 는 소리로 들으면 세어야 하는 숫자다. 시계를 못 읽는 사람이 쓰는 앱이다.
+  const say = scheduleSentence(readPrescription({ ...SHEET, hour: '19' }, 'Metformin'));
+  assert.match(say, /7 in the evening/);
+  assert.doesNotMatch(say, /19/);
+});
+
+test('문장이 이미 말한 것을 그림이 다시 말하지 않는다', () => {
+  /*
+    `Take 2 ... at 7 in the morning` 옆에 `\qty_two` 와 `\time_morning` 이 나란히
+    서면 같은 사실이 두 번이고, 그 둘은 서로를 확인해 주지도 않는다 — 그림 쪽이 덜
+    정확하다. `time_morning` 은 7시인지 9시인지를 못 말한다.
+  */
+  const item = toScanItem(readPrescription(SHEET, 'Amoxicillin', '2'))!;
+  const strip = forPictograms(item);
+  assert.deepEqual(strip.rx?.schedule, []);
+  assert.equal(strip.rx?.doseCount, undefined);
+  // 원본은 안 건드린다 — 알람과 상자로 가는 것은 일정이 살아 있어야 한다.
+  assert.equal(item.rx?.schedule.length, 1);
+  assert.equal(item.rx?.doseCount, 2);
+});
+
+test('끝까지 먹으라는 것은 일정이 아니라 주의다', () => {
+  /*
+    문장의 "30일치가 있다" 와 `\finish_course` 는 다른 말이다. 앞은 몇 개가 있는가고
+    뒤는 증상이 가셔도 끝까지 먹으라는 것이다 — 항생제 내성의 주요 경로가 그 지점이다.
+  */
+  const item = toScanItem(readPrescription(SHEET, 'Amoxicillin', '2'))!;
+  assert.notEqual(forPictograms(item).rx?.durationText, 'ongoing');
 });

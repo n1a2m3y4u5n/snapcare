@@ -1,4 +1,4 @@
-import type { ItemFlag } from '@/lib/snapcare/types';
+import type { ItemFlag, Precaution } from '@/lib/snapcare/types';
 
 /**
  * **약품표.** 이름 하나로 그림까지 가는 길.
@@ -58,6 +58,19 @@ export interface Drug {
   form: DrugForm;
   /** 판정과 픽토그램이 함께 쓰는 플래그. */
   flags?: ItemFlag[];
+  /**
+   * 이 약에 딸린 주의.
+   *
+   * **종이가 아니라 표가 지는 것**이 이 칸의 요점이다. "식후에 먹어라" 는 이 환자의
+   * 일정이 아니라 그 약의 성질이고, 의사가 매번 같은 칸을 채우게 하면 안 채운 날
+   * 그 지시가 통째로 사라진다. 종이는 사람마다 다른 것만 진다 — 어느 칸, 무슨 요일,
+   * 며칠, 몇 시, 몇 알.
+   *
+   * 여기 적는 것은 **교과서 수준으로 굳은 것만**이다. 애매한 것을 넣지 않는 이유는
+   * `flags` 와 같다 — 빠진 주의는 화면에 안 뜨지만, 틀린 주의는 사람이 약을 안 먹게
+   * 만든다.
+   */
+  care?: Precaution[];
   /** WHO EML 절 — 이 줄의 출처. */
   eml: string;
 }
@@ -71,12 +84,12 @@ export interface Drug {
 export const WHO_DRUGS: Drug[] = [
   // ── 2. 통증·해열 ─────────────────────────────────────────────────────
   { inn: 'paracetamol', name: 'Paracetamol', also: ['acetaminophen', 'panadol'], form: 'tablet', eml: '2.1' },
-  { inn: 'ibuprofen', name: 'Ibuprofen', also: ['brufen'], form: 'tablet', flags: ['nsaid_bleed'], eml: '2.1' },
-  { inn: 'acetylsalicylic acid', name: 'Aspirin', also: ['aspirin', 'asa'], form: 'tablet', flags: ['nsaid_bleed'], eml: '2.1' },
-  { inn: 'morphine', name: 'Morphine', form: 'tablet', flags: ['alcohol'], eml: '2.2' },
+  { inn: 'ibuprofen', name: 'Ibuprofen', also: ['brufen'], form: 'tablet', flags: ['nsaid_bleed'], care: ['with_food', 'upset_stomach'], eml: '2.1' },
+  { inn: 'acetylsalicylic acid', name: 'Aspirin', also: ['aspirin', 'asa'], form: 'tablet', flags: ['nsaid_bleed'], care: ['with_food', 'upset_stomach', 'not_for_children'], eml: '2.1' },
+  { inn: 'morphine', name: 'Morphine', form: 'tablet', flags: ['alcohol'], care: ['drowsy', 'no_driving'], eml: '2.2' },
 
   // ── 3. 알레르기 ──────────────────────────────────────────────────────
-  { inn: 'chlorphenamine', name: 'Chlorphenamine', also: ['chlorpheniramine'], form: 'tablet', flags: ['alcohol'], eml: '3' },
+  { inn: 'chlorphenamine', name: 'Chlorphenamine', also: ['chlorpheniramine'], form: 'tablet', flags: ['alcohol'], care: ['drowsy', 'no_driving'], eml: '3' },
   { inn: 'loratadine', name: 'Loratadine', form: 'tablet', eml: '3' },
 
   // ── 6.1 구충 ─────────────────────────────────────────────────────────
@@ -97,10 +110,10 @@ export const WHO_DRUGS: Drug[] = [
   { inn: 'azithromycin', name: 'Azithromycin', also: ['zithromax'], form: 'tablet', eml: '6.2.1' },
   { inn: 'erythromycin', name: 'Erythromycin', form: 'tablet', eml: '6.2.1' },
   { inn: 'clarithromycin', name: 'Clarithromycin', form: 'tablet', eml: '6.2.1' },
-  { inn: 'ciprofloxacin', name: 'Ciprofloxacin', also: ['cipro'], form: 'tablet', eml: '6.2.2' },
-  { inn: 'doxycycline', name: 'Doxycycline', form: 'tablet', flags: ['unsafe_pregnancy'], eml: '6.2.1' },
-  { inn: 'metronidazole', name: 'Metronidazole', also: ['flagyl'], form: 'tablet', flags: ['alcohol'], eml: '6.2.2' },
-  { inn: 'nitrofurantoin', name: 'Nitrofurantoin', form: 'tablet', eml: '6.2.1' },
+  { inn: 'ciprofloxacin', name: 'Ciprofloxacin', also: ['cipro'], form: 'tablet', care: ['full_glass'], eml: '6.2.2' },
+  { inn: 'doxycycline', name: 'Doxycycline', form: 'tablet', flags: ['unsafe_pregnancy'], care: ['full_glass', 'not_for_children'], eml: '6.2.1' },
+  { inn: 'metronidazole', name: 'Metronidazole', also: ['flagyl'], form: 'tablet', flags: ['alcohol'], care: ['with_food'], eml: '6.2.2' },
+  { inn: 'nitrofurantoin', name: 'Nitrofurantoin', form: 'tablet', care: ['with_food'], eml: '6.2.1' },
   { inn: 'sulfamethoxazole + trimethoprim', name: 'Co-trimoxazole', also: ['cotrimoxazole', 'septrin', 'bactrim'], form: 'tablet', eml: '6.2.1' },
   { inn: 'gentamicin', name: 'Gentamicin', form: 'injection', eml: '6.2.2' },
   { inn: 'clindamycin', name: 'Clindamycin', form: 'capsule', eml: '6.2.2' },
@@ -108,8 +121,8 @@ export const WHO_DRUGS: Drug[] = [
   { inn: 'chloramphenicol', name: 'Chloramphenicol', form: 'capsule', eml: '6.2.2' },
 
   // ── 6.2.4 결핵 ───────────────────────────────────────────────────────
-  { inn: 'isoniazid', name: 'Isoniazid', also: ['inh'], form: 'tablet', eml: '6.2.4' },
-  { inn: 'rifampicin', name: 'Rifampicin', also: ['rifampin'], form: 'capsule', eml: '6.2.4' },
+  { inn: 'isoniazid', name: 'Isoniazid', also: ['inh'], form: 'tablet', care: ['empty_stomach'], eml: '6.2.4' },
+  { inn: 'rifampicin', name: 'Rifampicin', also: ['rifampin'], form: 'capsule', care: ['empty_stomach'], eml: '6.2.4' },
   { inn: 'pyrazinamide', name: 'Pyrazinamide', form: 'tablet', eml: '6.2.4' },
   { inn: 'ethambutol', name: 'Ethambutol', form: 'tablet', eml: '6.2.4' },
 
@@ -147,16 +160,16 @@ export const WHO_DRUGS: Drug[] = [
   { inn: 'glyceryl trinitrate', name: 'Glyceryl trinitrate', also: ['gtn', 'nitroglycerin'], form: 'tablet', eml: '12.1' },
 
   // ── 17. 소화기 ───────────────────────────────────────────────────────
-  { inn: 'omeprazole', name: 'Omeprazole', form: 'capsule', eml: '17.1' },
-  { inn: 'oral rehydration salts', name: 'Oral rehydration salts', also: ['ors'], form: 'sachet', eml: '17.5.1' },
+  { inn: 'omeprazole', name: 'Omeprazole', form: 'capsule', care: ['empty_stomach'], eml: '17.1' },
+  { inn: 'oral rehydration salts', name: 'Oral rehydration salts', also: ['ors'], form: 'sachet', care: ['full_glass'], eml: '17.5.1' },
   { inn: 'zinc sulfate', name: 'Zinc sulfate', also: ['zinc'], form: 'tablet', eml: '17.5.1' },
   { inn: 'ondansetron', name: 'Ondansetron', form: 'tablet', eml: '17.2' },
 
   // ── 18.5 당뇨 ────────────────────────────────────────────────────────
-  { inn: 'metformin', name: 'Metformin', also: ['glucophage'], form: 'tablet', eml: '18.5.2' },
-  { inn: 'glibenclamide', name: 'Glibenclamide', also: ['glyburide'], form: 'tablet', eml: '18.5.2' },
-  { inn: 'gliclazide', name: 'Gliclazide', form: 'tablet', eml: '18.5.2' },
-  { inn: 'insulin human', name: 'Insulin', also: ['insulin'], form: 'injection', eml: '18.5.1' },
+  { inn: 'metformin', name: 'Metformin', also: ['glucophage'], form: 'tablet', care: ['with_food', 'upset_stomach'], eml: '18.5.2' },
+  { inn: 'glibenclamide', name: 'Glibenclamide', also: ['glyburide'], form: 'tablet', care: ['with_food'], eml: '18.5.2' },
+  { inn: 'gliclazide', name: 'Gliclazide', form: 'tablet', care: ['with_food'], eml: '18.5.2' },
+  { inn: 'insulin human', name: 'Insulin', also: ['insulin'], form: 'injection', care: ['fridge'], eml: '18.5.1' },
 
   // ── 21. 안과 ─────────────────────────────────────────────────────────
   { inn: 'timolol', name: 'Timolol', form: 'eyedrop', eml: '21.4' },
@@ -168,21 +181,21 @@ export const WHO_DRUGS: Drug[] = [
   { inn: 'misoprostol', name: 'Misoprostol', form: 'tablet', flags: ['unsafe_pregnancy'], eml: '22.1' },
 
   // ── 24. 정신 ─────────────────────────────────────────────────────────
-  { inn: 'amitriptyline', name: 'Amitriptyline', form: 'tablet', flags: ['alcohol'], eml: '24.2.1' },
+  { inn: 'amitriptyline', name: 'Amitriptyline', form: 'tablet', flags: ['alcohol'], care: ['drowsy', 'no_driving'], eml: '24.2.1' },
   { inn: 'fluoxetine', name: 'Fluoxetine', form: 'capsule', eml: '24.2.1' },
-  { inn: 'haloperidol', name: 'Haloperidol', form: 'tablet', flags: ['alcohol'], eml: '24.1' },
-  { inn: 'diazepam', name: 'Diazepam', also: ['valium'], form: 'tablet', flags: ['alcohol'], eml: '24.3' },
+  { inn: 'haloperidol', name: 'Haloperidol', form: 'tablet', flags: ['alcohol'], care: ['drowsy', 'no_driving'], eml: '24.1' },
+  { inn: 'diazepam', name: 'Diazepam', also: ['valium'], form: 'tablet', flags: ['alcohol'], care: ['drowsy', 'no_driving'], eml: '24.3' },
 
   // ── 5. 항경련 ────────────────────────────────────────────────────────
-  { inn: 'carbamazepine', name: 'Carbamazepine', form: 'tablet', flags: ['unsafe_pregnancy'], eml: '5' },
+  { inn: 'carbamazepine', name: 'Carbamazepine', form: 'tablet', flags: ['unsafe_pregnancy'], care: ['drowsy'], eml: '5' },
   { inn: 'phenytoin', name: 'Phenytoin', form: 'tablet', flags: ['unsafe_pregnancy'], eml: '5' },
   { inn: 'valproic acid', name: 'Sodium valproate', also: ['sodium valproate', 'valproate'], form: 'tablet', flags: ['unsafe_pregnancy'], eml: '5' },
-  { inn: 'phenobarbital', name: 'Phenobarbital', also: ['phenobarbitone'], form: 'tablet', flags: ['alcohol'], eml: '5' },
+  { inn: 'phenobarbital', name: 'Phenobarbital', also: ['phenobarbitone'], form: 'tablet', flags: ['alcohol'], care: ['drowsy', 'no_driving'], eml: '5' },
 
   // ── 25. 호흡기 ───────────────────────────────────────────────────────
   { inn: 'salbutamol', name: 'Salbutamol', also: ['albuterol', 'ventolin'], form: 'inhaler', eml: '25.1' },
   { inn: 'beclometasone', name: 'Beclometasone', also: ['beclomethasone'], form: 'inhaler', eml: '25.1' },
-  { inn: 'prednisolone', name: 'Prednisolone', form: 'tablet', eml: '25.1' },
+  { inn: 'prednisolone', name: 'Prednisolone', form: 'tablet', care: ['with_food'], eml: '25.1' },
   { inn: 'epinephrine', name: 'Adrenaline', also: ['adrenaline'], form: 'injection', eml: '25.2' },
 
   // ── 13. 피부 ─────────────────────────────────────────────────────────
@@ -191,7 +204,7 @@ export const WHO_DRUGS: Drug[] = [
   { inn: 'permethrin', name: 'Permethrin', form: 'cream', eml: '13.5' },
 
   // ── 27. 비타민·무기질 ────────────────────────────────────────────────
-  { inn: 'ferrous salt', name: 'Iron', also: ['ferrous sulfate', 'ferrous sulphate', 'iron'], form: 'tablet', eml: '10.1' },
+  { inn: 'ferrous salt', name: 'Iron', also: ['ferrous sulfate', 'ferrous sulphate', 'iron'], form: 'tablet', care: ['with_food', 'upset_stomach'], eml: '10.1' },
   { inn: 'folic acid', name: 'Folic acid', form: 'tablet', eml: '10.1' },
   { inn: 'retinol', name: 'Vitamin A', also: ['vitamin a'], form: 'capsule', flags: ['unsafe_pregnancy'], eml: '27' },
   { inn: 'colecalciferol', name: 'Vitamin D', also: ['cholecalciferol', 'vitamin d'], form: 'tablet', eml: '27' },

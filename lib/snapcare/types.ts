@@ -7,6 +7,33 @@ export type Level = 'safe' | 'caution' | 'avoid';
 
 export type ItemKind = 'food' | 'drink' | 'medicine' | 'prescription';
 
+/**
+ * 약에 딸린 주의 — 그림으로 그릴 수 있는 것만.
+ *
+ * 목록이 짧은 것은 의도다. 이 앱이 하는 약속은 **글을 못 읽어도 지시가 도착한다**
+ * 이고, 그림이 없는 주의를 자료에 넣으면 그 약속을 못 지키는 자리가 조용히 생긴다.
+ * 그림이 없는 것은 넣지 않는다 — 넣고 싶으면 형태소를 먼저 만든다.
+ */
+export type Precaution =
+  /** 식후 · 음식과 함께 */
+  | 'with_food'
+  /** 공복 */
+  | 'empty_stomach'
+  /** 물 한 컵과 함께 — 식도에 걸리면 헐 수 있는 약들 */
+  | 'full_glass'
+  /** 졸릴 수 있다 */
+  | 'drowsy'
+  /** 운전하지 말 것 */
+  | 'no_driving'
+  /** 속이 불편할 수 있다 */
+  | 'upset_stomach'
+  /** 아이에게 주지 말 것 */
+  | 'not_for_children'
+  /** 냉장 보관 */
+  | 'fridge'
+  /** 빛을 피해 보관 */
+  | 'keep_dark';
+
 /** 스캔 대상이 가진 속성 플래그 (컨디션과 대조하는 열쇠) */
 export type ItemFlag =
   | 'peanut' | 'tree_nuts' | 'gluten' | 'lactose' | 'shellfish' | 'egg' | 'soy' | 'sesame'
@@ -167,6 +194,18 @@ export interface ScanItem {
     storageText?: string;
     /** 렌즈 착용 금지 (안약). OCR 이 lensRestriction 으로 이미 뽑는다. */
     noLens?: boolean;
+    /**
+     * 이 **약에** 딸린 주의. 이 사람의 일정이 아니라 약의 성질이다.
+     *
+     * 종이에는 이 칸이 없고, 있어서도 안 된다 — "식후에 먹어라" 는 의사가 매번 같은
+     * 값을 채워야 하는 것이고, 안 채운 날 그 지시가 통째로 사라진다. 약마다 고정된
+     * 것은 약품표가 지고(`lib/formulary/who.ts`), 종이는 사람마다 다른 것만 진다.
+     *
+     * 이름은 개념이지 그림이 아니다. 어느 형태소로 그릴지는 `sigil.ts` 가 정한다 —
+     * 그림 어휘가 이 타입까지 새어 나오면 형태소 하나가 바뀔 때마다 자료가 같이
+     * 바뀌어야 한다.
+     */
+    care?: Precaution[];
   };
 }
 

@@ -1,4 +1,4 @@
-import type { ItemFlag, ScanItem } from './types';
+import type { ItemFlag, Precaution, ScanItem } from './types';
 
 /**
  * ScanItem → SIGIL DSL (.p 소스).
@@ -120,6 +120,33 @@ const FORM_SITE: Record<string, string> = {
   syrup: 'body_mouth',
 };
 
+/**
+ * 약에 딸린 주의 → 형태소.
+ *
+ * 개념과 그림을 여기서 잇는다. 자료(`lib/formulary/who.ts`)는 `'drowsy'` 라고만
+ * 적고 그것이 `symptom_dizzy` 로 그려진다는 것은 모른다 — 그림 어휘가 자료로 새어
+ * 나가면 형태소 하나가 바뀔 때마다 90줄짜리 표를 같이 고쳐야 한다.
+ *
+ * `head` 인지 `modifier` 인지가 갈린다. 수식어는 혼자 설 수 없어서 약을 머리로
+ * 두고 슬롯에 넣는다 — 물컵만 덩그러니 있으면 물을 마시라는 말이고, 이 지시는
+ * **이 약을** 물과 함께라는 말이다.
+ *
+ * `\no{}` 를 붙이는 것은 그림 자체가 중립일 때뿐이다. 자동차와 아이 그림은 그대로
+ * 두면 "운전하세요"·"아이에게 주세요" 로 읽힌다. `symptom_dizzy` 는 감싸면 안 된다 —
+ * "어지럽지 마세요" 는 말이 안 되는 그림이다. `FlagVoice` 와 같은 판단이다.
+ */
+const CARE_GLYPH: Record<Precaution, { glyph: string; slot?: boolean; negate?: boolean }> = {
+  with_food: { glyph: 'food_bowl', slot: true },
+  empty_stomach: { glyph: 'food_empty_bowl', slot: true },
+  full_glass: { glyph: 'water_glass', slot: true },
+  drowsy: { glyph: 'symptom_dizzy' },
+  no_driving: { glyph: 'vehicle', negate: true },
+  upset_stomach: { glyph: 'symptom_gut' },
+  not_for_children: { glyph: 'state_child', negate: true },
+  fridge: { glyph: 'storage_fridge', slot: true },
+  keep_dark: { glyph: 'storage_dark', slot: true },
+};
+
 /** 약/처방 → 어떻게 먹는가. 순서가 곧 읽는 순서라, 먼저 할 일부터 놓는다. */
 function medicineLabels(item: ScanItem, avoid: boolean): string[] {
   const labels: string[] = [];
@@ -210,6 +237,25 @@ function medicineLabels(item: ScanItem, avoid: boolean): string[] {
 
   // 안약을 넣는 동안 렌즈를 끼면 약이 렌즈에 갇힌다. OCR 이 이미 읽고 있던 값이다.
   if (rx?.noLens) labels.push('\\no{\\contact_lens}');
+
+  /*
+    약에 딸린 주의. **맨 뒤다.**
+
+    앞의 것들은 "어떻게 먹는가" 이고 이것들은 "무엇을 조심하는가" 다. 순서가 곧 읽는
+    순서이므로, 먹는 법을 다 말한 뒤에 조심할 것을 말한다 — 반대로 놓으면 첫 그림이
+    경고가 되어 약을 먹지 말라는 말로 읽힌다.
+
+    식사 맥락은 위에서 이미 자리를 잡았을 수 있다(`dosageText` 에 적힌 경우). 같은
+    그림을 두 번 그리지 않는다.
+  */
+  const drawn = new Set(labels);
+  for (const care of rx?.care ?? []) {
+    const entry = CARE_GLYPH[care];
+    if (!entry) continue;
+    const body = entry.slot ? `\\${head}{\\${entry.glyph}}` : `\\${entry.glyph}`;
+    const label = entry.negate ? `\\no{${body}}` : body;
+    if (!drawn.has(label)) { drawn.add(label); labels.push(label); }
+  }
 
   return labels;
 }

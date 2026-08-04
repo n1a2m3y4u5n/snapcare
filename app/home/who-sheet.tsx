@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import {
   activeAccountId, addAccount, freeFaces, listAccounts, switchTo, type Account,
@@ -37,7 +38,18 @@ import { useIsClient } from '@/lib/hooks';
  * 여기서 확인해 둘 것은 그 성질이 **유지되는지**이고, 그것은 시험이 본다
  * (`lib/snapcare/accounts.test.ts`).
  */
-export function WhoSheet() {
+export function WhoSheet({ needsProfile = false }: {
+  /**
+   * 이 사람이 아직 자기 조건을 한 번도 확인하지 않았나.
+   *
+   * 홈 궤도에 `Who` 위성이 있었고 그 위성이 이 점을 달고 있었다. 위성을 걷으면서
+   * 점도 같이 사라질 뻔했는데, 그 점이 말하는 것은 위성보다 무겁다 — 판정이 전부
+   * 나이와 조건에서 나오는데 그 값이 기본값('어른, 조건 없음')으로 아무 표시 없이
+   * 정해져 있다는 뜻이다. 얼굴로 옮긴다.
+   */
+  needsProfile?: boolean;
+}) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const isClient = useIsClient();
   const people: Account[] = isClient ? listAccounts() : [];
@@ -74,11 +86,16 @@ export function WhoSheet() {
         onClick={() => setOpen((v) => !v)}
         aria-label="Switch person"
         aria-expanded={open}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl shadow-sm active:scale-95 transition-transform"
+        className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl shadow-sm active:scale-95 transition-transform"
         style={{ background: me?.color ?? 'var(--color-sc-bg)' }}
         {...sayable('This is who the app is answering for. Tap to switch to another person.')}
       >
         {me ? <FaceIcon face={me.emoji} /> : <PersonIcon />}
+        {needsProfile && (
+          <span aria-hidden
+                className="absolute right-0 top-0 h-3 w-3 rounded-full"
+                style={{ background: 'var(--color-caution)', outline: '2px solid var(--color-sc-bg)' }} />
+        )}
       </button>
 
       {open && (
@@ -94,10 +111,18 @@ export function WhoSheet() {
               <button
                 key={p.id}
                 role="menuitem"
-                onClick={() => { if (on) setOpen(false); else switchTo(p.id); }}
+                /*
+                  자기 줄을 누르면 **프로필로 간다.** 홈에서 `Who` 위성을 걷어내면서
+                  나이와 조건으로 가는 길이 설정 안 한 곳만 남았는데, 그 값이 이 앱의
+                  모든 판정을 정한다. 얼굴을 눌러 자기 줄을 누르는 것이 그리로 가는
+                  가장 짧은 길이고, 뜻도 맞는다 — "나" 를 누르면 나에 대한 것이 나온다.
+                */
+                onClick={() => { if (on) router.push('/profile'); else switchTo(p.id); }}
                 className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left active:scale-[0.98] transition-transform"
                 style={{ background: on ? 'var(--color-sc-bg)' : 'transparent' }}
-                {...sayable(on ? 'This is you.' : 'Switch to this person. You will be asked for their picture key.')}
+                {...sayable(on
+                  ? 'This is you. Tap to see your age, your conditions and your allergies.'
+                  : 'Switch to this person. You will be asked for their picture key.')}
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg"
                       style={{ background: p.color, opacity: on ? 1 : 0.55 }}>
@@ -111,7 +136,7 @@ export function WhoSheet() {
                 */}
                 <span className="flex-1 text-sm font-semibold"
                       style={{ color: on ? 'var(--color-sc-ink)' : 'var(--color-sc-muted)' }}>
-                  {on ? 'You' : 'Switch'}
+                  {on ? 'You · conditions' : 'Switch'}
                 </span>
               </button>
             );

@@ -26,7 +26,7 @@ import { scaleTransform } from '@/lib/formsheet/field';
 import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { itemToDsl } from '@/lib/snapcare/sigil';
 import { PillIcon } from '@/components/icons';
-import { readPrescription, toScanItem, type SheetPrescription } from '@/lib/formsheet/prescription';
+import { forPictograms, readPrescription, scheduleSentence, toScanItem, type SheetPrescription } from '@/lib/formsheet/prescription';
 import { DEFAULT_HOST, FITTED_TRAYS, MAX_TRAYS, planTrays, saveUrl, scheduleUrl, releaseUrl, weeklyFrom, looksLikeHost } from '@/lib/hardware/dispenser';
 import { speak } from '@/lib/voice';
 import { PushToggle } from './push-toggle';
@@ -234,7 +234,7 @@ export default function DevicePage() {
         층·요일·기간·시각은 그대로 상자로 갈 수 있다. 먼저 읽으면 실패가 앞을
         막고, 그러면 확실한 넷까지 같이 잃는다.
       */
-      let hand = { name: '', count: '' };
+      let hand = { name: '', count: '', notes: '' };
       try {
         let work = await decodeToGray(file);
         let sheetRead = parseFormSheet(work);
@@ -288,7 +288,7 @@ export default function DevicePage() {
       }
 
       setStage(null);
-      const parsed = readPrescription(values, hand.name, hand.count);
+      const parsed = readPrescription(values, hand.name, hand.count, hand.notes);
       setRx(parsed);
       const reading = parsed.schedule;
       if (reading.schedule.length === 0) {
@@ -814,7 +814,7 @@ function LanPath({ folded, children }: { folded: boolean; children: React.ReactN
  */
 function SheetCard({ rx }: { rx: SheetPrescription }) {
   const item = toScanItem(rx);
-  const slot = rx.schedule.schedule[0];
+  const sentence = scheduleSentence(rx);
 
   return (
     <div className="mt-3 rounded-3xl bg-white p-4 shadow-sm">
@@ -842,45 +842,64 @@ function SheetCard({ rx }: { rx: SheetPrescription }) {
             : `The name was read as ${rx.read}, which is not in the list this app carries.`} />
       </div>
 
-      {/* 버블에서 읽은 넷. 이름과 무관하게 늘 확실하다. */}
-      {slot && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {[
-            `Tray ${slot.slot}`,
-            `${slot.times[0].slice(0, 2)}:00`,
-            slot.days === 127 ? 'Every day' : dayWords(slot.days),
-            slot.durationDays > 0 ? `${slot.durationDays} days` : 'Ongoing',
-            ...(rx.count ? [`${rx.count} per dose`] : []),
-          ].map((chip) => (
-            <span key={chip} className="rounded-full px-2.5 py-1 text-xs font-semibold"
-                  style={{ background: 'var(--color-sc-bg)', color: 'var(--color-sc-ink)' }}>
-              {chip}
-            </span>
-          ))}
+      {/*
+        일정은 **문장**이다. 그림으로 안 그린다.
+
+        이 앱의 규칙은 "글을 못 읽어도 지시가 도착한다" 이지 "모든 것을 그림으로"
+        가 아니다. 요일은 형태소가 아예 없고, `\time_morning` 한 장은 7시인지
+        9시인지를 못 말하고, 30일치는 `\finish_course` 한 장으로 뭉개진다 — 그림으로
+        옮기면 정확도를 잃으면서 자리는 더 먹는다.
+
+        글을 못 읽는 사람에게는 이미 답이 있다. 이 줄에도 소리가 붙어 있다.
+      */}
+      {sentence && (
+        <div className="mt-3 flex items-start gap-2 rounded-2xl px-3 py-3"
+             style={{ background: 'var(--color-sc-bg)' }}>
+          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+            {sentence}
+          </span>
+          <Hear text={sentence} />
         </div>
       )}
 
       {/*
-        그림. 이름을 맞혔을 때만 나온다 — 그림은 제형과 경고에서 나오고, 그 둘은
-        표에서 오기 때문이다. 이름 없이 그린 그림은 아무 약의 그림이다.
+        그림은 **약과 주의**를 진다. 말로 옮기면 길어지는 것들 — 안약을 눈에,
+        흔들고 쓴다, 운전하지 않는다 — 이고, 한 장이면 끝나며 언어가 필요 없다.
+        일정과 겹치지 않는다.
+
+        `avoid` 는 거짓이다. 이 화면은 종이를 읽은 결과이지 **판정이 아니다** —
+        누가 먹을 것인지가 아직 안 정해져서 임신 금기가 걸리는지 알 수 없다.
+        판정은 이 처방이 사람에게 붙은 뒤에 나오고, 그때 사선이 그어진다.
+        여기서 미리 그으면 아무에게도 걸리지 않은 경고를 모두에게 보이게 된다.
       */}
       {item && (
         <div className="mt-3">
-          {/*
-            `avoid` 는 거짓이다. 이 화면은 종이를 읽은 결과이지 **판정이 아니다** —
-            누가 먹을 것인지가 아직 안 정해져서 임신 금기가 걸리는지 알 수 없다.
-            판정은 이 처방이 사람에게 붙은 뒤에 나오고, 그때 사선이 그어진다.
-            여기서 미리 그으면 아무에게도 걸리지 않은 경고를 모두에게 보이게 된다.
-          */}
-          <PictogramStrip source={itemToDsl(item, false)} />
+          <PictogramStrip source={itemToDsl(forPictograms(item), false)} />
+        </div>
+      )}
+
+      {/*
+        약사가 적었는데 **우리가 못 그리는** 주의.
+
+        버리지 않는다. 조용히 버리면 종이에는 있고 화면에는 없는 지시가 생기고,
+        그것은 주의가 아예 없는 것보다 나쁘다 — 사람은 화면을 봤으니 다 봤다고
+        여긴다. 그림이 없다는 것까지 말한다.
+      */}
+      {rx.notes.unknown.length > 0 && (
+        <div className="mt-3 rounded-2xl px-3 py-3" style={{ background: 'var(--color-caution-bg)' }}>
+          <div className="flex items-start gap-2">
+            <span className="flex-1 text-xs font-bold tracking-wide" style={{ color: 'var(--color-caution)' }}>
+              ALSO WRITTEN ON THE SHEET — NO PICTURE FOR THIS
+            </span>
+            <Hear text={`Also written on the sheet, with no picture for it. ${rx.notes.unknown.join('. ')}.`} />
+          </div>
+          {rx.notes.unknown.map((line) => (
+            <p key={line} className="mt-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+              {line}
+            </p>
+          ))}
         </div>
       )}
     </div>
   );
-}
-
-/** 요일 비트마스크를 사람이 읽는 말로. */
-function dayWords(mask: number): string {
-  const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  return names.filter((_, i) => mask & (1 << i)).join(' ');
 }

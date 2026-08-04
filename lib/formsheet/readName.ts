@@ -63,8 +63,8 @@ export async function readHandwriting(
   gray: Gray,
   transform: Mat3,
   onProgress?: (p: number) => void,
-): Promise<{ name: string; count: string }> {
-  const read = async (field: 'name' | 'count') => {
+): Promise<{ name: string; count: string; notes: string }> {
+  const read = async (field: 'name' | 'count' | 'notes') => {
     const rect = SHEET_CONFIG.fields[field];
     if (!rect) return '';
     try {
@@ -77,5 +77,11 @@ export async function readHandwriting(
   };
   // 차례로 돈다. tesseract 워커가 하나라 나란히 던져 봐야 줄을 설 뿐이고,
   // 진행률이 두 개 섞여 사람에게는 되감기는 막대로 보인다.
-  return { name: await read('name'), count: await read('count') };
+  return {
+    name: await read('name'),
+    count: await read('count'),
+    // 약사가 주의를 적는 자리. 종이가 이미 인쇄되어 있어 칸을 새로 팔 수 없는데,
+    // 이 빈 줄은 처음부터 있었고 아무도 읽지 않고 있었다.
+    notes: await read('notes'),
+  };
 }

@@ -75,31 +75,15 @@ export default function SettingsPage() {
         </button>
 
         {/*
-          한 폰을 여럿이 쓰는 경우.
+          "이 폰을 쓰는 사람들" 이 여기 있었다. 걷었다.
 
-          위의 "나와 내 조건" 바로 아래에 둔다. 둘은 같은 질문의 두 켜다 — 위는 지금
-          누구 기준으로 보고 있는지고, 여기는 그 '누구' 가 몇 명인지다.
+          홈 오른쪽 위의 얼굴이 같은 일을 한다 — 명단, 추가, 전환. 그리고 그쪽이
+          더 나은 자리다: 사람을 바꾸는 것은 설정이 아니라 **중간 동작**이고, 하루에
+          몇 번 있는 일이며, 무엇보다 지금 누구 기준인지가 늘 보여야 한다.
 
-          하단 탭이 아니라 설정 안에 두는 이유는 가족 명단을 없앨 때와 같다. 탭에 있으면
-          '가족 관리 앱' 으로 읽히는데, 이것은 하루에 한 번 있는 일도 아니다.
+          `/people` 화면 자체는 남아 있다. 지운 것은 길이지 기능이 아니다 —
+          거기에는 사람을 지우는 것처럼 이 시트에 두면 안 되는 것도 있다.
         */}
-        <button
-          onClick={() => router.push('/people')}
-          className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
-        >
-          <span className="sc-avatar flex items-center justify-center rounded-full"
-                style={{ background: 'var(--color-sc-line)' }}>👥</span>
-          <span className="flex-1">
-            <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
-                  {...sayable('Who uses this phone. Add someone else, or switch to them.')}>
-              Who uses this phone
-            </span>
-            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-              Share this phone — each person keeps their own
-            </span>
-          </span>
-          <span className="sc-end" style={{ color: 'var(--color-sc-muted)' }}>›</span>
-        </button>
 
         {/*
           글자 크기.
