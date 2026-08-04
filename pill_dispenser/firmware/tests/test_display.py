@@ -465,3 +465,29 @@ def _pixels(canvas):
     if isinstance(canvas, Rgb565):
         return struct.unpack(f">{len(raw) // 2}H", raw)
     return raw
+
+
+# ── 배출 확인 화면 ──────────────────────────────────────────────────────────
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_the_released_frame_says_when_not_which_tray(canvas, monkeypatch):
+    """트레이 번호는 이 기계가 답할 수 없는 질문에 답하고 있었다.
+
+    "어느 컵인가" 가 전부인 것은 칸마다 배출구가 있는 기계의 이야기다. 이 빌드는
+    트레이가 위아래로 쌓여 있고 약이 전부 한 곳으로 떨어지므로, 배출 뒤에 뜨는
+    큰 숫자는 앞에 선 사람이 하지도 않은 질문에 답하면서 헷갈리게만 했다.
+
+    같이 지켜지는 것이 하나 더 있다. 이 파일의 규칙은 "어느 상태에서든 화면에서
+    가장 큰 것은 시계" 이고, `released` 가 마지막 예외였다.
+    """
+    drawn = []
+    monkeypatch.setattr(screens, "_hero_time",
+                        lambda c, text, ink, **kw: drawn.append(("time", text)))
+    monkeypatch.setattr(screens, "_big_number",
+                        lambda c, text, ink: drawn.append(("number", text)))
+
+    screens.released(canvas, dataclasses.replace(WELL, now="09:14"), 3)
+
+    assert ("time", "09:14") in drawn
+    assert not any(kind == "number" for kind, _ in drawn), \
+        "the tray number is back, and this machine has one cup"

@@ -43,11 +43,15 @@ next dose's time rather than the current time — the old firmware made the
 current time the large element, which was right when there was nowhere else to
 put it and is wrong now that there is.
 
-Two screens lead with a number instead of a time, and both are deliberate:
-`released` shows the tray, because "which cup" is the entire message once the
-pills are out; `schedule` shows the tray count, because that is the one fact
-that tells whoever sent the plan that the plan that landed is the plan they
-meant.
+One screen leads with a number instead of a time, and it is deliberate:
+`schedule` shows the tray count, because that is the one fact that tells
+whoever sent the plan that the plan that landed is the plan they meant.
+
+There used to be a second. `released` led with the tray, on the reasoning that
+"which cup" is the entire message once the pills are out — true of a machine
+with an outlet per hopper, and this one has stacked trays that all fall to one
+place. The number was answering a question nobody in front of it had, so it is
+gone and the rule above has no exception left.
 
 Text
 ----
@@ -426,23 +430,38 @@ def _window_bar(canvas: Canvas, health: Health, theme: dict, ink: int) -> None:
 
 def released(canvas: Canvas, health: Health, tray: object = None, *,
              theme: dict | None = None) -> None:
-    """The pills are in the cup. Blue, a solid circle, and the tray number huge.
+    """The pills are in the cup. Blue, a solid circle, and the time it happened.
 
-    The one frame that leads with a tray rather than a time. The person does not
-    need to be told to do anything — the doing is done — they need to be told
-    *which drawer to open*, and on an eight-hopper machine that is the whole
-    message. A time here would be one more thing to mistake for the due screen.
+    This used to lead with the **tray number**, on the reasoning that "which
+    cup" is the entire message once the pills are out. That reasoning belongs to
+    a machine with an outlet per hopper. This one does not have that: the trays
+    are stacked and everything falls to one place, so the number answered a
+    question nobody in front of it was asking. Reported from the bench in those
+    words — "숫자가 뜨는데 사용자 혼란만 주는듯".
+
+    So the frame keeps its colour and loses its number, and the file's own rule
+    comes back with it: in every state the largest thing on the panel is a
+    clock. This was the last exception to it.
+
+    The time is **now**, not the next dose. Now is a record of the thing that
+    just happened, which is what this frame is; the next dose on a blue screen
+    invites "is another one ready?", and the resting frame that follows in a few
+    seconds already answers that properly, with the pending shape that means it.
 
     No tick glyph, and none is wanted: the strip in this same frame has already
     turned that dose's mark blue, which is a better acknowledgement than a
     symbol because it is the memory the person will consult tomorrow appearing
     at the moment it becomes true.
+
+    `tray` is still taken. It is what `presence` keys the frame on, so that a
+    second release repaints rather than being mistaken for the first, and it
+    stays in the signature for that even though nothing draws it.
     """
     theme = _palette(canvas, theme)
     _flood(canvas, theme, "RELEASED")
     ink = theme["TEXT"]
     _hero_shape(canvas, Shape.SAFE, ink, with_tray=False)
-    _big_number(canvas, _tray_text(tray), ink)
+    _hero_time(canvas, _clock_text(_field(health, "now")) or "--:--", ink)
     _frame(canvas, health, theme)
 
 
