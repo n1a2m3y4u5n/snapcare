@@ -97,10 +97,14 @@ HERO_H = strip.STRIP_Y - bar.BAR_H              # 148
 #: leaves the time the two thirds it needs to be read from a doorway.
 SPLIT = W * 3 // 10                             # 96
 
-#: The severity shape's radius, and the tray digit's height under it. Sized so
-#: that shape + gap + digit is centred in the band with the margin intact.
+#: The severity shape's radius. Sized from the band with the margin intact.
+#:
+#: The quarter is a leftover: a tray digit of the same height used to stack
+#: under the shape, so the two of them plus a gap had to fit. The digit is gone
+#: (this machine has one cup) and the shape is centred alone now, but the radius
+#: it was given is the one that reads well at arm's length, so the arithmetic
+#: stays rather than being retuned for its own sake.
 HERO_R = (HERO_H - 2 * PAD - PAD // 2) // 4     # 29
-TRAY_H = 2 * HERO_R                             # 58
 
 HERO_RX = SPLIT                                 # 96
 HERO_RW = W - PAD - SPLIT                       # 212
@@ -191,25 +195,21 @@ def _flood(canvas: Canvas, theme: dict, colour: str) -> None:
     canvas.rect(0, HERO_Y, W, HERO_H, theme[colour])
 
 
-def _hero_shape(canvas: Canvas, shape: Shape, value: int, *,
-                with_tray: bool) -> None:
-    """The solid severity shape in the left column.
+def _hero_shape(canvas: Canvas, shape: Shape, value: int) -> None:
+    """The solid severity shape in the left column, centred on the band.
 
-    Centred on the band when it stands alone, and lifted to make room when a
-    tray number is stacked under it — so a frame with no tray does not leave a
-    hole where the digit would have been.
+    A tray number used to stack under it, and the shape was lifted to make room.
+    Both are gone: **this machine has one cup.** Every hopper drops into the
+    same place, so "which tray" is a fact about the inside of the machine and
+    not about anything the person in front of it has to do. Reported from the
+    bench as exactly that — 왼쪽에 트레이 번호 뜨는 거 지우자.
+
+    It is still on the app, where the person loading the hoppers needs it, and
+    still in the log. What it is not is the biggest thing on a frame somebody
+    reads at arm's length while a buzzer is going.
     """
-    stack = (2 * HERO_R + 1) + PAD + TRAY_H if with_tray else 2 * HERO_R + 1
-    top = HERO_Y + (HERO_H - stack) // 2
+    top = HERO_Y + (HERO_H - (2 * HERO_R + 1)) // 2
     shapes.fill(canvas, SPLIT // 2, top + HERO_R, HERO_R, shape, value)
-
-
-def _hero_tray(canvas: Canvas, tray: object, value: int) -> None:
-    stack = (2 * HERO_R + 1) + PAD + TRAY_H
-    top = HERO_Y + (HERO_H - stack) // 2 + 2 * HERO_R + 1 + PAD
-    text = _tray_text(tray)
-    numerals.draw(canvas, SPLIT // 2 - numerals.text_width(text, TRAY_H) // 2,
-                  top, TRAY_H, text, value)
 
 
 def _hero_time(canvas: Canvas, text: str, value: int, *,
@@ -382,8 +382,7 @@ def due(canvas: Canvas, health: Health, *, theme: dict | None = None,
     ground, mark = ("BLACK", "DUE") if beat else ("DUE", "BLACK")
     _flood(canvas, theme, ground)
     ink = theme[mark]
-    _hero_shape(canvas, Shape.SAFE, ink, with_tray=True)
-    _hero_tray(canvas, _field(health, "waiting_tray", None), ink)
+    _hero_shape(canvas, Shape.SAFE, ink)
 
     when = _clock_text(_field(health, "waiting_at"))
     _hero_time(canvas, when or "--:--", ink)
@@ -394,13 +393,11 @@ def due(canvas: Canvas, health: Health, *, theme: dict | None = None,
     # instruction is the same either way, and the strip already shows both.
     waiting = _field(health, "waiting", 0)
     if isinstance(waiting, int) and waiting >= 2:
-        stack = (2 * HERO_R + 1) + PAD + TRAY_H
-        top = HERO_Y + (HERO_H - stack) // 2
+        top = HERO_Y + (HERO_H - (2 * HERO_R + 1)) // 2
         shapes.fill(canvas, SPLIT // 2 - HERO_R // 4, top + HERO_R - HERO_R // 4,
                     HERO_R, Shape.SAFE,
                     canvas.mix(theme[ground], theme[mark], 45))
         shapes.fill(canvas, SPLIT // 2, top + HERO_R, HERO_R, Shape.SAFE, ink)
-        _hero_tray(canvas, _field(health, "waiting_tray", None), ink)
 
     _frame(canvas, health, theme, focal=when)
 
@@ -473,7 +470,7 @@ def released(canvas: Canvas, health: Health, tray: object = None, *,
     theme = _palette(canvas, theme)
     _flood(canvas, theme, "RELEASED")
     ink = theme["TEXT"]
-    _hero_shape(canvas, Shape.SAFE, ink, with_tray=False)
+    _hero_shape(canvas, Shape.SAFE, ink)
     _hero_time(canvas, _clock_text(_field(health, "now")) or "--:--", ink)
     _frame(canvas, health, theme)
 
@@ -496,8 +493,7 @@ def missed(canvas: Canvas, health: Health, tray: object = None,
     theme = _palette(canvas, theme)
     _flood(canvas, theme, "MISSED")
     ink = theme["BLACK"]
-    _hero_shape(canvas, Shape.CAUTION, ink, with_tray=True)
-    _hero_tray(canvas, tray, ink)
+    _hero_shape(canvas, Shape.CAUTION, ink)
     _hero_time(canvas, _clock_text(when) or "--:--", ink)
     _frame(canvas, health, theme, focal=_clock_text(when))
 
@@ -517,7 +513,7 @@ def schedule(canvas: Canvas, health: Health, count: object = None, *,
     theme = _palette(canvas, theme)
     _flood(canvas, theme, "SCHEDULE")
     ink = theme["BLACK"]
-    _hero_shape(canvas, Shape.SAFE, ink, with_tray=False)
+    _hero_shape(canvas, Shape.SAFE, ink)
     _big_number(canvas, _tray_text(count), ink)
     _frame(canvas, health, theme)
 
@@ -552,8 +548,7 @@ def idle(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
 
     upcoming = _next_upcoming(health)
     if upcoming is not None:
-        _hero_shape(canvas, Shape.PENDING, theme["MARK_PENDING"], with_tray=True)
-        _hero_tray(canvas, upcoming.tray, theme["TEXT"])
+        _hero_shape(canvas, Shape.PENDING, theme["MARK_PENDING"])
         _hero_time(canvas, _clock_text(upcoming.at), theme["TEXT"],
                    secondary=address, secondary_value=theme["TEXT_DIM"])
         _frame(canvas, health, theme, focal=upcoming.at)
@@ -564,7 +559,7 @@ def idle(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
     # the strip underneath says whether the day is done or was never planned.
     loaded = _field(health, "trays_loaded", 0)
     if loaded:
-        _hero_shape(canvas, Shape.PENDING, theme["TEXT_MUTE"], with_tray=False)
+        _hero_shape(canvas, Shape.PENDING, theme["TEXT_MUTE"])
     else:
         # No prescription at all: an outline, because solid means "we know" and
         # this machine has nothing to know yet.

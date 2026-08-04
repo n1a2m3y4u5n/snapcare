@@ -341,14 +341,20 @@ def test_the_urgent_setting_is_actually_more_urgent():
     can leave the urgent phase quieter than the gentle one and both tests still
     pass, which is a machine that gets calmer the longer a dose sits.
     """
-    assert config.BUZZER_URGENT_CHIRP_S > config.BUZZER_CHIRP_S
-    assert config.BUZZER_URGENT_REPEAT_S < config.BUZZER_REPEAT_S
+    assert config.BUZZER_URGENT_REPEAT_S <= config.BUZZER_REPEAT_S
     assert config.BUZZER_URGENT_GAP_S < config.BUZZER_GAP_S
-    # 소리 나는 시간의 비율. 이것이 실제로 사람이 "더 심해졌다" 고 느끼는 값이다.
-    gentle = config.BUZZER_CHIRP_S / (config.BUZZER_CHIRP_S + config.BUZZER_REPEAT_S)
-    urgent = (config.BUZZER_URGENT_CHIRP_S
-              / (config.BUZZER_URGENT_CHIRP_S + config.BUZZER_URGENT_REPEAT_S))
-    assert urgent > gentle * 1.5
+
+    # 묶음 사이에는 이제 양쪽 다 쉼이 없다. 그래서 "더 급하다" 는 삑과 삑 **사이**가
+    # 좁다는 뜻이고, 재는 값은 소리 나는 시간의 비율이다.
+    def duty(on_s, off_s):
+        return on_s / (on_s + off_s)
+
+    assert duty(config.BUZZER_URGENT_BEEP_S, config.BUZZER_URGENT_GAP_S) > \
+           duty(config.BUZZER_BEEP_S, config.BUZZER_GAP_S)
+
+    # 그리고 순한 쪽도 쉬지 않아야 한다. 쉼이 돌아오면 옆 방에 있는 사람에게는
+    # 그 구간이 통째로 놓칠 자리가 되고, 이 소리는 알림이 아니라 프롬프트다.
+    assert config.BUZZER_REPEAT_S == 0
 
 
 def test_the_urgency_resets_for_the_next_dose(monkeypatch):
