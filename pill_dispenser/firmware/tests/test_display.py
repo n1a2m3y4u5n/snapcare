@@ -365,16 +365,29 @@ def test_the_panel_uses_the_short_pairing_payload():
     from snapcare_dispenser.display.health import _pair_fields
 
     claim, payload = _pair_fields({"relayUrl": "https://snapcare-relay.fly.dev"})
-    assert payload.startswith("SNAPCARE-PAIR:"), \
-        "the panel drew the long URL form, which is 41 modules"
+    # Never the *relay's* pairing page: that is a debugging hand-off, and the
+    # phone that scans this should land in SnapCare.
+    assert "snapcare-relay" not in payload, "the panel points at the relay's page"
     assert claim and claim in payload
 
     from snapcare_dispenser.display import qr_art
     matrix = qr_art.matrix_for(payload)
     if matrix is not None:                       # needs segno
         modules = len(matrix)
-        assert (240 - 2 * screens.PAD) // modules >= 6, \
-            f"{modules} modules leaves less than 6 px a module"
+        # Five, not six, and the difference is a decision rather than a slip.
+        #
+        # The bare `SNAPCARE-PAIR:` form is 33 modules and would give six. The
+        # app URL is 37 and gives five — bought with the module that a **phone's
+        # own camera** needs to be able to open the code at all. That path is by
+        # far the strongest of the three: tens of frames a second and a focus
+        # loop, against our decoder's one still photograph.
+        #
+        # It is not a trade against nothing. The app also scans live now
+        # (`lib/hardware/useQrWatch.ts`), which is what actually made a 2.8-inch
+        # panel readable; five pixels a module is comfortable when something is
+        # looking five times a second and only needs to be right once.
+        assert (240 - 2 * screens.PAD) // modules >= 5, \
+            f"{modules} modules leaves less than 5 px a module"
 
 
 def test_the_full_panel_frames_never_get_a_bar_painted_over_them():

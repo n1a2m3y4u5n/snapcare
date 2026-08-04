@@ -728,17 +728,40 @@ def _pair_fields(_relay_status: dict) -> tuple[str, str]:
         SNAPCARE-PAIR:DDBQE-KEJ78    25 chars →  33 modules → 6 px a module
 
     Twenty percent more module for free, on a code somebody is photographing at
-    arm's length in a room with whatever light it has. The measurements in
-    `screens.pair` say the margin collapses below about five pixels a module
-    once there is any defocus at all, which is exactly where the long form sat.
+    arm's length in a room with whatever light it has.
+
+    …and then it went the other way, because of what was actually failing
+    ---------------------------------------------------------------------
+    The short form was not enough. On a real photograph of this panel the app's
+    own decoder still came back empty, and the vision model looking at the same
+    picture answered **"QR code"** — the code was plainly in the frame and the
+    pixels reaching the decoder were not.
+
+    The fault was never the payload length. It was that a **single still
+    photograph** is a poor instrument for reading a QR: one chance at focus, no
+    chance to move, and you learn how many pixels a module got only after the
+    shutter. A phone's own camera does the same job with tens of frames a second
+    and a focus loop, and it is very good at it — but it will only act on a code
+    it can *open*.
+
+    So the panel carries an address into this app (`app/pair/page.tsx`), which
+    pairs from the fragment the moment it loads. Somebody points their ordinary
+    camera at the box, taps the notification that appears, and it is done. The
+    app's own camera still reads this code too, and still reads the short form
+    and the relay form, so nothing that worked before stops working.
+
+    The code stays in the **fragment**, which browsers never send to a server —
+    ten characters are the whole authority over this device, and they must not
+    land in an access log on the way past.
     """
-    from .. import provisioning  # noqa: PLC0415 - reads a file on first call
+    from .. import config, provisioning  # noqa: PLC0415 - reads a file on first call
 
     identity = provisioning.load_identity()
     claim = provisioning.format_claim(identity.claim)
     if not claim:
         return "", ""
-    return claim, f"SNAPCARE-PAIR:{claim}"
+    app = config.APP_URL.rstrip("/")
+    return claim, (f"{app}/pair#{claim}" if app else f"SNAPCARE-PAIR:{claim}")
 
 
 def _network_fields(network) -> tuple[str, str, str, str, bool]:

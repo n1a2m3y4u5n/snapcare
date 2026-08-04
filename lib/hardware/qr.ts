@@ -22,6 +22,18 @@ import jsQR from 'jsqr';
  */
 const EDGES = [1000, 1800] as const;
 
+/**
+ * 가운데를 잘라서 다시 보는 비율.
+ *
+ * 사람은 찍고 싶은 것을 가운데 둔다. 4032px 사진의 가운데 절반을 잘라 원본 해상도
+ * 그대로 훑으면 축소를 한 번도 안 거치는 셈이라, 같은 QR 이 두 배 크기의 모듈로
+ * 도착한다. 위의 두 배율이 다 실패한 뒤에만 하므로 평소에는 비용이 0 이다.
+ */
+const CENTRE = 0.5;
+
+/** 잘라서 볼 때의 상한. 이보다 크면 jsQR 이 한 프레임 안에 못 끝낸다. */
+const CROP_EDGE = 2000;
+
 export async function decodeQrFromImage(source: File | Blob | string): Promise<string | null> {
   const opened = await open(source);
   if (!opened) return null;
@@ -29,29 +41,44 @@ export async function decodeQrFromImage(source: File | Blob | string): Promise<s
   try {
     const { image } = opened;
     const longest = Math.max(image.width, image.height);
+
     for (const edge of EDGES) {
       const found = readAt(image, Math.min(1, edge / longest));
       if (found) return found;
       // 사진이 이미 이 크기보다 작으면 더 키워 봐야 같은 픽셀이다.
       if (longest <= edge) break;
     }
-    return null;
+
+    /*
+      마지막 수. 여기까지 왔다는 것은 화면 전체에서는 모듈이 너무 작다는 뜻이고,
+      실제로 그런 사진에서 판별 모델은 "QR 코드"라고 알아본다 — 그림은 있는데
+      우리 판독기에 닿는 픽셀이 모자란 것이다.
+    */
+    return readAt(image, Math.min(1, CROP_EDGE / (longest * CENTRE)), CENTRE);
   } finally {
     opened.release();
   }
 }
 
-/** 한 배율로 캔버스에 그려 훑는다. */
-function readAt(image: ImageBitmap | HTMLImageElement, scale: number): string | null {
-  const w = Math.max(1, Math.round(image.width * scale));
-  const h = Math.max(1, Math.round(image.height * scale));
+/**
+ * 한 배율로 캔버스에 그려 훑는다. `centre` 를 주면 그 비율만큼 가운데만 본다.
+ */
+function readAt(image: ImageBitmap | HTMLImageElement, scale: number,
+                centre = 1): string | null {
+  const sx = Math.round(image.width * (1 - centre) / 2);
+  const sy = Math.round(image.height * (1 - centre) / 2);
+  const sw = Math.round(image.width * centre);
+  const sh = Math.round(image.height * centre);
+
+  const w = Math.max(1, Math.round(sw * scale));
+  const h = Math.max(1, Math.round(sh * scale));
 
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) return null;
-  ctx.drawImage(image, 0, 0, w, h);
+  ctx.drawImage(image, sx, sy, sw, sh, 0, 0, w, h);
 
   const { data } = ctx.getImageData(0, 0, w, h);
 

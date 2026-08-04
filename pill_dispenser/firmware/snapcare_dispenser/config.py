@@ -633,6 +633,19 @@ HOTSPOT_RETRY_S = 5 * 60
 # is an extra way *in*, never a dependency: a relay that is down, unreachable
 # or never configured must not cost anybody a dose.
 
+#: Where the SnapCare web app lives, for the QR the pairing screen draws.
+#:
+#: A phone's own camera reads a QR far better than a still photograph does, but
+#: it will only act on a code it can **open**. Pointing that code at the app
+#: turns pairing into "hold the phone up, tap the notification" and takes our
+#: decoder out of the path entirely. See `display/health._pair_fields`.
+#:
+#: Empty falls back to the bare `SNAPCARE-PAIR:` form, which only the app can
+#: act on. That is the right default for a device with no app deployment to
+#: point at — a code promising a page that does not exist is worse than a code
+#: an ordinary camera declines to open.
+APP_URL = os.environ.get("SNAPCARE_APP_URL", "https://snapcare.fly.dev").strip()
+
 #: Base URL of the relay, e.g. https://snapcare-relay.fly.dev. Empty is off.
 CLOUD_RELAY_URL = os.environ.get("SNAPCARE_RELAY_URL", "").strip().rstrip("/")
 

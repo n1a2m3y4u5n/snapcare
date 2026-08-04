@@ -10,6 +10,7 @@ import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } f
 import { recognizeText } from '@/lib/ocr';
 import { estimateOnDevice, warmUp } from '@/lib/nutrition/estimateOnDevice';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
+import { useQrWatch } from '@/lib/hardware/useQrWatch';
 import { readQr } from '@/lib/dispenser/qrIntent';
 import { pairWith } from '@/lib/dispenser/paired';
 import { DEFAULT_RELAY } from '@/lib/dispenser/relayUrl';
@@ -40,6 +41,18 @@ export default function CameraPage() {
 
   // 16MB 를 사진 찍은 뒤에 받기 시작하면 그만큼 기다린다. 화면에 들어올 때 미리 받는다.
   useEffect(() => { warmUp(); }, []);
+
+  /*
+    이 화면이 열려 있는 동안 뒤에서 계속 QR 을 훑는다. **스스로는 아무것도 안 한다.**
+
+    이 화면의 약속은 하나다 — 무엇이든 찍으면 알아서 분류된다. QR 만 셔터 없이
+    처리되면 규칙이 둘이 되고, 상자를 향한 채 음식을 찍으려던 사람이 짝짓기 화면으로
+    끌려간다. 그래서 누르는 동작은 그대로 두고, 훑어 둔 것은 **셔터가 쓰는 재료**로만
+    쓴다: 사진 한 장이 아니라 그동안 본 수십 프레임 중 읽힌 것을 쓰게 된다.
+
+    이유는 useQrWatch 에 적었다 — 사진 한 장은 QR 을 읽는 도구로 최악이다.
+  */
+  const { videoRef, live, recent } = useQrWatch(!busy);
 
   /**
    * 홈의 "TRY IT" 에서 표본을 눌러 들어온 경우, 도착하자마자 그 표본을 읽는다.
@@ -108,7 +121,25 @@ export default function CameraPage() {
    * @returns 처리했으면 true. 그러면 호출한 쪽은 OCR 로 넘어가지 않는다.
    */
   async function handledAsQr(image: string | File | Blob): Promise<boolean> {
-    const found = readQr(await decodeQrFromImage(image));
+    /*
+      미리보기에서 이미 읽어 둔 것이 있으면 그것을 쓴다. 같은 코드를 두고 사진 한
+      장이 실패하고 프레임 수십 장이 성공하는 일이 실제로 벌어진다 — 손이 멎는 순간,
+      초점이 맞는 순간 중 아무 때나 한 번만 맞으면 되기 때문이다.
+
+      없으면 예전처럼 찍은 사진에서 찾는다. 카메라 권한을 못 받았거나 미리보기를
+      못 여는 기기가 그 길로 간다.
+    */
+    const live = recent();
+    if (live) return actOnQr(readQr(live));
+    return actOnQr(readQr(await decodeQrFromImage(image)));
+  }
+
+  /**
+   * 읽어낸 QR 하나에 대해 할 일. 사진 경로와 실시간 경로가 같은 것을 쓴다.
+   *
+   * 두 벌로 두면 한쪽만 고쳐지는 날이 온다 — 이 파일에서 이미 한 번 겪었다.
+   */
+  async function actOnQr(found: ReturnType<typeof readQr>): Promise<boolean> {
 
     if (found.kind === 'pair') {
       setStatus('Connecting to the box…');
@@ -295,10 +326,43 @@ export default function CameraPage() {
       return false;
     }
     const { item } = (await res.json()) as { item: ScanItem };
+
+    /*
+      판별이 "코드를 찍은 사진" 이라고 답했다.
+
+      그러면 우리 판독기가 못 푼 것이지 사진이 나쁜 것이 아니다 — 그림 안에 코드는
+      분명히 있고, 모델이 그걸 알아봤다. 실제로 기기 화면을 조금 멀리서 찍었을 때
+      이렇게 돌아온다:
+
+          Caution for You / Unrecognized image (QR code)
+          ⚠ Not sure what this is — check the packet
+
+      그 문장은 두 번 틀렸다. **포장지를 확인하라**고 말하는데 손에 든 것은 약통이고,
+      다음에 무엇을 해야 하는지는 한 글자도 없다. 이 앱을 쓰는 사람은 거기서 멈춘다.
+
+      코드는 가까이 대면 읽힌다. 재 보면 모듈이 5px 아래로 내려갈 때 무너지는데,
+      그것은 거리의 문제이지 사진 실력의 문제가 아니다. 그러니 그렇게 말한다.
+    */
+    if (looksLikeACode(item.name)) {
+      fail('That is a code, and it needs to be bigger in the picture. Hold the camera about a hand\'s width away and take it again.');
+      return true;
+    }
+
     // 사진을 함께 넘긴다. 되짚는 화면에서 "이 날 뭘 먹었나" 에 답하는 것은 이름이
     // 아니라 그림이고, 이름은 읽어야 하지만 자기가 찍은 사진은 안 그렇다.
     goWith(item, dataUrl);
     return true;
+  }
+
+  /**
+   * 판별이 "이건 코드를 찍은 사진" 이라고 답했는가.
+   *
+   * 그러면 사진이 나쁜 것이 아니라 우리 판독기에 닿은 픽셀이 모자란 것이다. 모델이
+   * 지은 이름을 보고 판단하므로 정확한 검사는 아니지만, 틀려도 손해가 없다 — 최악의
+   * 경우 "코드 같다" 는 안내가 한 번 더 뜰 뿐이다.
+   */
+  function looksLikeACode(name: string): boolean {
+    return /\b(qr|barcode|bar code)\b/i.test(name);
   }
 
   /** 성분표에서 읽어낸 프로필을 스캔 아이템으로. */
@@ -348,9 +412,17 @@ export default function CameraPage() {
 
         {/* 프리뷰 */}
         <div className="relative flex-1 mx-5 my-3 rounded-3xl overflow-hidden min-h-[180px]" style={{ background: '#1b1b1e' }}>
+          {/*
+            진짜 미리보기. 여기 비추는 동안 QR 은 셔터 없이 읽힌다 — 상자를 향하면
+            그 순간 짝이 맺힌다. 카메라를 못 열었으면 이 자리는 비고, 아래의 이모지와
+            안내가 그대로 보인다.
+          */}
+          <video ref={videoRef} playsInline muted
+                 className="absolute inset-0 h-full w-full object-cover"
+                 style={{ opacity: live ? 1 : 0 }} />
           <div className="absolute inset-6 rounded-2xl" style={{ border: '2px solid rgba(255,255,255,0.35)' }} />
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-8">
-            <span className="text-5xl">📷</span>
+            <span className="text-5xl" style={{ opacity: live ? 0 : 1 }}>📷</span>
             <span className="text-xs opacity-70"
                   {...sayable(busy ? (status ?? 'Working on it.') : 'The camera is pointed here. Press the big round button below to take the photograph.')}>
               {busy ? (status ?? 'Analyzing…') : 'camera preview'}
