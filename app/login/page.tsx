@@ -11,9 +11,17 @@ import { seedDemoIfEmpty } from '@/stores/scans';
 import { setDemo } from '@/lib/snapcare/demo';
 import { useIsClient, useIsDemo } from '@/lib/hooks';
 import { activeAccountId, listAccounts, switchTo, type Account } from '@/lib/snapcare/accounts';
+import { TILE_ICONS, TILE_NAMES } from '@/components/icons/tiles';
 
 /** 픽처키 로그인 — 텍스트/숫자 없이 픽토그램 4개 순서 (bcrypt로 실제 설정·검증). */
-const TILES = ['☀️', '🌙', '💧', '🔥', '🌸', '🐦', '🏠', '⛰️', '🛣️', '🚪', '🔔', '🔑'];
+/*
+  그림열쇠의 열두 글자. **순서가 곧 열쇠다.**
+
+  해시는 이모지가 아니라 누른 자리의 번호로 만들어지므로(`DEMO_KEY = [0,1,2,3]`),
+  그림을 바꿔도 이미 만든 열쇠는 그대로 열린다. 배열 순서를 건드리면 그 순간 모든
+  사람의 열쇠가 깨진다.
+*/
+const TILES = TILE_ICONS;
 const KEY_LEN = 4;
 /** 시연용 픽처키와 그 해시. 시연 모드에서만 쓴다. */
 const DEMO_KEY = [0, 1, 2, 3];
@@ -179,22 +187,25 @@ export default function LoginPage() {
                   transform: isLast ? 'scale(1.06)' : 'none',
                 }}
               >
-                {filled ? TILES[picked[k]] : ''}
+                {filled ? (() => { const T = TILES[picked[k]]; return <T />; })() : ''}
               </span>
             );
           })}
         </div>
 
         <div className="mt-4 grid w-full max-w-[22rem] grid-cols-4 gap-3">
-          {TILES.map((t, idx) => (
+          {TILES.map((Tile, idx) => (
             <button
               key={idx}
               onClick={() => tap(idx)}
               disabled={busy}
               className="flex aspect-square w-full items-center justify-center rounded-2xl bg-white text-2xl shadow-sm active:scale-95 transition-transform disabled:opacity-50"
-              aria-label={`picture ${idx + 1}`}
+              style={{ color: 'var(--color-sc-ink)' }}
+              /* 이름을 붙인다. 그림열쇠는 눈으로만 쓰는 것이 아니다 — 스캐닝으로
+                 훑는 사람에게 "picture 7" 은 무엇을 누르는지 말해 주지 않는다. */
+              aria-label={TILE_NAMES[idx]}
             >
-              {t}
+              <Tile />
             </button>
           ))}
         </div>
@@ -211,7 +222,9 @@ export default function LoginPage() {
           <div className="mt-3 flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: 'var(--color-caution-bg)' }}>
             <span className="rounded-md px-1.5 py-0.5 text-[10px] font-bold" style={{ background: 'var(--color-caution)', color: '#fff' }}>DEMO</span>
             <span className="text-sm" style={{ color: 'var(--color-sc-ink)' }}>Tap in order:</span>
-            <span className="text-lg tracking-wide">{DEMO_KEY.map((i) => TILES[i]).join(' ')}</span>
+            <span className="flex items-center gap-1.5 text-lg">
+              {DEMO_KEY.map((i) => { const T = TILES[i]; return <T key={i} />; })}
+            </span>
           </div>
         )}
 

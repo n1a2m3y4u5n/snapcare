@@ -11,6 +11,7 @@ import { useIsClient, useMyColor } from '@/lib/hooks';
 import { usePreferences } from '@/stores/preferences';
 import { speak } from '@/lib/voice';
 import type { AgeBand } from '@/lib/snapcare/types';
+import { FaceIcon } from '@/components/icons';
 
 /**
  * 내 프로필 — 키보드를 한 번도 쓰지 않는다.
@@ -169,7 +170,7 @@ function ProfileBody() {
         <div className="mt-4 flex items-center gap-3">
           <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-3xl"
                 style={{ background: myColor }}>
-            {profile.emoji}
+            <FaceIcon face={profile.emoji} />
           </span>
           <span className="flex-1 text-[11px] font-bold tracking-wide" style={{ color: 'var(--color-sc-muted)' }}
                 {...sayable('Tap a picture. No typing needed.')}>
@@ -201,7 +202,7 @@ function ProfileBody() {
               aria-label={`Face ${f}`}
               aria-pressed={profile.emoji === f}
             >
-              {f}
+              <FaceIcon face={f} />
             </button>
           ))}
         </div>

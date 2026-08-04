@@ -13,6 +13,7 @@ import { TEXT_SIZES, TEXT_SIZE_LABEL, ROOT_PX } from '@/lib/a11y/textSize';
 import { sayable, ask, Speakable } from '@/components/sc/Say';
 import { useMyColor } from '@/lib/hooks';
 import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
+import { FaceIcon } from '@/components/icons';
 
 /**
  * 설정 — 판정에 실제로 영향을 주는 것만 둔다.
@@ -59,7 +60,7 @@ export default function SettingsPage() {
             className="sc-avatar flex items-center justify-center rounded-full"
             style={{ background: myColor }}
           >
-            {profile.emoji}
+            <FaceIcon face={profile.emoji} />
           </span>
           <span className="flex-1">
             <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}

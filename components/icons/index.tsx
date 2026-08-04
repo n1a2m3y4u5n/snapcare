@@ -201,3 +201,210 @@ export const AvoidIcon = (p: IconProps) => (
     />
   </Svg>
 );
+
+/* ── 그림열쇠의 열두 글자 ───────────────────────────────────────────────────
+ *
+ * 이것들은 장식이 아니라 **암호를 이루는 글자**다. 둘이 헷갈리면 사람이 자기 열쇠를
+ * 못 누르고, 못 누르면 앱을 못 연다. 그래서 뜻이 예쁜 것보다 **바깥 윤곽이 서로
+ * 안 겹치는 것**이 먼저다.
+ */
+
+/** 해. 뾰족한 살 여덟. 꽃과 갈라지는 것이 이 뾰족함이다. */
+export const SunIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="5" />
+    <path d="M11 1h2v4h-2zM11 19h2v4h-2zM1 11h4v2H1zM19 11h4v2h-4z" />
+    <path d="m4.2 5.6 1.4-1.4 2.8 2.8-1.4 1.4zM15.6 17 17 15.6l2.8 2.8-1.4 1.4zM5.6 19.8 4.2 18.4 7 15.6 8.4 17zM18.4 4.2l1.4 1.4L17 8.4l-1.4-1.4z" />
+  </Svg>
+);
+
+/** 달. 초승달을 파낸다 — 덮지 않는다. */
+export const MoonIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path
+      fillRule="evenodd"
+      d="M13.4 1.5A10.5 10.5 0 1 0 22.5 15 8.5 8.5 0 0 1 13.4 1.5Z"
+    />
+  </Svg>
+);
+
+/** 물. 위가 뾰족하고 아래가 둥근 방울. 종과는 바닥에서 갈라진다. */
+export const DropIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 1.5c4.7 5.4 7 9.2 7 12a7 7 0 0 1-14 0c0-2.8 2.3-6.6 7-12Z" />
+  </Svg>
+);
+
+/** 불. 흔들리는 혀. 방울과 달리 옆이 비대칭이다. */
+export const FireIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M13 1c.5 3.5-1.5 5-3.4 7C7.4 10.2 6 12 6 14.5a6 6 0 0 0 12 0c0-2.3-1-4.2-2.6-6-.3 1.2-1 2-2 2.4.7-3.6-.2-7-.4-9.9Z" />
+  </Svg>
+);
+
+/** 꽃. 두꺼운 잎 다섯. 해와 갈라지는 것이 이 두께다. */
+export const FlowerIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path
+      fillRule="evenodd"
+      d="M12 1.5a3.6 3.6 0 0 1 3.4 4.8 3.6 3.6 0 0 1 4.9 4.4 3.6 3.6 0 0 1-1.5 6.6 3.6 3.6 0 0 1-6.8 3 3.6 3.6 0 0 1-6.8-3A3.6 3.6 0 0 1 3.7 10.7a3.6 3.6 0 0 1 4.9-4.4A3.6 3.6 0 0 1 12 1.5Zm0 7.6a2.9 2.9 0 1 0 0 5.8 2.9 2.9 0 0 0 0-5.8Z"
+    />
+  </Svg>
+);
+
+/** 새. 날개를 편 옆모습. */
+export const BirdIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M22 5.5 18.5 7A5 5 0 0 0 9 8.6L2 11l5.5 1.5L4 21l7.5-6 3 6 2-7.5 5.5-2-4-2 4-4Z" />
+  </Svg>
+);
+
+/** 산. 봉우리 둘, 높이가 다르다. */
+export const MountainIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M8.5 5 16 19H1L8.5 5Z" />
+    <path d="M16.5 8 23 19h-9l3-5.5-2-3L16.5 8Z" />
+  </Svg>
+);
+
+/** 길. 가운데 점선이 이 그림의 전부다 — 없으면 그냥 사다리꼴이다. */
+export const RoadIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path
+      fillRule="evenodd"
+      d="M8 2h8l4 20H4L8 2Zm3 2.5h2v3.5h-2V4.5Zm0 6h2V14h-2v-3.5Zm0 6h2v3.5h-2V16.5Z"
+    />
+  </Svg>
+);
+
+/** 문. 손잡이가 붙어야 창문과 안 헷갈린다. */
+export const DoorIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path
+      fillRule="evenodd"
+      d="M5 2h14v20H5V2Zm10 9.2a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z"
+    />
+  </Svg>
+);
+
+/** 종. 바닥을 평평하게 자르고 추를 단다 — 물방울과 갈라지는 자리다. */
+export const BellIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 1.5a2 2 0 0 1 2 2v.7a7 7 0 0 1 5 6.7v4.6l2 2.5v1.5H3v-1.5l2-2.5v-4.6a7 7 0 0 1 5-6.7v-.7a2 2 0 0 1 2-2Z" />
+    <path d="M9.5 21h5a2.5 2.5 0 0 1-5 0Z" />
+  </Svg>
+);
+
+/** 열쇠. 고리와 이빨. */
+export const KeyIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path
+      fillRule="evenodd"
+      d="M16 1.5a6.5 6.5 0 0 0-6.2 8.5L1.5 18.3V22.5H6v-2.5h2.5v-2.5H11l3-3a6.5 6.5 0 1 0 2-13Zm1 3.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"
+    />
+  </Svg>
+);
+
+/* ── 사람 여덟 ──────────────────────────────────────────────────────────────
+ *
+ * 프로필에서 자기를 고르는 그림들. 얼굴 이모지를 대신한다.
+ *
+ * 사람 여덟을 그리면서 제일 어려운 것은 **서로 달라 보이게 하는 것**이다. 사람
+ * 실루엣은 다 비슷해서, 나이를 표정으로 그리면(주름·안경) 작은 크기에서 전부 같은
+ * 동그라미가 된다. 그래서 표정이 아니라 **머리 모양과 어깨 폭**으로 가른다 — 그
+ * 둘은 32px 에서도 남는다.
+ *
+ * 저장된 값은 그대로 둔다. 프로필에는 이모지 문자열이 들어 있고 그것이 사람을
+ * 가리키는 열쇠이므로, 여기서는 그 문자열을 그림에 잇기만 한다. 값을 바꾸면 이미
+ * 쓰던 사람의 얼굴이 남의 것이 된다.
+ */
+
+/** 어른. 기준이 되는 몸. */
+const AdultIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="7" r="4.2" />
+    <path d="M4 22a8 8 0 0 1 16 0Z" />
+  </Svg>
+);
+
+/** 아이. 머리가 크고 어깨가 좁다. */
+const ChildIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="7.5" r="5" />
+    <path d="M6.5 22a5.5 5.5 0 0 1 11 0Z" />
+  </Svg>
+);
+
+/** 아기. 머리가 더 크고 몸이 짧다. */
+const BabyIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="8" r="5.8" />
+    <path d="M7.5 22a4.5 4.5 0 0 1 9 0Z" />
+    <circle cx="12" cy="2.5" r="1.4" />
+  </Svg>
+);
+
+/** 노인. 지팡이가 이 그림을 다른 일곱에서 갈라낸다. */
+const ElderIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="10.5" cy="6.5" r="4" />
+    <path d="M3.5 22a7 7 0 0 1 14 0Z" />
+    <path d="M19 9h2v13h-2z" />
+  </Svg>
+);
+
+/** 머리를 묶은 사람. */
+const TiedHairIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="7" r="4.2" />
+    <path d="M16.4 4.5a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4Z" />
+    <path d="M4 22a8 8 0 0 1 16 0Z" />
+  </Svg>
+);
+
+/** 수염이 있는 사람. */
+const BeardIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="6.5" r="4" />
+    <path d="M8.4 9.5h7.2a3.6 3.6 0 0 1-7.2 0Z" />
+    <path d="M4 22a8 8 0 0 1 16 0Z" />
+  </Svg>
+);
+
+/** 짧은 머리의 젊은 사람. 어깨가 각지다. */
+const BoyIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="12" cy="7" r="4.2" />
+    <path d="M5 22v-3a7 7 0 0 1 14 0v3Z" />
+  </Svg>
+);
+
+/** 긴 머리의 젊은 사람. */
+const GirlIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 2.2a4.6 4.6 0 0 1 4.6 4.6V12h-1.8a4.6 4.6 0 0 1-5.6 0H7.4V6.8A4.6 4.6 0 0 1 12 2.2Z" />
+    <path d="M4.5 22a7.5 7.5 0 0 1 15 0Z" />
+  </Svg>
+);
+
+/**
+ * 저장된 얼굴 값 → 그림.
+ *
+ * 모르는 값이면 어른으로 떨어진다. 옛 기록이나 다른 기기에서 온 값이 그림 없는
+ * 빈칸이 되면, 사람을 가리키는 자리가 통째로 비어 보인다.
+ */
+export const FACE_ICONS: Record<string, (p: IconProps) => React.ReactNode> = {
+  '🧑': AdultIcon,
+  '🧒': ChildIcon,
+  '👶': BabyIcon,
+  '🧓': ElderIcon,
+  '👩': TiedHairIcon,
+  '👨': BeardIcon,
+  '👦': BoyIcon,
+  '👧': GirlIcon,
+};
+
+export function FaceIcon({ face, ...rest }: IconProps & { face: string }) {
+  const Found = FACE_ICONS[face] ?? AdultIcon;
+  return <Found {...rest} />;
+}
