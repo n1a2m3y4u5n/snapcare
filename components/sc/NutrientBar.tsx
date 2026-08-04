@@ -53,7 +53,10 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
       {/*
         다섯이 한 줄에 있다 — 그림, 이름, 양, 칸 수, 듣기. 글자를 가장 크게 두면
         287px 안에서 이름 몫이 36px 로 줄어 잘렸다. 이름에 최소폭을 주고 접히게 두면
-        첫 줄은 "🍬 Sugars", 둘째 줄은 "25.9 g · 5/10 · 🔊" 로 나뉜다. 다섯 다 남는다.
+        첫 줄은 "그림 Sugars", 둘째 줄은 "25.9 g · 5/10 · 듣기" 로 나뉜다.
+
+        뒤의 셋은 **한 덩이**다. 따로 두었더니 접힐 때 둘째 줄의 왼쪽부터 다시
+        시작해서, 숫자와 스피커가 화면 한가운데 떠 있는 모양이 됐다.
       */}
       <div className="flex flex-wrap items-center gap-2">
         {/*
@@ -67,9 +70,6 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
         <span className="min-w-[6rem] flex-1 text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
           {NUTRIENT_LABEL[a.key]}
         </span>
-        <span className="text-xs font-bold" style={{ color }}>
-          {a.amount}{unit}
-        </span>
         {/*
           백분율 대신 **칸 수**를 적는다. 아래 게이지에 보이는 것과 같은 수라, 숫자를
           읽는 사람에게는 정확한 값이 되고 못 읽는 사람에게는 칸을 세면 같은 답이
@@ -80,11 +80,27 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
           아무 표시가 없어서 "잘하고 있다" 와 구별되지 않았다. 위 화살표 하나면
           더 먹으라는 쪽이라는 것이 읽지 않고도 도착한다.
         */}
-        <span className="w-11 text-right text-[11px] font-bold tabular-nums"
-              style={{ color: need || g.over > 0 ? color : 'var(--color-sc-muted)' }}>
-          {g.over > 0 ? `+${g.over}` : need ? `↑ ${g.filled}/${g.segments}` : `${g.filled}/${g.segments}`}
+        {/*
+          양·칸수·듣기를 **한 덩이로 묶어 오른쪽에 붙인다.**
+
+          전에는 셋이 따로 서 있었다. 글자가 커져 줄이 접히면 셋이 둘째 줄의 **왼쪽
+          부터** 다시 시작해서, 화면 한가운데에 숫자와 스피커가 떠 있는 모양이 됐다.
+          첫 줄에서는 오른쪽 끝에 있던 것들이 둘째 줄에서는 가운데로 오니, 같은 카드가
+          글자 크기에 따라 다른 배치가 된다.
+
+          `ml-auto` 로 남는 자리를 앞에서 다 먹는다 — 한 줄이든 두 줄이든 이 덩이는
+          오른쪽 끝이다.
+        */}
+        <span className="ml-auto flex shrink-0 items-center gap-2">
+          <span className="text-xs font-bold" style={{ color }}>
+            {a.amount}{unit}
+          </span>
+          <span className="w-11 text-right text-[11px] font-bold tabular-nums"
+                style={{ color: need || g.over > 0 ? color : 'var(--color-sc-muted)' }}>
+            {g.over > 0 ? `+${g.over}` : need ? `↑ ${g.filled}/${g.segments}` : `${g.filled}/${g.segments}`}
+          </span>
+          <Hear text={barSentence(a)} className="sc-hear" />
         </span>
-        <Hear text={barSentence(a)} className="sc-hear" />
       </div>
       <Gauge pct={a.pct} kind={a.kind} color={color} need={need} />
     </Speakable>

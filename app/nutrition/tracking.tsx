@@ -3,7 +3,8 @@
 import { useProfile } from '@/stores/profile';
 import { useTracking } from '@/lib/condition/useTracking';
 import { trackingSentence, weeklySentence } from '@/lib/condition/tracking';
-import { sayable, Speakable } from '@/components/sc/Say';
+import { Hear, sayable, Speakable } from '@/components/sc/Say';
+import { CarefulIcon, FineIcon } from '@/components/icons';
 import type { ScanRecord } from '@/lib/snapcare/types';
 
 /**
@@ -32,9 +33,21 @@ export function ConditionTracking({ scans }: { scans: ScanRecord[] }) {
 
   return (
     <section className="mt-6">
-      <Speakable text={`Last ${tracking.span} days, for what you are managing.`} className="text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
+      {/*
+        누를 수 있는 소리 버튼을 단다.
+
+        `Speakable` 은 **꾹 누르면** 읽어 준다. 그것을 아는 사람에게는 충분하지만,
+        이 앱은 그 손짓을 화면 어디에도 안 적어 두고 딱 한 번 알려 줄 뿐이다.
+        보이는 버튼이 없으면 그 한 번을 놓친 사람에게 이 카드는 소리가 없는 카드다.
+      */}
+      <div className="flex items-center gap-2">
+        <Speakable text={`Last ${tracking.span} days, for what you are managing.`}
+                   className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
+                   style={{ color: 'var(--color-sc-muted)' }}>
           <span className="flex-1">LAST {tracking.span} DAYS</span>
         </Speakable>
+        <Hear text={`Last ${tracking.span} days, for what you are managing.`} className="sc-hear" />
+      </div>
 
       <div className="mt-2 flex flex-col gap-2">
         {tracking.series.map((s) => (
@@ -47,10 +60,15 @@ export function ConditionTracking({ scans }: { scans: ScanRecord[] }) {
                 {s.label}
               </span>
               {/* 넘긴 날 수는 색만으로 싣지 않는다 — 숫자와 기호를 함께 둔다 */}
-              <span className="text-xs font-bold"
+              <span className="flex items-center gap-1 text-xs font-bold"
                     style={{ color: s.summary.over > 0 ? 'var(--color-caution)' : 'var(--color-safe)' }}>
-                {s.summary.over > 0 ? `⚠️ ${s.summary.over}` : `✅ ${s.summary.logged}`}
+                {/* ⚠️ 와 ✅ 였다. 이 둘은 이 앱에서 판정을 뜻하는 도형이 이미 있다. */}
+                <span aria-hidden className="flex items-center leading-none">
+                  {s.summary.over > 0 ? <CarefulIcon /> : <FineIcon />}
+                </span>
+                {s.summary.over > 0 ? s.summary.over : s.summary.logged}
               </span>
+              <Hear text={trackingSentence(s.label, s.summary, tracking.span)} />
             </div>
 
             {/* 일곱 칸. 높이가 상한 대비 비율이고, 넘긴 날만 색이 다르다. */}
@@ -104,6 +122,7 @@ export function ConditionTracking({ scans }: { scans: ScanRecord[] }) {
                         style={{ color: 'var(--color-sc-muted)' }}>
                     BY WEEK
                   </span>
+                  <Hear text={weeklySentence(s.label, s.weeks)} />
                 </div>
                 <div className="mt-1 flex items-end gap-1" style={{ height: 26 }}>
                   {s.weeks.map((w, i) => (

@@ -2,7 +2,7 @@
 
 import { useProfile, PROFILE_ID } from '@/stores/profile';
 import { feedbackFrom, surveyTriggers, type SurveyRow } from '@/lib/pattern/infer';
-import { sayable, Speakable } from '@/components/sc/Say';
+import { Hear, sayable, Speakable } from '@/components/sc/Say';
 import type { ScanRecord } from '@/lib/snapcare/types';
 
 /**
@@ -62,7 +62,12 @@ export function Reactions({ scans }: { scans: ScanRecord[] }) {
           const s = STATE_STYLE[r.state];
           return (
             <div key={r.condition.id} className="rounded-2xl bg-white px-3 py-3 shadow-sm">
-              <div className="flex items-center gap-2" {...sayable(r.text)}>
+              <div className="flex items-center gap-2">
+                {/*
+                  조건 그림. 이모지를 그대로 쓰고 있었다 — 🥜🌰🥛… 열셋이고, 이 화면은
+                  그 중 하나를 프로필에 넣을지 묻는 화면이다. 아직 우리 그림이 없어서
+                  남겨 두는데, 남은 곳이 여기와 프로필 둘뿐이라는 것을 적어 둔다.
+                */}
                 <span className="text-lg" aria-hidden>{r.condition.emoji}</span>
                 <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                   {r.condition.label}
@@ -71,6 +76,13 @@ export function Reactions({ scans }: { scans: ScanRecord[] }) {
                       style={{ background: s.bg, color: s.color }}>
                   {r.state === 'watching' && r.significant ? 'Found' : s.chip}
                 </span>
+                {/*
+                  꾹 누르면 읽어 주는 것으로는 모자란다. 그 손짓을 이 앱은 딱 한 번
+                  알려 주고, 놓친 사람에게 이 카드는 소리가 없는 카드가 된다. 그리고
+                  이 카드는 **사람에게 판단을 요구하는** 카드라, 못 읽는 사람이 근거를
+                  못 들으면 그 판단을 할 수가 없다.
+                */}
+                <Hear text={r.text} />
               </div>
 
               {/*

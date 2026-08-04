@@ -238,9 +238,19 @@ function RoutineCard({ list, next, onOpen }: {
         {list.map((r) => {
           const isNext = !!next && next.item.name === r.name;
           return (
+          /*
+            두 줄이 같은 모양이다.
+
+            전에는 다음에 올 것만 배경이 크림색이고 나머지는 회색이었다. 배경이
+            다르면 **다른 종류의 것**으로 읽힌다 — 이 둘은 같은 종류다(둘 다 지금
+            정해져 있는 복약이고, 하나가 먼저 올 뿐이다).
+
+            "다음" 은 테두리 하나로 말한다. 같은 카드 위에 얹힌 표시라 종류가 아니라
+            상태로 읽히고, 그 아래 줄의 `Next · 7:00 PM` 이 같은 것을 글로도 말한다.
+          */
           <div key={r.name} className="sc-row flex items-center rounded-2xl py-2"
                style={{
-                 background: isNext ? 'var(--color-med-bg)' : 'var(--color-sc-bg)',
+                 background: 'var(--color-sc-bg)',
                  outline: isNext ? '2px solid var(--color-sc-primary)' : undefined,
                }}
                onClick={isNext && next ? () => onOpen(next) : undefined}>
