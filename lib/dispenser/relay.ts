@@ -288,6 +288,19 @@ export class DispenserClient {
   }
 
   /**
+   * Tell the box somebody has claimed it. Moves nothing and makes no sound.
+   *
+   * Pairing happens entirely inside this app — the keys come off a printed code
+   * and nothing is announced — so the device cannot observe it, and until this
+   * existed it went on showing a "pair with me" QR to a phone that already had.
+   * One sealed byte is the whole fix: only the holder of the code can produce
+   * it, so receiving it *is* the evidence.
+   */
+  async hello(): Promise<number> {
+    return this.command({ action: 'hello' });
+  }
+
+  /**
    * Seal a command into the mailbox at the next revision.
    *
    * The revision dance is shared by every command rather than copied per verb:

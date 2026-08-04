@@ -77,6 +77,22 @@ export async function pairWith(claim: string, relayUrl: string): Promise<PairedD
     pairedAt: new Date().toISOString(),
   };
   await tx('readwrite', (s) => s.put(paired, KEY));
+
+  /*
+    상자에게 "네 주인이 생겼다" 를 알린다.
+
+    **여기 있는 이유**: 짝을 맺는 자리가 셋이다 — 카메라, 설정의 코드 입력, 그리고
+    QR 이 여는 /pair. 세 곳에서 각자 부르게 하면 한 곳이 빠지고, 그 한 곳으로 짝을
+    맺은 사람만 상자가 계속 QR 을 띄운다. 그건 원인을 짐작할 수 없는 종류의 버그다.
+
+    **기다리지 않는다**: 짝은 이미 이 기기에 저장됐고 화면은 넘어가야 한다. 이 한마디는
+    상자 화면을 바꾸는 것이 전부라, 망이 느리다고 사람을 세워 둘 이유가 없다. 실패해도
+    잃는 것은 없다 — 처방이나 명령이 오면 상자는 어차피 같은 결론에 이른다.
+  */
+  void clientFor(paired).hello().catch((err) => {
+    console.warn('[dispenser] 상자에게 인사를 못 보냈다 (짝짓기는 됐다):', err);
+  });
+
   return paired;
 }
 

@@ -414,18 +414,28 @@ def _read(dispenser, network, cloud, display=None) -> Health:
     claim, pair_payload = _try("the pairing code",
                                lambda: _pair_fields(relay_status), ("", ""))
 
-    # Has anybody sent this machine a prescription yet.
+    # Has anybody taken this machine yet — and the answer moved.
     #
-    # `appliedAt` is set the first time a schedule from the relay is put into
-    # effect and is never cleared, so it survives a reboot in a way a bare
-    # `desiredRev` would not — that counter is reset when the relay address
-    # changes, and a device pointed at a new relay has not un-been prescribed.
+    # It used to be "has a prescription arrived", because pairing happens wholly
+    # inside the app and the device could not observe it. That is the moment the
+    # machine becomes *useful*, and it is not the moment somebody pairs: between
+    # the two, a box that had just been paired went on showing a "pair with me"
+    # code to the phone that had already done it. Reported from the bench in
+    # exactly those words — "연결 됐는데도 기기 화면은 QR코드임".
     #
-    # A schedule that arrived over the LAN or off a paper sheet counts too. It
-    # never touches the relay, so `appliedAt` stays empty for it, and a machine
-    # that is dispensing correctly must not be showing a setup screen.
-    prescribed = bool(relay_status.get("appliedAt")) or _try(
-        "the loaded trays", lambda: bool(dispenser.scheduler.slots), False)
+    # So the app now says so (`claimedAt`, from a `hello` command sealed under
+    # the box key — only the holder of the printed code can produce one).
+    #
+    # The other two still count, and both are older than the relay:
+    # `appliedAt` is set the first time a cloud schedule is applied and never
+    # cleared, so it survives a reboot in a way a bare `desiredRev` would not.
+    # And a schedule that came over the LAN or off a paper sheet never touches
+    # the relay at all — a machine that is dispensing correctly must not be
+    # asking to be set up.
+    prescribed = (bool(relay_status.get("claimedAt"))
+                  or bool(relay_status.get("appliedAt"))
+                  or _try("the loaded trays",
+                          lambda: bool(dispenser.scheduler.slots), False))
 
     next_tray, next_at = _next_dose(dispenser, at)
 

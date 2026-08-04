@@ -195,6 +195,9 @@ class CloudLink:
         #: rebooting would collect the last release command again and, if the
         #: dose happened to still be inside its window, drop a second one.
         self._command_rev = int(stored.get("commandRev") or 0)
+        #: 폰이 이 상자를 자기 것이라고 말한 시각, 또는 "". 짝짓기 화면을 내리는
+        #: 유일한 증거다 — `display/health` 가 읽는다.
+        self._claimed_at = str(stored.get("claimedAt") or "")
         self._applied_at = str(stored.get("appliedAt") or "")
 
         #: The current generation's control events. See `_Ctl`.
@@ -244,6 +247,7 @@ class CloudLink:
                 "reportedRev": self._reported_rev,
                 "commandRev": self._command_rev,
                 "appliedAt": self._applied_at,
+                "claimedAt": self._claimed_at,
                 "lastContactSecondsAgo": round(age) if age is not None else None,
                 "lastError": self._last_error,
                 "attempts": self._attempts,
@@ -572,6 +576,20 @@ class CloudLink:
 
         self._carry_out(opened, rev)
 
+    def _claim(self) -> None:
+        """누군가 이 상자를 자기 것이라고 말했다. SD 카드에 남긴다.
+
+        메모리에만 두면 재부팅 뒤에 상자가 다시 짝을 맺자고 한다 — 짝은 폰 안에
+        그대로 있는데. 한 번 일어난 일은 되돌아가지 않으므로 지우지 않는다. 짝을
+        푸는 것은 폰 쪽의 일이고, 그때 상자는 아무 말도 듣지 못한다.
+        """
+        with self._lock:
+            if self._claimed_at:
+                return
+            self._claimed_at = datetime.now().isoformat(timespec="seconds")
+        self._save_state()
+        self.nudge()
+
     def _bench(self, action: str, opened: dict, rev: int) -> None:
         """Move a tray, or sound the buzzer, because somebody asked from the app.
 
@@ -647,6 +665,19 @@ class CloudLink:
 
     def _carry_out(self, opened: dict, rev: int) -> None:
         action = str(opened.get("action") or "").strip().lower()
+
+        if action == "hello":
+            # 앱이 짝을 맺자마자 보내는 한마디. 아무것도 움직이지 않는다.
+            #
+            # 기기는 짝짓기를 볼 수 없다 — 앱은 인쇄된 코드에서 열쇠를 스스로 만들
+            # 뿐 아무에게도 알리지 않는다. 그래서 이 한마디가 오기 전까지 상자는 이미
+            # 짝이 맺힌 폰을 앞에 두고 "짝을 맺자" 는 QR 을 계속 띄웠다.
+            #
+            # 이것이 증거가 되는 이유: 상자 열쇠로 봉해져 오므로 만들 수 있는 것은
+            # 코드를 쥔 쪽뿐이다. 릴레이는 이 봉투를 열지 못하고 지어내지도 못한다.
+            self._claim()
+            log.info("a phone claimed this box (revision %d)", rev)
+            return
 
         if action in ("drop", "beep"):
             self._bench(action, opened, rev)
@@ -833,6 +864,7 @@ class CloudLink:
                 "reportedRev": self._reported_rev,
                 "commandRev": self._command_rev,
                 "appliedAt": self._applied_at,
+                "claimedAt": self._claimed_at,
             }
         try:
             write_atomic(self._state_path(), json.dumps(data, indent=2))

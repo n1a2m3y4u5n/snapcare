@@ -219,8 +219,25 @@ export interface BeepCommand {
   action: 'beep';
 }
 
+/**
+ * "이 상자는 이제 내 것이다" — 짝을 맺자마자 앱이 보내는 한마디.
+ *
+ * 기기는 짝짓기를 볼 수 없다. 앱은 인쇄된 코드에서 열쇠를 스스로 만들 뿐 아무에게도
+ * 알리지 않으므로(`paired.ts`), 상자 입장에서 짝이 맺어진 순간은 관측 불가능하다.
+ *
+ * 그래서 관측 가능한 것으로 대신했었다 — 처방이 왔는가. 그건 상자가 쓸모 있어지는
+ * 순간으로는 맞지만 **짝짓기와는 다른 순간**이고, 그 사이에 상자는 이미 짝이 맺힌
+ * 폰을 앞에 두고 짝을 맺자는 QR 을 계속 띄운다. 방금 성공한 사람에게 그건 실패다.
+ *
+ * 이 명령은 아무것도 움직이지 않는다. 상자 열쇠로 봉해져 오므로 만들 수 있는 것은
+ * 코드를 쥔 쪽뿐이고, 상자는 그것 하나로 "누군가 나를 가져갔다" 를 알게 된다.
+ */
+export interface HelloCommand {
+  action: 'hello';
+}
+
 /** Anything the phone can put in the command slot. */
-export type DeviceCommand = ReleaseCommand | DropCommand | BeepCommand;
+export type DeviceCommand = ReleaseCommand | DropCommand | BeepCommand | HelloCommand;
 
 /** The relay's own view of a mailbox — revisions and timestamps, no plaintext. */
 export interface MailboxMeta {

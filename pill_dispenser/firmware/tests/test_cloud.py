@@ -819,3 +819,26 @@ def test_a_beep_on_a_build_with_no_buzzer_is_not_an_error(link, dispenser):
         "if Indicator grows a beep(), simplify _bench to call it"
     link._carry_out({"action": "beep"}, 11)                    # noqa: SLF001
     assert _events(dispenser) == []
+
+
+def test_a_hello_marks_the_box_claimed_and_survives_a_restart(link, dispenser, tmp_path):
+    """The moment the pairing screen has to come down.
+
+    Pairing happens wholly inside the app — the keys come off a printed code and
+    nothing is announced — so the device cannot see it. Between pairing and the
+    first prescription, a box that had just been paired went on showing a "pair
+    with me" code to the phone that had already done it.
+
+    The claim is written to the card rather than kept in memory: a reboot must
+    not make the box ask again, because the phone still has the keys and nothing
+    on this side changed.
+    """
+    assert not link.status()["claimedAt"]
+    link._carry_out({"action": "hello"}, 12)                   # noqa: SLF001
+    claimed = link.status()["claimedAt"]
+    assert claimed, "the box did not record that it had been claimed"
+    assert _events(dispenser) == [], "hello must move nothing"
+
+    # A second phone, or the same one re-paired. The first moment stands.
+    link._carry_out({"action": "hello"}, 13)                   # noqa: SLF001
+    assert link.status()["claimedAt"] == claimed
