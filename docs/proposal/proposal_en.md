@@ -759,7 +759,9 @@ The other side is Professor Heejung Seo of Dong-eui University, also in §5.7: t
 
 SIGIL (Symbol Intuitive Glyph Image Lab) is a pictogram composition engine the team designed and implemented itself. Where existing pictogram sets are lists of pictures, SIGIL is built from morphemes and a grammar.
 
-It currently has 78 morphemes, divided into 57 heads and 21 modifiers. A head is an object that can stand on its own (pill bottle, dropper bottle, inhaler, peanut, milk carton), while a modifier cannot stand alone and goes into a slot inside a head (morning, midday, evening, count, refrigerate, eye, mouth).
+It currently has 78 morphemes, divided into 57 heads and 21 modifiers. A head is an object that can stand on its own (pill bottle, dropper bottle, inhaler, peanut, milk carton), while a modifier goes into a slot inside a head (count, refrigerate, eye, mouth).
+
+Four of the modifiers can also stand alone: the time morphemes for morning, midday, evening and night. They are marked `standalone` in the dictionary and the parser allows them on the strength of that mark, because a dose time is both a condition attached to a medicine and an instruction in itself. One picture saying "in the evening", standing after the picture of the medicine, is the instruction. The count of 1,258 expressions in §1.9 adds those four separately for the same reason.
 
 There are five operators on top of this. `no{}` applies prohibition, `half{}` applies a half portion, and `twice_daily{}`, `three_times_daily{}` and `four_times_daily{}` apply a daily frequency.
 

@@ -543,6 +543,39 @@ def affil_invent() -> list:
     return out
 
 
+def engine_facts() -> list:
+    """엔진에 대해 본문이 말하는 수가 사전과 같은가.
+
+    형태소 수는 `morpheme_names` 가 이름으로 보지만, 갈래별 수와 연산자
+    수와 홀로 설 수 있는 것의 수는 아무도 보지 않았다. 실제로 §2.2 가
+    "수식어는 홀로 설 수 없다" 고 적으면서 홀로 서는 넷을 예로 들고
+    있었다."""
+    import json
+    dic = DOC.parent.parent / 'engine/dictionary.json'
+    if not dic.is_file():
+        return skip('엔진 수치 대조 — engine/dictionary.json 이 없다')
+    d = json.loads(dic.read_text())
+    want = {
+        '머리': len(d['heads']),
+        '수식어': len(d['modifiers']),
+        '형태소': len(d['heads']) + len(d['modifiers']),
+        '연산자': len(d['composition_operators']),
+        '홀로': sum(1 for m in d['modifiers'] if m.get('standalone')),
+    }
+    s = (DOC / 'proposal_ko.md').read_text()
+    s = s[:s.index('### 5.11')]
+    out = []
+    for pat, key in ((r'형태소 (\d+)종', '형태소'),
+                     (r'(\d+)개의 머리', '머리'), (r'(\d+)개의 수식어', '수식어'),
+                     (r'머리 (\d+)종', '머리'), (r'(\d+) × (?:\d+)', '머리')):
+        for m in re.finditer(pat, s):
+            got = int(m.group(1))
+            if got != want[key]:
+                out.append(f'본문의 {key} 수 {got} 이 사전의 {want[key]} 과 다르다 '
+                           f'— …{s[max(0, m.start() - 26):m.end() + 14].strip()}…')
+    return out
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1692,6 +1725,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in engine_facts():
+        note(t)
 
     for t in affil_invent():
         note(t)
