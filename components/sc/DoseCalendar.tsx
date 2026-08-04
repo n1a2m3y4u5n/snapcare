@@ -175,13 +175,17 @@ function Cell({ day, picked, onPick }: {
     안쪽에 긋는다(`inset`). 바깥에 그으면 4px 사이 간격을 잡아먹어 칸끼리 붙어 보이고,
     색이 찬 날에는 안쪽 선이 조각과 테두리를 갈라 주기까지 한다.
 
+    색은 `--color-sc-line`(#ECEBE6) 이었다. 배경(#F4F3EF)과 2% 차이라 **화면에서 안
+    보였다** — 격자를 그어 놓고 격자가 없는 것과 같았다. 글자색을 20% 섞어 쓴다.
+    옅은 회색이지만 배경과는 확실히 갈리고, 칸 안의 색조각보다는 확실히 약하다.
+
     고른 날과 오늘의 굵은 테두리가 이것을 덮는다. 셋이 겹칠 때의 순서는 그대로다.
   */
   const ring = picked
     ? { boxShadow: '0 0 0 3px var(--color-sc-primary)' }
     : day.today
       ? { boxShadow: '0 0 0 2px var(--color-sc-ink)' }
-      : { boxShadow: 'inset 0 0 0 1px var(--color-sc-line)' };
+      : { boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--color-sc-ink) 20%, transparent)' };
   const pick = onPick ? { onClick: () => onPick(day.dayKey), role: 'button', tabIndex: 0 } : {};
 
   if (day.offered === 0) {

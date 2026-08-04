@@ -45,6 +45,21 @@ const HAS_LATIN = /[A-Za-z]/;
  * @param text 읽을 문장
  * @param want 사용자가 고른 언어 (`'ko'`, `'ko-KR'`, `'en'` …)
  */
+/**
+ * 이 문장이 **이미 그 언어로** 쓰여 있는가.
+ *
+ * 번역기를 두 번 태우지 않으려고 쓴다. 판정 문장은 손으로 적은 사전에서 이미 그
+ * 나라 말로 나오는데, 그것을 다시 번역기에 보내면 값을 치르면서 사람이 쓴 문장을
+ * 기계가 고쳐 쓴다.
+ *
+ * 라틴 문자를 쓰는 언어는 못 가른다(루마니아어와 영어는 글자가 같다). 그쪽은 false 를
+ * 돌려주고, 한 번 더 다녀오는 값을 치른다 — 결과는 갈무리되므로 문장마다 한 번뿐이다.
+ */
+export function isInScript(text: string, lang: string): boolean {
+  const script = SCRIPTS[lang.split('-')[0].toLowerCase()];
+  return script ? script.test(text) : false;
+}
+
 export function voiceLangFor(text: string, want: string): string {
   const base = want.split('-')[0].toLowerCase();
   const script = SCRIPTS[base];

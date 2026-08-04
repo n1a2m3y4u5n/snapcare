@@ -1,6 +1,7 @@
 // Web Speech API 래퍼 — TTS + STT
 import { pickVoice } from './tts/pickVoice';
 import { voiceLangFor } from './tts/voiceLang';
+import { translate as liveTranslate } from './i18n/live';
 
 // 브라우저 전용 타입 보조
 interface WebSpeechRecognition extends EventTarget {
@@ -97,19 +98,33 @@ export async function speak(text: string, lang = currentLang): Promise<void> {
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
   /*
+    말하기 **직전에** 그 나라 말로 옮긴다.
+
+    이 앱의 화면 글은 영어 하나뿐이라, 목소리만 바꾸면 루마니아 목소리가 영어를 읽는
+    소리가 난다. 화면마다 문장을 옮겨 적는 대신 여기 한 곳에서 거른다 — 말하는 길목이
+    이것 하나이므로, 미리 적어 둔 문장과 **실행 중에 만들어진 문장**(처방전에서 읽어
+    온 지시, 판별이 붙인 이름)이 같은 길을 탄다.
+
+    못 옮기면 영어 그대로다. 오프라인이거나 서버에 열쇠가 없을 때인데, 그때 영어가
+    나오는 것은 이 저장소가 사전에서 하는 것과 같은 판단이다.
+  */
+  const base = lang.split('-')[0].toLowerCase();
+  const said = base === 'en' ? text : await liveTranslate(text, base);
+
+  /*
     문장과 목소리가 어긋나지 않게 한 번 더 거른다.
 
     사용자가 한국어로 읽으라고 했는데 이 문장이 아직 번역되지 않은 영어면, 한국어
     목소리는 그것을 소리 나는 대로 읽는다 — 한국 사람이 영어를 읽는 소리가 나고
     알아들을 수 없다. 왜 이렇게 가르는지는 lib/tts/voiceLang.ts 에 적었다.
   */
-  const useLang = voiceLangFor(text, lang);
+  const useLang = voiceLangFor(said, lang);
   const voice = await preferredVoice(useLang);
 
   return new Promise((resolve) => {
     // 이전 발화 중단
     window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
+    const utt = new SpeechSynthesisUtterance(said);
     utt.lang = useLang;
     if (voice) utt.voice = voice;
     // 사용자가 고른 속도. 설정에서 바꾸면 다음 발화부터 적용된다.
