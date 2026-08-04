@@ -1133,3 +1133,17 @@ export function GlyphIcon({ emoji, ...rest }: IconProps & { emoji: string }) {
   const Found = GLYPH_ICONS[emoji];
   return Found ? <Found {...rest} /> : null;
 }
+
+/**
+ * 해당 없음.
+ *
+ * 금지 표시(사선 친 원)를 쓰지 않는다. 이 앱에서 사선과 빨강은 **먹지 마라**이고,
+ * 그 뜻이 "나에게는 해당 없음" 자리에 오면 정확히 반대로 읽힌다.
+ *
+ * 가로 막대 하나. 빈칸을 그린 것이고, 이 앱에서 다른 뜻으로 쓰이지 않는다.
+ */
+export const NoneIcon = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="4" y="10.6" width="16" height="2.8" rx="1.4" />
+  </Svg>
+);

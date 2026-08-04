@@ -9,9 +9,7 @@ import { useProfile } from '@/stores/profile';
 import { useDoseLog } from '@/lib/dispenser/useDoseLog';
 import { useDoseAlert } from '@/lib/dispenser/useDoseAlert';
 import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
-import { useScans } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
-import { TryIt } from './try-it';
 import { WhoSheet } from './who-sheet';
 import { Orbit, type Satellite } from './orbit';
 import { BoxIcon, FoodIcon, GearIcon, PillIcon } from '@/components/icons';
@@ -29,7 +27,6 @@ export default function HomePage() {
     보냈다고 믿은 사람이 그것을 알게 되는 자리는 약이 안 나오는 아침이다.
   */
   const autoSend = useAutoSend(box.report?.status.trayCount ?? FITTED_TRAYS);
-  const scans = useScans((s) => s.scans);
   const confirmed = useProfile((s) => s.confirmed);
   const reminders = useReminders((s) => s.reminders);
 
@@ -228,11 +225,14 @@ export default function HomePage() {
         </div>
 
         {/*
-          아직 아무것도 안 찍은 사람에게만 표본을 내놓는다. 궤도 아래에 두는 이유는
-          이것이 **한 번 쓰고 사라지는 안내**이기 때문이다 — 한 번이라도 찍고 나면
-          다시는 안 보이므로 궤도를 차지할 자리가 아니다.
+          "TRY IT" 표본 석 장이 여기 있었다.
+
+          처음 연 사람에게 이 앱이 무엇을 하는지 보여주려던 것인데, 홈을 한 화면에
+          담기로 하면서 셈이 뒤집혔다. 그 석 장은 **궤도가 쓸 자리를 가져가고**,
+          정작 이 앱에서 사람이 하는 일 하나(사진을 찍는 것)를 작게 만든다.
+          그리고 같은 표본은 카메라 화면의 `Can't take a photo?` 뒤에 그대로 있다 —
+          없앤 것이 아니라 홈에서 뺀 것이다.
         */}
-        {scans.length === 0 && <TryIt />}
 
         {/*
           묻는 것들은 `Today` 로 옮겼다 — 몸이 어땠는지도, 의심되는 것도 **음식에

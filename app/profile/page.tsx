@@ -11,7 +11,7 @@ import { useIsClient, useMyColor } from '@/lib/hooks';
 import { usePreferences } from '@/stores/preferences';
 import { speak } from '@/lib/voice';
 import type { AgeBand } from '@/lib/snapcare/types';
-import { ConditionIcon, ClockIcon, FaceIcon, FaceUnwellIcon, StethoscopeIcon } from '@/components/icons';
+import { ConditionIcon, ClockIcon, FaceIcon, FaceUnwellIcon, NoneIcon, StethoscopeIcon } from '@/components/icons';
 
 /**
  * 내 프로필 — 키보드를 한 번도 쓰지 않는다.
@@ -269,6 +269,21 @@ function ProfileBody() {
                 </Speakable>
                 <Hear text={`${g.say} ${items.map((c) => c.label).join(', ')}.`} className="sc-hear" />
               </div>
+              {/*
+                **해당 없음**을 고를 수 있게 한다.
+
+                전에는 없었다. 임신도 수유도 아닌 사람에게 이 묶음은 누를 것이 없는 칸
+                둘이고, 화면은 "고르라" 고만 한다. 그러면 사람은 자기가 무언가를 놓쳤다고
+                여기거나, 아무 데나 하나 누른다 — 둘 다 나쁘고, 뒤쪽은 프로필에 없는
+                조건을 심는다.
+
+                고른 표시는 **따로 저장하지 않는다.** "이 묶음에 켜진 것이 없다" 가 곧
+                해당 없음이고, 그 둘은 같은 사실이다. 값을 하나 더 두면 둘이 어긋날 수
+                있고(켜 놓고 해당 없음도 눌린 상태), 어긋난 프로필은 판정을 틀리게 한다.
+
+                그래서 처음 열면 이 칸이 이미 켜져 있다. 그것은 거짓이 아니라 **지금
+                저장된 답**이고, 화면이 그것을 보여 주는 편이 빈 격자보다 정직하다.
+              */}
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {items.map((c) => {
                   const on = profile.conditionIds.includes(c.id);
@@ -290,6 +305,30 @@ function ProfileBody() {
                     </button>
                   );
                 })}
+                {(() => {
+                  const none = items.every((c) => !profile.conditionIds.includes(c.id));
+                  return (
+                    <button
+                      onClick={() => {
+                        for (const c of items) {
+                          if (profile.conditionIds.includes(c.id)) toggleCondition(c.id);
+                        }
+                        say('None of these. Selected.');
+                      }}
+                      className="flex flex-col items-center gap-1.5 rounded-2xl bg-white px-2 py-4 shadow-sm"
+                      style={{ outline: none ? '2px solid var(--color-safe)' : '2px solid transparent' }}
+                      aria-pressed={none}
+                      aria-label="None of these"
+                      {...sayable(`None of these. ${none ? 'Selected.' : ''}`)}
+                    >
+                      <span className="flex items-center text-2xl" aria-hidden><NoneIcon /></span>
+                      <span className="text-center text-[11px] font-semibold leading-tight"
+                            style={{ color: none ? 'var(--color-safe)' : 'var(--color-sc-muted)' }}>
+                        None of these
+                      </span>
+                    </button>
+                  );
+                })()}
               </div>
             </div>
           );

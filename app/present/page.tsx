@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { BellIcon, BoxIcon } from '@/components/icons';
 
 import { PAIRED_EVENT, clientFor, loadPaired, type PairedDevice } from '@/lib/dispenser/paired';
+import { isDemo, setDemo } from '@/lib/snapcare/demo';
 import { useReminders } from '@/stores/reminders';
 import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
 import { shortName } from '@/lib/snapcare/shortName';
@@ -114,6 +115,33 @@ export default function PresentPage() {
     그려지고 그 뒤에 시연 블롭이 도착해 스스로 짝이 맺어진다 — 그 순서를 모르면
     화면이 "짝이 없다" 에서 안 벗어난다.
   */
+  /*
+    이 화면은 **시연 화면이다.**
+
+    그래서 열리는 순간 시연 모드를 켠다. 켜지 않으면 이 폰은 자기 파일을 보고, 시연
+    블롭에 적힌 상자를 못 찾는다 — 발표자가 폰을 바꿀 때마다 상자 QR 을 다시 찍어야
+    한다는 뜻이고, 그것이 정확히 없애려던 걸음이다.
+
+    통째로 다시 읽는 이유(`location.replace`): 스토어들은 만들어질 때 어느 저장소를
+    쓸지 정한다. 도중에 깃발만 바꾸면 이미 만들어진 스토어는 옛 저장소를 계속 본다 —
+    화면마다 다른 자료가 보이는, 재현이 어려운 상태가 된다. 이 앱이 `?demo=1` 을
+    첫 화면에서만 받는 것도 같은 이유다.
+
+    이 주소는 앱 어디에서도 링크하지 않는다. 발표자만 손으로 친다.
+  */
+  useEffect(() => {
+    if (!isDemo()) {
+      setDemo(true);
+      window.location.replace('/present');
+      return;
+    }
+  }, []);
+
+  /*
+    열릴 때 한 번 읽고, **짝이 생기면 다시 읽는다.** 시연에서는 이 화면이 먼저
+    그려지고 그 뒤에 시연 블롭이 도착해 스스로 짝이 맺어진다 — 그 순서를 모르면
+    화면이 "짝이 없다" 에서 안 벗어난다.
+  */
   useEffect(() => {
     const read = () => { void loadPaired().then(setPaired); };
     read();
@@ -166,7 +194,22 @@ export default function PresentPage() {
           이 폰은 아직 상자와 짝이 없다
         </p>
         <p className="text-sm" style={{ color: 'var(--color-sc-muted)' }}>
-          발표자 폰에서도 한 번 짝을 맺어야 한다. 카메라로 상자를 찍으면 된다.
+          카메라로 상자 화면의 코드를 찍으면 된다.
+        </p>
+        {/*
+          왜 한 번은 찍어야 하는가.
+
+          상자 열쇠는 꺼낼 수 없게 만들어 두었고(`paired.ts`), 그래서 이미 짝을 맺은
+          폰에서 그것을 뽑아 나눠 줄 방법이 없다. 나눌 수 있는 것은 **코드**뿐이고,
+          코드는 짝을 맺는 그 순간에만 손에 있다.
+
+          그러니 시연 모드에서 **한 번** 짝을 맺어야 그 코드가 시연 블롭에 적히고,
+          그때부터 다른 폰들이 스스로 이어받는다. 이 문장이 없으면 발표자는 "된다고
+          했는데 왜 또 짝지으라고 하지" 에서 멈춘다.
+        */}
+        <p className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--color-sc-muted)' }}>
+          한 번만 하면 된다. 시연 모드에서 맺은 짝은 다른 폰이 이어받는다 —
+          이미 짝이 있는 폰이라도, 그 짝을 맺을 때 코드가 안 남았으면 여기서 한 번 더 찍어야 한다.
         </p>
       </main>
     );
