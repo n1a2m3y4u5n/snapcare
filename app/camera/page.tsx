@@ -288,8 +288,28 @@ export default function CameraPage() {
 
   /** 셔터. 미리보기가 살아 있으면 그 프레임을, 아니면 시스템 카메라를 쓴다. */
   async function shutter() {
+    /*
+      **누른 즉시** 화면이 답한다.
+
+      전에는 `capture()` 를 먼저 기다렸다. 그 사이 화면은 아무 일도 안 일어난 것과
+      똑같이 생겼는데, 한 프레임을 캔버스에 그려 JPEG 으로 굽는 일은 폰에서 공짜가
+      아니다 — 12메가픽셀 프레임이면 수백 밀리초다. 사람은 그 동안 안 눌린 줄 알고
+      한 번 더 누른다.
+
+      상태를 먼저 세우면 그 시간이 통째로 사라진다. 실제로 빨라지는 것은 없고,
+      **기다리는지 모르는 상태**가 없어진다. 그 둘의 차이가 여기서는 크다 — 이 앱을
+      쓰는 사람은 화면이 답하지 않으면 자기가 잘못한 줄 안다.
+    */
+    setBusy(true);
+    setHint(null);
+    setStatus('Looking…');
+    const started = performance.now();
     const frame = await capture();
+    console.info(`[camera] 프레임 ${Math.round(performance.now() - started)}ms`,
+                 frame ? `${Math.round(frame.size / 1024)}KB` : '없음');
     if (frame) { void runOcr(frame); return; }
+    setBusy(false);
+    setStatus(null);
     fileRef.current?.click();
   }
 

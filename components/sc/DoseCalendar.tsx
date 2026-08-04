@@ -165,11 +165,23 @@ function Cell({ day, picked, onPick }: {
     고른 날은 굵은 테두리, 오늘은 얇은 테두리. 둘이 겹치면 굵은 쪽이 이긴다 —
     "지금 보고 있는 것" 이 "오늘" 보다 먼저 알아야 하는 사실이다.
   */
+  /*
+    빈 칸에도 **테두리를 그린다.**
+
+    빈 날의 바탕이 화면 바탕과 같은 색이라, 아무것도 안 찍은 날은 칸이 아예 없는 것
+    처럼 보였다. 그러면 격자가 안 보이고, 격자가 안 보이면 "이 조각이 어느 날인가" 를
+    셀 수가 없다 — 달력이 달력으로 안 읽힌다.
+
+    안쪽에 긋는다(`inset`). 바깥에 그으면 4px 사이 간격을 잡아먹어 칸끼리 붙어 보이고,
+    색이 찬 날에는 안쪽 선이 조각과 테두리를 갈라 주기까지 한다.
+
+    고른 날과 오늘의 굵은 테두리가 이것을 덮는다. 셋이 겹칠 때의 순서는 그대로다.
+  */
   const ring = picked
     ? { boxShadow: '0 0 0 3px var(--color-sc-primary)' }
     : day.today
       ? { boxShadow: '0 0 0 2px var(--color-sc-ink)' }
-      : undefined;
+      : { boxShadow: 'inset 0 0 0 1px var(--color-sc-line)' };
   const pick = onPick ? { onClick: () => onPick(day.dayKey), role: 'button', tabIndex: 0 } : {};
 
   if (day.offered === 0) {

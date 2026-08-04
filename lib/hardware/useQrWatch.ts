@@ -146,15 +146,32 @@ export function useQrWatch(enabled = true): QrWatch {
     return hit && Date.now() - hit.at < FRESH_MS ? hit.text : null;
   };
 
+  /*
+    구울 때의 긴 변 상한.
+
+    카메라가 주는 프레임을 그대로 구우면 폰에 따라 4032픽셀이 오고, 그 한 장을 JPEG
+    으로 굽는 데만 수백 밀리초가 든다. 그 시간은 셔터를 누른 사람이 그냥 기다리는
+    시간이고, 그 뒤의 QR 판독·마커 찾기·업로드가 전부 그 크기에 비례해 더 든다.
+
+    2400 인 이유는 **폼시트 때문**이다. 이 종이의 손글씨 칸은 원본 해상도에서 잘라
+    OCR 에 넘긴다(`lib/formsheet/field.ts`) — 실측에서 그 조각이 3712×112 였고, 정규
+    격자에서 자른 928×28 보다 훨씬 잘 읽혔다. 여기서 너무 줄이면 그 이득이 사라진다.
+    2400 이면 A4 를 화면 가득 채워 찍었을 때 한 줄이 여전히 200픽셀 넘게 남는다.
+
+    이보다 작은 프레임은 그대로 둔다 — 늘리는 것은 얻는 것 없이 파일만 키운다.
+  */
+  const MAX_EDGE = 2400;
+
   const capture = async (): Promise<Blob | null> => {
     const video = videoRef.current;
     if (!video?.videoWidth) return null;
+    const scale = Math.min(1, MAX_EDGE / Math.max(video.videoWidth, video.videoHeight));
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
-    ctx.drawImage(video, 0, 0);
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     // JPEG 0.92 — 나머지 경로가 전부 사진 파일을 받으므로 형식을 맞춘다. 무손실로
     // 두면 4메가짜리 PNG 가 OCR 과 판별 요청에 실린다.
     return new Promise((resolve) =>

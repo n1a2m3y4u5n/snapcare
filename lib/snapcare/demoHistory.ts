@@ -163,6 +163,11 @@ function missed(back: number, due: string): boolean {
   땅콩은 두 주에 네 번 남긴다. 식이 일지가 결론을 내려면 먹은 날이 넷은 있어야 하고
   (`infer.ts` 의 `MIN_EATEN`), 그것이 이 자료가 증명하려는 기능이다.
 */
+/** 하루치를 밀어올리는 것들. 달력에서 주의로 칠해진다. */
+const SWEETS = new Set<keyof typeof PRODUCTS>(
+  ['redbull', 'snickers', 'mars', 'cola', 'nutella', 'juice'],
+);
+
 const WEEK: (keyof typeof PRODUCTS)[][] = [
   // ── 첫째 주 ──
   ['oats', 'soup', 'juice', 'cola'],                    // 일
@@ -243,6 +248,44 @@ function ateAt(day: string, index: number): { hhmm: string; label: string } {
 }
 
 /**
+ * **오늘**의 끼니 시각. 지나간 시간 안에 밀어 넣는다.
+ *
+ * 무엇이 문제였나
+ * ---------------
+ * 오늘은 지나간 끼니만 넣는다. 그 규칙 자체는 옳다 — 아침 아홉 시에 저녁이 이미
+ * 먹은 것으로 앉아 있으면 화면이 "이 앱은 미래를 안다" 로 읽힌다.
+ *
+ * 그런데 그 규칙이 **오늘 화면을 비운다.** 첫 끼니가 8시 20분이라 그 전에 열면
+ * `EATEN TODAY` 에 아무것도 없고, 열 시에 열어도 하나뿐이다. 하루 누적·부족한
+ * 영양소·되짚기가 전부 그 목록 위에 서 있는데, 시연을 여는 시각에 따라 그 화면들이
+ * 통째로 빈다.
+ *
+ * 어떻게 고치나
+ * -------------
+ * 시각을 못박는 대신 **지나간 시간을 나눠 쓴다.** 하루의 식단을 06시부터 지금까지
+ * 사이에 고르게 앉힌다. 그러면 목록은 늘 차 있고, 그러면서 **미래 시각은 하나도
+ * 안 나온다** — 지키려던 것이 그것이었다.
+ *
+ * 어제까지는 손대지 않는다. 지난 날들은 이미 다 지나갔으므로 제자리에 앉으면 된다.
+ */
+function ateNowish(index: number, count: number, nowMinutes: number): { hhmm: string; label: string } {
+  const START = 6 * 60;
+  // 아직 여섯 시도 안 됐으면 자정부터 지금까지를 쓴다. 새벽에 여는 경우다.
+  const from = Math.min(START, Math.max(0, nowMinutes - 60));
+  const span = Math.max(0, nowMinutes - from);
+  // 끼니 사이를 고르게. 마지막 것이 '지금' 에 딱 붙지 않게 한 칸 더 나눈다.
+  const at = Math.round(from + (span * (index + 1)) / (count + 1));
+  const h = Math.floor(at / 60);
+  const m = at % 60;
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const h12 = ((h + 11) % 12) + 1;
+  return {
+    hhmm: `${String(h).padStart(2, '0')}${String(m).padStart(2, '0')}`,
+    label: `${h12}:${String(m).padStart(2, '0')} ${ampm}`,
+  };
+}
+
+/**
  * 시연 계정의 지난 열두 주. 오늘(back=0)까지 포함한다.
  *
  * 길이가 두 번 바뀌었다. 다섯 주였다가 — 넉 주짜리 달력이 생기면서 한 번만 뒤로
@@ -296,9 +339,12 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
     const menu = ateOn(day, back);
     for (let index = 0; index < menu.length; index++) {
       const key = menu[index];
-      const at = ateAt(day, index);
-      // 오늘은 지나간 끼니만. 복용과 같은 이유다.
-      if (back === 0 && hhmmToMinutes(at.hhmm) > nowMinutes) continue;
+      /*
+        오늘은 지나간 시간 안에 밀어 넣는다(`ateNowish`). 제자리 시각을 쓰면 아침에
+        연 사람에게 목록이 비고, 그 목록 위에 선 화면 넷이 같이 빈다. 미래 시각은
+        여전히 하나도 안 나온다 — 지키려던 것이 그것이다.
+      */
+      const at = back === 0 ? ateNowish(index, menu.length, nowMinutes) : ateAt(day, index);
       const p = PRODUCTS[key];
       out.push({
         id: `demo_food_${day}_${key}`,
@@ -307,9 +353,19 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
         kind: p.kind,
         emoji: p.emoji,
         memberId,
-        // 설탕이 하루치를 밀어올리는 것들이라 주의로 둔다. 회피는 사람마다 다르므로
-        // 판정 엔진이 프로필을 보고 다시 매긴다 — 여기 값은 목록에 보이는 표시다.
-        level: 'caution',
+        /*
+          판정은 **먹은 것마다** 다르다.
+
+          전부 `caution` 이었다. 자료에 단것밖에 없던 시절의 값인데, 끼니가 들어온
+          뒤로도 그대로라 달력이 통째로 주황이 됐다 — 렌틸도 요거트도 주의로 칠해진
+          달력은 색이 아무 말도 안 한다. 넉 주를 보여주면서 "언제가 나빴나" 를 못
+          짚으면 그 화면이 있을 이유가 없다.
+
+          단것과 청량음료만 주의로 둔다. 회피는 여기서 안 정한다 — 사람마다 다르고,
+          판정 엔진이 프로필을 보고 다시 매긴다(땅콩 알레르기가 있으면 땅콩버터가
+          그때 빨강이 된다).
+        */
+        level: SWEETS.has(key) ? 'caution' : 'safe',
         timeLabel: `${when} · ${at.label}`,
         dayKey: day,
         barcode: p.barcode,
