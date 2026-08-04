@@ -20,8 +20,11 @@ const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const BASE = process.env.SNAPCARE_BASE || 'http://localhost:3000';
 const MIN = 24; // SC 2.5.8 Target Size (Minimum)
 
+// /onboarding 은 없앴다(ef8c97b). 그 자리에 첫 실행의 두 단계가 들어가고,
+// 그 뒤에 만들어진 화면들(지난 날들·짝짓기·촬영)도 함께 잰다.
 const PATHS = ['/home', '/scan', '/nutrition', '/settings', '/profile',
-  '/people', '/device', '/onboarding', '/dose'];
+  '/people', '/device', '/dose', '/history', '/text-size', '/login',
+  '/camera', '/pair'];
 
 const browser = await puppeteer.launch({
   executablePath: CHROME,
@@ -41,13 +44,17 @@ for (const p of PATHS) {
     const r = await page.evaluate((MIN) => {
       const sel = 'button, a[href], [role="button"], input, select, textarea,'
         + ' [tabindex]:not([tabindex="-1"])';
+      // 접힌 <details> 안은 화면에도 보조기술에도 나오지 않는다. offsetParent 는
+      // 그것을 걸러 주지 못하고, innerText 만 비어서 "이름 없는 조작" 으로 잡힌다.
+      // 실제로 /device 에서 그렇게 두 건이 잡혔는데 둘 다 글자를 가진 링크였다.
       const els = [...document.querySelectorAll(sel)].filter((e) => {
         const s = getComputedStyle(e);
-        return s.display !== 'none' && s.visibility !== 'hidden' && e.offsetParent !== null;
+        if (s.display === 'none' || s.visibility === 'hidden' || e.offsetParent === null) return false;
+        return !e.closest('details:not([open])');
       });
       const box = (e) => e.getBoundingClientRect();
       const name = (e) => (e.innerText || '').trim() || e.getAttribute('aria-label')
-        || e.getAttribute('aria-labelledby') || e.title || '';
+        || e.getAttribute('aria-labelledby') || e.title || (e.textContent || '').trim();
 
       // 작은 표적. 간격 예외를 함께 본다 — 24픽셀 원이 다른 표적의 원과
       // 겹치지 않으면 SC 2.5.8 을 충족한다.
@@ -103,5 +110,5 @@ for (const p of PATHS) {
 }
 
 await browser.close();
-console.log(faults ? `\n${faults}개 화면에서 걸렸다` : '\n아홉 화면 모두 통과');
+console.log(faults ? `\n${faults}개 화면에서 걸렸다` : `\n${PATHS.length}개 화면 모두 통과`);
 process.exit(faults ? 1 : 0);
