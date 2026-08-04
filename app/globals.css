@@ -238,6 +238,12 @@ body {
 .px-4 { padding-left: min(1rem, 16px); padding-right: min(1rem, 16px); }
 .px-5 { padding-left: min(1.25rem, 20px); padding-right: min(1.25rem, 20px); }
 /*
+  화면 맨 위의 여백도 틀이다. 32px 에서 `pt-14` 는 **112px** 이고, 그만큼이 화면
+  꼭대기에서 그냥 사라진다. 짧은 폰에서는 그 112px 이 홈의 궤도가 쓸 수 있는 자리의
+  절반이었다. 글자를 키운 사람이 원한 것은 글자이지 위쪽 빈칸이 아니다.
+*/
+.pt-14 { padding-top: min(3.5rem, 56px); }
+/*
   홈의 궤도는 그 여백을 되찾아 쓴다(`-mx-5`). 상한을 건 쪽과 같은 값이어야 좌우가
   안 어긋난다 — 한쪽만 고정하면 궤도가 화면 밖으로 20px 밀린다.
 */
@@ -364,4 +370,18 @@ html[data-hearing] {
   .sc-demo-hand, .sc-demo-ripple, .sc-demo-press { animation: none; }
   .sc-demo-hand, .sc-demo-ripple { display: none; }
   .sc-reduced-only { display: block; }
+}
+
+/*
+ * 홈의 궤도 — 한 변을 담긴 칸의 **짧은 쪽**에서 뽑는다.
+ *
+ * 왜 여기 있나: `@supports` 가 필요해서다. 인라인 스타일로는 못 쓴다.
+ *
+ * 아래 기본줄은 컨테이너 질의를 모르는 브라우저용이다. 세로를 `68vh` 로 어림하는데,
+ * 홈에 카드가 뜨면 실제로 남는 높이는 그보다 적어서 원이 조금 잘릴 수 있다. 그
+ * 브라우저에서 예전에 하던 그대로이고, 아래 `@supports` 가 그것을 대신한다.
+ */
+.sc-orbit { width: min(100%, 68vh, 420px); max-width: 100%; }
+@supports (width: 1cqmin) {
+  .sc-orbit { width: min(100cqmin, 420px); }
 }

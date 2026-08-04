@@ -218,7 +218,12 @@ export default function HomePage() {
           되찾으면 위성 지름이 그만큼 커지고, 그것이 이 화면에서 제일 겨누기 어려운
           표적이다.
         */}
-        <div className="-mx-5 flex min-h-0 flex-1 items-center justify-center py-2">
+        {/*
+          궤도가 제 한 변을 이 칸의 **짧은 쪽**에서 뽑는다(`orbit.tsx` 의 `cqmin`).
+          그러려면 이 칸이 크기를 아는 컨테이너여야 한다.
+        */}
+        <div className="-mx-5 flex min-h-0 flex-1 items-center justify-center py-2"
+             style={{ containerType: 'size' }}>
           <Orbit satellites={satellites} />
         </div>
 

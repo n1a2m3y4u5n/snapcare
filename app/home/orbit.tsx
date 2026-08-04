@@ -60,12 +60,25 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
       한 엄지로 닿지 않는 거리가 된다.
     */
     /*
-      `max-height: 100%` 가 같이 있어야 한다. 홈이 높이를 못박고부터 이 상자는 줄어들
-      수 있는 칸 안에 있는데, `aspect-square` 는 폭에서 높이를 만든다 — 폭만 재면 칸
-      보다 키가 큰 정사각형이 나오고 아래가 잘린다. 둘 다 걸어 두면 좁은 쪽이 이긴다.
+      **정사각형이 깨지면 위성이 카메라 안으로 들어온다.**
+
+      홈이 높이를 못박고부터 이 상자는 줄어들 수 있는 칸 안에 있다. 처음에는
+      `max-h-full` 을 걸었는데, 그건 정사각형을 지키는 것이 아니라 **높이만 잘랐다** —
+      375 폭짜리 칸에서 상자가 375×184 가 됐다. 위성 자리는 상자 크기의 비율(%)로
+      잡으므로 세로가 반으로 줄면 위아래 위성이 가운데로 딸려 들어오고, 실제로 위
+      아래 둘이 카메라 단추를 59px 씩 파고들었다. `aspect-square` 는 폭에서 높이를
+      만드는 규칙이라, 폭이 정해진 채로 높이를 자르면 이길 수가 없다.
+
+      한 변을 **칸의 짧은 쪽**에서 뽑는다(`cqmin`). 그러려면 부모가 크기를 아는
+      컨테이너여야 하고(`container-type: size`, 부르는 쪽에 걸어 두었다), 그러면 폭이
+      좁은 화면에서는 폭이, 키가 낮은 화면에서는 높이가 한 변을 정한다. 자르는 것이
+      아니라 **작아진다.**
+
+      크기는 `globals.css` 의 `.sc-orbit` 이 정한다. 거기 두는 이유는 `@supports` 가
+      필요해서다 — 컨테이너 질의를 모르는 브라우저는 예전처럼 세로를 `vh` 로 어림한다.
+      정확하진 않아도 안 깨진다.
     */
-    <div className="relative mx-auto aspect-square h-auto max-h-full w-full"
-         style={{ maxWidth: 'min(100%, 68vh, 420px)' }}>
+    <div className="sc-orbit relative mx-auto aspect-square">
       {/*
         가운데. DOM 에서 맨 앞이라 키보드·스캐닝이 여기부터 만난다.
         컨테이너의 52% — 340px 상자에서 177px 이다. 96 → 136 → 177 로 두 번 커졌다.
@@ -118,9 +131,21 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
           key={s.href}
           onClick={() => router.push(s.href)}
           aria-label={s.say}
-          className="absolute flex aspect-square w-[18%] -translate-x-1/2 -translate-y-1/2 flex-col
+          /*
+            이름을 **바깥쪽으로** 놓는다.
+
+            넷 다 그림 아래에 이름을 달고 있었다. 아래쪽 위성에서는 그것이 곧 바깥쪽
+            이라 문제가 없는데, **위쪽 위성에서는 안쪽**이다 — 궤도가 작아지는 화면
+            에서 위 위성의 이름이 그대로 카메라 단추 위에 얹혔다. 위 절반에 있는
+            위성은 이름을 그림 위로 올린다(`flex-col-reverse`).
+
+            좌우 위성은 아래가 바깥도 안쪽도 아니라 그대로 둔다. 그쪽은 이름이 옆으로
+            비껴나므로 가운데와 겹치지 않는다.
+          */
+          className={`absolute flex aspect-square w-[18%] -translate-x-1/2 -translate-y-1/2
                      items-center justify-center rounded-full bg-white shadow-sm
-                     active:scale-95 transition-transform"
+                     active:scale-95 transition-transform
+                     ${spots[i].top < 50 ? 'flex-col-reverse' : 'flex-col'}`}
           style={{ left: `${spots[i].left}%`, top: `${spots[i].top}%` }}
         >
           {/*
@@ -135,10 +160,21 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
             이름은 파랑으로 안 칠한다. 색을 다 파랑으로 덮으면 그림과 글자의 무게가
             같아져서 어느 쪽을 먼저 보는지가 안 정해진다.
           */}
-          <span aria-hidden className="flex items-center justify-center text-2xl leading-none"
-                style={{ color: 'var(--color-sc-primary)' }}>{s.icon({})}</span>
-          <span aria-hidden className="mt-0.5 px-1 text-center text-[9px] font-bold leading-tight"
-                style={{ color: 'var(--color-sc-muted)' }}>
+          {/*
+            그림 크기를 **동그라미에서** 뽑는다.
+
+            `text-2xl` 이었다. rem 이라 글자를 가장 크게 두면 그림이 48px 이 되는데,
+            짧은 화면에서 이 동그라미는 33px 이다 — 그림이 제 동그라미보다 커져서
+            테두리 밖으로 삐져나왔다. 이 앱이 여러 번 만난 같은 결함이다(틀은 px 또는
+            비율, 내용은 rem). 여기서 틀은 동그라미이므로 그림도 그 비율로 잡는다.
+          */}
+          <span aria-hidden className="flex w-[54%] items-center justify-center leading-none"
+                style={{ color: 'var(--color-sc-primary)' }}>{s.icon({ size: '100%' })}</span>
+          <span aria-hidden
+                className="px-1 text-center text-[9px] font-bold leading-tight"
+                style={{ color: 'var(--color-sc-muted)',
+                         marginTop: spots[i].top < 50 ? 0 : 2,
+                         marginBottom: spots[i].top < 50 ? 2 : 0 }}>
             {s.label}
           </span>
           {/*

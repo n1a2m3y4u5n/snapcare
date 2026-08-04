@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 import { sayable } from './Say';
@@ -40,8 +41,32 @@ export function HomeBar({ atHome, children }: {
   /** 낭독 버튼 */
   children?: React.ReactNode;
 }) {
+  /*
+    본문이 비켜 줄 만큼을 **재서 알려 준다.**
+
+    본문은 `pb-[7rem]` 로 자리를 비워 두고 있었다. 어림값이라 맞을 리가 없다 — 글자를
+    가장 크게 두면 이 막대가 129px 인데 본문은 224px 을 비웠고, 그 차이 95px 이 홈에서
+    궤도가 쓸 수 있는 자리였다. 반대로 어림을 줄이면 어느 크기에서 마지막 줄이 막대
+    밑으로 들어간다.
+
+    재는 편이 낫다. 막대는 제 높이를 알고, 본문은 그 값을 쓴다(`--sc-bar-h`).
+    글자 크기가 바뀌면 `ResizeObserver` 가 다시 알려 준다.
+  */
+  const nav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = nav.current;
+    if (!el) return;
+    const tell = () => document.documentElement.style
+      .setProperty('--sc-bar-h', `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    tell();
+    const ro = new ResizeObserver(tell);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <nav
+      ref={nav}
       className="fixed bottom-0 left-1/2 z-30 w-full max-w-[440px] -translate-x-1/2 border-t
                  bg-white/95 backdrop-blur"
       style={{ borderColor: 'var(--color-sc-line)' }}

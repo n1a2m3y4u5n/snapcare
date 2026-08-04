@@ -66,7 +66,13 @@ export function MobileScreen({
           rem 으로 준다 — 글자를 키우면 줄도 같이 커지므로 px 로 박으면 가장 큰
           크기에서 마지막 줄이 가려진다.
         */}
-        <main className={`flex-1 flex flex-col ${fit ? 'min-h-0 overflow-y-auto' : ''} ${bar ? 'pb-[7rem]' : ''} ${className}`}>{children}</main>
+        {/*
+          아래 줄이 화면에 고정이라 본문 끝이 그 밑으로 들어간다. 비켜 주는 양은
+          `HomeBar` 가 자기 높이를 재서 알려 준다(`--sc-bar-h`). 어림값 `7rem` 은
+          그 값이 아직 없는 첫 그림 한 장 동안만 쓰인다.
+        */}
+        <main className={`flex-1 flex flex-col ${fit ? 'min-h-0 overflow-y-auto' : ''} ${className}`}
+              style={bar ? { paddingBottom: 'calc(var(--sc-bar-h, 7rem) + 12px)' } : undefined}>{children}</main>
         {!bar && <ReadScreen variant={variant} />}
         {bar && <HomeBar atHome={bar === 'home'}>{!ownRead && <ReadScreen variant="tab" wide={bar === 'home'} />}</HomeBar>}
         {bar && ownRead && <ReadScreen variant="none" />}
