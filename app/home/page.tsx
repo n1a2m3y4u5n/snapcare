@@ -85,15 +85,15 @@ export default function HomePage() {
   */
   const satellites: Satellite[] = [
     {
-      emoji: '🥗', label: 'Today', href: '/nutrition',
-      say: 'Today. Everything you have eaten so far, added up against your daily amount.',
+      emoji: '🥗', label: 'Food', href: '/nutrition',
+      say: 'Food. What you have eaten today, and the last four weeks day by day.',
     },
     {
-      emoji: '📅', label: 'Past days', href: '/history',
-      say: 'Past days. Everything you have checked, day by day, and how your medicine went.',
+      emoji: '💊', label: 'Medicine', href: '/history',
+      say: 'Medicine. What is set right now, and how the last four weeks went.',
     },
     {
-      emoji: '💊', label: 'Pill box', href: '/device',
+      emoji: '📦', label: 'Pill box', href: '/device',
       say: 'The pill box. Send the schedule, and see what it has done.',
     },
     {

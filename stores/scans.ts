@@ -3,7 +3,8 @@ import { persist } from 'zustand/middleware';
 import type { Reaction, ScanRecord, Symptom } from '@/lib/snapcare/types';
 import { PROFILE_ID, seedDemoProfile } from './profile';
 import { prune } from '@/lib/snapcare/retention';
-import { demoHistory } from '@/lib/snapcare/demoHistory';
+import { demoHistory, demoReminders } from '@/lib/snapcare/demoHistory';
+import { useReminders } from './reminders';
 import { isDemo } from '@/lib/snapcare/demo';
 import { accountStorage, activeAccountId, DEMO_KID, DEMO_PRIMARY } from '@/lib/snapcare/accounts';
 
@@ -182,6 +183,18 @@ export function seedDemoIfEmpty(): void {
     브라우저에서 화면이 붙은 뒤에 불린다.
   */
   useScans.setState({ scans: [...seed, ...demoHistory(todayKey(), PROFILE_ID)] });
+  /*
+    알람도 같이 심는다.
+
+    기록만 심으면 복약 화면의 "지금 정해져 있는 것" 이 빈다 — 지난 넉 주는 보여주면서
+    무엇으로 정해져 있는지는 말하지 못하는 화면이 된다. 둘은 같은 표에서 나오므로
+    서로 어긋날 일도 없다.
+
+    이미 알람이 있으면 손대지 않는다. 시연 도중에 사람이 만든 것을 지우면 안 된다.
+  */
+  if (useReminders.getState().reminders.length === 0) {
+    useReminders.setState({ reminders: demoReminders(PROFILE_ID) });
+  }
   // 기록만 넣으면 소용이 없다 — 판정은 프로필에서 나온다. 조건이 비어 있으면 위의
   // 회피 두 건이 왜 회피인지 화면 어디에도 설명이 없다.
   seedDemoProfile();
@@ -209,6 +222,9 @@ export function seedDemoIfEmpty(): void {
 export function resetDemo(): boolean {
   if (!isDemo()) return false;
   useScans.setState({ scans: [] });
+  // 알람도 비운다. 안 비우면 `seedDemoIfEmpty` 가 "이미 있다" 며 넘어가고, 리허설
+  // 중에 손댄 알람이 그대로 남는다 — 되돌린다고 해 놓고 절반만 되돌리는 셈이다.
+  useReminders.setState({ reminders: [] });
   seedDemoIfEmpty();
   return true;
 }

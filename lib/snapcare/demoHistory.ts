@@ -41,8 +41,22 @@ const PRODUCTS = {
   nutella: { barcode: '3017620422003', name: 'Hazelnut spread', emoji: '🍞', grams: 30, kind: 'food' as const },
 };
 
-/** 하루 세 번. 상자가 내미는 시각이다. */
-const DOSE_TIMES = ['0800', '1300', '1900'] as const;
+/**
+ * 시연 계정의 처방. 상자가 내미는 것과 앱이 들고 있는 알람이 **같은 표에서** 나온다.
+ *
+ * 한 약을 하루 세 번 내밀던 것을 둘로 갈랐다. 화면이 영양과 복약으로 갈리면서 복약
+ * 쪽에 "지금 정해져 있는 것" 목록이 생겼는데, 약이 하나뿐이면 그 목록이 한 줄이고
+ * 그 한 줄은 아무것도 보여주지 못한다 — 주기가 다른 약이 나란히 서야 그 화면이
+ * 무엇을 하는지가 보인다.
+ *
+ * 그래서 하루 두 번짜리 하나와 하루 한 번짜리 하나다. 칸도 다르다: 달력의 조각이
+ * 어느 약인지를 아래 날짜별 목록에서 짚을 수 있어야 한다.
+ */
+const DOSES = [
+  { due: '0800', tray: 1, name: 'Metformin 500mg', emoji: '💊', label: '8:00 AM' },
+  { due: '1300', tray: 2, name: 'Amlodipine 5mg', emoji: '💊', label: '1:00 PM' },
+  { due: '1900', tray: 1, name: 'Metformin 500mg', emoji: '💊', label: '7:00 PM' },
+] as const;
 
 function isoDay(today: string, back: number): string {
   const t = new Date(`${today}T00:00:00Z`).getTime();
@@ -96,22 +110,22 @@ export function demoHistory(today: string, memberId: string, days = 35): ScanRec
     const when = back === 0 ? 'Today' : back === 1 ? 'Yesterday' : day.slice(5);
 
     // 상자가 내민 복용
-    for (const due of DOSE_TIMES) {
+    for (const d of DOSES) {
       // 오늘은 아직 저녁이 안 왔다. 안 온 것을 "걸렀다" 로 세면 순응도가 매일 아침
       // 나빠 보인다.
-      if (back === 0 && due === '1900') continue;
-      const taken = !missed(back, due);
+      if (back === 0 && d.due === '1900') continue;
+      const taken = !missed(back, d.due);
       out.push({
-        id: `demo_dose_${day}_${due}`,
-        itemId: 'device_tray_1',
-        name: 'Metformin 500mg',
+        id: `demo_dose_${day}_${d.due}`,
+        itemId: `device_tray_${d.tray}`,
+        name: d.name,
         kind: 'medicine',
-        emoji: '💊',
+        emoji: d.emoji,
         memberId,
         level: taken ? 'safe' : 'caution',
-        timeLabel: `${when} · ${clock(due)}`,
+        timeLabel: `${when} · ${clock(d.due)}`,
         dayKey: day,
-        dose: { taken, due, tray: 1, reason: taken ? 'released' : 'not-released' },
+        dose: { taken, due: d.due, tray: d.tray, reason: taken ? 'released' : 'not-released' },
       });
     }
 
@@ -166,4 +180,31 @@ export function demoHistory(today: string, memberId: string, days = 35): ScanRec
   }
 
   return out;
+}
+
+
+/**
+ * 시연 계정의 **알람**. 위의 복용 기록과 같은 표에서 나온다.
+ *
+ * 기록만 심고 알람을 안 심으면 복약 화면의 "지금 정해져 있는 것" 이 빈다 — 지난
+ * 넉 주는 보여주면서 무엇으로 정해져 있는지는 말하지 못하는 화면이 된다. 그리고
+ * 그 둘이 어긋나면(기록은 하루 세 번인데 알람은 둘) 화면이 스스로와 모순된다.
+ *
+ * 끝나는 날을 두지 않는다. 만성 질환의 약이고, 끝이 있는 처방은 "다 먹었다" 카드를
+ * 띄우는데 시연 중에 그 카드가 뜨면 무엇을 보여주려던 화면인지가 흐려진다.
+ */
+export function demoReminders(memberId: string) {
+  return DOSES.map((d) => ({
+    id: `demo_rx_${d.tray}_${d.due}`,
+    memberId,
+    time: d.label,
+    item: {
+      id: `demo_med_${d.name.split(' ')[0].toLowerCase()}`,
+      name: d.name,
+      kind: 'medicine' as const,
+      emoji: d.emoji,
+      detectedVia: 'Demo data',
+      flags: [],
+    },
+  }));
 }

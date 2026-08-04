@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation';
 import { spokenName } from '@/lib/tts/speakable';
 import { DoseCalendar } from '@/components/sc/DoseCalendar';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
-import { Thumb } from '@/components/sc/Thumb';
+import { DayCard } from '@/components/sc/DayCard';
 
 /**
  * 지난 날들.
@@ -112,8 +112,8 @@ export default function HistoryPage() {
             그쪽이 엄지가 닿는 자리다. 화면마다 '◀️ Home' '◀️ Back' '◀️ Settings'
             로 제각각이던 것이 하나로 모인다. */}
         <h1 className=" text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
-            {...ask('Past days. Everything you have checked, day by day, newest first.')}>
-          Past days
+            {...ask('Medicine. What is set right now, how the last four weeks went, and every dose day by day.')}>
+          Medicine
         </h1>
 
         {/*
@@ -172,14 +172,19 @@ export default function HistoryPage() {
         {setNow.length > 0 && <RoutineCard list={setNow} />}
         {week && week.rate !== null && <AdherenceCard span={week} month={month} />}
 
-        {days.length === 0 && (
-          <p className="mt-10 text-center text-sm" style={{ color: 'var(--color-sc-muted)' }}>
-            Nothing recorded yet.
-          </p>
-        )}
+        {/*
+          날짜별 복용. 위의 달력이 "어느 날" 을 답한다면 이 목록은 "그 날 무엇을,
+          몇 시에" 를 답한다 — 달력의 조각 하나가 어느 약이었는지는 그림으로는
+          알 수 없다.
+        */}
+        <Speakable text="Day by day."
+                   className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                   style={{ color: 'var(--color-sc-muted)' }}>
+          <span className="flex-1">DAY BY DAY</span>
+        </Speakable>
 
         <div className="mt-4 flex flex-col gap-4">
-          {days.map((day) => <Day key={day.dayKey} day={day} today={today} />)}
+          {days.map((day) => <DayCard key={day.dayKey} day={day} today={today} only="dose" />)}
         </div>
       </div>
     </MobileScreen>
@@ -332,74 +337,4 @@ function AdherenceCard({ span, month }: {
   );
 }
 
-/** 하루 한 덩어리. */
-function Day({ day, today }: { day: DaySummary; today: string }) {
-  const label = dayLabel(day.dayKey, today);
-  const say = daySentence(day, label);
-  const [open, setOpen] = useState(false);
 
-  return (
-    <div>
-      <div className="flex items-center gap-2">
-        {/*
-          이름을 못박는다. 접근성 트리에서 이 버튼은 이름이 비어 있었다 — 안의
-          글자가 span 여럿에 흩어져 있고 그림은 전부 aria-hidden 이라 그렇다.
-          스캐닝으로 훑는 사람에게는 날짜 목록이 이름 없는 버튼 여러 개가 된다.
-        */}
-        <button onClick={() => setOpen(!open)} aria-expanded={open}
-                aria-label={open ? `Hide ${label}` : `Show what happened on ${label}`}
-                className="flex flex-1 items-center gap-2 text-left">
-          <span aria-hidden className="text-sm">{open ? '▼' : '▶'}</span>
-          <span className="text-sm font-bold" style={{ color: 'var(--color-sc-ink)' }}>{label}</span>
-          {/* 그날에 무슨 일이 있었는지를 줄 끝에서 한눈에. 펴 보지 않아도 보인다. */}
-          {day.missed > 0 && <span aria-hidden title="missed a dose">💊</span>}
-          {day.hadAvoid && <span aria-hidden title="something to avoid">🚫</span>}
-          {day.hadReaction && <span aria-hidden title="felt unwell">🤢</span>}
-        </button>
-        <Hear text={say} />
-      </div>
-
-      {/*
-        접힌 상태에서도 그날 먹은 것의 그림은 보인다. 펴야만 보이면 되짚는 데
-        누름이 하루마다 하나씩 더 들고, 이 화면은 되짚으라고 있는 화면이다.
-      */}
-      <div className="mt-2 flex flex-wrap gap-1.5 pl-6">
-        {/* 직접 찍은 것은 사진으로, 나머지는 이모지로. 이유는 Thumb 안에 적었다. */}
-        {day.records.slice(0, open ? day.records.length : 8).map((r) => (
-          <Thumb key={r.id} id={r.id} emoji={r.emoji} />
-        ))}
-        {!open && day.records.length > 8 && (
-          <span className="flex h-9 items-center px-1 text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-            +{day.records.length - 8}
-          </span>
-        )}
-      </div>
-
-      {open && (
-        <div className="mt-2 flex flex-col gap-1.5 pl-6">
-          {day.records.map((r) => (
-            <div key={r.id} className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm">
-              <Thumb id={r.id} emoji={r.emoji} size={28} />
-              <span className="flex-1">
-                <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-                  {r.name}
-                </span>
-                <span className="block text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
-                  {r.timeLabel}
-                </span>
-              </span>
-              {/* 상자에서 온 것은 먹었는지 걸렀는지를 그림으로 낸다. 판정 색과 다른
-                  뜻이라 색만으로 구별하지 않는다. */}
-              {r.dose && (
-                <span aria-hidden className="text-base">{r.dose.taken ? '✅' : '⭕'}</span>
-              )}
-              {!r.dose && r.level !== 'safe' && (
-                <span aria-hidden className="text-base">{LEVEL_META[r.level].emoji}</span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}

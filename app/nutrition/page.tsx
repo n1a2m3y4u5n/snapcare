@@ -10,6 +10,13 @@ import { SuspectedTriggerCard } from '@/app/home/suspected';
 import { HowDidItSit, pendingFeedback } from '@/app/home/how-did-it-sit';
 import { PROFILE_ID } from '@/stores/profile';
 import { Reactions } from './reactions';
+import { DayCard } from '@/components/sc/DayCard';
+import { FoodCalendar } from '@/components/sc/FoodCalendar';
+import { foodCalendar } from '@/lib/history/foodCalendar';
+import { byDay } from '@/lib/history/byDay';
+import { todayKey } from '@/stores/scans';
+import { useIsClient } from '@/lib/hooks';
+import { useMemo } from 'react';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NUTRIENT_LABEL, type NutrientAssessment } from '@/lib/nutrition/types';
 import { ask, Hear, Speakable } from '@/components/sc/Say';
@@ -23,6 +30,23 @@ export default function NutritionPage() {
   // 반응은 먹은 직후에 나오지 않으므로, 아직 답하지 않은 끼니 중 가장 오래된 것을 묻는다.
   const pending = pendingFeedback(scans, PROFILE_ID);
   const member = useProfile((s) => s.profile);
+  const ready = useIsClient();
+  const today = ready ? todayKey() : '';
+  /*
+    복약 화면과 같은 격자, 같은 규칙. 다른 것은 무엇이 칸을 칠하는가 하나다 —
+    복약은 먹었나 걸렀나 둘 중 하나이고, 음식은 판정이 셋이라 조각이 그 색을 입는다.
+
+    한 번 배운 그림이 두 화면에서 그대로 읽혀야 한다. 두 화면이 같은 물음("요즘
+    어떻게 지내고 있나")에 답하는데 그림이 다르면 사람은 두 가지를 배워야 한다.
+  */
+  const month = useMemo(
+    () => (ready && member ? foodCalendar(scans, today, member.id) : []),
+    [ready, scans, today, member],
+  );
+  const days = useMemo(
+    () => (ready && member ? byDay(scans, today, member.id) : []),
+    [ready, scans, today, member],
+  );
   const daily = useDailyIntake(scans, member);
 
   const energy = daily.assessments?.find((a) => a.key === 'energy');
@@ -72,8 +96,8 @@ export default function NutritionPage() {
         */}
         <div className="flex items-center justify-between gap-2">
           <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
-              {...ask('Today. Everything you have eaten so far, added up against your daily amount.')}>
-            Today
+              {...ask('Food. What you have eaten today, added up against your daily amount, and the last four weeks day by day.')}>
+            Food
           </h1>
           {daily.state === 'ready' && <Hear text={spoken} />}
         </div>
@@ -145,6 +169,27 @@ export default function NutritionPage() {
             <SuspectedTriggerCard />
             {pending && <HowDidItSit key={pending.id} record={pending} />}
 
+            {/*
+              지난 넉 주. 위가 오늘이라면 이쪽은 "요즘" 이다.
+
+              한 주로는 요일이 안 읽힌다 — 각 요일이 한 번씩만 나와서 "주말마다
+              무너진다" 가 한 번의 우연과 구별되지 않는다. 넉 주면 같은 요일이 네 번
+              줄지어 서고 그때 비로소 세로줄이 뜻을 갖는다.
+            */}
+            {month.length > 0 && (
+              <>
+                <Speakable text="The last four weeks. What you checked, day by day."
+                           className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                           style={{ color: 'var(--color-sc-muted)' }}>
+                  <span aria-hidden className="text-lg leading-none">🥗</span>
+                  <span className="flex-1">FOOD · THE LAST FOUR WEEKS</span>
+                </Speakable>
+                <div className="mt-3 rounded-3xl bg-white px-5 py-4 shadow-sm">
+                  <FoodCalendar days={month} />
+                </div>
+              </>
+            )}
+
             <Speakable text="Eaten today. Everything you checked since this morning."
                        className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
                        style={{ color: 'var(--color-sc-muted)' }}>
@@ -174,6 +219,28 @@ export default function NutritionPage() {
                 </div>
               ))}
             </div>
+
+            {/*
+              날짜별. 위의 달력이 "어느 날" 을 답한다면 이 목록은 "그 날 무엇을" 을
+              답한다 — 달력의 조각 하나가 무엇이었는지는 그림으로는 알 수 없다.
+
+              복약 화면에도 같은 목록이 같은 모양으로 있다. 다른 것은 어느 쪽 기록만
+              보느냐 하나다.
+            */}
+            {days.length > 0 && (
+              <>
+                <Speakable text="Day by day."
+                           className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
+                           style={{ color: 'var(--color-sc-muted)' }}>
+                  <span className="flex-1">DAY BY DAY</span>
+                </Speakable>
+                <div className="mt-2 flex flex-col gap-4">
+                  {days.map((day) => (
+                    <DayCard key={day.dayKey} day={day} today={today} only="food" />
+                  ))}
+                </div>
+              </>
+            )}
 
             <p className="mt-4 mb-2 text-[10px] leading-snug" style={{ color: 'var(--color-sc-muted)' }}>
               {daily.reference?.basis} Product data from OpenFoodFacts, which is community-edited and may be
