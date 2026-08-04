@@ -136,7 +136,9 @@ def test_each_event_paints_its_own_screen(screens):
     indicator.schedule_accepted()
     indicator.clear()
 
-    assert screens.names == ["due", "released", "missed", "schedule", "idle"]
+    # 배출은 자기 화면을 갖지 않는다 — 눈앞에서 일어나는 일이라 화면이 다시 알릴
+    # 것이 없고, 아래로 떨어져 쉬는 화면이 나온다.
+    assert screens.names == ["due", "idle", "missed", "schedule", "idle"]
     assert len(display.frames) == 5, "every state has to reach the panel"
 
 
@@ -155,8 +157,8 @@ def test_the_screen_says_which_tray_and_when(screens):
     name, args = screens.painted[0]
     assert name == "due"
     assert (args[0].waiting_tray, args[0].waiting_at) == (2, "08:00")
-    assert screens.painted[1][0] == "released"
-    assert screens.painted[1][1][1] == 2
+    # 배출은 화면을 갖지 않으므로 그 자리는 쉬는 화면이다.
+    assert screens.painted[1][0] == "idle"
     assert screens.painted[2][0] == "missed"
     assert screens.painted[2][1][1:] == (3, "08:00")
 
@@ -254,7 +256,12 @@ def test_the_hint_comes_back_after_the_dose_that_borrowed_the_screen(screens):
     indicator.dose_due(1)
     indicator.dose_released(1)
     indicator.clear()
-    assert screens.names == ["network", "due", "released", "network"]
+    # 순서가 아니라 두 가지를 본다. 배출이 자기 화면을 가져가지 않았다는 것과,
+    # 그 뒤에 설정 힌트가 돌아왔다는 것. 사이에 무엇이 몇 장 지나갔는지는 이
+    # 시험이 지키려는 것이 아니고, 정책이 바뀔 때마다 여기를 고치게 만든다.
+    assert "released" not in screens.names
+    assert screens.names[-1] == "network"
+    assert screens.names[:2] == ["network", "due"]
 
 
 def test_the_screen_goes_idle_when_there_is_nothing_to_say(screens):

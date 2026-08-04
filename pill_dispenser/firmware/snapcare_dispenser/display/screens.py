@@ -432,12 +432,25 @@ def released(canvas: Canvas, health: Health, tray: object = None, *,
              theme: dict | None = None) -> None:
     """The pills are in the cup. Blue, a solid circle, and the time it happened.
 
-    This used to lead with the **tray number**, on the reasoning that "which
+    **No longer shown during a release.** `presence` gives that transition no
+    screen of its own: the servo turns and the pills fall in front of the
+    person, so a frame announcing it is the machine reporting something they
+    have just watched happen, and it delays the resting screen they actually
+    want back. Reported from the bench in those words — "어차피 모터가 돌아가니까
+    확인음 정도만 해주면 되고, 차라리 빨리 메인 화면으로 돌아가주는 게 더 중요할
+    듯. 약간 혼란스러움."
+
+    What survives is the colour, in two places that matter more: the strip's
+    mark for that dose turns blue in the resting frame, which is the memory
+    somebody consults tomorrow, and `--selftest` paints this frame full-screen
+    so a person can confirm the panel renders blue at all. That last one is not
+    cosmetic — the BGR bit in `MADCTL` swaps red and blue, and therefore swaps
+    *missed* for *released*, and a whole-panel colour is the only way to see it.
+
+    It also used to lead with the **tray number**, on the reasoning that "which
     cup" is the entire message once the pills are out. That reasoning belongs to
-    a machine with an outlet per hopper. This one does not have that: the trays
-    are stacked and everything falls to one place, so the number answered a
-    question nobody in front of it was asking. Reported from the bench in those
-    words — "숫자가 뜨는데 사용자 혼란만 주는듯".
+    a machine with an outlet per hopper. This one has stacked trays that all
+    fall to one place, so the number answered a question nobody had.
 
     So the frame keeps its colour and loses its number, and the file's own rule
     comes back with it: in every state the largest thing on the panel is a

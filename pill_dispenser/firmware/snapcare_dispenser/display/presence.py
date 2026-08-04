@@ -265,12 +265,16 @@ class Plan:
         fn = getattr(screens, plan.screen)
         fn(canvas, *plan.args)
 
-    The eight names and their arguments, which match `screens.py`:
+    The seven names and their arguments, which match `screens.py`:
 
         boot    (health,)            blocked  (health,)
         due     (health,)            network  (health,)
-        released(health, tray)       idle     (health,)
-        missed  (health, tray, at)   schedule (health, count)
+        missed  (health, tray, at)   idle     (health,)
+        schedule(health, count)
+
+    `screens.released` is not among them. A release takes no screen — see
+    `_transient` — and that frame now exists only for the commissioning colour
+    walk.
 
     **`args` always starts with `health` and is never compared.** Both halves of
     that are load-bearing. Passing the whole snapshot is what lets every screen
@@ -764,7 +768,21 @@ class Presence:
         the resting screen.
         """
         if kind == "released":
-            return (health, self._ev_tray), (self._ev_tray,)
+            # 화면을 주지 않는다. 아래로 떨어져 쉬는 화면이 나온다.
+            #
+            # 배출은 **눈앞에서 일어난다.** 서보가 돌고 약이 컵에 떨어지는 것이
+            # 확인이고, 거기에 화면을 하나 더 얹는 것은 이미 끝난 일을 다시
+            # 알리는 일이다. 벤치에서 그대로 나온 말: "어차피 모터가 돌아가니까
+            # 확인음 정도만 해주면 되고, 차라리 빨리 메인 화면으로 돌아가주는 게
+            # 더 중요할 듯. 약간 혼란스러움."
+            #
+            # 확인이 아예 없어지는 것은 아니다. 누르는 순간 알람이 그치고 짧은
+            # 확인음이 나며(`Indicator.acknowledge`), 같은 프레임 아래 띠에서 그
+            # 복용의 표시가 파랑으로 바뀐다 — 내일 "먹었나" 를 되짚을 때 사람이
+            # 실제로 보는 것이 그 띠다.
+            #
+            # 파랑이 색 어휘에서 사라지는 것도 아니다. 그 띠의 표시가 계속 쓴다.
+            return None
         if kind == "missed":
             return ((health, self._ev_tray, self._ev_at),
                     (self._ev_tray, self._ev_at,

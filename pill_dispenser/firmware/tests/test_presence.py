@@ -143,10 +143,15 @@ def test_the_resting_screen_is_the_only_resting_screen(policy, clock):
 
 # ── transients expire; nothing is left showing something that stopped being true
 
-def test_a_released_screen_gives_the_panel_back(policy, clock):
+def test_a_release_takes_no_screen_of_its_own(policy, clock):
+    """배출은 눈앞에서 일어난다. 서보가 돌고 약이 컵에 떨어지는 것이 확인이고,
+    거기에 화면을 하나 더 얹는 것은 이미 끝난 일을 다시 알리는 일이다.
+
+    `network` 가 다시 붙는 전환과 같은 처리다 — 그쪽도 자기 화면 없이 아래로
+    떨어진다. 확인이 사라지는 것은 아니다. 누르는 순간 알람이 그치고 짧은 확인음이
+    나며, 아래 띠의 그 복용 표시가 파랑으로 바뀐다."""
     policy.event("released", tray=3)
-    assert screen_at(policy, clock, 1000) == "released"
-    assert screen_at(policy, clock, 1000 + 60) == "idle"
+    assert screen_at(policy, clock, 1000) == "idle"
 
 
 def test_settling_a_dose_takes_down_a_prompt_that_is_no_longer_true(policy, clock):

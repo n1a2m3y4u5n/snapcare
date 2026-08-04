@@ -63,6 +63,7 @@ page rather than pretending something is lit.
 """
 from __future__ import annotations
 
+import contextlib
 import logging
 import threading
 import time
@@ -203,6 +204,11 @@ class Buzzer:
         self._pi = None
         self._lgpio = None
         self._handle = None
+        #: 소자는 하나다. 알람 스레드와 확인음 스레드가 겹치면 서로의 삑을 잘라
+        #: 먹으므로, `pattern` 한 번에 하나만 통과시킨다.
+        self._sounding = threading.Lock()
+        #: 울고 있는 `pattern` 에게 그만두라고 말하는 깃발.
+        self._cancel = threading.Event()
 
         tried = []
         for name in (("pigpio", "lgpio") if backend == "auto" else (backend,)):
@@ -268,12 +274,27 @@ class Buzzer:
         """
         import time  # noqa: PLC0415
 
-        ends = time.monotonic() + total_s
-        while time.monotonic() < ends:
-            self.beep(on_s)
-            if time.monotonic() >= ends:
-                break
-            time.sleep(off_s)
+        # 한 번에 하나만 운다. 소자가 하나뿐이라 두 스레드가 겹치면 서로의 삑을
+        # 잘라먹고, 들리는 것은 둘 다 아닌 무엇이 된다 — 실제로 알람이 우는 동안
+        # 누름 확인음이 나오게 했더니 확인음이 통째로 사라졌다.
+        with self._sounding:
+            self._cancel.clear()
+            ends = time.monotonic() + total_s
+            while time.monotonic() < ends and not self._cancel.is_set():
+                self.beep(on_s)
+                if time.monotonic() >= ends or self._cancel.is_set():
+                    break
+                time.sleep(off_s)
+        self.off()
+
+    def cancel(self) -> None:
+        """지금 울고 있는 것을 그만두게 한다. 기다리지 않는다.
+
+        누름 확인음이 알람을 뚫고 나오려면 알람이 먼저 비켜야 한다. 한 번의 삑
+        중간에서는 못 끊지만 그것은 길어야 `BUZZER_URGENT_BEEP_S`(0.3초)이고,
+        사람이 느끼는 것은 "누르자마자 조용해졌다" 이다.
+        """
+        self._cancel.set()
 
     def off(self) -> None:
         if self.backend == "pigpio":
@@ -518,8 +539,20 @@ class FittedIndicator(Indicator):
         and far faster than any chirp, and the frame is the pulse's lit half held
         for a moment, so nothing new has to be learned to read either of them.
         """
+        # 알람을 먼저 비키게 한다. 두 가지가 동시에 해결된다.
+        #
+        # 하나는 소리의 자리다. 소자가 하나뿐이라 알람이 우는 동안 확인음을 내면
+        # 서로의 삑을 잘라먹고 아무것도 안 들린다 — 벤치에서 그대로 나온 말:
+        # "확인음이 따로 안 울리는 것 같음".
+        #
+        # 다른 하나가 더 크다. **누르자마자 조용해지는 것 자체가 가장 분명한
+        # 확인이다.** 집요하게 울던 소리가 그치는 것은 어떤 새 소리보다 알아채기
+        # 쉽고, 지금까지는 배출이 다 끝나는 2초 뒤에야 그쳤다.
+        self._alerting.clear()
         buzzer = getattr(self, "buzzer", None)
         if buzzer is not None:
+            with contextlib.suppress(Exception):
+                buzzer.cancel()
             # On its own thread: a release must not wait on a sound, and this
             # runs while the servo is already turning.
             threading.Thread(
