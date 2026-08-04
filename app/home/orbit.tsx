@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 
 import { orbitSpots } from '@/lib/home/orbit';
+import { CameraIcon } from '@/components/icons';
 
 /**
  * 카메라를 가운데, 나머지를 그 둘레에.
@@ -71,11 +72,12 @@ export function Orbit({ satellites }: { satellites: Satellite[] }) {
                    active:scale-95 transition-transform"
         style={{ background: 'var(--color-sc-primary)' }}
       >
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden className="w-[38%]">
-          <path d="M4 8a2 2 0 0 1 2-2h1.5l1-1.5h5l1 1.5H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"
-                stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-          <circle cx="12" cy="12.5" r="3.5" stroke="currentColor" strokeWidth="1.8" />
-        </svg>
+        {/*
+          이 카메라만 외곽선이었다. 둘레의 다섯이 채운 실루엣인데 가운데 하나가
+          선으로 그려져 있으면, 화면에서 가장 큰 그림이 나머지와 다른 화가의 것이
+          된다 — 그리고 이 앱에서 가장 큰 그림이 곧 이 앱이 하는 일이다.
+        */}
+        <CameraIcon size="38%" />
         {/*
           이름을 버튼 **안**에 둔다.
 
