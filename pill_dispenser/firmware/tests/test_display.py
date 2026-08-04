@@ -236,6 +236,48 @@ def test_a_nonsense_tray_number_is_a_question_mark_not_a_wrong_number():
         assert screens._tray_text(bad) == "?", bad  # noqa: SLF001
 
 
+def test_every_digit_stands_on_one_line_and_reaches_one_top():
+    """The digits are a row before they are characters, and this is measured.
+
+    They were drawn one at a time, each looking right on its own, and shipped
+    spanning 98 to 116 rows of a 100 px box with tops 10 rows apart and feet 10
+    rows apart. On `08:30` the 8 and the 3 stood over the 0 and hung below it;
+    on `12:45` the 4 and the 5 fell short at both ends. Nobody reads a clock one
+    digit at a time, so that reads as a fault in the panel rather than as a
+    typeface.
+
+    Measured on the rendering rather than on `_STROKES`, because the pen is half
+    the metric: a round terminal puts ink a pen radius past the point it was
+    told to stop at, so a table that agrees with itself can still draw a row
+    that does not.
+
+    The 2 px that is left is the overshoot the round digits are *supposed* to
+    have — a circle stopping level with a flat stroke looks smaller than it is —
+    and it is asserted as a ceiling rather than removed.
+    """
+    from snapcare_dispenser.display import numerals
+
+    size, margin = 100, 10
+    tops, feet = {}, {}
+    for char in "0123456789":
+        canvas = Rgb565(120, 140)
+        canvas.fill(0)
+        numerals.draw_char(canvas, margin, margin, size, char, 0xFFFF)
+        pixels = canvas.buffer()
+        lit = [row for row in range(140)
+               if any(pixels[2 * (row * 120 + col)] or pixels[2 * (row * 120 + col) + 1]
+                      for col in range(120))]
+        tops[char], feet[char] = min(lit), max(lit)
+
+    assert max(tops.values()) - min(tops.values()) <= 2, \
+        f"the digits do not share a cap line: {tops}"
+    assert max(feet.values()) - min(feet.values()) <= 2, \
+        f"the digits do not share a baseline: {feet}"
+    heights = {char: feet[char] - tops[char] for char in tops}
+    assert max(heights.values()) - min(heights.values()) <= 4, \
+        f"the digits are not one height: {heights}"
+
+
 def test_every_glyph_fits_its_declared_grid():
     """All the glyphs are one square, so they scale to any panel by a whole
     number. A row wider than the span draws off the side of its own box."""

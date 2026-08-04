@@ -21,6 +21,11 @@ Each character is a set of **strokes** in a unit box — x and y both 0..1, y
 downwards — and a stroke is a polyline. Curves are polylines too, sampled finely
 enough that the pen covers the corners.
 
+Every stroke is stated against the two lines defined below the imports, a cap
+line and a baseline shared by all ten digits, rather than against the box. That
+is not tidiness: a digit is only ever seen beside another one, and a set drawn
+to look right individually does not line up. See `_CAP`.
+
 Drawing is stamping a filled disc along that path, which is what a marker pen
 does. It gives round terminals and round joins for free, it needs no polygon
 filling and no anti-aliasing, and it is correct at every size because nothing is
@@ -68,53 +73,110 @@ def _arc(cx: float, cy: float, rx: float, ry: float,
             for i in range(steps + 1)]
 
 
-#: The bowls most digits are built from. Kept as names so that 3, 6, 8 and 9
-#: agree with each other — a 6 whose bowl is a different size from an 8's reads
-#: as a different typeface on the same line.
-_BOWL_X = 0.30
-_TOP_Y = 0.26
-_BOTTOM_Y = 0.74
-_BOWL_Y = 0.26
+#: The two lines every character is drawn between, in unit-box y. A flat top
+#: starts at `_CAP` and a flat bottom ends at `_BASE`, without exception.
+#:
+#: This was the one thing the first cut of this module got wrong, and it is the
+#: kind of wrong that is invisible while a digit is drawn on its own and obvious
+#: the moment two of them are side by side. The digits were laid out one at a
+#: time, each to look right by itself, and ended up spanning anywhere from 0.82
+#: to 1.00 of the box with neither a shared top nor a shared bottom: on `08:30`
+#: the 8 and the 3 hung below the 0's feet and stood above its head, and on
+#: `12:45` the 4 and the 5 came up short at both ends. A clock is the one string
+#: on this panel that is always read as a *row*, so a digit that is 18% taller
+#: than its neighbour does not read as a taller digit — it reads as a broken
+#: screen. Every stroke below is now stated in terms of these two lines.
+_CAP = 0.08
+_BASE = 0.92
+
+#: Round forms overshoot both lines, and have to. A circle that stops exactly on
+#: the cap line reads *smaller* than a flat stroke that touches it, because the
+#: eye judges size from the run of ink near the line and a curve only grazes it.
+#: Every typeface does this; the size is the usual 1.5% of cap height, which on
+#: the 65 px hero clock is a single pixel — enough to cancel the illusion and far
+#: too little to look like the drift it replaces.
+_OVERSHOOT = 0.015
+_ROUND_TOP = _CAP - _OVERSHOOT           # 0.065
+_ROUND_BASE = _BASE + _OVERSHOOT         # 0.935
+
+#: The ink box, horizontally. Everything but `1` fills it, so that `2`'s foot and
+#: `4`'s crossbar stop where `0`'s bowl does rather than 0.06 further out.
+_LEFT = 0.20
+_RIGHT = 0.80
+_MID = 0.50
+
+#: Where the two bowls of a 3 and an 8 meet. Above centre on purpose: a digit
+#: with the larger bowl underneath stands, and one with it on top topples.
+_WAIST = 0.46
+
+#: The bowls, derived from the lines above rather than typed in, so that 3, 6, 8
+#: and 9 cannot drift apart again — a 6 whose bowl is a different size from an
+#: 8's reads as a different typeface on the same line.
+_BOWL_RX = 0.30
+_TOP_BOWL_RX = 0.26                                       # a touch narrower
+_TOP_BOWL_CY = (_ROUND_TOP + _WAIST) / 2                  # 0.2625
+_TOP_BOWL_RY = (_WAIST - _ROUND_TOP) / 2                  # 0.1975
+_BOTTOM_BOWL_CY = (_WAIST + _ROUND_BASE) / 2              # 0.6975
+_BOTTOM_BOWL_RY = (_ROUND_BASE - _WAIST) / 2              # 0.2375
+
+#: The single deep bowl of a 6 and a 9, hung off the line it sits on.
+_LOOP_RY = 0.24
+_LOOP_BOTTOM_CY = _ROUND_BASE - _LOOP_RY                  # 0.695
+_LOOP_TOP_CY = _ROUND_TOP + _LOOP_RY                      # 0.305
+
+#: The 5's bowl, and the angle its stem hands over to. The stem's foot is taken
+#: from the arc itself below rather than typed twice: they used to be two
+#: literals a tenth apart, which at this weight is a pen radius of daylight
+#: between the stem and the bowl on one digit in ten.
+_FIVE_CY = 0.6925
+_FIVE_RY = _ROUND_BASE - _FIVE_CY                         # 0.2425
+_FIVE_JOIN = -math.pi * 0.72
+_FIVE_BOWL = _arc(_MID, _FIVE_CY, _BOWL_RX, _FIVE_RY,
+                  _FIVE_JOIN, math.pi * 0.95, 26)
 
 _STROKES: dict[str, list[list[tuple[float, float]]]] = {
-    "0": [_arc(0.50, 0.50, _BOWL_X, 0.44, -math.pi / 2, math.pi * 1.5, 40)],
-    "1": [[(0.28, 0.22), (0.50, 0.08), (0.50, 0.92)]],
+    "0": [_arc(_MID, (_ROUND_TOP + _ROUND_BASE) / 2, _BOWL_RX,
+               (_ROUND_BASE - _ROUND_TOP) / 2, -math.pi / 2, math.pi * 1.5, 40)],
+    "1": [[(0.28, 0.24), (_MID, _CAP), (_MID, _BASE)]],
     "2": [
-        _arc(0.50, _TOP_Y, _BOWL_X, _BOWL_Y, math.pi, TAU + 0.35, 24)
-        + [(0.18, 0.90)],
-        [(0.18, 0.90), (0.84, 0.90)],
+        _arc(_MID, 0.325, _BOWL_RX, 0.26, math.pi, TAU + 0.35, 24)
+        + [(_LEFT, _BASE)],
+        [(_LEFT, _BASE), (_RIGHT, _BASE)],
     ],
     "3": [
-        _arc(0.50, _TOP_Y, _BOWL_X, _BOWL_Y, math.pi, TAU + math.pi / 3, 24),
-        _arc(0.50, _BOTTOM_Y, _BOWL_X, _BOWL_Y, -math.pi / 3, math.pi, 24),
+        _arc(_MID, _TOP_BOWL_CY, _TOP_BOWL_RX, _TOP_BOWL_RY,
+             math.pi, TAU + math.pi / 3, 24),
+        _arc(_MID, _BOTTOM_BOWL_CY, _BOWL_RX, _BOTTOM_BOWL_RY,
+             -math.pi / 3, math.pi, 24),
     ],
     "4": [
-        [(0.62, 0.08), (0.16, 0.66), (0.86, 0.66)],
-        [(0.62, 0.34), (0.62, 0.92)],
+        [(0.62, _CAP), (_LEFT, 0.66), (_RIGHT, 0.66)],
+        [(0.62, 0.34), (0.62, _BASE)],
     ],
-    "5": [
-        [(0.76, 0.10), (0.28, 0.10), (0.24, 0.44)],
-        _arc(0.50, 0.64, _BOWL_X, 0.28, -math.pi * 0.72, math.pi * 0.95, 26),
-    ],
+    "5": [[(0.78, _CAP), (0.26, _CAP), _FIVE_BOWL[0]], _FIVE_BOWL],
     "6": [
-        _arc(0.50, _BOTTOM_Y, _BOWL_X, _BOWL_Y, -math.pi, math.pi, 36),
-        [(0.20, 0.74), (0.24, 0.34)],
-        _arc(0.52, 0.30, 0.28, 0.22, math.pi, math.pi * 1.7, 14),
+        _arc(_MID, _LOOP_BOTTOM_CY, _BOWL_RX, _LOOP_RY, -math.pi, math.pi, 36),
+        [(_LEFT, _LOOP_BOTTOM_CY), (0.245, 0.32)],
+        _arc(0.52, 0.30, 0.28, 0.235, math.pi, math.pi * 1.7, 14),
     ],
-    "7": [[(0.18, 0.10), (0.82, 0.10), (0.40, 0.92)]],
+    "7": [[(_LEFT, _CAP), (_RIGHT, _CAP), (0.40, _BASE)]],
     "8": [
-        _arc(0.50, _TOP_Y, 0.26, 0.22, -math.pi / 2, math.pi * 1.5, 30),
-        _arc(0.50, _BOTTOM_Y, _BOWL_X, _BOWL_Y, -math.pi / 2, math.pi * 1.5, 34),
+        _arc(_MID, _TOP_BOWL_CY, _TOP_BOWL_RX, _TOP_BOWL_RY,
+             -math.pi / 2, math.pi * 1.5, 30),
+        _arc(_MID, _BOTTOM_BOWL_CY, _BOWL_RX, _BOTTOM_BOWL_RY,
+             -math.pi / 2, math.pi * 1.5, 34),
     ],
     "9": [
-        _arc(0.50, _TOP_Y, _BOWL_X, _BOWL_Y, -math.pi, math.pi, 36),
-        [(0.80, 0.26), (0.76, 0.66)],
-        _arc(0.48, 0.70, 0.28, 0.22, 0, math.pi * 0.7, 14),
+        _arc(_MID, _LOOP_TOP_CY, _BOWL_RX, _LOOP_RY, -math.pi, math.pi, 36),
+        [(_RIGHT, _LOOP_TOP_CY), (0.755, 0.68)],
+        _arc(0.48, 0.70, 0.28, 0.235, 0, math.pi * 0.7, 14),
     ],
-    "-": [[(0.20, 0.50), (0.80, 0.50)]],
+    #: On the centre line between cap and base, which is where a hyphen in a date
+    #: belongs — not on the box's centre, which the overshoot has moved off it.
+    "-": [[(_LEFT, (_CAP + _BASE) / 2), (_RIGHT, (_CAP + _BASE) / 2)]],
     "?": [
-        _arc(0.50, 0.30, 0.24, 0.20, math.pi, TAU + 0.6, 20) + [(0.50, 0.62)],
-        [(0.50, 0.84), (0.50, 0.86)],
+        _arc(_MID, 0.285, 0.24, 0.22, math.pi, TAU + 0.6, 20) + [(_MID, 0.62)],
+        [(_MID, 0.88), (_MID, _BASE)],
     ],
     " ": [],
     #: Two discs rather than a stroke — see `draw_char`.
