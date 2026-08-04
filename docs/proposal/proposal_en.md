@@ -1397,6 +1397,12 @@ This measurement is kept as `tools/check_a11y.mjs`, to be rerun when screens are
 
 What was already correct should be recorded too. The path by which a scanning device reaches the audio (SC 2.1.1, keyboard operation), the absence of unnamed controls (SC 4.1.2), no horizontal scrolling at 375 pixels (SC 1.4.10) and no obscured focus (SC 2.4.11) were all confirmed to hold. These four are listed not to claim credit for passing but because stating how far we looked is what separates "passed" from "not checked".
 
+The icons on screen are a matter for this section as well. Emoji were used at first and all of them were replaced with drawings of our own. Emoji are not drawn by us, so they look different on every device, and the same pill emoji reads as a different object on Android and on iOS. Their size and optical weight are not ours to set, and placed side by side they put a row of things drawn by different hands on one line.
+
+What was settled in replacing them was the filled silhouette, and the grounds for that choice are the argument of this section. A filled circle of radius 29 is 2,629 pixels, while an outlined triangle in the same place is 1,127. Only that difference in mass, more than twofold, survives across a room and remains for someone who cannot tell the colours apart. The thin-line icons now common are the opposite case, because a line is the first thing to go as things get smaller. The device screen already uses the same grammar, so an app that follows it puts box and app in one language.
+
+There are four rules for drawing. Coordinates are placed only on a 24 grid, `stroke` is not used, colour is `currentColor` alone, and holes are cut with `evenodd`. The second and third join up with other decisions in this app. In an app that changes text size across five steps, wobble in line weight is actually visible, and a colour baked into each drawing leaves the drawings in daylight when the palette goes dark.
+
 ---
 
 ### 3.8 Checking that it was understood
@@ -2779,12 +2785,16 @@ Eleventh, whether people keep using it was not measured. The formative evaluatio
 
 Twelfth, whether taking the photograph is possible was assumed and not measured. This app begins with one photograph, and we assumed that taking it is possible for anyone. It is the point Yonghan Lee, Senior Manager at the Korea Craft and Design Foundation, raised in §1.5: that blind people may be the largest group among those who cannot read, and that for them the act of photographing is itself a barrier. This app did not take blind users as its target, so it is out of scope rather than a failure. But unless the scope is written down, the "three layers overlaid" of §2.1 reads as though it required no sight. How far a screen reader and assisted capture can be joined to this is left to §5.10.
 
+Thirteenth, nothing was measured under the widened conditions. §1.13 sets out eleven conditions as the target of this app, and four of them rest on a shared mechanism alone: dyslexia, Alzheimer's disease and memory disorders, autism and intellectual disability, and misuse by children. We have never had a person with those conditions use this app, and the expert survey of §5.7 asked about the single condition taken as the design standard. A shared mechanism speaks to the possibility that the same screen works, not to its having worked. What makes this different in kind from the twelve items above is that it is not something we failed to measure but the scope we have newly claimed. The claim widened, so what has to be measured widened with it, and it has not been measured yet.
+
 ### 5.10 Future plans
 
 The plans were not drawn up among ourselves. Points from the last box of the survey went into the table, and one of them is a single line from Professor Sung-il Cho of Seoul National University.
 
 > "A plan is needed to reflect the fact that circumstances differ by country."
 > (Professor Sung-il Cho, Seoul National University)
+
+What stage 6 would measure belongs here as well. The direct approach is to compare medication-taking over four weeks with and without this app, and that requires a control group, a period and ethical review, so it is out of our reach. What we can do is give one task and measure whether it was carried through and how long it took: photograph one prescription and say what is to be taken today, at what time and how many, which is the same kind of measurement the studies cited in §1.10 used. What such a measurement measures is whether the screen arrived, not whether the person took the medicine, and that distinction is the same one set down at the head of §5.7.
 
 That one line separates stages 3 and 5 of the table below. Running the field evaluation of stage 3 in one country yields that country's answer only, and Figure 10 in §1.8 has already shown the same internationally standardised symbol going from 94% in one country to 8% in another. Table 6 in the same section likewise shows the highest pass rate belonging to a set made locally and tested on local people. So the evaluation is split by country, and building culturally adapted versions of the morphemes was set as stage 5. That the 39 respondents work in 22 countries is itself the first data for that plan.
 
@@ -2797,6 +2807,7 @@ That one line separates stages 3 and 5 of the table below. Running the field eva
 | 3 | Redesign morphemes confirmed as misread | The five in §5.3 need the concept itself reconsidered |
 | 4 | Fix the defects raised in §5.7 (partly complete) | The contraindication marking, `finish_course` and the checking step (§3.8) are built. The ceiling on elements per image will be set after the field evaluation |
 | 5 | Formalise morphemes generated at runtime | Expand the set on the basis of the gap log the app leaves |
+| 6 | Use testing under the widened conditions | Answers the four conditions in Table 7 of §1.13 and the thirteenth item of §5.9. The first question is whether the routine screen of §3.9 in fact works for users carrying a load on executive function |
 
 Stage 2 matters most. Every measurement in this work confirmed whether information reaches the screen, and whether it is read by a person can only be learned by asking people.
 
