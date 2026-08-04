@@ -60,8 +60,18 @@ export function HomeBar({ atHome, children }: {
       <div className="flex items-stretch gap-3 px-4 pt-2"
            style={{ paddingBottom: 'calc(0.625rem + env(safe-area-inset-bottom, 0px))' }}>
         {atHome ? (
-          // 자리를 비워 둔다. 낭독 버튼이 늘 같은 자리에 있어야 한다.
-          <span aria-hidden className="flex-1" />
+          /*
+            홈에서는 빈 자리를 두지 않는다.
+
+            전에는 여기에 `flex-1` 짜리 빈 칸을 세워 낭독 버튼을 오른쪽 절반에
+            묶어 두었다. 자리를 고정하려던 것인데, 실제로는 **줄의 절반이 아무것도
+            아닌 채로 남아** 있었고 그만큼 두꺼워 보였다.
+
+            대신 버튼을 눕혀 폭을 다 쓴다. 자리는 여전히 아래 줄이고 — 읽지 못하는
+            사람이 이 버튼을 찾는 방법이 '늘 거기 있다' 뿐이라 그건 못 건드린다 —
+            같은 줄 안에서 넓어지는 것뿐이다.
+          */
+          null
         ) : (
           <Link
             href="/home"

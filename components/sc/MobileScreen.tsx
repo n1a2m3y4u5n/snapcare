@@ -50,7 +50,7 @@ export function MobileScreen({
         */}
         <main className={`flex-1 flex flex-col ${bar ? 'pb-[7rem]' : ''} ${className}`}>{children}</main>
         {!bar && <ReadScreen variant={variant} />}
-        {bar && <HomeBar atHome={bar === 'home'}>{!ownRead && <ReadScreen variant="tab" />}</HomeBar>}
+        {bar && <HomeBar atHome={bar === 'home'}>{!ownRead && <ReadScreen variant="tab" wide={bar === 'home'} />}</HomeBar>}
         {bar && ownRead && <ReadScreen variant="none" />}
       </div>
     </div>

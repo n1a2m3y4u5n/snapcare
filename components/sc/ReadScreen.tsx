@@ -34,7 +34,21 @@ import { languageByCode } from '@/lib/i18n/languages';
  */
 export type ReadScreenVariant = 'float' | 'tab' | 'none';
 
-export function ReadScreen({ variant = 'float' }: { variant?: ReadScreenVariant } = {}) {
+export function ReadScreen({ variant = 'float', wide = false }: {
+  variant?: ReadScreenVariant;
+  /**
+   * 가로로 눕힌다. 홈에서만 켠다.
+   *
+   * 홈에는 짝이 되는 집 버튼이 없어서 아래 줄의 왼쪽 절반이 통째로 빈다. 세로로
+   * 쌓인 버튼 하나가 그 옆에 서 있으면 줄이 두꺼운 만큼 비어 보이고, 실제로
+   * 벤치에서 그렇게 읽혔다 — "하단 바가 필요없이 두꺼워 보인다".
+   *
+   * 눕히면 폭을 다 쓰고 높이가 준다. 버튼은 여전히 손가락보다 훨씬 크고, 자리는
+   * 그대로 아래 줄이다 — 읽지 못하는 사람이 이 버튼을 찾는 방법이 '늘 거기 있다'
+   * 뿐이라 그 규칙은 못 건드린다.
+   */
+  wide?: boolean;
+} = {}) {
   const [playing, setPlaying] = useState(false);
   const cancelled = useRef(false);
   const pathname = usePathname();
@@ -142,8 +156,9 @@ export function ReadScreen({ variant = 'float' }: { variant?: ReadScreenVariant 
           채움은 안 준다 — 파란 채움은 이 앱에서 "지금 눌러야 하는 것" 이고,
           듣기는 늘 있는 도구다.
         */
-        className="flex flex-1 flex-col items-center gap-1 rounded-2xl border-2 py-2
-                   active:scale-95 transition-transform"
+        className={`flex flex-1 items-center justify-center rounded-2xl border-2
+                    active:scale-95 transition-transform
+                    ${wide ? 'flex-row gap-2 py-3' : 'flex-col gap-1 py-2'}`}
         style={{
           color: playing ? 'var(--color-caution)' : 'var(--color-sc-muted)',
           borderColor: playing ? 'var(--color-caution)' : 'var(--color-sc-line)',
