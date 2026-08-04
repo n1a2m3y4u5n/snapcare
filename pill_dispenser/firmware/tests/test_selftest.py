@@ -88,6 +88,51 @@ def test_leaving_the_tray_count_at_the_default_is_a_warning_not_a_pass():
     assert _outcome(report, "how many hoppers") == PASS
 
 
+def _room(monkeypatch, *, touch_node, button_seen, pin_claimable=True):
+    """Run the release-path check with the room's two controls set by hand."""
+    monkeypatch.setattr(selftest.touch, "find_touch_device", lambda: touch_node)
+    monkeypatch.setattr(selftest, "_button_available", lambda: pin_claimable)
+    report = Report()
+    selftest.check_release_path(report, TrayServos(backend=MockBackend(),
+                                                   pins={1: 17}), button_seen)
+    return report
+
+
+def test_a_claimable_pin_is_not_a_button(monkeypatch):
+    # The one this was written for. On 2026-08-04 a machine with an unwired
+    # touch panel and no button fitted reported
+    #
+    #     [  ok  ] the room can release a dose — the button on the machine
+    #
+    # because the GPIO line could be claimed. An unfitted pin and an unpressed
+    # button read identically through an internal pull-up, so nothing short of
+    # a press is evidence, and a signed-off report saying otherwise is worse
+    # than no report: nobody in that room could have taken a dose.
+    report = _room(monkeypatch, touch_node=None, button_seen=None)
+    assert _outcome(report, "the room can release") == SKIP
+
+    # And it must not quietly claim the button in the list of ways in either.
+    asked = [r for r in report.results if "something can ask" in r.name][0]
+    assert "unknown" in asked.detail
+
+
+def test_a_press_nobody_saw_fails_the_room(monkeypatch):
+    report = _room(monkeypatch, touch_node=None, button_seen=False)
+    assert _outcome(report, "the room can release") == FAIL
+
+
+def test_a_press_that_arrived_is_a_control(monkeypatch):
+    report = _room(monkeypatch, touch_node=None, button_seen=True)
+    assert _outcome(report, "the room can release") == PASS
+
+
+def test_a_touch_panel_needs_no_press_to_count(monkeypatch):
+    # A device node is real evidence: the kernel bound a driver to a controller
+    # that answered. That is the one control this build ships with.
+    report = _room(monkeypatch, touch_node="/dev/input/event3", button_seen=None)
+    assert _outcome(report, "the room can release") == PASS
+
+
 def test_the_interactive_checks_are_skipped_rather_than_assumed(tmp_path):
     # Never silently passed. A check nobody performed has to read as skipped,
     # or the report says a colour was confirmed that nobody looked at.

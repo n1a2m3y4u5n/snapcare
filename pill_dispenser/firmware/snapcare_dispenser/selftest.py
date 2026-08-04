@@ -754,16 +754,32 @@ def check_buzzer(report: Report, indicator, interactive: bool) -> None:
                    f"check the piezo on GPIO {config.BUZZER_GPIO} and its 100 Ω resistor")
 
 
-def check_release_path(report: Report, servos: TrayServos) -> None:
+def check_release_path(report: Report, servos: TrayServos,
+                       button_seen: bool | None = None) -> None:
     """Can a tap actually reach this machine and open a tray?
 
     Nothing on this device opens a tray on the schedule's behalf — something has
     to ask — so the question a checklist could never ask, "is the one control
     that matters connected?", is worth asking here.
 
-    Both halves are machine-checkable and neither needs a person. A device that
-    cannot move a horn will fail every release; a device with no way to be asked
-    will never be asked.
+    A device that cannot move a horn will fail every release; a device with no
+    way to be asked will never be asked.
+
+    `button_seen` is what `check_button` observed a moment ago: True if a press
+    actually arrived, False if one was asked for and never came, None if nobody
+    was asked. It has to be passed in because **a claimable GPIO line is not a
+    button.** An unfitted pin and an unpressed button read exactly the same
+    through an internal pull-up, so no amount of probing distinguishes them and
+    the only evidence a button exists is somebody pressing it.
+
+    That distinction was not academic. On 2026-08-04 this check reported
+
+        [  ok  ] the room can release a dose — the button on the machine
+
+    on a machine whose touch panel was unwired *and* which has no button fitted
+    at all — measured three ways, and then by watching GPIO 24 stay high through
+    fifteen seconds of pressing. The pin was claimable, so the check called it a
+    control. A person alone with that box could not have taken a dose.
     """
     if not servos.backend.moves_hardware:
         report.add("a release can open a tray", FAIL,
@@ -781,8 +797,15 @@ def check_release_path(report: Report, servos: TrayServos) -> None:
     touch_node = touch.find_touch_device()
     if touch_node is not None:
         reachable.append("a tap on the screen")
-    if _button_available():
+    if button_seen:
         reachable.append("the button on the machine")
+    elif button_seen is None and _button_available():
+        # Nobody was asked to press, so the pin is all there is to go on. Listed
+        # rather than dropped, because a real button on a machine with no relay
+        # and no mDNS would otherwise turn this into a false alarm — but said as
+        # what it is, so it cannot be read as a control that was found.
+        reachable.append("the button on the machine (nobody pressed it, so "
+                         "whether one is fitted is unknown)")
     if shutil.which("avahi-daemon") or Path("/etc/avahi").exists():
         reachable.append(f"{config.MDNS_HOSTNAME}.local on the LAN")
     if config.CLOUD_RELAY_URL:
@@ -805,15 +828,24 @@ def check_release_path(report: Report, servos: TrayServos) -> None:
     # button fitted — which is the normal build — a dead touch panel means the
     # room has no control at all, and the screen goes on showing the dose it
     # cannot release.
-    if touch_node is None and not _button_available():
-        report.add("the room can release a dose", FAIL,
-                   "no touch panel and no button",
-                   "the screen is the control on this build: "
-                   "`sudo snapcare-dispenser --touch-setup`")
-    else:
+    if touch_node is not None:
+        report.add("the room can release a dose", PASS, "a tap on the screen")
+    elif button_seen:
         report.add("the room can release a dose", PASS,
-                   "a tap on the screen" if touch_node is not None
-                   else "the button on the machine")
+                   "the button on the machine, pressed during this run")
+    elif button_seen is False:
+        report.add("the room can release a dose", FAIL,
+                   "no touch panel, and the button was pressed and not seen",
+                   "the screen is the control on this build: "
+                   "`sudo snapcare-dispenser --touch-setup`. If the panel has no "
+                   f"touch layer, wire a switch from GPIO {config.BUTTON_GPIO} "
+                   "(pin 18) to ground (pin 20) instead")
+    else:
+        # Not a pass. Whether anyone in the room can take a dose is unknown, and
+        # on this build the likely answer is no.
+        report.add("the room can release a dose", SKIP,
+                   "no touch panel, and nobody was asked to press the button — "
+                   "run this interactively to find out")
 
 
 def check_trays(report: Report, servos: TrayServos, fitted: int | None,
@@ -887,8 +919,13 @@ def _button_available() -> bool:
         button.close()
 
 
-def check_button(report: Report, interactive: bool) -> None:
+def check_button(report: Report, interactive: bool) -> bool | None:
     """Does the take-dose button register exactly one press per press?
+
+    Returns True if a press actually arrived, False if one was asked for and
+    never came, and None if nobody was asked. `check_release_path` needs that
+    answer because it is the only evidence that a button is fitted at all: see
+    its docstring for why probing the pin cannot tell.
 
     Two failures hide behind each other here and they need different fixes. A
     button wired to the wrong pin, or not wired at all, registers nothing. A
@@ -908,11 +945,11 @@ def check_button(report: Report, interactive: bool) -> None:
                        "sudo apt install python3-lgpio, and check the button goes "
                        f"from GPIO {config.BUTTON_GPIO} (physical pin 18) to a "
                        "ground (pin 20) — two wires, no resistor")
-            return
+            return None
 
         if not interactive:
             report.add("the take-dose button registers a press", SKIP, "not asked")
-            return
+            return None
 
         print(f"\n        .. press the button once ({config.BUTTON_DEBOUNCE_US // 1000} ms "
               "debounce), then press Enter")
@@ -925,16 +962,21 @@ def check_button(report: Report, interactive: bool) -> None:
                        "the press was not seen at all",
                        f"check the wire from GPIO {config.BUTTON_GPIO} (pin 18) to "
                        "ground (pin 20). The pull-up is internal, so a button that "
-                       "reads nothing is an open circuit, not a missing resistor")
-        elif seen == 1:
+                       "reads nothing is an open circuit, not a missing resistor. "
+                       "This build may also simply have no button fitted, which is "
+                       "only a problem if the touch panel is dead as well")
+            return False
+        if seen == 1:
             report.add("the take-dose button registers a press", PASS,
                        f"{button.backend} backend, one press seen")
-        else:
-            report.add("the take-dose button registers a press", FAIL,
-                       f"one press registered {seen} times",
-                       "the debounce filter is not being applied — check which "
-                       "backend came up, and that the switch is not a rotary "
-                       "encoder or a momentary with a very light action")
+            return True
+        report.add("the take-dose button registers a press", FAIL,
+                   f"one press registered {seen} times",
+                   "the debounce filter is not being applied — check which "
+                   "backend came up, and that the switch is not a rotary "
+                   "encoder or a momentary with a very light action")
+        # A button that bounces is still a button, and the room can use it.
+        return True
     finally:
         button.close()
 
@@ -1014,8 +1056,8 @@ def run(interactive: bool = True, fitted: int | None = None,
         check_tray_count(report, servos, fitted)
         check_display(report, indicator, interactive)
         check_buzzer(report, indicator, interactive)
-        check_button(report, interactive)
-        check_release_path(report, servos)
+        button_seen = check_button(report, interactive)
+        check_release_path(report, servos, button_seen)
 
         if interactive and servos.backend.moves_hardware:
             print("\n  The next part OPENS TRAYS. Anything loaded will come out.")
