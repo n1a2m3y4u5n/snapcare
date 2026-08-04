@@ -9,6 +9,7 @@ import { DEFAULT_RELAY } from '@/lib/dispenser/relayUrl';
 import { requestPermission } from '@/lib/notifications';
 import { speak } from '@/lib/voice';
 import { useIsClient } from '@/lib/hooks';
+import { CameraIcon } from '@/components/icons';
 
 /**
  * 기기 화면의 QR 이 여는 자리. 여기 도착하면 짝은 이미 맺어지는 중이다.
@@ -82,7 +83,7 @@ export default function PairPage() {
             여기까지 왔는데 코드가 없거나 안 맞는다. 사람이 할 수 있는 일이 하나뿐이라
             그것만 말한다 — 다시 비추기. 원인을 설명해도 고칠 수 있는 것이 아니다.
           */}
-          <span aria-hidden className="text-6xl">📷</span>
+          <span aria-hidden className="leading-none" style={{ fontSize: 64 }}><CameraIcon /></span>
           <p className="text-lg font-bold" style={{ color: 'var(--color-sc-ink)' }}>
             That code did not work
           </p>
@@ -91,7 +92,7 @@ export default function PairPage() {
             className="mt-2 flex h-14 items-center gap-2 rounded-2xl px-6 font-bold text-white"
             style={{ background: 'var(--color-sc-primary)' }}
           >
-            <span aria-hidden className="text-xl leading-none">📷</span>
+            <span aria-hidden className="flex items-center text-xl leading-none"><CameraIcon /></span>
             Photograph the box
           </button>
         </>

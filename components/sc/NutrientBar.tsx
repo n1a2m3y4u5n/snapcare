@@ -5,19 +5,32 @@ import { Hear, Speakable } from './Say';
 import { barSentence, colorFor } from '@/lib/nutrition/barText';
 import { gaugeOf } from '@/lib/nutrition/gauge';
 import { Gauge } from './Gauge';
+import {
+  BowlIcon, ButterIcon, CandyIcon, FlameIcon, MuscleIcon, OilIcon, SaltIcon, WheatIcon,
+} from '@/components/icons';
 
 // 순수 로직은 lib 에 있다(노드 시험이 .tsx 를 못 읽는다). 부르는 쪽이 바뀌지 않게 다시 내보낸다.
 export { barSentence, colorFor };
 
-export const NUTRIENT_EMOJI: Record<NutrientKey, string> = {
-  energy: '🔥',
-  sugars: '🍬',
-  salt: '🧂',
-  saturatedFat: '🧈',
-  fat: '🫒',
-  protein: '💪',
-  fiber: '🌾',
-  carbohydrates: '🍚',
+/**
+ * 영양소마다 그림 하나.
+ *
+ * 🔥🍬🧂🧈🫒💪🌾🍚 였다. 이 여덟은 한 화면에 세로로 줄지어 서기 때문에 **서로 안
+ * 겹치는 것이 전부**인데, 이모지로는 그것을 우리가 정할 수 없다 — 어느 기기에서는
+ * 버터와 올리브유가 둘 다 노란 덩어리이고, 그 둘이 포화지방과 지방이다.
+ *
+ * 이름을 `NUTRIENT_EMOJI` 그대로 두지 않는다. 부르는 곳이 두 군데뿐이라 바꾸는
+ * 값이 싸고, 이름이 이모지라고 말하면 다음 사람이 이모지를 넣는다.
+ */
+export const NUTRIENT_ICON: Record<NutrientKey, (p: { size?: number | string }) => React.ReactNode> = {
+  energy: FlameIcon,
+  sugars: CandyIcon,
+  salt: SaltIcon,
+  saturatedFat: ButterIcon,
+  fat: OilIcon,
+  protein: MuscleIcon,
+  fiber: WheatIcon,
+  carbohydrates: BowlIcon,
 };
 
 
@@ -43,7 +56,10 @@ export function NutrientBar({ a }: { a: NutrientAssessment }) {
         첫 줄은 "🍬 Sugars", 둘째 줄은 "25.9 g · 5/10 · 🔊" 로 나뉜다. 다섯 다 남는다.
       */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="shrink-0 text-base">{NUTRIENT_EMOJI[a.key]}</span>
+        <span aria-hidden className="flex shrink-0 items-center justify-center text-base leading-none"
+              style={{ color }}>
+          {NUTRIENT_ICON[a.key]({})}
+        </span>
         <span className="min-w-[6rem] flex-1 text-xs font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
           {NUTRIENT_LABEL[a.key]}
         </span>

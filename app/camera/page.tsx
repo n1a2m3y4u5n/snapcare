@@ -8,6 +8,7 @@ import { getItem } from '@/lib/snapcare/catalog';
 import { ocrToScanItem } from '@/lib/snapcare/fromOcr';
 import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } from '@/lib/nutrition/labelOcr';
 import { recognizeText } from '@/lib/ocr';
+import { CameraIcon, FoodIcon, PillIcon, SheetIcon } from '@/components/icons';
 import { estimateOnDevice, warmUp } from '@/lib/nutrition/estimateOnDevice';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
 import { useQrWatch } from '@/lib/hardware/useQrWatch';
@@ -465,7 +466,11 @@ export default function CameraPage() {
         */}
         {!live && (
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 px-8 text-center">
-            <span className="text-5xl">📷</span>
+            {/*
+              카메라를 못 열었을 때의 자리 표시. 📷 였다 — 화면에서 가장 큰 그림이
+              기기마다 다른 그림이면, 이 앱이 무엇을 하는 앱인지가 폰마다 달라진다.
+            */}
+            <span aria-hidden className="leading-none" style={{ fontSize: 56 }}><CameraIcon /></span>
             <span className="text-xs opacity-70"
                   {...sayable('The camera is pointed here. Press the big round button below to take the photograph.')}>
               camera preview
@@ -549,7 +554,8 @@ export default function CameraPage() {
               <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
                 {SAMPLE_RX.map((s) => (
                   <button key={s.src} onClick={() => scanSample(s.src)} disabled={busy} className="shrink-0 rounded-2xl px-3 py-2 text-xs font-semibold disabled:opacity-40" style={{ background: 'rgba(255,255,255,0.12)' }}>
-                    📄 {s.label}
+                    <span aria-hidden className="mr-1 inline-flex align-[-2px] text-sm leading-none"><SheetIcon /></span>
+                    {s.label}
                   </button>
                 ))}
               </div>
@@ -573,7 +579,16 @@ export default function CameraPage() {
                   const it = getItem(id)!;
                   return (
                     <button key={id} onClick={() => scanDemo(id)} disabled={busy} className="flex items-center gap-2 rounded-2xl px-3 py-3 text-left disabled:opacity-40" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                      <span className="text-lg">{it.emoji}</span>
+                      {/*
+                        시연 항목의 그림. 카탈로그의 이모지를 그대로 쓰고 있었다.
+                        이 목록은 음식과 약이 섞여 있고, 사람이 고르는 기준이 그
+                        둘이라 종류만 말하면 된다.
+                      */}
+                      <span aria-hidden className="text-lg leading-none"
+                            style={{ color: 'rgba(255,255,255,0.75)' }}>
+                        {it.kind === 'medicine' || it.kind === 'prescription'
+                          ? <PillIcon /> : <FoodIcon />}
+                      </span>
                       <span className="text-xs font-semibold">{it.name}</span>
                     </button>
                   );

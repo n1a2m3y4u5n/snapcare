@@ -5,6 +5,7 @@ import { splitDslLines, dslKey, cachedPictogramPath, type PictogramManifest } fr
 import { dslSentence } from '@/lib/snapcare/dslSpeech';
 import { usePreferences } from '@/stores/preferences';
 import { Speakable } from './Say';
+import { SpeakerIcon, ZoomIcon } from '@/components/icons';
 
 /**
  * SIGIL 픽토그램 시퀀스.
@@ -144,7 +145,7 @@ function BiggerPictures() {
         color: big ? '#fff' : 'var(--color-sc-muted)',
       }}
     >
-      <span aria-hidden className="text-base leading-none">🔍</span>
+      <span aria-hidden className="flex items-center text-base leading-none"><ZoomIcon /></span>
       <span>{big ? 'BIG' : 'BIGGER'}</span>
     </button>
   );
@@ -196,7 +197,7 @@ function Tile({ src, line, big = false }: { src: string; line?: string; big?: bo
             className="pointer-events-none absolute bottom-1 right-1 flex h-7 w-7 items-center
                        justify-center rounded-full text-sm"
             style={{ background: 'var(--color-sc-line)' }}>
-        🔊
+        <SpeakerIcon />
       </span>
     </Speakable>
   );

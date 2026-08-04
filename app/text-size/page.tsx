@@ -7,6 +7,7 @@ import { usePreferences } from '@/stores/preferences';
 import { useSession } from '@/stores/session';
 import { ROOT_PX, TEXT_SIZES, applyTextSize, type TextSize } from '@/lib/a11y/textSize';
 import { speak } from '@/lib/voice';
+import { TapIcon } from '@/components/icons';
 
 /**
  * 앱을 처음 켰을 때 가장 먼저 나오는 화면 — 글자 크기 고르기.
@@ -75,7 +76,7 @@ export default function TextSizePage() {
         {/* 손가락을 함께 낸다. 이 문장을 못 읽는 사람에게 "누르라" 는 말은 그림이다. */}
         <p className="flex items-center justify-center gap-2 text-center text-sm font-semibold"
            style={{ color: 'var(--color-sc-muted)' }}>
-          <span aria-hidden className="text-xl leading-none">👆</span>
+          <span aria-hidden className="flex items-center text-xl leading-none"><TapIcon /></span>
           Tap the smallest line you can read
         </p>
 
@@ -146,7 +147,7 @@ export default function TextSizePage() {
                         className="sc-demo-hand pointer-events-none absolute right-4 top-1/2 -translate-y-1/2
                                    text-3xl leading-none"
                         style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.25))' }}>
-                    👆
+                    <TapIcon />
                   </span>
                 </>
               )}
