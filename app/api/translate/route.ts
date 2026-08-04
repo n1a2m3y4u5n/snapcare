@@ -35,7 +35,17 @@ const MAX_BATCH = 40;
 /** 한 문장의 길이 상한. 이보다 길면 화면 문구가 아니라 다른 것이 들어온 것이다. */
 const MAX_CHARS = 600;
 
-const MODEL = process.env.SNAPCARE_TRANSLATE_MODEL || 'claude-opus-5';
+/*
+  번역은 **빠른 쪽**을 쓴다.
+
+  Opus 로 재 보니 일곱 문장 묶음에 6.5~14초가 걸렸다. 그동안 사람은 아무 소리도 못
+  듣고 서 있고, 화면 하나를 읽는 데 그만큼을 기다리게 할 수는 없다. 옮기는 일 자체는
+  짧은 문장을 규칙대로 바꾸는 것이라 더 작은 모델로 충분하다 — 그리고 숫자가 어긋나면
+  아래에서 잡아낸다.
+
+  올릴 필요가 생기면 `SNAPCARE_TRANSLATE_MODEL` 로 바꾼다.
+*/
+const MODEL = process.env.SNAPCARE_TRANSLATE_MODEL || 'claude-sonnet-5';
 
 function systemFor(englishName: string, native: string): string {
   return `You translate short sentences for a medicine and food safety app.
@@ -44,10 +54,17 @@ The reader may not be able to read at all — the sentence will be spoken aloud 
 Translate into ${englishName} (${native}).
 
 Rules:
-- Keep every number, time, dose and unit EXACTLY as given. Do not convert units, do not
-  round, do not spell numbers out. "500mg" stays "500mg". "8:00 AM" stays "8:00 AM".
-- Keep product names, brand names and drug names in their original form. A person looks
-  for that name on the package; a translated name cannot be found.
+- Keep every number, time and dose EXACTLY as given. Do not convert, do not round, do not
+  spell numbers out. "500mg" stays "500mg". "8:00 AM" stays "8:00 AM".
+- Unit SYMBOLS attached to a number stay as written (mg, ml, g, kcal). Unit WORDS spelled
+  out in the sentence ("calories", "kilocalories", "grams", "percent") are ordinary words —
+  translate them. A spoken sentence that leaves them in English sounds like two languages
+  spliced together, and the listener stops trusting the half they did understand.
+- Never TRANSLATE a product, brand or drug name — the person has to find that name on the
+  package, and a translated name cannot be found. If the target language uses the Latin
+  alphabet, keep the name spelled exactly as given. If it does not (Korean, Bengali, Urdu),
+  transliterate the sound of the name into that script — a speech engine reading Latin
+  letters in those languages produces something nobody recognises.
 - Keep it short and plain. Use the simplest everyday words of the language. Prefer the
   imperative a nurse would use with an elderly patient.
 - Never add advice, warnings or explanations that are not in the source.

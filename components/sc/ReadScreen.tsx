@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { speak, stopSpeaking, setSayLang, setSpeechRate } from '@/lib/voice';
+import { prewarm } from '@/lib/i18n/live';
 import { usePreferences } from '@/stores/preferences';
 import { languageByCode } from '@/lib/i18n/languages';
 import { SpeakerIcon, StopIcon } from '@/components/icons';
@@ -62,6 +63,28 @@ export function ReadScreen({ variant = 'float', wide = false }: {
   // 말하는 언어도 같은 자리에서 밀어 넣는다.
   const sayLang = usePreferences((s) => s.sayLang);
   useEffect(() => { setSayLang(languageByCode(sayLang).tag); }, [sayLang]);
+
+  /*
+    이 화면의 말들을 **미리** 옮겨 둔다.
+
+    옮기는 데 7~10초가 든다. 사람이 듣기 단추를 누른 뒤에 시작하면 그동안 아무 소리도
+    안 나고, 이 앱에서 소리가 안 나는 것은 "안 눌렸다" 로 읽힌다. 화면이 뜨는 순간
+    조용히 시작해 두면 사람이 단추를 찾는 몇 초가 그 시간이 된다.
+
+    이 컴포넌트가 모든 화면에 있어서 여기 둔다 — 화면마다 부르게 하면 언젠가 한 곳이
+    빠지고, 하필 그 화면이 판정 화면일 수 있다.
+
+    한 박자 늦춘다: 화면이 그려지자마자 스무 개를 보내면 첫 그림이 그만큼 늦다.
+  */
+  useEffect(() => {
+    const at = setTimeout(() => {
+      const texts = [...document.querySelectorAll('[data-say]')]
+        .map((el) => el.getAttribute('data-say') ?? '')
+        .filter(Boolean);
+      prewarm(texts, sayLang);
+    }, 400);
+    return () => clearTimeout(at);
+  }, [sayLang, pathname]);
 
   /** 읽기를 멈추고 표시를 지운다. 상태 갱신은 재생 루프가 스스로 정리한다. */
   const stop = useCallback(() => {
