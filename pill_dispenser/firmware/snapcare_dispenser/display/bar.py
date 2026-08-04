@@ -138,14 +138,22 @@ MARK_CY = ICON_Y + glyphs.ROWS + ICON_GAP + MARK_R      # 25
 #: claimed to be — the three-metre element is the hero and always was.
 CLOCK_H = 20
 
-#: The date, left of the clock and smaller than it. Three fifths.
+#: The date, left of the clock and smaller than it. Seven tenths.
 #:
 #: Two numbers the same size beside each other are one number with a space in it,
 #: and `26-08-04 17:26` read that way is thirteen digits of nothing. Making one
 #: plainly smaller is what splits them into two facts, and it says which is which
 #: without a label: the minute is what you came to the machine for, the date is
 #: what you check once.
-DATE_H = 12
+#:
+#: Seven tenths rather than three fifths because 12 px was small enough that the
+#: date had to be hunted for, and a fact you have to hunt for on a panel is a
+#: fact that is not on the panel. This is the largest the band has room for: at
+#: 14 the pair wants 145 px of the 152 that six chips leave, and the seven px
+#: left over are the whole margin. The size ratio is doing less of the splitting
+#: now, which is why the ink weights matter — `TEXT` against `TEXT_DIM` carries
+#: what the sizes no longer do on their own.
+DATE_H = 14
 #: Between them. Wider than the space inside either so the pair does not fuse
 #: back into one string.
 DATE_GAP = 8
