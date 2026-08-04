@@ -1,6 +1,7 @@
 'use client';
 
 import { sayable } from './Say';
+import { MAX_BACK } from '@/lib/history/window';
 
 /**
  * 넉 주짜리 창을 앞뒤로 옮기는 줄.
@@ -19,18 +20,33 @@ import { sayable } from './Say';
  * 앞으로 가는 쪽은 **오늘에서 멈춘다.** 미래는 빈 격자라 보여줄 것이 없고, 눌러도
  * 아무 일이 없는 버튼은 고장으로 읽힌다. 그래서 못 누를 때는 흐려 둔다.
  */
-export function MonthNav({ back, onBack, label }: {
+export function MonthNav({ back, onBack, label, max = MAX_BACK }: {
   /** 몇 창 뒤로 와 있는가. 0 이면 오늘이 든 창. */
   back: number;
   onBack: (next: number) => void;
   /** 지금 보고 있는 구간, 사람이 읽을 말로. */
   label: string;
+  /**
+   * 얼마나 뒤까지 갈 수 있나.
+   *
+   * 앞으로 가는 쪽이 오늘에서 멈추는 것과 같은 이유로 뒤로 가는 쪽도 멈춘다 —
+   * 그 너머에는 보여줄 것이 **있을 수가 없다.** 기록은 90일에서 잘리므로
+   * (`retention.ts`), 그보다 뒤는 늘 빈 격자다.
+   *
+   * 이 상한이 없을 때 실제로 일어난 일: 빈 창에서 카드가 통째로 안 그려지면서
+   * **화살표까지 같이 사라졌다.** 돌아올 길이 화면에서 지워졌고, 사람은 뒤로 갈
+   * 수도 앞으로 올 수도 없었다. 벤치에서 그대로 나온 말 — "이전 달로 가는 화살표
+   * 누르면 오류 발생".
+   */
+  max?: number;
 }) {
+  const atEnd = back >= max;
   return (
     <div className="flex items-center gap-2">
       <button
-        onClick={() => onBack(back + 1)}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold"
+        onClick={() => onBack(Math.min(max, back + 1))}
+        disabled={atEnd}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold disabled:opacity-30"
         style={{ background: 'var(--color-sc-bg)', color: 'var(--color-sc-ink)' }}
         aria-label="Show the four weeks before this"
         {...sayable('Earlier')}

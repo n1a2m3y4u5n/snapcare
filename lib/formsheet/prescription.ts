@@ -183,38 +183,46 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
  * 자리는 더 먹는다.**
  *
  * 그리고 이 앱에는 이미 답이 있다. 화면의 모든 글에는 소리가 붙어 있고, 글을 못
- * 읽는 사람은 누르면 듣는다. 문장은 요일 셋과 정확한 시각과 정확한 날수를 다
- * 담으면서 그 통로를 그대로 탄다.
+ * 읽는 사람은 누르면 듣는다.
  *
- * 그래서 그림은 **약과 주의**를 지고, 문장은 **일정**을 진다. 겹치지 않는다.
+ * 문장의 모양
+ * -----------
+ * 형태는 `describe_pill_schedule.py` 에서 왔다. 옮기면서 셋을 고쳤다.
+ *
+ *  · **"everyday except" 가 있는 날을 세고 있었다.** 다섯 날이 표시되면 그 다섯을
+ *    "빼는 날" 로 적어서 뜻이 정확히 뒤집혔다. 빼는 날은 표시되지 **않은** 날이다.
+ *  · 이레가 다 표시되면 `len > 4` 에 먼저 걸려 "everyday except 이레 전부" 가 됐고,
+ *    `everyday` 가지는 닿을 수 없었다. 이레부터 갈라낸다.
+ *  · 마지막 문장이 `sentence` 가 아니라 `daysofweek` 에 붙고 있었고, f 접두어가
+ *    빠져 `{duration}` 이 글자 그대로 나갔다.
+ *
+ * 그리고 요일을 `MON` 이 아니라 `Monday` 로 적는다. 이 문장이 존재하는 이유가
+ * **소리로 듣는 것**인데, 음성 합성기는 `MON` 을 "먼" 이라고 읽는다. 눈으로만 볼
+ * 문장이면 약자가 짧아서 낫지만 이 문장은 그런 문장이 아니다.
  */
 export function scheduleSentence(rx: SheetPrescription): string {
   const slot = rx.schedule.schedule[0];
-  if (!slot) return '';
+  if (!slot || !rx.drug) return '';
 
-  const hour = Number(slot.times[0].slice(0, 2));
-  const clock = hour === 0 ? '12 at night'
-    : hour < 12 ? `${hour} in the morning`
-      : hour === 12 ? '12 midday'
-        : hour < 18 ? `${hour - 12} in the afternoon`
-          : `${hour - 12} in the evening`;
+  const raw = Number(slot.times[0].slice(0, 2));
+  const pm = raw >= 12;
+  const hour = raw === 0 ? 12 : raw > 12 ? raw - 12 : raw;
 
-  const days = Object.keys(DAY_WORD).filter((d, i) => slot.days & (1 << i));
-  const when = days.length === 7 ? 'every day'
-    : days.length === 0 ? ''
-      : `on ${listWords(days.map((d) => DAY_WORD[d]))}`;
+  const marked = Object.keys(DAY_WORD).filter((_, i) => slot.days & (1 << i));
+  const missing = Object.keys(DAY_WORD).filter((_, i) => !(slot.days & (1 << i)));
+  const when = marked.length === 7 ? 'everyday'
+    : marked.length <= 4 ? `on ${listWords(marked.map((d) => DAY_WORD[d]))}`
+      : `everyday except ${listWords(missing.map((d) => DAY_WORD[d]))}`;
 
-  const how = rx.count ? `Take ${rx.count}` : 'Take it';
-  const parts = [`${how}${when ? ` ${when}` : ''} at ${clock}.`];
-
-  // 며칠치인지. 끝이 없는 처방은 "언제까지" 가 없는 것이 정보다 — 그것을 안 말하면
-  // 사람은 남은 날을 세려고 종이를 다시 본다.
-  parts.push(slot.durationDays > 0
-    ? `There are ${slot.durationDays} days of it in the box.`
-    : 'This one keeps going — there is no end date.');
-
-  parts.push(`It comes out of tray ${slot.slot}.`);
-  return parts.join(' ');
+  const out = [
+    `${rx.drug.name} will drop from layer ${slot.slot}, `
+    + `${hour}:00 ${pm ? 'PM' : 'AM'} ${when}.`,
+  ];
+  if (rx.count) out.push(`Take ${rx.count} each time.`);
+  if (slot.durationDays > 0) {
+    out.push(`This schedule will be disabled after ${slot.durationDays} days.`);
+  }
+  return out.join(' ');
 }
 
 /** `A, B and C` — 마지막만 and 로. 목록을 소리로 들을 때 끝이 어디인지 알려 준다. */

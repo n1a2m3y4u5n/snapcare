@@ -12,7 +12,7 @@ import type { ScanRecord } from './types';
  * "이 음식을 먹으면 속이 안 좋다" 를 못 찾아낸다. 하루 누적 추적은 7일만 보므로
  * 영향이 없다.
  */
-const KEEP_DAYS = 90;
+export const KEEP_DAYS = 90;
 
 /**
  * 개수 상한. **90일보다 먼저 걸리면 안 된다.**

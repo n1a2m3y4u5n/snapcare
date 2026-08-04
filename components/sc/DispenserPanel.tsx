@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Speakable, sayable } from '@/components/sc/Say';
 import { formatClaim, isValidClaim } from '@/lib/dispenser/claim';
-import { forgetPaired, pairWith, type PairedDevice } from '@/lib/dispenser/paired';
+import { pairWith, type PairedDevice } from '@/lib/dispenser/paired';
 import { DEFAULT_RELAY, RELAY_MISSING } from '@/lib/dispenser/relayUrl';
 import { requestPermission } from '@/lib/notifications';
 import type { DeviceReport } from '@/lib/dispenser/types';
@@ -77,11 +77,6 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
     }
   }
 
-  async function unpair() {
-    await forgetPaired();
-    setNote(null);
-    onChanged();
-  }
 
   // ── 아직 짝이 없다 ────────────────────────────────────────────────────────
   if (!paired) {
@@ -272,15 +267,9 @@ export function DispenserPanel({ paired, report, stale, loading, error, onChange
         </p>
       )}
 
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
-          Paired {sinceWords(paired.pairedAt)}
-        </span>
-        <button onClick={unpair} className="text-xs font-semibold underline"
-                style={{ color: 'var(--color-sc-muted)' }}>
-          Forget this box
-        </button>
-      </div>
+      <p className="mt-3 text-[11px]" style={{ color: 'var(--color-sc-muted)' }}>
+        Paired {sinceWords(paired.pairedAt)}
+      </p>
 
       {/*
         "아직 소식을 기다린다" 는 말은 소식이 오면 사라져야 한다. 안 그러면 트레이

@@ -2,6 +2,25 @@
 
 import { DAY_PARTS, MAX_SEGMENTS, PART_WORD, type CalendarDay, type DayPart, daySentence, leadingBlanks } from '@/lib/history/calendar';
 import { sayable } from './Say';
+import { MiddayIcon, MoonIcon, SunriseIcon, SunsetIcon } from '@/components/icons';
+
+/**
+ * 때마다 그림 하나.
+ *
+ * 범례가 글자였다 — `MORNING` · `MIDDAY` · `EVENING`. 글을 못 읽으면 색이 무엇을
+ * 뜻하는지 알 방법이 없었고, 그러면 **색을 나눈 일 자체가 헛일**이 된다. 읽을 수
+ * 있는 사람에게만 읽히는 범례를 달아 놓고 색으로 때를 말했다고 한 셈이다.
+ *
+ * 셋을 가르는 것은 지평선에 대한 해의 자리와 화살표 방향이다. 뜨는 해와 지는 해는
+ * 자리가 같아서 화살표 없이는 안 갈린다.
+ */
+const PART_ICON: Record<DayPart, (p: { size?: number | string }) => React.ReactNode> = {
+  morning: SunriseIcon,
+  midday: MiddayIcon,
+  evening: SunsetIcon,
+  night: MoonIcon,
+  unknown: MiddayIcon,
+};
 
 /**
  * 때마다 한 색. 밝기 순으로 늘어놓은 한 갈래다 — 값은 `globals.css` 에 있고,
@@ -102,15 +121,25 @@ function Legend({ days }: { days: CalendarDay[] }) {
 
   return (
     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-      {present.map((part) => (
-        <span key={part} className="flex items-center gap-1 text-[10px] font-bold tracking-wide"
-              style={{ color: 'var(--color-sc-muted)' }}
-              {...sayable(`${PART_WORD[part]} doses are ${part === 'morning' ? 'the lightest' : part === 'night' ? 'the darkest' : 'in between'}.`)}>
-          <span aria-hidden className="h-2.5 w-2.5 rounded-[2px]"
-                style={{ background: PART_COLOR[part] }} />
-          {PART_WORD[part].toUpperCase()}
-        </span>
-      ))}
+      {present.map((part) => {
+        const Icon = PART_ICON[part];
+        return (
+          /*
+            글자를 지운 것이 아니라 **그림을 앞에 세웠다.** 읽을 수 있는 사람에게
+            낱말은 여전히 가장 빠른 길이고, 그림만 남기면 그 사람이 이번에는 그림을
+            배워야 한다. 둘을 나란히 두면 각자 아는 쪽으로 읽는다.
+          */
+          <span key={part} className="flex items-center gap-1 text-[10px] font-bold tracking-wide"
+                style={{ color: 'var(--color-sc-muted)' }}
+                {...sayable(`${PART_WORD[part]} doses are this colour.`)}>
+            <span aria-hidden className="flex items-center justify-center text-sm leading-none"
+                  style={{ color: PART_COLOR[part] }}>
+              <Icon />
+            </span>
+            {PART_WORD[part].toUpperCase()}
+          </span>
+        );
+      })}
       <span className="flex items-center gap-1 text-[10px] font-bold tracking-wide"
             style={{ color: 'var(--color-sc-muted)' }}
             {...sayable('A hollow block is a dose that was not taken.')}>

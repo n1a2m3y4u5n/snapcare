@@ -25,7 +25,8 @@ import { readHandwriting } from '@/lib/formsheet/readName';
 import { scaleTransform } from '@/lib/formsheet/field';
 import { PictogramStrip } from '@/components/sc/PictogramStrip';
 import { itemToDsl } from '@/lib/snapcare/sigil';
-import { PillIcon } from '@/components/icons';
+import { BoxIcon, PillIcon } from '@/components/icons';
+import { forgetPaired } from '@/lib/dispenser/paired';
 import { forPictograms, readPrescription, scheduleSentence, toScanItem, type SheetPrescription } from '@/lib/formsheet/prescription';
 import { DEFAULT_HOST, FITTED_TRAYS, MAX_TRAYS, planTrays, saveUrl, scheduleUrl, releaseUrl, weeklyFrom, looksLikeHost } from '@/lib/hardware/dispenser';
 import { speak } from '@/lib/voice';
@@ -182,6 +183,18 @@ export default function DevicePage() {
    * 끝났다는 것은 **사서함에 놓였다**는 뜻이지 상자가 받았다는 뜻이 아니다. 확인은
    * 다음 보고에 실려 오는 `status.payload` 이고, 위 상태판이 그것을 보여준다.
    */
+  /** 상자가 가진 일정을 이 폰의 것으로 갈아 끼운다. */
+  async function resync() {
+    await sendToBox();
+    box.refresh();
+  }
+
+  /** 짝을 놓는다. 기록은 그대로 — 기록은 이 폰의 것이지 상자의 것이 아니다. */
+  async function forget() {
+    await forgetPaired();
+    box.refresh();
+  }
+
   async function sendToBox() {
     if (!box.paired || sendSlots.length === 0) return;
     setSending('sending');
@@ -397,6 +410,67 @@ export default function DevicePage() {
             먼저 보이면 켜 놓고 아무 일도 안 일어나는 상태가 된다.
           */}
           {box.paired && <PushToggle deviceId={box.paired.deviceId} />}
+
+          {/*
+            상자와 짝지은 사람이 이 화면에서 실제로 할 수 있는 일은 둘뿐이다.
+
+            나머지는 전부 저절로 된다 — 알람을 만들면 일정이 사서함으로 가고
+            (`useAutoSend`), 복용은 보고에 실려 기록으로 들어온다(`useDoseLog`).
+            그래서 이 아래에 있던 것들은 "안 될 때의 다른 길" 이었고, 안 될 때가
+            아닌데 늘 펼쳐 두면 이 화면이 무엇을 하는 곳인지가 흐려진다.
+
+            둘 다 큰 버튼이다. 이 화면에 몇 번 오지 않는 사람이 찾아야 하는 것이고,
+            작은 밑줄 글씨로 두면 글을 못 읽는 사람에게는 없는 것과 같다.
+          */}
+          {box.paired && (
+            <div className="space-y-2">
+              <button
+                onClick={() => void resync()}
+                disabled={sending === 'sending'}
+                className="flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-4 shadow-sm
+                           active:scale-[0.99] transition-transform disabled:opacity-50"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl"
+                      style={{ background: 'var(--color-sc-bg)', color: 'var(--color-sc-primary)' }}>
+                  <BoxIcon />
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-base font-bold" style={{ color: 'var(--color-sc-ink)' }}>
+                    {sending === 'sending' ? 'Sending…' : 'Send everything again'}
+                  </span>
+                  <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                    Replaces what the box has with what this phone has
+                  </span>
+                </span>
+                <Hear text="Send everything again. This replaces the times in the box with the times on this phone. Use it if the box seems to have the wrong schedule." />
+              </button>
+
+              {/*
+                짝을 끊는 것은 되돌릴 수 있다(짝짓기 코드를 다시 읽으면 된다). 그래서
+                두 번 누르게 하지 않는다 — 지우는 것이 아니라 놓는 것이다.
+              */}
+              <button
+                onClick={() => void forget()}
+                className="flex w-full items-center gap-3 rounded-2xl px-4 py-4
+                           active:scale-[0.99] transition-transform"
+                style={{ background: 'var(--color-avoid-bg)' }}
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-white"
+                      style={{ background: 'var(--color-avoid)' }}>
+                  ✕
+                </span>
+                <span className="flex-1 text-left">
+                  <span className="block text-base font-bold" style={{ color: 'var(--color-avoid)' }}>
+                    Forget this box
+                  </span>
+                  <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                    Your history stays. Pair again any time with its code.
+                  </span>
+                </span>
+                <Hear text="Forget this box. This phone stops talking to it. Your history stays, and you can pair again any time with the code on the box." />
+              </button>
+            </div>
+          )}
           {/*
             기계를 직접 흔드는 자리가 여기 있었다 — 트레이를 열고 부저를 울리는
             버튼들. 시연에서만 보이게 막아 두었었는데, 이제 통째로 없앴다.

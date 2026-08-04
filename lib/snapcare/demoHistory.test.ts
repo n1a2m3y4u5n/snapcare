@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { demoHistory } from './demoHistory.ts';
+import { DEMO_DAYS, demoHistory } from './demoHistory.ts';
+import { MAX_BACK, WINDOW_DAYS } from '../history/window.ts';
 import { byDay } from '../history/byDay.ts';
 import { adherence, doseRows } from '../history/adherence.ts';
 import { KEEP_COUNT } from './retention.ts';
@@ -9,16 +10,21 @@ import { KEEP_COUNT } from './retention.ts';
 const TODAY = '2026-08-03';
 const ME = 'me';
 
-test('석 달이 실제로 채워진다', () => {
-  // 시연 자료가 오늘·어제 네 줄뿐이라 이 앱이 시간을 두고 하는 일이 화면에
-  // 아무것도 안 나왔다. 열나흘 추세는 막대 두 개, 주별 추세는 아예 안 떴다.
-  //
-  // 다섯 주였다가 석 달이 됐다. 화면이 넉 주짜리 달력을 갖게 되면서 그 길이로는
-  // 지난 달을 넘겨 볼 것이 없어졌다 — 한 번만 뒤로 가면 빈 격자가 나온다.
+test('달력의 세 창이 정확히 채워진다', () => {
+  /*
+    길이가 두 번 바뀌었다. 다섯 주였다가 — 넉 주짜리 달력이 생기면서 한 번만 뒤로
+    가면 빈 격자가 나왔다 — 90일이 됐고, 지금은 84일이다.
+
+    84 인 이유는 창에 딱 맞는 수여서다. 창이 28일이고 뒤로 갈 수 있는 끝이 2번
+    창이므로 세 창이 정확히 84일이다. 90 이면 마지막 창의 엿새가 자료 밖으로 나가서
+    반쯤 빈 달력이 되고, **반만 채워진 달력은 "이때 안 먹었다" 로 읽힌다.**
+  */
   const h = demoHistory(TODAY, ME);
   const days = byDay(h, TODAY, ME);
-  assert.equal(days.length, 90);
-  assert.ok(h.length > 250, `기록이 ${h.length} 개뿐이다`);
+  assert.equal(days.length, DEMO_DAYS);
+  assert.equal(DEMO_DAYS % WINDOW_DAYS, 0, '창에 딱 안 맞으면 반쯤 빈 달력이 생긴다');
+  assert.equal(DEMO_DAYS / WINDOW_DAYS, MAX_BACK + 1, '뒤로 갈 수 있는 끝과 자료의 끝이 같아야 한다');
+  assert.ok(h.length > 200, `기록이 ${h.length} 개뿐이다`);
 });
 
 test('보관 한도 안에 들어간다', () => {

@@ -102,13 +102,20 @@ function sweetsOn(back: number): (keyof typeof PRODUCTS)[] {
 }
 
 /**
- * 시연 계정의 지난 석 달. 오늘(back=0)까지 포함한다.
+ * 시연 계정의 지난 열두 주. 오늘(back=0)까지 포함한다.
  *
- * 다섯 주였다. 화면이 넉 주짜리 달력을 갖게 되면서 그 길이로는 **지난 달을 넘겨
- * 볼 것이 없어졌다** — 한 번만 뒤로 가면 빈 격자가 나온다. 보관 기간이 90일이니
- * 시연 자료도 거기까지 채운다.
+ * 길이가 두 번 바뀌었다. 다섯 주였다가 — 넉 주짜리 달력이 생기면서 한 번만 뒤로
+ * 가면 빈 격자가 나왔다 — 보관 한도인 90일까지 채웠고, 지금은 84일이다.
+ *
+ * 84 인 이유는 **달력의 창에 딱 맞는 수**여서다. 창이 28일이고 뒤로 갈 수 있는
+ * 끝이 2번 창이므로(`MonthNav.MAX_BACK`), 세 창이 정확히 84일이다. 90 이면 마지막
+ * 창의 엿새가 자료 밖으로 나가서 반쯤 빈 달력이 되고, 반만 채워진 달력은 "이때
+ * 안 먹었다" 로 읽힌다 — 시연에서 그 오해는 특히 비싸다.
  */
-export function demoHistory(today: string, memberId: string, days = 90): ScanRecord[] {
+/** 시연 자료의 길이. 달력 세 창에 정확히 맞는다. */
+export const DEMO_DAYS = 84;
+
+export function demoHistory(today: string, memberId: string, days = DEMO_DAYS): ScanRecord[] {
   const out: ScanRecord[] = [];
 
   for (let back = 0; back < days; back++) {

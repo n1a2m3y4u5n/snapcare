@@ -172,8 +172,21 @@ export default function HistoryPage() {
         */}
 
         {setNow.length > 0 && <RoutineCard list={setNow} next={nextDose} onOpen={openDose} />}
-        {week && week.rate !== null && <AdherenceCard span={week} month={month} each={perMedicine}
-                          back={back} onBack={setBack} />}
+        {/*
+          자료가 없어도 그린다.
+
+          예전에는 `week` 가 비면 이 카드를 통째로 안 그렸고, 그러면 **화살표까지
+          같이 사라졌다.** 넉 주를 뒤로 넘기다 빈 창에 닿는 순간 돌아올 길이 화면에서
+          지워진다 — 그 자리에서 사람이 할 수 있는 일이 앱을 다시 여는 것뿐이었다.
+
+          빈 창은 고장이 아니라 **평범한 상태**다. 그때 화면이 할 일은 사라지는 것이
+          아니라 비었다고 말하는 것이고, 나가는 길은 그대로 두는 것이다.
+        */}
+        {ready && member && (
+          <AdherenceCard span={week && week.rate !== null ? week : null}
+                         month={month} each={perMedicine}
+                         back={back} onBack={setBack} />
+        )}
 
         {/*
           날짜별 복용 목록이 여기 있었다. 걷어냈다.
@@ -282,13 +295,16 @@ function RoutineCard({ list, next, onOpen }: {
  * "주말마다 저녁을 거른다" 가 한 번의 우연과 구별되지 않는다.
  */
 function AdherenceCard({ span, month, each, back, onBack }: {
-  span: NonNullable<ReturnType<typeof adherence>>;
+  /** 이 창에 자료가 없으면 `null`. 카드는 그래도 그려진다 — 위 주석 참고. */
+  span: ReturnType<typeof adherence> | null;
   month: ReturnType<typeof calendar>;
   each: ReturnType<typeof byMedicine>;
   back: number;
   onBack: (next: number) => void;
 }) {
-  const say = adherenceSentence(span);
+  const say = span
+    ? adherenceSentence(span)
+    : 'Nothing was recorded in these four weeks.';
   return (
     <div className="mt-4 rounded-3xl bg-white px-5 py-4 shadow-sm">
       {/*
@@ -372,7 +388,7 @@ function AdherenceCard({ span, month, each, back, onBack }: {
         <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-ink)' }}>{say}</p>
       </div>
 
-      {span.worstTime && (
+      {span?.worstTime && (
         <p className="mt-1 text-xs" style={{ color: 'var(--color-sc-muted)' }}>
           Most often missed at {clockOf(span.worstTime)}.
         </p>

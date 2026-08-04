@@ -1,19 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { LanguagePicker } from '@/components/sc/LanguagePicker';
-import { useProfile } from '@/stores/profile';
 import { resetDemo } from '@/stores/scans';
 import { isDemo } from '@/lib/snapcare/demo';
 import { useIsClient } from '@/lib/hooks';
 import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
 import { TEXT_SIZES, TEXT_SIZE_LABEL, ROOT_PX } from '@/lib/a11y/textSize';
-import { sayable, ask, Speakable } from '@/components/sc/Say';
-import { useMyColor } from '@/lib/hooks';
+import { ask, Speakable, Hear } from '@/components/sc/Say';
 import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
-import { FaceIcon } from '@/components/icons';
 
 /**
  * 설정 — 판정에 실제로 영향을 주는 것만 둔다.
@@ -26,8 +22,6 @@ import { FaceIcon } from '@/components/icons';
  * 설정 안에 있으면 본래 역할 — 기준치를 정하는 입력 — 로 읽힌다.
  */
 export default function SettingsPage() {
-  const router = useRouter();
-  const profile = useProfile((s) => s.profile);
   /*
     `isDemo()` 는 주소와 브라우저 저장소를 읽으므로 서버에는 없다. 그리기 중에
     부르면 서버가 그린 화면과 어긋나서, 화면이 붙은 뒤에 판단한다.
@@ -35,7 +29,6 @@ export default function SettingsPage() {
   const ready = useIsClient();
   const demo = ready && isDemo();
   const [reset, setReset] = useState('');
-  const myColor = useMyColor(profile.color);
   const autoTts = usePreferences((s) => s.autoTts);
   const speechRate = usePreferences((s) => s.speechRate);
   const setSpeechRate = usePreferences((s) => s.setSpeechRate);
@@ -48,31 +41,17 @@ export default function SettingsPage() {
       <div className="px-5 pt-14">
         <h1 {...ask('Settings. Change who we check for, how the voice reads, and the pill device.')} className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}>Settings</h1>
 
-        {/* 판정 기준이 되는 사람 */}
-        <Speakable text={'Who we check for.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
-          <span className="flex-1">WHO WE CHECK FOR</span>
-        </Speakable>
-        <button
-          onClick={() => router.push('/profile')}
-          className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
-        >
-          <span
-            className="sc-avatar flex items-center justify-center rounded-full"
-            style={{ background: myColor }}
-          >
-            <FaceIcon face={profile.emoji} />
-          </span>
-          <span className="flex-1">
-            <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
-                  {...sayable('Me and my conditions. Age and allergies decide every verdict.')}>
-              Me &amp; my conditions
-            </span>
-            <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-              {profile.role}{profile.conditionIds.length > 0 ? ` · ${profile.conditionIds.length}` : ''}
-            </span>
-          </span>
-          <span className="sc-end" style={{ color: 'var(--color-sc-muted)' }}>›</span>
-        </button>
+        {/*
+          "누구 기준으로 보는가" 묶음이 여기 있었다 — 나와 내 조건, 그리고 이 폰을
+          쓰는 사람들. 둘 다 걷었다.
+
+          홈 오른쪽 위의 얼굴이 그 둘을 다 한다. 얼굴을 누르면 명단이 열리고, 자기
+          줄을 누르면 나이와 조건으로 간다. 그쪽이 더 나은 자리이기도 하다 — 사람을
+          바꾸는 것은 설정이 아니라 중간 동작이고, 무엇보다 **지금 누구 기준인지가
+          늘 보여야** 한다. 설정 안에 있으면 들어가 봐야만 알 수 있다.
+
+          `/profile` 과 `/people` 화면은 남아 있다. 지운 것은 길이지 기능이 아니다.
+        */}
 
         {/*
           "이 폰을 쓰는 사람들" 이 여기 있었다. 걷었다.
@@ -141,8 +120,10 @@ export default function SettingsPage() {
           aria-pressed={autoTts}
         >
           <span className="sc-icon">{autoTts ? '🔊' : '🔇'}</span>
-          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }} {...sayable('Read results aloud. This is on.')}>Read results aloud
+          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+            Read results aloud
           </span>
+          <Hear text={`Read results aloud. This is ${autoTts ? 'on' : 'off'}. Tap the row to change it.`} />
           <span
             className="flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors"
             style={{ background: autoTts ? 'var(--color-safe)' : 'var(--color-sc-line)' }}
@@ -232,9 +213,10 @@ export default function SettingsPage() {
               className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
             >
               <span className="sc-icon">↩️</span>
-              <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }} {...sayable('Put the demo data back to how it started.')}>Reset the demo data
+              <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+                Reset the demo data
               </span>
-              <span className="sc-end" style={{ color: 'var(--color-sc-muted)' }}>›</span>
+              <Hear text="Reset the demo data. This puts the demo data back to how it started." />
             </button>
             {reset && (
               <p className="mt-2 text-xs" style={{ color: 'var(--color-sc-muted)' }}>{reset}</p>

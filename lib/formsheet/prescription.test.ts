@@ -144,24 +144,57 @@ test('일정을 문장으로 말한다', () => {
   const say = scheduleSentence(readPrescription(
     { layer: '3', days: ['MON', 'TUE', 'WED'], duration: '30d', hour: '7' },
     'Amoxicillin', '2'));
-  assert.match(say, /Take 2/);
-  assert.match(say, /Monday, Tuesday and Wednesday/);
-  assert.match(say, /7 in the morning/);
-  assert.match(say, /30 days/);
-  assert.match(say, /tray 3/);
+  assert.match(say, /^Amoxicillin will drop from layer 3/);
+  assert.match(say, /7:00 AM/);
+  assert.match(say, /on Monday, Tuesday and Wednesday/);
+  assert.match(say, /Take 2 each time/);
+  assert.match(say, /disabled after 30 days/);
 });
 
-test('끝이 없는 처방은 없다고 말한다', () => {
-  // 안 말하면 사람은 남은 날을 세려고 종이를 다시 본다.
+test('이레가 다 표시되면 everyday 다', () => {
+  /*
+    옮겨 온 파이썬은 `len > 4` 에 먼저 걸려서 이레를 "everyday except 이레 전부" 로
+    적었고, `everyday` 가지는 닿을 수 없었다. 매일 먹는 약이 매일 빼는 약이 된다.
+  */
+  const say = scheduleSentence(readPrescription(SHEET, 'Metformin'));
+  assert.match(say, /everyday\./);
+  assert.doesNotMatch(say, /except/);
+});
+
+test('닷새면 빠진 이틀을 적는다 — 있는 날이 아니라', () => {
+  /*
+    옮겨 온 파이썬은 여기서 뜻이 정확히 뒤집혔다. 표시된 다섯 날을 "빼는 날" 로
+    적어서, 평일에 먹는 약이 평일에 빼는 약이 됐다.
+  */
+  const say = scheduleSentence(readPrescription(
+    { layer: '1', days: ['MON', 'TUE', 'WED', 'THU', 'FRI'], duration: '7d', hour: '12' },
+    'Metformin'));
+  assert.match(say, /everyday except Saturday and Sunday/);
+});
+
+test('끝이 없는 처방에는 끝나는 말을 안 붙인다', () => {
   const say = scheduleSentence(readPrescription({ ...SHEET, duration: 'ongoing' }, 'Metformin'));
-  assert.match(say, /no end date/);
+  assert.doesNotMatch(say, /disabled/);
 });
 
-test('오후 시각을 24시제로 읽지 않는다', () => {
-  // "19시" 는 소리로 들으면 세어야 하는 숫자다. 시계를 못 읽는 사람이 쓰는 앱이다.
-  const say = scheduleSentence(readPrescription({ ...SHEET, hour: '19' }, 'Metformin'));
-  assert.match(say, /7 in the evening/);
-  assert.doesNotMatch(say, /19/);
+test('자정과 정오를 0시·12시로 읽지 않는다', () => {
+  // 12시간제에서 0시는 12 AM 이고 12시는 12 PM 이다. 옮겨 온 파이썬이 그 둘을
+  // 따로 다룬 이유가 그것이고, 여기서도 따로 다룬다.
+  assert.match(scheduleSentence(readPrescription({ ...SHEET, hour: '0' }, 'Metformin')), /12:00 AM/);
+  assert.match(scheduleSentence(readPrescription({ ...SHEET, hour: '12' }, 'Metformin')), /12:00 PM/);
+  assert.match(scheduleSentence(readPrescription({ ...SHEET, hour: '19' }, 'Metformin')), /7:00 PM/);
+});
+
+test('요일을 약자로 읽지 않는다', () => {
+  /*
+    이 문장이 존재하는 이유가 **소리로 듣는 것**이다. 음성 합성기는 `MON` 을 "먼"
+    이라고 읽는다. 눈으로만 볼 문장이면 약자가 짧아서 낫지만 이 문장은 그런 문장이
+    아니다.
+  */
+  const say = scheduleSentence(readPrescription(
+    { layer: '1', days: ['MON'], duration: '7d', hour: '8' }, 'Metformin'));
+  assert.match(say, /Monday/);
+  assert.doesNotMatch(say, /\bMON\b/);
 });
 
 test('문장이 이미 말한 것을 그림이 다시 말하지 않는다', () => {
