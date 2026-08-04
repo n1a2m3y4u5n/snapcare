@@ -7,7 +7,6 @@ import { NutrientBar } from '@/components/sc/NutrientBar';
 import { useScans } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
 import { ConditionTracking } from './tracking';
-import { SuspectedTriggerCard } from '@/app/home/suspected';
 import { HowDidItSit, pendingFeedback } from '@/app/home/how-did-it-sit';
 import { PROFILE_ID } from '@/stores/profile';
 import { Reactions } from './reactions';
@@ -102,6 +101,24 @@ export default function NutritionPage() {
           {daily.state === 'ready' && <Hear text={spoken} />}
         </div>
 
+        {/*
+          **사람이 답해야 하는 것이 맨 위다.**
+
+          아래에 있었다. "이 화면의 맨 위는 오늘 얼마나 먹었나이고 그것은 지금 결정에
+          쓰인다, 묻는 것들은 오늘 안에만 답하면 된다" 는 이유였는데, 그 이유가 뒤집혔다 —
+          **오늘 안에 답하면 되는 것이야말로 눈에 안 띄면 오늘이 지나간다.** 숫자는
+          내일도 그 자리에 있고, 물음은 안 그렇다.
+
+          그리고 이 화면에서 사람이 **할 수 있는 일**이 이것 하나다. 나머지는 전부
+          읽는 것이다. 할 일이 있는 화면에서 할 일을 아래에 두면, 스크롤하지 않는
+          사람에게는 할 일이 없는 화면이 된다.
+
+          `daily.state` 밖에 둔다. 오늘 아무것도 안 찍었어도 어제 찍은 것에 대한 물음이
+          남아 있을 수 있고, 그때 화면이 "Nothing scanned today" 만 내놓으면 그 물음은
+          영영 안 보인다.
+        */}
+        {pending && <HowDidItSit key={pending.id} record={pending} />}
+
         {daily.state === 'loading' && (
           <div className="mt-5 flex flex-col gap-2">
             {[0, 1, 2].map((i) => <div key={i} className="h-12 animate-pulse rounded-2xl bg-white shadow-sm" />)}
@@ -155,19 +172,6 @@ export default function NutritionPage() {
             */}
             <Reactions scans={scans} />
 
-            {/*
-              묻는 것들. 홈에서 옮겨 왔다.
-
-              둘 다 **음식에 대한 물음**이고, 답을 적어 넣을 맥락이 이 화면에 있다 —
-              바로 위가 오늘 먹은 것과 몸의 반응이다. 홈에서 물으면 사람은 무엇에
-              대해 답하는지를 기억으로 채워야 했다.
-
-              위가 아니라 여기인 이유: 이 화면의 맨 위는 오늘 얼마나 먹었나이고,
-              그것은 **지금 결정**에 쓰인다(하나 더 먹어도 되나). 묻는 것들은 오늘
-              안에만 답하면 된다.
-            */}
-            <SuspectedTriggerCard />
-            {pending && <HowDidItSit key={pending.id} record={pending} />}
 
             {/*
               지난 넉 주. 위가 오늘이라면 이쪽은 "요즘" 이다.

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { ScanRecord, Symptom } from '@/lib/snapcare/types';
 import { useScans } from '@/stores/scans';
 import { sayable, Speakable } from '@/components/sc/Say';
+import { FaceFineIcon, FaceUnwellIcon } from '@/components/icons';
 
 /**
  * "그거 먹고 괜찮았나요?" — 식이 일지의 입력부.
@@ -79,7 +80,7 @@ export function HowDidItSit({ record }: { record: ScanRecord }) {
             className="flex flex-1 flex-col items-center gap-1 rounded-2xl py-3"
             style={{ background: 'var(--color-safe-bg)', color: 'var(--color-safe)' }}
           >
-            <span className="text-2xl" aria-hidden>🙂</span>
+            <span className="flex items-center text-2xl leading-none" aria-hidden><FaceFineIcon /></span>
             <span className="text-xs font-semibold" {...sayable('Fine.')}>Fine</span>
           </button>
           <button
@@ -87,7 +88,7 @@ export function HowDidItSit({ record }: { record: ScanRecord }) {
             className="flex flex-1 flex-col items-center gap-1 rounded-2xl py-3"
             style={{ background: 'var(--color-caution-bg)', color: 'var(--color-caution)' }}
           >
-            <span className="text-2xl" aria-hidden>😣</span>
+            <span className="flex items-center text-2xl leading-none" aria-hidden><FaceUnwellIcon /></span>
             <span className="text-xs font-semibold" {...sayable('Unwell.')}>Unwell</span>
           </button>
         </div>
