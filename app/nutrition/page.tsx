@@ -10,13 +10,11 @@ import { SuspectedTriggerCard } from '@/app/home/suspected';
 import { HowDidItSit, pendingFeedback } from '@/app/home/how-did-it-sit';
 import { PROFILE_ID } from '@/stores/profile';
 import { Reactions } from './reactions';
-import { DayCard } from '@/components/sc/DayCard';
 import { FoodCalendar } from '@/components/sc/FoodCalendar';
 import { foodCalendar } from '@/lib/history/foodCalendar';
-import { byDay } from '@/lib/history/byDay';
 import { todayKey } from '@/stores/scans';
 import { useIsClient } from '@/lib/hooks';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NUTRIENT_LABEL, type NutrientAssessment } from '@/lib/nutrition/types';
 import { ask, Hear, Speakable } from '@/components/sc/Say';
@@ -41,12 +39,6 @@ export default function NutritionPage() {
   */
   const month = useMemo(
     () => (ready && member ? foodCalendar(scans, today, member.id) : []),
-    [ready, scans, today, member],
-  );
-  /* 달력에서 고른 날. 기본은 오늘. 복약 화면과 같은 방식이다. */
-  const [pickedDay, setPickedDay] = useState('');
-  const days = useMemo(
-    () => (ready && member ? byDay(scans, today, member.id) : []),
     [ready, scans, today, member],
   );
   const daily = useDailyIntake(scans, member);
@@ -187,7 +179,7 @@ export default function NutritionPage() {
                   <span className="flex-1">FOOD · THE LAST FOUR WEEKS</span>
                 </Speakable>
                 <div className="mt-3 rounded-3xl bg-white px-5 py-4 shadow-sm">
-                  <FoodCalendar days={month} picked={pickedDay || today} onPick={setPickedDay} />
+                  <FoodCalendar days={month} />
                 </div>
               </>
             )}
@@ -223,33 +215,13 @@ export default function NutritionPage() {
             </div>
 
             {/*
-              날짜별. 위의 달력이 "어느 날" 을 답한다면 이 목록은 "그 날 무엇을" 을
-              답한다 — 달력의 조각 하나가 무엇이었는지는 그림으로는 알 수 없다.
+              날짜별 목록이 여기 있었다. 걷어냈다.
 
-              복약 화면에도 같은 목록이 같은 모양으로 있다. 다른 것은 어느 쪽 기록만
-              보느냐 하나다.
+              기록을 하나하나 되보여줄 이유가 없다. 이 앱은 그것을 **뒤에서 쌓고
+              분석하는** 데 쓴다 — 오늘 누적, 넉 주 달력, 의심되는 것, 몸의 반응이
+              전부 그 자료에서 나오고, 그것이 자료가 하는 일이다. 목록은 그 위에
+              스물여덟 줄을 더할 뿐이었고 몇 달을 쓰면 아무도 안 내리는 벽이 된다.
             */}
-            {days.length > 0 && (
-              <>
-                <Speakable text="Day by day."
-                           className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
-                           style={{ color: 'var(--color-sc-muted)' }}>
-                  <span className="flex-1">DAY BY DAY</span>
-                </Speakable>
-                <div className="mt-2">
-                  {(() => {
-                    const shown = days.find((d) => d.dayKey === (pickedDay || today));
-                    return shown
-                      ? <DayCard key={shown.dayKey} day={shown} today={today} only="food" />
-                      : (
-                        <p className="text-center text-sm" style={{ color: 'var(--color-sc-muted)' }}>
-                          Nothing on this day.
-                        </p>
-                      );
-                  })()}
-                </div>
-              </>
-            )}
 
             <p className="mt-4 mb-2 text-[10px] leading-snug" style={{ color: 'var(--color-sc-muted)' }}>
               {daily.reference?.basis} Product data from OpenFoodFacts, which is community-edited and may be

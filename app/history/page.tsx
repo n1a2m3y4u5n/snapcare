@@ -19,7 +19,7 @@ import { useRouter } from 'next/navigation';
 import { spokenName } from '@/lib/tts/speakable';
 import { DoseCalendar } from '@/components/sc/DoseCalendar';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
-import { DayCard } from '@/components/sc/DayCard';
+import { byMedicine, medicineSentence } from '@/lib/history/byMedicine';
 
 /**
  * 지난 날들.
@@ -77,6 +77,18 @@ export default function HistoryPage() {
   const setNow = useMemo(
     () => (ready ? routines(reminders, today) : []),
     [ready, reminders, today],
+  );
+  /*
+    복약률을 약마다 따로.
+
+    합친 수는 고칠 곳을 안 가리킨다. 열 번을 걸렀다는 것이 한 약에 몰린 것인지 두
+    약에 흩어진 것인지에 따라 할 일이 다르고, 진료실에서 오가는 물음도 약 단위다.
+    그리고 이 기계에는 이미 그 단위가 있다 — 트레이가 층으로 쌓여 있고 한 층이 한
+    약이라, 화면이 층별로 말하면 약통을 열어 그 층을 보면 되는 것이 된다.
+  */
+  const perMedicine = useMemo(
+    () => (ready && member ? byMedicine(doseRows(scans, member.id), today, 28) : []),
+    [ready, scans, today, member],
   );
   const month = useMemo(
     () => (ready && member ? calendar(doseRows(scans, member.id), today, 28) : []),
@@ -171,28 +183,20 @@ export default function HistoryPage() {
         */}
 
         {setNow.length > 0 && <RoutineCard list={setNow} next={nextDose} onOpen={openDose} />}
-        {week && week.rate !== null && <AdherenceCard span={week} month={month} picked={showDay} onPick={setPickedDay} />}
+        {week && week.rate !== null && <AdherenceCard span={week} month={month} each={perMedicine} />}
 
         {/*
-          날짜별 복용. 위의 달력이 "어느 날" 을 답한다면 이 목록은 "그 날 무엇을,
-          몇 시에" 를 답한다 — 달력의 조각 하나가 어느 약이었는지는 그림으로는
-          알 수 없다.
-        */}
-        <Speakable text="Day by day."
-                   className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
-                   style={{ color: 'var(--color-sc-muted)' }}>
-          <span className="flex-1">DAY BY DAY</span>
-        </Speakable>
+          날짜별 복용 목록이 여기 있었다. 걷어냈다.
 
-        <div className="mt-4">
-          {dayShown
-            ? <DayCard key={showDay} day={dayShown} today={today} only="dose" />
-            : (
-              <p className="text-center text-sm" style={{ color: 'var(--color-sc-muted)' }}>
-                Nothing on this day.
-              </p>
-            )}
-        </div>
+          기록을 하나하나 되보여줄 이유가 없다. 이 앱은 그것을 **뒤에서 쌓고
+          분석하는** 데 쓰지, 사람에게 다시 읽히려고 모으는 것이 아니다. 위의 달력이
+          이미 어느 날 무슨 일이 있었는지를 말하고, 목록은 그 위에 스물여덟 줄을
+          더할 뿐이었다 — 몇 달을 쓰면 아무도 안 내리는 벽이 된다.
+
+          벤치에서 그대로 나온 말: "이 데이터 하나하나를 유저한테 다시 보여줄 필요는
+          없을 것 같음."
+        */}
+
       </div>
     </MobileScreen>
   );
@@ -282,11 +286,10 @@ function RoutineCard({ list, next, onOpen }: {
  * 한 주가 아니라 넉 주인 이유는 요일이다. 한 주에서는 각 요일이 한 번씩만 나와서
  * "주말마다 저녁을 거른다" 가 한 번의 우연과 구별되지 않는다.
  */
-function AdherenceCard({ span, month, picked, onPick }: {
+function AdherenceCard({ span, month, each }: {
   span: NonNullable<ReturnType<typeof adherence>>;
   month: ReturnType<typeof calendar>;
-  picked: string;
-  onPick: (dayKey: string) => void;
+  each: ReturnType<typeof byMedicine>;
 }) {
   const say = adherenceSentence(span);
   return (
@@ -321,7 +324,7 @@ function AdherenceCard({ span, month, picked, onPick }: {
         있으니 "주말마다 저녁을 거른다" 같은 것이 보인다.
       */}
       <div className="mt-3">
-        <DoseCalendar days={month} picked={picked} onPick={onPick} />
+        <DoseCalendar days={month} />
       </div>
 
       {/*
@@ -334,16 +337,39 @@ function AdherenceCard({ span, month, picked, onPick }: {
         여기서도 백분율은 안 쓴다. 채워진 길이가 곧 답이고, 옆의 두 수는 그것을
         읽을 수 있는 사람을 위한 것이다.
       */}
-      <div className="mt-4">
-        <div className="h-4 w-full overflow-hidden rounded-full"
-             style={{ background: 'var(--color-sc-bg)' }}>
-          <div className="h-full rounded-full"
-               style={{
-                 width: `${span.offered ? Math.round((span.taken / span.offered) * 100) : 0}%`,
-                 background: 'var(--color-safe)',
-               }} />
-        </div>
-        <p className="mt-2 text-sm" style={{ color: 'var(--color-sc-ink)' }}>{say}</p>
+      {/*
+        게이지를 **약마다** 낸다. 하나로 합친 것이 여기 있었는데, 그 수는 고칠 곳을
+        가리키지 못했다 — 걸린 열 번이 한 약에 몰렸는지 흩어졌는지가 안 보인다.
+
+        층 번호를 앞에 둔다. 이 기계는 트레이가 층으로 쌓여 있어서, 화면이 층으로
+        말하면 약통을 열어 그 층을 보는 것으로 이어진다. 숫자와 손이 같은 것을
+        가리킨다.
+      */}
+      <div className="mt-4 flex flex-col gap-3">
+        {each.map((m) => (
+          <div key={m.tray} {...sayable(medicineSentence(m))}>
+            <div className="flex items-baseline gap-2">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-bold"
+                    style={{ background: 'var(--color-med-bg)', color: 'var(--color-sc-ink)' }}>
+                {m.tray}
+              </span>
+              <span className="flex-1 truncate text-sm font-semibold"
+                    style={{ color: 'var(--color-sc-ink)' }}>{m.name}</span>
+              <span className="text-xs tabular-nums" style={{ color: 'var(--color-sc-muted)' }}>
+                {m.taken}/{m.offered}
+              </span>
+            </div>
+            <div className="mt-1 h-3 w-full overflow-hidden rounded-full"
+                 style={{ background: 'var(--color-sc-bg)' }}>
+              <div className="h-full rounded-full"
+                   style={{
+                     width: `${Math.round((m.rate ?? 0) * 100)}%`,
+                     background: 'var(--color-safe)',
+                   }} />
+            </div>
+          </div>
+        ))}
+        <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-ink)' }}>{say}</p>
       </div>
 
       {span.worstTime && (
