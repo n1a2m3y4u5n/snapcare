@@ -1312,6 +1312,9 @@ Colour has three levels and is derived from the user's conditions. Where several
 | Not confident what it is | Vision model confidence below 0.4, or all nutrient values returned as zero | Fixed at caution |
 | A whole day's allowance at once | 100% or more of this person's daily limit | Caution |
 | Interaction with a medicine being taken | Conflict with an already registered medicine | Fixed at avoid |
+| A handwritten prescription | Recognition judges the sheet to be handwritten | Caution. Green never lights |
+
+The fifth row came out of a point raised in §5.7. Told that it would not work on a handwritten prescription, we put a real one in and found that it did not fail to work but worked wrongly, with green lit on top of it. What this row does is erase the confidence rather than what was read. The account is in §5.7.
 
 The third row is why this app's verdict differs from person to person. Because the daily limit is derived from the user's age band rather than taken from a table (§2.4), the same snack can come out as caution for a 65-year-old and safe for an adult.
 
