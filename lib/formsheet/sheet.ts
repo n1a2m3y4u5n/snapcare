@@ -254,6 +254,15 @@ export interface SheetValues {
 
 export interface SheetResult {
   foundPage: boolean;
+  /**
+   * 원본 → 1000×1000 정규 좌표 변환. 종이를 못 찾았으면 `null`.
+   *
+   * 손으로 쓴 칸을 읽으려면 이것이 필요하다. 칸은 정규 격자가 아니라 **원본
+   * 해상도에서** 잘라야 하고(`field.ts`), 그러려면 그때 쓴 변환이 있어야 한다.
+   * 부르는 쪽이 마커를 다시 찾게 하면 같은 일을 두 번 하는데, 그것이 이 화면에서
+   * 가장 비싼 일이다.
+   */
+  transform: Mat3 | null;
   values: SheetValues;
   problems: string[];
   baseline: number;
@@ -342,6 +351,9 @@ export function readFormSheet(
 
   return {
     foundPage: true,
+    // `readFormSheet` 는 이미 편 그림만 받으므로 변환을 모른다. `parseFormSheet` 이
+    // 자기가 쓴 것을 위에 덮어씌운다 — 아는 쪽이 채우는 것이 맞다.
+    transform: null,
     values: values as unknown as SheetValues,
     problems,
     baseline,
@@ -368,6 +380,7 @@ export function parseFormSheet(gray: Gray, cfg: SheetConfig = SHEET_CONFIG): She
   } catch (err) {
     return {
       foundPage: false,
+      transform: null,
       values: emptyValues(cfg),
       problems: [`could not locate the sheet: ${err instanceof Error ? err.message : String(err)}`],
       baseline: 0,
@@ -379,5 +392,5 @@ export function parseFormSheet(gray: Gray, cfg: SheetConfig = SHEET_CONFIG): She
 
   const warped = warpPerspective(gray, M, SIDE, SIDE, 'bilinear');
   const { quality, problems } = assessQuality(warped, info);
-  return readFormSheet(preprocess(warped), cfg, quality, problems);
+  return { ...readFormSheet(preprocess(warped), cfg, quality, problems), transform: M };
 }

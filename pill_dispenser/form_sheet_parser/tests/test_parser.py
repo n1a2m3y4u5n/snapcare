@@ -324,3 +324,48 @@ def test_a_mark_too_faint_to_separate_is_reported_not_guessed():
         assert not (result.ok and result.values != ANSWERS), "silently misread a faint sheet"
         flagged += not result.ok
     assert flagged >= 6, f"only {flagged}/8 faint sheets were flagged"
+
+
+def test_a_handwritten_box_is_cropped_from_the_photograph_not_the_grid():
+    """The name box is 28 canonical rows. Nothing reads handwriting out of 28 rows.
+
+    That is 4.7 mm on A5, and the warp is not what loses it — we picked a
+    1000x1000 canonical grid for the bubbles and then tried to read inside it.
+    `crop_field` maps the box back through the same homography and rectifies it
+    from the original, where a phone photograph gives about 25 px per mm.
+
+    Asserted the way it actually breaks: draw a stripe pattern that only exists
+    above the canonical grid's resolution and check it survives the crop.
+    """
+    import numpy as np
+
+    from form_sheet_parser import SIDE, crop_field, load_config
+
+    k = 8                                   # the photograph is 8x the canonical grid
+    img = np.full((SIDE * k, SIDE * k), 255, np.uint8)
+    x0, y0, x1, y1 = load_config()["fields"]["name"]
+    img[y0 * k:y1 * k, x0 * k:x1 * k] = np.where(
+        (np.arange(x0 * k, x1 * k) // 2) % 2 == 0, 0, 255)
+
+    M = np.float32([[1 / k, 0, 0], [0, 1 / k, 0], [0, 0, 1]])
+    out = crop_field(img, M, (x0, y0, x1, y1), scale=4)
+
+    assert out.shape == ((y1 - y0) * 4, (x1 - x0) * 4)
+    assert len(set(out[0].tolist())) > 1, "the stripes were flattened — not sampled from the original"
+
+
+def test_the_field_rectangles_do_not_overlap_and_stay_on_the_page():
+    """Overlapping boxes read each other's ink, and nothing on screen says so."""
+    from form_sheet_parser import load_config
+
+    rects = load_config()["fields"]
+    assert set(rects) >= {"name", "count", "notes"}
+    for name, (x0, y0, x1, y1) in rects.items():
+        assert x1 > x0 and y1 > y0, f"{name}: inside out"
+        assert 0 <= x0 and 0 <= y0 and x1 <= 1000 and y1 <= 1000, f"{name}: off the page"
+
+    boxes = list(rects.items())
+    for i, (an, a) in enumerate(boxes):
+        for bn, b in boxes[i + 1:]:
+            apart = a[3] <= b[1] or b[3] <= a[1] or a[2] <= b[0] or b[2] <= a[0]
+            assert apart, f"{an} overlaps {bn}"

@@ -40,8 +40,16 @@ const CONFUSABLE: Record<string, string> = {
   '0': 'o', '1': 'l', '2': 'z', '5': 's', '6': 'g', '8': 'b',
 };
 
-/** 함량과 제형 — 이름이 아닌 뒷부분. `shortName` 과 같은 판단이다. */
-const NOT_A_NAME = /\b\d+(\.\d+)?\s?(mg|mcg|ug|g|ml|l|iu|%)\b.*$|\b(tab|tabs|tablet|tablets|cap|caps|capsule|capsules|syrup|susp|suspension|drops?|cream|inj|injection|sachet|bp|usp|ip)\b/gi;
+/**
+ * 이름이 아닌 것들 — 함량, 제형, 그리고 **종이에 인쇄된 라벨**.
+ *
+ * 앞의 둘은 `shortName` 과 같은 판단이다. 세 번째가 이 파일에만 있는 것인데,
+ * 폼시트의 이름칸을 잘라낼 때 위에 인쇄된 "Medication name" 이 크롭에 걸릴 수
+ * 있기 때문이다. 자르는 자리를 라벨 아래로 잡아 두었지만(`config.ts` 의 `fields`)
+ * 종이가 조금 기울면 한 줄이 들어온다. 인쇄된 낱말은 **어떤 약의 이름도 아니므로**
+ * 지우는 쪽이 언제나 옳다.
+ */
+const NOT_A_NAME = /\b\d+(\.\d+)?\s?(mg|mcg|ug|g|ml|l|iu|%)\b.*$|\b(tab|tabs|tablet|tablets|cap|caps|capsule|capsules|syrup|susp|suspension|drops?|cream|inj|injection|sachet|bp|usp|ip|medication|name|pill|count|per|slot|notes)\b/gi;
 
 /** 이 아래로는 답하지 않는다. */
 export const MIN_SIMILARITY = 0.72;

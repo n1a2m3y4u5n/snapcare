@@ -14,6 +14,20 @@ export interface BubbleGroup {
   bubbles: Record<string, [number, number]>;
 }
 
+/**
+ * 손으로 쓰는 칸. `[x0, y0, x1, y1]` — 1000×1000 정규 좌표계.
+ *
+ * 버블은 채웠는지만 보면 되지만 이 칸들은 **읽어야** 하고, 그래서 정규 격자에서
+ * 자르면 안 된다. 이름칸은 정규 좌표로 28행뿐이라 그 안에서는 어떤 OCR 도 손글씨를
+ * 못 읽는다. 자르는 것은 **원본 사진**에서다(`cropField`) — 폰으로 A5 를 찍으면
+ * 1mm 가 25px 쯤이고, 그 4.7mm 띠는 120px 이 넘는다.
+ *
+ * 라벨을 뺀 자리다. 종이에 인쇄된 "Medication name" 이 위 10행에 있어서, 그것까지
+ * 끌고 오면 OCR 이 약 이름의 일부로 읽는다. 아래 경계는 밑줄을 조금 넘는데,
+ * 사람은 줄 **위에** 쓰지만 g·y 의 꼬리가 줄을 넘어가기 때문이다.
+ */
+export type FieldRect = [number, number, number, number];
+
 export interface SheetConfig {
   half_width: number;
   half_height: number;
@@ -21,6 +35,7 @@ export interface SheetConfig {
   abs_min: number;
   margin: number;
   groups: Record<string, BubbleGroup>;
+  fields: Record<string, FieldRect>;
 }
 
 export const SHEET_CONFIG: SheetConfig = {
@@ -62,5 +77,14 @@ export const SHEET_CONFIG: SheetConfig = {
         '20': [445, 789], '21': [497, 789], '22': [546, 789], '23': [595, 789],
       },
     },
+  },
+  /*
+    손으로 쓰는 세 칸. 아래 값들은 `form_sheet_config.json` 과 같아야 하고,
+    `config.test.ts` 가 매번 대조한다.
+  */
+  fields: {
+    name: [36, 130, 964, 158],
+    count: [36, 193, 964, 220],
+    notes: [36, 256, 964, 283],
   },
 };

@@ -281,6 +281,37 @@ def warp_form_sheet(img: np.ndarray, transform: np.ndarray) -> np.ndarray:
     return cv2.warpPerspective(img, M, (SIDE, SIDE))
 
 
+def crop_field(img: np.ndarray, transform: np.ndarray, rect, scale: int = 4) -> np.ndarray:
+    """One handwritten box, at the **photograph's own resolution**.
+
+    The bubbles are read on the 1000x1000 canonical grid, and for "is it filled"
+    that grid is generous. The name box is not: it is 28 canonical rows — 4.7 mm
+    on A5 — and nothing reads handwriting out of 28 rows. The warp is not losing
+    the ink; we picked 1000 and then tried to read inside it.
+
+    So this maps the box back through the same homography and rectifies it
+    straight from the original. A phone photograph of A5 is about 25 px per mm,
+    which makes that 4.7 mm band over 120 px tall.
+
+    `scale` is canonical units per output pixel, so the crop is the same size
+    whatever the photograph's resolution. That constancy is the point: OCR is
+    sensitive to glyph height, and handing it a different size per photograph gives
+    days it reads well and days it does not, with nothing to blame.
+
+    The browser has the same function (`lib/formsheet/field.ts`) and the same
+    rectangles (`fields` in the config both read).
+    """
+    x0, y0, x1, y1 = rect
+    w = max(1, int(round((x1 - x0) * scale)))
+    h = max(1, int(round((y1 - y0) * scale)))
+    T = np.float32([[scale, 0, -x0 * scale],
+                    [0, scale, -y0 * scale],
+                    [0, 0, 1]])
+    # One matrix rather than two warps: sampling through the canonical grid would
+    # bake in exactly the resolution this function exists to avoid.
+    return cv2.warpPerspective(img, T @ np.asarray(transform, dtype=np.float32), (w, h))
+
+
 # ── thresholding ────────────────────────────────────────────────────────────
 
 def preprocess_form_sheet(warped: np.ndarray) -> np.ndarray:

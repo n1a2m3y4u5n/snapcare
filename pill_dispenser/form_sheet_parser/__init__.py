@@ -14,6 +14,7 @@ from .form_sheet_parser import (  # noqa: F401
     SIDE,
     SheetResult,
     assess_quality,
+    crop_field,
     detect_aruco_corners,
     generate_aruco_corners,
     load_config,

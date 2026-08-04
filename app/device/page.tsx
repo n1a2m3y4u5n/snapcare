@@ -12,15 +12,21 @@ import { toCloudSlots } from '@/lib/dispenser/fromApp';
 import { useDoseLog } from '@/lib/dispenser/useDoseLog';
 import { useDoseAlert } from '@/lib/dispenser/useDoseAlert';
 import { Hint } from '@/components/sc/Hint';
-import { sayable, ask, Speakable } from '@/components/sc/Say';
+import { sayable, ask, Hear, Speakable } from '@/components/sc/Say';
 import { useReminders } from '@/stores/reminders';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
 import { encodeSchedule, encodeWeekly, decodeEvent, messageKind, type SlotSchedule, type WeeklySlot } from '@/lib/hardware/protocol';
-import { toSchedule, type FormSheetValues } from '@/lib/hardware/formSheet';
+import { type FormSheetValues } from '@/lib/hardware/formSheet';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
 import { decodeToGray, RETRY_WORK_DIM } from '@/lib/formsheet/decode';
 import { parseFormSheet } from '@/lib/formsheet/sheet';
+import { readHandwriting } from '@/lib/formsheet/readName';
+import { scaleTransform } from '@/lib/formsheet/field';
+import { PictogramStrip } from '@/components/sc/PictogramStrip';
+import { itemToDsl } from '@/lib/snapcare/sigil';
+import { PillIcon } from '@/components/icons';
+import { readPrescription, toScanItem, type SheetPrescription } from '@/lib/formsheet/prescription';
 import { DEFAULT_HOST, FITTED_TRAYS, MAX_TRAYS, planTrays, saveUrl, scheduleUrl, releaseUrl, weeklyFrom, looksLikeHost } from '@/lib/hardware/dispenser';
 import { speak } from '@/lib/voice';
 import { PushToggle } from './push-toggle';
@@ -68,11 +74,15 @@ export default function DevicePage() {
 
   const [host, setHost] = useState(DEFAULT_HOST);
   const [reading, setReading] = useState(false);
+  /** 읽는 동안 어느 단계인지. 이름 OCR 은 몇 초가 걸려서 말이 없으면 멈춘 것으로 보인다. */
+  const [stage, setStage] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [sending, setSending] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
   // 폼시트에서 읽어낸 일정 — 있으면 알람 대신 이것을 기기로 내보낸다.
   // 시트에서 온 일정은 요일·기간을 갖는다 (WeeklySlot). 앱 안에서 만든 알람은 안 갖는다.
   const [sheet, setSheet] = useState<{ schedule: WeeklySlot[]; summary: string } | null>(null);
+  /** 종이에서 읽은 처방 — 이름과 그림까지. 버블만 읽힌 경우에도 값이 있다. */
+  const [rx, setRx] = useState<SheetPrescription | null>(null);
 
   // 알람을 기기 칸으로 묶는다 — 약 하나가 칸 하나다.
   const slots: SlotSchedule[] = useMemo(() => {
@@ -217,11 +227,43 @@ export default function DevicePage() {
     try {
       let values: FormSheetValues;
       let problems: string[];
+      /*
+        손으로 쓴 칸은 **버블을 다 읽은 뒤에** 읽는다.
+
+        순서가 뜻을 가진다. 버블은 확실하고 이름은 아니라서, 이름을 못 읽어도
+        층·요일·기간·시각은 그대로 상자로 갈 수 있다. 먼저 읽으면 실패가 앞을
+        막고, 그러면 확실한 넷까지 같이 잃는다.
+      */
+      let hand = { name: '', count: '' };
       try {
-        let sheetRead = parseFormSheet(await decodeToGray(file));
-        if (!sheetRead.foundPage) sheetRead = parseFormSheet(await decodeToGray(file, RETRY_WORK_DIM));
+        let work = await decodeToGray(file);
+        let sheetRead = parseFormSheet(work);
+        if (!sheetRead.foundPage) {
+          work = await decodeToGray(file, RETRY_WORK_DIM);
+          sheetRead = parseFormSheet(work);
+        }
         values = sheetRead.values;
         problems = sheetRead.problems;
+
+        if (sheetRead.transform) {
+          /*
+            이름칸은 **더 큰 그림에서** 읽는다.
+
+            버블은 2000px 로 줄인 그림에서 읽는다 — 마커 무늬가 60px 로 잡히고
+            그것으로 충분하며, 윤곽선 추적이 화소 수에 비례한다. 그런데 이름칸은
+            종이의 4.7mm 라 그 배율에서는 글자가 남지 않는다.
+
+            마커를 다시 찾지는 않는다. 같은 사진, 같은 종이라 변환은 배율만 다르고,
+            그 배율은 두 그림의 폭 비율이다.
+          */
+          setStage('Reading the name…');
+          const full = work.w >= RETRY_WORK_DIM ? work : await decodeToGray(file, RETRY_WORK_DIM);
+          const M = full === work
+            ? sheetRead.transform
+            : scaleTransform(sheetRead.transform, full.w / work.w);
+          hand = await readHandwriting(full, M,
+            (p) => setStage(`Reading the name… ${Math.round(p * 100)}%`));
+        }
       } catch (err) {
         // 캔버스나 createImageBitmap 이 없는 아주 오래된 브라우저 — 서버가 대신 읽는다.
         //
@@ -245,7 +287,10 @@ export default function DevicePage() {
         }
       }
 
-      const reading = toSchedule(values);
+      setStage(null);
+      const parsed = readPrescription(values, hand.name, hand.count);
+      setRx(parsed);
+      const reading = parsed.schedule;
       if (reading.schedule.length === 0) {
         // 종이를 아예 못 찾은 것과 칸을 안 채운 것은 사용자가 할 일이 다르다.
         const lost = problems.some((p) => p.startsWith('could not locate'));
@@ -255,10 +300,12 @@ export default function DevicePage() {
         return;
       }
       setSheet({ schedule: reading.schedule, summary: reading.summary });
-      setResult(`Read from the sheet — ${reading.summary}`);
-      speak(`Schedule read. ${reading.summary}`, 'en-US');
+      const named = parsed.drug ? `${parsed.drug.name} — ` : '';
+      setResult(`Read from the sheet — ${named}${reading.summary}`);
+      speak(`Schedule read. ${named}${reading.summary}`, 'en-US');
     } finally {
       setReading(false);
+      setStage(null);
     }
   }
 
@@ -622,7 +669,7 @@ export default function DevicePage() {
               Photograph the paper form sheet
             </span>
             <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
-              {sheet ? sheet.summary : 'The clinic fills it in — you only take the photo'}
+              {stage ?? (sheet ? sheet.summary : 'The clinic fills it in — you only take the photo')}
             </span>
           </span>
           <input
@@ -637,6 +684,8 @@ export default function DevicePage() {
             }}
           />
         </label>
+
+        {rx && <SheetCard rx={rx} />}
 
         {/*
           기기 → 폰. **시연에서만 낸다.**
@@ -722,4 +771,92 @@ function LanPath({ folded, children }: { folded: boolean; children: React.ReactN
       {children}
     </details>
   );
+}
+
+/**
+ * 종이에서 읽은 처방, 한 장으로.
+ *
+ * 여섯 가지를 다 낸다 — 이름, 그림, 몇 번째 층, 무슨 요일, 며칠치, 몇 시. 그 여섯이
+ * 이 기능이 존재하는 이유이고, 하나라도 빠지면 사람이 종이를 다시 봐야 한다.
+ *
+ * 못 읽은 것을 못 읽었다고 말한다
+ * -------------------------------
+ * 이름이 안 잡히는 경우가 둘이고, 사람이 할 일이 다르다. 글자가 아예 안 나왔으면
+ * 다시 찍는 것이고, 글자는 나왔는데 목록에 없으면 다시 찍어 봐야 소용이 없다.
+ * 한 가지 말로 뭉치면 반은 헛걸음을 한다.
+ *
+ * 어느 쪽이든 **버블에서 읽은 넷은 그대로 보인다.** 이름을 못 읽은 것이 일정을 못
+ * 읽은 것은 아니고, 이름 없는 일정도 상자로 보낼 수 있다.
+ */
+function SheetCard({ rx }: { rx: SheetPrescription }) {
+  const item = toScanItem(rx);
+  const slot = rx.schedule.schedule[0];
+
+  return (
+    <div className="mt-3 rounded-3xl bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl"
+              style={{ background: 'var(--color-med-bg)', color: 'var(--color-sc-primary)' }}>
+          <PillIcon />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-base font-bold" style={{ color: 'var(--color-sc-ink)' }}>
+            {rx.drug ? rx.drug.name : 'Name not read'}
+          </span>
+          <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+            {rx.drug
+              ? `${rx.drug.form} · from the WHO essential medicines list`
+              : rx.unread
+                ? 'Photograph the sheet again, flat and in good light'
+                : `Read as “${rx.read}” — not in the list this app carries`}
+          </span>
+        </span>
+        <Hear text={rx.drug
+          ? `${rx.drug.name}. ${rx.schedule.summary}.`
+          : rx.unread
+            ? 'The medicine name could not be read. Photograph the sheet again.'
+            : `The name was read as ${rx.read}, which is not in the list this app carries.`} />
+      </div>
+
+      {/* 버블에서 읽은 넷. 이름과 무관하게 늘 확실하다. */}
+      {slot && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {[
+            `Tray ${slot.slot}`,
+            `${slot.times[0].slice(0, 2)}:00`,
+            slot.days === 127 ? 'Every day' : dayWords(slot.days),
+            slot.durationDays > 0 ? `${slot.durationDays} days` : 'Ongoing',
+            ...(rx.count ? [`${rx.count} per dose`] : []),
+          ].map((chip) => (
+            <span key={chip} className="rounded-full px-2.5 py-1 text-xs font-semibold"
+                  style={{ background: 'var(--color-sc-bg)', color: 'var(--color-sc-ink)' }}>
+              {chip}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/*
+        그림. 이름을 맞혔을 때만 나온다 — 그림은 제형과 경고에서 나오고, 그 둘은
+        표에서 오기 때문이다. 이름 없이 그린 그림은 아무 약의 그림이다.
+      */}
+      {item && (
+        <div className="mt-3">
+          {/*
+            `avoid` 는 거짓이다. 이 화면은 종이를 읽은 결과이지 **판정이 아니다** —
+            누가 먹을 것인지가 아직 안 정해져서 임신 금기가 걸리는지 알 수 없다.
+            판정은 이 처방이 사람에게 붙은 뒤에 나오고, 그때 사선이 그어진다.
+            여기서 미리 그으면 아무에게도 걸리지 않은 경고를 모두에게 보이게 된다.
+          */}
+          <PictogramStrip source={itemToDsl(item, false)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 요일 비트마스크를 사람이 읽는 말로. */
+function dayWords(mask: number): string {
+  const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  return names.filter((_, i) => mask & (1 << i)).join(' ');
 }
