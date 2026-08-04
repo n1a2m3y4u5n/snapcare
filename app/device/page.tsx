@@ -190,10 +190,19 @@ export default function DevicePage() {
           */}
           {box.paired && (
             <div className="space-y-2">
+              {/*
+                듣기 단추를 줄 단추 **밖으로** 뺀다.
+
+                `<button>` 안의 `<button>` 은 HTML 이 금지하고 하이드레이션 오류가
+                난다. 더 실질적인 문제는 안쪽을 누르면 바깥도 같이 눌린다는 것이다 —
+                읽어 달라고 눌렀는데 일정이 다시 전송되거나 짝이 끊긴다. 설정 화면에서
+                같은 결함을 고쳤고, 여기 둘이 남아 있었다.
+              */}
+              <div className="flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-4 shadow-sm">
               <button
                 onClick={() => void resync()}
                 disabled={sending === 'sending'}
-                className="flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-4 shadow-sm
+                className="flex min-w-0 flex-1 items-center gap-3 text-left
                            active:scale-[0.99] transition-transform disabled:opacity-50"
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl"
@@ -208,18 +217,20 @@ export default function DevicePage() {
                     Replaces what the dispenser has with what this phone has
                   </span>
                 </span>
-                <Hear text="Send everything again. This replaces the times in the dispenser with the times on this phone. Use it if the dispenser seems to have the wrong schedule." />
               </button>
+                <Hear text="Send everything again. This replaces the times in the dispenser with the times on this phone. Use it if the dispenser seems to have the wrong schedule." />
+              </div>
 
               {/*
                 짝을 끊는 것은 되돌릴 수 있다(짝짓기 코드를 다시 읽으면 된다). 그래서
                 두 번 누르게 하지 않는다 — 지우는 것이 아니라 놓는 것이다.
               */}
+              <div className="flex w-full items-center gap-3 rounded-2xl px-4 py-4"
+                   style={{ background: 'var(--color-avoid-bg)' }}>
               <button
                 onClick={() => void forget()}
-                className="flex w-full items-center gap-3 rounded-2xl px-4 py-4
+                className="flex min-w-0 flex-1 items-center gap-3 text-left
                            active:scale-[0.99] transition-transform"
-                style={{ background: 'var(--color-avoid-bg)' }}
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-white"
                       style={{ background: 'var(--color-avoid)' }}>
@@ -233,8 +244,9 @@ export default function DevicePage() {
                     Your history stays. Pair again any time with its code.
                   </span>
                 </span>
-                <Hear text="Forget this dispenser. This phone stops talking to it. Your history stays, and you can pair again any time with the code on the dispenser." />
               </button>
+                <Hear text="Forget this dispenser. This phone stops talking to it. Your history stays, and you can pair again any time with the code on the dispenser." />
+              </div>
             </div>
           )}
           {/*

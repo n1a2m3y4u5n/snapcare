@@ -412,3 +412,50 @@ html[data-hearing] {
   손가락이든 마우스든 창이 좁은 것이고, 좁은 창에서 가운데 기둥만 쓰는 것은 어느
   쪽에도 이득이 없다.
 */
+
+/*
+ * 말하기 속도 게이지.
+ *
+ * 브라우저 기본 슬라이더는 손잡이가 12px 안팎이다. 이 앱의 사용자는 손이 떨리고,
+ * WCAG 2.5.8 이 요구하는 것도 24 이상이다. 28px 로 키우고 홈에서 쓰는 파랑을 준다.
+ *
+ * px 로 못박는 이유는 이 앱의 다른 조작들과 같다 — 틀은 px, 내용은 rem. 글자를
+ * 키운다고 손잡이가 커질 이유가 없고, 커지면 게이지 길이만 잡아먹는다.
+ *
+ * `appearance: none` 을 안 주면 위 규칙이 통째로 무시된다(사파리·크롬 둘 다).
+ */
+.sc-speed {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 28px;
+  background: transparent;
+  cursor: pointer;
+}
+.sc-speed::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-sc-line);
+}
+.sc-speed::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-sc-line);
+}
+.sc-speed::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  margin-top: -10px;          /* 8px 트랙 가운데에 앉힌다 */
+  border-radius: 999px;
+  background: var(--color-sc-primary);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+}
+.sc-speed::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-sc-primary);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+}

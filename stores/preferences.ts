@@ -53,6 +53,27 @@ interface PreferencesState {
   setTextSize: (size: TextSize) => void;
 }
 
+/**
+ * 말하기 속도의 **양 끝**.
+ *
+ * 네 단계였다(0.7 · 0.85 · 0.95 · 1.1). 좁은 데다 칸으로 끊겨 있어서, 그 사이가
+ * 필요한 사람 — 0.6 이 편한 사람, 1.6 이 답답하지 않은 사람 — 이 고를 수 있는 것이
+ * 없었다. 이 값은 취향이 아니라 **알아들을 수 있느냐**를 정한다.
+ *
+ * 0.5 는 브라우저가 실제로 또박또박 읽어 주는 하한이다. 그보다 낮추면 음소가 늘어져
+ * 오히려 말이 뭉개진다. 2.5 는 상한인데, 명세는 10 까지 허용하지만 그 위는 어느
+ * 브라우저에서든 알아들을 수 없는 소리가 되고 — 이 앱에서 소리는 장식이 아니라
+ * 글을 못 읽는 사람에게 도착하는 유일한 통로다 — 고를 수 있게 두는 것이 친절이 아니다.
+ */
+export const SPEECH_RATE_MIN = 0.5;
+export const SPEECH_RATE_MAX = 2.5;
+/** 게이지가 움직이는 최소 단위. 0.05 면 사람 귀에 한 칸이 들린다. */
+export const SPEECH_RATE_STEP = 0.05;
+
+/**
+ * 옛 네 단계. 화면에서는 안 쓰지만 남겨 둔다 — 저장된 값이 이 중 하나일 수 있고,
+ * 새 범위 안에 그대로 들어간다.
+ */
 export const SPEECH_RATES = [0.7, 0.85, 0.95, 1.1] as const;
 
 export const usePreferences = create<PreferencesState>()(

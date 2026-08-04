@@ -6,11 +6,11 @@ import { LanguagePicker } from '@/components/sc/LanguagePicker';
 import { resetDemo } from '@/stores/scans';
 import { isDemo } from '@/lib/snapcare/demo';
 import { useIsClient } from '@/lib/hooks';
-import { usePreferences, SPEECH_RATES } from '@/stores/preferences';
+import { usePreferences, SPEECH_RATE_MIN, SPEECH_RATE_MAX, SPEECH_RATE_STEP } from '@/stores/preferences';
 import { TEXT_SIZES, TEXT_SIZE_LABEL, ROOT_PX } from '@/lib/a11y/textSize';
 import { ask, Speakable, Hear } from '@/components/sc/Say';
 import { speak, setSpeechRate as setVoiceRate } from '@/lib/voice';
-import { DotIcon, HareIcon, SpeakerIcon, SpeakerOffIcon, TortoiseIcon, UndoIcon } from '@/components/icons';
+import { HareIcon, SpeakerIcon, SpeakerOffIcon, TortoiseIcon, UndoIcon } from '@/components/icons';
 
 /**
  * 설정 — 판정에 실제로 영향을 주는 것만 둔다.
@@ -168,49 +168,52 @@ export default function SettingsPage() {
         <LanguagePicker />
 
         {/*
-          말하기 속도.
-          숫자(0.85×)는 이 앱의 사용자가 읽을 수 없는 표기다. 거북이와 토끼는 크기가
-          곧 뜻이라 세지 않아도 읽히고, 고르면 그 속도로 바로 한 문장을 들려준다 —
-          설명을 읽는 대신 들어보고 고르게 하는 편이 이 앱의 방식이다.
+          말하기 속도 — **게이지로.**
+
+          네 칸짜리 단추였다. 좁은 데다 칸으로 끊겨 있어서 그 사이가 필요한 사람이
+          고를 것이 없었다. 이 값은 취향이 아니라 알아들을 수 있느냐를 정한다 —
+          귀가 어두운 사람에게는 0.6 이, 이 앱을 오래 쓴 사람에게는 1.6 이 맞다.
+
+          숫자는 곁들이다. 이 앱의 사용자는 `1.35×` 를 못 읽는다. 그래서 거북이와
+          토끼를 양 끝에 두고, 고른 자리에서 **바로 그 속도로 한 문장을 들려준다** —
+          설명을 읽는 대신 들어보고 고르게 하는 것이 이 앱의 방식이고, 게이지가 되면서
+          그 방식이 더 잘 맞는다. 손가락을 끌면서 소리가 따라오면 어디가 자기 자리인지
+          귀로 찾을 수 있다.
+
+          끌 때마다 말하면 문장이 끊겨 무슨 말인지 안 들린다. 손을 뗄 때 한 번만 읽는다.
         */}
-        <div className="mt-2 flex items-center gap-2 rounded-2xl bg-white px-4 py-3 shadow-sm">
-          <span aria-hidden className="flex items-center text-lg leading-none"
+        <div className="mt-2 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
+          <span aria-hidden className="flex shrink-0 items-center text-lg leading-none"
                 style={{ color: 'var(--color-sc-muted)' }}><TortoiseIcon /></span>
-          <div className="flex flex-1 gap-1.5">
-            {SPEECH_RATES.map((r) => {
-              const on = Math.abs(speechRate - r) < 0.01;
-              return (
-                <button
-                  key={r}
-                  onClick={() => {
-                    setSpeechRate(r);
-                    setVoiceRate(r);
-                    void speak('This is how fast I will read.');
-                  }}
-                  aria-label={`Speech speed ${r}`}
-                  aria-pressed={on}
-                  className="flex-1 rounded-xl py-2 text-xs font-bold"
-                  style={{
-                    background: on ? 'var(--color-sc-primary)' : 'var(--color-sc-bg)',
-                    color: on ? '#fff' : 'var(--color-sc-muted)',
-                  }}
-                >
-                  {/*
-                    네모 한 글자를 되풀이하고 있었다(`'▪'.repeat`). 글꼴이 가진
-                    도형이라 기기마다 크기와 무게가 다르고, 이 앱이 이모지를 걷어낸
-                    이유와 같은 문제다. 같은 수만큼 우리 점을 찍는다.
-                  */}
-                  <span className="flex items-center justify-center gap-0.5">
-                    {Array.from({ length: SPEECH_RATES.indexOf(r) + 1 }, (_, i) => (
-                      <DotIcon key={i} size="0.5em" />
-                    ))}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          <span aria-hidden className="flex items-center text-lg leading-none"
+          <input
+            type="range"
+            className="sc-speed min-w-0 flex-1"
+            min={SPEECH_RATE_MIN}
+            max={SPEECH_RATE_MAX}
+            step={SPEECH_RATE_STEP}
+            value={speechRate}
+            aria-label="Speech speed"
+            aria-valuetext={`${speechRate.toFixed(2)} times`}
+            onChange={(e) => {
+              const rate = Number(e.target.value);
+              setSpeechRate(rate);
+              // 소리 계층에도 바로 밀어 넣는다. 다음에 말하는 것부터 이 속도다.
+              setVoiceRate(rate);
+            }}
+            onPointerUp={() => void speak('This is how fast I will read.')}
+            onKeyUp={() => void speak('This is how fast I will read.')}
+          />
+          <span aria-hidden className="flex shrink-0 items-center text-lg leading-none"
                 style={{ color: 'var(--color-sc-muted)' }}><HareIcon /></span>
+          {/*
+            숫자는 곁들이다 — 못 읽는 사람에게는 거북이와 토끼가 답이고, 읽는 사람
+            (돌보는 가족, 심사자)에게는 이 숫자가 "지금 어디인지" 를 정확히 말한다.
+            폭을 고정해 두지 않으면 1.05 와 1.1 사이에서 게이지가 흔들린다.
+          */}
+          <span className="shrink-0 text-right text-xs font-bold tabular-nums"
+                style={{ color: 'var(--color-sc-muted)', width: '3.2em' }}>
+            {speechRate.toFixed(2)}×
+          </span>
         </div>
 
         {/*
@@ -245,21 +248,25 @@ export default function SettingsPage() {
             <Speakable text={'Demo.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
               <span className="flex-1">DEMO</span>
             </Speakable>
+            {/* 듣기 단추가 줄 단추 안에 있었다 — 읽어 달라고 누르면 시연 자료가
+                초기화됐다. 위의 낭독 스위치와 같은 결함이다. */}
+            <div className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 shadow-sm">
             <button
               onClick={() => {
                 const ok = resetDemo();
                 setReset(ok ? 'The demo data is back to how it started.' : '');
                 if (ok) speak('The demo data is back to how it started.');
               }}
-              className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
+              className="flex min-w-0 flex-1 items-center gap-3 text-left"
             >
               <span aria-hidden className="sc-icon flex items-center justify-center"
                     style={{ color: 'var(--color-sc-primary)' }}><UndoIcon /></span>
               <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
                 Reset the demo data
               </span>
-              <Hear text="Reset the demo data. This puts the demo data back to how it started." />
             </button>
+              <Hear text="Reset the demo data. This puts the demo data back to how it started." />
+            </div>
             {reset && (
               <p className="mt-2 text-xs" style={{ color: 'var(--color-sc-muted)' }}>{reset}</p>
             )}
