@@ -207,33 +207,19 @@ export default function SettingsPage() {
           <span className="text-lg">🐇</span>
         </div>
 
-        {/* 기기 — 네트워크 없이 카메라로만 오간다 */}
-        <Speakable text={'Pill device.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
-          <span className="flex-1">PILL DEVICE</span>
-        </Speakable>
-        <button
-          onClick={() => router.push('/device')}
-          className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
-        >
-          <span className="sc-icon">💊</span>
-          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }} {...sayable('Send the schedule to the pill device, using the camera.')}>Send the schedule to the device
-          </span>
-          <span className="sc-end" style={{ color: 'var(--color-sc-muted)' }}>›</span>
-        </button>
+        {/*
+          여기 두 묶음이 있었다 — PILL DEVICE 와 AT THE CLINIC. 둘 다 걷었다.
 
-        {/* 의료진 공유 — 타이핑 없이 기록을 넘기는 경로 */}
-        <Speakable text={'At the clinic.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
-          <span className="flex-1">AT THE CLINIC</span>
-        </Speakable>
-        <button
-          onClick={() => router.push('/provider')}
-          className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
-        >
-          <span className="sc-icon">👩‍⚕️</span>
-          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }} {...sayable('Show your history to a health worker.')}>Show history to a provider
-          </span>
-          <span className="sc-end" style={{ color: 'var(--color-sc-muted)' }}>›</span>
-        </button>
+          약통은 홈 궤도에 "Pill box" 위성으로 이미 있다. 설정에 또 두면 같은 곳으로
+          가는 문이 둘이 되고, 문이 둘이면 어느 쪽이 최신인지 사람이 알 수 없다 —
+          실제로 이 버튼은 `/device` 의 옛 이름("일정을 기기로 보낸다")을 그대로
+          달고 있었는데, 그 일은 이제 알람을 만들면 저절로 된다(`useAutoSend`).
+          문이 자기가 여는 방의 옛 이름을 부르고 있었다.
+
+          진료실 공유(`/provider`)는 만들어 두고 쓰이지 않았다. 설정은 사람이 헤매는
+          자리라 안 쓰는 줄이 가장 비싸다. 화면 자체는 남아 있으므로 주소로는 여전히
+          열린다 — 지운 것은 길이지 기능이 아니다.
+        */}
 
         {/*
           시연용 자료 되돌리기 — **시연 모드에서만** 보인다.

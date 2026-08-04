@@ -6,7 +6,6 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { DispenserPanel } from '@/components/sc/DispenserPanel';
 import { isDemo } from '@/lib/snapcare/demo';
 import { useIsClient } from '@/lib/hooks';
-import { BenchTest } from '@/components/sc/BenchTest';
 import { DoseRelease } from '@/components/sc/DoseRelease';
 import { useDispenser } from '@/lib/dispenser/useDispenser';
 import { toCloudSlots } from '@/lib/dispenser/fromApp';
@@ -346,16 +345,18 @@ export default function DevicePage() {
           */}
           {box.paired && <PushToggle deviceId={box.paired.deviceId} />}
           {/*
-            기계가 도는지 직접 확인하는 자리. 짝이 있어야 명령을 봉할 수 있고,
-            칸 수는 상자가 스스로 말한 것을 쓴다 — 없으면 화면에서 고른 값이다.
+            기계를 직접 흔드는 자리가 여기 있었다 — 트레이를 열고 부저를 울리는
+            버튼들. 시연에서만 보이게 막아 두었었는데, 이제 통째로 없앴다.
+
+            같은 것이 `/present` 에 이미 있다. 트레이마다 알람, 트레이마다 배출,
+            부저 — 하나도 빠짐없이 같고, 거기가 그것들이 있어야 할 곳이다. 두 곳에
+            같은 버튼을 두면 시연 중에 어느 쪽을 눌러야 하는지가 한 번 더 생각할
+            일이 되고, 고쳐야 할 때 한쪽만 고쳐진다.
+
+            그리고 이 화면은 **약을 먹는 사람의 화면**이다. 그 사람에게 "아무 칸이나
+            여는 버튼" 은 있어서는 안 되는 것이고, 눌러서 나온 알약은 다음 복용에서
+            비게 된다.
           */}
-          {/*
-            시연에서만 낸다. 여기 있는 것들 — 트레이를 열고 부저를 울리는 것 — 은
-            **기계가 도는지 확인하는** 물건이지 약을 먹는 사람이 쓰는 물건이 아니다.
-            실제로 쓰는 사람에게 "아무 칸이나 여는 버튼" 은 있어서는 안 되는 것이고,
-            눌러서 나온 알약은 다음 복용에서 비게 된다.
-          */}
-          {demo && box.paired && <BenchTest paired={box.paired} trays={trays} />}
         </div>
 
         {/*
@@ -637,7 +638,18 @@ export default function DevicePage() {
           />
         </label>
 
-        {/* 기기 → 폰 */}
+        {/*
+          기기 → 폰. **시연에서만 낸다.**
+
+          상자가 보고한 복용은 사서함을 거쳐 저절로 기록에 들어온다(`useDoseLog`).
+          이 화면의 사진 찍기는 그 길이 막혔을 때의 다른 길이고 — 상자가 인터넷을
+          못 볼 때 — 그 경우를 실제로 만나는 사람은 화면을 스스로 열어 보지 않는다.
+          늘 펼쳐 두면 "복용을 남기려면 매번 상자를 찍어야 하나" 로 읽힌다.
+
+          "표본 코드로 해 보기" 는 더 분명하다. 그건 상자가 없는 자리에서 이 경로를
+          보여주기 위한 물건이고, 상자를 가진 사람에게는 뜻이 없다.
+        */}
+        {demo && (<>
         <Speakable text="Read the box. Photograph the code on its screen to record whether the dose was taken."
                    className="mt-8 text-[11px] font-bold tracking-wide flex w-full items-center gap-2">
           <span className="flex-1">READ THE DEVICE</span>
@@ -679,6 +691,8 @@ export default function DevicePage() {
             No device here — try a sample code
           </button>
         )}
+
+        </>)}
 
         {result && (
           <div className="mt-3 rounded-2xl px-4 py-3" style={{ background: 'var(--color-safe-bg)' }}>

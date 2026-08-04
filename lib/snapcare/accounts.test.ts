@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 /**
  * 이 파일이 지키는 것은 하나다: **누구의 자료가 누구에게 보이는가.**
@@ -226,4 +227,30 @@ test('명단이 깨져 있어도 앱은 열린다', () => {
   // 명단을 못 읽는 것이 앱을 못 여는 이유가 되면 안 된다.
   assert.equal(listAccounts().length, 1);
   assert.equal(activeAccountId(), PRIMARY_ID);
+});
+
+test('사람을 바꾸면 그림열쇠를 다시 묻는다', () => {
+  /*
+    홈의 프로필 시트(app/home/who-sheet.tsx)가 이것에 기대고 있다. 시트는 열쇠를
+    직접 묻지 않는데, 그 이유가 **여기 이미 있기 때문**이다 — 물으면 두 곳이 같은
+    것을 지키게 되고, 두 곳이 지키는 것은 언젠가 한쪽만 고쳐진다.
+
+    성질 둘이 함께 있어야 성립한다.
+
+      · 세션이 사람마다 갈려 있다(`accountStorage`). 안 갈리면 바꾼 뒤에도 앞사람의
+        `authed` 가 그대로 남는다.
+      · `authed` 는 저장되지 않는다(`partialize`). 저장되면 한 번 연 사람은 다시
+        안 묻게 된다.
+
+    소스를 읽는 시험인 이유: 이 둘은 스토어를 **만들 때** 정해지는 성질이라, 만들어진
+    스토어를 아무리 흔들어도 드러나지 않는다. 실제로 무너지는 방식은 누가
+    `partialize` 에 `authed` 를 한 줄 더하는 것이고, 그건 이렇게만 잡힌다.
+  */
+  const src = readFileSync(new URL('../../stores/session.ts', import.meta.url), 'utf8');
+  assert.match(src, /storage:\s*accountStorage/, '세션이 사람마다 갈려 있지 않다');
+
+  const partialize = src.slice(src.indexOf('partialize'));
+  const kept = partialize.slice(0, partialize.indexOf('}'));
+  assert.doesNotMatch(kept, /\bauthed\b/,
+                      'authed 가 저장되면 사람을 바꿔도 열쇠를 안 묻는다');
 });

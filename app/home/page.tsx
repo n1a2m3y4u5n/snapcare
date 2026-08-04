@@ -12,6 +12,7 @@ import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
 import { useScans } from '@/stores/scans';
 import { useReminders } from '@/stores/reminders';
 import { TryIt } from './try-it';
+import { WhoSheet } from './who-sheet';
 import { Orbit, type Satellite } from './orbit';
 import { BoxIcon, FoodIcon, GearIcon, PersonIcon, PillIcon } from '@/components/icons';
 import { ask, sayable } from '@/components/sc/Say';
@@ -125,10 +126,21 @@ export default function HomePage() {
         밖으로 밀어내던 것을 이 구조가 대신 막는다.
       */}
       <div className="flex flex-1 flex-col px-5 pt-14">
-        <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
-            {...ask('SnapCare. Photograph food or medicine to check it. The big blue button takes a photograph.')}>
-          SnapCare
-        </h1>
+        {/*
+          제목과 얼굴이 한 줄이다.
+
+          얼굴이 오른쪽 위에 있어야 하는 이유는 자리 때문이 아니라 **그것이 답하는
+          물음** 때문이다 — 이 화면의 모든 판정은 "지금 이 사람 기준" 인데, 그 사람이
+          누구인지가 홈 어디에도 적혀 있지 않았다. 어머니 계정으로 딸의 과자를 찍고
+          어머니 기준의 판정을 받아도 아무도 모른다.
+        */}
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
+              {...ask('SnapCare. Photograph food or medicine to check it. The big black button takes a photograph.')}>
+            SnapCare
+          </h1>
+          <WhoSheet />
+        </div>
 
         {/*
           지금 꺼내야 하는 약. 기기는 시간이 됐다고 내보내지 않으므로 이것이 화면에
