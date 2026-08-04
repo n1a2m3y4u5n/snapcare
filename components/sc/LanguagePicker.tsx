@@ -5,7 +5,8 @@ import { CheckIcon, SpeakerOffIcon } from '@/components/icons';
 import { LANGUAGES, languageByCode, voiceAvailable } from '@/lib/i18n/languages';
 import { usePreferences } from '@/stores/preferences';
 import { speak, voicesReady } from '@/lib/voice';
-import { dslSentence } from '@/lib/snapcare/dslSpeech';
+import { say } from '@/lib/i18n';
+import { HOME_INTRO_EN } from '@/lib/snapcare/homeIntro';
 import { Speakable } from '@/components/sc/Say';
 
 /**
@@ -55,8 +56,18 @@ export function LanguagePicker() {
               key={l.code}
               onClick={() => {
                 setSayLang(l.code);
-                // 고른 그 언어로, 이 앱이 실제로 하는 말 하나를 들려준다.
-                void speak(dslSentence('\\hand_wash', l.code) ?? 'Wash your hands first.', l.tag);
+                /*
+                  고른 그 언어로 **이 앱이 실제로 하는 말**을 들려준다.
+
+                  전에는 "먼저 손을 씻으세요" 였다. 그 문장은 그림말 사전에 있어서
+                  번역이 확실하다는 이유로 골랐는데, 앱을 열었을 때 나는 소리가 아니다.
+                  고르는 자리에서 들은 소리와 홈에서 나는 소리가 다르면, 방금 고른 것이
+                  무엇인지 확인할 방법이 없다.
+
+                  홈이 도착하자마자 하는 말로 바꾼다 — 이 앱에서 가장 많이 들리는 문장이고,
+                  홈도 같은 열쇠를 읽는다(`app/home/page.tsx`).
+                */
+                void speak(say(l.code, 'home.intro') ?? HOME_INTRO_EN, l.tag);
               }}
               aria-pressed={on}
               aria-label={`Speak ${l.english}${mute ? ' — no voice on this phone' : ''}`}

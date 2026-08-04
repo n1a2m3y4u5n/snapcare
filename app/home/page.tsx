@@ -14,6 +14,8 @@ import { WhoSheet } from './who-sheet';
 import { Orbit, type Satellite } from './orbit';
 import { BoxIcon, FoodIcon, GearIcon, PillIcon } from '@/components/icons';
 import { ask, sayable } from '@/components/sc/Say';
+import { homeIntro } from '@/lib/snapcare/homeIntro';
+import { usePreferences } from '@/stores/preferences';
 
 export default function HomePage() {
   // 약통이 짝지어져 있으면 걸린 약을 여기서 보여준다. 짝이 없으면 훅이 조용히
@@ -28,6 +30,7 @@ export default function HomePage() {
   */
   const autoSend = useAutoSend(box.report?.status.trayCount ?? FITTED_TRAYS);
   const confirmed = useProfile((s) => s.confirmed);
+  const sayLang = usePreferences((s) => s.sayLang);
   const reminders = useReminders((s) => s.reminders);
 
   // 상자가 약을 내보내거나 놓친 것을 기록에 남긴다. 홈에서도 도는 이유는, 기기 화면을
@@ -136,9 +139,14 @@ export default function HomePage() {
             사람이 읽어야 하는 정보가 아니라 여기가 어디인지 알려 주는 표찰이고,
             옆의 단추는 **누를 수 있어야 하는 것**이다. 상한은 가장 큰 단계에서만 걸린다.
           */}
+          {/*
+            이 인사는 설정의 언어 미리듣기와 **같은 문장**이어야 한다. 고르는 자리에서
+            들은 소리와 홈에서 나는 소리가 다르면, 방금 고른 것이 무엇인지 확인할
+            방법이 없다. 그래서 문장을 `lib/snapcare/homeIntro.ts` 한 곳에 둔다.
+          */}
           <h1 className="min-w-0 text-2xl font-extrabold"
               style={{ color: 'var(--color-sc-ink)', fontSize: 'min(1.5rem, 36px)' }}
-              {...ask('SnapCare. Photograph food or medicine to check it. The big black button takes a photograph.')}>
+              {...ask(homeIntro(sayLang))}>
             SnapCare
           </h1>
           <WhoSheet needsProfile={!confirmed} />
