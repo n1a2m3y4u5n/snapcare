@@ -9,6 +9,8 @@ import { useProfile } from '@/stores/profile';
 import { useIsClient } from '@/lib/hooks';
 import { byDay, dayLabel, daySentence, type DaySummary } from '@/lib/history/byDay';
 import { adherence, adherenceSentence, clockOf, doseRows } from '@/lib/history/adherence';
+import { calendar } from '@/lib/history/calendar';
+import { DoseCalendar } from '@/components/sc/DoseCalendar';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
 import { Thumb } from '@/components/sc/Thumb';
 
@@ -44,6 +46,17 @@ export default function HistoryPage() {
     () => (ready && member ? adherence(doseRows(scans, member.id), today, 7) : null),
     [ready, scans, today, member],
   );
+  /*
+    달력은 넉 주를 본다.
+
+    한 주는 요일을 못 읽는다 — 각 요일이 한 번씩만 나오므로 "주말마다 빠진다" 가
+    한 번의 우연과 구별되지 않는다. 넉 주면 같은 요일이 네 번 줄지어 서고, 그때
+    비로소 세로줄이 뜻을 갖는다. 그 이상은 폰 화면에서 칸이 너무 작아진다.
+  */
+  const month = useMemo(
+    () => (ready && member ? calendar(doseRows(scans, member.id), today, 28) : []),
+    [ready, scans, today, member],
+  );
 
   return (
     <MobileScreen bar="inner">
@@ -56,7 +69,7 @@ export default function HistoryPage() {
           Past days
         </h1>
 
-        {week && week.rate !== null && <AdherenceCard week={week} />}
+        {week && week.rate !== null && <AdherenceCard week={week} month={month} />}
 
         {days.length === 0 && (
           <p className="mt-10 text-center text-sm" style={{ color: 'var(--color-sc-muted)' }}>
@@ -79,7 +92,10 @@ export default function HistoryPage() {
  * 사람이 이 앱의 사용자다. 대신 **칸을 그린다** — 한 칸이 한 번의 복용이고, 채워진
  * 칸은 먹은 것, 빈 칸은 거른 것이다. 세면 된다.
  */
-function AdherenceCard({ week }: { week: NonNullable<ReturnType<typeof adherence>> }) {
+function AdherenceCard({ week, month }: {
+  week: NonNullable<ReturnType<typeof adherence>>;
+  month: ReturnType<typeof calendar>;
+}) {
   const say = adherenceSentence(week);
   return (
     <div className="mt-4 rounded-3xl bg-white px-5 py-4 shadow-sm">
@@ -92,19 +108,16 @@ function AdherenceCard({ week }: { week: NonNullable<ReturnType<typeof adherence
       </div>
 
       {/*
-        한 칸이 한 번. 스물한 칸을 넘으면(하루 세 번 × 7일) 줄이 접힌다.
-        aria-hidden 인 이유는 옆의 듣기 버튼과 아래 문장이 같은 것을 말하기 때문이다 —
-        스크린리더가 칸 스물한 개를 하나씩 읽으면 그게 더 나쁘다.
+        복용 한 번을 칸 하나로 늘어놓던 자리다. 한 주에 스물한 번쯤이면 셀 만한
+        그림이었지만 그 수는 위로 열려 있었다 — 벤치에서 칸 128개가 한 줄로 흘렀다.
+        그리고 늘어선 칸들은 "얼마나 잘 하고 있나" 는 말해도 **언제 걸렀나** 는
+        말하지 못한다.
+
+        달력은 둘 다 한다. 개수가 날짜에 묶여 위로 안 열리고, 빈 자리가 요일 위에
+        있으니 "주말마다 저녁을 거른다" 같은 것이 보인다.
       */}
-      <div aria-hidden className="mt-3 flex flex-wrap gap-1.5">
-        {Array.from({ length: week.taken }, (_, i) => (
-          <span key={`t${i}`} className="h-6 w-6 rounded-md"
-                style={{ background: 'var(--color-safe)' }} />
-        ))}
-        {Array.from({ length: week.missed }, (_, i) => (
-          <span key={`m${i}`} className="h-6 w-6 rounded-md border-2"
-                style={{ borderColor: 'var(--color-caution)', background: 'transparent' }} />
-        ))}
+      <div className="mt-3">
+        <DoseCalendar days={month} />
       </div>
 
       <p className="mt-3 text-sm" style={{ color: 'var(--color-sc-ink)' }}>{say}</p>
