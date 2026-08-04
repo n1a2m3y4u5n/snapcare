@@ -776,10 +776,10 @@ def check_release_path(report: Report, servos: TrayServos,
 
         [  ok  ] the room can release a dose — the button on the machine
 
-    on a machine whose touch panel was unwired *and* which has no button fitted
-    at all — measured three ways, and then by watching GPIO 24 stay high through
-    fifteen seconds of pressing. The pin was claimable, so the check called it a
-    control. A person alone with that box could not have taken a dose.
+    on a machine whose touch panel was not working *and* which has no button
+    fitted at all — GPIO 24 stayed high through fifteen seconds of pressing.
+    The pin was claimable, so the check called it a control. A person alone with
+    that box could not have taken a dose, and the report said it was ready.
     """
     if not servos.backend.moves_hardware:
         report.add("a release can open a tray", FAIL,

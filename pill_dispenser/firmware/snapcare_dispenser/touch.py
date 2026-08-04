@@ -77,8 +77,10 @@ which is a supported build, and none of them may reach the scheduler.
 """
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
+import re
 import struct
 import threading
 import time
@@ -120,6 +122,37 @@ _TOUCH_NAMES = ("ft5x06", "ft5406", "ft5426", "ft6206", "ft6236",
 #: line, so finding one is worth saying out loud.
 _NOT_TOUCH = ("ads7846", "xpt2046", "tsc2046")
 
+#: The kernel modules that publish a capacitive panel, and the one that does not.
+#:
+#: Checked before the names above, because a name is what the *chip* answered
+#: and a driver is what the *kernel* decided. `edt_ft5x06` asks the controller
+#: for its model string and uses that verbatim, so the fitted panel arrives as
+#:
+#:     1-0038 EP0110M09
+#:
+#: which contains none of `_TOUCH_NAMES` and was read as "no touch panel found"
+#: on a machine where the driver had bound correctly. The list of model numbers
+#: a vendor might return has no end; the list of drivers that can publish one
+#: is short and is ours to keep.
+_TOUCH_DRIVERS = ("edt_ft5x06", "goodix", "goodix_ts", "ns2009")
+_NOT_TOUCH_DRIVERS = ("ads7846",)
+
+
+def _device_driver(node: Path) -> str:
+    """Which kernel module published this input node, or "" if it cannot tell.
+
+    Two `device` hops: the first reaches the `input` device, the second the bus
+    device under it — the I2C client for a touch panel — and only that one
+    carries a `driver` symlink.
+    """
+    link = _SYS_INPUT / node.name / "device" / "device" / "driver"
+    try:
+        if not link.is_symlink():
+            return ""
+        return link.resolve().name
+    except OSError:
+        return ""
+
 
 def _device_name(node: Path) -> str:
     try:
@@ -147,7 +180,9 @@ def find_touch_device(explicit: str | None = None) -> Path | None:
     found = None
     for node in nodes:
         name = _device_name(node)
-        if any(needle in name for needle in _NOT_TOUCH):
+        driver = _device_driver(node)
+        if driver in _NOT_TOUCH_DRIVERS or any(needle in name
+                                               for needle in _NOT_TOUCH):
             # Said every time rather than once, and at warning level: this is a
             # machine one config.txt line away from reporting a touch panel it
             # cannot read, and the line names itself in the message.
@@ -156,7 +191,8 @@ def find_touch_device(explicit: str | None = None) -> Path | None:
                 "build does not have. Remove `dtoverlay=ads7846` from "
                 "/boot/firmware/config.txt and reboot.", node, name)
             continue
-        if found is None and any(needle in name for needle in _TOUCH_NAMES):
+        if found is None and (driver in _TOUCH_DRIVERS
+                              or any(needle in name for needle in _TOUCH_NAMES)):
             found = node
     return found
 
@@ -300,6 +336,21 @@ _CONTROLLERS = {
 }
 
 
+def _i2c_param() -> str:
+    """The overlay parameter that names the bus this panel is on.
+
+    Taken from `TOUCH_I2C_BUS` rather than written as a constant, so that the
+    line in `config.txt` and the bus the probe just found the chip on cannot
+    drift apart. `/dev/i2c-1` becomes `i2c1`, which is the bus on GPIO 2 and 3.
+    """
+    match = re.search(r"(\d+)$", config.TOUCH_I2C_BUS)
+    # No trailing number means somebody pointed `SNAPCARE_TOUCH_I2C` at a path
+    # this cannot read. The wiring in the assembly guide is GPIO 2 and 3, so
+    # that is the bus to name rather than leaving the overlay on its own
+    # default, which is the camera connector and is never right here.
+    return f"i2c{match.group(1)}" if match else "i2c1"
+
+
 def _overlay_lines(addr: int) -> tuple[str, ...]:
     """The `config.txt` lines that give the chip at `addr` a driver.
 
@@ -322,7 +373,17 @@ def _overlay_lines(addr: int) -> tuple[str, ...]:
         # as a panel that works intermittently for no visible reason.
         if config.TOUCH_INT_GPIO != 4:
             return ()
-        return ("dtoverlay=edt-ft5406",
+        # The bus has to be named. This overlay exists for the official 7-inch
+        # DSI screen and defaults to `i2c_csi_dsi`, the bus on the camera and
+        # display connectors — so without it the driver loads, probes a bus this
+        # panel is not on, and gives up:
+        #
+        #     edt_ft5x06 10-0038: touchscreen probe failed
+        #     edt_ft5x06 10-0038: probe with driver edt_ft5x06 failed with error -5
+        #
+        # which looks like a broken panel and is a line that named the wrong
+        # wires. `10-` is the giveaway: this module is on i2c-1, GPIO 2 and 3.
+        return (f"dtoverlay=edt-ft5406,{_i2c_param()}",
                 f"gpio={config.TOUCH_RESET_GPIO}=op,dh")
     if addr in (0x14, 0x5D):
         # This one takes both pins, so the driver owns the reset and there is
@@ -332,6 +393,64 @@ def _overlay_lines(addr: int) -> tuple[str, ...]:
     return ()
 
 
+#: How long a controller needs after its reset is released before it will
+#: acknowledge its address. Measured on the fitted FT6236: 200 ms was enough and
+#: is what this uses. The datasheets quote single-digit milliseconds for the
+#: reset pulse itself and say nothing about the firmware boot that follows.
+_RESET_SETTLE_S = 0.2
+
+
+@contextlib.contextmanager
+def _reset_released():
+    """Hold CTP_RST high for the length of a probe, if this machine can.
+
+    Without this the probe asks a chip that is still in reset, and a chip in
+    reset does not acknowledge its address — so a fully wired panel reads
+    exactly like an absent one.
+
+    That is not hypothetical. On 2026-08-04 the fitted panel had been reported
+    dead for the whole build: `--touch-setup` said "Nothing answered", an
+    `i2cdetect` of both buses came back empty, and CTP_INT never moved through
+    fifteen seconds of pressing. All three were true and all three were the same
+    fact, because nothing on the machine had ever driven GPIO 12. Held high by
+    hand, the FT6236 answered at 0x38 immediately.
+
+    Nothing releases the line permanently here. That is `config.txt`'s job, via
+    the `gpio=` line `_overlay_lines` writes, so the pin is high before the
+    driver probes on every boot. This is only so that the probe can see what is
+    actually on the end of the ribbon.
+
+    Yields True when the line was actually driven. False means lgpio is missing
+    or the pin is spoken for, and a probe that finds nothing after that has not
+    established anything.
+    """
+    try:
+        import lgpio  # noqa: PLC0415 - Pi only, and only on this path
+    except ImportError:
+        yield False
+        return
+
+    handle = None
+    try:
+        handle = lgpio.gpiochip_open(0)
+        lgpio.gpio_claim_output(handle, config.TOUCH_RESET_GPIO, 1)
+    except Exception:  # noqa: BLE001 - any GPIO failure is "could not release"
+        if handle is not None:
+            with contextlib.suppress(Exception):
+                lgpio.gpiochip_close(handle)
+        yield False
+        return
+
+    try:
+        time.sleep(_RESET_SETTLE_S)
+        yield True
+    finally:
+        with contextlib.suppress(Exception):
+            lgpio.gpio_free(handle, config.TOUCH_RESET_GPIO)
+        with contextlib.suppress(Exception):
+            lgpio.gpiochip_close(handle)
+
+
 def probe_bus(bus: str | None = None) -> list[int]:
     """Every touch-controller address that answers on the I2C bus.
 
@@ -339,28 +458,32 @@ def probe_bus(bus: str | None = None) -> list[int]:
     either acknowledges or it does not, while the LCD half is write-only and
     initialises exactly as well with nothing on the end of the ribbon.
 
+    The reset line is released first — see `_reset_released` for what happens
+    when it is not.
+
     Returns an empty list both for "the bus is there and nothing answered" and
     for "there is no bus" — `setup` tells those two apart before calling, since
     they need opposite fixes.
     """
     import fcntl  # noqa: PLC0415 - Linux only, and only on this path
 
-    try:
-        fd = os.open(bus or config.TOUCH_I2C_BUS, os.O_RDWR)
-    except OSError:
-        return []
-    found = []
-    try:
-        for addr in sorted(_CONTROLLERS):
-            try:
-                fcntl.ioctl(fd, _I2C_SLAVE, addr)
-                os.read(fd, 1)
-            except OSError:
-                continue
-            found.append(addr)
-    finally:
-        os.close(fd)
-    return found
+    with _reset_released():
+        try:
+            fd = os.open(bus or config.TOUCH_I2C_BUS, os.O_RDWR)
+        except OSError:
+            return []
+        found = []
+        try:
+            for addr in sorted(_CONTROLLERS):
+                try:
+                    fcntl.ioctl(fd, _I2C_SLAVE, addr)
+                    os.read(fd, 1)
+                except OSError:
+                    continue
+                found.append(addr)
+        finally:
+            os.close(fd)
+        return found
 
 
 def _input_devices() -> list[tuple[Path, str]]:
@@ -391,10 +514,50 @@ def _strip_resistive(lines: list[str]) -> tuple[list[str], int]:
     for line in lines:
         if line.strip().startswith("dtoverlay=ads7846"):
             dropped += 1
-            while kept and kept[-1].strip().startswith("# SnapCare"):
-                kept.pop()
-            while kept and not kept[-1].strip():
-                kept.pop()
+            _pop_our_comment(kept)
+            continue
+        kept.append(line)
+    return kept, dropped
+
+
+def _pop_our_comment(kept: list[str]) -> None:
+    """Take back the comment and blank line that introduced a dropped line.
+
+    Only comments this project wrote, so a note somebody left by hand survives
+    the line it was written about. Without this, every rewrite of a line leaves
+    its heading behind and the file grows a stack of them.
+    """
+    while kept and kept[-1].strip().startswith("# SnapCare"):
+        kept.pop()
+    while kept and not kept[-1].strip():
+        kept.pop()
+
+
+def _strip_superseded(lines: list[str],
+                      wanted: tuple[str, ...]) -> tuple[list[str], int]:
+    """Drop earlier versions of the overlay lines about to be written.
+
+    `dtoverlay` lines accumulate: the kernel loads every one it finds, so a
+    line written by a previous run of this command is not replaced by a newer
+    one, it is loaded alongside it. When the two differ only in parameters,
+    which is exactly what a fix to those parameters produces, the older load
+    fails and its failure is what shows up in `dmesg` — the line that works and
+    the line that broke are both there, and the visible one is the wrong one.
+
+    Matched on the overlay name alone (everything before the first comma), so a
+    line for a different overlay is never touched, and one that is already
+    exactly right is left where it is rather than moved to the bottom.
+    """
+    names = {line.split(",", 1)[0].strip() for line in wanted
+             if line.strip().startswith("dtoverlay=")}
+    keep_as_is = {line.strip() for line in wanted}
+    kept: list[str] = []
+    dropped = 0
+    for line in lines:
+        bare = line.strip()
+        if (bare.split(",", 1)[0].strip() in names and bare not in keep_as_is):
+            dropped += 1
+            _pop_our_comment(kept)
             continue
         kept.append(line)
     return kept, dropped
@@ -440,9 +603,22 @@ def setup(config_txt: str | None = None) -> int:
         print(f"Could not open {bus}: {exc}")
         return 1
 
+    # Reported separately from the probe, because "nothing answered" means two
+    # different things depending on whether the reset was actually released, and
+    # only one of them is about wiring.
+    with _reset_released() as released:
+        pass
+
     found = probe_bus(bus)
+    if not found and not released:
+        print(f"Nothing answered on {bus}, and CTP_RST could not be released.")
+        print(f"  GPIO {config.TOUCH_RESET_GPIO} could not be driven, so a "
+              "controller sitting in reset would have looked exactly like this "
+              "and nothing has been established.")
+        print("  sudo apt install python3-lgpio, then run this again.")
+        return 1
     if not found:
-        print(f"Nothing answered on {bus}.")
+        print(f"Nothing answered on {bus}, with CTP_RST held high.")
         print("  The controller is not powered or not wired. Check VCC, GND, "
               f"CTP_SDA (GPIO {config.TOUCH_SDA_GPIO}) and CTP_SCL "
               f"(GPIO {config.TOUCH_SCL_GPIO}) — and that CTP_SDA and CTP_SCL "
@@ -475,6 +651,13 @@ def setup(config_txt: str | None = None) -> int:
         print(f"  Removing {dropped} `dtoverlay=ads7846` line(s) — that driver "
               "is for a resistive panel this build does not have, and it can "
               "publish an input device for a chip that is not there.")
+
+    kept, superseded = _strip_superseded(kept, lines)
+    if superseded:
+        print(f"  Replacing {superseded} earlier line(s) for the same overlay. "
+              "Left in place they load a second time against the wrong "
+              "parameters, and the failed probe is the one that ends up in "
+              "`dmesg`.")
 
     already = {line.strip() for line in kept}
     to_add = [line for line in lines if line not in already]

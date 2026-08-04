@@ -99,8 +99,8 @@ def _room(monkeypatch, *, touch_node, button_seen, pin_claimable=True):
 
 
 def test_a_claimable_pin_is_not_a_button(monkeypatch):
-    # The one this was written for. On 2026-08-04 a machine with an unwired
-    # touch panel and no button fitted reported
+    # The one this was written for. On 2026-08-04 a machine whose touch panel
+    # was not working, and which has no button fitted, reported
     #
     #     [  ok  ] the room can release a dose — the button on the machine
     #
