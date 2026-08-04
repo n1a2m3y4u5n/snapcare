@@ -128,7 +128,19 @@ export default function HomePage() {
           어머니 기준의 판정을 받아도 아무도 모른다.
         */}
         <div className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
+          {/*
+            제목의 크기에 상한을 둔다.
+
+            글자를 가장 크게 두면 "SnapCare" 가 48px 로 225px 을 차지하고, 얼굴 단추
+            88px 과 사이 24px 을 더하면 337px 이 되어 295px 짜리 줄을 42px 넘겼다.
+            넘친 쪽이 오른쪽이라 **얼굴 단추가 화면 밖으로 2px 나갔다.**
+
+            줄이는 것이 제목인 이유: 이 줄에서 글자를 키워서 얻는 것이 없다. 앱 이름은
+            사람이 읽어야 하는 정보가 아니라 여기가 어디인지 알려 주는 표찰이고,
+            옆의 단추는 **누를 수 있어야 하는 것**이다. 상한은 가장 큰 단계에서만 걸린다.
+          */}
+          <h1 className="min-w-0 text-2xl font-extrabold"
+              style={{ color: 'var(--color-sc-ink)', fontSize: 'min(1.5rem, 36px)' }}
               {...ask('SnapCare. Photograph food or medicine to check it. The big black button takes a photograph.')}>
             SnapCare
           </h1>

@@ -203,7 +203,23 @@ export function SectionLabel({ children, say, className = '' }: {
  * 크기가 44 인 것은 임의의 값이 아니다. 손끝이 화면에 닿는 면적이 대략 그만큼이고,
  * 그보다 작으면 조준을 요구하게 된다. 이 앱을 쓰는 사람의 손은 떨린다.
  */
-export function Hear({ text, className = '' }: { text: string; className?: string }) {
+export function Hear({ text, className = '', size = 44 }: {
+  text: string;
+  className?: string;
+  /**
+   * 지름(px). **rem 이 아니다.**
+   *
+   * `h-11 w-11` 이었다. rem 이라 글자를 가장 크게 두면 이 단추가 88px 이 되고, 줄에서
+   * 안 줄어드는 것이 하나 더 커지는 셈이라 옆의 글 칸을 밀어냈다 — 영양 추세 카드에서
+   * "Sugar" 가 23px 을 받아 한 글자씩 세로로 쌓였다.
+   *
+   * 이 저장소는 그 규칙을 이미 적어 두었다(`globals.css` 의 `.sc-hear`): **틀은 px,
+   * 내용은 rem.** 글자를 키운 사람이 원하는 것은 글자이지 단추가 아니고, 44px 은
+   * WCAG 2.5.8 이 요구하는 24 보다 넉넉하다. 그 규칙이 클래스로만 있어서 붙이는 것을
+   * 잊은 자리마다 빠졌다 — 스물세 곳 중 여섯 곳에만 있었다. 기본값으로 옮긴다.
+   */
+  size?: number;
+}) {
   const [speaking, setSpeaking] = useState(false);
   async function play(e: React.MouseEvent) {
     e.stopPropagation();
@@ -218,9 +234,10 @@ export function Hear({ text, className = '' }: { text: string; className?: strin
       onClick={play}
       aria-label={speaking ? 'Stop' : `Read aloud: ${text}`}
       {...sayable(text)}
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-lg
+      className={`flex shrink-0 items-center justify-center rounded-full
                   active:scale-95 transition-transform ${className}`}
       style={{
+        width: size, height: size, fontSize: Math.round(size * 0.45),
         background: speaking ? 'var(--color-sc-primary)' : 'var(--color-sc-line)',
         color: speaking ? '#fff' : 'var(--color-sc-ink)',
       }}

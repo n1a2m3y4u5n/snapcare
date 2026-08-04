@@ -115,29 +115,43 @@ export default function SettingsPage() {
         <Speakable text={'Voice.'} className="mt-6 text-[11px] font-bold tracking-wide flex w-full items-center gap-2" style={{ color: 'var(--color-sc-muted)' }}>
           <span className="flex-1">VOICE</span>
         </Speakable>
-        <button
-          onClick={() => setAutoTts(!autoTts)}
-          className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 text-left shadow-sm"
-          aria-pressed={autoTts}
-        >
-          <span aria-hidden className="sc-icon flex items-center justify-center"
-                style={{ color: autoTts ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)' }}>
-            {autoTts ? <SpeakerIcon /> : <SpeakerOffIcon />}
-          </span>
-          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
-            Read results aloud
-          </span>
-          <Hear text={`Read results aloud. This is ${autoTts ? 'on' : 'off'}. Tap the row to change it.`} />
-          <span
-            className="flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors"
-            style={{ background: autoTts ? 'var(--color-safe)' : 'var(--color-sc-line)' }}
+        {/*
+          듣기 단추가 줄 단추 **안에** 있었다.
+
+          `<button>` 안의 `<button>` 은 HTML 이 금지하고, React 가 서버에서 그린 것과
+          브라우저가 고친 것이 달라져 이 화면에서 하이드레이션 오류가 났다(콘솔에
+          네 줄). 더 실질적인 문제는 그 안쪽 단추를 눌렀을 때 **바깥 단추도 같이
+          눌린다**는 것이다 — 읽어 달라고 눌렀는데 낭독이 꺼지는 줄이었다.
+          (`Hear` 가 `stopPropagation` 을 부르지만, 그건 겹침을 감출 뿐 구조는 그대로다.)
+
+          바깥을 `div` 로 바꾸고 줄과 듣기를 나란히 둔다. 누를 수 있는 자리는 여전히
+          줄 전체에서 듣기 동그라미만 뺀 만큼이다.
+        */}
+        <div className="sc-row mt-2 flex w-full items-center rounded-2xl bg-white py-3 shadow-sm">
+          <button
+            onClick={() => setAutoTts(!autoTts)}
+            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+            aria-pressed={autoTts}
           >
+            <span aria-hidden className="sc-icon flex items-center justify-center"
+                  style={{ color: autoTts ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)' }}>
+              {autoTts ? <SpeakerIcon /> : <SpeakerOffIcon />}
+            </span>
+            <span className="min-w-0 flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+              Read results aloud
+            </span>
             <span
-              className="h-5 w-5 shrink-0 rounded-full bg-white transition-transform"
-              style={{ transform: autoTts ? 'translateX(20px)' : 'none' }}
-            />
-          </span>
-        </button>
+              className="flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors"
+              style={{ background: autoTts ? 'var(--color-safe)' : 'var(--color-sc-line)' }}
+            >
+              <span
+                className="h-5 w-5 shrink-0 rounded-full bg-white transition-transform"
+                style={{ transform: autoTts ? 'translateX(20px)' : 'none' }}
+              />
+            </span>
+          </button>
+          <Hear text={`Read results aloud. This is ${autoTts ? 'on' : 'off'}. Tap the row to change it.`} />
+        </div>
 
         <LanguagePicker />
 

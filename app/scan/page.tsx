@@ -586,7 +586,7 @@ function PrimaryButton({ children, onClick, level, say, icon }: {
       </button>
       {/* 듣기 버튼은 흰 바탕에 둔다 — 같은 색으로 붙이면 버튼 하나가 두 칸으로
           쪼개진 것처럼 보여서, 오른쪽을 눌러도 끝나는 줄 안다. */}
-      <Hear text={say} className="h-14 w-14 shadow-sm" />
+      <Hear text={say} size={56} className="shadow-sm" />
     </div>
   );
 }
