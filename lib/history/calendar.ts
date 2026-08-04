@@ -48,13 +48,18 @@ export interface CalendarDay {
 }
 
 /**
- * 오늘부터 거슬러 `days` 일치를, **오래된 날이 앞에** 오도록.
+ * `anchor` 부터 거슬러 `days` 일치를, **오래된 날이 앞에** 오도록.
+ *
+ * `anchor` 와 `today` 를 따로 받는다. 지난 달을 넘겨 보려면 창을 옮겨야 하는데,
+ * 그때도 "오늘" 표시는 진짜 오늘에 붙어 있어야 한다 — 넘긴 화면에서 옛날 어느 날이
+ * 오늘로 표시되면 그 화면은 거짓말을 한다.
  *
  * 달력은 왼쪽 위에서 오른쪽 아래로 읽으므로 시간 순서도 그래야 한다. `windowDays`
  * 는 오늘부터 거꾸로 주는데, 그쪽은 "이 날짜가 창 안인가" 를 묻는 용도라 순서가
  * 상관없다. 여기서 뒤집어 두면 그리는 쪽이 매번 뒤집지 않아도 된다.
  */
-export function calendar(rows: DoseRow[], today: string, days = 28): CalendarDay[] {
+export function calendar(rows: DoseRow[], anchor: string, days = 28,
+                         today = anchor): CalendarDay[] {
   const byDay = new Map<string, { offered: number; taken: number }>();
   for (const row of rows) {
     const cell = byDay.get(row.dayKey) ?? { offered: 0, taken: 0 };
@@ -63,7 +68,7 @@ export function calendar(rows: DoseRow[], today: string, days = 28): CalendarDay
     byDay.set(row.dayKey, cell);
   }
 
-  return windowDays(today, days)
+  return windowDays(anchor, days)
     .slice()
     .reverse()
     .map((dayKey) => {

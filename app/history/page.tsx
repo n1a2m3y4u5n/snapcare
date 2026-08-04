@@ -20,6 +20,7 @@ import { spokenName } from '@/lib/tts/speakable';
 import { DoseCalendar } from '@/components/sc/DoseCalendar';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
 import { byMedicine, medicineSentence } from '@/lib/history/byMedicine';
+import { MonthNav, anchorFor, windowLabel } from '@/components/sc/MonthNav';
 
 /**
  * 지난 날들.
@@ -59,7 +60,7 @@ export default function HistoryPage() {
     그림과 말이 서로 다른 것을 가리키게 된다.
   */
   const week = useMemo(
-    () => (ready && member ? adherence(doseRows(scans, member.id), today, 28) : null),
+    () => (ready && member ? adherence(doseRows(scans, member.id), anchor, 28) : null),
     [ready, scans, today, member],
   );
   /*
@@ -86,12 +87,16 @@ export default function HistoryPage() {
     그리고 이 기계에는 이미 그 단위가 있다 — 트레이가 층으로 쌓여 있고 한 층이 한
     약이라, 화면이 층별로 말하면 약통을 열어 그 층을 보면 되는 것이 된다.
   */
+  /* 몇 창 뒤로 와 있는가. 0 이면 오늘이 든 창. */
+  const [back, setBack] = useState(0);
+  const anchor = anchorFor(today, back);
+
   const perMedicine = useMemo(
-    () => (ready && member ? byMedicine(doseRows(scans, member.id), today, 28) : []),
-    [ready, scans, today, member],
+    () => (ready && member ? byMedicine(doseRows(scans, member.id), anchor, 28) : []),
+    [ready, scans, anchor, member],
   );
   const month = useMemo(
-    () => (ready && member ? calendar(doseRows(scans, member.id), today, 28) : []),
+    () => (ready && member ? calendar(doseRows(scans, member.id), anchor, 28, today) : []),
     [ready, scans, today, member],
   );
 
@@ -183,7 +188,8 @@ export default function HistoryPage() {
         */}
 
         {setNow.length > 0 && <RoutineCard list={setNow} next={nextDose} onOpen={openDose} />}
-        {week && week.rate !== null && <AdherenceCard span={week} month={month} each={perMedicine} />}
+        {week && week.rate !== null && <AdherenceCard span={week} month={month} each={perMedicine}
+                          back={back} onBack={setBack} />}
 
         {/*
           날짜별 복용 목록이 여기 있었다. 걷어냈다.
@@ -286,10 +292,12 @@ function RoutineCard({ list, next, onOpen }: {
  * 한 주가 아니라 넉 주인 이유는 요일이다. 한 주에서는 각 요일이 한 번씩만 나와서
  * "주말마다 저녁을 거른다" 가 한 번의 우연과 구별되지 않는다.
  */
-function AdherenceCard({ span, month, each }: {
+function AdherenceCard({ span, month, each, back, onBack }: {
   span: NonNullable<ReturnType<typeof adherence>>;
   month: ReturnType<typeof calendar>;
   each: ReturnType<typeof byMedicine>;
+  back: number;
+  onBack: (next: number) => void;
 }) {
   const say = adherenceSentence(span);
   return (
@@ -309,7 +317,7 @@ function AdherenceCard({ span, month, each }: {
         <span aria-hidden className="text-lg leading-none">💊</span>
         <Speakable text={say} className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
                    style={{ color: 'var(--color-sc-muted)' }}>
-          <span className="flex-1">MEDICINE · THE LAST FOUR WEEKS</span>
+          <span className="flex-1">MEDICINE</span>
         </Speakable>
         <Hear text={say} />
       </div>
@@ -324,6 +332,9 @@ function AdherenceCard({ span, month, each }: {
         있으니 "주말마다 저녁을 거른다" 같은 것이 보인다.
       */}
       <div className="mt-3">
+        <MonthNav back={back} onBack={onBack} label={windowLabel(back)} />
+      </div>
+      <div className="mt-2">
         <DoseCalendar days={month} />
       </div>
 

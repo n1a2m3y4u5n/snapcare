@@ -4,24 +4,30 @@ import assert from 'node:assert/strict';
 import { demoHistory } from './demoHistory.ts';
 import { byDay } from '../history/byDay.ts';
 import { adherence, doseRows } from '../history/adherence.ts';
+import { KEEP_COUNT } from './retention.ts';
 
 const TODAY = '2026-08-03';
 const ME = 'me';
 
-test('다섯 주가 실제로 채워진다', () => {
+test('석 달이 실제로 채워진다', () => {
   // 시연 자료가 오늘·어제 네 줄뿐이라 이 앱이 시간을 두고 하는 일이 화면에
   // 아무것도 안 나왔다. 열나흘 추세는 막대 두 개, 주별 추세는 아예 안 떴다.
+  //
+  // 다섯 주였다가 석 달이 됐다. 화면이 넉 주짜리 달력을 갖게 되면서 그 길이로는
+  // 지난 달을 넘겨 볼 것이 없어졌다 — 한 번만 뒤로 가면 빈 격자가 나온다.
   const h = demoHistory(TODAY, ME);
   const days = byDay(h, TODAY, ME);
-  assert.equal(days.length, 35);
-  assert.ok(h.length > 100, `기록이 ${h.length} 개뿐이다`);
+  assert.equal(days.length, 90);
+  assert.ok(h.length > 250, `기록이 ${h.length} 개뿐이다`);
 });
 
 test('보관 한도 안에 들어간다', () => {
-  // lib/snapcare/retention.ts 가 200개·90일에서 자른다. 넘치면 시연 자료가
-  // 스스로 잘려서, 만들어 놓고 안 보이는 자료가 된다.
+  // 넘치면 시연 자료가 스스로 잘려서, 만들어 놓고 안 보이는 자료가 된다.
+  //
+  // 상한을 숫자로 적지 않고 가져다 쓴다. 예전에는 200이 여기 박혀 있었고, 그
+  // 값이 바뀌었을 때 이 시험은 **바뀐 쪽이 아니라 자기 자신을** 지켰다.
   const h = demoHistory(TODAY, ME);
-  assert.ok(h.length <= 200, `${h.length} 개는 보관 한도를 넘는다`);
+  assert.ok(h.length <= KEEP_COUNT, `${h.length} 개는 보관 한도(${KEEP_COUNT})를 넘는다`);
 });
 
 test('열 때마다 같은 자료가 나온다', () => {

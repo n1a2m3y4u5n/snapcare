@@ -11,10 +11,11 @@ import { HowDidItSit, pendingFeedback } from '@/app/home/how-did-it-sit';
 import { PROFILE_ID } from '@/stores/profile';
 import { Reactions } from './reactions';
 import { FoodCalendar } from '@/components/sc/FoodCalendar';
+import { MonthNav, anchorFor, windowLabel } from '@/components/sc/MonthNav';
 import { foodCalendar } from '@/lib/history/foodCalendar';
 import { todayKey } from '@/stores/scans';
 import { useIsClient } from '@/lib/hooks';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useDailyIntake } from '@/lib/nutrition/useDailyIntake';
 import { NUTRIENT_LABEL, type NutrientAssessment } from '@/lib/nutrition/types';
 import { ask, Hear, Speakable } from '@/components/sc/Say';
@@ -37,9 +38,12 @@ export default function NutritionPage() {
     한 번 배운 그림이 두 화면에서 그대로 읽혀야 한다. 두 화면이 같은 물음("요즘
     어떻게 지내고 있나")에 답하는데 그림이 다르면 사람은 두 가지를 배워야 한다.
   */
+  /* 몇 창 뒤로 와 있는가. 복약 화면과 같은 방식이다. */
+  const [back, setBack] = useState(0);
+  const anchor = anchorFor(today, back);
   const month = useMemo(
-    () => (ready && member ? foodCalendar(scans, today, member.id) : []),
-    [ready, scans, today, member],
+    () => (ready && member ? foodCalendar(scans, anchor, member.id, 28, today) : []),
+    [ready, scans, anchor, today, member],
   );
   const daily = useDailyIntake(scans, member);
 
@@ -176,10 +180,13 @@ export default function NutritionPage() {
                            className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
                            style={{ color: 'var(--color-sc-muted)' }}>
                   <span aria-hidden className="text-lg leading-none">🥗</span>
-                  <span className="flex-1">FOOD · THE LAST FOUR WEEKS</span>
+                  <span className="flex-1">FOOD</span>
                 </Speakable>
                 <div className="mt-3 rounded-3xl bg-white px-5 py-4 shadow-sm">
-                  <FoodCalendar days={month} />
+                  <MonthNav back={back} onBack={setBack} label={windowLabel(back)} />
+                  <div className="mt-2">
+                    <FoodCalendar days={month} />
+                  </div>
                 </div>
               </>
             )}

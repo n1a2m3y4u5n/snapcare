@@ -101,8 +101,14 @@ function sweetsOn(back: number): (keyof typeof PRODUCTS)[] {
   return pattern[Math.min(week, pattern.length - 1)];
 }
 
-/** 시연 계정의 지난 다섯 주. 오늘(back=0)까지 포함한다. */
-export function demoHistory(today: string, memberId: string, days = 35): ScanRecord[] {
+/**
+ * 시연 계정의 지난 석 달. 오늘(back=0)까지 포함한다.
+ *
+ * 다섯 주였다. 화면이 넉 주짜리 달력을 갖게 되면서 그 길이로는 **지난 달을 넘겨
+ * 볼 것이 없어졌다** — 한 번만 뒤로 가면 빈 격자가 나온다. 보관 기간이 90일이니
+ * 시연 자료도 거기까지 채운다.
+ */
+export function demoHistory(today: string, memberId: string, days = 90): ScanRecord[] {
   const out: ScanRecord[] = [];
 
   for (let back = 0; back < days; back++) {

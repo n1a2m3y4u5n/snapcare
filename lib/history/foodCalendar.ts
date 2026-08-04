@@ -33,8 +33,9 @@ export const MAX_SEGMENTS = 6;
 /** 나쁜 것이 위로. 하루에 하나만 보이더라도 그것이 회피여야 한다. */
 const RANK: Record<Level, number> = { avoid: 0, caution: 1, safe: 2 };
 
-export function foodCalendar(scans: ScanRecord[], today: string,
-                             memberId?: string, days = 28): FoodDay[] {
+export function foodCalendar(scans: ScanRecord[], anchor: string,
+                             memberId?: string, days = 28,
+                             today = anchor): FoodDay[] {
   const byDay = new Map<string, Level[]>();
   for (const s of scans) {
     // 약은 뺀다. 이 달력은 음식에 대한 것이고, 복약은 자기 달력을 갖고 있다.
@@ -45,7 +46,7 @@ export function foodCalendar(scans: ScanRecord[], today: string,
     byDay.set(s.dayKey, found);
   }
 
-  return windowDays(today, days)
+  return windowDays(anchor, days)
     .slice()
     .reverse()
     .map((dayKey) => {

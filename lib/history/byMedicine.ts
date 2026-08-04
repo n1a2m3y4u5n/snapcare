@@ -32,9 +32,9 @@ export interface MedicineAdherence {
   rate: number | null;
 }
 
-export function byMedicine(rows: DoseRow[], today: string,
+export function byMedicine(rows: DoseRow[], anchor: string,
                            days = 28): MedicineAdherence[] {
-  const window = new Set(windowDays(today, days));
+  const window = new Set(windowDays(anchor, days));
   const byTray = new Map<number, MedicineAdherence>();
 
   for (const row of rows) {
