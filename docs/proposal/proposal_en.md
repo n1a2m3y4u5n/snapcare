@@ -1418,13 +1418,43 @@ The answer order is shuffled, but always the same way. If the answer moves aroun
 
 This step was built after the survey in §5.7. It has not been verified with people, and whether pointing at pictures produces the same confirming effect as speaking back is an item for the field evaluation in §5.10.
 
+### 3.9 Medication routine and the last four weeks
+
+The eight preceding sections dealt with a single verdict. Photograph, look, close. What the broadened target of §1.13 lacks, though, is not that single verdict. Unless it is recorded whether last night's dose was taken, whether weekends are the ones that get missed, and when the missing began, no verdict however good will hold a routine together.
+
+This app leaves a record with every scan: what was eaten, what it was found to contain at the time, and, where a box has been paired, whether the medicine was taken or missed. The questions that record can answer are the ones actually asked in a consulting room. What did you eat on the day the rash appeared? When did you start missing doses? Human memory does not answer these, and less so for someone who cannot write things down. Yet the only places to look back at that record were four recent lines on the home screen and today's running total on the nutrition screen. It was data piled up and read by no one.
+
+The screen has three parts from top to bottom.
+
+[Table 23] The parts of the past-days screen and why each sits where it does
+
+| Order | What is there | Why here |
+|---|---|---|
+| 1 | The medication routine as currently set: for each medicine, the next dose time and how many times a day | It has to come before the calendar below. Two empty cells mean a whole day skipped on a twice-daily prescription and one late dose on a five-times-daily one. Without knowing what should have happened, the same picture means different things |
+| 2 | A four-week calendar. One day is one cell and one bar inside a cell is one dose. A filled bar was taken, an outlined bar was missed | One week cannot be read by weekday. Each weekday appears only once, so "it is always the weekend" cannot be told apart from a single coincidence. Over four weeks the same weekday lines up four times, and only then does a vertical column mean something. Beyond that the cells get too small on a phone |
+| 3 | A gauge, showing as the length of a bar how much of the four weeks was filled, split into one row per medicine | The calendar and the gauge answer different questions. The calendar shows which days were missed, the gauge how much of the whole was filled. And one combined number cannot point at what to fix. If ten of eighty-three doses were missed, ten piled onto one medicine means that medicine is the problem while ten scattered across means the habit is, and the two call for different things. The questions asked in a consulting room are per medicine too |
+
+Medication is at the top because the urgency differs. Food can be known a day late; medicine has to be known this evening.
+
+No percentage is written large on this screen. The number 86% does not arrive for someone who cannot read numbers, and that person is the user this app took as its standard (§1.13). So the same thing is drawn instead. Whether a cell is empty can be counted, and how far a bar has filled can be judged by eye. Neither passes through reading.
+
+What groups the gauges is worth noting as well: not the name of a medicine but the tray layer in the box. What the box reports is the layer, and the name is something the app attaches from the prescription, so it may be absent. This machine also stacks its trays in layers, so when the screen speaks in layers that leads straight into opening the box and looking at that layer. The place on the screen and the place the hand reaches point at the same thing.
+
+There is no list laying out the records day by day. There was one and it was taken out. Showing records back one at a time is not what this app does with that data. The calendar, the gauge, what is suspected and how the body responded all come out of it. The list only added twenty-eight more rows on top, and after a few months it becomes a wall nobody scrolls.
+
+This is why the screen spans several conditions in Table 7 of §1.13. What someone carrying a load on executive function needs is "what do I take now", and that is the first part. What someone with damage to memory needs is "did I already take it", and that is the second. What the consulting room needs is "when did the missing start", and that is the third. One screen answers three questions, and it was built so that those answers are not obtained by reading. The difference between a filled bar and an empty one is not a letter, and the shape of a column going blank is seen rather than read.
+
+The screen does lean on the picture and colour layers of §2.1, with speech carried by the read-aloud button on each card. Medicine names and times do appear as text, and the principle of §2.1 holds here as elsewhere: this app did not erase text from the screen, it removed anything that can only be known by reading. What the calendar conveys is a shape rather than a name.
+
+The limits of the screen belong here too. A bar fills when a paired box has recorded a dispense or when the user has left a scan. A dose taken by hand, with no box and no scan, stays recorded as missed. What this calendar measures, then, is not taking medicine but taking medicine through this app, and that difference is among the unverified items in §5.9.
+
 ## □ Development and Implementation
 
 ### 4.1 Overview of the stack
 
 This section first sets out what was built with which tools, and the sections that follow take up one by one the points where a judgement had to be made. The content of this section is why those choices were made rather than the stack itself.
 
-[Table 23] Technical stack
+[Table 24] Technical stack
 
 | Layer | Technology | Note |
 |---|---|---|
@@ -1444,7 +1474,7 @@ Reading the last column on its own shows how this stack is put together. The hea
 
 There is one reason for inverting that convention. Anything on the server becomes nothing when the internet drops. Only the things "without which the verdict does not hold at all" were therefore moved onto the device.
 
-[Table 24] What runs where
+[Table 25] What runs where
 
 | Task | Runs on | If the internet drops |
 |---|---|---|
@@ -1470,7 +1500,7 @@ How large an energy error of 253.7 kcal is becomes clear against the thresholds 
 
 SnapCare therefore applies the same checks regardless of which route a value came in by.
 
-[Table 25] Checks a value must pass before it is accepted
+[Table 26] Checks a value must pass before it is accepted
 
 | Check | Content |
 |---|---|
@@ -1519,7 +1549,7 @@ Returning `problems` as an array of strings rather than a boolean is also delibe
 
 Connecting the phone to the dispenser was a problem with several constraints applying at once.
 
-[Table 26] Connection methods considered and why each was excluded
+[Table 27] Connection methods considered and why each was excluded
 
 | Method | Reason for exclusion | Nature |
 |---|---|---|
@@ -1528,13 +1558,13 @@ Connecting the phone to the dispenser was a problem with several constraints app
 | Cloud broker (MQTT over wss) | Solves all three problems but **requires internet on both sides** | Conflicts with the target environment |
 | Dropping iOS support | Android share is 86.6% in Africa, 90.9% in Latin America and about 95% in India, so there is a basis, but **it contradicts the product's claim of working for anyone** | Our own principle |
 
-The first two are set by the platforms and cannot be worked around, the third is unacceptable as long as low-infrastructure regions are the target, and the fourth we ruled out ourselves. The last row of Table 26 is different in nature from the rest, which should be stated. Technology did not block it; we narrowed the options to keep the product's claim.
+The first two are set by the platforms and cannot be worked around, the third is unacceptable as long as low-infrastructure regions are the target, and the fourth we ruled out ourselves. The last row of Table 27 is different in nature from the rest, which should be stated. Technology did not block it; we narrowed the options to keep the product's claim.
 
 The remaining route is top-level navigation. An HTTPS page cannot `fetch` an HTTP device, but navigating to that address is not blocked. The app therefore builds a link to the device's save address, and one press from the user has the device store the schedule and show a confirmation page. No broker and no cloud are required, and the whole thing completes inside the home.
 
 #### 4.3.1 Adding a relay path
 
-The reason for excluding the cloud broker in the third row of Table 26 was that it "requires internet on both sides." That sentence is true when relying on that route alone. Since the LAN route above is already complete, adding an internet route on top of it does not increase the requirements.
+The reason for excluding the cloud broker in the third row of Table 27 was that it "requires internet on both sides." That sentence is true when relying on that route alone. Since the LAN route above is already complete, adding an internet route on top of it does not increase the requirements.
 
 That judgement was reached because a problem remained that the LAN route does not solve. The person managing the prescription is usually not in the house. The carer is at work and the dosing time changes on a Tuesday afternoon. And the two constraints excluded earlier in §4.3 remain in force on the LAN route. Mixed content means the app cannot call the device's API, so all a link can carry is the fields the legacy compatibility URL accepts. There is no field there for days of the week and none for duration. A Monday-Wednesday-Friday prescription goes out all seven days, and a 30-day prescription goes out until the tray is empty.
 
@@ -1552,7 +1582,7 @@ printed code ──HKDF──► device id      the relay's address    (relay se
 
 **[Figure 31]** Three values separate out of ten printed characters. The relay distinguishes mailboxes by the first two, and the last is sent by neither side, so the relay has no way of holding it.
 
-This is one more channel rather than a dependency. The schedule is already on the device's SD card and the time is known to the real-time clock. Whether the relay is down, unreachable or never configured at all, nobody's dose is missed. The judgement in Table 26 stands. We still do not require a cloud.
+This is one more channel rather than a dependency. The schedule is already on the device's SD card and the time is known to the real-time clock. Whether the relay is down, unreachable or never configured at all, nobody's dose is missed. The judgement in Table 27 stands. We still do not require a cloud.
 
 ### 4.4 Reading the paper form
 
@@ -1621,7 +1651,7 @@ Photographs are therefore generated. Starting from a real form image, bubbles ar
 
 With this generator each degradation was pushed until reading broke. A point counts as passing only if every trial at that point was read correctly.
 
-[Table 27] The last point at which reading stayed at 100% (16 images per point)
+[Table 28] The last point at which reading stayed at 100% (16 images per point)
 
 | Degradation | Last value read entirely correctly | At the next value |
 |---|---|---|
@@ -1635,7 +1665,7 @@ With this generator each degradation was pushed until reading broke. A point cou
 
 The bottom three rows are lower bounds rather than limits. They mean 100% was maintained to the harshest value tested, and where they break beyond that is unknown. Reading them as limits would record the parser as worse than it is, so they are marked separately.
 
-What has to be read here is not the left of Table 27 but what the right two rows mean. Robustness to shadow and brightness comes from adaptive thresholding setting its threshold locally, and surviving JPEG quality 8 comes from what is being read being a filled area rather than a fine pattern. The two that collapse are different in nature. Defocus and mark fill erase the boundary of the bubble itself. Half being wrong at fill 0.3 is because at that lightness the difference between filled and unfilled becomes smaller than the paper's own blotching.
+What has to be read here is not the left of Table 28 but what the right two rows mean. Robustness to shadow and brightness comes from adaptive thresholding setting its threshold locally, and surviving JPEG quality 8 comes from what is being read being a filled area rather than a fine pattern. The two that collapse are different in nature. Defocus and mark fill erase the boundary of the bubble itself. Half being wrong at fill 0.3 is because at that lightness the difference between filled and unfilled becomes smaller than the paper's own blotching.
 
 Two practical instructions come out of this. Fill more than half the box when marking, and focus when taking the photograph. Nothing else needs worrying about. Dark, shadowed or poor quality makes no difference. That is also why the guidance printed alongside the paper form says only these two things.
 
@@ -1666,7 +1696,7 @@ self.addEventListener('fetch', (event) => {
   // being offline.
   if (url.pathname.startsWith('/api/')) return;
 
-  if (request.mode === 'navigate') {
+  if (request.mode === 'navigate' || SHELL_URLS.includes(url.pathname)) {
     event.respondWith(networkFirst(request));
     return;
   }
@@ -1690,6 +1720,8 @@ Design intent. The three branches are three different judgements.
 
 The verdict API is not intercepted because what this app handles is medicine. Returning a cached verdict leaves the user with no way of knowing whether it is today's answer or yesterday's. A failure is noticed by the user; a stale success is not.
 
+The list of shell paths joining the condition that catches page requests is a correction of the same kind. At first only the request's `mode` was checked for `navigate`, but offline warm-up fetches page HTML with `fetch('/nutrition')`, and that request's `mode` is `cors` rather than `navigate`. The pages warm-up brought back were therefore stored nowhere and simply went out to the network. Because the HTML cached at install time was there it worked on the surface, so the defect would only have surfaced the moment a new page was added to the list, and that page alone would have quietly dropped out of offline use. The same line fixed `manifest.webmanifest` as well: it sat in the shell yet matched no rule, so with the file in cache the worker still went to the network and failed.
+
 Putting the model and OCR assets under cache-first was the fix for a defect found during development. The whole point of the app is that it computes verdicts on the device without an internet connection, yet the 16 MB estimation model was missing from the cache list. The computation ran on the device while the model to perform it could not be fetched, so the offline claim was only half true.
 
 These assets are nonetheless not prefetched. They are fetched on first use. Demanding 16 MB at the first screen makes the app look as though it has not opened at all where the network is slow, and that is precisely where our users are. One feature arriving late is better than the app not opening.
@@ -1700,7 +1732,7 @@ Cache names carry an asset fingerprint. A pictogram's address is derived from it
 
 Because health information is involved, measures were needed on both storage and transmission.
 
-[Table 28] Privacy-related design
+[Table 29] Privacy-related design
 
 | Item | Content |
 |---|---|
@@ -1756,7 +1788,7 @@ Deriving the household ID as the SHA-256 hash of the public key follows the same
 
 The web app, the hardware firmware and the training code are managed in a single repository. It will be transferred to the contest organisation's GitHub organisation for final submission.
 
-[Table 29] Composition of the repository (as of 3 August 2026)
+[Table 30] Composition of the repository (as of 3 August 2026)
 
 | Area | Files | Lines | Responsibility |
 |---|---|---|---|
@@ -1771,7 +1803,7 @@ There is a reason the repository was not split. What breaks most often in this p
 
 In practice three kinds of test in this repository each require something different.
 
-[Table 30] Three kinds of test
+[Table 31] Three kinds of test
 
 | Kind | Tests | Result | What it needs |
 |---|---:|---|---|
@@ -1823,7 +1855,7 @@ Design intent. The scoring result is not reduced to a single true or false but k
 
 Counting `glyphs` alongside has a reason too. All six items can be true while not a single picture appears. That is the state where delivery happens only through sentences and speech and the pictogram route is dead. Eight of the 28 runs before the fix were exactly that, and had we been watching only the item scores those eight would have passed as "partially successful."
 
-[Table 31] Scoring items in the formative evaluation
+[Table 32] Scoring items in the formative evaluation
 
 | Item | What it confirms |
 |---|---|
@@ -1842,7 +1874,7 @@ We state what the one that did not was. In the run where a user with no register
 
 This was not fixed as a defect. The alternative suggestion is derived from the reason for avoidance, as described in §2.7, and for a user with no reason to avoid anything there is nothing to derive from. Telling someone with no conditions to "choose that instead of this" would require inventing the grounds, and that is something this app has decided not to do. This one case is therefore the result of applying the scoring items uniformly across all runs rather than a feature failing to work. Splitting the scoresheet by condition would make it 28/28, but under the principle of not adjusting scoring criteria to fit results it is left as it is.
 
-[Table 32] Formative evaluation results
+[Table 33] Formative evaluation results
 
 | | Before fix | After fix |
 |---|---|---|
@@ -1864,7 +1896,7 @@ Comprehension testing requires assembling people, however, so it is expensive an
 
 This work designed a procedure that inverts that order. Two gates are placed on each pictogram.
 
-[Table 33] The two gates of pictogram verification
+[Table 34] The two gates of pictogram verification
 
 | Gate | What it judges | Method |
 |---|---|---|
@@ -1933,7 +1965,7 @@ The same defect appeared once more later. `qty_four` had remained as four rings 
 
 Applying this procedure to all 78 morphemes gave the following.
 
-[Table 34] Semantic check results for the 78 morphemes
+[Table 35] Semantic check results for the 78 morphemes
 
 | Category | Count |
 |---|---|
@@ -1947,7 +1979,7 @@ Of the 24 read differently, 7 are actually exposed on screen, while the remainin
 **[Figure 38]** First-pass semantic check results for the 78 morphemes and the breakdown of the 24 misread. The misreadings are split rather than pooled because the two are different in nature. The 7 exposed on screen are actually seen by users and have to be fixed, while the 17 that exist only in the dictionary are not yet seen by anyone. Fixing the former first is a matter of allocating effort and does not mean the latter are acceptable.
 
 
-[Table 35] Morphemes improved by rework
+[Table 36] Morphemes improved by rework
 
 | Morpheme | Previously read as | After |
 |---|---|---|
@@ -1965,7 +1997,7 @@ The improvement to `allergen_tree_nut` matters particularly. Its being read as "
 
 Five symbols were reworked without improving. These differ in nature from the seven above.
 
-[Table 36] Morphemes not improved and why
+[Table 37] Morphemes not improved and why
 
 | Morpheme | Problem | Judgement |
 |---|---|---|
@@ -2013,7 +2045,7 @@ That lands directly on the procedure of §5.2. When a morpheme fails the semanti
 
 The model used on the meal photograph route was scored against the official RGB test split of Nutrition5k. The deployed file itself (`web.onnx`) was run with the same preprocessing as the browser: short side resized to 258, 224 centre crop, divided by 255.
 
-[Table 37] Per-item error of the nutrition estimation model (n = 507)
+[Table 38] Per-item error of the nutrition estimation model (n = 507)
 
 | Item | MAE | MAE% | Test set mean |
 |---|---|---|---|
@@ -2032,7 +2064,7 @@ It should be stated that these values can no longer be re-measured. When the Nut
 
 There is a value measured on what remains, however, and it is the one that fits this app better.
 
-[Table 38] The difference between two scorings
+[Table 39] The difference between two scorings
 
 | | Official test split | Re-measured on what remains |
 |---|---|---|
@@ -2058,7 +2090,7 @@ Values from this route are therefore not trusted on the grounds of accuracy. Wha
 
 An int8 quantised build reducing the model to 4.86 MB was also exported but not deployed.
 
-[Table 39] float32 compared with int8
+[Table 40] float32 compared with int8
 
 | | Size | Mean MAE% | Energy MAE |
 |---|---|---|---|
@@ -2071,7 +2103,7 @@ The size falls to a third while the error roughly doubles. For an app targeting 
 
 The claim that verdicts are computed on the device without an internet connection was verified. After building for deployment, the following were confirmed with the server shut down.
 
-[Table 40] Offline operation check
+[Table 41] Offline operation check
 
 | Item checked | Result |
 |---|---|
@@ -2095,7 +2127,7 @@ As stated in §5.4, every measurement up to this point has been a machine scorin
 
 The list was not built in one pass. It was researched separately across eight domains and then combined. Searching sequentially, one person carries the criteria of the first domain into the later ones and the sample tilts one way. Researching by domain means people are chosen by the standards of each field.
 
-[Table 41] The eight domains of the list (846 in total)
+[Table 42] The eight domains of the list (846 in total)
 
 | Domain | Count | On what criteria they were chosen |
 |---|---|---|
@@ -2154,7 +2186,7 @@ We left a morpheme comprehension test out of the survey. A professor reading our
 
 As of 3 August 2026, 39 people had answered: 3.5% of those contacted, with 124 free-text responses alongside.
 
-[Table 42] Composition of respondents (n = 39)
+[Table 43] Composition of respondents (n = 39)
 
 | Field | Responses | Field | Responses |
 |---|---|---|---|
@@ -2169,7 +2201,7 @@ As of 3 August 2026, 39 people had answered: 3.5% of those contacted, with 124 f
 
 The countries respondents recorded as working in span 22 countries across five continents, with 20 recording Korea only. All respondents consented to being quoted by name and affiliation, so they are recorded here as given.
 
-[Table 43] The 39 respondents (all consented to being named with their affiliation)
+[Table 44] The 39 respondents (all consented to being named with their affiliation)
 
 | Name | Position | Affiliation | Country |
 |---|---|---|---|
@@ -2225,7 +2257,7 @@ One thing has to be set down here. Forty-three percent of respondents (15 people
 
 The questions calling for a judgement on the demonstration were attached to five segments only. They were not attached to the law, standards and industry segments. Ruling on patient comprehension is not something that can be done from those positions, and mixing unqualified answers into the denominator makes the resulting proportion a proportion of nothing.
 
-[Table 44] Could a patient who cannot read take their medicine correctly, alone, with only these screens? (five qualified segments, n = 25)
+[Table 45] Could a patient who cannot read take their medicine correctly, alone, with only these screens? (five qualified segments, n = 25)
 
 | Answer | Responses |
 |---|---|
@@ -2246,7 +2278,7 @@ In the nursing and public health segment, 6 of 9 answered that the patient and t
 
 The sample is small. The judgement question went only to the five qualified segments, so n = 25 there, and questions taking all respondents as the denominator have n = 35. So rather than recording proportions alone we record how much those proportions move. The intervals below are 95% confidence intervals by the Wilson method. With a small sample the normal approximation produces intervals dropping below 0 or exceeding 1; Wilson does not.
 
-[Table 45] Proportions and 95% confidence intervals for the judgement question (n = 25)
+[Table 46] Proportions and 95% confidence intervals for the judgement question (n = 25)
 
 | Answer | Responses | Proportion | 95% CI |
 |---|---|---|---|
@@ -2263,7 +2295,7 @@ The last row is the place in this table to be most careful about. Zero "No" answ
 
 We then tested whether differences exist between groups. Fisher's exact test was used throughout. Chi-squared cannot be used when an expected cell frequency falls below 5, and the tables from this sample always do. It is the same reason the same test is used for allergy inference in §2.5.
 
-[Table 46] Tests of difference between groups
+[Table 47] Tests of difference between groups
 
 | What against what | Observed | Test | p | Verdict |
 |---|---|---|---|---|
@@ -2492,7 +2524,7 @@ Professor Eun-Kyoung Kim pointed at the procedure before the test rather than th
 
 The preceding subsections quoted only the questions we selected. To see whether the basis of that selection tilted one way, we laid out the whole tally by occupation again. It had tilted. There were places where the figure unfavourable to us was included and the favourable one omitted, and the bold rows in the table below are those.
 
-[Table 47] Every answer by occupation (the denominator is the number of respondents in that occupation)
+[Table 48] Every answer by occupation (the denominator is the number of respondents in that occupation)
 
 | Occupation | Question | Answer | Responses |
 |---|---|---|---|
@@ -2621,7 +2653,7 @@ The dispenser now calls the phone when it presents a dose. The same respondent p
 
 A checking step was built. It responds to the absence of teach-back raised by Foued Maaoui, researcher at the Pasteur Institute of Tunis, and its design and rationale are in §3.8. What should be recorded here is that this step is a screen that did not exist at all before the survey. If the earlier fixes corrected things that were already there, this is something the survey created.
 
-The web app test count went from 231 to 360 (Table 30).
+The web app test count went from 231 to 360 (Table 31).
 
 #### 5.7.14 Limits of this survey
 
@@ -2633,7 +2665,7 @@ The denominators are small. The largest segment, pharmacy, is 12 people. Written
 
 Three respondents told us the survey instrument itself was flawed. Professor Atif Usman of The Islamia University of Bahawalpur asked that multiple responses be allowed in every segment, and Associate Professor Hangil Lee of Ewha Womans University wrote that only one option could be selected so he chose contraindications, though side effects and dose adjustment belong in the same place. Professor Namsoo Park of Hyupsung University said the same thing: asked where an older patient living alone fails first, he answered that operating the screen, managing the device and trust arrive together.
 
-The distributions for single-choice questions in this section therefore do not hold everything the respondents wanted to choose. That has to be read alongside the figures in Table 47, and it is why this section presents the free text next to the multiple choice.
+The distributions for single-choice questions in this section therefore do not hold everything the respondents wanted to choose. That has to be read alongside the figures in Table 48, and it is why this section presents the free text next to the multiple choice.
 
 A heavier flaw surfaced as the fourth wave of responses came in. What the demonstration attached to the survey shows is a prescription photograph and the pictograms and speech produced from it; the app's own screens are not in it. Youngchan Kim of Kyung Hee Cyber University gave the same answer to three questions:
 
@@ -2659,7 +2691,7 @@ We do not know how many people heard the audio. Whether the speaker in the demon
 
 The point at which SnapCare intervenes is the last step described in §1.4. The health system takes care of consultation and dispensing, but from the moment the patient opens the medicine packet at home it is left to their own ability to read.
 
-[Table 48] Correspondence with SDG 3 targets
+[Table 49] Correspondence with SDG 3 targets
 
 | Target | SnapCare's contribution |
 |---|---|
@@ -2725,7 +2757,7 @@ The plans were not drawn up among ourselves. Points from the last box of the sur
 
 That one line separates stages 3 and 5 of the table below. Running the field evaluation of stage 3 in one country yields that country's answer only, and Figure 10 in §1.8 has already shown the same internationally standardised symbol going from 94% in one country to 8% in another. Table 6 in the same section likewise shows the highest pass rate belonging to a set made locally and tested on local people. So the evaluation is split by country, and building culturally adapted versions of the morphemes was set as stage 5. That the 39 respondents work in 22 countries is itself the first data for that plan.
 
-[Table 49] Plans after the contest
+[Table 50] Plans after the contest
 
 | Stage | Content | Rationale |
 |---|---|---|
@@ -2749,7 +2781,7 @@ It should also be recorded that we may not obtain it. That the pass rates in Tab
 
 ### 5.11 Appendix. Every free-text response
 
-§5.7 quotes only the responses we selected. Selecting can tilt towards what favours us, so all 124 free-text responses received are set down here in full, by question. Only line breaks were removed; nothing else was touched. Short answers ("N/A", "Yes.") are left in rather than being dropped and reinstated. Responses written in Korean are given here in our own translation; the originals stand unaltered in the Korean version of this document. Positions and affiliations are likewise as the respondent wrote them. Table 42 uses what we confirmed against the institution's own faculty listing when the list was built, so it is sometimes more specific: respondent Hangil Lee is "Professor · Ewha Womans University" here and "Associate Professor · College of Pharmacy, Ewha Womans University" there.
+§5.7 quotes only the responses we selected. Selecting can tilt towards what favours us, so all 124 free-text responses received are set down here in full, by question. Only line breaks were removed; nothing else was touched. Short answers ("N/A", "Yes.") are left in rather than being dropped and reinstated. Responses written in Korean are given here in our own translation; the originals stand unaltered in the Korean version of this document. Positions and affiliations are likewise as the respondent wrote them. Table 43 uses what we confirmed against the institution's own faculty listing when the list was built, so it is sometimes more specific: respondent Hangil Lee is "Professor · Ewha Womans University" here and "Associate Professor · College of Pharmacy, Ewha Womans University" there.
 
 **Anything you would add that we did not ask** (14)
 
