@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { BellIcon, BoxIcon } from '@/components/icons';
 
-import { clientFor, loadPaired, type PairedDevice } from '@/lib/dispenser/paired';
+import { PAIRED_EVENT, clientFor, loadPaired, type PairedDevice } from '@/lib/dispenser/paired';
 import { useReminders } from '@/stores/reminders';
 import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
 import { shortName } from '@/lib/snapcare/shortName';
@@ -109,7 +109,17 @@ export default function PresentPage() {
   //: 흐르게 하려고 다시 그리는 용도로만 둔다.
   const [, setSeen] = useState(0);
 
-  useEffect(() => { void loadPaired().then(setPaired); }, []);
+  /*
+    열릴 때 한 번 읽고, **짝이 생기면 다시 읽는다.** 시연에서는 이 화면이 먼저
+    그려지고 그 뒤에 시연 블롭이 도착해 스스로 짝이 맺어진다 — 그 순서를 모르면
+    화면이 "짝이 없다" 에서 안 벗어난다.
+  */
+  useEffect(() => {
+    const read = () => { void loadPaired().then(setPaired); };
+    read();
+    window.addEventListener(PAIRED_EVENT, read);
+    return () => window.removeEventListener(PAIRED_EVENT, read);
+  }, []);
 
   /*
     상태를 3초마다 다시 읽는다.

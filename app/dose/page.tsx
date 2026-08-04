@@ -52,7 +52,7 @@ export default function DosePage() {
 
   return (
     <div className="min-h-screen w-full flex justify-center" style={{ background: 'var(--color-med-bg)' }}>
-      <div className="relative w-full max-w-[440px] min-h-screen flex flex-col items-center px-6 pt-24">
+      <div className="relative w-full sc-shell min-h-screen flex flex-col items-center px-6 pt-24">
         <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-white shadow-sm"
              style={{ fontSize: 64, color: 'var(--color-sc-primary)' }}>
           <PillIcon />

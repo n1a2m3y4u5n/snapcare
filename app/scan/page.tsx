@@ -104,6 +104,24 @@ export default function ScanResultPage() {
       정리도 여기서 한 번 돈다. 기록은 200개·90일에서 잘리는데(retention.ts) 사진은
       그것을 모르므로, 가리킬 기록이 없어진 사진이 계속 쌓인다.
     */
+    /*
+      먹는 것이 아니면 **아무것도 안 남긴다.**
+
+      화면은 이미 "노트북" 이라고 쓰고 있었는데 기록에는 들어갔다. 그러면 오늘 먹은
+      것에 노트북이 앉고, 하루 누적과 주별 추세가 그것을 세고, 식이 일지가 그것을
+      끼니로 놓고 반응을 대조한다 — 한 번의 잘못된 저장이 네 화면을 조용히 오염시킨다.
+
+      사진도 안 남긴다. 가리킬 기록이 없는 사진은 쓰레기일 뿐이다.
+
+      되돌아가는 것은 같다. 사람이 누른 것은 "다 봤다" 이고, 그 뜻은 여기서도 같다.
+    */
+    if (scanned?.notConsumable) {
+      leaving.current = true;
+      setCurrent(null);
+      router.push('/home');
+      return;
+    }
+
     if (photo) void putThumb(id, photo);
     void prunePhotos([id, ...scans.map((r) => r.id)]);
     addScan({

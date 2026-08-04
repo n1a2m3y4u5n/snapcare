@@ -99,3 +99,25 @@ test('멀쩡한 것은 통과한다', () => {
   assert.equal(isUsable(seen), true);
   assert.equal(isUsable({ version: SYNC_VERSION }), true, '빈 것도 형태로는 멀쩡하다');
 });
+
+test('시연 상자를 되올릴 때 잃지 않는다', () => {
+  /*
+    시연 블롭에는 사람 몫 말고 약통 짝짓기 코드가 하나 더 들어 있다. 사람 몫을 갈아
+    끼울 때 이것을 안 챙기면 **다음에 여는 폰이 상자를 못 찾는다** — 사람 자료는
+    멀쩡히 보이는데 `/present` 만 다시 짝지으라고 하고, 어느 쪽에서도 오류가 안 난다.
+    나머지 사람을 되올려야 하는 것과 정확히 같은 이유다.
+  */
+  const seen: SyncBlob = {
+    version: SYNC_VERSION,
+    people: { me: { scans: [] } },
+    demoBox: { claim: 'ABCDEFGHJK', relayUrl: 'https://relay.example' },
+  };
+  assert.deepEqual(withPerson(seen, ROSTER, 'me', { scans: [] }).demoBox, seen.demoBox);
+  assert.deepEqual(withoutPerson(seen, ROSTER, 'p_kid').demoBox, seen.demoBox);
+});
+
+test('실제 블롭에는 상자 칸이 아예 없다', () => {
+  // 있으면 안 되는 것이 `undefined` 로라도 있으면, 언젠가 누가 그 칸을 채운다.
+  const out = withPerson(null, ROSTER, 'me', { scans: [] });
+  assert.equal('demoBox' in out, false);
+});

@@ -73,6 +73,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // 모델이 검증을 통과했으면 숫자는 모델 것을 쓰고, Vision 은 세부 영양소만 얹는다.
+  /*
+    먹는 것이 아니라고 봤으면 끼니 경로로 안 보낸다.
+
+    여기가 새던 자리다. 자체 모델은 무엇을 찍어도 숫자를 내놓으므로 `measured.ok` 는
+    노트북에서도 참이 되고, 그러면 아래가 `intent: 'food'` 에 이름만 "Laptop" 인
+    항목을 만들어 돌려줬다. 화면은 노트북이라고 쓰면서 그것을 오늘 먹은 것에 넣었다.
+  */
+  if (vision?.item.notConsumable) {
+    return NextResponse.json({ intent: 'other', item: vision.item, source: 'vision' });
+  }
+
   if (measured?.ok) {
     const { per100, dropped } = mergeVisionDetail(measured.per100, vision?.item.profile?.per100);
     if (dropped.length) console.warn('[analyze] vision detail dropped:', dropped.join(', '));
@@ -144,7 +155,7 @@ const SYSTEM = `You identify what a person is about to consume, from one photo.
 Return STRICT JSON only. No prose, no markdown fences.
 
 {
-  "kind": "food" | "drink" | "medicine" | "prescription",
+  "kind": "food" | "drink" | "medicine" | "prescription" | "other",
   "name": string,                 // short, e.g. "Bowl of jollof rice with chicken"
   "emoji": string,
   "confidence": number,           // 0-1, how sure you are of the identification
@@ -161,6 +172,11 @@ Return STRICT JSON only. No prose, no markdown fences.
 }
 
 Rules:
+- "other" is for anything a person does not eat, drink or take: a laptop, a phone, a chair,
+  a hand, a pet, an empty table. Use it whenever the photo is not something consumable, and
+  still put what you see in "name" ("Laptop"). Do not stretch a non-food into "food" — the
+  app records what it is told is food, so a wrong "food" becomes a meal in someone's diary.
+- Omit per100, portionGrams and allergenTags entirely for "other".
 - per100 is DENSITY (per 100 g), never the amount on the plate. portionGrams carries the amount.
 - Energy must be consistent with the macros: energy ~= 4*carbohydrates + 4*protein + 9*fat. The app re-checks this and discards your answer if it does not hold.
 - Use typical composition for the dish you recognise. If you cannot recognise it, set confidence below 0.4.
@@ -238,14 +254,23 @@ async function analyzeWithClaude(image: string, key: string): Promise<VisionResu
   }
   const parsed = JSON.parse(text.replace(/^```json\s*|\s*```$/g, '')) as VisionOut;
 
-  const kind = (parsed.kind ?? 'food') as ScanItem['kind'];
+  /*
+    `other` 는 먹는 것이 아니다.
+
+    `ItemKind` 에 넣지 않는다 — 그 타입은 판정·달력·통계가 다 같이 쓰고, 거기에 값을
+    하나 더하면 그 전부가 "먹는 것이 아닌 것" 을 다룰 줄 알아야 한다. 대신 **깃발
+    하나**로 들고 다닌다. 그 깃발이 하는 일은 둘이다: 화면이 다른 말을 하고, 기록에
+    안 들어간다.
+  */
+  const notConsumable = parsed.kind === 'other';
+  const kind = (notConsumable ? 'food' : (parsed.kind ?? 'food')) as ScanItem['kind'];
   const isRx = kind === 'medicine' || kind === 'prescription';
 
   // 사진 판별은 LLM이 하고, 판정은 우리 엔진이 한다.
   // LLM이 준 영양 밀도는 물리 제약(범위·부분집합·질량보존·Atwater)을 통과해야만 채택한다.
   // 통과 못 하면 숫자를 버리고 정성 판정으로 떨어뜨린다 — 틀린 수치보다 없는 편이 낫다.
   let profile: NutrientProfile | undefined;
-  if (!isRx && parsed.per100 && recognised(parsed)) {
+  if (!isRx && !notConsumable && parsed.per100 && recognised(parsed)) {
     const check = validateDensity(parsed.per100);
     if (check.ok) {
       profile = {
@@ -263,7 +288,8 @@ async function analyzeWithClaude(image: string, key: string): Promise<VisionResu
   return {
     kind,
     // 약·처방전은 영양 수치가 없는 것이 정상이므로 판별 여부를 confidence 로만 본다.
-    recognised: isRx ? confident(parsed) : confident(parsed) && hasAnyNutrient(parsed),
+    // 먹는 것이 아니면 '알아봤다' 가 아니다 — 알아본 것으로 치면 판정 엔진이 초록을 낸다.
+    recognised: notConsumable ? false : isRx ? confident(parsed) : confident(parsed) && hasAnyNutrient(parsed),
     item: {
       id: `scan_${Math.abs(hash(text))}`,
       name: parsed.name ?? 'Unknown item',
@@ -272,6 +298,8 @@ async function analyzeWithClaude(image: string, key: string): Promise<VisionResu
       detectedVia: profile ? 'photo analysis' : 'photo analysis (nutrition unverified)',
       flags: [],
       profile,
+      notConsumable: notConsumable || undefined,
+      unidentified: notConsumable || undefined,
       rx: parsed.rx,
       // 손으로 쓴 지시는 확신하고 읽으면 안 된다. 왜인지는 lib/snapcare/types.ts 에 적었다.
       handwritten: isRx ? parsed.handwritten === true : undefined,

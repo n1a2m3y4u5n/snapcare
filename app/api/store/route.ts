@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFile, rename, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -32,16 +33,36 @@ const DATA_DIR = process.env.SNAPCARE_DATA_DIR || join(process.cwd(), '.data');
  * 자리였다. 밖으로 꺼내니 열 개가 붙었고, 그중 셋(메서드 바꿔치기, 미래 시각 서명,
  * 공개키 바꿔치기)은 여기서는 한 번도 확인된 적이 없던 성질이다.
  */
+/**
+ * 시연이 쓰는 파일 이름.
+ *
+ * 파일 이름을 공개키에서 유도하는 것이 이 앱의 접근 통제인데, 시연에서는 정확히 그
+ * 성질 때문에 폰을 바꾸면 아무것도 안 보인다. 심사장에서 폰이 바뀌는 것은 예외가
+ * 아니라 기본이다. 시연 요청은 모두 이 하나를 쓴다.
+ *
+ * **서명은 그대로 요구한다.** 인증을 푸는 것이 아니라 *어느 파일을 여는가*만 바꾸는
+ * 것이다. 유효한 기기 열쇠 없이는 여전히 아무것도 못 읽고 못 쓴다.
+ */
+const DEMO_ID = 'demo';
+
 async function verify(req: NextRequest, method: string, body: string): Promise<string | null> {
-  return verifySigned(
+  /*
+    범위가 서명 대상에 들어 있다(`PUT!demo`). 헤더만 보고 파일을 고르면 남의 실제
+    요청에서 헤더만 바꿔치기해 시연 파일에 쓸 수 있다 — 서명이 지키는 범위에 구멍을
+    내지 않는다.
+  */
+  const demo = req.headers.get('x-scope') === 'demo';
+  const id = await verifySigned(
     {
       device: req.headers.get('x-device'),
       sig: req.headers.get('x-sig'),
       ts: req.headers.get('x-ts'),
     },
-    method,
+    demo ? `${method}!demo` : method,
     body,
   );
+  if (!id) return null;
+  return demo ? DEMO_ID : id;
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -72,7 +93,17 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   // 임시 파일에 쓰고 옮긴다. writeFile 은 원자적이지 않아서, 쓰는 도중에 끊기면
   // 잘린 JSON 이 남고 다음 읽기에서 파싱이 터진다 — 그러면 앱은 "자료 없음" 으로
   // 알아듣고 처음부터 시작한다. rename 은 원자적이라 반쯤 쓰인 파일이 남지 않는다.
-  const tmp = `${file}.${process.pid}.tmp`;
+  /*
+    임시 이름에 **매번 다른 꼬리표**를 붙인다.
+
+    `${file}.${process.pid}.tmp` 였다. 한 서버 안에서 pid 는 늘 같으므로, 같은 파일에
+    두 요청이 겹치면 둘이 **같은 임시 파일**에 쓴다. 먼저 끝난 쪽이 그것을 rename 으로
+    가져가고, 나중 쪽의 rename 은 `ENOENT` 로 터진다 — 그 저장은 조용히 사라진다.
+
+    기기마다 파일이 갈려 있을 때는 겹칠 일이 드물었다. 시연이 파일 하나를 여럿이
+    쓰면서 흔한 일이 됐고, 실제로 첫 시험에서 바로 났다.
+  */
+  const tmp = `${file}.${randomUUID()}.tmp`;
   await writeFile(tmp, JSON.stringify(parsed), 'utf-8');
   await rename(tmp, file);
   return NextResponse.json({ ok: true });

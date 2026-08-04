@@ -59,7 +59,7 @@ export function MobileScreen({
   return (
     <div className={`w-full flex justify-center ${fit ? 'h-[100dvh]' : 'min-h-screen'}`}
          style={{ background: bg }}>
-      <div className={`relative w-full max-w-[440px] flex flex-col ${fit ? 'h-full' : 'min-h-screen'}`}
+      <div className={`relative w-full sc-shell flex flex-col ${fit ? 'h-full' : 'min-h-screen'}`}
            style={{ background: bg }}>
         {/*
           아래 줄이 화면에 고정(fixed)이라, 본문 끝이 그 밑으로 들어간다. 여백을

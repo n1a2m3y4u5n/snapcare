@@ -87,14 +87,20 @@ export function PushToggle({ deviceId }: { deviceId: string }) {
             {on === null ? 'Checking…' : on ? 'On' : 'Off'}
           </span>
         </span>
+        {/*
+          스위치는 틀이라 px 로 못박는다. 설정 화면의 같은 스위치와 같은 결함이
+          여기에도 있었다 — 트랙과 손잡이는 rem 인데 움직이는 거리만 20px 이라,
+          글자를 키우면 손잡이가 한가운데서 멈춘다.
+        */}
         <span
           aria-hidden
-          className="h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors"
-          style={{ background: on ? 'var(--color-safe)' : 'var(--color-sc-bg)' }}
+          className="shrink-0 rounded-full transition-colors"
+          style={{ width: 44, height: 24, padding: 2,
+                   background: on ? 'var(--color-safe)' : 'var(--color-sc-bg)' }}
         >
           <span
-            className="block h-5 w-5 shrink-0 rounded-full bg-white shadow transition-transform"
-            style={{ transform: on ? 'translateX(20px)' : 'none' }}
+            className="block shrink-0 rounded-full bg-white shadow transition-transform"
+            style={{ width: 20, height: 20, transform: on ? 'translateX(20px)' : 'none' }}
           />
         </span>
       </button>

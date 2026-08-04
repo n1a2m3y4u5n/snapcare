@@ -3,6 +3,8 @@
 import { DispenserClient } from './relay.ts';
 import { deriveKeys } from './derive.ts';
 import { normaliseClaim } from './claim.ts';
+import { isDemo } from '../snapcare/demo.ts';
+import { setDemoBox } from '../snapcare/sync.ts';
 
 /**
  * 짝지은 디스펜서를 기기 안에 기억한다 — **페어링 코드는 남기지 않고.**
@@ -28,6 +30,9 @@ import { normaliseClaim } from './claim.ts';
 const DB = 'snapcare-dispenser';
 const STORE = 'paired';
 const KEY = 'device';
+
+/** 짝이 생기거나 없어졌을 때 창에 뜨는 사건 이름. 화면들이 이것을 듣는다. */
+export const PAIRED_EVENT = 'snapcare:paired';
 
 export interface PairedDevice {
   relayUrl: string;
@@ -79,6 +84,18 @@ export async function pairWith(claim: string, relayUrl: string): Promise<PairedD
   await tx('readwrite', (s) => s.put(paired, KEY));
 
   /*
+    짝이 생겼다고 **알린다.**
+
+    화면들은 열릴 때 한 번 `loadPaired()` 를 한다. 사람이 코드를 찍어 짝을 맺는 흐름
+    에서는 그것으로 충분했다 — 짝짓기 화면이 끝나면서 어차피 다시 그려지니까.
+
+    시연에서 스스로 짝짓게 되면서 순서가 뒤집혔다. `/present` 가 먼저 그려지고
+    (짝 없음), 그 뒤에 시연 블롭이 도착해 짝이 생긴다. 화면은 그것을 모른 채
+    "이 폰은 아직 상자와 짝이 없다" 를 계속 띄운다 — 실제로 첫 시험에서 그랬다.
+  */
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(PAIRED_EVENT));
+
+  /*
     상자에게 "네 주인이 생겼다" 를 알린다.
 
     **여기 있는 이유**: 짝을 맺는 자리가 셋이다 — 카메라, 설정의 코드 입력, 그리고
@@ -92,6 +109,20 @@ export async function pairWith(claim: string, relayUrl: string): Promise<PairedD
   void clientFor(paired).hello().catch((err) => {
     console.warn('[dispenser] 상자에게 인사를 못 보냈다 (짝짓기는 됐다):', err);
   });
+
+  /*
+    시연이면 코드를 시연 블롭에도 적어 둔다 — 다음에 여는 폰이 그것으로 스스로
+    짝짓는다. 여기 있는 이유는 위의 `hello()` 와 같다: 짝을 맺는 자리가 셋이라
+    (카메라, 설정의 코드 입력, QR 이 여는 `/pair`) 부르는 쪽에 맡기면 한 곳이 빠지고,
+    그 한 곳으로 맺은 사람만 다른 폰에서 상자를 못 찾는다.
+
+    실제 모드에서는 아무 일도 안 한다. 왜 이것이 안전한지는 `demoBox.ts` 에 적었다.
+  */
+  if (isDemo()) {
+    void setDemoBox(claim, paired.relayUrl).catch((err) => {
+      console.warn('[demo] 상자를 시연 블롭에 못 적었다 (짝은 이 폰에 남았다):', err);
+    });
+  }
 
   return paired;
 }

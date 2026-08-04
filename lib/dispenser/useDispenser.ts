@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DispenserClient } from './relay.ts';
-import { clientFor, loadPaired, type PairedDevice } from './paired.ts';
+import { PAIRED_EVENT, clientFor, loadPaired, type PairedDevice } from './paired.ts';
 import type { DeviceReport, WeeklySlot } from './types.ts';
 
 /**
@@ -56,6 +56,16 @@ export function useDispenser() {
   const clientRef = useRef<DispenserClient | null>(null);
   /** 짝이 바뀌면(페어링·해제) 루프를 다시 세운다. */
   const [generation, setGeneration] = useState(0);
+
+  /*
+    짝이 생기면 처음부터 다시 돈다. 시연에서 스스로 짝을 맺는 경우, 이 훅은 이미
+    "짝 없음" 으로 멈춰 있어서 그대로 두면 상자 소식이 영영 안 온다.
+  */
+  useEffect(() => {
+    const again = () => setGeneration((n) => n + 1);
+    window.addEventListener(PAIRED_EVENT, again);
+    return () => window.removeEventListener(PAIRED_EVENT, again);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();

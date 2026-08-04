@@ -67,7 +67,7 @@ export function HomeBar({ atHome, children }: {
   return (
     <nav
       ref={nav}
-      className="fixed bottom-0 left-1/2 z-30 w-full max-w-[440px] -translate-x-1/2 border-t
+      className="fixed bottom-0 left-1/2 z-30 w-full sc-shell -translate-x-1/2 border-t
                  bg-white/95 backdrop-blur"
       style={{ borderColor: 'var(--color-sc-line)' }}
     >

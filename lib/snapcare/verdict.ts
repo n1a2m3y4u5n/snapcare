@@ -41,7 +41,16 @@ export function computeVerdict(
   // 알레르기 판정은 '이 음식에 무엇이 들었나' 를 아는 데서 출발하는데, 그걸 모르는 채로
   // 걸리는 플래그가 없다는 이유만으로 초록을 내보내면 '확인했고 괜찮다' 로 읽힌다.
   // 글을 못 읽는 사용자에게 초록은 먹어도 된다는 뜻이다.
-  if (item.unidentified) {
+  /*
+    먹는 것이 아닌 것과 못 알아본 것은 사람이 할 일이 다르다.
+
+    "잘 모르겠으니 포장을 확인하세요" 는 노트북을 찍은 사람에게 아무 뜻이 없다. 그
+    사람이 알아야 하는 것은 **이건 먹는 물건이 아니고, 그래서 기록에도 안 들어간다**
+    하나다. 문구가 갈려야 화면이 사실을 말한다.
+  */
+  if (item.notConsumable) {
+    reasons.push({ level: 'caution', text: 'This is not food or medicine — nothing was recorded' });
+  } else if (item.unidentified) {
     reasons.push({ level: 'caution', text: 'Not sure what this is — check the packet' });
   }
 

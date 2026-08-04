@@ -140,13 +140,25 @@ export default function SettingsPage() {
             <span className="min-w-0 flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
               Read results aloud
             </span>
+            {/*
+                스위치는 **틀이다 — px 로 못박는다.**
+
+                `h-6 w-11` 에 `translateX(20px)` 이었다. 트랙과 손잡이는 rem 이라 글자
+                크기를 따라 커지는데 **움직이는 거리만 20px 로 고정**돼 있었다. 기본
+                크기에서는 정확히 맞아떨어져서(44 − 4 − 20 = 20) 아무도 몰랐다.
+
+                글자를 키우면 트랙이 88px 이 되고 손잡이는 여전히 20px 만 간다 —
+                손잡이가 **한가운데서 멈춘다.** 켜졌는지 꺼졌는지가 그 순간부터 안
+                읽히고, 여러 번 눌러도 늘 중간이다.
+              */}
             <span
-              className="flex h-6 w-11 shrink-0 items-center rounded-full px-0.5 transition-colors"
-              style={{ background: autoTts ? 'var(--color-safe)' : 'var(--color-sc-line)' }}
+              className="flex shrink-0 items-center rounded-full transition-colors"
+              style={{ width: 44, height: 24, padding: 2,
+                       background: autoTts ? 'var(--color-safe)' : 'var(--color-sc-line)' }}
             >
               <span
-                className="h-5 w-5 shrink-0 rounded-full bg-white transition-transform"
-                style={{ transform: autoTts ? 'translateX(20px)' : 'none' }}
+                className="shrink-0 rounded-full bg-white transition-transform"
+                style={{ width: 20, height: 20, transform: autoTts ? 'translateX(20px)' : 'none' }}
               />
             </span>
           </button>

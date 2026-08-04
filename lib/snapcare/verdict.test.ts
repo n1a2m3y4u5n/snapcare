@@ -96,3 +96,16 @@ test('모른다는 것이 알레르기 경고를 덮지 않는다', () => {
   const v = computeVerdict(item(['peanut'], { unidentified: true }), member(['peanut_allergy']));
   assert.equal(v.level, 'avoid');
 });
+
+test('먹는 것이 아니면 다른 말을 한다', () => {
+  /*
+    "잘 모르겠으니 포장을 확인하세요" 는 노트북을 찍은 사람에게 아무 뜻이 없다.
+    그리고 이 문구가 갈리는 것이 곧 저장 여부가 갈리는 자리다 — 화면과 기록이
+    같은 사실을 말하는지가 여기서 정해진다.
+  */
+  const v = computeVerdict(item([], { notConsumable: true, unidentified: true }), member([]));
+  const texts = v.reasons.map((r) => r.text);
+  assert.ok(texts.some((t) => /not food or medicine/i.test(t)));
+  assert.ok(!texts.some((t) => /check the packet/i.test(t)));
+  assert.notEqual(v.level, 'safe', '먹는 것이 아닌데 초록이면 안 된다');
+});

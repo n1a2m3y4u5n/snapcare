@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useProfile } from '@/stores/profile';
 import { seedDemoIfEmpty, useScans } from '@/stores/scans';
+import { adoptDemoBox } from '@/lib/dispenser/demoBox';
 import { isDemo } from '@/lib/snapcare/demo';
 import { useReminders } from '@/stores/reminders';
 import { pull, push, type PersonBlob } from '@/lib/snapcare/sync';
@@ -44,16 +45,17 @@ export function SyncProvider() {
 
   useEffect(() => {
     let alive = true;
-    // 시연 모드는 서버에 오가지 않는다.
-    //
-    // 서버 파일은 이 사람의 실제 자료를 지키려고 있는 것인데, 거기에 시연 자료를
-    // 올리면 지킬 것이 무엇인지가 흐려진다. 실제로 한 번 새면 되돌리기도 어렵다 —
-    // 시연 명단이 올라간 뒤로는 실제 모드로 돌아와도 받아올 때마다 그 사람들이
-    // 명단에 다시 붙었다. 시연은 브라우저 안에서만 도는 것이 맞다.
-    if (isDemo()) {
-      seedDemoIfEmpty();
-      return () => { alive = false; };
-    }
+    /*
+      시연도 서버에 오간다 — **다른 파일로.**
+
+      전에는 여기서 돌아섰다. 이유는 옳았다: 시연 자료가 실제 사람의 파일에 섞이면
+      지킬 것이 무엇인지 흐려지고, 실제로 한 번 새자 시연 명단이 실제 모드에서도
+      계속 되살아났다.
+
+      그런데 그 결정은 시연을 **한 폰 안에** 가뒀다. 심사장에서 폰이 바뀌면 자료도
+      상자 짝도 처음부터다. 파일을 가르면 둘 다 얻는다 — 시연 요청은 `demo` 하나를
+      쓰고(`lib/snapcare/sync.ts` 의 범위 서명), 실제 파일은 손도 안 닿는다.
+    */
     // 사용자가 무언가 고치면 즉시 표시한다. 이 구독을 아래 pull 보다 **먼저** 건다 —
     // 다른 useEffect 에 두었더니 서버 응답이 클릭보다 늦게 도착하는 경우를 놓쳤고,
     // 첫 실행에서 조건을 누른 것이 서버 사본에 덮여 사라졌다.
@@ -88,6 +90,11 @@ export function SyncProvider() {
         seedDemoIfEmpty();
         void push(snapshot());
       }
+      /*
+        시연이면 상자도 이어받는다. `pull()` 뒤여야 한다 — 그전에는 블롭에 무엇이
+        있는지 모른다. 이미 짝이 있으면 아무것도 안 한다.
+      */
+      void adoptDemoBox();
       ready.current = true;
     })();
     return () => {
@@ -97,7 +104,6 @@ export function SyncProvider() {
   }, []);
 
   useEffect(() => {
-    if (isDemo()) return;
     const schedule = () => {
       if (!ready.current) return;
       if (timer.current) clearTimeout(timer.current);

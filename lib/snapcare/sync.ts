@@ -2,6 +2,7 @@ import type { Member, ScanRecord } from './types.ts';
 import type { Reminder } from '@/stores/reminders';
 import { isSupported, openBlob, publicKey, sealBlob, sign } from './deviceKey.ts';   // 확장자 필수 — 시험이 --experimental-strip-types 로 돈다
 import { activeAccountId, listAccounts, mergeRoster, type Account } from './accounts.ts';
+import { isDemo } from './demo.ts';
 
 /**
  * 서버 blob 스키마 버전.
@@ -34,6 +35,20 @@ export interface SyncBlob {
   roster?: Account[];
   /** 사람 표 → 그 사람 몫. */
   people?: Record<string, PersonBlob>;
+  /**
+   * **시연 전용.** 약통 짝짓기 코드.
+   *
+   * 이 저장소는 코드를 안 남기기로 했고(`lib/dispenser/paired.ts`), 그 판단은 그대로
+   * 옳다 — 열 자리 코드는 의료기기에 일정을 쓰고 트레이를 여는 권한이다.
+   *
+   * 시연에서는 반대 요구가 선다. 심사장에서 폰이 바뀌고, 그때마다 상자 화면의 코드를
+   * 다시 읽게 하면 시연이 끊긴다. 그래서 **시연 모드에서만** 코드를 함께 둔다.
+   *
+   * 무엇이 이것을 받아들일 만하게 하는가: 시연 블롭은 우리 대회용 상자 하나만
+   * 가리키고, 그 안의 사람 자료는 전부 지어낸 것이다. 실제 사용자의 블롭에는 이
+   * 칸이 절대 안 들어간다 — 넣는 쪽도 읽는 쪽도 `isDemo()` 안에 있다.
+   */
+  demoBox?: { claim: string; relayUrl: string };
 }
 
 /** 서버 데이터를 신뢰해도 되는가 (버전 일치 + 최소 형태 검사). */
@@ -64,11 +79,25 @@ let remote: SyncBlob | null = null;
  */
 async function signedHeaders(method: string, body: string): Promise<HeadersInit> {
   const ts = Date.now();
+  /*
+    시연은 **다른 파일**을 쓴다.
+
+    파일 이름은 공개키에서 유도되므로 기기마다 다르다. 그것이 이 앱의 접근 통제인데,
+    시연에서는 정확히 그 성질 때문에 폰을 바꾸면 아무것도 안 보인다. 시연 모드에서는
+    모두가 같은 이름 하나(`demo`)를 쓴다.
+
+    범위를 **서명 대상에 넣는다**(`PUT!demo`). 헤더로만 보내면 서명은 그대로 둔 채
+    헤더만 바꿔치기할 수 있고, 그러면 남의 실제 요청을 시연 파일 쓰기로 돌려쓸 수
+    있다. 잃을 것이 큰 방향은 아니지만, 서명이 지키는 범위에 구멍을 내는 것은 그
+    자체로 나쁜 습관이다.
+  */
+  const scope = isDemo() ? 'demo' : null;
   return {
     'content-type': 'application/json',
     'x-device': await publicKey(),
     'x-ts': String(ts),
-    'x-sig': await sign(method, body, ts),
+    'x-sig': await sign(scope ? `${method}!${scope}` : method, body, ts),
+    ...(scope ? { 'x-scope': scope } : {}),
   };
 }
 
@@ -108,6 +137,9 @@ export function withPerson(
     version: SYNC_VERSION,
     roster,
     people: { ...(seen?.people ?? {}), [id]: mine },
+    // 받아 둔 것을 그대로 되올린다. 사람 몫과 같은 이유다 — 여기서 빠뜨리면 다음에
+    // 여는 폰이 상자를 못 찾고, 그 실패는 화면에 아무 표시도 안 낸다.
+    ...(seen?.demoBox ? { demoBox: seen.demoBox } : {}),
   };
 }
 
@@ -115,7 +147,25 @@ export function withPerson(
 export function withoutPerson(seen: SyncBlob | null, roster: Account[], id: string): SyncBlob {
   const people = { ...(seen?.people ?? {}) };
   delete people[id];
-  return { version: SYNC_VERSION, roster, people };
+  return { version: SYNC_VERSION, roster, people,
+           ...(seen?.demoBox ? { demoBox: seen.demoBox } : {}) };
+}
+
+/**
+ * 시연 블롭이 들고 있는 약통. 마지막으로 받아 온 것에서 읽는다.
+ *
+ * 따로 받아오지 않는 이유: 이 값을 쓰는 자리(`sync-provider`)는 `pull()` 바로 뒤이고,
+ * 한 번 받은 것을 두 번 받을 이유가 없다.
+ */
+export function demoBox(): { claim: string; relayUrl: string } | null {
+  return remote?.demoBox ?? null;
+}
+
+/** 시연 블롭에 약통을 적어 둔다. 다음에 여는 폰이 이것으로 스스로 짝짓는다. */
+export async function setDemoBox(claim: string, relayUrl: string): Promise<boolean> {
+  const seen = remote ?? { version: SYNC_VERSION };
+  remote = { ...seen, version: SYNC_VERSION, demoBox: { claim, relayUrl } };
+  return pushBlob(remote);
 }
 
 /** 지금 사람 몫을 올린다. 나머지 사람은 받아 둔 것을 그대로 되올린다. */
@@ -166,7 +216,17 @@ async function pushBlob(data: SyncBlob): Promise<boolean> {
   try {
     // 올리기 전에 기기에서 잠근다. 서버는 열 수 없는 덩어리만 받는다 — fly 볼륨에
     // 침입해도, 우리가 ssh 로 들어가도 알레르기·처방 기록을 읽을 수 없다.
-    const body = JSON.stringify(await sealBlob(JSON.stringify(data)));
+    /*
+      시연 블롭은 **안 봉한다.**
+
+      `sealBlob` 은 기기 열쇠로 잠근다. 그것이 실제 자료를 지키는 방식이고 — fly 볼륨에
+      침입해도 알레르기·처방을 못 읽는다 — 동시에 다른 폰이 절대 못 여는 이유다.
+      시연에서 원하는 것이 정확히 "다른 폰에서 열리는 것"이라, 여기서는 잠그지 않는다.
+      잠글 것이 없기도 하다: 시연 자료는 우리가 지어낸 끼니와 약이다.
+    */
+    const body = isDemo()
+      ? JSON.stringify(data)
+      : JSON.stringify(await sealBlob(JSON.stringify(data)));
     const res = await fetch('/api/store', {
       method: 'PUT', headers: await signedHeaders('PUT', body), body,
     });

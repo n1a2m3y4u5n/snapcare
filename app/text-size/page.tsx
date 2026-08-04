@@ -68,7 +68,7 @@ export default function TextSizePage() {
 
   return (
     <div className="min-h-screen w-full flex justify-center" style={{ background: 'var(--color-sc-bg)' }}>
-      <div className="w-full max-w-[440px] px-5 py-10">
+      <div className="w-full sc-shell px-5 py-10">
         {/*
           제목은 작게 둔다. 이 화면에서 크기를 말하는 것은 아래 줄들이고, 제목이
           크면 그 비교를 방해한다. 어차피 소리가 같은 말을 이미 했다.

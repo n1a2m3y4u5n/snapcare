@@ -521,7 +521,7 @@ export default function CameraPage() {
 
   return (
     <div className="min-h-screen w-full flex justify-center bg-black">
-      <div className="relative w-full max-w-[440px] min-h-screen flex flex-col text-white">
+      <div className="relative w-full sc-shell min-h-screen flex flex-col text-white">
         {/* 머리글. 영상 위라 검은 그라데이션을 깔아 글자가 읽히게 한다. */}
         <div className="relative z-10 flex items-center justify-between px-5 pt-14 pb-3"
              style={{ background: 'linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0))' }}>
