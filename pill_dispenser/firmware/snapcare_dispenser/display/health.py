@@ -179,6 +179,16 @@ class Dose:
     #: ledger is a reachable state — `store.read_events` returns `[]`
     #: permanently after one bad UTF-8 byte.
     state: str
+    #: 이 복용을 기계가 **내밀기는 했나.**
+    #:
+    #: `state` 로는 안 갈리는 것이 있다. 거른 복용에는 두 가지가 있는데 — 기계가
+    #: 불을 켜고 울렸는데 아무도 안 눌렀다(`not-released`), 기계가 아예 안 내밀었다
+    #: (`window-closed`, 그 한 시간 내내 꺼져 있었거나 시계를 못 믿었다) — 띠는 둘 다
+    #: 삼각형으로 그린다. 그건 맞다: 어느 쪽이든 약이 안 나갔고 누군가는 알아야 한다.
+    #:
+    #: 그런데 "오늘 다 먹었다" 를 판단할 때는 갈려야 한다. 기계가 안 내민 것을 사람의
+    #: 실패로 세면, 상자를 하루 꺼 뒀다는 이유로 웃는 얼굴이 사라진다.
+    offered: bool = True
 
 
 @dataclass(frozen=True)
@@ -619,19 +629,24 @@ def _day(dispenser, at, owed) -> tuple[Dose, ...]:
 
     doses = []
     for slot, minutes in keys:
+        offered = True
         if (slot, minutes) in waiting_keys:
             state = "waiting"
         else:
             recorded = str(outcomes.get((slot, minutes), ""))
-            if recorded in ("taken", "missed"):
-                state = recorded
+            if recorded in ("taken", "missed", "unoffered"):
+                # 띠에는 둘 다 놓친 것으로 그린다 — 어느 쪽이든 약이 안 나갔다.
+                # 갈리는 것은 `offered` 이고, 그것을 보는 것은 웃는 얼굴뿐이다.
+                state = "missed" if recorded == "unoffered" else recorded
+                offered = recorded != "unoffered"
             elif minutes >= now_minutes:
                 state = "upcoming"
             else:
                 # The ledger has nothing, and the time has gone. Say so.
                 state = "unknown"
         doses.append(Dose(tray=slot if slot in fitted else None,
-                          minutes=minutes, at=_hhmm(minutes), state=state))
+                          minutes=minutes, at=_hhmm(minutes), state=state,
+                          offered=offered))
 
     doses.sort(key=lambda dose: (dose.minutes, dose.tray if dose.tray is not None else -1))
     return tuple(doses)

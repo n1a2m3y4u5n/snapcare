@@ -77,10 +77,16 @@ log = logging.getLogger(__name__)
 #:   `interrupted` is the one case where the firmware genuinely does not know
 #:   whether the pills fell. It says so by leaving the ledger silent, which the
 #:   panel draws as an outline: solid means we know, outline means we do not.
+#:   `window-closed` is a miss the **machine** made, not the person. Nobody was
+#:   ever offered that dose — the device was off, or blocked on an untrusted
+#:   clock, for the whole hour. The panel still draws it as a miss (somebody
+#:   should know the box was down), but the smile that means "you finished
+#:   today" must not be withheld for it. That is the whole reason it has its own
+#:   ledger word instead of collapsing into `missed` here.
 _LEDGER = {
     "released": "taken",
     "not-released": "missed",
-    "window-closed": "missed",
+    "window-closed": "unoffered",
 }
 
 #: How far back the ledger is rebuilt at boot. Eight trays at six doses a day is

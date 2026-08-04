@@ -670,11 +670,25 @@ def _day_is_done(health: Health) -> bool:
     "안 먹었다" 가 아니라 "모른다" 이고, 모르는 것 위에 웃는 얼굴을 얹는 것은 확신
     없는 자리에 확신을 그리는 일이다. 이 패널이 외곽선 도형을 남겨 둔 이유와 같다.
 
+    **기계가 안 내민 복용은 안 센다.** 거른 복용에는 두 가지가 있다 — 불이 켜지고
+    소리가 났는데 아무도 안 눌렀거나(`not-released`), 그 한 시간 내내 기계가 꺼져
+    있었거나 시계를 못 믿어서 아예 안 내밀었거나(`window-closed`). 뒤쪽은 사람이
+    거른 것이 아니다. 그것을 사람의 실패로 세면 **상자를 하루 꺼 뒀다는 이유로**
+    웃는 얼굴이 사라지고, 그 다음부터 이 얼굴은 사람이 한 일과 무관해진다.
+
+    띠는 여전히 둘 다 삼각형으로 그린다. 어느 쪽이든 약이 안 나갔고 누군가는 알아야
+    한다 — 얼굴이 답하는 물음("오늘 할 일을 했나")과 띠가 답하는 물음("무슨 일이
+    있었나")이 다를 뿐이다.
+
     하루가 비어 있으면 웃지 않는다. 처방이 없는 기계와 오늘 것을 끝낸 기계는 다르고,
-    그 둘이 같은 얼굴을 하면 얼굴이 아무것도 말하지 않는 것이 된다.
+    그 둘이 같은 얼굴을 하면 얼굴이 아무것도 말하지 않는 것이 된다. 하루가 통째로
+    안 내밀어진 날도 마찬가지다 — 가져간 것이 하나는 있어야 한다.
     """
     day = _field(health, "day", ()) or ()
-    return len(day) > 0 and all(getattr(d, "state", "") == "taken" for d in day)
+    if not any(getattr(d, "state", "") == "taken" for d in day):
+        return False
+    return all(getattr(d, "state", "") == "taken" or not getattr(d, "offered", True)
+               for d in day)
 
 
 def _next_upcoming(health: Health):

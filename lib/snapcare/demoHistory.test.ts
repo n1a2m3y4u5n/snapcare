@@ -41,11 +41,22 @@ test('열 때마다 같은 자료가 나온다', () => {
   assert.deepEqual(demoHistory(TODAY, ME), demoHistory(TODAY, ME));
 });
 
-test('오늘 아직 안 온 복용을 거른 것으로 세지 않는다', () => {
-  // 안 온 저녁 약을 걸렀다고 세면 순응도가 매일 아침 나빠 보인다.
-  const today = byDay(demoHistory(TODAY, ME), TODAY, ME)[0];
-  assert.equal(today.missed, 0);
-  assert.equal(today.doses.length, 2, '오늘은 아침·점심 둘만 지났다');
+test('오늘은 지금까지 지나간 것만 들어 있다', () => {
+  /*
+    안 온 저녁 약을 걸렀다고 세면 순응도가 매일 아침 나빠 보인다. 그리고 그보다
+    큰 문제가 있었다 — 저녁 하나만 빼고 나머지를 다 넣어서, **아침 아홉 시에 앱을
+    열어도 점심 약이 이미 먹은 것으로 앉아 있었다.** 시연에서 그 화면은 "이 앱은
+    미래를 안다" 로 읽힌다.
+
+    시각을 넘겨서 잰다. 안에서 시계를 읽으면 이 시험이 몇 시에 도느냐에 따라 답이
+    달라지고, 그러면 확인이 아니라 우연이 된다.
+  */
+  const at9 = byDay(demoHistory(TODAY, ME, DEMO_DAYS, 9 * 60), TODAY, ME)[0];
+  assert.equal(at9.missed, 0);
+  assert.equal(at9.doses.length, 1, '아침 아홉 시에는 8시 약 하나만 지났다');
+
+  const at2340 = byDay(demoHistory(TODAY, ME, DEMO_DAYS, 23 * 60 + 40), TODAY, ME)[0];
+  assert.equal(at2340.doses.length, 3, '밤에는 셋 다 지났다');
 });
 
 test('순응도가 셀 것이 생긴다', () => {

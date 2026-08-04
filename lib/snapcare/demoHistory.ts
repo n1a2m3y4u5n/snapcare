@@ -58,6 +58,23 @@ const DOSES = [
   { due: '1900', tray: 1, name: 'Metformin 500mg', emoji: '💊', label: '7:00 PM' },
 ] as const;
 
+/** `'0820'` → 500. 오늘 무엇이 이미 지나갔는지를 재는 데만 쓴다. */
+function hhmmToMinutes(hhmm: string): number {
+  return Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(2));
+}
+
+/**
+ * 지금 몇 분인가. 기본값일 뿐이고, 부르는 쪽이 넘기면 그것을 쓴다.
+ *
+ * 시험이 넘길 수 있어야 한다. 안에서 시계를 읽으면 이 자료가 몇 시에 만들어졌느냐에
+ * 따라 달라지고, 그러면 같은 것을 두 번 확인할 수 없다 — 무작위를 안 쓴다는 이 파일의
+ * 규칙이 시계 때문에 깨진다.
+ */
+function nowInMinutes(): number {
+  const d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
+}
+
 function isoDay(today: string, back: number): string {
   const t = new Date(`${today}T00:00:00Z`).getTime();
   return new Date(t - back * 86400000).toISOString().slice(0, 10);
@@ -83,22 +100,65 @@ function missed(back: number, due: string): boolean {
   return false;
 }
 
-/** 그날 단것을 몇 개 먹었나. 최근으로 올수록 준다 — 이 자료가 담은 이야기다. */
-function sweetsOn(back: number): (keyof typeof PRODUCTS)[] {
-  const week = Math.floor(back / 7);
-  const pattern: (keyof typeof PRODUCTS)[][] = [
-    // 이번 주 — 거의 안 먹는다
-    back % 4 === 0 ? ['snickers'] : [],
-    // 지난주
-    back % 3 === 0 ? ['redbull'] : [],
-    // 2주 전
-    back % 2 === 0 ? ['redbull', 'mars'] : ['cola'],
-    // 3주 전
-    back % 2 === 0 ? ['redbull', 'snickers'] : ['cola', 'nutella'],
-    // 4주 전 — 가장 나빴다
-    ['redbull', 'snickers', 'cola'],
+/**
+ * **한 주짜리 식단.** 요일이 곧 그 날의 내용이다.
+ *
+ * 예전에는 "몇 주 전인가" 로 그날의 음식을 정했다. 그래서 자료가 하루하루 앞으로
+ * 밀릴 때마다 내용이 바뀌었고, 시연 중에 "어제는 이랬는데" 라는 말을 할 수가 없었다.
+ * 요일로 정하면 그 말이 성립한다 — 화요일은 늘 같은 화요일이고, 날이 지나면 새 날이
+ * **자기 요일의 내용으로** 저절로 채워진다.
+ *
+ * 그리고 하루에 한둘이다. 실제로 사람이 앱에 찍어 남기는 수가 그쯤이고, 하루 네댓
+ * 줄이 석 달 쌓이면 화면이 "이 사람은 하루 종일 앱만 쓴다" 로 읽힌다.
+ *
+ * 설탕이 줄어드는 이야기는 요일이 아니라 **주**가 진다(`sweeter`). 요일 메뉴는
+ * 뼈대이고, 옛날 주에는 거기에 단것이 하나 더 붙는다.
+ */
+const WEEK: (keyof typeof PRODUCTS)[][] = [
+  ['cola'],                  // 일
+  ['snickers'],              // 월 — 땅콩
+  [],                        // 화 — 아무것도 안 찍은 날. 이런 날이 있어야 진짜다.
+  ['nutella'],               // 수
+  ['snickers'],              // 목 — 땅콩
+  ['redbull'],               // 금
+  ['cola', 'mars'],          // 토
+];
+
+/**
+ * 그날 먹은 것.
+ *
+ * 요일이 뼈대를 정하고, 옛날 주일수록 단것이 하나 더 붙는다 — 설탕이 줄어드는
+ * 이야기가 주별 막대에서 보여야 하고, 그것이 이 화면이 존재하는 이유다.
+ */
+function ateOn(day: string, back: number): (keyof typeof PRODUCTS)[] {
+  const weekday = new Date(`${day}T00:00:00Z`).getUTCDay();
+  const menu = [...WEEK[weekday]];
+
+  /*
+    시대가 셋이다. 요일이 뼈대를 정하고 주가 무게를 정한다.
+
+      4주보다 전   여기에 에너지음료가 하나 더 — 거의 매일 단것
+      2~4주 전     적어 둔 그대로
+      최근 2주     토요일의 두 번째 단것이 빠진다
+
+    주별 막대가 내려가는 것이 보여야 그 화면이 존재하는 이유가 증명된다. 한 단계로는
+    모자랐다 — 옛날 주와 이번 주가 두 배도 안 벌어져서, 사람 눈에는 그냥 들쭉날쭉한
+    것으로 보였다.
+  */
+  if (back >= 28 && !menu.includes('redbull')) menu.push('redbull');
+  if (back < 14 && menu.length > 1) menu.pop();
+  return menu;
+}
+
+/** 그 음식을 몇 시에 먹었나. 요일과 자리에서 결정적으로 — 무작위를 안 쓴다. */
+function ateAt(day: string, index: number): { hhmm: string; label: string } {
+  const slots = [
+    { hhmm: '0820', label: '8:20 AM' },
+    { hhmm: '1505', label: '3:05 PM' },
+    { hhmm: '1940', label: '7:40 PM' },
   ];
-  return pattern[Math.min(week, pattern.length - 1)];
+  const weekday = new Date(`${day}T00:00:00Z`).getUTCDay();
+  return slots[(weekday + index) % slots.length];
 }
 
 /**
@@ -115,7 +175,8 @@ function sweetsOn(back: number): (keyof typeof PRODUCTS)[] {
 /** 시연 자료의 길이. 달력 세 창에 정확히 맞는다. */
 export const DEMO_DAYS = 84;
 
-export function demoHistory(today: string, memberId: string, days = DEMO_DAYS): ScanRecord[] {
+export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
+                            nowMinutes = nowInMinutes()): ScanRecord[] {
   const out: ScanRecord[] = [];
 
   for (let back = 0; back < days; back++) {
@@ -124,9 +185,17 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS): 
 
     // 상자가 내민 복용
     for (const d of DOSES) {
-      // 오늘은 아직 저녁이 안 왔다. 안 온 것을 "걸렀다" 로 세면 순응도가 매일 아침
-      // 나빠 보인다.
-      if (back === 0 && d.due === '1900') continue;
+      /*
+        오늘은 **지금까지 지나간 것만** 넣는다.
+
+        예전에는 저녁 한 건만 빼고 나머지를 다 넣었는데, 그러면 아침 아홉 시에 앱을
+        열어도 점심 약이 이미 먹은 것으로 앉아 있었다. 시연에서 그 화면은 "이 앱은
+        미래를 안다" 로 읽힌다.
+
+        시각을 넘겨받는 이유는 시험 때문이다 — 시계를 읽는 함수를 안에서 부르면 이
+        자료가 몇 시에 만들어졌느냐에 따라 달라져서, 같은 것을 두 번 확인할 수 없다.
+      */
+      if (back === 0 && hhmmToMinutes(d.due) > nowMinutes) continue;
       const taken = !missed(back, d.due);
       out.push({
         id: `demo_dose_${day}_${d.due}`,
@@ -143,7 +212,12 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS): 
     }
 
     // 먹은 것
-    for (const key of sweetsOn(back)) {
+    const menu = ateOn(day, back);
+    for (let index = 0; index < menu.length; index++) {
+      const key = menu[index];
+      const at = ateAt(day, index);
+      // 오늘은 지나간 끼니만. 복용과 같은 이유다.
+      if (back === 0 && hhmmToMinutes(at.hhmm) > nowMinutes) continue;
       const p = PRODUCTS[key];
       out.push({
         id: `demo_food_${day}_${key}`,
@@ -155,7 +229,7 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS): 
         // 설탕이 하루치를 밀어올리는 것들이라 주의로 둔다. 회피는 사람마다 다르므로
         // 판정 엔진이 프로필을 보고 다시 매긴다 — 여기 값은 목록에 보이는 표시다.
         level: 'caution',
-        timeLabel: `${when} · ${back % 2 === 0 ? '3:20 PM' : '11:05 AM'}`,
+        timeLabel: `${when} · ${at.label}`,
         dayKey: day,
         barcode: p.barcode,
         grams: p.grams,
@@ -172,7 +246,24 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS): 
     땅콩이 든 초콜릿을 먹은 날에 몰아서 붙인다 — 일지가 실제로 그것을 짚어내는지가
     이 자료로 확인된다.
   */
+  /*
+    답한 끼니는 **최근 세 주만**이다.
+
+    전에는 석 달치를 전부 답했고 화면에 "197 answered" 가 떴다. 한 사람이 석 달 동안
+    끼니마다 몸이 어땠는지를 200번 답했다는 뜻인데, 그것은 이 앱을 쓰는 사람의 모습이
+    아니다. 숫자가 커질수록 믿음직해 보이는 것이 아니라 **지어낸 티가 난다.**
+
+    세 주로 자른 것은 그냥 줄인 것이 아니다. 추론이 피셔 정확검정이라 네 칸이 다
+    차야 하고(먹고 아팠다·먹고 괜찮았다·안 먹고 아팠다·안 먹고 괜찮았다), 주간
+    식단에 땅콩이 이틀 들어 있으므로 세 주면 땅콩 여섯 날과 나머지 열대여섯 날이
+    된다. 그 정도면 검정이 결론을 내고, 수는 사람이 실제로 답할 만한 크기다.
+  */
+  const answered = new Set(
+    Array.from({ length: Math.min(21, days) }, (_, back) => isoDay(today, back)),
+  );
+
   for (const rec of out) {
+    if (!answered.has(rec.dayKey)) continue;
     if (rec.itemId === 'snickers') {
       rec.reaction = 'unwell';
       rec.symptoms = ['gut'];

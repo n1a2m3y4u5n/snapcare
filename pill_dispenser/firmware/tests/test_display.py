@@ -706,3 +706,51 @@ def test_the_smile_stays_inside_its_column():
         for x in range(scr.SPLIT, 320):
             i = 2 * (y * 320 + x)
             assert raw[i] == 0 and raw[i + 1] == 0, f"얼굴이 {x},{y} 까지 샜다"
+
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_the_box_being_off_is_not_the_person_missing_a_dose(canvas):
+    """거른 복용에 두 가지가 있고, 얼굴은 그 둘을 갈라야 한다.
+
+    불이 켜지고 소리가 났는데 아무도 안 눌렀으면 그것은 사람이 거른 것이다.
+    그 한 시간 내내 기계가 꺼져 있었거나 시계를 못 믿어서 아예 안 내밀었으면 —
+    `window-closed` — 사람은 거를 기회조차 없었다.
+
+    뒤쪽을 사람의 실패로 세면 **상자를 하루 꺼 뒀다는 이유로** 웃는 얼굴이 사라지고,
+    그 다음부터 이 얼굴은 사람이 한 일과 무관해진다.
+
+    띠는 여전히 둘 다 삼각형으로 그린다. 어느 쪽이든 약이 안 나갔고 누군가는 알아야
+    한다 — 얼굴이 답하는 물음과 띠가 답하는 물음이 다를 뿐이다.
+    """
+    from snapcare_dispenser.display.health import Dose
+
+    taken = Dose(tray=1, minutes=420, at="07:00", state="taken")
+    unoffered = Dose(tray=2, minutes=720, at="12:00", state="missed", offered=False)
+    ignored = Dose(tray=2, minutes=720, at="12:00", state="missed", offered=True)
+
+    # 얼굴의 물음만 잰다. 프레임 전체를 견주면 띠가 그리는 조각 수까지 섞여서,
+    # 얼굴이 맞아도 실패한다 — 재려는 것과 다른 것을 재는 시험이 된다.
+    assert screens._day_is_done(_idle_of((taken, unoffered))), \
+        "기계가 안 내민 복용 때문에 웃음이 사라졌다"
+    assert not screens._day_is_done(_idle_of((taken, ignored))), \
+        "사람이 거른 복용인데도 웃고 있다"
+
+    # 그리고 그 둘은 화면에서 실제로 달라야 한다 — 하루의 모양이 같으므로
+    # 갈리는 것은 얼굴뿐이다.
+    assert _frame(canvas, screens.idle, _idle_of((taken, unoffered))) \
+        != _frame(canvas, screens.idle, _idle_of((taken, ignored)))
+
+
+def test_a_day_the_box_slept_through_does_not_smile():
+    """하나도 안 내민 날은 "다 먹은 날" 이 아니라 "아무 일도 없던 날" 이다.
+
+    가져간 것이 하나는 있어야 한다. 안 그러면 상자를 꺼 둔 하루가 하루를 잘 마친
+    것처럼 보인다.
+    """
+    from snapcare_dispenser.display import screens as scr
+    from snapcare_dispenser.display.health import Dose
+
+    slept = (Dose(tray=1, minutes=420, at="07:00", state="missed", offered=False),
+             Dose(tray=2, minutes=720, at="12:00", state="missed", offered=False))
+    assert not scr._day_is_done(_idle_of(slept))
+    assert scr._day_is_done(_idle_of((Dose(tray=1, minutes=420, at="07:00", state="taken"),)))
