@@ -468,6 +468,41 @@ def toc_built() -> list:
     return out
 
 
+def built_fresh() -> list:
+    """제출본이 지금의 본문에서 만들어진 것인가.
+
+    본문을 고치고 다시 만들지 않으면 검사는 마크다운만 보고 통과하는데
+    제출되는 것은 옛 문서다. 실제로 그런 상태로 한 번 커밋되었다. 빌드가
+    "템플릿에 없는 절" 로 멈춘 것을 출력을 버려서 못 보았고, docx 는
+    예전 것이 그대로 남아 있었다.
+
+    그래서 빌드가 원본의 sha1 앞 열두 자리를 `cp:contentStatus` 에 찍고
+    여기서 대조한다. 다르면 다시 만들어야 한다는 뜻이다."""
+    import hashlib
+    import zipfile
+    out = []
+    for doc, src in (('SnapCare_H1_Final_Proposal_KO.docx', 'proposal_ko.md'),
+                     ('SnapCare_H1_Final_Proposal_EN.docx', 'proposal_en.md')):
+        path = DOC / doc
+        if not path.exists():
+            out.append(f'{doc}: 파일이 없다')
+            continue
+        try:
+            t = zipfile.ZipFile(path).read('docProps/core.xml').decode('utf-8')
+        except Exception as e:
+            out.append(f'{doc}: 속성을 읽지 못했다 ({e.__class__.__name__})')
+            continue
+        m = re.search(r'<cp:contentStatus>src:([0-9a-f]+)</cp:contentStatus>', t)
+        if not m:
+            out.append(f'{doc}: 원본 지문이 찍혀 있지 않다 — 옛 빌더로 만든 문서다')
+            continue
+        want = hashlib.sha1((DOC / src).read_bytes()).hexdigest()[:12]
+        if m.group(1) != want:
+            out.append(f'{doc}: 지금 본문에서 만든 문서가 아니다 '
+                       f'(찍힌 것 {m.group(1)} · 지금 {want}). 다시 만들어야 한다')
+    return out
+
+
 def _last_commit(path: str) -> str:
     import subprocess
     try:
@@ -1617,6 +1652,9 @@ def main() -> int:
     for f in ('proposal_ko.md', 'proposal_en.md'):
         for t in quote_drift(f):
             note(f'{f}: 인용이 부록 원문과 다르다 — "{t}…"')
+
+    for t in built_fresh():
+        note(t)
 
     for t in toc_built():
         note(t)

@@ -362,7 +362,7 @@ def sections(md: str) -> dict[str, str]:
     return out
 
 
-def fix_props(path: str) -> None:
+def fix_props(path: str, stamp: str = '') -> None:
     """제출 파일의 문서 속성을 우리 것으로 바꾼다.
 
     서식을 그대로 열어 채우는 방식이라 속성이 서식의 것을 물려받는다.
@@ -374,7 +374,12 @@ def fix_props(path: str) -> None:
         우리 제출물에 남의 이름이 실려 나간다
 
     통계는 지운다. 지우면 Word 가 열 때 다시 센다. 우리가 손으로
-    적으면 문서를 고칠 때마다 또 틀린다."""
+    적으면 문서를 고칠 때마다 또 틀린다.
+
+    그리고 원본 마크다운의 지문을 `cp:contentStatus` 에 남긴다. 이것이
+    없으면 본문을 고치고 다시 만들지 않은 문서가 검사를 그대로 통과한다.
+    실제로 목차를 넣을 때 빌드가 멈춘 것을 모른 채 예전 docx 가 남아
+    있었고, 검사는 마크다운만 보고 통과했다."""
     import re
     import shutil
     import zipfile
@@ -400,6 +405,11 @@ def fix_props(path: str) -> None:
                            '<cp:lastModifiedBy>Global Team H1 · SnapCare</cp:lastModifiedBy>', t)
                 t = re.sub(r'<dcterms:modified([^>]*)>[^<]*</dcterms:modified>',
                            rf'<dcterms:modified\1>{now}</dcterms:modified>', t)
+                if stamp:
+                    t = re.sub(r'<cp:contentStatus>[^<]*</cp:contentStatus>', '', t)
+                    t = t.replace('</cp:coreProperties>',
+                                  f'<cp:contentStatus>src:{stamp}</cp:contentStatus>'
+                                  '</cp:coreProperties>')
                 if '<dc:title>' in t:
                     t = re.sub(r'<dc:title>[^<]*</dc:title>',
                                '<dc:title>SnapCare — Final Project Proposal</dc:title>', t)
@@ -435,7 +445,9 @@ def main() -> None:
         print(f'  {key}')
 
     d.save(args.out)
-    fix_props(args.out)
+    import hashlib
+    stamp = hashlib.sha1(src.read_bytes()).hexdigest()[:12]
+    fix_props(args.out, stamp)
     size = Path(args.out).stat().st_size / 1e6
     print(f'\n{args.out}  ({size:.1f} MB)')
 
