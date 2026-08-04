@@ -1,5 +1,6 @@
 'use client';
 
+import { Thumb } from '@/components/sc/Thumb';
 import { useState } from 'react';
 import type { ScanRecord, Symptom } from '@/lib/snapcare/types';
 import { useScans } from '@/stores/scans';
@@ -65,7 +66,7 @@ export function HowDidItSit({ record }: { record: ScanRecord }) {
       </Speakable>
 
       <div className="mt-2 flex items-center gap-2">
-        <span className="text-xl">{record.emoji}</span>
+        <Thumb id={record.id} kind={record.kind} level={record.level} size={28} />
         <span className="text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
           {record.name}
         </span>

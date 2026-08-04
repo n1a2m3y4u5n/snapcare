@@ -13,6 +13,7 @@ import { doseSentence, storageSentence } from '@/lib/snapcare/say';
 import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
+import { BasketIcon, FoodIcon, PillIcon } from '@/components/icons';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
 import { useAnalysis } from '@/stores/analysis';
 import { putThumb, prunePhotos } from '@/lib/photos/store';
@@ -192,7 +193,7 @@ export default function ScanResultPage() {
       <HoldToHear />
 
       {isRx ? (
-        <RxResult item={scanned} verdict={verdict} onDone={createReminders} />
+        <RxResult item={scanned} verdict={verdict} onDone={createReminders} photo={photo} />
       ) : (
         <FoodResult
           item={scanned}
@@ -200,6 +201,7 @@ export default function ScanResultPage() {
           member={member}
           alternative={alternative}
           onDone={finish}
+          photo={photo}
         />
       )}
     </MobileScreen>
@@ -207,14 +209,15 @@ export default function ScanResultPage() {
 }
 
 function FoodResult({
-  item, verdict, member, alternative, onDone,
+  item, verdict, member, alternative, onDone, photo,
 }: {
   item: ScanItem; verdict: Verdict; member: Member;
   alternative: Alternative | null; onDone: () => void;
+  photo?: string | null;
 }) {
   return (
     <div className="flex flex-1 flex-col">
-      <VerdictHero item={item} verdict={verdict} />
+      <VerdictHero item={item} verdict={verdict} photo={photo} />
 
       <div className="mt-2 flex flex-col gap-3 px-5">
         {/*
@@ -267,7 +270,11 @@ function FoodResult({
                 color="var(--color-avoid)"
                 say={`Not this one. ${spokenName(item.name, item.kind)}.`}
               >
-                <span className="text-3xl" aria-hidden>{item.emoji}</span>
+                {/* 왼쪽은 **방금 찍은 그것**이다. 사진이 있으면 사진이 맞다. */}
+                {photo
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={photo} alt="" aria-hidden className="h-9 w-9 rounded-lg object-cover" />
+                  : <span className="text-3xl" style={{ color: 'var(--color-avoid)' }} aria-hidden><FoodIcon /></span>}
               </SwapSide>
 
               <span className="text-2xl" style={{ color: 'var(--color-sc-muted)' }} aria-hidden>→</span>
@@ -275,7 +282,7 @@ function FoodResult({
               <SwapSide mark="✓" color="var(--color-safe)" say={alternative.text}>
                 {alternative.glyph
                   ? <OneGlyph line={`\\no{\\${alternative.glyph}}`} className="h-10 w-10" />
-                  : <span className="text-3xl" aria-hidden>🛒</span>}
+                  : <span className="text-3xl" style={{ color: 'var(--color-safe)' }} aria-hidden><BasketIcon /></span>}
               </SwapSide>
 
               <p className="flex-1 text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
@@ -299,9 +306,9 @@ function FoodResult({
 }
 
 function RxResult({
-  item, verdict, onDone,
+  item, verdict, onDone, photo,
 }: {
-  item: ScanItem; verdict: Verdict; onDone: () => void;
+  item: ScanItem; verdict: Verdict; onDone: () => void; photo?: string | null;
 }) {
   const router = useRouter();
   const meta = LEVEL_META[verdict.level];
@@ -309,8 +316,15 @@ function RxResult({
   return (
     <div className="flex flex-1 flex-col px-5">
       <div className="flex flex-col items-center pt-4 text-center">
-        <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full text-5xl" style={{ background: conflict ? meta.bg : 'var(--color-med-bg)' }}>
-          {item.emoji}
+        {/* 찍은 것이 그 약봉지·그 처방전이다. 사진이 이모지보다 정확하다. */}
+        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full"
+             style={{ background: conflict ? meta.bg : 'var(--color-med-bg)',
+                      color: conflict ? meta.color : 'var(--color-sc-primary)', fontSize: 48,
+                      boxShadow: photo ? `0 0 0 4px ${conflict ? meta.color : 'var(--color-sc-primary)'}` : undefined }}>
+          {photo
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={photo} alt="" aria-hidden className="h-full w-full object-cover" />
+            : <PillIcon />}
         </div>
         <h1 className="mt-4 text-2xl font-bold" style={{ color: 'var(--color-sc-ink)' }}>
           {/* 화면에는 포장지 원문, 음성은 영어 — 대회 공식 언어가 영어다 */}

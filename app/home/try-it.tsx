@@ -44,7 +44,8 @@ export function TryIt() {
             />
             <span className="flex items-center justify-center gap-1 px-1 py-1.5 text-[10px] font-semibold"
                   style={{ color: 'var(--color-sc-ink)' }}>
-              <span aria-hidden>{s.emoji}</span>
+              {/* 이모지가 여기 있었다. 바로 위가 그 표본의 실제 사진인데 그 아래에
+                  같은 것을 그림으로 또 말할 이유가 없다. */}
               {s.label.replace(/ (label|Rx)$/, '')}
             </span>
           </button>

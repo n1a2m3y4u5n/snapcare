@@ -2,6 +2,7 @@
 
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
+import { Thumb } from '@/components/sc/Thumb';
 import { NutrientBar } from '@/components/sc/NutrientBar';
 import { useScans } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
@@ -217,9 +218,7 @@ export default function NutritionPage() {
               */}
               {daily.entries.map(({ record, amounts }) => (
                 <div key={record.id} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg" style={{ background: 'var(--color-sc-bg)' }}>
-                    {record.emoji}
-                  </span>
+                  <Thumb id={record.id} kind={record.kind} level={record.level} size={36} />
                   <span className="flex-1">
                     <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}>{record.name}</span>
                     <span className="mt-0.5 block text-xs" style={{ color: 'var(--color-sc-muted)' }}>

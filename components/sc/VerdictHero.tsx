@@ -4,20 +4,42 @@ import type { ScanItem, Verdict } from '@/lib/snapcare/types';
 import { LEVEL_META } from '@/lib/snapcare/verdict';
 import { Say } from './Say';
 import { spokenName } from '@/lib/tts/speakable';
+import { FoodIcon, PillIcon } from '@/components/icons';
 
 /**
  * 신호등 판정 히어로 — 큰 아이콘 + headline + 요약 배지.
  * "no reading required": 색 하나로 안전/주의/회피를 즉시 전달.
  */
-export function VerdictHero({ item, verdict }: { item: ScanItem; verdict: Verdict }) {
+export function VerdictHero({ item, verdict, photo }: {
+  item: ScanItem;
+  verdict: Verdict;
+  /** 방금 찍은 사진. 표본을 눌러 본 것이면 없다. */
+  photo?: string | null;
+}) {
   const meta = LEVEL_META[verdict.level];
+  const Fallback = item.kind === 'medicine' || item.kind === 'prescription' ? PillIcon : FoodIcon;
   return (
     <div className="flex flex-col items-center text-center px-6 pt-6">
+      {/*
+        방금 찍은 그 사진이 여기 온다.
+
+        여기 있던 것은 이모지였다 — 사람이 자기 집 부엌에서 자기 빵을 찍었는데
+        화면에는 남의 빵 그림이 떴다. 그러면 이 판정이 **내가 찍은 그것**에 대한
+        말인지 아닌지가 흐려진다. 판정을 믿게 만드는 것은 문장이 아니라 "그래,
+        내가 찍은 게 이거다" 라는 확인이다.
+
+        테두리로 판정 색을 두른다. 사진이 들어오면 배경색이 가려지는데, 그 색이
+        이 화면에서 글자 없이 뜻이 서는 유일한 것이라 잃으면 안 된다.
+      */}
       <div
-        className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full text-5xl"
-        style={{ background: meta.bg }}
+        className="flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-full"
+        style={{ background: meta.bg, color: meta.color, fontSize: 56,
+                 boxShadow: photo ? `0 0 0 4px ${meta.color}` : undefined }}
       >
-        {item.emoji}
+        {photo
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={photo} alt="" aria-hidden className="h-full w-full object-cover" />
+          : <Fallback />}
       </div>
 
       {/*

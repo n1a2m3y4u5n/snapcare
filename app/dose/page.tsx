@@ -8,6 +8,7 @@ import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { usePreferences } from '@/stores/preferences';
 import { speak } from '@/lib/voice';
 import { spokenName } from '@/lib/tts/speakable';
+import { PillIcon } from '@/components/icons';
 
 /** 복약 확인 — 알람 시점의 큰 Taken/Missed (와이어프레임 Metformin dose). */
 export default function DosePage() {
@@ -51,8 +52,9 @@ export default function DosePage() {
   return (
     <div className="min-h-screen w-full flex justify-center" style={{ background: 'var(--color-med-bg)' }}>
       <div className="relative w-full max-w-[440px] min-h-screen flex flex-col items-center px-6 pt-24">
-        <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-white text-6xl shadow-sm">
-          {item.emoji}
+        <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full bg-white shadow-sm"
+             style={{ fontSize: 64, color: 'var(--color-sc-primary)' }}>
+          <PillIcon />
         </div>
         <h1 className="mt-6 text-2xl font-bold" style={{ color: 'var(--color-sc-ink)' }}>{item.name}</h1>
         <p className="mt-1 text-sm" style={{ color: 'var(--color-sc-muted)' }}>

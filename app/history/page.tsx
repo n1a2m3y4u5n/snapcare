@@ -230,7 +230,10 @@ function RoutineCard({ list, next, onOpen }: {
                  outline: isNext ? '2px solid var(--color-sc-primary)' : undefined,
                }}
                onClick={isNext && next ? () => onOpen(next) : undefined}>
-            <span aria-hidden className="sc-icon">{r.emoji}</span>
+            <span aria-hidden className="sc-icon"
+                  style={{ color: isNext ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)' }}>
+              <PillIcon />
+            </span>
             <span className="flex-1">
               <span className="block text-sm font-semibold" style={{ color: 'var(--color-sc-ink)' }}
                     {...sayable(routineSentence(r))}>
