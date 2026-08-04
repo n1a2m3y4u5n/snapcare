@@ -176,12 +176,21 @@ export default function NutritionPage() {
             */}
             {month.length > 0 && (
               <>
-                <Speakable text="The last four weeks. What you checked, day by day."
-                           className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
-                           style={{ color: 'var(--color-sc-muted)' }}>
-                  <span aria-hidden className="text-lg leading-none">🥗</span>
-                  <span className="flex-1">FOOD</span>
-                </Speakable>
+                {/*
+                  낭독 버튼이 없던 자리. 제목을 누르면 읽어 주기는 했지만 **눌러도
+                  되는 것인지 보이지 않았다** — 글자는 그냥 글자처럼 생겼다. 다른
+                  화면들은 제목 옆에 이 버튼이 서 있고, 그 규칙이 여기서만 깨져
+                  있었다.
+                */}
+                <div className="mt-6 flex items-center gap-2">
+                  <Speakable text="The last four weeks. What you checked, day by day."
+                             className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
+                             style={{ color: 'var(--color-sc-muted)' }}>
+                    <span aria-hidden className="text-lg leading-none">🥗</span>
+                    <span className="flex-1">FOOD</span>
+                  </Speakable>
+                  <Hear text="The last four weeks. What you checked, day by day." className="sc-hear" />
+                </div>
                 <div className="mt-3 rounded-3xl bg-white px-5 py-4 shadow-sm">
                   <MonthNav back={back} onBack={setBack} label={windowLabel(back)} />
                   <div className="mt-2">
@@ -191,11 +200,14 @@ export default function NutritionPage() {
               </>
             )}
 
-            <Speakable text="Eaten today. Everything you checked since this morning."
-                       className="mt-6 flex w-full items-center gap-2 text-[11px] font-bold tracking-wide"
-                       style={{ color: 'var(--color-sc-muted)' }}>
-              <span className="flex-1">EATEN TODAY</span>
-            </Speakable>
+            <div className="mt-6 flex items-center gap-2">
+              <Speakable text="Eaten today. Everything you checked since this morning."
+                         className="flex flex-1 items-center gap-2 text-[11px] font-bold tracking-wide"
+                         style={{ color: 'var(--color-sc-muted)' }}>
+                <span className="flex-1">EATEN TODAY</span>
+              </Speakable>
+              <Hear text="Eaten today. Everything you checked since this morning." className="sc-hear" />
+            </div>
             <div className="mt-2 flex flex-col gap-2">
               {/*
                 이 줄들은 소리로 닿는 길이 시각 글리프에 붙은 표시 하나뿐이었다 —
