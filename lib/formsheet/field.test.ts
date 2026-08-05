@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { cropField, forOcr, otsu } from './field.ts';
+import { cropField, otsu } from './field.ts';
 import { SHEET_CONFIG } from './config.ts';
 import { makeGray } from './image.ts';
 import type { Mat3 } from './homography.ts';
@@ -56,30 +56,6 @@ test('정규 격자를 거치지 않는다 — 원본에서 바로 뜬다', () =
   assert.ok(values.size > 1, '줄무늬가 통째로 뭉개졌다 — 원본에서 안 뜨고 있다');
 });
 
-test('인쇄된 밑줄을 지운다', () => {
-  /*
-    밑줄은 어느 사진에나 있다. 글자 바닥에 붙은 긴 가로선을 OCR 은 글자의 일부로
-    읽고, 그러면 한 글자가 틀리는 정도가 아니라 낱말이 통째로 하나로 뭉친다.
-
-    칸 안에서 밑줄은 폭의 대부분을 차지하는 어두운 행이고, 그런 행은 글자에서
-    나올 수 없다 — 이 칸은 한 줄짜리라 어떤 글자도 칸을 가로지르지 않는다.
-  */
-  const g = makeGray(100, 20);
-  g.d.fill(255);
-  for (let x = 0; x < 100; x++) { g.d[18 * 100 + x] = 0; g.d[19 * 100 + x] = 0; }
-  // 글자 하나 — 폭의 일부만 차지한다.
-  for (let y = 5; y < 15; y++) for (let x = 10; x < 20; x++) g.d[y * 100 + x] = 0;
-
-  const out = forOcr(g);
-  const rowDark = (y: number) => {
-    let n = 0;
-    for (let x = 0; x < 100; x++) if (out.d[y * 100 + x] === 0) n++;
-    return n;
-  };
-  assert.equal(rowDark(18), 0, '밑줄이 남았다');
-  assert.equal(rowDark(19), 0, '밑줄이 남았다');
-  assert.ok(rowDark(10) > 0, '글자까지 지웠다');
-});
 
 test('Otsu 가 두 무리를 실제로 가른다', () => {
   /*

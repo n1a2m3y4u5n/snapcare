@@ -1,6 +1,6 @@
 import type { FieldRect } from './config.ts';
 import { invert3, type Mat3 } from './homography.ts';
-import { makeGray, type Gray } from './image.ts';
+import type { Gray } from './image.ts';
 import { warpPerspective } from './warp.ts';
 
 /**
@@ -65,37 +65,6 @@ function mul3(a: Mat3, b: Mat3): Mat3 {
   return out;
 }
 
-/**
- * OCR 에 넘기기 전에 손보는 것.
- *
- * 두 가지만 한다. **밑줄 지우기**와 **대비 올리기**.
- *
- * 밑줄은 인쇄된 것이라 어느 사진에나 있고, 글자 바닥에 붙은 긴 가로선은 OCR 이
- * 글자의 일부로 읽는다 — `amoxicillin` 이 `arnoxicillin` 이 되는 것보다 나쁘게,
- * 글자가 통째로 하나로 뭉친다. 잘라낸 칸 안에서 밑줄은 **폭의 대부분을 차지하는
- * 어두운 행**이라 알아보기 쉽고, 그런 행은 글자에서 나올 수 없다.
- *
- * 대비는 Otsu 로 문턱을 잡아 흑백으로 만든다. 손으로 쓴 연필과 볼펜은 종이보다
- * 조금 어두울 뿐이고, 그 조금을 남겨 두면 OCR 이 종이의 결을 글자로 읽는다.
- */
-export function forOcr(crop: Gray): Gray {
-  const { w, h, d } = crop;
-  const out = makeGray(w, h);
-  // `<=` 다. Otsu 가 돌려주는 것은 **어두운 무리에 들어가는 마지막 값**이라,
-  // `<` 로 쓰면 문턱 자신이 밝은 쪽으로 넘어간다 — 값이 두 봉우리에 몰려 있는
-  // 흑백 그림에서는 그 한 칸이 어두운 무리를 통째로 잃는다는 뜻이다.
-  const t = otsu(d);
-  for (let i = 0; i < d.length; i++) out.d[i] = d[i] <= t ? 0 : 255;
-
-  // 폭의 70% 넘게 검은 행은 인쇄된 밑줄이다. 글자는 그렇게 넓을 수 없다 —
-  // 이 칸은 한 줄짜리라 어떤 글자도 칸을 가로지르지 않는다.
-  for (let y = 0; y < h; y++) {
-    let dark = 0;
-    for (let x = 0; x < w; x++) if (out.d[y * w + x] === 0) dark++;
-    if (dark > w * 0.7) for (let x = 0; x < w; x++) out.d[y * w + x] = 255;
-  }
-  return out;
-}
 
 /**
  * Otsu — 두 무리로 갈랐을 때 무리 사이 분산이 가장 큰 문턱.

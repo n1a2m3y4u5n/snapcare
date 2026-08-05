@@ -4,9 +4,6 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/stores/analysis';
 import { makeThumb } from '@/lib/photos/store';
-import { ocrToScanItem } from '@/lib/snapcare/fromOcr';
-import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } from '@/lib/nutrition/labelOcr';
-import { recognizeText } from '@/lib/ocr';
 import { CameraIcon } from '@/components/icons';
 import { decodeEvent } from '@/lib/hardware/protocol';
 import { decodeToGray, RETRY_WORK_DIM } from '@/lib/formsheet/decode';
@@ -30,7 +27,6 @@ import { speak } from '@/lib/voice';
 import { Hint } from '@/components/sc/Hint';
 import { sayable, ask } from '@/components/sc/Say';
 import type { ScanItem } from '@/lib/snapcare/types';
-import type { NutrientProfile } from '@/lib/nutrition/types';
 
 
 export default function CameraPage() {
@@ -341,47 +337,26 @@ export default function CameraPage() {
       */
       if (await handledAsSheet(image, shot)) return;
 
-      setStatus('Reading text… 0%');
-      const text = await recognizeText(image, (p) => setStatus(`Reading text… ${Math.round(p * 100)}%`));
-      if (!text || text.trim().length < 4) {
-        // 글자가 없는 사진(음식 그 자체) → 사진 판별
-        await tryVision(image);
-        return;
-      }
+      /*
+        글자 읽기는 **Vision 하나로 간다.**
 
-      // 영양성분표라면 표를 읽어 그대로 계산 엔진에 넣는다.
-      // 제품 DB도 인터넷도 필요 없는 경로 — 대상 지역 로컬 식품에서 유일하게 작동한다.
-      if (looksLikeNutritionLabel(text)) {
-        const parsed = parseNutritionLabel(text);
+        여기 tesseract 가 있었다. 사진 전체를 OCR 해서 나온 글자로 성분표인지 처방전
+        인지 가르고, 성분표면 그 글자를 표로 파싱했다(labelOcr — 같이 지웠다).
+        공짜에 오프라인이라는 것이 그 경로의 값어치였다.
 
-        // 오프라인으로 전 항목을 검증까지 통과했으면 그대로 쓴다 — 네트워크를 타지 않는다.
-        if (parsed.profile && parsed.rejected.length === 0) {
-          goWith(labelItem(parsed.profile, parsed.servingGrams), shot);
-          return;
-        }
+        걷어낸 이유는 정확도다. 두 자리에서 나란히 쟀다:
 
-        // 일부를 못 읽었다면 인터넷이 있을 때만 판별로 보강한다.
-        // 실측상 표 읽기는 Vision이 Tesseract보다 정확했다 (같은 라벨에서 8/8 대 부분성공).
-        setStatus('Checking the label…');
-        if (await tryVision(image)) return;
+          손글씨 약 이름   tesseract 1/3 (conf 33·41·0)   Vision 3/3
+          영양성분표       tesseract 부분 성공             Vision 8/8 칸 일치
 
-        // 보강도 실패 — 부분적으로라도 읽힌 게 있으면 그것만이라도 쓴다.
-        if (parsed.profile) {
-          goWith(labelItem(parsed.profile, parsed.servingGrams), shot);
-          return;
-        }
-        fail('Could not read the table reliably. Hold steady and fill the frame with the label.');
-        return;
-      }
+        그리고 tesseract 가 잘하는 자리 — 반듯하게 인쇄된 글자 — 는 이 앱에서 드물다.
+        사람이 찍는 것은 손으로 쓴 종이와 구겨진 포장지다. 두 번째 인식기를 유지하는
+        값(52MB 자산, 두 갈래 코드, 두 벌의 실패 모드)이 그 드문 경우를 위해 치르기에
+        비쌌다.
 
-      // 처방전도 명시적 신호가 있을 때만 그 경로로 보낸다.
-      // 글자가 읽혔다는 이유만으로 처방전 취급하면 음식 사진이 처방전이 된다.
-      if (looksLikePrescription(text)) {
-        const { item } = ocrToScanItem(text);
-        goWith(item, shot);
-        return;
-      }
-
+        잃은 것을 적어 둔다: **성분표를 오프라인으로 읽던 길이 없어졌다.** 망이 없으면
+        이제 아래 판별도 못 하므로, 그 경우 화면은 "연결이 필요하다" 로 간다.
+      */
       // 글자는 있지만 성분표도 처방전도 아니다 → 음식 사진으로 보고 판별에 맡긴다
       await tryVision(image);
       return;
@@ -390,7 +365,7 @@ export default function CameraPage() {
       // 이 자리가 조용했던 탓에 OCR 이 배포본에서 통째로 죽어 있는 것을 오래 몰랐다 —
       // 화면에는 "다시 시도하세요" 만 뜨고 콘솔에는 아무것도 없어서, 표본이 원래
       // 어려운 것처럼 보였다.
-      console.error('[ocr] 읽기 실패:', err);
+      console.error('[camera] 읽기 실패:', err);
       fail('Could not read that. Try again, or pick one below.');
     } finally {
       setBusy(false);
@@ -509,20 +484,6 @@ export default function CameraPage() {
    */
   function looksLikeACode(name: string): boolean {
     return /\b(qr|barcode|bar code)\b/i.test(name);
-  }
-
-  /** 성분표에서 읽어낸 프로필을 스캔 아이템으로. */
-  function labelItem(profile: NutrientProfile, servingGrams?: number): ScanItem {
-    return {
-      // 라벨 내용에서 결정론적으로 만든 id (같은 라벨은 같은 id)
-      id: `label_${Math.round(profile.per100.energy ?? 0)}_${servingGrams ?? 100}`,
-      name: profile.name,
-      kind: 'food',
-      emoji: '🥫',
-      detectedVia: 'nutrition label',
-      flags: [],
-      profile,
-    };
   }
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {

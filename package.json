@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "node --test --experimental-strip-types 'lib/**/*.test.ts'",
     "predev": "node scripts/copy-model.mjs",
-    "prebuild": "node scripts/copy-model.mjs && node scripts/copy-ocr.mjs && node scripts/prewarm-pictograms.mjs && node scripts/glyph-manifest.mjs && node scripts/stamp-sw.mjs",
+    "prebuild": "node scripts/copy-model.mjs && node scripts/prewarm-pictograms.mjs && node scripts/glyph-manifest.mjs && node scripts/stamp-sw.mjs",
     "prewarm": "node scripts/prewarm-pictograms.mjs",
     "glyphs": "python3 engine/gen_glyphs.py --install --force && python3 engine/build_assets.py --publish && node scripts/prewarm-pictograms.mjs"
   },
@@ -23,7 +23,6 @@
     "qrcode.react": "^4.2.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "tesseract.js": "^7.0.0",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
