@@ -144,13 +144,16 @@ export default function HomePage() {
               손으로 그린 획이라 클수록 잘 읽히고, 이 화면의 첫인상이기도 하다.
             */}
             {/*
-              150px. 글자를 가운데 맞추느라 상자가 넓어졌으므로(679×320) 높이를 그만큼
-              눌러야 폭이 화면에 든다 — 150 이면 폭이 318px 이고, 좁은 폰(360)에서
-              좌우 여백을 빼고 남는 320 안에 들어간다. 이보다 키우면 그 기기에서 넘친다.
+              176px. 상자가 519×320 이라 이 높이에서 폭이 286px 이고, 좁은 폰(360)에서
+              좌우 여백을 뺀 320 안에 든다.
+
+              한때 150 이었다. 그때는 가운데를 맞추느라 왼쪽에 여백을 20% 나 붙여 상자가
+              679px 로 넓어져 있었고, 넓은 상자는 같은 폭 안에서 높이를 눌렀다. 무게중심
+              으로 다시 재면서 여백이 3.4% 로 줄었고, 줄어든 만큼 글자를 키울 수 있다.
             */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-mark.png" alt="SnapCare" width={318} height={150}
-                 style={{ height: 150, width: 'auto' }} />
+            <img src="/logo-mark.png" alt="SnapCare" width={286} height={176}
+                 style={{ height: 176, width: 'auto' }} />
           </h1>
         </div>
 

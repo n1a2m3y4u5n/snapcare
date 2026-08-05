@@ -51,43 +51,44 @@ const OUT = 'public/icons';
 const TILT = 6;
 
 /**
- * **글자가 가운데 오게** 여백을 채운다.
+ * 그림의 **광학 중심**을 상자 가운데로 옮긴다.
  *
- * 그림 상자를 화면 가운데에 놓았는데 글자가 왼쪽으로 치우쳐 보였다. 상자는 정확히
- * 가운데였다 — 치우친 것은 상자 안의 글자다. 오른쪽 위에 사진기와 반짝임이 붙어
- * 있어서 상자의 오른쪽 끝이 그만큼 밀려나 있고, 정작 눈이 로고로 읽는 것은 연둣빛
- * 글자다.
+ * 무엇이 문제인가
+ * ---------------
+ * 여백을 턴 그림을 화면 가운데 놓으면 상자는 정확히 가운데다. 그런데 눈은 상자를
+ * 보지 않고 **잉크의 무게**를 본다. 이 로고는 오른쪽 위에 사진기와 반짝임이, 오른쪽
+ * 가운데에 회색 디스펜서가 있어서 상자의 오른쪽 끝이 그만큼 밀려 있고, 정작 진한
+ * 것은 왼쪽의 연둣빛 글자다. 그래서 가운데에 놓아도 왼쪽으로 치우쳐 보인다.
  *
- * 재 보면 연둣빛의 가운데가 상자 가운데보다 97px(20%) 왼쪽에 있다. 그만큼을 왼쪽에
- * 투명으로 채우면 글자의 가운데가 상자의 가운데가 되고, 그때 상자를 가운데 놓으면
- * 글자가 가운데에 온다.
+ * 두 번 재서 두 번 다 틀렸다
+ * --------------------------
+ * 처음에는 상자 중심을 썼다 — 왼쪽으로 치우쳐 보였다(0% 보정).
+ * 다음에는 연둣빛 글자의 상자 중심을 썼다 — 이번에는 오른쪽으로 치우쳐 보였다.
+ * 20% 를 민 셈인데, 그 값은 회색과 검정을 **없는 것으로 친** 값이다. 그것들도 눈에는
+ * 보인다.
  *
- * 왜 CSS 로 밀지 않는가: 상자보다 그림을 옮기면 오른쪽의 사진기가 화면 밖으로 나갈
- * 수 있다(좁은 폰에서 실제로 2px 넘쳤다). 여백은 상자 안에 있으므로 그 일이 없다.
- *
- * 연둣빛만 재는 이유는 그것이 로고의 이름 부분이라서다. 회색 디스펜서와 검은 사진기는
- * 곁들이고, 곁들이를 가운데 맞추면 이름이 다시 치우친다.
+ * 세 번째로 잰 것이 이것이다: **모든 잉크의, 투명도로 가중한 무게중심.** 진한 초록
+ * 획은 무겁게, 가는 검은 선은 가볍게 센다. 이 그림에서 그 값은 상자 중심보다 3.4%
+ * 왼쪽이고, 그만큼만 밀면 된다. 앞의 두 값(0% 와 20%) 사이 어디쯤이라는 것이 눈으로
+ * 본 것과도 맞는다.
  */
-async function centreOnWordmark(buf) {
+async function centreOnInk(buf) {
   const { data, info } = await sharp(buf).ensureAlpha().raw()
     .toBuffer({ resolveWithObject: true });
   const { width: w, height: h, channels: ch } = info;
-  let min = w;
-  let max = 0;
+
+  let sum = 0;
+  let mass = 0;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const i = (y * w + x) * ch;
-      const [r, g, b, a] = [data[i], data[i + 1], data[i + 2], data[i + 3]];
-      // 연둣빛: 초록이 세고, 빨강보다 확실히 세고, 파랑보다 훨씬 세다.
-      if (a > 60 && g > 120 && g > r + 25 && g > b + 60) {
-        if (x < min) min = x;
-        if (x > max) max = x;
-      }
+      const a = data[(y * w + x) * ch + 3];
+      if (a > 60) { sum += x * a; mass += a; }
     }
   }
-  if (max <= min) return buf;                       // 연둣빛을 못 찾았으면 그대로 둔다
-  const off = Math.round(w / 2 - (min + max) / 2);  // 오른쪽으로 밀어야 하는 양
-  if (Math.abs(off) < 4) return buf;                // 이미 가운데다
+  if (mass === 0) return buf;
+
+  const off = Math.round(w / 2 - sum / mass);   // 오른쪽으로 밀어야 하는 양
+  if (Math.abs(off) < 4) return buf;            // 이미 가운데다
   const pad = Math.abs(off) * 2;
   return sharp(buf)
     .extend({
@@ -110,7 +111,7 @@ async function wordmark(src) {
     .png()
     .toBuffer();
 
-  const centred = await centreOnWordmark(straight);
+  const centred = await centreOnInk(straight);
   // 홈에서 쓰는 높이의 두 배쯤. 3배 화면에서도 또렷하다.
   await sharp(centred).resize({ height: 320 }).png({ compressionLevel: 9 })
     .toFile('public/logo-mark.png');
