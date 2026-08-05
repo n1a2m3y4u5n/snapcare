@@ -311,9 +311,44 @@ function clearOldDemoResidue(): void {
   }
 }
 
+/**
+ * 시연 명단에 쌓인 **시험용 사람들을 한 번 쓸어낸다.**
+ *
+ * 시연 자료를 정리할 때 서버 사본과 실제 명단은 치웠는데, 시연 명단(`~demo`)은 기기
+ * 안에만 있어서 손이 닿지 않았다. 그래서 이미 만져 본 기기에서는 얼굴 목록에 이름
+ * 없는 사람이 아홉까지 늘어난 채로 남았다 — 심사장에서 얼굴을 고르는 화면이 그렇게
+ * 보이면 이 기능이 뜻하는 바가 안 보인다.
+ *
+ * **한 번만 한다.** 시연 중에 사람을 더해 보이는 것은 정상적인 사용이고, 그것을 열
+ * 때마다 지우면 방금 한 일이 조용히 취소된다. 표시를 남겨 두 번째부터는 손대지 않는다.
+ */
+const DEMO_SWEPT = 'snapcare-demo-swept';
+
+export function sweepDemoStrays(): void {
+  if (typeof localStorage === 'undefined') return;
+  if (localStorage.getItem(DEMO_SWEPT)) return;
+  // 쓸 것이 없어도 표시부터 남긴다 — 이 함수가 두 번 도는 일이 없어야 한다.
+  localStorage.setItem(DEMO_SWEPT, '1');
+
+  const raw = localStorage.getItem(`${ROSTER}~demo`);
+  if (!raw) return;
+  try {
+    const list = JSON.parse(raw) as Account[];
+    const keep = new Set<string>([DEMO_PRIMARY, DEMO_KID]);
+    const strays = list.filter((a) => ok(a) && !keep.has(a.id));
+    if (strays.length === 0) return;
+    // 사람만 지우고 자료를 남기면 그 자료는 아무도 못 여는 채로 남는다.
+    strays.forEach((a) => SCOPED.forEach((k) => localStorage.removeItem(`${k}#${a.id}`)));
+    localStorage.setItem(`${ROSTER}~demo`, JSON.stringify(DEMO_ROSTER));
+  } catch {
+    localStorage.removeItem(`${ROSTER}~demo`);
+  }
+}
+
 // 스토어가 저장소를 읽기 전에 끝나야 한다. 이 파일은 스토어들이 먼저 불러들이므로
 // 여기(모듈이 읽히는 시점)가 그 조건을 만족하는 유일하게 확실한 자리다.
 clearOldDemoResidue();
+sweepDemoStrays();
 
 /**
  * 서버에 있던 명단을 되살린다 (모르는 사람만 더한다).

@@ -33,7 +33,7 @@ const store = fakeStorage();
 
 const {
   PRIMARY_ID, DEMO_PRIMARY, DEMO_KID, activeAccountId, addAccount, freeFaces,
-  listAccounts, mergeRoster, removeAccount, scopedKey, setActiveFace,
+  listAccounts, mergeRoster, removeAccount, scopedKey, setActiveFace, sweepDemoStrays,
 } = await import('./accounts.ts');
 
 function reset() {
@@ -253,4 +253,41 @@ test('사람을 바꾸면 그림열쇠를 다시 묻는다', () => {
   const kept = partialize.slice(0, partialize.indexOf('}'));
   assert.doesNotMatch(kept, /\bauthed\b/,
                       'authed 가 저장되면 사람을 바꿔도 열쇠를 안 묻는다');
+});
+
+test('시연 명단에 쌓인 시험용 사람을 한 번 쓸어낸다', () => {
+  reset();
+  const ROSTER_DEMO = 'snapcare-accounts~demo';
+  store.setItem(ROSTER_DEMO, JSON.stringify([
+    { id: DEMO_PRIMARY, emoji: '🧓', color: '#2F6BF6' },
+    { id: DEMO_KID, emoji: '👧', color: '#E8590C' },
+    { id: 'p_e0285284', emoji: '🧑', color: '#2F9E44' },
+    { id: 'p_707894c8', emoji: '🧒', color: '#9C36B5' },
+  ]));
+  // 지워진 사람의 자료도 같이 나가야 한다. 남으면 아무도 못 여는 채로 쌓인다.
+  store.setItem('snapcare-scans#p_e0285284', '{"state":{"scans":[1]}}');
+
+  sweepDemoStrays();
+
+  const left = JSON.parse(store.getItem(ROSTER_DEMO)!) as { id: string }[];
+  assert.deepEqual(left.map((a) => a.id), [DEMO_PRIMARY, DEMO_KID]);
+  assert.equal(store.getItem('snapcare-scans#p_e0285284'), null);
+});
+
+test('쓸어내는 것은 한 번뿐 — 시연 중에 더한 사람은 살아남는다', () => {
+  reset();
+  const ROSTER_DEMO = 'snapcare-accounts~demo';
+  store.setItem(ROSTER_DEMO, JSON.stringify([{ id: DEMO_PRIMARY, emoji: '🧓', color: '#2F6BF6' }]));
+  sweepDemoStrays();                       // 첫 번째 — 여기서 표시가 남는다
+
+  // 심사 도중에 사람을 더해 보이는 것은 정상적인 사용이다. 열 때마다 지우면
+  // 방금 한 일이 조용히 취소되고, 그것이 무대에서 가장 나쁜 종류의 결함이다.
+  store.setItem(ROSTER_DEMO, JSON.stringify([
+    { id: DEMO_PRIMARY, emoji: '🧓', color: '#2F6BF6' },
+    { id: 'p_새로만든', emoji: '👦', color: '#F08C00' },
+  ]));
+  sweepDemoStrays();
+
+  const left = JSON.parse(store.getItem(ROSTER_DEMO)!) as { id: string }[];
+  assert.equal(left.length, 2);
 });
