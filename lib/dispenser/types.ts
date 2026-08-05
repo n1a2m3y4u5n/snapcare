@@ -267,9 +267,33 @@ export interface DueCommand {
 }
 
 /** Anything the phone can put in the command slot. */
+/**
+ * 짝짓기 QR 을 **지금 띄워라.** 발표에서 쓴다.
+ *
+ * 상자는 짝이 없을 때만 그 QR 을 띄운다(`presence.py` 의 사다리). 옳은 규칙이다 —
+ * 이미 주인이 있는 상자 앞에서 "짝을 맺자" 는 화면은 거짓말이고, 그 규칙을 만들려고
+ * `hello` 를 따로 두기까지 했다.
+ *
+ * 그런데 심사장에서 그 규칙이 정확히 보여줄 것을 막는다. 이 기계의 첫 걸음이 QR 한
+ * 장으로 폰과 이어지는 것인데, 그것을 보이려면 먼저 짝을 풀어야 하고 — 풀면 그 뒤에
+ * 보여줄 것들(일정, 배출, 달력)이 같이 사라진다. 순서를 지키려고 시연을 부수는 셈이다.
+ *
+ * 그래서 잠깐만 띄운다. `goodbye` 와 다르다: 저쪽은 짝을 실제로 푸는 것이고 이것은
+ * **화면만** 바꾼다. 상자는 여전히 그 폰의 것이고, 일정도 기록도 그대로다.
+ *
+ * 내려가는 방법이 둘이다 — 앱이 그 QR 을 찍어 `hello` 를 보내거나(시연에서 보이려는
+ * 바로 그 장면이다), 시간이 지나거나. 뒤엣것이 없으면 시연이 끝난 뒤에도 상자가
+ * 짝짓기 화면을 붙들고 서 있게 된다.
+ */
+export interface ShowPairingCommand {
+  action: 'show_pairing';
+  /** 몇 초 동안. 안 주면 펌웨어 기본값. */
+  seconds?: number;
+}
+
 export type DeviceCommand =
   | ReleaseCommand | DropCommand | BeepCommand
-  | HelloCommand | GoodbyeCommand | DueCommand;
+  | HelloCommand | GoodbyeCommand | DueCommand | ShowPairingCommand;
 
 /** The relay's own view of a mailbox — revisions and timestamps, no plaintext. */
 export interface MailboxMeta {

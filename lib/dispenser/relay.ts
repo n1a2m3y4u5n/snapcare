@@ -322,6 +322,16 @@ export class DispenserClient {
    * claimed by a phone that has forgotten it, and therefore never showing its
    * pairing code to the next person who stands in front of it.
    */
+  /**
+   * 짝짓기 QR 을 잠깐 띄우라고 한다. 짝은 그대로다 — 화면만 바뀐다.
+   *
+   * 발표에서 첫 걸음(QR 한 장으로 폰과 잇기)을 보이려고 있다. 왜 짝을 풀지 않고
+   * 이 길로 가는지는 `ShowPairingCommand` 에 적었다.
+   */
+  async showPairing(seconds?: number): Promise<number> {
+    return this.command(seconds ? { action: 'show_pairing', seconds } : { action: 'show_pairing' });
+  }
+
   async goodbye(): Promise<number> {
     return this.command({ action: 'goodbye' });
   }

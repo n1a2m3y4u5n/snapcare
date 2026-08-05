@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BellIcon, BoxIcon } from '@/components/icons';
+import { BellIcon, BoxIcon, LinkIcon } from '@/components/icons';
 
 import { PAIRED_EVENT, clientFor, loadPaired, type PairedDevice } from '@/lib/dispenser/paired';
 import { isDemo, setDemo } from '@/lib/snapcare/demo';
@@ -251,6 +251,32 @@ export default function PresentPage() {
             </button>
           ))}
         </div>
+        {/*
+          첫 걸음을 보여주는 단추.
+
+          이 기계가 폰과 이어지는 방법은 QR 한 장이고, 그것이 이 발표에서 가장 먼저
+          설명할 것이다. 그런데 상자는 짝이 없을 때만 그 QR 을 띄운다 — 옳은 규칙이고
+          (이미 주인이 있는 상자 앞에서 "짝을 맺자" 는 화면은 거짓말이다) 그 규칙을
+          만들려고 `hello` 를 따로 두기까지 했다.
+
+          그래서 심사장에서는 그 규칙이 정확히 보여줄 것을 막는다. 보이려면 짝을
+          풀어야 하고, 풀면 그 뒤에 보여줄 것들 — 일정, 배출, 달력 — 이 같이 사라진다.
+
+          이 단추는 **화면만** 바꾼다. 짝은 그대로다. 그리고 내려가는 방법이 사람이
+          할 일과 같다: 폰으로 그 QR 을 찍으면 사라진다. 시연에서 보이려는 장면이
+          정확히 그것이라, 설명과 화면이 따로 놀지 않는다.
+        */}
+        <button
+          onClick={() => send('Pairing QR', () => clientFor(paired).showPairing())}
+          disabled={busy !== null}
+          className="sc-row mt-2 flex w-full items-center rounded-2xl py-3 text-left disabled:opacity-40"
+          style={{ background: 'var(--color-sc-bg)' }}
+        >
+          <span className="sc-icon flex items-center" aria-hidden><LinkIcon /></span>
+          <span className="flex-1 font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+            {busy === 'Pairing QR' ? '…' : 'Pairing QR'}
+          </span>
+        </button>
         <button
           onClick={() => send('Beep', () => clientFor(paired).beep())}
           disabled={busy !== null}

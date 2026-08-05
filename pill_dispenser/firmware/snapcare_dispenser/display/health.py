@@ -309,6 +309,12 @@ class Health:
     #: is true whenever it is shown, and it clears exactly when the machine
     #: becomes useful.
     prescribed: bool = False
+    #: 발표용으로 짝짓기 화면을 띄우라는 요청이 살아 있는가.
+    #:
+    #: `prescribed` 와 나란히 선다. 저쪽은 "이 상자가 이미 쓰이고 있는가" 이고 이것은
+    #: "지금 그 첫 걸음을 보여 주는 중인가" 다. 둘이 동시에 참일 수 있고, 그때는
+    #: 이쪽이 이긴다 — 발표에서만 그렇게 하라고 누른 것이다.
+    pairing_demo: bool = False
     #: The next dose still to come *today*, ignoring anything already owed. A
     #: dose waiting right now shows up in `waiting`, not here.
     next_tray: int | None = None
@@ -546,6 +552,10 @@ def _read(dispenser, network, cloud, display=None) -> Health:
     # settled between them, which is a panel arguing with itself.
     today_doses = _try("today's doses", lambda: _day(dispenser, at, owed), ())
 
+    # 발표용 짝짓기 화면. 남은 초를 상자가 세고 있고, 화면은 그것이 0 인지만 본다.
+    pairing_demo = _try("the pairing demo",
+                        lambda: int(relay_status.get("showPairingFor") or 0) > 0, False)
+
     health = Health(
         dispensing=dispensing,
         wifi=wifi,
@@ -555,6 +565,7 @@ def _read(dispenser, network, cloud, display=None) -> Health:
         claim=claim,
         pair_payload=pair_payload,
         prescribed=prescribed,
+        pairing_demo=pairing_demo,
         next_tray=next_tray,
         next_at=next_at,
         now=f"{at.hour:02d}:{at.minute:02d}" if at is not None else "",

@@ -1035,3 +1035,23 @@ def _idle_of(day, **over):
     return Health(day=day, days=_days(today=day), **base)
 
 
+
+
+def test_the_pairing_screen_can_be_summoned_over_a_working_box():
+    """발표 버튼이 화면 사다리를 실제로 바꾸는가.
+
+    평소 규칙은 그대로여야 한다 — 짝이 있으면 짝짓기 화면은 안 뜬다. 그 규칙이
+    무너지면 이미 주인이 있는 상자가 "짝을 맺자" 고 말하게 되고, 그 앞에 선 사람은
+    자기 폰이 풀린 줄 안다.
+    """
+    from snapcare_dispenser.display import presence as presence_mod
+    from snapcare_dispenser.display.health import Health
+
+    def screen(**kw):
+        health = Health(pair_payload="SNAPCARE-PAIR:ABC", claim="ABCDE-12345",
+                        dispensing=True, wifi="online", known=True, **kw)
+        return presence_mod.Presence()._decide(health).screen   # noqa: SLF001
+
+    assert screen(prescribed=False, pairing_demo=False) == "pair", "설정 중에는 떠야 한다"
+    assert screen(prescribed=True, pairing_demo=False) == "idle", "쓰이는 상자는 안 뜬다"
+    assert screen(prescribed=True, pairing_demo=True) == "pair", "발표 버튼이 안 먹었다"

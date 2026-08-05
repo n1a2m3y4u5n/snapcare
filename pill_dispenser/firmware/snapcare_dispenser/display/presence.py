@@ -715,7 +715,17 @@ class Presence:
         #     Above the resting frame and nowhere near the dose frames — every
         #     rung above this one is the machine doing its job, and a setup card
         #     must never cover a dose that is waiting to be pressed.
-        if not _field(health, "prescribed", False) and _field(health, "pair_payload", ""):
+        #     발표에서 이 화면을 **일부러** 부를 수 있다(`show_pairing`). 그때는
+        #     이미 처방이 있어도 뜬다 — 이 기계의 첫 걸음이 QR 한 장으로 폰과 이어지는
+        #     것인데, 그것을 보이려고 짝을 실제로 풀면 그 뒤에 보여줄 것들이 같이
+        #     사라진다. 화면만 잠깐 덮어쓰고 짝은 건드리지 않는다.
+        #
+        #     이 자리에 두는 이유는 위와 같다: 기다리는 복용을 절대 안 덮는다. 시연
+        #     중에 약이 나올 때가 되면 그쪽이 이긴다. 설명하다 놓치는 편이 사람이
+        #     약을 놓치는 것보다 낫다.
+        if ((_field(health, "pairing_demo", False)
+             or not _field(health, "prescribed", False))
+                and _field(health, "pair_payload", "")):
             return plan("pair", (health,),
                         (_field(health, "claim", ""),
                          _field(health, "pair_payload", "")),

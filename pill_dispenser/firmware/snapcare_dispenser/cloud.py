@@ -172,6 +172,8 @@ class CloudLink:
         #: 폰이 이 상자를 자기 것이라고 말한 시각, 또는 "". 짝짓기 화면을 내리는
         #: 유일한 증거다 — `display/health` 가 읽는다.
         self._claimed_at = str(stored.get("claimedAt") or "")
+        # 발표용 짝짓기 화면이 꺼지는 시각(monotonic). 0 이면 안 띄우는 중.
+        self._show_pair_until = 0.0
         #: 폰이 짝을 **푼** 시각, 또는 "". `claimedAt` 이 비었다는 것만으로는
         #: 부족해서 따로 남긴다: 한 번도 짝지은 적 없는 상자와 방금 풀린 상자가
         #: 그 필드에서는 똑같이 보이는데, 짝짓기 QR 을 다시 띄워야 하는 쪽은
@@ -228,6 +230,13 @@ class CloudLink:
                 "appliedAt": self._applied_at,
                 "claimedAt": self._claimed_at,
                 "releasedAt": self._released_at,
+                # 발표용으로 짝짓기 QR 을 띄우는 동안 남은 초. 0 이면 안 띄운다.
+                #
+                # 카드에 안 쓴다. 이것은 화면 하나의 상태이지 이 기계가 누구 것인지가
+                # 아니고, 재부팅으로 사라지는 편이 맞다 — 시연이 끝난 뒤 상자가 짝짓기
+                # 화면을 붙들고 서 있을 이유가 없다.
+                "showPairingFor": max(0, round(self._show_pair_until - time.monotonic()))
+                                  if self._show_pair_until else 0,
                 "lastContactSecondsAgo": round(age) if age is not None else None,
                 "lastError": self._last_error,
                 "attempts": self._attempts,
@@ -688,6 +697,13 @@ class CloudLink:
             # 이것이 증거가 되는 이유: 상자 열쇠로 봉해져 오므로 만들 수 있는 것은
             # 코드를 쥔 쪽뿐이다. 릴레이는 이 봉투를 열지 못하고 지어내지도 못한다.
             self._claim(True)
+            # 발표용 짝짓기 화면이 떠 있었으면 여기서 내린다.
+            #
+            # 시연에서 보이려는 장면이 바로 이것이다 — 폰이 그 QR 을 찍으면 화면이
+            # 사라진다. 시간으로 내리면 "찍어서 사라졌다" 가 아니라 "그냥 사라졌다" 로
+            # 보이고, 그 둘의 차이가 이 시연의 요점이다.
+            with self._lock:
+                self._show_pair_until = 0.0
             log.info("a phone claimed this box (revision %d)", rev)
             return
 
@@ -698,6 +714,24 @@ class CloudLink:
             # 일이 없어진다.
             self._claim(False)
             log.info("the phone let go of this box (revision %d)", rev)
+            return
+
+        if action == "show_pairing":
+            # 짝짓기 QR 을 잠깐 띄운다. **짝은 안 푼다** — `goodbye` 와 다르다.
+            #
+            # 왜 필요한가: 이 기계의 첫 걸음이 QR 한 장으로 폰과 이어지는 것인데,
+            # 상자는 짝이 없을 때만 그 화면을 띄운다. 옳은 규칙이라 안 고친다. 대신
+            # 발표에서만 잠깐 덮어쓴다 — 화면만 바뀌고 일정도 기록도 그대로다.
+            #
+            # 반드시 꺼진다. 시간으로도 꺼지고 `hello` 로도 꺼진다. 앞엣것이 없으면
+            # 시연이 끝난 뒤 상자가 짝짓기 화면을 붙들고 서 있게 된다.
+            seconds = _optional_int(opened.get("seconds")) or config.SHOW_PAIRING_S
+            seconds = max(5, min(int(seconds), 600))
+            with self._lock:
+                self._show_pair_until = time.monotonic() + seconds
+            log.info("showing the pairing code for %ds, from the cloud "
+                     "(revision %d) — the pairing itself is untouched", seconds, rev)
+            self.nudge()
             return
 
         if action in ("drop", "beep", "due"):

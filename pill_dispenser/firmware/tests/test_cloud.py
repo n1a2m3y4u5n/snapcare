@@ -933,3 +933,47 @@ def test_a_demo_alarm_twice_on_one_tray_does_not_double(link, dispenser):
     link._carry_out({"action": "due", "tray": 2}, 31)          # noqa: SLF001
     link._carry_out({"action": "due", "tray": 2}, 32)          # noqa: SLF001
     assert len(dispenser.awaiting_release) == 1
+
+
+def test_show_pairing_puts_the_code_back_without_unpairing(link):
+    """발표에서 첫 걸음을 보이는 길.
+
+    이 기계가 폰과 이어지는 방법은 QR 한 장이고 그것이 가장 먼저 설명할 것인데,
+    상자는 짝이 없을 때만 그 화면을 띄운다. 옳은 규칙이라 안 고친다 — 이미 주인이
+    있는 상자 앞에서 "짝을 맺자" 는 화면은 거짓말이다.
+
+    그래서 화면만 잠깐 덮어쓴다. **짝은 그대로여야 한다.** 짝을 실제로 풀면
+    (`goodbye`) 그 뒤에 보여줄 것들 — 일정, 배출, 달력 — 이 같이 사라지고, 순서를
+    지키려다 시연을 부수는 셈이 된다.
+    """
+    link._carry_out({"action": "hello"}, 30)                   # noqa: SLF001
+    claimed = link.status()["claimedAt"]
+    assert claimed
+
+    link._carry_out({"action": "show_pairing", "seconds": 60}, 31)   # noqa: SLF001
+    status = link.status()
+    assert status["showPairingFor"] > 0, "짝짓기 화면이 안 켜졌다"
+    assert status["claimedAt"] == claimed, "짝을 건드리면 안 된다"
+
+
+def test_scanning_the_code_takes_the_pairing_screen_down(link):
+    """시연에서 보이려는 장면이 정확히 이것이다.
+
+    폰이 그 QR 을 찍으면 화면이 사라진다. 시간으로만 내리면 "찍어서 사라졌다" 가
+    아니라 "그냥 사라졌다" 로 보이고, 그 둘의 차이가 이 시연의 요점이다.
+    """
+    link._carry_out({"action": "show_pairing", "seconds": 600}, 40)  # noqa: SLF001
+    assert link.status()["showPairingFor"] > 0
+
+    link._carry_out({"action": "hello"}, 41)                   # noqa: SLF001
+    assert link.status()["showPairingFor"] == 0, "찍었는데 화면이 안 내려갔다"
+
+
+def test_the_pairing_screen_cannot_be_left_up_forever(link):
+    """반드시 꺼진다 — 아무도 안 찍어도.
+
+    없으면 시연이 끝난 뒤 상자가 짝짓기 화면을 붙들고 서 있게 된다. 그리고 그 화면은
+    "이 상자는 주인이 없다" 는 뜻이라, 다음 사람이 그 앞에서 잘못 판단한다.
+    """
+    link._carry_out({"action": "show_pairing", "seconds": 99999}, 50)  # noqa: SLF001
+    assert link.status()["showPairingFor"] <= 600, "상한이 안 걸렸다"

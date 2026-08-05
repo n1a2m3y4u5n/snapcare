@@ -841,6 +841,13 @@ CLOUD_BACKOFF_FACTOR = 2.0
 #: a random 30-90 s.
 CLOUD_BACKOFF_JITTER = 0.5
 
+#: 발표용 짝짓기 화면을 몇 초 띄우는가 (`show_pairing` 이 값을 안 주면).
+#:
+#: 90초는 설명하고, 폰을 꺼내고, 찍는 데 드는 시간이다. 짧게 잡으면 말하는 중에
+#: 사라지고, 길게 잡으면 다음 이야기로 넘어간 뒤에도 남는다. 어차피 폰이 찍으면
+#: 그 자리에서 내려가므로 이 값이 하는 일은 **안 찍었을 때 언제 포기하는가** 하나다.
+SHOW_PAIRING_S = 90
+
 #: How often the device republishes its state even when nothing has changed.
 #:
 #: This is what makes the app able to say "last heard from, four minutes ago"
