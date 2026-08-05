@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useIsDemo } from '@/lib/hooks';
 import { CanIcon, QuestionIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/stores/analysis';
@@ -62,6 +63,8 @@ export default function CameraPage() {
    * 무엇을 눌러야 할지 고르는 일부터 시작된다. 인식이 실패했을 때만 펼친다.
    */
   const [showOptions, setShowOptions] = useState(false);
+  // 표본 목록은 시연에서만 낸다 — 이유는 아래 그것을 그리는 자리에 적었다.
+  const demo = useIsDemo();
 
   // 16MB 를 사진 찍은 뒤에 받기 시작하면 그만큼 기다린다. 화면에 들어올 때 미리 받는다.
   useEffect(() => { warmUp(); }, []);
@@ -661,10 +664,21 @@ export default function CameraPage() {
         </div>
 
         {/*
-          인식이 실패하기 전까지는 대안 경로를 감춘다 — 주된 동작은 셔터 하나뿐이다.
-          완전히 막아두면 카메라를 못 쓰는 상황에서 갇히므로, 눈에 띄지 않는 링크로만 열어둔다.
+          "Can't take a photo?" 를 **시연에서만** 낸다.
+
+          이 줄은 카메라를 못 쓰는 사람의 출구라고 적혀 있었다. 그런데 눌러서 나오는
+          것은 표본 목록뿐이다 — 성분표 석 장, 처방전 넉 장, 미리 만든 항목 몇 개.
+          손이 떨려서 못 찍는 사람에게 남의 성분표 사진은 아무 도움이 안 된다. 출구라고
+          이름 붙인 문이 실은 진열대였다.
+
+          진짜 출구는 이미 있다. 미리보기를 못 열면 셔터가 시스템 카메라(갤러리 포함)를
+          열고, 거기서 이미 찍어 둔 사진을 고를 수 있다.
+
+          표본은 심사 시연에서 쓴다 — 실물 약통과 종이를 무대에 들고 갈 수 없을 때가
+          있다. 그래서 지우지 않고 시연 모드 안으로 옮긴다. 이 저장소가 시연 자료
+          초기화 단추에 하는 것과 같다.
         */}
-        {!showOptions ? (
+        {!showOptions ? (demo && (
           <div className="relative z-10 px-5 pb-8 text-center"
                style={{ background: 'rgba(0,0,0,0.55)' }}>
             <button
@@ -679,7 +693,7 @@ export default function CameraPage() {
               <span {...sayable('Cannot take a photo? Tap here for things you can try instead.')}>Can&apos;t take a photo?</span>
             </button>
           </div>
-        ) : (
+        )) : (
           /* 대안 목록. 열리면 영상을 덮는다 — 여기서 고르는 동안 미리보기는 방해다. */
           <div className="relative z-10 h-full overflow-y-auto" style={{ background: '#000' }}>
             <div className="px-5 pt-1">
