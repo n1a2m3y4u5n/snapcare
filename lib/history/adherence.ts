@@ -22,6 +22,12 @@ import type { ScanRecord } from '../snapcare/types.ts';
  * 그래서 이 수는 **짝지은 상자를 쓰는 사람의 수**다. 그 사실을 화면에도 적는다.
  */
 
+/** 지금을 `'HHMM'` 으로. 부르는 쪽이 넘기면 그것을 쓴다 — 시험이 시계를 안 읽게. */
+function nowClock(): string {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
 export interface DoseRow {
   dayKey: string;
   /** 예정 시각 `'0800'` */
@@ -80,9 +86,22 @@ export function windowDays(today: string, days: number): string[] {
   return out;
 }
 
-export function adherence(rows: DoseRow[], today: string, days = 7): Adherence {
+export function adherence(rows: DoseRow[], today: string, days = 7,
+                          nowHHMM = nowClock()): Adherence {
   const window = new Set(windowDays(today, days));
-  const inWindow = rows.filter((r) => window.has(r.dayKey));
+  /*
+    **아직 시각이 안 온 복용은 안 센다.**
+
+    분모에서 뺀다. 안 빼면 매일 자정에 그 날 몫이 통째로 실패로 들어오고, 하루가
+    지나면서 조금씩 회복된다 — 즉 **아침마다 순응도가 가장 낮게 보인다.** 실제로
+    나빠진 것이 없는데 숫자가 떨어지고, 그것을 매일 아침 보는 사람에게는 앱이 자기를
+    나무라는 것으로 읽힌다.
+
+    달력이 같은 판단을 하고 있다(`calendar.ts` 의 `pending`). 한쪽만 고치면 같은
+    화면에서 그림은 "아직" 이라고 하고 숫자는 "실패" 라고 한다.
+  */
+  const inWindow = rows.filter((r) => window.has(r.dayKey)
+    && !(r.dayKey === today && !r.taken && r.due > nowHHMM));
 
   const offered = inWindow.length;
   const taken = inWindow.filter((r) => r.taken).length;

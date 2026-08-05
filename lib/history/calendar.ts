@@ -78,6 +78,17 @@ export interface DoseSlot {
   due: string;
   part: DayPart;
   taken: boolean;
+  /**
+   * 아직 그 시각이 안 왔다.
+   *
+   * `taken: false` 를 전부 "걸렀다" 로 그리고 있었다. 그래서 아침에 앱을 열면 **오늘
+   * 저녁 약이 이미 실패로 칠해져 있었다.** 아직 일어나지도 않은 일을 나무라는 화면이고,
+   * 매일 아침 그것을 보는 사람에게는 앱이 자기를 못 미더워하는 것으로 읽힌다.
+   *
+   * 여기서 정하는 이유는 `countable` 과 같다 — 이것은 **자료에 대한 판단**이지 화면
+   * 넓이에 대한 것이 아니다. 그리는 쪽이 각자 정하면 두 화면이 같은 날을 다르게 센다.
+   */
+  pending: boolean;
 }
 
 export interface CalendarDay {
@@ -87,6 +98,8 @@ export interface CalendarDay {
   offered: number;
   /** 그중 사람이 가져간 횟수. */
   taken: number;
+  /** 아직 시각이 안 온 횟수. `offered` 에는 들지만 실패로 세면 안 된다. */
+  pending: number;
   /** 오늘인가. 오늘은 아직 안 지났으므로 빈 자리가 실패가 아니다. */
   today: boolean;
   /**
@@ -109,6 +122,12 @@ export interface CalendarDay {
   slots: DoseSlot[];
 }
 
+/** 지금을 `'HHMM'` 으로. 부르는 쪽이 넘기면 그것을 쓴다 — 시험이 시계를 안 읽게. */
+function nowClock(): string {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
 /**
  * `anchor` 부터 거슬러 `days` 일치를, **오래된 날이 앞에** 오도록.
  *
@@ -121,11 +140,13 @@ export interface CalendarDay {
  * 상관없다. 여기서 뒤집어 두면 그리는 쪽이 매번 뒤집지 않아도 된다.
  */
 export function calendar(rows: DoseRow[], anchor: string, days = 28,
-                         today = anchor): CalendarDay[] {
+                         today = anchor, nowHHMM = nowClock()): CalendarDay[] {
   const byDay = new Map<string, DoseSlot[]>();
   for (const row of rows) {
     const cell = byDay.get(row.dayKey) ?? [];
-    cell.push({ due: row.due, part: partOf(row.due), taken: row.taken });
+    // 아직 안 온 시각은 오늘에만 있다. 지난 날의 빈 자리는 그냥 거른 것이다.
+    const pending = row.dayKey === today && !row.taken && row.due > nowHHMM;
+    cell.push({ due: row.due, part: partOf(row.due), taken: row.taken, pending });
     byDay.set(row.dayKey, cell);
   }
   // 시각 순. `'0800'` 은 자리수가 고정이라 글자 비교가 곧 시각 비교다.
@@ -140,6 +161,8 @@ export function calendar(rows: DoseRow[], anchor: string, days = 28,
         dayKey,
         offered: slots.length,
         taken: slots.filter((s) => s.taken).length,
+        // 아직 안 온 것은 성공도 실패도 아니다. 순응도 계산이 이 수를 빼고 세도록.
+        pending: slots.filter((s) => s.pending).length,
         today: dayKey === today,
         countable: slots.length > 0 && slots.length <= MAX_SEGMENTS,
         slots,

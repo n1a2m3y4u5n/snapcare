@@ -147,3 +147,32 @@ test('때를 모르는 것은 거른 이유로 말하지 않는다', () => {
   assert.match(daySentence(day), /1 of 2 doses/);
   assert.doesNotMatch(daySentence(day), /unrecorded/);
 });
+
+/*
+  아직 시각이 안 온 복용은 **실패가 아니다.**
+
+  `taken: false` 를 전부 거른 것으로 그리고 있었다. 그래서 아침에 앱을 열면 오늘
+  저녁 약이 이미 실패로 칠해져 있었다 — 아직 일어나지도 않은 일을 나무라는 화면이고,
+  매일 아침 그것을 보는 사람에게는 앱이 자기를 못 미더워하는 것으로 읽힌다.
+*/
+test('오늘 아직 안 온 복용은 거른 것과 갈린다', () => {
+  const rows = [
+    { dayKey: '2026-08-05', due: '0800', taken: true },
+    { dayKey: '2026-08-05', due: '1900', taken: false },   // 정오 기준 아직
+    { dayKey: '2026-08-04', due: '1900', taken: false },   // 어제 — 진짜 거름
+  ] as never[];
+  const days = calendar(rows, '2026-08-05', 3, '2026-08-05', '1200');
+  const today = days.find((d) => d.today)!;
+  const yesterday = days.find((d) => d.dayKey === '2026-08-04')!;
+
+  assert.equal(today.pending, 1, '오늘 저녁은 아직 안 온 것이다');
+  assert.equal(today.slots.find((s) => s.due === '1900')!.pending, true);
+  assert.equal(yesterday.pending, 0, '지난 날의 빈 자리는 그냥 거른 것이다');
+  assert.equal(yesterday.slots[0].pending, false);
+});
+
+test('시각이 지나면 거른 것이 된다', () => {
+  const rows = [{ dayKey: '2026-08-05', due: '0800', taken: false }] as never[];
+  const days = calendar(rows, '2026-08-05', 1, '2026-08-05', '1200');
+  assert.equal(days[0].pending, 0, '8시가 지났으면 더는 기다리는 것이 아니다');
+});
