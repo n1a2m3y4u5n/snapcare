@@ -97,7 +97,7 @@ export function WhoSheet({ needsProfile = false }: {
         onClick={() => setOpen((v) => !v)}
         aria-label="Switch person"
         aria-expanded={open}
-        className="relative flex h-full w-full items-center justify-center
+        className="relative flex h-full w-full items-center justify-center rounded-r-3xl
                    active:bg-[var(--color-sc-bg)] transition-colors"
         style={{ paddingTop: 16, paddingBottom: 16 }}
         {...sayable('This is who the app is answering for. Tap to switch to another person.')}

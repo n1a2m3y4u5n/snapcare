@@ -110,7 +110,14 @@ export function BigCamera() {
 export function Dock({ satellites, extra }: { satellites: Satellite[]; extra?: React.ReactNode }) {
   const router = useRouter();
   return (
-    <div className="flex items-stretch overflow-hidden rounded-3xl bg-white shadow-sm">
+    /*
+      `overflow-hidden` 을 쓰면 안 된다.
+
+      끝 칸의 모서리를 둥글게 자르려고 붙였는데, 그러면 이 줄 **안에서 열리는 것**이
+      같이 잘린다 — 프로필 목록이 위로 펼쳐지는데 그림자만 보이고 목록은 안 보였다.
+      모서리는 첫 칸과 끝 칸에 따로 둥글게 준다.
+    */
+    <div className="flex items-stretch rounded-3xl bg-white shadow-sm">
       {satellites.map((s, i) => (
         <button
           key={s.href}
@@ -118,8 +125,9 @@ export function Dock({ satellites, extra }: { satellites: Satellite[]; extra?: R
           aria-label={s.say}
           /* 위아래 여백을 px 로 못박는다 — 틀은 px, 내용은 rem. rem 이면 가장 큰
              글자에서 이 줄이 98px 로 부풀고, 그만큼이 카메라에서 빠진다. */
-          className="relative flex min-w-0 flex-1 items-center justify-center
-                     active:bg-[var(--color-sc-bg)] transition-colors"
+          className={`relative flex min-w-0 flex-1 items-center justify-center
+                      active:bg-[var(--color-sc-bg)] transition-colors
+                      ${i === 0 ? 'rounded-l-3xl' : ''}`}
           /*
             칸과 칸 사이의 실선. 테두리로 그리면 첫 칸에만 없어야 해서 조건이 붙는데,
             그 조건은 칸 순서가 바뀌는 날 잊힌다. 왼쪽에만 긋고 첫 칸에서 끈다.
@@ -146,7 +154,7 @@ export function Dock({ satellites, extra }: { satellites: Satellite[]; extra?: R
         </button>
       ))}
       {extra && (
-        <div className="flex min-w-0 flex-1 items-center justify-center"
+        <div className="flex min-w-0 flex-1 items-center justify-center rounded-r-3xl"
              style={{ borderLeft: '1px solid var(--color-sc-line)' }}>
           {extra}
         </div>
