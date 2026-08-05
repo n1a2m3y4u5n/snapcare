@@ -185,6 +185,24 @@ export function leadingBlanks(first: string): number {
 }
 
 /**
+ * 마지막 날 뒤에 남는 그 주의 빈 칸 수.
+ *
+ * 창이 **오늘에서 끝난다.** 그래서 마지막 줄이 주 중간에서 뚝 끊겼고, 달력이 달력으로
+ * 안 보였다 — 수요일까지 그려진 격자를 보면 사람은 "이 달력이 잘못됐다" 고 읽는다.
+ * 실제로 그 말을 들었다.
+ *
+ * 앞의 빈 칸은 이미 그리고 있었다(`leadingBlanks`). 같은 이유가 뒤에도 있었는데
+ * 한쪽만 하고 있었던 셈이다.
+ *
+ * 아직 안 온 날은 **칸으로는 있고 내용은 없다.** 지워 버리면 이번 주가 사흘밖에
+ * 없는 것처럼 보이고, 색을 칠하면 안 일어난 일을 그린 것이 된다.
+ */
+export function trailingBlanks(last: string): number {
+  const d = new Date(`${last}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) ? 0 : 6 - d.getUTCDay();
+}
+
+/**
  * 그 날을 소리로. 읽지 못하는 사람에게 달력은 그림일 뿐이라, 칸마다 말이 필요하다.
  */
 export function daySentence(day: CalendarDay): string {

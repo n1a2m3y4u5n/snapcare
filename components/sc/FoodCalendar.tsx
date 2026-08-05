@@ -1,7 +1,7 @@
 'use client';
 
 import { type FoodDay, foodDaySentence } from '@/lib/history/foodCalendar';
-import { leadingBlanks } from '@/lib/history/calendar';
+import { leadingBlanks, trailingBlanks } from '@/lib/history/calendar';
 import { sayable } from './Say';
 import { AvoidIcon, CarefulIcon, FineIcon } from '@/components/icons';
 
@@ -44,6 +44,17 @@ export function FoodCalendar({ days, picked, onPick }: {
 }) {
   if (!days.length) return null;
   const blanks = leadingBlanks(days[0].dayKey);
+  /*
+    마지막 줄을 그 주 끝까지 채운다.
+
+    창이 오늘에서 끝나므로 마지막 줄이 주 중간에서 뚝 끊겼고, 그러면 달력이 달력으로
+    안 읽힌다 — 수요일까지 그려진 격자를 보면 "이 달력이 잘못됐다" 로 읽는다.
+    앞의 빈 칸은 이미 그리고 있었으니, 같은 이유가 뒤에도 있었던 것이다.
+
+    아직 안 온 날은 **칸으로는 있고 내용은 없다.** 지우면 이번 주가 사흘뿐인 것처럼
+    보이고, 칠하면 안 일어난 일을 그린 것이 된다.
+  */
+  const ahead = trailingBlanks(days[days.length - 1].dayKey);
 
   return (
     <div>
@@ -57,6 +68,13 @@ export function FoodCalendar({ days, picked, onPick }: {
         {days.map((day) => (
           <Cell key={day.dayKey} day={day}
                 picked={day.dayKey === picked} onPick={onPick} />
+        ))}
+        {/* 아직 안 온 날. 칸은 있고 내용은 없다 — 누를 것도 읽을 것도 없으므로
+            소리도 안 붙인다. */}
+        {Array.from({ length: ahead }, (_, i) => (
+          <span key={`a${i}`} aria-hidden className="aspect-square rounded-md"
+                style={{ background: 'var(--color-sc-bg)',
+                         boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--color-sc-ink) 8%, transparent)' }} />
         ))}
       </div>
 

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { DAY_PARTS, MAX_SEGMENTS, calendar, daySentence, leadingBlanks, partOf } from './calendar.ts';
+import { DAY_PARTS, MAX_SEGMENTS, calendar, daySentence, leadingBlanks, partOf, trailingBlanks } from './calendar.ts';
 import type { DoseRow } from './adherence.ts';
 
 function dose(dayKey: string, taken: boolean): DoseRow {
@@ -175,4 +175,32 @@ test('시각이 지나면 거른 것이 된다', () => {
   const rows = [{ dayKey: '2026-08-05', due: '0800', taken: false }] as never[];
   const days = calendar(rows, '2026-08-05', 1, '2026-08-05', '1200');
   assert.equal(days[0].pending, 0, '8시가 지났으면 더는 기다리는 것이 아니다');
+});
+
+/*
+  달력이 달력으로 보이려면 **마지막 줄도 그 주 끝까지** 있어야 한다.
+
+  창이 오늘에서 끝나므로 마지막 줄이 주 중간에서 뚝 끊겼다. 앞의 빈 칸은 이미 그리고
+  있었으니 같은 이유가 뒤에도 있었던 셈이고, 한쪽만 하고 있었다. 실제로 "캘린더가
+  오늘 날짜가 안 맞는 것 같다" 는 말을 들었다.
+*/
+test('마지막 날 뒤에 그 주의 남은 칸 수를 센다', () => {
+  // 2026-08-05 는 수요일(getUTCDay 3). 목·금·토 셋이 남는다.
+  assert.equal(trailingBlanks('2026-08-05'), 3);
+  // 토요일이면 남는 것이 없다.
+  assert.equal(trailingBlanks('2026-08-08'), 0);
+  // 일요일이면 여섯.
+  assert.equal(trailingBlanks('2026-08-09'), 6);
+});
+
+test('앞뒤 빈 칸을 더하면 언제나 일곱의 배수다', () => {
+  // 이것이 깨지면 격자가 어긋나고, 어긋난 격자에서는 세로줄이 요일을 안 가리킨다.
+  for (const [first, last, n] of [
+    ['2026-07-09', '2026-08-05', 28],
+    ['2026-08-01', '2026-08-08', 8],
+    ['2026-08-09', '2026-08-09', 1],
+  ] as [string, string, number][]) {
+    const total = leadingBlanks(first) + n + trailingBlanks(last);
+    assert.equal(total % 7, 0, `${first}..${last} 에서 격자가 어긋난다 (${total})`);
+  }
 });

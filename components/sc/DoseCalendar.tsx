@@ -1,6 +1,6 @@
 'use client';
 
-import { MAX_SEGMENTS, type CalendarDay, daySentence, leadingBlanks } from '@/lib/history/calendar';
+import { MAX_SEGMENTS, type CalendarDay, daySentence, leadingBlanks, trailingBlanks } from '@/lib/history/calendar';
 import { sayable } from './Say';
 
 /**
@@ -25,7 +25,19 @@ import { sayable } from './Say';
  */
 const SLOT_COLOR = {
   taken: 'var(--color-safe)',
-  missed: 'var(--color-caution)',
+  /*
+    거른 것은 **빨강**이다.
+
+    주황(`caution`)이었다. 근거는 "한 번 거른 것이 위험이 아니라 살펴볼 일" 이었고,
+    그 말 자체는 지금도 맞다. 바꾼 이유는 이 화면에서 주황이 하는 일이 달라서다:
+    스물여덟 칸을 한눈에 훑을 때 초록과 주황은 밝기가 가까워서 **거른 날이 눈에 안
+    띈다.** 이 달력을 보는 이유가 정확히 그 날들을 찾는 것인데.
+
+    음식 달력에서 빨강이 "먹지 마세요" 인 것과 겹치지 않는가 — 겹치지 않는다. 저쪽
+    빨강은 앞으로 할 일에 대한 금지이고 이쪽은 이미 지나간 일에 대한 표시다. 같은
+    색이 두 화면에서 뜻하는 것은 하나로 모인다: **여기를 보라.**
+  */
+  missed: 'var(--color-avoid)',
 } as const;
 
 /**
@@ -76,6 +88,17 @@ export function DoseCalendar({ days, picked, onPick }: {
 }) {
   if (!days.length) return null;
   const blanks = leadingBlanks(days[0].dayKey);
+  /*
+    마지막 줄을 그 주 끝까지 채운다.
+
+    창이 오늘에서 끝나므로 마지막 줄이 주 중간에서 뚝 끊겼고, 그러면 달력이 달력으로
+    안 읽힌다 — 수요일까지 그려진 격자를 보면 "이 달력이 잘못됐다" 로 읽는다.
+    앞의 빈 칸은 이미 그리고 있었으니, 같은 이유가 뒤에도 있었던 것이다.
+
+    아직 안 온 날은 **칸으로는 있고 내용은 없다.** 지우면 이번 주가 사흘뿐인 것처럼
+    보이고, 칠하면 안 일어난 일을 그린 것이 된다.
+  */
+  const ahead = trailingBlanks(days[days.length - 1].dayKey);
 
   return (
     <div>
@@ -91,6 +114,13 @@ export function DoseCalendar({ days, picked, onPick }: {
         {days.map((day) => (
           <Cell key={day.dayKey} day={day}
                 picked={day.dayKey === picked} onPick={onPick} />
+        ))}
+        {/* 아직 안 온 날. 칸은 있고 내용은 없다 — 누를 것도 읽을 것도 없으므로
+            소리도 안 붙인다. */}
+        {Array.from({ length: ahead }, (_, i) => (
+          <span key={`a${i}`} aria-hidden className="aspect-square rounded-md"
+                style={{ background: 'var(--color-sc-bg)',
+                         boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--color-sc-ink) 8%, transparent)' }} />
         ))}
       </div>
 
