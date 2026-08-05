@@ -183,7 +183,7 @@ test('앞선 판이 실제 자리에 남긴 시연 자국을 치운다', async (
   reset();
   // 짧게 배포됐던 판이 만들던 모양 그대로.
   store.setItem('snapcare-accounts',
-    '[{"id":"me","emoji":"🧓","color":"#2F6BF6"},{"id":"kid","emoji":"👧","color":"#E8590C"}]');
+    '[{"id":"me","emoji":"🧓","color":"#323E2C"},{"id":"kid","emoji":"👧","color":"#E8590C"}]');
   store.setItem('snapcare-scans', '{"state":{"scans":[{"id":"s1"},{"id":"s4"}]}}');
   store.setItem('snapcare-profile', '{"state":{"confirmed":true}}');
   store.setItem('snapcare-scans#kid', '{"state":{"scans":[{"id":"k1"}]}}');
@@ -201,7 +201,7 @@ test('앞선 판이 실제 자리에 남긴 시연 자국을 치운다', async (
 test('실제 명단에 붙은 시연 표를 떼어낸다', async () => {
   reset();
   store.setItem('snapcare-accounts',
-    '[{"id":"me","emoji":"🧑","color":"#2F6BF6"},{"id":"demo_me","emoji":"🧓","color":"#2F6BF6"}]');
+    '[{"id":"me","emoji":"🧑","color":"#323E2C"},{"id":"demo_me","emoji":"🧓","color":"#323E2C"}]');
   await reload('3');
   assert.deepEqual(JSON.parse(store.getItem('snapcare-accounts')!).map((a: {id: string}) => a.id),
     ['me'], '시연 두 사람이 실제 잠금화면에 뜨면 자기 얼굴을 못 찾는다');
@@ -259,7 +259,7 @@ test('시연 명단에 쌓인 시험용 사람을 한 번 쓸어낸다', () => {
   reset();
   const ROSTER_DEMO = 'snapcare-accounts~demo';
   store.setItem(ROSTER_DEMO, JSON.stringify([
-    { id: DEMO_PRIMARY, emoji: '🧓', color: '#2F6BF6' },
+    { id: DEMO_PRIMARY, emoji: '🧓', color: '#323E2C' },
     { id: DEMO_KID, emoji: '👧', color: '#E8590C' },
     { id: 'p_e0285284', emoji: '🧑', color: '#2F9E44' },
     { id: 'p_707894c8', emoji: '🧒', color: '#9C36B5' },
@@ -277,13 +277,13 @@ test('시연 명단에 쌓인 시험용 사람을 한 번 쓸어낸다', () => {
 test('쓸어내는 것은 한 번뿐 — 시연 중에 더한 사람은 살아남는다', () => {
   reset();
   const ROSTER_DEMO = 'snapcare-accounts~demo';
-  store.setItem(ROSTER_DEMO, JSON.stringify([{ id: DEMO_PRIMARY, emoji: '🧓', color: '#2F6BF6' }]));
+  store.setItem(ROSTER_DEMO, JSON.stringify([{ id: DEMO_PRIMARY, emoji: '🧓', color: '#323E2C' }]));
   sweepDemoStrays();                       // 첫 번째 — 여기서 표시가 남는다
 
   // 심사 도중에 사람을 더해 보이는 것은 정상적인 사용이다. 열 때마다 지우면
   // 방금 한 일이 조용히 취소되고, 그것이 무대에서 가장 나쁜 종류의 결함이다.
   store.setItem(ROSTER_DEMO, JSON.stringify([
-    { id: DEMO_PRIMARY, emoji: '🧓', color: '#2F6BF6' },
+    { id: DEMO_PRIMARY, emoji: '🧓', color: '#323E2C' },
     { id: 'p_새로만든', emoji: '👦', color: '#F08C00' },
   ]));
   sweepDemoStrays();

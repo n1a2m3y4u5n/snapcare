@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
@@ -38,6 +38,17 @@ function luminance(hex: string): number {
 function ratio(a: string, b: string): number {
   const [x, y] = [luminance(a), luminance(b)];
   return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+
+/** 화면을 그리는 파일 전부. 색은 한 곳만 새어도 그 화면에서 문장이 안 읽힌다. */
+function walk(dir: string): string[] {
+  const out: string[] = [];
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, e.name);
+    if (e.isDirectory()) out.push(...walk(full));
+    else if (/\.tsx?$/.test(e.name) && !e.name.includes('.test.')) out.push(full);
+  }
+  return out;
 }
 
 const WHITE = '#FFFFFF';
@@ -92,4 +103,46 @@ test('판정 셋이 서로 구별되는 색상으로 남아 있다', () => {
   assert.ok(hue(safe) >= 90 && hue(safe) <= 170, `safe 가 초록이 아니다: ${safe} (${hue(safe)}°)`);
   assert.ok(hue(caution) >= 20 && hue(caution) <= 55, `caution 이 주황이 아니다: ${caution} (${hue(caution)}°)`);
   assert.ok(hue(avoid) <= 15 || hue(avoid) >= 345, `avoid 가 빨강이 아니다: ${avoid} (${hue(avoid)}°)`);
+});
+
+/*
+  강조 초록은 **글자가 아니다.**
+
+  로고에서 가져온 두 색 중 밝은 쪽(#34A853)은 흰 카드에서 3.06:1 이다. 테두리와
+  그림에는 쓸 수 있고(WCAG 1.4.11 의 3:1) 글자에는 못 쓴다(1.4.3 의 4.5:1).
+
+  이 차이는 화면에서 안 보인다. 흰 바탕 위의 초록 글자는 멀쩡해 보이고, 못 읽는
+  사람은 우리가 아니다. 그래서 잰다.
+*/
+test('강조 초록은 흰 바탕에서 테두리로는 되고 글자로는 안 된다', () => {
+  const accent = token('sc-accent');
+  const r = ratio(accent, WHITE);
+  assert.ok(r >= 3, `테두리로도 못 쓴다 (${accent} 가 흰 바탕에서 ${r.toFixed(2)}:1)`);
+  assert.ok(r < MIN, `4.5:1 을 넘었다 (${r.toFixed(2)}:1) — 넘었으면 글자로도 쓸 수 있으니 이 시험과 위 주석을 고쳐라`);
+});
+
+test('강조 초록을 글자 색으로 쓴 곳이 없다', () => {
+  /*
+    `color:` 로 쓰면 글자다. `borderColor`·`background`·`outline` 은 아니다.
+    한 곳만 새어도 그 화면의 문장이 안 읽히는데, 화면에서는 티가 안 난다.
+  */
+  const files = walk(join(process.cwd(), 'app')).concat(walk(join(process.cwd(), 'components')));
+  const bad: string[] = [];
+  for (const f of files) {
+    for (const [i, line] of readFileSync(f, 'utf8').split('\n').entries()) {
+      if (/(^|[^-\w])color:\s*'?var\(--color-sc-accent\)/.test(line)) {
+        bad.push(`${f.replace(process.cwd() + '/', '')}:${i + 1}`);
+      }
+    }
+  }
+  assert.deepEqual(bad, [], `강조 초록이 글자 색으로 쓰였다:\n  ${bad.join('\n  ')}`);
+});
+
+test('판정 색은 로고 초록으로 안 바뀌었다', () => {
+  /*
+    강조 초록과 판정 초록(#0E7A38)은 1.78:1 밖에 안 갈린다. 판정이 나가는 자리에
+    강조 초록이 들어가면 "안전" 과 "그냥 단추" 가 같은 색이 된다.
+  */
+  assert.notEqual(token('safe').toUpperCase(), token('sc-accent').toUpperCase());
+  assert.notEqual(token('safe').toUpperCase(), token('sc-primary').toUpperCase());
 });

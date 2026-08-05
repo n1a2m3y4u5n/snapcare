@@ -177,15 +177,21 @@ export function ReadScreen({ variant = 'float', wide = false }: {
         /*
           아래 줄의 짝(Home 버튼)과 같은 모양으로 맞춘다. 전에는 이쪽만 테두리도
           바탕도 없어서, 나란히 놓인 둘이 크기도 모양도 어긋나 보였다.
-          채움은 안 준다 — 파란 채움은 이 앱에서 "지금 눌러야 하는 것" 이고,
-          듣기는 늘 있는 도구다.
+
+          채움은 안 준다 — 진한 채움은 이 앱에서 "지금 눌러야 하는 것" 이고, 듣기는
+          늘 있는 도구다. 대신 **테두리에 강조 초록**을 준다. 회색 줄이었을 때 이
+          단추는 흰 바탕에서 사실상 안 보였는데, 글을 못 읽는 사람이 화면을 통과하는
+          주된 길이 바로 이것이다. 테두리·그림은 3:1 이면 되고 강조 초록이 흰 바탕에서
+          3.06:1 이라, 여기가 이 색을 쓸 수 있는 몇 안 되는 자리다.
+
+          글자와 그림은 기본색이다. 강조 초록으로 쓰면 4.5:1 에 못 미친다.
         */
         className={`flex flex-1 items-center justify-center rounded-2xl border-2
                     active:scale-95 transition-transform
                     ${wide ? 'flex-row gap-2 py-3' : 'flex-col gap-1 py-2'}`}
         style={{
-          color: playing ? 'var(--color-caution)' : 'var(--color-sc-muted)',
-          borderColor: playing ? 'var(--color-caution)' : 'var(--color-sc-line)',
+          color: playing ? 'var(--color-caution)' : 'var(--color-sc-primary)',
+          borderColor: playing ? 'var(--color-caution)' : 'var(--color-sc-accent)',
         }}
       >
         <span className="flex items-center justify-center text-xl leading-none" aria-hidden>{playing ? <StopIcon /> : <SpeakerIcon />}</span>

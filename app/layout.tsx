@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2F6BF6",
+  themeColor: "#323E2C",
   // 판정 화면을 확대하다 레이아웃이 깨지는 것보다, 큰 글씨·큰 버튼으로 처음부터 읽히는 편이 낫다
   width: "device-width",
   initialScale: 1,

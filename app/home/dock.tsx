@@ -129,8 +129,18 @@ export function Dock({ satellites, extra }: { satellites: Satellite[]; extra?: R
           aria-label={s.say}
           /* 위아래 여백을 px 로 못박는다 — 틀은 px, 내용은 rem. rem 이면 가장 큰
              글자에서 이 줄이 98px 로 부풀고, 그만큼이 카메라에서 빠진다. */
+          /*
+            누르는 동안 **강조 초록**이 옅게 깔린다.
+
+            전에는 배경색(오프화이트)이 깔렸는데, 이 줄 자체가 흰 바탕이라 눌러도
+            거의 안 바뀌었다. 글을 못 읽는 사람에게 "눌렸다" 를 알리는 것은 색 하나
+            뿐이고, 그 색이 안 보이면 사람은 한 번 더 누른다.
+
+            채움이 아니라 옅은 물이라 그 위의 그림은 여전히 기본색(11:1)이다 — 강조
+            초록은 흰 바탕에서 3.06:1 이라 그림 색으로는 못 쓴다.
+          */
           className={`relative flex min-w-0 flex-1 items-center justify-center
-                      active:bg-[var(--color-sc-bg)] transition-colors
+                      active:bg-[color-mix(in_srgb,var(--color-sc-accent)_18%,white)] transition-colors
                       ${i === 0 ? 'rounded-l-3xl' : ''}`}
           /*
             칸과 칸 사이의 실선. 테두리로 그리면 첫 칸에만 없어야 해서 조건이 붙는데,

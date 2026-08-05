@@ -63,7 +63,7 @@ export interface Account {
 */
 export const FACES = ['🧑', '🧒', '👶', '🧓', '👨', '👦', '👧'];
 
-const COLORS = ['#2F6BF6', '#E8590C', '#2F9E44', '#9C36B5', '#0B7285', '#C2255C', '#5C7CFA', '#F08C00'];
+const COLORS = ['#323E2C', '#E8590C', '#2F9E44', '#9C36B5', '#0B7285', '#C2255C', '#5C7CFA', '#F08C00'];
 
 const ROSTER = 'snapcare-accounts';
 const ACTIVE = 'snapcare-active';
