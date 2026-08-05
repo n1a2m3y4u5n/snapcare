@@ -390,6 +390,8 @@ class FittedIndicator(Indicator):
         self._bar_key = None
         self._cal_key = None
         self._highlight_timer: threading.Timer | None = None
+        #: True while the tick is being drawn. See `_beat`.
+        self._ticking = False
         self._night = False
         #: Whether the due frame is currently on its flipped half. Tracked so a
         #: pulse never repaints a frame that already looks like that, which on a
@@ -540,6 +542,13 @@ class FittedIndicator(Indicator):
         if plan is None or getattr(plan, "screen", "") != "due":
             self._lit = False
             return
+        if self._ticking:
+            # The glass has been pressed and the tick is being drawn on it. The
+            # chirp thread's last act on the way down is to put the dark half
+            # back, and without this that lands in the middle of the animation —
+            # erasing the answer to the press, on the one frame where the person
+            # is looking straight at it.
+            return
         if only_if_lit and not self._lit:
             return
         if self._lit == lit:
@@ -622,13 +631,24 @@ class FittedIndicator(Indicator):
         if plan is None or getattr(plan, "screen", "") != "due":
             return
         step = self._TICK_S / screens.CHECK_STEPS
+        self._ticking = True
+        try:
+            self._draw_tick_frames(plan, step)
+        finally:
+            self._ticking = False
+
+    def _draw_tick_frames(self, plan, step: float) -> None:
         for frame in range(1, screens.CHECK_STEPS + 1):
             if self._stop.is_set() or getattr(self._last_plan, "screen", "") != "due":
                 return
             try:
                 palette = theme.pack(self._surface(), night=self._night)
+                # On the settled half, not the green one. The alarm is already
+                # silenced by the time this runs, so the pulse is over — and a
+                # green tick drawn onto the green half of a beat that is no
+                # longer beating is a tick nobody can see.
                 self._paint(screens.due, *plan.args, palette=palette,
-                            beat=True, check=frame)
+                            beat=False, check=frame)
             except Exception:  # noqa: BLE001 - never onto the release path
                 log.debug("could not draw the tick")
                 return

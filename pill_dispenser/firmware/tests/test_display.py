@@ -488,24 +488,35 @@ def _beat(canvas):
 
 
 @pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
-def test_the_pulse_swaps_the_pair_rather_than_dimming_it(canvas):
-    """The same two colours the other way round, so contrast survives the beat.
+def test_each_half_of_the_beat_is_a_measured_pair(canvas):
+    """박자의 어느 쪽에서도 대비가 살아 있어야 한다.
 
-    Black on this green measures 10.79:1 and the swap is the same pair, so both
-    halves of the pulse are legible. A beat drawn by fading or by a third colour
-    would spend the contrast this frame was built around — and it is the one
-    frame the product cannot afford to make harder to read.
+    초록 위의 검정은 10.79:1, 검정 위의 밝은 잉크는 16.78:1. 두 쪽 다 재고 고른
+    짝이다. 상자를 양쪽에서 다 흰색으로 두는 쪽을 먼저 해 봤고, 그것 하나가 이
+    프레임이 절대 하면 안 되는 일이다 — 이 초록 위의 흰색은 2.25:1 로, 큰 도형의
+    최저선 3:1 에도 못 미친다. 이 팔레트를 다시 만든 이유가 바로 그 실패다.
     """
-    screens.due(canvas, WAITING)
-    still = collections.Counter(_pixels(canvas))
-    screens.due(canvas, WAITING, beat=True)
-    lit = collections.Counter(_pixels(canvas))
+    palette = theme.pack(canvas)
 
-    # 히어로 영역에서 두 색이 자리를 맞바꾼다. 정확한 화소 수까지 같을 필요는 없다
-    # (도형과 숫자가 차지하는 면적이 그대로라 대략 뒤집힌다). 확인할 것은 새로운
-    # 색이 끼어들지 않았다는 것 — 즉 흐리게 만들거나 제3의 색을 쓰지 않았다는 것이다.
-    assert set(lit) <= set(still), "the beat introduced a colour that is not the pair"
-    assert lit != still, "nothing swapped"
+    screens.due(canvas, WAITING, theme=palette)
+    dark = _below_the_bar(canvas)
+    screens.due(canvas, WAITING, theme=palette, beat=True)
+    lit = _below_the_bar(canvas)
+
+    # 바탕: 검정 ↔ 초록. 상태 막대는 어느 쪽에서도 안 뛴다.
+    assert dark[0] == palette["INK"] and lit[0] == palette["DUE"]
+
+    # 상자의 테두리는 그 바탕에 대해 잰 잉크다.
+    edge = ((screens.ALARM_Y + 1 - bar_h(canvas)) * canvas.width
+            + screens.ALARM_X + screens.ALARM_BOX // 2)
+    assert dark[edge] == palette["TEXT"], "검정 위에서 상자가 밝지 않다"
+    assert lit[edge] == palette["BLACK"], "초록 위에 흰 상자를 그렸다 — 2.25:1"
+
+
+def bar_h(_canvas):
+    from snapcare_dispenser.display import bar
+
+    return bar.BAR_H
 
 
 def _pixels(canvas):
@@ -701,24 +712,27 @@ def test_the_alarm_is_one_checkbox_that_blinks(canvas):
 
     canvas.fill(0)
     screens.due(canvas, WAITING, theme=palette, beat=False)
-    dark = _pixels(canvas)
+    dark = _below_the_bar(canvas)
     canvas.fill(0)
     screens.due(canvas, WAITING, theme=palette, beat=True)
-    lit = _pixels(canvas)
+    lit = _below_the_bar(canvas)
 
     assert dark != lit, "박동이 아무것도 안 바꿨다"
-    # 밝기만 다르고 **그림은 같아야 한다.** 실루엣이 달라지면 그것은 같은 상자가
-    # 빛을 받는 것이 아니라 두 개의 다른 그림이고, 사람은 매 박자마다 무엇을 보고
-    # 있는지부터 다시 판단해야 한다.
-    ink = palette["INK"]
-    assert [i for i, px in enumerate(dark) if px != ink] \
-        == [i for i, px in enumerate(lit) if px != ink], "박동이 그림을 바꿨다"
+    # 색만 다르고 **그림은 같아야 한다.** 각자의 바탕색을 뺀 나머지가 같은 자리에
+    # 있어야 한다는 뜻이다. 실루엣이 달라지면 그것은 같은 상자가 빛을 받는 것이
+    # 아니라 두 개의 다른 그림이고, 사람은 매 박자마다 무엇을 보고 있는지부터
+    # 다시 판단해야 한다.
+    assert [i for i, px in enumerate(dark[len(dark) // 2:])
+            if px != palette["INK"]] \
+        == [i for i, px in enumerate(lit[len(lit) // 2:])
+            if px != palette["DUE"]], "박동이 그림을 바꿨다"
 
     # 달력은 덮인다. 이 순간 기계는 보고하는 것이 아니라 **부탁하는 중**이다.
-    from snapcare_dispenser.display import calendar
+    from snapcare_dispenser.display import bar, calendar
     assert "due" not in screens.CALENDAR
-    row = (calendar.ROWS_Y + calendar.ROW_H // 2) * canvas.width + calendar.COL_X(0)
-    assert lit[row] == palette["INK"], "알람 아래로 달력이 비쳤다"
+    row = ((calendar.ROWS_Y - bar.BAR_H + calendar.ROW_H // 2) * canvas.width
+           + calendar.COL_X(0))
+    assert lit[row] == palette["DUE"], "알람 아래로 달력이 비쳤다"
 
 
 @pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
@@ -734,7 +748,10 @@ def test_the_tick_is_drawn_rather_than_appearing(canvas):
     counts = []
     for frame in range(0, screens.CHECK_STEPS + 1):
         canvas.fill(0)
-        screens.due(canvas, WAITING, theme=palette, beat=True, check=frame)
+        # 눌린 뒤에 그려지는 프레임이므로 박동은 이미 끝났다 — `_draw_tick` 이
+        # 쓰는 것과 같은 어두운 쪽에서 잰다. 초록 바탕 위의 초록 체크는 아무것도
+        # 아니고, 이 시험이 그것을 통과시키면 안 된다.
+        screens.due(canvas, WAITING, theme=palette, beat=False, check=frame)
         counts.append(sum(1 for px in _below_the_bar(canvas) if px == green))
 
     assert counts[0] == 0, "누르기도 전에 체크가 있다"

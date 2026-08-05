@@ -930,16 +930,23 @@ def test_the_pulse_has_a_dark_phase_with_an_actual_length():
         assert dark >= 0.15, "검정 프레임이 패널을 칠하는 시간과 구별되지 않는다"
 
 
-def test_the_green_outweighs_the_black():
-    """초록은 **상태**(복용이 기다린다)이고 검정은 박자일 뿐이다.
+def test_the_two_halves_of_the_beat_are_equal():
+    """밝은 쪽과 어두운 쪽의 길이가 같다. 요구사항이고, 여기서 지킨다.
 
-    반반이면 이 화면은 초록이 뛰는 것이 아니라 두 색이 번갈아 드는 것이 되고,
-    그러면 무슨 상태인지가 흐려진다. 벤치에서 나온 말이 그것이다 — "초록색을
-    띄우는 시간이 살짝 더 길거나 균형이 있어야 될듯."
+    이 시험은 정반대를 재던 것이었다 — 초록이 검정의 두 배는 되어야 한다. 그 논지는
+    초록이 **히어로 밴드만** 덮던 시절의 것이고, 그때는 초록이 차지하는 시간이 곧
+    "복용이 기다린다" 라는 상태의 크기였다.
+
+    지금은 상태 막대 아래가 통째로 초록이 된다. 상태를 말하는 것은 시간이 아니라
+    면적이고, 시간이 하는 일은 **뛰는 것**뿐이다 — 그리고 뛰는 것을 가장 뚜렷하게
+    만드는 배분은 반반이다.
+
+    두 값을 따로 적지 않는다. `PULSE_DARK_S = PULSE_LIT_S` 라서 한쪽만 고쳐지는 길이
+    아예 없고, 이 시험은 그 구조가 유지되는지를 본다.
     """
     for lit, dark in ((config.PULSE_LIT_S, config.PULSE_DARK_S),
                       (config.PULSE_URGENT_LIT_S, config.PULSE_URGENT_DARK_S)):
-        assert lit > dark * 2, "검정이 박자가 아니라 절반이 됐다"
+        assert lit == dark, "박자의 두 쪽이 갈라졌다"
 
 
 def test_the_pulse_stays_under_the_photosensitivity_line():

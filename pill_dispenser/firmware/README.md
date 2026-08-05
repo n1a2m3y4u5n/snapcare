@@ -682,16 +682,31 @@ has used one of these devices understands the other:
 
 | | |
 |---|---|
-| **a blinking box, repeating chirp** | a dose is due; touch the screen, or release it in the app |
+| **the panel pulsing green, repeating chirp** | a dose is due; touch the screen, or release it in the app |
 | **a green tick** | that dose is taken — drawn under the finger that asked for it |
 | **a red cross, red border** | the dose went untaken, or its window closed |
 | **an amber border** | a new schedule arrived; the calendar under it is already the new one |
 | **cyan, silent** | waiting to be put on a WiFi network |
 | **red** | the machine will not open a tray until somebody fixes something |
 
-Green means "this one is done" and nothing else on the panel is green, which is
-why the alarm's countdown bar is grey: a green bar draining away under an
-untouched box would be one colour saying "done" and "not done yet" on one screen.
+When a dose is due, everything under the status bar goes green and black and
+green again, in step with the buzzer and with the box brightening — the two are
+one event, and a field that pulsed out of time with the object it is asking
+about would read as two things happening near each other. **The bar never
+blinks**: somebody woken at three in the morning by this screen may need to read
+whether the machine is on the network, and a status row that strobes is a status
+row nobody can read. The two halves of the beat are the same length, 0.84 s
+each — 0.60 Hz, far under the 3 Hz photosensitivity line in WCAG 2.3.1, which
+matters more now that what flashes is 85% of the panel rather than one shape.
+
+The box inverts across the beat rather than glowing: black on the green at
+10.79:1, light ink on the black at 16.78:1, so it is at full contrast on both
+halves. Keeping it white throughout is the one thing this frame cannot do —
+white on this green is 2.25:1.
+
+Elsewhere green means "this one is done", which is why the alarm's countdown bar
+is not green: a green bar draining away under an untouched box would be one
+colour saying "done" and "not done yet" on the same screen.
 
 **The violet screen is gone.** A new schedule used to take the whole panel to
 announce that the calendar underneath had changed, which is the wrong way round.

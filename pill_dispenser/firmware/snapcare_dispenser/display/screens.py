@@ -307,20 +307,38 @@ def due(canvas: Canvas, health: Health, *, theme: dict | None = None,
     px, in the middle of the glass, over the whole of which is the touch target
     (see `touch.py`).
 
-    **It blinks, and that is the affordance.** A still panel reads as a display:
-    somebody who has been told the machine will tell them when to take a pill
-    sees a picture with a time on it, which is a machine reporting, and
-    reporting is not asking. `beat` is flipped by the chirp thread on the same
-    rhythm as the buzzer, and it does not swap colours or flash the panel — it
-    lifts the box out of the surface and lets it settle back. Brighter and
-    darker, so the movement is on the object somebody is being asked to touch
-    and nowhere else.
+    **The whole panel blinks, and that is the affordance.** A still screen reads
+    as a display: somebody who has been told the machine will tell them when to
+    take a pill sees a picture with a time on it, which is a machine reporting,
+    and reporting is not asking. `beat` is flipped by the chirp thread on the
+    rhythm of the buzzer, and everything below the status bar goes green with
+    it. The box brightens on the same instant, because they are one event — the
+    field and the object it is asking about have to pulse together or the screen
+    reads as two things happening near each other.
+
+    The bar never blinks. Whatever is flashing, the subsystem row and the clock
+    stay still and readable: a person woken at three in the morning by this
+    screen may need to know the machine is on the network, and a status row that
+    strobes is a status row nobody can read.
+
+    **The box inverts rather than glowing.** On the green half its frame is
+    black at 10.79:1 and on the black half it is the light ink at 16.78:1, so
+    the object is at full contrast on both halves of every beat. Keeping it
+    white throughout was tried first and is the one thing this frame cannot do:
+    white on this green measures 2.25:1, below even the 3:1 large-graphic floor
+    — the exact failure this palette was rebuilt to remove, reintroduced on the
+    single most important frame the product has.
+
+    Its **inside** stays dark on both halves, which is what leaves the tick
+    somewhere to be drawn: a green tick on a green field is nothing at all.
 
     `check` is the answer. Nought is the empty box; `CHECK_STEPS` is a finished
     green tick, and the frames between are the tick being *drawn*, in the
     direction a hand would draw it. It runs while the servo is already turning,
     so the picture of the dose being taken and the pill arriving in the cup are
-    one event rather than an animation followed by a wait.
+    one event rather than an animation followed by a wait. The pulse is over by
+    then — `acknowledge` has already silenced the alarm — so those frames are
+    painted on the black half, where a green tick is 9.46:1 and unmistakable.
 
     Nothing else is on this frame but the time the dose was due for and how much
     of its window is left. There is no tray number, here or anywhere else on
@@ -330,14 +348,15 @@ def due(canvas: Canvas, health: Health, *, theme: dict | None = None,
     """
     theme = _palette(canvas, theme)
     _frame(canvas, health, theme)
-    canvas.rect(0, HERO_Y, W, HERO_H, theme["INK"])
 
-    # Brighter and darker, not two colours. The box is one object and the beat
-    # is it catching the light; a colour swap would be a second state somebody
-    # has to work out is the same box.
-    lift = theme["TEXT"] if beat else canvas.mix(theme["TEXT"], theme["INK"], 45)
-    canvas.rect(ALARM_X, ALARM_Y, ALARM_BOX, ALARM_BOX, lift)
+    # The field, and the ink that was measured against it. Every colour below is
+    # picked from this pair rather than chosen per element, which is what stops
+    # one of them being right on one half of the beat and invisible on the other.
+    field, ink = ("DUE", "BLACK") if beat else ("INK", "TEXT")
+    canvas.rect(0, HERO_Y, W, HERO_H, theme[field])
+
     frame_w = max(2, ALARM_BOX // 22)
+    canvas.rect(ALARM_X, ALARM_Y, ALARM_BOX, ALARM_BOX, theme[ink])
     canvas.rect(ALARM_X + frame_w, ALARM_Y + frame_w,
                 ALARM_BOX - 2 * frame_w, ALARM_BOX - 2 * frame_w,
                 theme["RULE"] if beat else canvas.mix(theme["RULE"], theme["INK"], 40))
@@ -348,12 +367,13 @@ def due(canvas: Canvas, health: Health, *, theme: dict | None = None,
 
     when = _clock_text(_field(health, "waiting_at"))
     _small_centred(canvas, 0, ALARM_Y + ALARM_BOX + ALARM_GAP, W,
-                   when or "--:--", theme["TEXT"], 3)
-    _window_bar(canvas, health, theme,
+                   when or "--:--", theme[ink], 3)
+    _window_bar(canvas, health, theme, ink,
                 ALARM_Y + ALARM_BOX + ALARM_GAP + ALARM_TIME_H + ALARM_GAP)
 
 
-def _window_bar(canvas: Canvas, health: Health, theme: dict, y: int) -> None:
+def _window_bar(canvas: Canvas, health: Health, theme: dict, ink: str,
+                y: int) -> None:
     """How much of the release window is left, as a bar rather than a number.
 
     The offer is not open-ended — an untapped dose is recorded missed when the
@@ -370,11 +390,16 @@ def _window_bar(canvas: Canvas, health: Health, theme: dict, y: int) -> None:
         return
     width = ALARM_BOX
     left = (W - width) // 2
-    canvas.rect(left, y, width, ALARM_BAR_H, theme["RULE"])
-    # Not green. On this frame green means one thing — the box has been ticked,
-    # the dose is taken — and a green bar draining away beneath an untouched box
-    # would be the same colour saying "done" and "not done yet" on one screen.
-    canvas.rect(left, y, width * frac // 10, ALARM_BAR_H, theme["TEXT_DIM"])
+    # The track is the field's own ink at a third, so it reads as a groove on
+    # both halves of the beat; the remaining window is the ink itself.
+    #
+    # Not green, on either half. On this frame green means one thing — the box
+    # has been ticked, the dose is taken — and a green bar draining away beneath
+    # an untouched box would be the same colour saying "done" and "not done yet"
+    # on one screen.
+    canvas.rect(left, y, width, ALARM_BAR_H,
+                canvas.mix(theme[ink], theme["DUE" if ink == "BLACK" else "INK"], 65))
+    canvas.rect(left, y, width * frac // 10, ALARM_BAR_H, theme[ink])
 
 
 def released(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
