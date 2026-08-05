@@ -83,3 +83,27 @@ test('열량이 0 이면 항등식을 따지지 않는다', () => {
   assert.ok(r.ok, r.problems.join(' · '));
   assert.equal(r.atwaterError, undefined);
 });
+
+/*
+  이름으로 제품을 고를 때 **다른 제품을 안 집는가.**
+
+  바코드는 그 물건 하나를 가리키지만 이름은 안 그렇다. 여기서 헐겁게 고르면 다른
+  제품의 영양 정보가 이 사람의 하루 누적에 들어가고, 화면에는 아무 표시도 안 남는다.
+*/
+const { nameOverlap } = await import('./openfoodfacts.ts');
+
+test('낱말이 겹치면 같은 제품으로 본다 — 길이가 달라도', () => {
+  // 편집 거리로 재면 이 둘은 멀다. 우리가 묻는 것은 같은 물건인가다.
+  assert.ok(nameOverlap('Nutella', 'Ferrero Nutella hazelnut spread 350g') >= 0.55);
+  assert.ok(nameOverlap('Indomie Chicken Noodles', 'Indomie instant noodles chicken flavour') >= 0.55);
+});
+
+test('다른 제품은 안 집는다', () => {
+  assert.ok(nameOverlap('Indomie Chicken Noodles', 'Coca-Cola Zero 330ml') < 0.55);
+  assert.ok(nameOverlap('Maggi cube', 'Nutella hazelnut spread') < 0.55);
+});
+
+test('짧은 낱말은 세지 않는다 — "of", "the" 로 점수가 오르면 안 된다', () => {
+  // 세 글자 이하를 빼지 않으면 "Can of X" 가 "Bag of Y" 와 겹쳐 보인다.
+  assert.ok(nameOverlap('Can of beans', 'Bag of rice') < 0.55);
+});

@@ -73,6 +73,17 @@ export function computeVerdict(
     갖고 틀린다. 그래서 초록을 켜지 않는다 — 이 한 줄이 하는 일이 그것이고, 나머지
     (그림·문장)는 그대로 보여준다. 지우는 것이 아니라 **확신을 지우는 것**이다.
   */
+  /*
+    무엇인지는 알지만 얼마나 들었는지 모르는 경우 — 포장 식품에서 흔하다.
+
+    초록을 막되 문장은 **할 수 있는 일**을 말한다. "모르겠습니다" 로 끝내면 사람이
+    할 수 있는 것이 없는데, 여기서는 있다: 성분표를 찍으면 정확한 값이 나온다.
+    지어낸 수치를 보여주는 것보다 이 한 줄이 낫다.
+  */
+  if (item.nutritionUnknown) {
+    reasons.push({ level: 'caution', text: 'Could not read the nutrition panel — photograph the label on the back' });
+  }
+
   if (item.handwritten) {
     reasons.push({ level: 'caution', text: 'Handwritten — ask someone to read it to you' });
   }

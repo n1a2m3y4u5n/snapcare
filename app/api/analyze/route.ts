@@ -5,6 +5,7 @@ import { validateDensity } from '@/lib/nutrition/validate';
 import { densityFromTotals, mergeVisionDetail, MIN_PORTION_G, MAX_PORTION_G } from '@/lib/nutrition/mealModel';
 import type { ModelTotals } from '@/lib/nutrition/mealModel';
 import type { NutrientAmounts, NutrientProfile } from '@/lib/nutrition/types';
+import { fetchByBarcode, searchByName } from '@/lib/nutrition/openfoodfacts';
 
 
 /**
@@ -82,6 +83,57 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   */
   if (vision?.item.notConsumable) {
     return NextResponse.json({ intent: 'other', item: vision.item, source: 'vision' });
+  }
+
+  /*
+    포장 식품은 **자체 모델의 숫자를 안 쓴다.**
+
+    무엇이 문제였나
+    ---------------
+    자체 모델은 접시에 담긴 끼니로 배운 회귀다. 초콜릿바 포장지를 들이대면 "이렇게
+    생긴 요리" 의 밀도를 내놓고, 그 값은 포장지에 인쇄된 실제 성분표와 전혀 다르다.
+    회귀는 기권할 수 없으므로 자기가 모르는 종류라는 사실을 스스로 말하지도 못한다 —
+    아래 `measured.ok` 는 물리 검사(질량 보존·Atwater)만 보는데, **일관되게 틀린 숫자**
+    는 그 검사를 전부 통과한다.
+
+    무엇으로 대신하나 — 사다리 넷, 확실한 순서대로
+    ----------------------------------------------
+    앞의 둘은 **이미 사진 안에 있다.** 인터넷보다 가깝고 정확하다.
+
+      1. 바코드      그 물건 하나를 가리킨다. OFF 제품 조회(분당 100회).
+      2. 성분표      사진에 읽히면 그것이 이 제품의 진실이다. 추정이 아니라 전사(轉寫).
+      3. 제품 이름   OFF 검색. 다른 제품을 가져올 수 있어 이름을 다시 재고, 분당 10회다.
+      4. 없음        숫자를 안 낸다. 지어낸 값 대신 **할 수 있는 일**을 알려준다 —
+                     성분표를 찍으면 정확한 값이 나온다.
+
+    넷째가 요점이다. 모르는 것을 모른다고 말하는 것은 이 저장소가 이미 여러 곳에서
+    고른 답이고(`match.ts`, `validate.ts`), 틀린 수치가 하루 누적에 들어가는 것보다
+    낫다. 알레르겐은 이 경우에도 살아남는다 — 그것은 성분 목록에서 오지 숫자에서
+    오지 않는다.
+  */
+  if (vision?.packaged && !visionIsRx(vision)) {
+    const real = await realNutrition(vision);
+    const item: ScanItem = {
+      ...vision.item,
+      detectedVia: real
+        ? `packaged product (${SOURCE_WORD[real.source] ?? real.source})`
+        : 'packaged product (nutrition not read)',
+      profile: real ?? {
+        source: 'vision',
+        name: vision.item.name,
+        // 숫자는 비운다. 빈 것은 계산 엔진이 그냥 건너뛰지만, 틀린 값은 하루 누적에 들어간다.
+        per100: {},
+        allergenTags: vision.item.profile?.allergenTags ?? [],
+      },
+      // 숫자를 못 찾았으면 초록을 막는다. 걸리는 플래그가 없다는 이유로 'safe' 가
+      // 뜨면, 글을 못 읽는 사람에게 그것은 먹어도 된다는 뜻이 된다.
+      nutritionUnknown: real ? undefined : true,
+    };
+    return NextResponse.json({
+      intent: vision.kind,
+      item,
+      source: real ? `packaged+${real.source}` : 'packaged',
+    });
   }
 
   if (measured?.ok) {
@@ -165,6 +217,9 @@ Return STRICT JSON only. No prose, no markdown fences.
     "sugars": number, "saturatedFat": number, "fiber": number, "salt": number
   },
   "portionGrams": number,         // your estimate of how much is in the photo, in grams
+  "packaged": boolean,            // true if this is a manufactured product in a wrapper/bottle/box
+  "barcode": string,              // the barcode digits, ONLY if you can read them in the photo
+  "panelRead": boolean,           // true ONLY if per100 was copied off a nutrition panel you can see
   "allergenTags": string[],       // OpenFoodFacts style: "en:peanuts","en:nuts","en:gluten","en:milk","en:eggs","en:soybeans","en:crustaceans"
   "rx": { "dosageText": string, "durationText": string,
           "schedule": [{"time": string, "label": string, "emoji": string}] },  // only for medicine/prescription
@@ -180,6 +235,19 @@ Rules:
 - per100 is DENSITY (per 100 g), never the amount on the plate. portionGrams carries the amount.
 - Energy must be consistent with the macros: energy ~= 4*carbohydrates + 4*protein + 9*fat. The app re-checks this and discards your answer if it does not hold.
 - Use typical composition for the dish you recognise. If you cannot recognise it, set confidence below 0.4.
+- PACKAGED PRODUCTS ARE DIFFERENT. If the photo shows a manufactured product — a wrapper,
+  bottle, can, box, sachet — set "packaged": true, and then:
+    · If a nutrition panel is legible in the photo, COPY its per-100g column exactly and set
+      "panelRead": true. Copy, do not adjust: those printed numbers are the truth for this
+      product, and the app has no other way to reach them.
+    · If the panel is not legible, OMIT per100 entirely and set "panelRead": false. Do NOT
+      estimate from what the product looks like. A typical composition is a fair guess for a
+      plate of rice; it is a wrong answer for a specific branded product, whose real values
+      are printed on the package and differ from brand to brand.
+    · Put the brand and product name in "name" as printed ("Indomie Chicken Instant Noodles"),
+      so the app can look the product up. Read the barcode digits into "barcode" if visible.
+- Set "packaged": false for a plate, bowl, or loose food — those are what "typical composition"
+  is for.
 - Omit per100 and portionGrams entirely for medicine/prescription.
 - handwritten: true when the drug names, doses or timings are written by hand, even if the
   form around them is printed. A printed hospital letterhead with handwriting under it is
@@ -190,11 +258,50 @@ Rules:
   night; "mane" in the morning; "prn" as needed. Put what is written in dosageText and
   leave schedule empty rather than inventing clock times that are not on the paper.`;
 
+/** 화면에 "이 숫자가 어디서 왔나" 를 쓰기 위한 말. 출처를 숨기면 사람이 못 따진다. */
+const SOURCE_WORD: Partial<Record<NutrientProfile['source'], string>> = {
+  openfoodfacts: 'product database',
+  'label-ocr': 'nutrition panel',
+};
+
+function visionIsRx(v: VisionResult): boolean {
+  return v.kind === 'medicine' || v.kind === 'prescription';
+}
+
+/**
+ * 포장 식품의 **실제** 영양 정보를 찾는다. 못 찾으면 `null` — 지어내지 않는다.
+ *
+ * 순서가 곧 확실성의 순서다 (위 주석의 사다리).
+ */
+async function realNutrition(v: VisionResult): Promise<NutrientProfile | null> {
+  if (v.barcode) {
+    const byCode = await fetchByBarcode(v.barcode).catch(() => null);
+    if (byCode?.per100.energy !== undefined) return byCode;
+  }
+  // 성분표를 읽어낸 것은 이미 위에서 물리 검사를 통과했다. 추정이 아니라 전사라
+  // 출처가 `label-ocr` 로 붙어 있다.
+  if (v.panelRead && v.item.profile?.source === 'label-ocr'
+      && v.item.profile.per100.energy !== undefined) {
+    return v.item.profile;
+  }
+  if (v.item.name && v.item.name !== 'Unknown item') {
+    const byName = await searchByName(v.item.name).catch(() => null);
+    if (byName) return byName;
+  }
+  return null;
+}
+
 interface VisionResult {
   item: ScanItem;
   kind: ScanItem['kind'];
   /** 무엇인지 알아봤는가. 못 알아본 것을 'safe' 로 내보내지 않기 위한 신호다. */
   recognised: boolean;
+  /** 포장된 제품인가. 참이면 자체 모델의 숫자를 안 쓴다. */
+  packaged: boolean;
+  /** 사진에서 읽은 바코드. */
+  barcode?: string;
+  /** per100 이 성분표를 옮긴 것인가 (추정이 아니라). */
+  panelRead: boolean;
 }
 
 async function analyzeWithClaude(image: string, key: string): Promise<VisionResult> {
@@ -274,7 +381,9 @@ async function analyzeWithClaude(image: string, key: string): Promise<VisionResu
     const check = validateDensity(parsed.per100);
     if (check.ok) {
       profile = {
-        source: 'vision',
+        // 성분표를 옮긴 것과 요리를 보고 추정한 것은 같은 값이 아니다. 출처가 갈려야
+        // 위쪽 사다리가 둘을 구별하고, 화면도 어디서 온 숫자인지 말할 수 있다.
+        source: parsed.packaged && parsed.panelRead ? 'label-ocr' : 'vision',
         name: parsed.name ?? 'Unknown item',
         servingGrams: plausiblePortion(parsed.portionGrams),
         per100: parsed.per100,
@@ -285,11 +394,35 @@ async function analyzeWithClaude(image: string, key: string): Promise<VisionResu
     }
   }
 
+  /*
+    숫자가 없어도 **알레르겐은 살린다.**
+
+    포장 식품에서 성분표가 안 보이면 위쪽이 `per100` 을 안 만든다(그것이 이 변경의
+    요점이다 — 지어내지 않는다). 그런데 프로필이 통째로 없으면 알레르겐 태그도 같이
+    사라지고, 그것은 숫자와 전혀 다른 것이다: 성분 **목록**에서 오지 수치에서 오지
+    않고, 땅콩 한 줄을 놓치는 것이 이 앱에서 가장 비싼 실패다.
+
+    숫자만 빈 프로필을 만든다. 계산 엔진은 빈 `per100` 을 그냥 건너뛰고, 알레르기
+    판정은 그대로 돈다.
+  */
+  if (!profile && !isRx && !notConsumable && (parsed.allergenTags?.length ?? 0) > 0) {
+    profile = {
+      source: 'vision',
+      name: parsed.name ?? 'Unknown item',
+      per100: {},
+      allergenTags: parsed.allergenTags ?? [],
+    };
+  }
+
   return {
     kind,
     // 약·처방전은 영양 수치가 없는 것이 정상이므로 판별 여부를 confidence 로만 본다.
     // 먹는 것이 아니면 '알아봤다' 가 아니다 — 알아본 것으로 치면 판정 엔진이 초록을 낸다.
     recognised: notConsumable ? false : isRx ? confident(parsed) : confident(parsed) && hasAnyNutrient(parsed),
+    packaged: parsed.packaged === true,
+    barcode: typeof parsed.barcode === 'string' && /^\d{8,14}$/.test(parsed.barcode.trim())
+      ? parsed.barcode.trim() : undefined,
+    panelRead: parsed.panelRead === true,
     item: {
       id: `scan_${Math.abs(hash(text))}`,
       name: parsed.name ?? 'Unknown item',
@@ -315,6 +448,12 @@ interface VisionOut {
   per100?: NutrientAmounts;
   portionGrams?: number;
   allergenTags?: string[];
+  /** 포장된 제품인가 — 자체 모델이 감당하는 종류가 아니라는 신호다. */
+  packaged?: boolean;
+  /** 사진에서 읽어낸 바코드 숫자. */
+  barcode?: string;
+  /** per100 이 **추정이 아니라 성분표를 옮긴 것**인가. */
+  panelRead?: boolean;
   rx?: ScanItem['rx'];
   handwritten?: boolean;
 }
