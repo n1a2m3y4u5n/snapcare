@@ -156,8 +156,9 @@ export default function HomePage() {
               보인다. 자리를 안 먹는 방법으로 미는 것이 요점이다 — 파일에 여백을 채워
               밀면 그만큼 상자가 넓어져 방금 채운 폭이 다시 줄어든다.
 
-              4% 는 좌우 여백(20px) 안에서 움직일 수 있는 만큼이다. 이보다 밀면 오른쪽
-              사진기가 화면 밖으로 나간다.
+              5% 가 상한이다. 좌우 여백이 20px 이고 그림이 그 안을 꽉 채우므로, 밀 수
+              있는 거리는 그 여백뿐이다 — 5% 면 375px 화면에서 오른쪽에 3px, 360px
+              에서 4px 남는다. 여기서 더 밀려면 그림을 그만큼 줄여야 한다.
 
               높이에 상한(26vh)을 두는 이유: 폭을 채우면 높이는 그림의 비율이 정하는데,
               키 낮은 폰에서는 그 높이가 카메라 몫을 가져간다. 640px 짜리 화면에서
@@ -167,7 +168,7 @@ export default function HomePage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-mark.png" alt="SnapCare" width={486} height={320}
                  className="h-auto w-full"
-                 style={{ transform: 'translateX(4%)', maxHeight: '26vh', objectFit: 'contain' }} />
+                 style={{ transform: 'translateX(5%)', maxHeight: '26vh', objectFit: 'contain' }} />
           </h1>
         </div>
 
