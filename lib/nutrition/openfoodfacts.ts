@@ -28,7 +28,8 @@ const NUTRIMENT_MAP = {
 interface OffProduct {
   code?: string;
   product_name?: string;
-  brands?: string;
+  /** 옛 주소는 쉼표로 이은 문자열, search-a-licious 는 배열로 준다. 둘 다 받는다. */
+  brands?: string | string[];
   serving_size?: string;
   nutriscore_grade?: string;
   allergens_tags?: string[];
@@ -68,7 +69,7 @@ export function toProfile(p: OffProduct): NutrientProfile {
     source: 'openfoodfacts',
     code: p.code,
     name: p.product_name?.trim() || 'Unknown product',
-    brands: p.brands?.trim() || undefined,
+    brands: (Array.isArray(p.brands) ? p.brands.join(', ') : p.brands)?.trim() || undefined,
     servingGrams: parseServingGrams(p.serving_size),
     per100,
     allergenTags: p.allergens_tags ?? [],
@@ -110,7 +111,26 @@ export function parseServingGrams(raw: string | undefined): number | undefined {
      HTML 안내 페이지가 온다 — 실제로 그걸 받아 봤다. 그래서 아래는 상태 코드만이
      아니라 content-type 도 본다. `res.json()` 에 그냥 넘기면 파싱 오류로 터진다.
 */
-const SEARCH = 'https://world.openfoodfacts.org/cgi/search.pl';
+/*
+  검색은 **search-a-licious** 로 간다 — 옛 `cgi/search.pl` 이 아니라.
+
+  처음엔 그 옛 주소로 붙였다. 한 번 되기에 됐다고 봤는데, 다시 재 보니 계속
+  `Page temporarily unavailable`(503, HTML)을 돌려준다. 내 기계에서도, 배포 서버
+  에서도 그랬다 — 내 IP 가 막힌 것이 아니라 그 엔드포인트가 죽어 있는 것이다.
+
+  그 사이 화면은 **포장 식품에 숫자를 하나도 못 붙이고** 있었다. 사다리의 셋째 칸이
+  통째로 비어 있었다는 뜻이고, 그러면 바코드도 성분표도 안 보이는 흔한 사진이 전부
+  넷째 칸("모른다")으로 떨어진다. 고친 것이 안 고친 것보다 나빠 보이는 상태였다.
+
+  세 주소를 나란히 재고 골랐다:
+    cgi/search.pl              503 HTML          ✗
+    api/v2/search              됨. 단 태그 검색이라 자유 문구가 안 통한다
+    search.openfoodfacts.org   됨. 자유 문구 그대로. Nutella 539kcal, 콜라 42kcal
+
+  그래서 세 번째다. 자유 문구가 필요한 이유는 우리가 가진 것이 사진에서 읽은 제품
+  이름이기 때문이다 — 태그가 아니라 사람이 포장지에 적어 둔 말이다.
+*/
+const SEARCH = 'https://search.openfoodfacts.org/search';
 
 /** 이름이 이만큼은 닮아야 같은 제품으로 친다. 안 닮으면 답하지 않는다. */
 const NAME_MIN = 0.55;
@@ -150,8 +170,7 @@ export async function searchByName(query: string): Promise<NutrientProfile | nul
   const q = query.trim();
   if (flatten(q).length < 3) return null;
 
-  const url = `${SEARCH}?search_terms=${encodeURIComponent(q)}&search_simple=1`
-    + `&action=process&json=1&page_size=5&fields=${FIELDS}`;
+  const url = `${SEARCH}?q=${encodeURIComponent(q)}&page_size=5&fields=${FIELDS}`;
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'SnapCare/0.1 (e-ICON World Contest student project)' },
@@ -160,12 +179,28 @@ export async function searchByName(query: string): Promise<NutrientProfile | nul
     // 분당 한도를 넘기면 200 에 HTML 이 온다. 여기서 안 막으면 파싱 오류로 터진다.
     if (!res.ok || !(res.headers.get('content-type') ?? '').includes('json')) return null;
 
-    const body = (await res.json()) as { products?: OffProduct[] };
-    const found = (body.products ?? [])
+    // search-a-licious 는 `hits` 로 준다. 옛 주소의 `products` 도 함께 본다 —
+    // 되살아나면 그대로 돌아갈 수 있고, 없는 키를 읽는 값이 싸다.
+    const body = (await res.json()) as { hits?: OffProduct[]; products?: OffProduct[] };
+    /*
+      이름이 비슷하면 **알레르겐이 적힌 쪽**을 고른다.
+
+      OFF 는 같은 제품의 레코드가 여럿이고 채워진 정도가 제각각이다. Nutella 를
+      찾으면 열량만 있는 것과 `en:nuts, en:milk, en:soybeans` 까지 있는 것이 나란히
+      온다. 이름 점수만 보면 앞엣것이 이기는데, 두 레코드의 차이는 **이 앱에서 가장
+      비싼 칸**이다 — 숫자는 틀려도 하루 누적이 어긋날 뿐이지만 땅콩 한 줄을 놓치면
+      먹으면 안 되는 것을 먹는다.
+
+      이름 점수를 먼저 보고(0.05 안쪽이면 비긴 것으로 친다) 그 다음에 알레르겐을 본다.
+      순서를 뒤집으면 다른 제품이 알레르겐을 갖고 있다는 이유로 이긴다.
+    */
+    const found = (body.hits ?? body.products ?? [])
       .map(toProfile)
       .filter(hasNumbers)
       .map((p) => ({ p, score: nameOverlap(q, `${p.brands ?? ''} ${p.name}`) }))
-      .sort((a, b) => b.score - a.score)[0];
+      .sort((a, b) => (Math.abs(b.score - a.score) > 0.05
+        ? b.score - a.score
+        : (b.p.allergenTags?.length ?? 0) - (a.p.allergenTags?.length ?? 0)))[0];
 
     if (!found || found.score < NAME_MIN) return null;
     return found.p;
