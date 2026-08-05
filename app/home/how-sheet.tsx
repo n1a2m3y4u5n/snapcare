@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { CameraIcon, QuestionIcon } from '@/components/icons';
+import { CameraIcon, HelpIcon } from '@/components/icons';
 import { Hear, sayable } from '@/components/sc/Say';
 import { useIsClient } from '@/lib/hooks';
 
@@ -121,7 +121,14 @@ export function HowSheet() {
                    active:scale-95 transition-transform"
         style={{ color: 'var(--color-sc-primary)' }}
       >
-        <span aria-hidden className="flex items-center text-xl leading-none"><QuestionIcon /></span>
+        {/*
+          채운 동그라미에 물음표를 뚫은 그림(`HelpIcon`). 획으로만 그린 것을 써 봤더니
+          옆의 글과 굵기가 비슷해서 문장의 일부로 보였다 — 글을 못 읽는 사람이 "여기서
+          물어볼 수 있다" 를 알아채는 단서가 이것뿐인데, 그것이 글로 보이면 단서가
+          없는 것과 같다. 채운 덩어리는 그 문제가 없고, 이 앱에서 채운 동그라미는
+          이미 "누르는 것" 이다.
+        */}
+        <span aria-hidden className="flex items-center text-2xl leading-none"><HelpIcon /></span>
         <span className="text-base font-bold underline underline-offset-4">
           How do I use this app?
         </span>
