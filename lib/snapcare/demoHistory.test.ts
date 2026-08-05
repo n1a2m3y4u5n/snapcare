@@ -4,7 +4,7 @@ import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-import { DEMO_DAYS, demoHistory } from './demoHistory.ts';
+import { ADULT_DOSES, DEMO_DAYS, KID_DOSES, demoHistory } from './demoHistory.ts';
 import { MAX_BACK, WINDOW_DAYS } from '../history/window.ts';
 import { byDay } from '../history/byDay.ts';
 import { adherence, doseRows } from '../history/adherence.ts';
@@ -165,18 +165,33 @@ test('기록의 주인이 프로필과 같아야 화면에 뜬다', () => {
     비는 것이 아니라 조용히 일부만 세는 쪽이라 더 나쁘다. 한때 여기에 계정 id 를
     넣었다가 프로필 쪽(`PROFILE_ID`)과 짝이 깨져 달력이 통째로 비었다.
   */
-  for (const doses of [true, false]) {
-    const h = demoHistory('2026-08-05', 'me', 84, 23 * 60, doses);
+  for (const plan of [ADULT_DOSES, KID_DOSES]) {
+    const h = demoHistory('2026-08-05', 'me', 84, 23 * 60, plan);
     assert.ok(h.length > 0);
     assert.equal(h.filter((r) => r.memberId === 'me').length, h.length,
       '넘긴 주인 그대로여야 한다');
   }
 });
 
-test('아이에게는 할머니의 복약을 안 준다', () => {
-  const kid = demoHistory('2026-08-05', 'me', 84, 23 * 60, false);
-  const meds = kid.filter((r) => r.kind === 'medicine' || r.kind === 'prescription');
-  assert.equal(meds.length, 0, '일곱 살 화면에 메트포르민이 쌓이면 그 자체가 틀린 화면이다');
-  // 그래도 볼 것은 있어야 한다 — 아이 쪽 논지는 끼니로 선다.
-  assert.ok(kid.length > 200, `끼니는 그대로여야 한다 (지금 ${kid.length}건)`);
+test('아이에게는 아이 약을 준다', () => {
+  /*
+    두 가지를 한꺼번에 본다. 전에는 아이에게 참·거짓을 넘겨서 복약을 통째로 껐는데,
+    막을 것은 **남의 약**이지 약 자체가 아니었다. 끄기만 하니 아이 쪽 복약 화면이
+    비었고, 사람을 바꾸면 이 앱의 절반이 사라졌다.
+  */
+  const kid = demoHistory('2026-08-05', 'me', 84, 23 * 60, KID_DOSES);
+  const names = new Set(kid.filter((r) => r.dose).map((r) => r.name));
+
+  assert.ok(names.size > 0, '아이도 복약 기록이 있어야 한다');
+  for (const grandma of ['Metformin 500mg', 'Amlodipine 5mg']) {
+    assert.ok(!names.has(grandma), `일곱 살 화면에 ${grandma} 이 쌓이면 그 자체가 틀린 화면이다`);
+  }
+  assert.deepEqual([...names].sort(), ['Loratadine 5mg', 'Vitamin D 400 IU']);
+
+  // 하루 두 번이다. 할머니가 세 번이라, 달력 칸의 조각 수가 그 사람의 처방을 그린다.
+  const perDay = kid.filter((r) => r.dose && r.dayKey === '2026-08-04').length;
+  assert.equal(perDay, 2);
+
+  // 끼니는 그대로다 — 아이 쪽 논지의 나머지 절반이다.
+  assert.ok(kid.filter((r) => !r.dose).length > 200);
 });

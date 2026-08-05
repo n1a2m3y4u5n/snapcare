@@ -6,6 +6,17 @@ import { doseRows, adherence, adherenceSentence, clockOf, windowDays } from './a
 import type { ScanRecord } from '../snapcare/types.ts';
 
 const TODAY = '2026-08-03';
+/*
+  하루의 끝 시각을 **못 박는다.**
+
+  `adherence` 는 아직 안 온 복용을 분모에서 빼는데, 그 판단이 "지금 몇 시인가" 에
+  달려 있다. 시험이 그 기본값에 기대고 있어서 **밤 열한 시에 통과하던 것이 자정을
+  넘기자 셋이 깨졌다** — 오후 일곱 시 복용이 갑자기 '아직 안 온 것' 이 됐기 때문이다.
+
+  자료가 아니라 시계 때문에 답이 달라지는 시험은 같은 것을 두 번 확인해 주지 못한다.
+  거른 복용을 말하려는 시험들이므로 그 날이 다 지난 시각으로 고정한다.
+*/
+const ENDOFDAY = '2359';
 
 function food(dayKey: string, over: Partial<ScanRecord> = {}): ScanRecord {
   return {
@@ -123,7 +134,7 @@ test('일곱 번 중 한 번을 거르면 그렇게 센다', () => {
     dose('2026-08-02', '0800', true), dose('2026-08-02', '1300', false),
     dose('2026-08-01', '0800', true), dose('2026-08-01', '1300', true),
   ]);
-  const a = adherence(rows, TODAY, 7);
+  const a = adherence(rows, TODAY, 7, ENDOFDAY);
   assert.equal(a.offered, 7);
   assert.equal(a.taken, 6);
   assert.equal(a.missed, 1);
@@ -132,12 +143,12 @@ test('일곱 번 중 한 번을 거르면 그렇게 센다', () => {
 
 test('기간 밖의 복용은 분모에 안 들어간다', () => {
   const rows = doseRows([dose(TODAY, '0800', true), dose('2026-06-01', '0800', false)]);
-  assert.equal(adherence(rows, TODAY, 7).offered, 1);
+  assert.equal(adherence(rows, TODAY, 7, ENDOFDAY).offered, 1);
 });
 
 test('상자가 아무것도 보고한 적 없으면 0%가 아니라 "모름"이다', () => {
   // 0% 는 "다 걸렀다" 는 뜻이다. 짝지은 상자가 없는 사람에게 그렇게 말하면 안 된다.
-  const a = adherence([], TODAY, 7);
+  const a = adherence([], TODAY, 7, ENDOFDAY);
   assert.equal(a.rate, null);
   assert.match(adherenceSentence(a), /has not reported/);
 });
@@ -148,13 +159,13 @@ test('자주 거르는 시각을 짚는다', () => {
     dose(TODAY, '1900', false), dose('2026-08-02', '1900', false),
     dose('2026-08-01', '0800', false), dose('2026-08-01', '1900', true),
   ]);
-  assert.equal(adherence(rows, TODAY, 7).worstTime, '1900');
+  assert.equal(adherence(rows, TODAY, 7, ENDOFDAY).worstTime, '1900');
 });
 
 test('동점이면 시각을 짚지 않는다', () => {
   // 둘 중 하나를 고르면 없는 규칙을 있다고 말하는 것이 된다.
   const rows = doseRows([dose(TODAY, '0800', false), dose(TODAY, '1900', false)]);
-  assert.equal(adherence(rows, TODAY, 7).worstTime, null);
+  assert.equal(adherence(rows, TODAY, 7, ENDOFDAY).worstTime, null);
 });
 
 test('기록이 없는 날은 연속을 끊지 않는다', () => {
@@ -165,7 +176,7 @@ test('기록이 없는 날은 연속을 끊지 않는다', () => {
     // 2026-08-02 는 기록 자체가 없다
     dose('2026-08-01', '0800', true),
   ]);
-  assert.equal(adherence(rows, TODAY, 7).streak, 2);
+  assert.equal(adherence(rows, TODAY, 7, ENDOFDAY).streak, 2);
 });
 
 test('오늘 거른 것으로 어제까지의 연속을 깎지 않는다', () => {
@@ -175,20 +186,20 @@ test('오늘 거른 것으로 어제까지의 연속을 깎지 않는다', () =>
     dose(TODAY, '1900', false),
     dose('2026-08-02', '0800', true), dose('2026-08-01', '0800', true),
   ]);
-  assert.equal(adherence(rows, TODAY, 7).streak, 2);
+  assert.equal(adherence(rows, TODAY, 7, ENDOFDAY).streak, 2);
 });
 
 test('어제 거르면 연속이 끊긴다', () => {
   const rows = doseRows([
     dose(TODAY, '0800', true), dose('2026-08-02', '0800', false), dose('2026-08-01', '0800', true),
   ]);
-  assert.equal(adherence(rows, TODAY, 7).streak, 1);
+  assert.equal(adherence(rows, TODAY, 7, ENDOFDAY).streak, 1);
 });
 
 test('잘하고 있을 때도 말한다', () => {
   // 실패했을 때만 말하는 앱은 잔소리가 되고, 잔소리는 꺼진다.
   const rows = doseRows([dose(TODAY, '0800', true), dose('2026-08-02', '0800', true)]);
-  assert.match(adherenceSentence(adherence(rows, TODAY, 7)), /every dose for 2 days/);
+  assert.match(adherenceSentence(adherence(rows, TODAY, 7, ENDOFDAY)), /every dose for 2 days/);
 });
 
 test('문장이 백분율이 아니라 횟수로 말한다', () => {
@@ -196,7 +207,7 @@ test('문장이 백분율이 아니라 횟수로 말한다', () => {
   const rows = doseRows([
     dose(TODAY, '0800', false), dose(TODAY, '1300', true), dose(TODAY, '1900', true),
   ]);
-  const s = adherenceSentence(adherence(rows, TODAY, 7));
+  const s = adherenceSentence(adherence(rows, TODAY, 7, ENDOFDAY));
   assert.ok(!s.includes('%'), `백분율이 문장에 들어갔다: ${s}`);
   assert.match(s, /missed once/);
 });

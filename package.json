@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test --experimental-strip-types 'lib/**/*.test.ts'",
+    "test": "node --test --experimental-strip-types 'lib/**/*.test.ts' 'components/**/*.test.ts'",
     "predev": "node scripts/copy-model.mjs",
     "prebuild": "node scripts/copy-model.mjs && node scripts/prewarm-pictograms.mjs && node scripts/glyph-manifest.mjs && node scripts/stamp-sw.mjs",
     "prewarm": "node scripts/prewarm-pictograms.mjs",

@@ -71,7 +71,7 @@ export interface SyncBlob {
  * 이 수가 서버 것보다 크면 받아온 시연 자료를 안 쓰고 우리 것을 밀어 올린다.
  * 작거나 같으면 평소대로 받는다 — 다른 폰이 리허설 중에 만든 것을 지우지 않는다.
  */
-export const DEMO_SEED = 2;
+export const DEMO_SEED = 3;
 
 /** 서버 데이터를 신뢰해도 되는가 (버전 일치 + 최소 형태 검사). */
 export function isUsable(blob: SyncBlob | null): blob is SyncBlob {

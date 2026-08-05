@@ -88,11 +88,39 @@ const PRODUCTS = {
  * 그래서 하루 두 번짜리 하나와 하루 한 번짜리 하나다. 칸도 다르다: 달력의 조각이
  * 어느 약인지를 아래 날짜별 목록에서 짚을 수 있어야 한다.
  */
-const DOSES = [
+export interface DosePlan {
+  due: string;
+  tray: number;
+  name: string;
+  emoji: string;
+  label: string;
+}
+
+/** 할머니 것 — 당뇨·혈압. 하루 세 번, 두 칸. */
+export const ADULT_DOSES: DosePlan[] = [
   { due: '0800', tray: 1, name: 'Metformin 500mg', emoji: '💊', label: '8:00 AM' },
   { due: '1300', tray: 2, name: 'Amlodipine 5mg', emoji: '💊', label: '1:00 PM' },
   { due: '1900', tray: 1, name: 'Metformin 500mg', emoji: '💊', label: '7:00 PM' },
-] as const;
+];
+
+/**
+ * 일곱 살 것.
+ *
+ * 아이 쪽 복약 화면이 통째로 비어 있었다. 아이에게 메트포르민과 암로디핀이 하루 세 번
+ * 쌓이는 것이 틀린 화면이라 막아 두었는데, 막기만 하고 **아이 것을 안 준** 상태였다.
+ * 그래서 사람을 바꾸면 이 앱의 절반이 사라졌다.
+ *
+ * 프로필에 있는 것에서 고른다. 이 아이는 땅콩 알레르기가 있으므로 항히스타민이 일상
+ * 약으로 붙는 것이 자연스럽고, 그러면 얼굴을 바꿨을 때 **약도 그 사람의 것**이라는
+ * 말이 화면만으로 선다. 둘 다 우리 약품표에 있는 약이다(`who.ts`).
+ *
+ * 하루 **두 번**인 것도 일부러다. 할머니가 세 번이라 달력 칸이 세 조각인데, 여기서
+ * 두 조각이 되면 "이 달력은 그 사람의 처방을 그린다" 가 설명 없이 보인다.
+ */
+export const KID_DOSES: DosePlan[] = [
+  { due: '0800', tray: 1, name: 'Loratadine 5mg', emoji: '💊', label: '8:00 AM' },
+  { due: '1900', tray: 2, name: 'Vitamin D 400 IU', emoji: '💊', label: '7:00 PM' },
+];
 
 /** `'0820'` → 500. 오늘 무엇이 이미 지나갔는지를 재는 데만 쓴다. */
 function hhmmToMinutes(hhmm: string): number {
@@ -300,14 +328,14 @@ function ateNowish(index: number, count: number, nowMinutes: number): { hhmm: st
 export const DEMO_DAYS = 84;
 
 /**
- * @param doses 상자가 내민 복용을 함께 넣는가.
+ * @param plan 이 사람의 복약 일정. 사람마다 다르다 — `ADULT_DOSES` / `KID_DOSES`.
  *
- * 아이는 안 넣는다. 시연의 두 사람은 할머니(당뇨·혈액희석제)와 일곱 살인데, 아이
- * 화면에 메트포르민과 암로디핀이 하루 세 번 쌓이면 **그 자체가 틀린 화면**이다.
- * 아이 쪽에서 이 앱이 하는 일은 먹는 것을 보는 것이고, 그쪽 논지는 끼니만으로 선다.
+ * 전에는 참·거짓이었다. 아이에게 할머니 약을 주지 않으려고 거짓을 넘겼는데, 그러면
+ * 아이 쪽 복약 화면이 **통째로 빈다.** 막을 것은 남의 약이지 약 자체가 아니었다.
+ * 일정을 받으면 두 가지를 한 번에 한다: 남의 약이 안 가고, 자기 약이 간다.
  */
 export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
-                            nowMinutes = nowInMinutes(), doses = true): ScanRecord[] {
+                            nowMinutes = nowInMinutes(), plan: DosePlan[] = ADULT_DOSES): ScanRecord[] {
   const out: ScanRecord[] = [];
 
   for (let back = 0; back < days; back++) {
@@ -315,7 +343,7 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
     const when = back === 0 ? 'Today' : back === 1 ? 'Yesterday' : day.slice(5);
 
     // 상자가 내민 복용
-    for (const d of doses ? DOSES : []) {
+    for (const d of plan) {
       /*
         오늘은 **지금까지 지나간 것만** 넣는다.
 
@@ -451,8 +479,8 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
  * 끝나는 날을 두지 않는다. 만성 질환의 약이고, 끝이 있는 처방은 "다 먹었다" 카드를
  * 띄우는데 시연 중에 그 카드가 뜨면 무엇을 보여주려던 화면인지가 흐려진다.
  */
-export function demoReminders(memberId: string) {
-  return DOSES.map((d) => ({
+export function demoReminders(memberId: string, plan: DosePlan[] = ADULT_DOSES) {
+  return plan.map((d) => ({
     id: `demo_rx_${d.tray}_${d.due}`,
     memberId,
     time: d.label,

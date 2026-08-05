@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { Reaction, ScanRecord, Symptom } from '@/lib/snapcare/types';
 import { PROFILE_ID, seedDemoProfile } from './profile';
 import { prune } from '@/lib/snapcare/retention';
-import { demoHistory, demoReminders } from '@/lib/snapcare/demoHistory';
+import { ADULT_DOSES, KID_DOSES, demoHistory, demoReminders } from '@/lib/snapcare/demoHistory';
 import { useReminders } from './reminders';
 import { isDemo } from '@/lib/snapcare/demo';
 import { accountStorage, activeAccountId, listAccounts, removeAccount, DEMO_KID, DEMO_PRIMARY } from '@/lib/snapcare/accounts';
@@ -133,7 +133,11 @@ export const useScans = create<ScansState>()(
        * 저장분은 그보다 오래된 모양**이다 — 실제로 열어 보니 62건이 한 칸에 뭉쳐
        * 있었다(옛 시드의 dayKey 센티널). 이름만 고쳐서는 안 풀리므로 다시 뿌린다.
        */
-      version: 7,
+      /**
+       * v8: 아이에게 자기 약을 준다(`KID_DOSES`). 이미 시연을 열어 본 폰은 아이 쪽
+       * 복약이 **빈 채로 저장돼 있어서**, 판을 올려 다시 뿌리지 않으면 영영 빈다.
+       */
+      version: 8,
       /**
        * 옛 저장분을 버린다 — **시연에서만.**
        *
@@ -258,9 +262,10 @@ export function seedDemoIfEmpty(): void {
     으로 한 번도 심지 않아서**였다. 그쪽은 `demoHistory` 의 인자로 고쳤다.
   */
   const me = activeAccountId();
-  // 아이에게는 복용을 안 넣는다 — 이유는 demoHistory 의 주석에.
-  useScans.setState({ scans: [...seed,
-    ...demoHistory(todayKey(), PROFILE_ID, undefined, undefined, me !== DEMO_KID)] });
+  // 사람마다 자기 약이다. 아이에게 할머니 약을 주지 않는 것이 요점이었지, 아이에게
+  // 약을 아예 안 주는 것이 아니었다 — 그래서 아이 쪽 복약 화면이 통째로 비어 있었다.
+  const plan = me === DEMO_KID ? KID_DOSES : ADULT_DOSES;
+  useScans.setState({ scans: [...seed, ...demoHistory(todayKey(), PROFILE_ID, undefined, undefined, plan)] });
   /*
     알람도 같이 심는다.
 
@@ -270,10 +275,10 @@ export function seedDemoIfEmpty(): void {
 
     이미 알람이 있으면 손대지 않는다. 시연 도중에 사람이 만든 것을 지우면 안 된다.
   */
-  if (useReminders.getState().reminders.length === 0 && me !== DEMO_KID) {
-    // 알람도 할머니 것이다. 일곱 살에게 암로디핀 알람이 울리는 화면은 시연에서
-    // 설명할 수 있는 종류의 실수가 아니다.
-    useReminders.setState({ reminders: demoReminders(me) });
+  if (useReminders.getState().reminders.length === 0) {
+    // 알람도 같은 표에서 나온다. 기록과 알람이 다른 표를 보면 "지금 정해져 있는 것"
+    // 과 지난 넉 주가 서로 다른 약을 말하게 된다.
+    useReminders.setState({ reminders: demoReminders(me, plan) });
   }
   // 기록만 넣으면 소용이 없다 — 판정은 프로필에서 나온다. 조건이 비어 있으면 위의
   // 회피 두 건이 왜 회피인지 화면 어디에도 설명이 없다.
