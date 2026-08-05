@@ -82,6 +82,7 @@ import json
 import logging
 import random
 import threading
+from collections.abc import Callable
 import time
 import urllib.error
 import urllib.request
@@ -353,6 +354,17 @@ class CloudLink:
     def nudge(self) -> None:
         """Something happened worth telling the app about, now rather than later."""
         self._ctl.wake_publisher.set()
+
+    #: 화면을 지금 다시 그려야 할 때 부른다. 데몬이 갈아 끼우고, 기본은 아무 일도 안 한다.
+    #:
+    #: `nudge` 와 방향이 반대다. 저쪽은 **앱에게** 알리는 것이고 이쪽은 **이 기계의
+    #: 화면**을 고치는 것이다. 화면 사다리는 `TICK_SECONDS` — 15 초마다 다시 계산되므로,
+    #: 이것이 없으면 클라우드에서 온 명령이 화면에 닿는 데 최대 15 초가 걸린다. 명령
+    #: 자체는 롱폴이 잡고 있어 즉시 도착하는데도 그렇다.
+    #:
+    #: 시연에서 그 15 초는 "안 되는 것" 으로 보인다. 발표자가 단추를 누르고 청중과 함께
+    #: 빈 화면을 보는 동안, 고장인지 느린 것인지 아무도 모른다.
+    on_screen: Callable[[], None] = staticmethod(lambda: None)
 
     def network_changed(self, state=None) -> None:
         """The device is back on a network. Stop waiting out the backoff.
@@ -704,6 +716,7 @@ class CloudLink:
             # 보이고, 그 둘의 차이가 이 시연의 요점이다.
             with self._lock:
                 self._show_pair_until = 0.0
+            self.on_screen()
             log.info("a phone claimed this box (revision %d)", rev)
             return
 
@@ -740,6 +753,7 @@ class CloudLink:
                     self._show_pair_until = 0.0
                 log.info("hiding the pairing code (revision %d) — the pairing itself "
                          "is untouched", rev)
+                self.on_screen()
                 self.nudge()
                 return
 
@@ -749,6 +763,7 @@ class CloudLink:
                 self._show_pair_until = time.monotonic() + seconds
             log.info("showing the pairing code for %ds, from the cloud "
                      "(revision %d) — the pairing itself is untouched", seconds, rev)
+            self.on_screen()
             self.nudge()
             return
 

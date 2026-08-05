@@ -86,6 +86,16 @@ class Daemon:
         # dose it has not heard about, so the report goes up when the ring goes
         # green rather than at the next heartbeat five minutes later.
         self.dispenser.on_change = self.cloud.nudge
+        # 클라우드에서 온 명령이 화면을 바꿨으면 다음 tick 을 기다리지 않는다.
+        #
+        # 명령 자체는 릴레이가 롱폴로 잡고 있어 즉시 도착한다 — 재 보니 상자가 쓰이는
+        # 그 순간에 집어 갔다. 그런데 화면 사다리는 15 초 주기로만 다시 계산되므로,
+        # 짝짓기 QR 을 켜는 단추를 눌러도 화면이 최대 15 초 뒤에 바뀌었다.
+        #
+        # 시연에서 그 15 초는 느린 것이 아니라 **안 되는 것**으로 보인다. 발표자가
+        # 단추를 누르고 청중과 함께 빈 화면을 보는 동안, 고장인지 기다리는 중인지
+        # 아무도 알 수 없다.
+        self.cloud.on_screen = self._redraw.set
         # The one input the machine has. It is the same action as the release
         # button on the app's main screen, deliberately reaching the same
         # `Dispenser.release` — so there is one path by which the schedule opens
@@ -115,6 +125,9 @@ class Daemon:
         )
         self.port = port
         self._stop = threading.Event()
+        # 화면을 지금 다시 그려야 한다는 신호. 아래 `_stop.wait(TICK_SECONDS)` 를
+        # 대신하며, 클라우드 명령이 화면을 바꿀 때 그 15 초를 건너뛰게 한다.
+        self._redraw = threading.Event()
         self._server = None
         self._ntp_trusted = False
         #: When the clock chip was last written. Seeded at 0 so the first
@@ -362,13 +375,18 @@ class Daemon:
                 # See the module docstring: the loop outlives its failures.
                 log.exception("tick failed; carrying on")
 
-            self._stop.wait(config.TICK_SECONDS)
+            # 다음 바퀴까지 기다리되, 화면을 고치라는 신호가 오면 거기서 깬다.
+            # 멈추라는 신호도 이 이벤트를 세우므로 종료가 15 초 늦지 않는다.
+            if self._redraw.wait(config.TICK_SECONDS):
+                self._redraw.clear()
 
         return 0
 
     def stop(self, *_args) -> None:
         log.info("shutting down")
         self._stop.set()
+        # 루프가 `_redraw` 위에서 자고 있다. 안 깨우면 종료가 최대 15 초 늦는다.
+        self._redraw.set()
         # Asked to stop here rather than in `close`, so their threads have the
         # whole of the shutdown to notice. They are daemon threads and cannot
         # hold the process open either way; this just keeps a poll that is

@@ -54,8 +54,19 @@ export interface Satellite {
  * 남는 자리를 다 쓰되 상한을 둔다. 태블릿에서 지름 400px 짜리 원이 되면 손가락이
  * 가장자리까지 가야 하고, 그 크기는 더 이상 겨누기 쉬운 것이 아니다.
  *
- * 검정인 이유: 이 앱에서 뜻이 안 붙은 유일한 진한 색이다. 초록·주황·빨강은 판정이고,
- * 파랑은 "누르는 것", 크림색은 복약이다. 둘레의 넷과 색이 갈려야 종류가 갈린다.
+ * **기본 초록**이다. 검정이었다.
+ *
+ * 그때의 이유는 "뜻이 안 붙은 유일한 진한 색" 이었다 — 초록·주황·빨강은 판정이고,
+ * 파랑은 누르는 것, 크림색은 복약이라 검정만 남아 있었다. 그 셈은 강조색이 파랑일
+ * 때의 것이다.
+ *
+ * 파랑이 로고의 어두운 초록으로 바뀌면서 그 자리가 비었다. 지금 이 원은 화면에서
+ * 가장 큰 것이고 로고 바로 아래에 있는데, 그 둘이 다른 색이면 앱에서 제일 눈에 띄는
+ * 두 가지가 서로 남남으로 보인다.
+ *
+ * 판정 초록과 헷갈리지 않는다. #323E2C 는 판정 초록(#0E7A38)보다 훨씬 어둡고 채도가
+ * 낮아 거의 먹색으로 읽히며, 무엇보다 **판정이 나가는 자리가 아니다** — 늘 같은
+ * 자리에 있는 단추 하나다.
  */
 export function BigCamera() {
   const router = useRouter();
@@ -72,7 +83,7 @@ export function BigCamera() {
       */
       className="sc-round mx-auto flex aspect-square items-center justify-center
                  rounded-full text-white shadow-lg active:scale-95 transition-transform"
-      style={{ background: 'var(--color-sc-ink)' }}
+      style={{ background: 'var(--color-sc-primary)' }}
     >
       {/*
         글자를 뺐다.

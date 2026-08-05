@@ -1010,3 +1010,29 @@ def test_zero_is_not_rounded_up_to_the_minimum(link):
         link._carry_out({"action": "show_pairing", "seconds": 600}, 71)  # noqa: SLF001
         link._carry_out({"action": "show_pairing", "seconds": asked}, 72)  # noqa: SLF001
         assert link.status()["showPairingFor"] == 0, f"{asked} 초가 켜기로 읽혔다"
+
+
+def test_a_pairing_command_asks_for_the_screen_now(link):
+    """화면이 다음 tick 을 기다리면 안 된다.
+
+    명령은 즉시 도착한다 — 릴레이가 롱폴로 잡고 있어서, 재 보니 상자가 쓰이는 그
+    순간에 집어 갔다. 그런데 화면 사다리는 `TICK_SECONDS`(15초) 주기로만 다시
+    계산되므로, 단추를 눌러도 화면이 최대 15초 뒤에 바뀌었다.
+
+    시연에서 그 15초는 느린 것이 아니라 **안 되는 것**으로 보인다.
+    """
+    woke = []
+    link.on_screen = lambda: woke.append(True)
+
+    link._carry_out({"action": "show_pairing", "seconds": 60}, 80)   # noqa: SLF001
+    assert woke, "켤 때 화면을 안 깨웠다"
+
+    woke.clear()
+    link._carry_out({"action": "show_pairing", "seconds": 0}, 81)    # noqa: SLF001
+    assert woke, "끌 때 화면을 안 깨웠다"
+
+    woke.clear()
+    link._carry_out({"action": "show_pairing", "seconds": 60}, 82)   # noqa: SLF001
+    woke.clear()
+    link._carry_out({"action": "hello"}, 83)                         # noqa: SLF001
+    assert woke, "폰이 찍었는데 화면을 안 깨웠다 — 시연에서 보이려는 바로 그 장면이다"
