@@ -168,15 +168,39 @@ export function calendar(rows: DoseRow[], anchor: string, days = 28,
     ? monthDays(anchor)
     : windowDays(anchor, days).slice().reverse();
 
+  /*
+    아직 안 온 날도 **다른 날과 같은 모양으로** 나눠 둔다.
+
+    앞으로의 날에는 기록이 없으니 조각도 없고, 그러면 그 칸만 통짜 네모로 그려진다.
+    달력에서 그 차이는 "약이 없는 날" 로 읽힌다 — 실제로는 아직 안 왔을 뿐인데.
+    나온 말: "아직 안 온 앞으로의 날짜들은 칸은 나눠두되 빈 칸 상태로".
+
+    몇 조각인지는 **이 달의 다른 날에서 가져온다.** 앞으로의 일정을 우리가 알 수는
+    없다(기록이 있어야 아는 것이라 앞날에는 없다). 다만 그리는 일에 필요한 것은 일정이
+    아니라 모양이고, "이 달이 하루 세 번짜리 달이면 앞날도 세 칸" 은 자료를 지어내는
+    것이 아니라 그리던 대로 마저 그리는 것이다.
+
+    이 조각들은 `offered` 에 안 넣는다. 세는 쪽(순응도·게이지·소리)에게 이 날은 여전히
+    아무 일도 없는 날이어야 한다 — 넣으면 안 온 날이 걸른 날로 세어진다.
+  */
+  const shape = new Map<number, number>();
+  for (const cell of byDay.values()) {
+    if (cell.length > 0 && cell.length <= MAX_SEGMENTS) shape.set(cell.length, (shape.get(cell.length) ?? 0) + 1);
+  }
+  const typical = [...shape.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]?.[0] ?? 0;
+  const blankDay = (): DoseSlot[] =>
+    Array.from({ length: typical }, () => ({ due: '', part: 'unknown' as const, taken: false, pending: true }));
+
   return span
     .map((dayKey) => {
-      const slots = byDay.get(dayKey) ?? [];
+      const real = byDay.get(dayKey) ?? [];
+      const slots = real.length === 0 && dayKey > today ? blankDay() : real;
       return {
         dayKey,
-        offered: slots.length,
-        taken: slots.filter((s) => s.taken).length,
+        offered: real.length,
+        taken: real.filter((s) => s.taken).length,
         // 아직 안 온 것은 성공도 실패도 아니다. 순응도 계산이 이 수를 빼고 세도록.
-        pending: slots.filter((s) => s.pending).length,
+        pending: real.filter((s) => s.pending).length,
         today: dayKey === today,
         countable: slots.length > 0 && slots.length <= MAX_SEGMENTS,
         slots,
@@ -221,7 +245,8 @@ export function trailingBlanks(last: string): number {
  */
 export function daySentence(day: CalendarDay): string {
   const when = day.today ? 'Today' : day.dayKey;
-  if (day.offered === 0) return `${when}: nothing from the box.`;
+  // 앞으로의 날은 조각이 그려져 있어도 아무 일도 없던 날이 아니다 — 아직 안 왔을 뿐이다.
+  if (day.offered === 0) return day.slots.length > 0 ? `${when}: not yet.` : `${when}: nothing from the box.`;
   if (day.taken === day.offered) {
     return day.offered === 1
       ? `${when}: the one dose was taken.`

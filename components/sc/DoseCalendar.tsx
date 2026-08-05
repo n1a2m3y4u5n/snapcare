@@ -205,7 +205,8 @@ function Cell({ day, picked, onPick }: {
       : { boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--color-sc-ink) 20%, transparent)' };
   const pick = onPick ? { onClick: () => onPick(day.dayKey), role: 'button', tabIndex: 0 } : {};
 
-  if (day.offered === 0) {
+  // `offered` 가 아니라 조각으로 가른다. 앞으로의 날은 준 것이 없어도 조각이 있다.
+  if (day.slots.length === 0) {
     return (
       <span {...pick} {...sayable(say)} title={say}
             className="aspect-square rounded-md"

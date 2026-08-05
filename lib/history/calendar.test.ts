@@ -229,3 +229,25 @@ test('달의 앞뒤 빈 칸을 더하면 일곱의 배수다', () => {
     assert.equal(total % 7, 0, `${m} 에서 격자가 어긋난다 (${total})`);
   }
 });
+
+test('앞으로의 날은 다른 날과 같은 수로 나뉘되 비어 있다', () => {
+  const rows = ['2026-08-01', '2026-08-02'].flatMap((dayKey) =>
+    ['0800', '1300', '1900'].map((due) => ({ dayKey, due, taken: true, name: 'M', memberId: 'me' })),
+  );
+  const days = calendar(rows as never, '2026-08', 28, '2026-08-02');
+
+  const future = days.find((d) => d.dayKey === '2026-08-20')!;
+  assert.equal(future.slots.length, 3, '다른 날처럼 세 칸이어야 한다');
+  assert.ok(future.slots.every((s) => s.pending && !s.taken), '칸은 비어 있어야 한다');
+
+  // 세는 쪽에게 이 날은 여전히 아무 일도 없는 날이다.
+  assert.equal(future.offered, 0);
+  assert.equal(future.pending, 0);
+  assert.match(daySentence(future), /not yet/);
+});
+
+test('지난 달을 넘겨 봐도 빈 칸을 지어내지 않는다', () => {
+  const rows = ['0800', '1300', '1900'].map((due) => ({ dayKey: '2026-07-01', due, taken: true, name: 'M', memberId: 'me' }));
+  const days = calendar(rows as never, '2026-07', 28, '2026-08-05');
+  assert.equal(days.find((d) => d.dayKey === '2026-07-20')!.slots.length, 0, '이미 지난 날이다');
+});
