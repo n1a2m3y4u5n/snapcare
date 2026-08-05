@@ -38,19 +38,91 @@ const BG = { r: 0xff, g: 0xff, b: 0xff, alpha: 1 };
 
 const OUT = 'public/icons';
 
+/**
+ * 글자 로고를 **똑바로 세운다.**
+ *
+ * 손으로 그린 원본이 조금 기울어 있다. 재 보면 첫 줄의 밑선이 -3.6°, 둘째 줄이
+ * -8.7° 다 — 두 줄이 서로 다른 각도라 어느 회전으로도 둘 다 완전히 눕히지는 못한다.
+ * 6° 가 눈에 가장 수평으로 보이는 값이고, 4°·6°·8° 를 나란히 놓고 골랐다.
+ *
+ * 그림 자체를 고치지 않고 여기서 도는 이유: 원본은 사람이 그린 것이고, 다시 그려
+ * 올 때마다 같은 손질을 잊지 않고 해야 한다. 스크립트에 두면 다음 판에도 따라온다.
+ */
+const TILT = 6;
+
+/**
+ * **글자가 가운데 오게** 여백을 채운다.
+ *
+ * 그림 상자를 화면 가운데에 놓았는데 글자가 왼쪽으로 치우쳐 보였다. 상자는 정확히
+ * 가운데였다 — 치우친 것은 상자 안의 글자다. 오른쪽 위에 사진기와 반짝임이 붙어
+ * 있어서 상자의 오른쪽 끝이 그만큼 밀려나 있고, 정작 눈이 로고로 읽는 것은 연둣빛
+ * 글자다.
+ *
+ * 재 보면 연둣빛의 가운데가 상자 가운데보다 97px(20%) 왼쪽에 있다. 그만큼을 왼쪽에
+ * 투명으로 채우면 글자의 가운데가 상자의 가운데가 되고, 그때 상자를 가운데 놓으면
+ * 글자가 가운데에 온다.
+ *
+ * 왜 CSS 로 밀지 않는가: 상자보다 그림을 옮기면 오른쪽의 사진기가 화면 밖으로 나갈
+ * 수 있다(좁은 폰에서 실제로 2px 넘쳤다). 여백은 상자 안에 있으므로 그 일이 없다.
+ *
+ * 연둣빛만 재는 이유는 그것이 로고의 이름 부분이라서다. 회색 디스펜서와 검은 사진기는
+ * 곁들이고, 곁들이를 가운데 맞추면 이름이 다시 치우친다.
+ */
+async function centreOnWordmark(buf) {
+  const { data, info } = await sharp(buf).ensureAlpha().raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width: w, height: h, channels: ch } = info;
+  let min = w;
+  let max = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * ch;
+      const [r, g, b, a] = [data[i], data[i + 1], data[i + 2], data[i + 3]];
+      // 연둣빛: 초록이 세고, 빨강보다 확실히 세고, 파랑보다 훨씬 세다.
+      if (a > 60 && g > 120 && g > r + 25 && g > b + 60) {
+        if (x < min) min = x;
+        if (x > max) max = x;
+      }
+    }
+  }
+  if (max <= min) return buf;                       // 연둣빛을 못 찾았으면 그대로 둔다
+  const off = Math.round(w / 2 - (min + max) / 2);  // 오른쪽으로 밀어야 하는 양
+  if (Math.abs(off) < 4) return buf;                // 이미 가운데다
+  const pad = Math.abs(off) * 2;
+  return sharp(buf)
+    .extend({
+      left: off > 0 ? pad : 0,
+      right: off > 0 ? 0 : pad,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .png()
+    .toBuffer();
+}
+
 /** 화면 머리에 놓을 글자 로고. 여백을 털어 같은 높이에서 글자가 크게 보이게 한다. */
 async function wordmark(src) {
   await mkdir('public', { recursive: true });
-  await sharp(src)
+  const straight = await sharp(src)
+    // 돌린 뒤에 턴다. 돌리면 네 귀퉁이에 투명이 생기고, 그 여백을 털어야 글자가
+    // 제 상자를 꽉 채운다.
+    .rotate(TILT, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .trim({ threshold: 12 })
-    // 홈에서 96px 높이로 쓴다. 세 배면 3배 화면에서도 또렷하다.
-    .resize({ height: 320 })
-    .png({ compressionLevel: 9 })
-    .toFile('public/logo-mark.png');
-  console.log('썼다 public/logo-mark.png (메인 화면 머리)');
+    .png()
+    .toBuffer();
 
-  // 보관용 원본. 문서·포스터처럼 폭이 있는 자리가 쓴다.
-  await sharp(src).resize({ width: 1200 }).png({ compressionLevel: 9, palette: true, colors: 128 })
+  const centred = await centreOnWordmark(straight);
+  // 홈에서 쓰는 높이의 두 배쯤. 3배 화면에서도 또렷하다.
+  await sharp(centred).resize({ height: 320 }).png({ compressionLevel: 9 })
+    .toFile('public/logo-mark.png');
+  const box = await sharp('public/logo-mark.png').metadata();
+  console.log(`썼다 public/logo-mark.png (메인 화면 머리) ${box.width}×${box.height}`);
+
+  // 보관용. 문서·포스터처럼 폭이 있는 자리가 쓴다. 이쪽도 세워 둔다 — 같은 로고가
+  // 자리에 따라 기울기가 다르면 두 벌처럼 보인다.
+  await sharp(src)
+    .rotate(TILT, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .trim({ threshold: 12 })
+    .resize({ width: 1200 }).png({ compressionLevel: 9, palette: true, colors: 128 })
     .toFile('public/logo.png');
   console.log('썼다 public/logo.png (보관용)');
 }

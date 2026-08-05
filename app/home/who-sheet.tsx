@@ -120,12 +120,19 @@ export function WhoSheet({ needsProfile = false }: {
           ref={panel}
           role="menu"
           /*
-            **위로** 연다. 이 단추가 화면 맨 아래 줄로 내려가면서, 아래로 열던
-            목록이 화면 밖으로 나갔다 — 열렸는데 아무것도 안 보이는 상태가 된다.
-            가로로는 가운데에 걸어 둔다(`left-1/2` + 이동): 줄의 오른쪽 끝이 아니라
-            줄 안 어디에 있어도 목록이 화면 안에 들어온다.
+            **위로, 그리고 오른쪽 끝을 맞춰** 연다.
+
+            아래로 열던 것을 위로 올린 이유: 이 단추가 화면 맨 아래 줄로 내려가면서
+            목록이 화면 밖으로 나갔다 — 열렸는데 아무것도 안 보이는 상태가 됐다.
+
+            가로는 가운데에 걸었다가 다시 고쳤다. 이 단추는 줄의 **마지막 칸**이라
+            가운데에 걸면 목록의 오른쪽 절반이 화면 밖으로 나간다(실제로 잘렸다).
+            오른쪽 끝을 단추에 맞추면 목록이 왼쪽으로 펼쳐져 화면 안에 들어온다.
+
+            폭에도 상한을 둔다. 화면이 목록보다 좁은 기기에서는 그 상한이 마지막
+            방어선이다 — 잘린 목록은 고를 수 없는 목록이다.
           */
-          className="absolute bottom-[80px] left-1/2 z-30 w-56 -translate-x-1/2 rounded-2xl bg-white p-2 shadow-lg"
+          className="absolute bottom-[80px] right-0 z-30 w-56 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-white p-2 shadow-lg"
           style={{ outline: '1px solid var(--color-sc-bg)' }}
         >
           {people.map((p) => {

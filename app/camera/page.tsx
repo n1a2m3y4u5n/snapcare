@@ -1,16 +1,13 @@
 'use client';
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { useIsDemo } from '@/lib/hooks';
-import { CanIcon, QuestionIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/stores/analysis';
 import { makeThumb } from '@/lib/photos/store';
-import { getItem } from '@/lib/snapcare/catalog';
 import { ocrToScanItem } from '@/lib/snapcare/fromOcr';
 import { looksLikeNutritionLabel, looksLikePrescription, parseNutritionLabel } from '@/lib/nutrition/labelOcr';
 import { recognizeText } from '@/lib/ocr';
-import { CameraIcon, FoodIcon, PillIcon, SheetIcon } from '@/components/icons';
+import { CameraIcon } from '@/components/icons';
 import { decodeEvent } from '@/lib/hardware/protocol';
 import { decodeToGray, RETRY_WORK_DIM } from '@/lib/formsheet/decode';
 import { parseFormSheet } from '@/lib/formsheet/sheet';
@@ -30,12 +27,10 @@ import { DEFAULT_RELAY } from '@/lib/dispenser/relayUrl';
 import { requestPermission } from '@/lib/notifications';
 import { speak } from '@/lib/voice';
 import { Hint } from '@/components/sc/Hint';
-import { sayable, ask, Speakable } from '@/components/sc/Say';
-import { SAMPLE_LABELS, SAMPLE_RX, sampleBySlug } from '@/lib/snapcare/samples';
+import { sayable, ask } from '@/components/sc/Say';
 import type { ScanItem } from '@/lib/snapcare/types';
 import type { NutrientProfile } from '@/lib/nutrition/types';
 
-const DEMO_IDS = ['energy_drink', 'granola_bar', 'amoxicillin', 'ibuprofen'];
 
 export default function CameraPage() {
   const router = useRouter();
@@ -62,9 +57,6 @@ export default function CameraPage() {
    * 사진 찍기가 한 번의 동작으로 끝나야 습관이 되는데, 선택지를 먼저 보여주면
    * 무엇을 눌러야 할지 고르는 일부터 시작된다. 인식이 실패했을 때만 펼친다.
    */
-  const [showOptions, setShowOptions] = useState(false);
-  // 표본 목록은 시연에서만 낸다 — 이유는 아래 그것을 그리는 자리에 적었다.
-  const demo = useIsDemo();
 
   // 16MB 를 사진 찍은 뒤에 받기 시작하면 그만큼 기다린다. 화면에 들어올 때 미리 받는다.
   useEffect(() => { warmUp(); }, []);
@@ -81,29 +73,14 @@ export default function CameraPage() {
   */
   const { videoRef, live, recent, capture } = useQrWatch(!busy);
 
-  /**
-   * 홈의 "TRY IT" 에서 표본을 눌러 들어온 경우, 도착하자마자 그 표본을 읽는다.
-   *
-   * 홈에서 직접 읽지 않고 여기로 보내는 이유: 인식 경로(OCR·모델·판정)가 전부
-   * 이 화면에 있다. 홈에 복사하면 두 벌이 되고, 한쪽만 고쳐지는 날이 온다.
-   *
-   * 슬러그로만 받는다 — 경로를 그대로 받으면 쿼리 문자열이 무엇이든 가져오는
-   * 통로가 된다. useSearchParams 대신 location 을 쓰는 것은 이 화면을
-   * Suspense 로 감싸지 않기 위해서다 (어차피 effect 안이라 서버에서 돌지 않는다).
-   */
-  const tried = useRef(false);
-  useEffect(() => {
-    if (tried.current) return;
-    const sample = sampleBySlug(new URLSearchParams(window.location.search).get('try'));
-    if (!sample) return;
-    tried.current = true;
-    void scanSample(sample.src);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  /*
+    `?try=` 로 표본을 열던 길이 여기 있었다. 홈의 "TRY IT" 이 그리로 보냈는데, 그
+    자리가 없어졌다(궤도를 걷고 아래 줄로 바꾸면서). 들어올 곳이 없는 문은 닫는다 —
+    남겨 두면 주소를 아는 사람만 쓰는 숨은 기능이 되고, 그런 것은 고쳐지지 않는다.
+  */
 
   function fail(message: string) {
     setHint(message);
-    setShowOptions(true);
   }
 
   /**
@@ -118,11 +95,6 @@ export default function CameraPage() {
     setPhoto(null);
     if (photo) void makeThumb(photo).then((t) => { if (t) setPhoto(t); });
     router.push('/scan');
-  }
-
-  function scanDemo(itemId: string) {
-    const item = getItem(itemId);
-    if (item) goWith(item);
   }
 
   /**
@@ -528,20 +500,6 @@ export default function CameraPage() {
     if (file) runOcr(file);
   }
 
-  async function scanSample(src: string) {
-    setBusy(true);
-    setStatus('Loading sample…');
-    try {
-      const blob = await (await fetch(src)).blob();
-      await runOcr(blob);
-    } catch (err) {
-      console.error('[camera] 표본을 불러오지 못했다:', err);
-      fail('Sample could not be loaded.');
-      setBusy(false);
-      setStatus(null);
-    }
-  }
-
   return (
     /*
       화면 높이에 **못박는다.**
@@ -664,101 +622,19 @@ export default function CameraPage() {
         </div>
 
         {/*
-          "Can't take a photo?" 를 **시연에서만** 낸다.
+          표본 목록이 여기 있었다 — 성분표 석 장, 처방전 넉 장, 미리 만든 항목 몇 개.
 
-          이 줄은 카메라를 못 쓰는 사람의 출구라고 적혀 있었다. 그런데 눌러서 나오는
-          것은 표본 목록뿐이다 — 성분표 석 장, 처방전 넉 장, 미리 만든 항목 몇 개.
-          손이 떨려서 못 찍는 사람에게 남의 성분표 사진은 아무 도움이 안 된다. 출구라고
-          이름 붙인 문이 실은 진열대였다.
+          걷어낸 이유가 둘이다. **이름이 거짓이었다**: "Can't take a photo?" 라고
+          적혀 있었는데 눌러서 나오는 것은 진열대였고, 손이 떨려 못 찍는 사람에게
+          남의 성분표 사진은 아무 도움이 안 된다. 그리고 **강제로 열렸다**: 판독이
+          한 번 실패하면 `fail()` 이 이 판을 펼쳤고, 다시 찍으려는 사람 앞에서
+          영상을 덮은 채 닫을 길이 없었다.
 
-          진짜 출구는 이미 있다. 미리보기를 못 열면 셔터가 시스템 카메라(갤러리 포함)를
-          열고, 거기서 이미 찍어 둔 사진을 고를 수 있다.
+          진짜 출구는 이미 있다. 미리보기를 못 열면 셔터가 시스템 카메라를 열고,
+          거기서 이미 찍어 둔 사진을 고를 수 있다.
 
-          표본은 심사 시연에서 쓴다 — 실물 약통과 종이를 무대에 들고 갈 수 없을 때가
-          있다. 그래서 지우지 않고 시연 모드 안으로 옮긴다. 이 저장소가 시연 자료
-          초기화 단추에 하는 것과 같다.
+          시연에서 실물을 못 들고 갈 때는 `/present` 와 시연 모드가 그 자리를 대신한다.
         */}
-        {!showOptions ? (demo && (
-          <div className="relative z-10 px-5 pb-8 text-center"
-               style={{ background: 'rgba(0,0,0,0.55)' }}>
-            <button
-              onClick={() => setShowOptions(true)}
-              className="inline-flex items-center gap-1 text-xs underline underline-offset-4 opacity-60"
-            >
-              {/* 물음표. 이 자리는 **카메라를 못 쓴 사람**이 오는 유일한 출구인데
-                  글자뿐이었다. 사진을 못 찍는 이유에는 손이 떨리는 것도, 종이가 너무
-                  작은 것도 있고(이번 조사에서 AAC 응답자가 짚었다), 그 사람들이
-                  정확히 글자로 된 출구를 못 찾는 사람과 겹친다. */}
-              <span aria-hidden className="flex items-center no-underline"><QuestionIcon /></span>
-              <span {...sayable('Cannot take a photo? Tap here for things you can try instead.')}>Can&apos;t take a photo?</span>
-            </button>
-          </div>
-        )) : (
-          /* 대안 목록. 열리면 영상을 덮는다 — 여기서 고르는 동안 미리보기는 방해다. */
-          <div className="relative z-10 h-full overflow-y-auto" style={{ background: '#000' }}>
-            <div className="px-5 pt-1">
-              <Speakable text={'Try a nutrition label. Tap one and it will be read like a photograph.'} className="text-[11px] font-bold tracking-wide opacity-60 flex w-full items-center gap-2">
-          <span className="flex-1">SCAN A NUTRITION LABEL (OCR)</span>
-        </Speakable>
-              <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                {SAMPLE_LABELS.map((s) => (
-                  <button key={s.src} onClick={() => scanSample(s.src)} disabled={busy} className="shrink-0 rounded-2xl px-3 py-2 text-xs font-semibold disabled:opacity-40" style={{ background: 'rgba(255,255,255,0.12)' }}>
-                    <CanIcon className="mr-1 inline align-[-0.1em]" /> {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="px-5 pt-3">
-              <Speakable text={'Try a prescription.'} className="text-[11px] font-bold tracking-wide opacity-60 flex w-full items-center gap-2">
-          <span className="flex-1">SCAN A REAL PRESCRIPTION (OCR)</span>
-        </Speakable>
-              <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                {SAMPLE_RX.map((s) => (
-                  <button key={s.src} onClick={() => scanSample(s.src)} disabled={busy} className="shrink-0 rounded-2xl px-3 py-2 text-xs font-semibold disabled:opacity-40" style={{ background: 'rgba(255,255,255,0.12)' }}>
-                    <span aria-hidden className="mr-1 inline-flex align-[-2px] text-sm leading-none"><SheetIcon /></span>
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="px-5 pb-8 pt-3">
-              <Speakable text={'Or try a ready-made item.'} className="text-[11px] font-bold tracking-wide opacity-60 flex w-full items-center gap-2">
-          <span className="flex-1">TRY A DEMO ITEM</span>
-        </Speakable>
-              {/*
-                두 칸으로 고정하지 않는다. 글자를 가장 크게 두면 "Peanut chocolate bar"
-                한 줄이 반 칸(163px)보다 넓어져 화면 밖으로 밀려났다 — 화면 전체에
-                가로 스크롤이 생겼고, 그것은 WCAG 1.4.10 이 막는 것이다.
-
-                최소 너비를 rem 으로 적으면 글자 크기가 그 최소값을 같이 끌어올린다.
-                기본 크기에서는 두 칸, 글자를 키우면 저절로 한 칸이 된다. 글자 크기를
-                뿌리 font-size 하나로 다루기 때문에 조건문 없이 따라온다.
-              */}
-              <div className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-2">
-                {DEMO_IDS.map((id) => {
-                  const it = getItem(id)!;
-                  return (
-                    <button key={id} onClick={() => scanDemo(id)} disabled={busy} className="flex items-center gap-2 rounded-2xl px-3 py-3 text-left disabled:opacity-40" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                      {/*
-                        시연 항목의 그림. 카탈로그의 이모지를 그대로 쓰고 있었다.
-                        이 목록은 음식과 약이 섞여 있고, 사람이 고르는 기준이 그
-                        둘이라 종류만 말하면 된다.
-                      */}
-                      <span aria-hidden className="text-lg leading-none"
-                            style={{ color: 'rgba(255,255,255,0.75)' }}>
-                        {it.kind === 'medicine' || it.kind === 'prescription'
-                          ? <PillIcon /> : <FoodIcon />}
-                      </span>
-                      <span className="text-xs font-semibold">{it.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
