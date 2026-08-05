@@ -213,7 +213,22 @@ export function seedDemoIfEmpty(): void {
     읽는 시점에 new Date() 를 부르면 서버가 그린 화면과 어긋난다. 이 함수는
     브라우저에서 화면이 붙은 뒤에 불린다.
   */
-  useScans.setState({ scans: [...seed, ...demoHistory(todayKey(), PROFILE_ID)] });
+  /*
+    **기록의 주인은 지금 이 계정이다.**
+
+    여기가 `PROFILE_ID`('me')를 넘기고 있었다. 저장은 계정별로 갈려 있으므로
+    (`snapcare-scans#demo_kid`) 자료 자체는 제자리에 들어갔는데, 화면이 기록을
+    `memberId` 로 거른다 — `r.memberId === member.id`. 그래서 아이 계정으로 들어가면
+    632건이 저장돼 있는데 화면에는 한 건도 안 뜬다. 할머니 쪽도 마찬가지로 걸러지는
+    화면이 있었고, 안 거르는 화면만 자료가 있는 것처럼 보였다.
+
+    저장 자리를 가르는 것(`accountStorage`)과 기록의 주인을 적는 것(`memberId`)은
+    다른 일이고, 둘 다 맞아야 화면이 맞는다.
+  */
+  const me = activeAccountId();
+  const seeded = seed.map((r) => ({ ...r, memberId: me }));
+  // 아이에게는 복용을 안 넣는다 — 이유는 demoHistory 의 주석에.
+  useScans.setState({ scans: [...seeded, ...demoHistory(todayKey(), me, undefined, undefined, me !== DEMO_KID)] });
   /*
     알람도 같이 심는다.
 
@@ -223,8 +238,10 @@ export function seedDemoIfEmpty(): void {
 
     이미 알람이 있으면 손대지 않는다. 시연 도중에 사람이 만든 것을 지우면 안 된다.
   */
-  if (useReminders.getState().reminders.length === 0) {
-    useReminders.setState({ reminders: demoReminders(PROFILE_ID) });
+  if (useReminders.getState().reminders.length === 0 && me !== DEMO_KID) {
+    // 알람도 할머니 것이다. 일곱 살에게 암로디핀 알람이 울리는 화면은 시연에서
+    // 설명할 수 있는 종류의 실수가 아니다.
+    useReminders.setState({ reminders: demoReminders(me) });
   }
   // 기록만 넣으면 소용이 없다 — 판정은 프로필에서 나온다. 조건이 비어 있으면 위의
   // 회피 두 건이 왜 회피인지 화면 어디에도 설명이 없다.

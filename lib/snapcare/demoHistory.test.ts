@@ -151,3 +151,27 @@ test('괜찮았던 끼니도 답이 달려 있다', () => {
   assert.ok(fine.every((r) => !r.tags?.includes('en:peanuts')),
     '괜찮았던 끼니에 땅콩이 들어 있으면 추론이 반대로 간다');
 });
+
+/*
+  시연 자료가 **누구 것인가.**
+
+  저장 자리는 계정별로 갈려 있지만(`snapcare-scans#demo_kid`), 화면은 기록의
+  `memberId` 로 한 번 더 거른다. 둘이 어긋나면 자료는 저장돼 있는데 화면은 비어 있다 —
+  실제로 아이 계정이 그랬다. 저장 자리를 가르는 것과 주인을 적는 것은 다른 일이다.
+*/
+test('기록의 주인이 그 계정이어야 화면에 뜬다', () => {
+  for (const id of ['demo_me', 'demo_kid']) {
+    const h = demoHistory('2026-08-05', id, 84, 23 * 60, id === 'demo_me');
+    assert.ok(h.length > 0, `${id}: 자료가 있어야 한다`);
+    assert.equal(h.filter((r) => r.memberId === id).length, h.length,
+      `${id}: 전부 이 사람 것이어야 한다 — 아니면 화면이 거르고 나서 빈다`);
+  }
+});
+
+test('아이에게는 할머니의 복약을 안 준다', () => {
+  const kid = demoHistory('2026-08-05', 'demo_kid', 84, 23 * 60, false);
+  const meds = kid.filter((r) => r.kind === 'medicine' || r.kind === 'prescription');
+  assert.equal(meds.length, 0, '일곱 살 화면에 메트포르민이 쌓이면 그 자체가 틀린 화면이다');
+  // 그래도 볼 것은 있어야 한다 — 아이 쪽 논지는 끼니로 선다.
+  assert.ok(kid.length > 200, `끼니는 그대로여야 한다 (지금 ${kid.length}건)`);
+});

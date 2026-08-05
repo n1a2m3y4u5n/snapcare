@@ -299,8 +299,15 @@ function ateNowish(index: number, count: number, nowMinutes: number): { hhmm: st
 /** 시연 자료의 길이. 달력 세 창에 정확히 맞는다. */
 export const DEMO_DAYS = 84;
 
+/**
+ * @param doses 상자가 내민 복용을 함께 넣는가.
+ *
+ * 아이는 안 넣는다. 시연의 두 사람은 할머니(당뇨·혈액희석제)와 일곱 살인데, 아이
+ * 화면에 메트포르민과 암로디핀이 하루 세 번 쌓이면 **그 자체가 틀린 화면**이다.
+ * 아이 쪽에서 이 앱이 하는 일은 먹는 것을 보는 것이고, 그쪽 논지는 끼니만으로 선다.
+ */
 export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
-                            nowMinutes = nowInMinutes()): ScanRecord[] {
+                            nowMinutes = nowInMinutes(), doses = true): ScanRecord[] {
   const out: ScanRecord[] = [];
 
   for (let back = 0; back < days; back++) {
@@ -308,7 +315,7 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
     const when = back === 0 ? 'Today' : back === 1 ? 'Yesterday' : day.slice(5);
 
     // 상자가 내민 복용
-    for (const d of DOSES) {
+    for (const d of doses ? DOSES : []) {
       /*
         오늘은 **지금까지 지나간 것만** 넣는다.
 
