@@ -126,6 +126,20 @@ async function main() {
   }
   await mkdir(OUT, { recursive: true });
 
+  /*
+    화면에 놓을 판을 따로 만든다 — 여백을 턴 것.
+
+    원본은 사진이라 흰 종이가 넓게 남는다. 그대로 화면에 놓으면 로고가 제 상자의
+    가운데에 작게 앉고, 그만큼 자리를 먹으면서 작아 보인다. 여백을 털면 같은 높이에서
+    글자가 훨씬 크다.
+
+    `trim` 만 부른다. `extract` 와 같이 부르면 순서가 뒤집히는데(아래 참고) 여기서는
+    자를 것이 없으므로 그 함정에 안 걸린다.
+  */
+  await sharp(LOGO).trim({ threshold: 12 }).png({ compressionLevel: 9, palette: true })
+    .toFile('public/logo-mark.png');
+  console.log('썼다 public/logo-mark.png (여백 턴 것)');
+
   const box = await firstLetterBox();
   console.log('머리글자를 찾았다', box);
 

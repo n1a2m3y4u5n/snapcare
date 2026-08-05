@@ -129,25 +129,28 @@ export default function HomePage() {
         */}
         <div className="flex items-start justify-between gap-3">
           {/*
-            제목의 크기에 상한을 둔다.
-
-            글자를 가장 크게 두면 "SnapCare" 가 48px 로 225px 을 차지하고, 얼굴 단추
-            88px 과 사이 24px 을 더하면 337px 이 되어 295px 짜리 줄을 42px 넘겼다.
-            넘친 쪽이 오른쪽이라 **얼굴 단추가 화면 밖으로 2px 나갔다.**
-
-            줄이는 것이 제목인 이유: 이 줄에서 글자를 키워서 얻는 것이 없다. 앱 이름은
-            사람이 읽어야 하는 정보가 아니라 여기가 어디인지 알려 주는 표찰이고,
-            옆의 단추는 **누를 수 있어야 하는 것**이다. 상한은 가장 큰 단계에서만 걸린다.
-          */}
-          {/*
             이 인사는 설정의 언어 미리듣기와 **같은 문장**이어야 한다. 고르는 자리에서
             들은 소리와 홈에서 나는 소리가 다르면, 방금 고른 것이 무엇인지 확인할
             방법이 없다. 그래서 문장을 `lib/snapcare/homeIntro.ts` 한 곳에 둔다.
           */}
-          <h1 className="min-w-0 text-2xl font-extrabold"
-              style={{ color: 'var(--color-sc-ink)', fontSize: 'min(1.5rem, 36px)' }}
-              {...ask(homeIntro(sayLang))}>
-            SnapCare
+          <h1 className="min-w-0" {...ask(homeIntro(sayLang))}>
+            {/*
+              글자 대신 로고를 놓는다.
+
+              높이를 **px 로 못박는다.** 이 앱의 다른 틀들과 같은 이유다 — 글자를
+              키운 사람이 원하는 것은 글자이지 표찰이 아니고, 홈은 한 화면에 담기로
+              해서 여기서 커진 만큼이 그대로 궤도에서 빠진다. 72px 은 두 줄짜리
+              글자가 읽히는 크기다 — 72px 로 뒀다가 키웠다. 손으로 그린 획이라 줄당
+              40px 은 있어야 "SnapCare" 로 읽히고, 그보다 작으면 초록 얼룩이 된다.
+              폭까지 합쳐도(132 + 얼굴 88 + 사이 12 + 좌우 40 = 272) 375px 줄에 든다.
+
+              `alt` 는 앱 이름 그대로다. 그림을 못 보는 사람에게 이 자리가 말해야
+              하는 것은 "여기가 SnapCare 다" 하나이고, 소리로 하는 인사는 위의
+              `ask()` 가 따로 한다 — 둘이 같은 말을 하면 두 번 들린다.
+            */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-mark.png" alt="SnapCare" width={132} height={96}
+                 style={{ height: 96, width: 'auto' }} />
           </h1>
           <WhoSheet needsProfile={!confirmed} />
         </div>
