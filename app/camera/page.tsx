@@ -6,7 +6,7 @@ import { useAnalysis } from '@/stores/analysis';
 import { makeThumb } from '@/lib/photos/store';
 import { CameraIcon } from '@/components/icons';
 import { decodeEvent } from '@/lib/hardware/protocol';
-import { decodeToGray, RETRY_WORK_DIM } from '@/lib/formsheet/decode';
+import { decodeBitmap, grayFrom, RETRY_WORK_DIM } from '@/lib/formsheet/decode';
 import { parseFormSheet } from '@/lib/formsheet/sheet';
 import { scaleTransform } from '@/lib/formsheet/field';
 import { readHandwriting } from '@/lib/formsheet/readName';
@@ -222,18 +222,39 @@ export default function CameraPage() {
     let sheet;
     try {
       setStatus('Looking for the sheet…');
-      let work = await decodeToGray(blob);
-      sheet = parseFormSheet(work);
-      if (!sheet.foundPage) {
-        work = await decodeToGray(blob, RETRY_WORK_DIM);
-        sheet = parseFormSheet(work);
-      }
-      if (!sheet.foundPage || !sheet.transform) return false;
+      /*
+        사진을 **한 번만 푼다.**
 
-      // 이름칸은 더 큰 그림에서 읽는다 — 종이의 4.7mm 라 2000px 배율에서는 글자가
-      // 남지 않는다. 마커는 다시 안 찾는다.
-      setStatus('Reading the name…');
-      const full = work.w >= RETRY_WORK_DIM ? work : await decodeToGray(blob, RETRY_WORK_DIM);
+        여기가 같은 blob 을 최대 세 번 디코딩하고 있었다 — 마커를 찾을 작은 판, 못
+        찾았을 때의 큰 판, 그리고 칸을 자를 큰 판. 그때마다 JPEG 을 처음부터 다시
+        풀었고, 폰이 찍는 12메가픽셀 한 장에서 그 일은 공짜가 아니다. 사람은 그 동안
+        셔터를 누른 채 기다린다.
+
+        비트맵 하나를 들고 크기만 다시 뽑는다. 다 쓰면 닫는다 — 안 닫으면 사진 한 장
+        분량의 픽셀이 그대로 남는다.
+      */
+      const bitmap = await decodeBitmap(blob);
+      let work;
+      let full;
+      try {
+        work = grayFrom(bitmap);
+        sheet = parseFormSheet(work);
+        if (!sheet.foundPage) {
+          work = grayFrom(bitmap, RETRY_WORK_DIM);
+          sheet = parseFormSheet(work);
+        }
+        if (!sheet.foundPage || !sheet.transform) return false;
+
+        // 이름칸은 더 큰 그림에서 읽는다 — 종이의 4.7mm 라 2000px 배율에서는 글자가
+        // 남지 않는다. 마커는 다시 안 찾는다.
+        setStatus('Reading the name…');
+        full = work.w >= RETRY_WORK_DIM ? work : grayFrom(bitmap, RETRY_WORK_DIM);
+      } finally {
+        // 여기까지가 비트맵이 필요한 전부다. `grayFrom` 이 픽셀을 복사해 돌려주므로
+        // 아래는 이것 없이 돈다 — 사진 한 장 분량을 더 들고 있을 이유가 없다.
+        bitmap.close();
+      }
+
       const M = full === work ? sheet.transform
         : scaleTransform(sheet.transform, full.w / work.w);
       const hand = await readHandwriting(full, M,
@@ -264,16 +285,9 @@ export default function CameraPage() {
       const item = toScanItem(rx, lookup);
       if (!item) {
         /*
-          종이는 찾았는데 채워진 것이 모자라다. 이것은 **다른 것을 찍은 것이 아니라**
-          이 종이를 못 읽은 것이라, 글자 읽기로 넘기지 않고 여기서 말한다.
+          종이는 찾았는데 채워진 것이 모자라다. 다른 것을 찍은 것이 아니라 이 종이를
+          못 읽은 것이라, 글자 읽기로 넘기지 않고 여기서 말한다.
 
-          문구가 사람이 할 일과 맞아야 한다. 전에는 이름을 잘 읽었는데 표에 없는
-          경우까지 "the name is missing" 이라고 했다. 이름을 또박또박 쓴 사람에게
-          없다고 하면 그 사람은 같은 종이를 계속 다시 찍는다 — 몇 번을 찍어도 결과가
-          안 바뀌는 일을 시킨 것이다. 그 갈래는 이제 여기까지 오지 않지만(표에 없어도
-          화면이 나온다), 문구는 남은 두 경우에 대해서도 갈려 있어야 한다.
-        */
-        /*
           **왜 못 읽었는지에 따라 다른 말을 한다.**
 
           셋이 한 문구로 나가고 있었다. tesseract 를 걷어낸 뒤로 이 칸은 언제나 망이

@@ -31,6 +31,32 @@ export const RETRY_WORK_DIM = 3500;
 export async function decodeToGray(source: Blob, maxDim = MAX_WORK_DIM): Promise<Gray> {
   const bitmap = await createImageBitmap(source);
   try {
+    return grayFrom(bitmap, maxDim);
+  } finally {
+    bitmap.close();
+  }
+}
+
+/**
+ * 사진을 **한 번만 푼다.**
+ *
+ * 종이 경로가 같은 blob 을 최대 세 번 `decodeToGray` 에 넘기고 있었다 — 마커를 찾을
+ * 작은 판, 못 찾았을 때의 큰 판, 그리고 칸을 자를 큰 판. 그때마다 JPEG 을 처음부터
+ * 다시 풀었다. 폰이 찍는 12메가픽셀 한 장에서 그 일은 공짜가 아니고, 사람은 그 동안
+ * 셔터를 누른 채 기다린다.
+ *
+ * 비트맵 하나를 들고 크기만 다시 뽑으면 그 일이 한 번으로 준다. 그림을 줄여 그리는
+ * 것은 이미 캔버스가 하던 일이라 새로 드는 값이 없다.
+ *
+ * 부르는 쪽이 `close()` 를 책임진다 — 여러 크기를 뽑는 동안 살아 있어야 하기 때문이다.
+ */
+export function decodeBitmap(source: Blob): Promise<ImageBitmap> {
+  return createImageBitmap(source);
+}
+
+/** 이미 푼 비트맵에서 원하는 크기의 회색조를 뽑는다. */
+export function grayFrom(bitmap: ImageBitmap, maxDim = MAX_WORK_DIM): Gray {
+  {
     const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
     const w = Math.max(1, Math.round(bitmap.width * scale));
     const h = Math.max(1, Math.round(bitmap.height * scale));
@@ -44,7 +70,5 @@ export async function decodeToGray(source: Blob, maxDim = MAX_WORK_DIM): Promise
     ctx.drawImage(bitmap as unknown as CanvasImageSource, 0, 0, w, h);
     const { data } = ctx.getImageData(0, 0, w, h);
     return grayFromRGBA(data, w, h);
-  } finally {
-    bitmap.close();
   }
 }
