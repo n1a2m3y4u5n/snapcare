@@ -49,6 +49,20 @@ export default function PairPage() {
   const claim = ready ? claimFromPairUrl(window.location.href) : '';
   const state: 'working' | 'bad' = !ready || (claim && !failed) ? 'working' : 'bad';
 
+  /*
+    `claim` 이 의존 목록에 있어야 한다.
+
+    없었다. 그래서 **QR 짝짓기가 한 번도 완료되지 않았다** — 첫 렌더는 `ready` 가
+    거짓이라 `claim` 이 빈 문자열이고, 이펙트는 그 값으로 돌아 바로 빠져나온다.
+    붙은 뒤 `ready` 가 켜지면서 `claim` 이 채워지지만, 의존 목록이 `[router]` 뿐이라
+    이펙트가 다시 돌 이유가 없다.
+
+    화면에는 "Connecting to your dispenser…" 가 영원히 남는다. 오류가 아니라 **기다리는
+    모습**이라, 보는 사람은 망이 느린 줄 안다. 실제로 확인했다: 가짜 코드로 열어 6초를
+    기다려도 릴레이로 요청이 한 건도 안 나갔다.
+
+    `done` 이 두 번 도는 것을 막으므로 목록에 넣어도 안전하다.
+  */
   useEffect(() => {
     if (!claim || done.current) return;
     done.current = true;
@@ -66,7 +80,7 @@ export default function PairPage() {
       void speak('This dispenser is now yours. It will tell you when your medicine is ready.');
       router.replace('/device');
     })();
-  }, [router]);
+  }, [router, claim]);
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center gap-4 px-8 text-center"
