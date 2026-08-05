@@ -100,7 +100,7 @@ export const useScans = create<ScansState>()(
        */
       merge: (persisted, current) => {   // 저장된 것이 있을 때만 불린다
         const p = (persisted ?? {}) as Partial<ScansState>;
-        return { ...current, ...p, scans: prune(p.scans ?? [], todayKey()) };
+        return { ...current, ...p, scans: reown(prune(p.scans ?? [], todayKey())) };
       },
       name: 'snapcare-scans',
       // 기록은 사람 것이다. 한 폰을 여럿이 쓸 때 이것이 섞이면 하루 누적과 식이 일지가
@@ -141,6 +141,31 @@ export const useScans = create<ScansState>()(
     },
   ),
 );
+
+/**
+ * 저장된 기록의 **주인 이름을 이 계정으로 맞춘다.**
+ *
+ * 시연 자료를 심을 때 `memberId` 를 `'me'` 로 못박고 있었다. 저장 자리는 계정별로
+ * 갈려 있어서(`snapcare-scans#demo_kid`) 자료 자체는 제자리에 들어갔는데, 화면은
+ * 기록을 `memberId` 로 한 번 더 거른다 — 그래서 아이 계정에 62건이 저장돼 있으면서
+ * 화면은 한 건도 안 떴다. 심는 쪽은 고쳤지만, **이미 저장된 것은 그대로 남는다.**
+ *
+ * 버리고 다시 뿌리지 않는다(판 올리기와 다른 점이다). 저장 자리가 이미 계정별로
+ * 갈려 있으므로 이 파일 안의 기록은 정의상 이 계정 것이고, 이름만 어긋난 것이다.
+ * 자료를 버릴 이유가 없다 — 그리고 실제 사용자의 기록이 같은 자리에 있다.
+ *
+ * 시연 밖에서도 돈다. 가족 명단을 없앨 때 남은 옛 이름들이 같은 증상을 낸다.
+ */
+function reown(scans: ScanRecord[]): ScanRecord[] {
+  const me = activeAccountId();
+  let changed = false;
+  const out = scans.map((s) => {
+    if (s.memberId === me) return s;
+    changed = true;
+    return { ...s, memberId: me };
+  });
+  return changed ? out : scans;
+}
 
 /** 렌더 중 Date 포맷팅을 피하기 위한 시각 라벨 생성 (이벤트 핸들러에서 호출) */
 export function nowLabel(): string {
