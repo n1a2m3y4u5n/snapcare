@@ -48,9 +48,20 @@ export const MAX_BACK = Math.floor(KEEP_DAYS / WINDOW_DAYS) - 1;
  * "지난달에는 어땠나" 도 그대로 되는데, 이제 **진짜 지난달**이다.
  */
 export function monthOf(today: string, back = 0): string {
-  const [y, m] = today.split('-').map(Number);
+  const [y, m] = String(today ?? '').split('-').map(Number);
+  /*
+    빈 값을 그대로 받는다.
+
+    화면이 서버에서 먼저 그려질 때 오늘은 아직 없다(`ready` 가 false 라 `''`). 그때
+    `new Date(Date.UTC(NaN, …)).toISOString()` 은 던지고, 던지면 그 페이지의 사전
+    렌더링이 통째로 실패한다 — 배포 빌드가 그 자리에서 깨졌다.
+
+    빈 문자열을 돌려주면 아래 `monthDays` 가 빈 배열을 내고 달력은 빈 격자로 그려진다.
+    화면이 붙은 뒤 진짜 오늘이 들어오면 다시 그려진다.
+  */
+  if (!Number.isFinite(y) || !Number.isFinite(m)) return '';
   const at = new Date(Date.UTC(y, m - 1 - back, 1));
-  return at.toISOString().slice(0, 7);
+  return Number.isNaN(at.getTime()) ? '' : at.toISOString().slice(0, 7);
 }
 
 /** 그 달의 모든 날, 오래된 것이 앞에. `'YYYY-MM'` 을 받는다. */
@@ -79,6 +90,7 @@ export const MAX_MONTHS_BACK = 2;
  * 세는 화면이 된다 — 그리고 그 어긋남은 화면에 아무 표시도 안 낸다.
  */
 export function spanOf(anchor: string, days = WINDOW_DAYS): string[] {
+  if (!anchor) return [];              // 아직 오늘을 모른다 (서버에서 그리는 중)
   return /^\d{4}-\d{2}$/.test(anchor) ? monthDays(anchor) : windowDaysDesc(anchor, days);
 }
 
@@ -86,6 +98,7 @@ export function spanOf(anchor: string, days = WINDOW_DAYS): string[] {
 function windowDaysDesc(anchor: string, days: number): string[] {
   const out: string[] = [];
   const [y, m, d] = anchor.split('-').map(Number);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return out;
   for (let back = days - 1; back >= 0; back--) {
     out.push(new Date(Date.UTC(y, m - 1, d - back)).toISOString().slice(0, 10));
   }
