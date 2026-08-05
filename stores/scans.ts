@@ -149,26 +149,24 @@ export const useScans = create<ScansState>()(
 );
 
 /**
- * 저장된 기록의 **주인 이름을 이 계정으로 맞춘다.**
+ * 저장된 기록의 **주인 이름을 프로필과 맞춘다.**
  *
- * 시연 자료를 심을 때 `memberId` 를 `'me'` 로 못박고 있었다. 저장 자리는 계정별로
- * 갈려 있어서(`snapcare-scans#demo_kid`) 자료 자체는 제자리에 들어갔는데, 화면은
- * 기록을 `memberId` 로 한 번 더 거른다 — 그래서 아이 계정에 62건이 저장돼 있으면서
- * 화면은 한 건도 안 떴다. 심는 쪽은 고쳤지만, **이미 저장된 것은 그대로 남는다.**
+ * 화면은 기록을 `memberId === member.id` 로 거르고, 프로필의 id 는 `PROFILE_ID` 다.
+ * 어긋난 이름을 단 기록은 저장돼 있으면서 화면에 안 나온다 — 비는 것이 아니라
+ * **조용히 일부만 세는** 쪽이라 더 나쁘다.
  *
- * 버리고 다시 뿌리지 않는다(판 올리기와 다른 점이다). 저장 자리가 이미 계정별로
- * 갈려 있으므로 이 파일 안의 기록은 정의상 이 계정 것이고, 이름만 어긋난 것이다.
- * 자료를 버릴 이유가 없다 — 그리고 실제 사용자의 기록이 같은 자리에 있다.
+ * 두 경로에서 어긋난 것이 들어온다: 가족 명단을 없앨 때 남은 옛 이름들, 그리고
+ * 한동안 계정 id 를 넣던 판(그 변경은 되돌렸다 — 한쪽만 바꿔서 짝이 깨졌다).
  *
- * 시연 밖에서도 돈다. 가족 명단을 없앨 때 남은 옛 이름들이 같은 증상을 낸다.
+ * 버리지 않고 고친다. 저장 자리가 이미 계정별로 갈려 있으므로 이 파일 안의 기록은
+ * 정의상 이 계정 것이고, 이름만 어긋난 것이다.
  */
 function reown(scans: ScanRecord[]): ScanRecord[] {
-  const me = activeAccountId();
   let changed = false;
   const out = scans.map((s) => {
-    if (s.memberId === me) return s;
+    if (s.memberId === PROFILE_ID) return s;
     changed = true;
-    return { ...s, memberId: me };
+    return { ...s, memberId: PROFILE_ID };
   });
   return changed ? out : scans;
 }
@@ -245,21 +243,24 @@ export function seedDemoIfEmpty(): void {
     브라우저에서 화면이 붙은 뒤에 불린다.
   */
   /*
-    **기록의 주인은 지금 이 계정이다.**
+    기록의 주인은 `PROFILE_ID` 하나다 — **계정 id 가 아니다.**
 
-    여기가 `PROFILE_ID`('me')를 넘기고 있었다. 저장은 계정별로 갈려 있으므로
-    (`snapcare-scans#demo_kid`) 자료 자체는 제자리에 들어갔는데, 화면이 기록을
-    `memberId` 로 거른다 — `r.memberId === member.id`. 그래서 아이 계정으로 들어가면
-    632건이 저장돼 있는데 화면에는 한 건도 안 뜬다. 할머니 쪽도 마찬가지로 걸러지는
-    화면이 있었고, 안 거르는 화면만 자료가 있는 것처럼 보였다.
+    한때 여기를 활성 계정 id 로 바꿨다. "저장 자리를 가르는 것과 주인을 적는 것은
+    다른 일" 이라는 생각이었는데, 재 보니 틀렸다. 저장이 이미 계정별로 갈려 있으므로
+    (`accountStorage` → `snapcare-scans#demo_kid`) 한 파일 안의 기록은 정의상 그
+    계정 것이고, `memberId` 는 그 안에서 **자기 프로필과 짝만 맞으면** 된다.
 
-    저장 자리를 가르는 것(`accountStorage`)과 기록의 주인을 적는 것(`memberId`)은
-    다른 일이고, 둘 다 맞아야 화면이 맞는다.
+    그리고 프로필 쪽은 `PROFILE_ID` 로 남아 있었다(`stores/profile.ts` 의 `SEED`).
+    한쪽만 바꾸니 짝이 깨져서 화면이 통째로 비었다 — 636건이 저장된 채로 달력 스물
+    여덟 칸이 전부 회색이었다. 그리고 `app/nutrition` 은 이 상수를 직접 쓴다.
+
+    무엇이 진짜 문제였나: 아이 계정에 자료가 없던 것은 이름 때문이 아니라 **그 계정
+    으로 한 번도 심지 않아서**였다. 그쪽은 `demoHistory` 의 인자로 고쳤다.
   */
   const me = activeAccountId();
-  const seeded = seed.map((r) => ({ ...r, memberId: me }));
   // 아이에게는 복용을 안 넣는다 — 이유는 demoHistory 의 주석에.
-  useScans.setState({ scans: [...seeded, ...demoHistory(todayKey(), me, undefined, undefined, me !== DEMO_KID)] });
+  useScans.setState({ scans: [...seed,
+    ...demoHistory(todayKey(), PROFILE_ID, undefined, undefined, me !== DEMO_KID)] });
   /*
     알람도 같이 심는다.
 
