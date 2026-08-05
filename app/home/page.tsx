@@ -165,19 +165,11 @@ export default function HomePage() {
               안 쓰는 셈이다. 폭을 기준으로 두면 글자가 화면을 가로지르고, 높이는
               그림의 비율이 정한다.
 
-              `translateX` 로 조금 민다. 무게중심은 이 그림의 광학 중심이 상자 중심보다
-              왼쪽이라고 말하고(사진기와 반짝임이 오른쪽 끝을 밀어낸다), 눈으로도 그렇게
-              보인다. 자리를 안 먹는 방법으로 미는 것이 요점이다 — 파일에 여백을 채워
-              밀면 그만큼 상자가 넓어져 방금 채운 폭이 다시 줄어든다.
-
-              밀 수 있는 거리는 **그림 밖의 여백**뿐이다. 파일에는 여백이 없고(잉크가
-              네 변에 닿는다) 상자의 오른쪽 끝을 정하는 것은 글자가 아니라 맨 위의
-              반짝임이다 — 파일 안에서 첫 줄 글자는 11px, 둘째 줄은 117px 을 남기고
-              끝나는데 반짝임만 0px 이다.
-
-              그래서 폭을 96% 로 조금 내주고 그만큼 더 민다. 크기는 4% 줄지만 밀 수
-              있는 거리가 그만큼 늘어, 결과적으로 글자가 10px 더 오른쪽에 선다.
-              반짝임 기준으로 오른쪽에 6px 남는다.
+              **미는 것을 걷어냈다.** 옛 로고는 오른쪽 끝을 정하는 것이 글자가 아니라
+              사진기와 반짝임이라, 광학 중심이 상자 중심보다 왼쪽이었다. 그래서 폭을
+              96% 로 내주고 `translateX` 로 되밀고 있었다. 새 로고는 글자뿐이고 파일
+              안에서 **좌우 여백을 같게** 잡아 두었다 — 마침표가 글자 블록 밖으로
+              151 만큼 나오므로 왼쪽에 그만큼을 비웠다. 가운데 두면 글자가 가운데 선다.
 
               높이에 상한(26vh)을 두는 이유: 폭을 채우면 높이는 그림의 비율이 정하는데,
               키 낮은 폰에서는 그 높이가 카메라 몫을 가져간다. 640px 짜리 화면에서
@@ -185,9 +177,9 @@ export default function HomePage() {
               하는 것이 로고 다음이 되면 안 된다.
             */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-mark.png" alt="SnapCare" width={486} height={320}
-                 className="mx-auto block h-auto w-[96%]"
-                 style={{ transform: 'translateX(6.5%)', maxHeight: '26vh', objectFit: 'contain' }} />
+            <img src="/logo-mark.png" alt="SnapCare" width={2005} height={1110}
+                 className="mx-auto block h-auto w-full"
+                 style={{ maxHeight: '26vh', objectFit: 'contain' }} />
           </h1>
         </div>
 

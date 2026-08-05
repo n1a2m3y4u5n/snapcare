@@ -106,6 +106,8 @@ export const WARM_ASSETS = [
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-maskable-512.png',
+  // 홈의 첫 화면을 통째로 차지하는 그림. 없으면 앱 이름 자리가 깨진 그림이 된다.
+  '/logo-mark.png',
   // 홈의 "TRY IT" — 사진을 못 찍는 자리에서 앱을 통과시켜 보는 유일한 길
   WARM_PROBE,
   '/label-eu-biscuit.png',

@@ -52,6 +52,12 @@ const SHELL_URLS = [
  * 사람이 카메라를 들이대기 전에 눌러 보는 자리이자, 심사자가 제일 먼저 누르는 자리다.
  */
 const STATIC_FILES = new Set([
+  /*
+    로고. 홈의 첫 화면 전부를 차지하는 그림인데 규칙 어디에도 안 걸려 있었다 —
+    오프라인에서 홈을 열면 앱 이름 자리가 깨진 그림이었다. "TRY IT" 세 장을 넣을 때
+    같이 봤어야 했는데 그때 이 파일만 빠졌다.
+  */
+  '/logo-mark.png',
   '/label-eu-biscuit.png',
   '/label-peanut-bar.png',
   '/label-us-cereal.png',

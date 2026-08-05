@@ -74,14 +74,18 @@ export function BigCamera() {
                  rounded-full text-white shadow-lg active:scale-95 transition-transform"
       style={{ background: 'var(--color-sc-ink)' }}
     >
-      <span className="flex flex-col items-center justify-center gap-1">
-        <CameraIcon size="44%" />
-        {/*
-          이름을 단추 **안**에 둔다. 밖에 얹으면 아래 줄과 겹치고, 원 밖으로 내보내면
-          무엇의 이름인지가 안 붙는다.
-        */}
-        <span aria-hidden className="text-[13px] font-bold leading-none">Scan</span>
-      </span>
+      {/*
+        글자를 뺐다.
+
+        "Scan" 이 사진기 그림 아래 붙어 있었다. 이 화면을 쓰는 사람은 글을 못 읽는데,
+        그러면 그 다섯 글자는 **아무에게도 안 읽히면서 사진기만 작게 만든다.** 뜻은
+        이미 그림이 지고 있다 — 사진기는 이 앱에서 배우지 않아도 아는 몇 안 되는
+        기호에 속하고, 눌러야 할 것이 화면에 이것 하나뿐이라 헷갈릴 것도 없다.
+
+        읽어 주는 이름은 `aria-label` 로 남아 있다. 없앤 것은 보이는 글자뿐이고,
+        귀로 듣는 사람은 전보다 더 긴 설명을 그대로 받는다.
+      */}
+      <CameraIcon size="44%" />
     </button>
   );
 }
