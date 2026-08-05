@@ -30,3 +30,64 @@ export const WINDOW_DAYS = 28;
  * 앱을 다시 여는 것뿐이었다.
  */
 export const MAX_BACK = Math.floor(KEEP_DAYS / WINDOW_DAYS) - 1;
+
+/**
+ * `back` 달 전의 달 — `'YYYY-MM'`.
+ *
+ * 왜 넉 주에서 달로 옮겼나
+ * ------------------------
+ * 창이 넉 주였다. 산수로는 낫다 — 같은 요일이 정확히 네 번씩 서고 길이가 늘 같다.
+ * 그런데 화면에서 그것이 **달로 읽힌다.** 일곱 칸짜리 격자에 요일 머리글자가 붙어
+ * 있으면 사람은 달력을 보고, 달력이면 1일에서 시작해 말일에서 끝난다고 읽는다.
+ *
+ * 그리고 이 앱은 칸에 날짜 숫자를 안 쓴다(글을 못 읽는 사람이 쓰기 때문이다). 그래서
+ * 어긋난 것을 바로잡을 단서가 화면에 하나도 없다. 실제로 나온 말 — "지금 8월 5일인데
+ * 월말처럼 나온다". 8월 5일이 격자의 서른한 번째 칸에 있었으니 맞는 읽기다.
+ *
+ * 달로 두면 그 물음이 사라진다. 오늘은 그 달에서 오늘의 자리에 있고, 뒤는 빈 칸이다.
+ * "지난달에는 어땠나" 도 그대로 되는데, 이제 **진짜 지난달**이다.
+ */
+export function monthOf(today: string, back = 0): string {
+  const [y, m] = today.split('-').map(Number);
+  const at = new Date(Date.UTC(y, m - 1 - back, 1));
+  return at.toISOString().slice(0, 7);
+}
+
+/** 그 달의 모든 날, 오래된 것이 앞에. `'YYYY-MM'` 을 받는다. */
+export function monthDays(month: string): string[] {
+  const [y, m] = month.split('-').map(Number);
+  if (!y || !m) return [];
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return Array.from({ length: last },
+    (_, i) => `${month}-${String(i + 1).padStart(2, '0')}`);
+}
+
+/**
+ * 뒤로 갈 수 있는 마지막 달.
+ *
+ * 기록이 90일에서 잘리므로(`retention.ts`) 석 달 전의 1일은 이미 한도 밖일 수 있다.
+ * 두 달 뒤까지만 연다 — 그 너머는 늘 빈 격자이고, 빈 격자에서 화살표까지 사라지면
+ * 돌아올 길이 없어진다(위 `MAX_BACK` 의 사연).
+ */
+export const MAX_MONTHS_BACK = 2;
+
+/**
+ * 이 창이 덮는 날들. `'YYYY-MM'` 이면 그 달, `'YYYY-MM-DD'` 면 거기서 거슬러 `days` 일치.
+ *
+ * 세 곳이 각자 창을 계산하고 있었다(달력·순응도·약별 게이지). 창의 뜻을 넉 주에서
+ * 달로 바꾸면서 그 셋이 어긋나면, 달력은 8월을 그리는데 아래 숫자는 지난 넉 주를
+ * 세는 화면이 된다 — 그리고 그 어긋남은 화면에 아무 표시도 안 낸다.
+ */
+export function spanOf(anchor: string, days = WINDOW_DAYS): string[] {
+  return /^\d{4}-\d{2}$/.test(anchor) ? monthDays(anchor) : windowDaysDesc(anchor, days);
+}
+
+/** 오래된 날이 앞에 오도록. `windowDays` 가 오늘부터 거꾸로 주는 것을 뒤집는다. */
+function windowDaysDesc(anchor: string, days: number): string[] {
+  const out: string[] = [];
+  const [y, m, d] = anchor.split('-').map(Number);
+  for (let back = days - 1; back >= 0; back--) {
+    out.push(new Date(Date.UTC(y, m - 1, d - back)).toISOString().slice(0, 10));
+  }
+  return out;
+}

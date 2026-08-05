@@ -1,4 +1,4 @@
-import { windowDays } from './adherence.ts';
+import { spanOf } from './window.ts';
 import type { Level, ScanRecord } from '../snapcare/types.ts';
 
 /**
@@ -46,9 +46,9 @@ export function foodCalendar(scans: ScanRecord[], anchor: string,
     byDay.set(s.dayKey, found);
   }
 
-  return windowDays(anchor, days)
-    .slice()
-    .reverse()
+  // 창의 뜻은 한 곳에서 정한다(`window.ts` 의 `spanOf`) — 복약 달력과 어긋나면
+  // 두 탭이 같은 화살표로 다른 구간을 보게 된다.
+  return spanOf(anchor, days)
     .map((dayKey) => {
       const levels = (byDay.get(dayKey) ?? [])
         .slice()

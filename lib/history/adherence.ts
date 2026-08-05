@@ -1,3 +1,4 @@
+import { spanOf } from './window.ts';
 import type { ScanRecord } from '../snapcare/types.ts';
 
 /**
@@ -86,9 +87,16 @@ export function windowDays(today: string, days: number): string[] {
   return out;
 }
 
-export function adherence(rows: DoseRow[], today: string, days = 7,
-                          nowHHMM = nowClock()): Adherence {
-  const window = new Set(windowDays(today, days));
+/**
+ * @param anchor 볼 창. `'YYYY-MM'`(그 달) 또는 `'YYYY-MM-DD'`(거기서 거슬러 `days` 일치).
+ * @param todayKey 진짜 오늘. 창과 갈라 둔다 — 지난달을 넘겨 봐도 "아직 안 온 복용" 은
+ *   오늘에만 있고, 창을 달로 바꾸면서 `anchor` 만으로는 그것을 가릴 수 없게 됐다.
+ */
+export function adherence(rows: DoseRow[], anchor: string, days = 7,
+                          nowHHMM = nowClock(), todayKey = anchor): Adherence {
+  const today = todayKey;
+  // 창의 뜻은 한 곳에서 정한다(`window.ts` 의 `spanOf`) — 달력과 어긋나면 안 된다.
+  const window = new Set(spanOf(anchor, days));
   /*
     **아직 시각이 안 온 복용은 안 센다.**
 
@@ -115,7 +123,7 @@ export function adherence(rows: DoseRow[], today: string, days = 7,
     깎지 않는다.
   */
   const missedDays = new Set(inWindow.filter((r) => !r.taken).map((r) => r.dayKey));
-  const all = windowDays(today, days);
+  const all = spanOf(anchor, days);
   let streak = 0;
   for (const day of all) {
     if (missedDays.has(day)) {

@@ -204,3 +204,28 @@ test('앞뒤 빈 칸을 더하면 언제나 일곱의 배수다', () => {
     assert.equal(total % 7, 0, `${first}..${last} 에서 격자가 어긋난다 (${total})`);
   }
 });
+
+/*
+  창이 **달**이다.
+
+  넉 주짜리 창이 화면에서 달로 읽혔다 — 일곱 칸 격자에 요일 머리글자가 붙어 있으면
+  사람은 1일에서 시작해 말일에서 끝나는 것을 보는데, 이 앱은 칸에 날짜 숫자를 안 써서
+  (글을 못 읽는 사람이 쓴다) 어긋난 것을 바로잡을 단서가 화면에 없다. 실제로 나온
+  말 — "지금 8월 5일인데 월말처럼 나온다".
+*/
+test('달을 주면 그 달의 모든 날을 그린다', () => {
+  const days = calendar([], '2026-08', 28, '2026-08-05');
+  assert.equal(days.length, 31, '8월은 서른하루다');
+  assert.equal(days[0].dayKey, '2026-08-01');
+  assert.equal(days.at(-1)!.dayKey, '2026-08-31');
+  assert.equal(days.filter((d) => d.today).length, 1);
+  assert.equal(days.find((d) => d.today)!.dayKey, '2026-08-05');
+});
+
+test('달의 앞뒤 빈 칸을 더하면 일곱의 배수다', () => {
+  for (const m of ['2026-08', '2026-02', '2024-02', '2026-11']) {
+    const days = calendar([], m, 28, '2026-08-05');
+    const total = leadingBlanks(days[0].dayKey) + days.length + trailingBlanks(days.at(-1)!.dayKey);
+    assert.equal(total % 7, 0, `${m} 에서 격자가 어긋난다 (${total})`);
+  }
+});

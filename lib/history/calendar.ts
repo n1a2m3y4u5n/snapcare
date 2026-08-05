@@ -1,5 +1,6 @@
 import type { DoseRow } from './adherence.ts';
 import { windowDays } from './adherence.ts';
+import { monthDays } from './window.ts';
 
 /**
  * 복약을 **달력**으로.
@@ -152,9 +153,22 @@ export function calendar(rows: DoseRow[], anchor: string, days = 28,
   // 시각 순. `'0800'` 은 자리수가 고정이라 글자 비교가 곧 시각 비교다.
   for (const cell of byDay.values()) cell.sort((a, b) => a.due.localeCompare(b.due));
 
-  return windowDays(anchor, days)
-    .slice()
-    .reverse()
+  /*
+    창이 **달**이다. `anchor` 가 `'YYYY-MM'` 이면 그 달의 모든 날을 쓴다.
+
+    넉 주짜리 창이었다. 산수로는 낫지만(같은 요일이 정확히 네 번, 길이가 늘 같다)
+    화면에서 그것이 달로 읽힌다 — 일곱 칸 격자에 요일 머리글자가 붙어 있으면 사람은
+    1일에서 시작해 말일에서 끝나는 것을 본다. 게다가 이 앱은 칸에 날짜 숫자를 안
+    쓰므로(글을 못 읽는 사람이 쓴다) 어긋난 것을 바로잡을 단서가 화면에 없다.
+
+    `'YYYY-MM-DD'` 도 그대로 받는다 — 옛 부름과 시험이 그 모양이고, 창의 뜻만 달라졌지
+    나머지 계산은 같다.
+  */
+  const span = /^\d{4}-\d{2}$/.test(anchor)
+    ? monthDays(anchor)
+    : windowDays(anchor, days).slice().reverse();
+
+  return span
     .map((dayKey) => {
       const slots = byDay.get(dayKey) ?? [];
       return {

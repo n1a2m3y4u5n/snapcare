@@ -60,8 +60,8 @@ export default function HistoryPage() {
     그림과 말이 서로 다른 것을 가리키게 된다.
   */
   const week = useMemo(
-    () => (ready && member ? adherence(doseRows(scans, member.id), anchor, 28) : null),
-    [ready, scans, anchor, member],
+    () => (ready && member ? adherence(doseRows(scans, member.id), anchor, 28, undefined, today) : null),
+    [ready, scans, anchor, today, member],
   );
   /*
     달력은 넉 주를 본다.
@@ -183,7 +183,7 @@ export default function HistoryPage() {
           아니라 비었다고 말하는 것이고, 나가는 길은 그대로 두는 것이다.
         */}
         {ready && member && (
-          <AdherenceCard span={week && week.rate !== null ? week : null}
+          <AdherenceCard today={today} span={week && week.rate !== null ? week : null}
                          month={month} each={perMedicine}
                          back={back} onBack={setBack} />
         )}
@@ -304,13 +304,15 @@ function RoutineCard({ list, next, onOpen }: {
  * 한 주가 아니라 넉 주인 이유는 요일이다. 한 주에서는 각 요일이 한 번씩만 나와서
  * "주말마다 저녁을 거른다" 가 한 번의 우연과 구별되지 않는다.
  */
-function AdherenceCard({ span, month, each, back, onBack }: {
+function AdherenceCard({ span, month, each, back, onBack, today }: {
   /** 이 창에 자료가 없으면 `null`. 카드는 그래도 그려진다 — 위 주석 참고. */
   span: ReturnType<typeof adherence> | null;
   month: ReturnType<typeof calendar>;
   each: ReturnType<typeof byMedicine>;
   back: number;
   onBack: (next: number) => void;
+  /** 달 이름을 짓는 데 쓴다 — 라벨이 "AUGUST" 인지 "AUGUST 2025" 인지 가른다. */
+  today: string;
 }) {
   const say = span
     ? adherenceSentence(span)
@@ -347,7 +349,7 @@ function AdherenceCard({ span, month, each, back, onBack }: {
         있으니 "주말마다 저녁을 거른다" 같은 것이 보인다.
       */}
       <div className="mt-3">
-        <MonthNav back={back} onBack={onBack} label={windowLabel(back)} />
+        <MonthNav back={back} onBack={onBack} label={windowLabel(back, today)} />
       </div>
       <div className="mt-2">
         <DoseCalendar days={month} />
