@@ -156,9 +156,14 @@ export default function HomePage() {
               보인다. 자리를 안 먹는 방법으로 미는 것이 요점이다 — 파일에 여백을 채워
               밀면 그만큼 상자가 넓어져 방금 채운 폭이 다시 줄어든다.
 
-              5% 가 상한이다. 좌우 여백이 20px 이고 그림이 그 안을 꽉 채우므로, 밀 수
-              있는 거리는 그 여백뿐이다 — 5% 면 375px 화면에서 오른쪽에 3px, 360px
-              에서 4px 남는다. 여기서 더 밀려면 그림을 그만큼 줄여야 한다.
+              밀 수 있는 거리는 **그림 밖의 여백**뿐이다. 파일에는 여백이 없고(잉크가
+              네 변에 닿는다) 상자의 오른쪽 끝을 정하는 것은 글자가 아니라 맨 위의
+              반짝임이다 — 파일 안에서 첫 줄 글자는 11px, 둘째 줄은 117px 을 남기고
+              끝나는데 반짝임만 0px 이다.
+
+              그래서 폭을 96% 로 조금 내주고 그만큼 더 민다. 크기는 4% 줄지만 밀 수
+              있는 거리가 그만큼 늘어, 결과적으로 글자가 10px 더 오른쪽에 선다.
+              반짝임 기준으로 오른쪽에 6px 남는다.
 
               높이에 상한(26vh)을 두는 이유: 폭을 채우면 높이는 그림의 비율이 정하는데,
               키 낮은 폰에서는 그 높이가 카메라 몫을 가져간다. 640px 짜리 화면에서
@@ -167,8 +172,8 @@ export default function HomePage() {
             */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo-mark.png" alt="SnapCare" width={486} height={320}
-                 className="h-auto w-full"
-                 style={{ transform: 'translateX(5%)', maxHeight: '26vh', objectFit: 'contain' }} />
+                 className="mx-auto block h-auto w-[96%]"
+                 style={{ transform: 'translateX(6.5%)', maxHeight: '26vh', objectFit: 'contain' }} />
           </h1>
         </div>
 
