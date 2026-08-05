@@ -82,39 +82,42 @@ export function WhoSheet({ needsProfile = false }: {
 
   return (
     /*
-      아래 줄의 넷과 **같은 모양**으로 선다 — 동그라미 + 이름.
+      아래 줄의 넷과 **같은 모양**으로 선다.
 
-      이름이 없으면 이 하나만 다르게 생기고, 다르게 생긴 것은 "덜 중요한 것" 으로
-      읽힌다. 이 단추가 답하는 물음("지금 누구 기준인가")은 이 화면에서 덜 중요하지
-      않다 — 모든 판정이 그 답에서 나온다.
+      그 줄이 동그라미 다섯에서 칸 나눈 막대 하나로 바뀌면서 이 단추도 칸이 됐다.
+      혼자 동그라미로 남으면 이 하나만 다른 종류로 읽히는데, 이 단추가 답하는
+      물음("지금 누구 기준인가")에서 이 화면의 모든 판정이 나온다 — 덜 중요한 것이
+      아니다.
+
+      얼굴 색은 남긴다. 그것이 사람을 가려내는 유일한 단서이고(`accounts.ts`),
+      칸 안의 작은 동그라미로 그 뜻이 그대로 선다.
     */
-    <div className="relative flex flex-col items-center gap-1">
+    <div className="relative flex h-full w-full items-center justify-center">
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Switch person"
         aria-expanded={open}
-        /*
-          아래 줄의 넷과 **같은 크기**여야 한다. 56px 은 그 줄의 표적 크기이고,
-          하나만 작으면 그 하나가 덜 중요한 것으로 읽힌다 — 이 단추가 답하는 물음은
-          "지금 누구 기준인가" 라, 이 화면에서 덜 중요한 것이 아니다.
-        */
-        className="relative flex shrink-0 items-center justify-center rounded-full shadow-sm active:scale-95 transition-transform"
-        style={{ background: me?.color ?? 'var(--color-sc-bg)', width: 56, height: 56,
-                 fontSize: 28, color: '#fff' }}
+        className="relative flex h-full w-full items-center justify-center
+                   active:bg-[var(--color-sc-bg)] transition-colors"
+        style={{ paddingTop: 16, paddingBottom: 16 }}
         {...sayable('This is who the app is answering for. Tap to switch to another person.')}
       >
-        {me ? <FaceIcon face={me.emoji} /> : <PersonIcon />}
-        {needsProfile && (
-          <span aria-hidden
-                className="absolute right-0 top-0 h-3 w-3 rounded-full"
-                style={{ background: 'var(--color-caution)', outline: '2px solid var(--color-sc-bg)' }} />
-        )}
+        {/*
+          배지를 **얼굴 동그라미에** 붙인다. 칸에 붙이면 칸이 넓어질 때(글자를 키우면
+          그렇다) 동그라미에서 떨어져 나가 무엇을 가리키는 표시인지가 흐려진다.
+        */}
+        <span className="relative flex items-center justify-center rounded-full"
+              style={{ background: me?.color ?? 'var(--color-sc-line)', color: '#fff',
+                       width: 34, height: 34, fontSize: 20 }}>
+          {me ? <FaceIcon face={me.emoji} /> : <PersonIcon />}
+          {needsProfile && (
+            <span aria-hidden
+                  className="absolute rounded-full"
+                  style={{ top: -2, right: -2, width: 12, height: 12,
+                           background: 'var(--color-caution)', outline: '2px solid #fff' }} />
+          )}
+        </span>
       </button>
-      <span aria-hidden className="w-full text-center text-[10px] font-bold leading-tight"
-            style={{ color: 'var(--color-sc-muted)' }}>
-        Who
-      </span>
-
       {open && (
         <div
           ref={panel}
@@ -132,7 +135,7 @@ export function WhoSheet({ needsProfile = false }: {
             폭에도 상한을 둔다. 화면이 목록보다 좁은 기기에서는 그 상한이 마지막
             방어선이다 — 잘린 목록은 고를 수 없는 목록이다.
           */
-          className="absolute bottom-[80px] right-0 z-30 w-56 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-white p-2 shadow-lg"
+          className="absolute bottom-[68px] right-0 z-30 w-56 max-w-[calc(100vw-1.5rem)] rounded-2xl bg-white p-2 shadow-lg"
           style={{ outline: '1px solid var(--color-sc-bg)' }}
         >
           {people.map((p) => {

@@ -89,6 +89,20 @@ export function BigCamera() {
 /**
  * 아래 한 줄 — 되짚는 곳들과 지금 누구인지.
  *
+ * **동그라미 다섯이 아니라 칸 나눈 막대 하나.**
+ *
+ * 동그라미로 두었을 때 이 줄은 "따로 떠 있는 것 다섯" 으로 보였다. 실제로는 같은
+ * 종류의 것 다섯이고 — 전부 "여기 말고 저기로 간다" 이다 — 그러면 한 덩어리로 보이는
+ * 편이 그 뜻에 맞는다. 그리고 표적이 커진다: 동그라미는 56px 이었지만 칸은 줄 높이
+ * 전체(64px)에 폭도 화면의 1/5 이라, 손이 떨려도 자기 칸 안에 들어간다.
+ *
+ * 이름을 뺐다
+ * -----------
+ * 이 저장소는 "그림뿐이면 무엇인지 아는 방법이 눌러 보는 것밖에 없다" 고 적어 두었고,
+ * 그 말은 지금도 맞다. 대신 두 가지가 그 자리를 메운다: 칸마다 `aria-label` 로 한
+ * 문장이 붙어 있고(스크린리더와 꾹 눌러 듣기가 그것을 읽는다), 홈에 도착하면 인사말이
+ * 저절로 나간다. 글자를 지운 만큼 그림이 커졌다 — 28px 에서 30px 로.
+ *
  * `extra` 는 프로필이다. 컴포넌트로 받는 이유는 그것이 링크가 아니라 **열리는 것**
  * 이어서다(사람 목록이 위로 펼쳐진다). 여기서 흉내 내면 두 벌이 되고, 두 벌은
  * 언젠가 갈라진다.
@@ -96,23 +110,26 @@ export function BigCamera() {
 export function Dock({ satellites, extra }: { satellites: Satellite[]; extra?: React.ReactNode }) {
   const router = useRouter();
   return (
-    <div className="flex items-start justify-between gap-1 px-1">
-      {satellites.map((s) => (
+    <div className="flex items-stretch overflow-hidden rounded-3xl bg-white shadow-sm">
+      {satellites.map((s, i) => (
         <button
           key={s.href}
           onClick={() => router.push(s.href)}
           aria-label={s.say}
-          className="relative flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl py-1
-                     active:scale-95 transition-transform"
+          /* 위아래 여백을 px 로 못박는다 — 틀은 px, 내용은 rem. rem 이면 가장 큰
+             글자에서 이 줄이 98px 로 부풀고, 그만큼이 카메라에서 빠진다. */
+          className="relative flex min-w-0 flex-1 items-center justify-center
+                     active:bg-[var(--color-sc-bg)] transition-colors"
+          /*
+            칸과 칸 사이의 실선. 테두리로 그리면 첫 칸에만 없어야 해서 조건이 붙는데,
+            그 조건은 칸 순서가 바뀌는 날 잊힌다. 왼쪽에만 긋고 첫 칸에서 끈다.
+          */
+          style={{ paddingTop: 16, paddingBottom: 16,
+                   ...(i === 0 ? {} : { borderLeft: '1px solid var(--color-sc-line)' }) }}
         >
-          <span aria-hidden
-                className="flex shrink-0 items-center justify-center rounded-full bg-white shadow-sm"
-                style={{ width: 56, height: 56, color: 'var(--color-sc-primary)' }}>
-            {s.icon({ size: 28 })}
-          </span>
-          <span aria-hidden className="w-full text-center text-[10px] font-bold leading-tight"
-                style={{ color: 'var(--color-sc-muted)' }}>
-            {s.label}
+          <span aria-hidden className="flex items-center justify-center"
+                style={{ color: 'var(--color-sc-primary)' }}>
+            {s.icon({ size: 30 })}
           </span>
           {s.badge !== undefined && s.badge > 0 && (
             /*
@@ -121,16 +138,19 @@ export function Dock({ satellites, extra }: { satellites: Satellite[]; extra?: R
             */
             <span aria-hidden
                   className="absolute flex items-center justify-center rounded-full font-bold text-white"
-                  style={{ top: 0, right: '18%', background: 'var(--color-caution)',
+                  style={{ top: 8, right: '22%', background: 'var(--color-caution)',
                            width: 18, height: 18, fontSize: 10, lineHeight: '18px' }}>
               {s.badge}
             </span>
           )}
         </button>
       ))}
-      {/* `py-1` 은 위의 단추들과 **같은 값**이어야 한다. 없으면 이 하나만 이름이
-          몇 px 아래로 내려가고, 한 줄에서 그 어긋남은 눈에 띈다. */}
-      {extra && <div className="flex min-w-0 flex-1 justify-center py-1">{extra}</div>}
+      {extra && (
+        <div className="flex min-w-0 flex-1 items-center justify-center"
+             style={{ borderLeft: '1px solid var(--color-sc-line)' }}>
+          {extra}
+        </div>
+      )}
     </div>
   );
 }
