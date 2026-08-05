@@ -132,6 +132,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 400,
+        /*
+          **effort 를 낮춘다 — 재 보니 더 빠르고 손해가 없다.**
+
+          기본값(high)으로 돌고 있었다. 실제 손글씨 16장에 직렬로 붙여 재니:
+
+            기본       정확 8/15 (53%)   중앙 5033ms   최대 12192ms
+            effort low 정확 10/16 (63%)  중앙 3787ms   최대  5668ms
+
+          정확도 차이는 표본이 작아 잡음으로 본다. 믿는 것은 시간이다 — 중앙이 25%
+          줄고 **꼬리가 12.2초에서 5.7초로** 짧아졌다. 꼬리가 중앙보다 중요하다:
+          사람이 "이 앱은 느리다" 고 기억하는 것은 평균이 아니라 가장 오래 기다린
+          한 번이다.
+
+          이 일이 어려운 추론이 아니라는 것과도 맞는다. 한 줄의 획을 읽어 목록에서
+          고르는 일이고, 깊이 생각한다고 획이 더 보이지는 않는다.
+        */
+        output_config: { effort: 'low' },
         system: systemFor(candidates),
         messages: [{ role: 'user', content: parts }],
       }),
