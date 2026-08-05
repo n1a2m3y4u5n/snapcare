@@ -83,11 +83,29 @@ async function toDataUrl(g: Gray): Promise<string> {
  * 버블은 이미 읽혔고, 층·요일·기간·시각은 그대로 상자로 보낼 수 있다. 여기서
  * 예외가 나가면 그 넷까지 같이 잃는다.
  */
+export interface Handwriting {
+  name: string;
+  count: string;
+  notes: string;
+  /**
+   * 이름이 비었을 때 **왜** 비었나.
+   *
+   * 세 상황이 있고 사람이 할 일이 다르다. 전에는 셋이 다 빈 문자열 하나로 내려가서
+   * 화면이 "평평하게, 밝은 곳에서 다시 찍으세요" 를 똑같이 말했다 — 망이 끊긴
+   * 사람에게 그 말은 몇 번을 다시 찍어도 안 바뀌는 일을 시키는 것이다. tesseract 를
+   * 걷어낸 뒤로 그 경우가 흔해졌으므로(이제 이 칸은 언제나 망이 필요하다) 갈라 둔다.
+   *
+   *   offline    못 물어봤다 — 망, 시간 초과, 상류 과부하
+   *   illegible  물어봤고 못 읽겠다는 답을 받았다
+   */
+  reason?: 'offline' | 'illegible';
+}
+
 export async function readHandwriting(
   gray: Gray,
   transform: Mat3,
   onProgress?: (p: number) => void,
-): Promise<{ name: string; count: string; notes: string }> {
+): Promise<Handwriting> {
   const shots = await Promise.all(
     (['name', 'count', 'notes'] as const).map(async (f) => {
       const rect = SHEET_CONFIG.fields[f];
@@ -117,7 +135,8 @@ export async function readHandwriting(
   });
   onProgress?.(1);
 
-  if (!read?.legible) return { name: '', count: '', notes: '' };
+  if (!read) return { name: '', count: '', notes: '', reason: 'offline' };
+  if (!read.legible) return { name: '', count: '', notes: '', reason: 'illegible' };
 
   /*
     목록에서 고른 것(`match`)은 **거의 안 쓴다.**
@@ -132,22 +151,38 @@ export async function readHandwriting(
   return { name: picked || read.name, count: read.count, notes: read.notes };
 }
 
-/** 한 번만 묻는다. 못 물어보면 `null` — 그때는 이름 없는 일정이 남는다. */
+/**
+ * 묻는다. 못 물어보면 `null` — 그때는 이름 없는 일정이 남는다.
+ *
+ * **한 번은 앱이 알아서 다시 보낸다.** 상류가 잠깐 밀리는 것은 이 사진의 문제가
+ * 아니고, 사진 판별 쪽에서 같은 판단을 이미 내려 두었다 — 처방전 200장 중 아홉 장이
+ * 503 이었는데 다시 보내니 아홉 장 전부 읽혔다. 사람에게 "다시 눌러 보세요" 라고 말할
+ * 수는 있지만 이 앱의 사용자는 그 문장을 읽지 못하고, 한 번 더 누르는 일 자체가
+ * 우리가 없애기로 한 종류의 수고다.
+ *
+ * 두 번은 안 한다. 조용히 세 번 재시도하면 사람은 앱이 멈춘 줄 안다.
+ */
 async function askVision(shots: { name: string; count: string; notes: string; candidates: string[] }) {
-  try {
-    const res = await fetch('/api/handwriting', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(shots),
-      signal: AbortSignal.timeout(16_000),
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as {
-      name: string; count: string; notes: string; legible: boolean;
-      match: string; matchConfidence: number;
-    };
-  } catch (err) {
-    console.warn('[form-sheet] 손글씨를 못 물어봤다:', err);
-    return null;
+  for (let tries = 0; tries < 2; tries++) {
+    try {
+      const res = await fetch('/api/handwriting', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(shots),
+        signal: AbortSignal.timeout(16_000),
+      });
+      if (res.ok) {
+        return (await res.json()) as {
+          name: string; count: string; notes: string; legible: boolean;
+          match: string; matchConfidence: number;
+        };
+      }
+      // 4xx 는 다시 보내도 같다 — 우리가 보낸 것이 문제다.
+      if (res.status < 500) return null;
+    } catch (err) {
+      console.warn('[form-sheet] 손글씨를 못 물어봤다:', err);
+    }
+    if (tries === 0) await new Promise((r) => setTimeout(r, 1200));
   }
+  return null;
 }

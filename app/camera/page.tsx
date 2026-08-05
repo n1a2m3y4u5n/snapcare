@@ -273,9 +273,19 @@ export default function CameraPage() {
           안 바뀌는 일을 시킨 것이다. 그 갈래는 이제 여기까지 오지 않지만(표에 없어도
           화면이 나온다), 문구는 남은 두 경우에 대해서도 갈려 있어야 한다.
         */
-        fail(rx.unread
-          ? 'Found the sheet, but could not read the medicine name. Photograph it flat, in good light.'
-          : `Found the sheet, but ${rx.schedule.missing.join(', ') || 'the drop time'} is missing. Fill that in and photograph it again.`);
+        /*
+          **왜 못 읽었는지에 따라 다른 말을 한다.**
+
+          셋이 한 문구로 나가고 있었다. tesseract 를 걷어낸 뒤로 이 칸은 언제나 망이
+          필요해졌고, 그래서 망이 끊긴 사람이 "평평하게, 밝은 곳에서 다시 찍으세요"
+          를 반복해서 듣게 됐다 — 몇 번을 다시 찍어도 안 바뀌는 일이다. 사람이 할 일이
+          다르면 말도 달라야 한다.
+        */
+        fail(hand.reason === 'offline'
+          ? 'The sheet is fine — reading the writing needs a connection. Try again when you are online.'
+          : rx.unread
+            ? 'Found the sheet, but could not read the medicine name. Photograph it flat, in good light.'
+            : `Found the sheet, but ${rx.schedule.missing.join(', ') || 'the drop time'} is missing. Fill that in and photograph it again.`);
         return true;
       }
       goWith(item, shot);
@@ -395,7 +405,11 @@ export default function CameraPage() {
     //
     // 그래서 여기서 잡고 501(서버에 판별 수단이 없음)과 같은 답으로 돌려보낸다.
     // 둘 다 "다시 찍어도 소용없다, 성분표를 찍어라" 이기 때문이다.
-    const NEEDS_NET = 'Photo recognition needs a connection. Photograph the nutrition label instead, or pick one below.';
+    /*
+      오프라인 성분표 읽기가 있었을 때는 "성분표를 대신 찍으세요" 가 진짜 출구였다.
+      그 경로를 걷어냈으므로(tesseract 제거) 이제 그 말은 할 수 없는 일을 시키는 것이다.
+    */
+    const NEEDS_NET = 'This needs a connection. Try again when you are online.';
 
     /*
       밀렸으면 **한 번은 앱이 알아서 다시 보낸다.**
