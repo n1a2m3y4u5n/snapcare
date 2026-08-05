@@ -11,7 +11,7 @@ import { useDoseAlert } from '@/lib/dispenser/useDoseAlert';
 import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
 import { useReminders } from '@/stores/reminders';
 import { WhoSheet } from './who-sheet';
-import { Orbit, type Satellite } from './orbit';
+import { BigCamera, Dock, type Satellite } from './dock';
 import { BoxIcon, FoodIcon, GearIcon, PillIcon } from '@/components/icons';
 import { ask, sayable } from '@/components/sc/Say';
 import { homeIntro } from '@/lib/snapcare/homeIntro';
@@ -67,14 +67,14 @@ export default function HomePage() {
   // 뒤쪽이 실제로 중요하다 — 예전에는 마운트 때 읽은 날짜를 계속 들고 있어서, 자정을
   // 넘겨 앱을 켜 둔 사람에게 '오늘' 이 어제로 남았다.
   /*
-    둘레에 놓을 것들 — 홈에서 갈 수 있는 곳 전부.
+    아래 줄에 놓을 것들 — 홈에서 갈 수 있는 곳 전부.
 
     중복을 없애는 방법을 두 번 바꿨다. 처음에는 '오늘' 을 위성에서 빼서 아래 탭에
     맡겼는데, 그러면 홈이 두 가지 언어로 말한다 — 가운데는 둥근 궤도, 아래는 네모난
     탭. 어느 쪽이 이 앱의 길인지가 화면에서 안 정해진다.
 
-    이제 반대로 한다. **홈에서는 궤도가 유일한 길**이고 아래 탭의 이동 링크는 감춘다.
-    영양과 설정이 궤도로 올라오고, 다른 화면에서는 탭이 그대로 남아 돌아오는 길이 된다.
+    이제 반대로 한다. **홈에서는 이 줄이 유일한 길**이고 아래 탭의 이동 링크는 감춘다.
+    영양과 설정이 이 줄로 올라오고, 다른 화면에서는 탭이 그대로 남아 돌아오는 길이 된다.
 
     낭독 버튼만은 자리를 지킨다. 읽지 못하는 사람이 그 버튼을 찾는 방법은 '늘 거기
     있다' 뿐이고, 하필 홈이 앱을 여는 첫 화면이다 — 여기서 자리가 바뀌면 그 규칙이
@@ -114,45 +114,39 @@ export default function HomePage() {
         궤도가 화면 위쪽에 몰리고 아래 절반이 비었다 — 카메라를 크게 만들어 놓고
         정작 화면은 안 채운 셈이다.
 
-        `flex-1` 로 받아서 궤도를 남는 자리 가운데에 앉힌다. 위아래 카드가 뜨는
-        날에는 그만큼 자리가 줄고 궤도가 알아서 위로 붙는다 — 카드가 궤도를 화면
+        `flex-1` 로 받아서 카메라를 남는 자리 가운데에 앉힌다. 위아래 카드가 뜨는
+        날에는 그만큼 자리가 줄고 카메라가 알아서 작아진다 — 카드가 카메라를 화면
         밖으로 밀어내던 것을 이 구조가 대신 막는다.
       */}
-      <div className="flex min-h-0 flex-1 flex-col px-5 pt-14">
+      {/*
+        `sc-quiet-reading` — 이 화면에서는 "지금 읽는 자리" 표시를 안 낸다. 이유는
+        `globals.css` 의 그 규칙 옆에 적었다.
+      */}
+      <div className="sc-quiet-reading flex min-h-0 flex-1 flex-col px-5 pt-14">
         {/*
-          제목과 얼굴이 한 줄이다.
+          로고를 **가로 가운데**에 놓는다.
 
-          얼굴이 오른쪽 위에 있어야 하는 이유는 자리 때문이 아니라 **그것이 답하는
-          물음** 때문이다 — 이 화면의 모든 판정은 "지금 이 사람 기준" 인데, 그 사람이
-          누구인지가 홈 어디에도 적혀 있지 않았다. 어머니 계정으로 딸의 과자를 찍고
-          어머니 기준의 판정을 받아도 아무도 모른다.
+          왼쪽 위에 두고 얼굴 단추를 오른쪽에 놓고 있었다. 그 줄이 사라진 이유는
+          얼굴이 아래 줄로 내려갔기 때문이고, 혼자 남은 로고를 왼쪽에 두면 오른쪽이
+          이유 없이 빈다. 가운데에 놓으면 아래의 카메라·줄과 같은 축에 선다.
+
+          세로로는 그대로 위쪽이다. 이 그림은 "여기가 어디인가" 를 말하는 표찰이라
+          먼저 보이는 자리에 있어야 하고, 그 자리는 맨 위다.
         */}
-        <div className="flex items-start justify-between gap-3">
-          {/*
-            이 인사는 설정의 언어 미리듣기와 **같은 문장**이어야 한다. 고르는 자리에서
-            들은 소리와 홈에서 나는 소리가 다르면, 방금 고른 것이 무엇인지 확인할
-            방법이 없다. 그래서 문장을 `lib/snapcare/homeIntro.ts` 한 곳에 둔다.
-          */}
+        <div className="flex justify-center">
           <h1 className="min-w-0" {...ask(homeIntro(sayLang))}>
             {/*
-              글자 대신 로고를 놓는다.
+              높이를 px 로 못박는다 — 이 앱의 다른 틀들과 같은 이유다. 글자를 키운
+              사람이 원하는 것은 글자이지 표찰이 아니고, 홈은 한 화면에 담기로 해서
+              여기서 커진 만큼이 그대로 카메라에서 빠진다.
 
-              높이를 **px 로 못박는다.** 이 앱의 다른 틀들과 같은 이유다 — 글자를
-              키운 사람이 원하는 것은 글자이지 표찰이 아니고, 홈은 한 화면에 담기로
-              해서 여기서 커진 만큼이 그대로 궤도에서 빠진다. 72px 은 두 줄짜리
-              글자가 읽히는 크기다 — 72px 로 뒀다가 키웠다. 손으로 그린 획이라 줄당
-              40px 은 있어야 "SnapCare" 로 읽히고, 그보다 작으면 초록 얼룩이 된다.
-              폭까지 합쳐도(132 + 얼굴 88 + 사이 12 + 좌우 40 = 272) 375px 줄에 든다.
-
-              `alt` 는 앱 이름 그대로다. 그림을 못 보는 사람에게 이 자리가 말해야
-              하는 것은 "여기가 SnapCare 다" 하나이고, 소리로 하는 인사는 위의
-              `ask()` 가 따로 한다 — 둘이 같은 말을 하면 두 번 들린다.
+              둘레의 넷이 아래로 내려가면서 위쪽에 자리가 생겼다. 그만큼 키운다 —
+              손으로 그린 획이라 클수록 잘 읽히고, 이 화면의 첫인상이기도 하다.
             */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-mark.png" alt="SnapCare" width={132} height={96}
-                 style={{ height: 96, width: 'auto' }} />
+            <img src="/logo-mark.png" alt="SnapCare" width={193} height={140}
+                 style={{ height: 140, width: 'auto' }} />
           </h1>
-          <WhoSheet needsProfile={!confirmed} />
         </div>
 
         {/*
@@ -169,12 +163,10 @@ export default function HomePage() {
         </div>
 
         {/*
-          프로필 안내 카드가 여기 있었다. 걷어낸 이유는 **`Who` 위성의 배지가 같은
+          프로필 안내 카드가 여기 있었다. 걷어낸 이유는 **얼굴 단추의 배지가 같은
           말을 하기 때문**이다. 한 화면에서 같은 것을 두 번 말하면 읽는 쪽은 둘이
-          다른 것을 말한다고 생각하고, 무엇보다 이 카드가 궤도를 화면 밖으로 밀어냈다.
-
-          배지가 카드보다 약한 신호인 것은 맞다. 대신 **늘 보인다** — 카드는 스크롤로
-          지나가지만 궤도는 이 화면의 가운데다.
+          다른 것을 말한다고 생각한다. 배지가 카드보다 약한 신호인 것은 맞지만
+          대신 늘 보인다.
         */}
 
         {/*
@@ -230,9 +222,29 @@ export default function HomePage() {
           궤도가 제 한 변을 이 칸의 **짧은 쪽**에서 뽑는다(`orbit.tsx` 의 `cqmin`).
           그러려면 이 칸이 크기를 아는 컨테이너여야 한다.
         */}
-        <div className="-mx-5 flex min-h-0 flex-1 items-center justify-center py-2"
+        {/*
+          가운데는 카메라 하나다. 남는 자리를 다 준다.
+
+          `containerType: 'size'` 는 남았다 — 카메라가 제 지름을 이 칸의 짧은 쪽에서
+          뽑는다. 칸이 낮으면 낮은 쪽이, 좁으면 좁은 쪽이 정한다.
+        */}
+        <div className="flex min-h-0 flex-1 items-center justify-center py-3"
              style={{ containerType: 'size' }}>
-          <Orbit satellites={satellites} />
+          <BigCamera />
+        </div>
+
+        {/*
+          되짚는 곳들과 지금 누구인지 — **낭독 줄 바로 위 한 줄에.**
+
+          둘레의 원이었다. 원은 자리를 비싸게 쓴다: 넷을 놓으려면 카메라 지름의 두 배쯤
+          되는 정사각형이 필요하고 네 귀퉁이는 늘 빈다. 홈이 스크롤 없이 한 화면에
+          담기로 하면서 그 빈 귀퉁이가 곧 카메라가 못 쓴 자리가 됐다.
+
+          아래로 내리면 그 자리가 카메라로 가고, 누르는 것들이 화면 아래에 모인다 —
+          낭독 줄과 같은 높이대라 "누를 것은 여기" 가 규칙 하나로 선다.
+        */}
+        <div className="pb-2">
+          <Dock satellites={satellites} extra={<WhoSheet needsProfile={!confirmed} />} />
         </div>
 
         {/*

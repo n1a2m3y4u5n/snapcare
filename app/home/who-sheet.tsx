@@ -81,13 +81,26 @@ export function WhoSheet({ needsProfile = false }: {
   }
 
   return (
-    <div className="relative">
+    /*
+      아래 줄의 넷과 **같은 모양**으로 선다 — 동그라미 + 이름.
+
+      이름이 없으면 이 하나만 다르게 생기고, 다르게 생긴 것은 "덜 중요한 것" 으로
+      읽힌다. 이 단추가 답하는 물음("지금 누구 기준인가")은 이 화면에서 덜 중요하지
+      않다 — 모든 판정이 그 답에서 나온다.
+    */
+    <div className="relative flex flex-col items-center gap-1">
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Switch person"
         aria-expanded={open}
-        className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl shadow-sm active:scale-95 transition-transform"
-        style={{ background: me?.color ?? 'var(--color-sc-bg)' }}
+        /*
+          아래 줄의 넷과 **같은 크기**여야 한다. 56px 은 그 줄의 표적 크기이고,
+          하나만 작으면 그 하나가 덜 중요한 것으로 읽힌다 — 이 단추가 답하는 물음은
+          "지금 누구 기준인가" 라, 이 화면에서 덜 중요한 것이 아니다.
+        */
+        className="relative flex shrink-0 items-center justify-center rounded-full shadow-sm active:scale-95 transition-transform"
+        style={{ background: me?.color ?? 'var(--color-sc-bg)', width: 56, height: 56,
+                 fontSize: 28, color: '#fff' }}
         {...sayable('This is who the app is answering for. Tap to switch to another person.')}
       >
         {me ? <FaceIcon face={me.emoji} /> : <PersonIcon />}
@@ -97,12 +110,22 @@ export function WhoSheet({ needsProfile = false }: {
                 style={{ background: 'var(--color-caution)', outline: '2px solid var(--color-sc-bg)' }} />
         )}
       </button>
+      <span aria-hidden className="w-full text-center text-[10px] font-bold leading-tight"
+            style={{ color: 'var(--color-sc-muted)' }}>
+        Who
+      </span>
 
       {open && (
         <div
           ref={panel}
           role="menu"
-          className="absolute right-0 top-[52px] z-30 w-56 rounded-2xl bg-white p-2 shadow-lg"
+          /*
+            **위로** 연다. 이 단추가 화면 맨 아래 줄로 내려가면서, 아래로 열던
+            목록이 화면 밖으로 나갔다 — 열렸는데 아무것도 안 보이는 상태가 된다.
+            가로로는 가운데에 걸어 둔다(`left-1/2` + 이동): 줄의 오른쪽 끝이 아니라
+            줄 안 어디에 있어도 목록이 화면 안에 들어온다.
+          */
+          className="absolute bottom-[80px] left-1/2 z-30 w-56 -translate-x-1/2 rounded-2xl bg-white p-2 shadow-lg"
           style={{ outline: '1px solid var(--color-sc-bg)' }}
         >
           {people.map((p) => {
