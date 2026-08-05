@@ -134,7 +134,7 @@ export default function HomePage() {
           먼저 보이는 자리에 있어야 하고, 그 자리는 맨 위다.
         */}
         <div className="flex justify-center">
-          <h1 className="min-w-0" {...ask(homeIntro(sayLang))}>
+          <h1 className="w-full min-w-0" {...ask(homeIntro(sayLang))}>
             {/*
               높이를 px 로 못박는다 — 이 앱의 다른 틀들과 같은 이유다. 글자를 키운
               사람이 원하는 것은 글자이지 표찰이 아니고, 홈은 한 화면에 담기로 해서
@@ -144,16 +144,30 @@ export default function HomePage() {
               손으로 그린 획이라 클수록 잘 읽히고, 이 화면의 첫인상이기도 하다.
             */}
             {/*
-              176px. 상자가 568×320 이라 이 높이에서 폭이 312px 이고, 좁은 폰(360)에서
-              좌우 여백을 뺀 320 안에 든다 — 여유가 8px 뿐이라 여기가 상한이다.
+              **폭을 채운다.**
 
-              한때 150 이었다. 그때는 가운데를 맞추느라 왼쪽에 여백을 20% 나 붙여 상자가
-              679px 로 넓어져 있었고, 넓은 상자는 같은 폭 안에서 높이를 눌렀다. 무게중심
-              으로 다시 재면서 여백이 3.4% 로 줄었고, 줄어든 만큼 글자를 키울 수 있다.
+              높이를 못박고 폭이 따라오게 하고 있었다(176px). 그러면 글자가 화면
+              한가운데에 작게 앉고 좌우가 넓게 빈다 — 이 화면의 첫인상인데 그 자리를
+              안 쓰는 셈이다. 폭을 기준으로 두면 글자가 화면을 가로지르고, 높이는
+              그림의 비율이 정한다.
+
+              `translateX` 로 조금 민다. 무게중심은 이 그림의 광학 중심이 상자 중심보다
+              왼쪽이라고 말하고(사진기와 반짝임이 오른쪽 끝을 밀어낸다), 눈으로도 그렇게
+              보인다. 자리를 안 먹는 방법으로 미는 것이 요점이다 — 파일에 여백을 채워
+              밀면 그만큼 상자가 넓어져 방금 채운 폭이 다시 줄어든다.
+
+              4% 는 좌우 여백(20px) 안에서 움직일 수 있는 만큼이다. 이보다 밀면 오른쪽
+              사진기가 화면 밖으로 나간다.
+
+              높이에 상한(26vh)을 두는 이유: 폭을 채우면 높이는 그림의 비율이 정하는데,
+              키 낮은 폰에서는 그 높이가 카메라 몫을 가져간다. 640px 짜리 화면에서
+              로고가 211px 을 먹고 카메라가 134px 로 줄었다 — 이 화면에서 가장 커야
+              하는 것이 로고 다음이 되면 안 된다.
             */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-mark.png" alt="SnapCare" width={312} height={176}
-                 style={{ height: 176, width: 'auto' }} />
+            <img src="/logo-mark.png" alt="SnapCare" width={486} height={320}
+                 className="h-auto w-full"
+                 style={{ transform: 'translateX(4%)', maxHeight: '26vh', objectFit: 'contain' }} />
           </h1>
         </div>
 

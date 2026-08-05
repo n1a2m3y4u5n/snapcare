@@ -50,70 +50,18 @@ const OUT = 'public/icons';
  */
 const TILT = 6;
 
-/**
- * 그림의 **광학 중심**을 상자 가운데로 옮긴다.
- *
- * 무엇이 문제인가
- * ---------------
- * 여백을 턴 그림을 화면 가운데 놓으면 상자는 정확히 가운데다. 그런데 눈은 상자를
- * 보지 않고 **잉크의 무게**를 본다. 이 로고는 오른쪽 위에 사진기와 반짝임이, 오른쪽
- * 가운데에 회색 디스펜서가 있어서 상자의 오른쪽 끝이 그만큼 밀려 있고, 정작 진한
- * 것은 왼쪽의 연둣빛 글자다. 그래서 가운데에 놓아도 왼쪽으로 치우쳐 보인다.
- *
- * 두 번 재서 두 번 다 틀렸다
- * --------------------------
- * 처음에는 상자 중심을 썼다 — 왼쪽으로 치우쳐 보였다(0% 보정).
- * 다음에는 연둣빛 글자의 상자 중심을 썼다 — 이번에는 오른쪽으로 치우쳐 보였다.
- * 20% 를 민 셈인데, 그 값은 회색과 검정을 **없는 것으로 친** 값이다. 그것들도 눈에는
- * 보인다.
- *
- * 세 번째로 잰 것이 이것이다: **모든 잉크의, 투명도로 가중한 무게중심.** 진한 초록
- * 획은 무겁게, 가는 검은 선은 가볍게 센다. 이 그림에서 그 값은 상자 중심보다 3.4%
- * 왼쪽이고, 그만큼만 밀면 된다. 앞의 두 값(0% 와 20%) 사이 어디쯤이라는 것이 눈으로
- * 본 것과도 맞는다.
- */
-async function centreOnInk(buf) {
-  const { data, info } = await sharp(buf).ensureAlpha().raw()
-    .toBuffer({ resolveWithObject: true });
-  const { width: w, height: h, channels: ch } = info;
+/*
+  가운데 맞추기를 여기서 하지 않는다 — **화면 쪽에서 한다.**
 
-  let sum = 0;
-  let mass = 0;
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const a = data[(y * w + x) * ch + 3];
-      if (a > 60) { sum += x * a; mass += a; }
-    }
-  }
-  if (mass === 0) return buf;
+  한동안 여기서 했다. 여백을 턴 그림을 화면 가운데 놓으면 상자는 가운데인데 눈에는
+  왼쪽으로 치우쳐 보인다(오른쪽 위의 사진기와 반짝임이 상자를 넓혀 놓기 때문이다).
+  그래서 왼쪽에 투명을 채워 그림을 오른쪽으로 밀었다.
 
-  /*
-    잰 값 위에 **손으로 조금 더** 민다.
-
-    무게중심은 잉크의 양만 센다. 눈은 거기에 더해 **덩어리가 어디에 뭉쳐 있는가**를
-    보는데, 이 로고는 왼쪽에 두 줄짜리 글자 덩어리가 서 있고 오른쪽은 사진기·반짝임
-    처럼 흩어진 점들이다. 흩어진 쪽은 무게로는 세지지만 덩어리로는 덜 세진다.
-
-    그 차이를 수식으로 잡으려면 이 그림에만 맞는 규칙을 만들게 된다. 잰 값을 기준으로
-    두고 눈으로 정한 만큼만 더하는 편이 정직하다 — 얼마를 더했는지가 숫자 하나로
-    남아서, 다음 사람이 그것만 보고 되돌릴 수 있다.
-
-    2.5% 로 시작해 눈으로 보고 5% 로 올렸다.
-  */
-  const NUDGE = 0.05;                           // 폭의 5% 만큼 오른쪽으로
-
-  const off = Math.round(w / 2 - sum / mass + w * NUDGE);
-  if (Math.abs(off) < 4) return buf;            // 이미 가운데다
-  const pad = Math.abs(off) * 2;
-  return sharp(buf)
-    .extend({
-      left: off > 0 ? pad : 0,
-      right: off > 0 ? 0 : pad,
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    })
-    .png()
-    .toBuffer();
-}
+  그 방법은 **폭을 꽉 채우는 것과 싸운다.** 채운 여백만큼 상자가 넓어지고, 같은
+  화면 폭 안에서 그만큼 그림이 작아진다. 지금은 글자가 화면 폭을 거의 채우기를
+  원하므로, 파일은 잉크에 딱 맞게 두고 미는 일은 화면에서 `translateX` 로 한다 —
+  그쪽은 자리를 안 먹는다.
+*/
 
 /** 화면 머리에 놓을 글자 로고. 여백을 털어 같은 높이에서 글자가 크게 보이게 한다. */
 async function wordmark(src) {
@@ -126,9 +74,8 @@ async function wordmark(src) {
     .png()
     .toBuffer();
 
-  const centred = await centreOnInk(straight);
   // 홈에서 쓰는 높이의 두 배쯤. 3배 화면에서도 또렷하다.
-  await sharp(centred).resize({ height: 320 }).png({ compressionLevel: 9 })
+  await sharp(straight).resize({ height: 320 }).png({ compressionLevel: 9 })
     .toFile('public/logo-mark.png');
   const box = await sharp('public/logo-mark.png').metadata();
   console.log(`썼다 public/logo-mark.png (메인 화면 머리) ${box.width}×${box.height}`);
