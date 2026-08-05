@@ -801,6 +801,35 @@ systemctl status snapcare-dispenser
 journalctl -u snapcare-dispenser -f
 ```
 
+### Updating one that is already installed
+
+```bash
+git pull && sudo ./service/update.sh
+```
+
+**install.sh owns the machine, update.sh owns the code.** The installer takes the
+apt lock, waits out `unattended-upgrades`, reinstalls six packages, rewrites
+`config.txt`, sets the hostname and restarts avahi — minutes, and every step is a
+way for a one-line fix to break something that was working. The updater copies
+the package and restarts the service, which is a second and a half.
+
+It refuses to deploy a checkout that does not compile — the unit is
+`Restart=always`, so a syntax error is not one crash but a machine that
+restarts every five seconds for ever with a dark screen. It replaces the package
+directory rather than copying over the top, so a module deleted upstream is
+deleted on the device too. It keeps the previous version, waits for the service
+to answer on its own port, and puts the old one back if it does not. It never
+touches `/var/lib/snapcare`, where the schedule, the dose ledger and the
+device's permanent setup network live.
+
+```bash
+sudo ./service/update.sh --dry-run      # say what would change, change nothing
+sudo ./service/update.sh --rollback     # put the previous version back
+```
+
+Anything that touches apt, the boot config, the hostname, the portal DNS rule or
+the clock chip still belongs to `install.sh` — re-run that instead, it is safe.
+
 ---
 
 ## The clock, and why the tray stays shut
@@ -1084,7 +1113,7 @@ firmware/
     rtc.py            whether the clock chip can be believed, whichever is fitted
     ds1302.py         three bit-banged wires, and the trust model they force
     web/              four pages, no build step, nothing external
-  service/            systemd unit + install.sh
+  service/            systemd unit, install.sh (the machine), update.sh (the code)
   tests/              668 tests; only the end-to-end one opens a socket
 ```
 
