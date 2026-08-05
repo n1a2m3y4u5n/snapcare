@@ -50,6 +50,14 @@ export function computeVerdict(
   */
   if (item.notConsumable) {
     reasons.push({ level: 'caution', text: 'This is not food or medicine — nothing was recorded' });
+  } else if (item.unidentified && item.lookedUp) {
+    /*
+      조회로 채운 경우. 초록은 여전히 안 켜지만 문장이 달라야 한다 — "무엇인지
+      모르겠다" 는 방금 이름과 용도를 읽어 준 화면에서 사실이 아니고, 그렇게 말하면
+      사람이 그 밑의 경고까지 안 믿는다. 모르는 것은 무엇인지가 아니라 **얼마나
+      믿을 수 있는가** 이고, 그것을 그대로 말한다.
+    */
+    reasons.push({ level: 'caution', text: 'Not on our checked list — ask a pharmacist to confirm' });
   } else if (item.unidentified) {
     reasons.push({ level: 'caution', text: 'Not sure what this is — check the packet' });
   }

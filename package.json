@@ -14,6 +14,7 @@
     "glyphs": "python3 engine/gen_glyphs.py --install --force && python3 engine/build_assets.py --publish && node scripts/prewarm-pictograms.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.115.0",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.3",
     "jsqr": "^1.4.0",

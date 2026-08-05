@@ -14,6 +14,7 @@ import { parseFormSheet } from '@/lib/formsheet/sheet';
 import { scaleTransform } from '@/lib/formsheet/field';
 import { readHandwriting } from '@/lib/formsheet/readName';
 import { readPrescription, toScanItem } from '@/lib/formsheet/prescription';
+import { lookUpDrug, renameOk } from '@/lib/formsheet/drugLookup';
 import { useScans, nowLabel, todayKey } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
 import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
@@ -243,7 +244,28 @@ export default function CameraPage() {
         (p) => setStatus(`Reading the name… ${Math.round(p * 100)}%`));
 
       const rx = readPrescription(sheet.values, hand.name, hand.count, hand.notes);
-      const item = toScanItem(rx);
+
+      /*
+        표에 없으면 물어본다.
+
+        표에서 맞았으면 안 부른다 — 사람이 쓴 표가 이기고, 부를 이유도 없다. 글자가
+        아예 안 나온 경우(`unread`)도 안 부른다: 물어볼 것이 없고, 그때 사람이 할
+        일은 다시 찍는 것이다.
+
+        기다리는 것은 이 한 번뿐이고 화면이 그동안 무엇을 하는지 말한다. 안 기다리고
+        먼저 띄웠다가 나중에 채우는 방법도 있었는데, 그러면 경고가 뒤늦게 뜬다 —
+        사람이 이미 화면을 보고 판단한 다음에 "사실 임신 중에는 안 됩니다" 가 붙는
+        것이라, 그 순서는 이 앱에서 가장 나쁜 순서다.
+      */
+      let lookup = null;
+      if (!rx.drug && !rx.unread) {
+        setStatus('Looking up the medicine…');
+        lookup = await lookUpDrug(rx.read);
+        // 이름을 바꾸는 것은 오타 교정일 때만. 아니면 종이에 쓴 글자를 그대로 쓴다.
+        if (lookup && !renameOk(rx.read, lookup)) lookup = { ...lookup, name: rx.read };
+      }
+
+      const item = toScanItem(rx, lookup);
       if (!item) {
         /*
           종이는 찾았는데 채워진 것이 모자라다. 이것은 **다른 것을 찍은 것이 아니라**

@@ -252,3 +252,54 @@ test('끝까지 먹으라는 것은 일정이 아니라 주의다', () => {
   assert.notEqual(forPictograms(item).rx?.durationText, 'ongoing');
 });
 
+
+/*
+  표에 없는 약을 조회로 보완하는 경로.
+
+  이 시험들이 지키는 것은 "채운다" 가 아니라 **"무엇을 안 받는가"** 다. 검증 안 된
+  출처에서 온 값이 사람이 쓴 표를 덮거나 경고를 지우면, 그 조용한 덮어쓰기는
+  화면에 아무 표시도 안 남는다.
+*/
+const LOOKUP = {
+  known: true, name: 'Rosuvastatin', inn: 'rosuvastatin', form: 'tablet' as const,
+  flags: ['unsafe_pregnancy' as const], handwash: false, shake: false,
+  storage: 'room' as const, purpose: 'This medicine lowers cholesterol.', confident: true,
+};
+
+test('조회가 제형·경고·용도를 채운다 — 그래도 초록은 안 켠다', () => {
+  const item = toScanItem(readPrescription(SHEET, 'Rosuvastatin', '1'), LOOKUP);
+  assert.ok(item);
+  assert.equal(item.rx?.form, 'tablet');
+  assert.ok(item.flags.includes('unsafe_pregnancy'), '임신 금기가 판정까지 가야 한다');
+  assert.ok(item.rx?.notes?.includes('This medicine lowers cholesterol.'));
+  // 초록을 막는 값은 그대로. 조회는 확신을 주지 않는다.
+  assert.equal(item.unidentified, true);
+  assert.equal(item.lookedUp, true, '문구를 가르려면 이 값이 필요하다');
+});
+
+test('표에서 맞은 약에는 조회를 안 섞는다 — 사람이 쓴 것이 이긴다', () => {
+  const poison = { ...LOOKUP, name: 'WRONG', form: 'cream' as const, purpose: 'nonsense.' };
+  const item = toScanItem(readPrescription(SHEET, 'Amoxicillin', '1'), poison);
+  assert.ok(item);
+  assert.equal(item.name, 'Amoxicillin');
+  assert.notEqual(item.rx?.form, 'cream');
+  assert.equal(item.unidentified, undefined);
+  assert.equal(item.lookedUp, undefined);
+});
+
+test('조회는 경고를 더하기만 한다 — 종이가 적은 것을 못 지운다', () => {
+  const noFlags = { ...LOOKUP, flags: [] as never[] };
+  // 종이의 Notes 칸이 금주를 적었다. 조회가 조용히 지우면 안 된다.
+  const rx = readPrescription(SHEET, 'Rosuvastatin', '1', 'Do not drink alcohol');
+  assert.ok(rx.notes.flags.includes('alcohol'), '전제: 종이가 금주를 적었다');
+  const item = toScanItem(rx, noFlags);
+  assert.ok(item?.flags.includes('alcohol'));
+});
+
+test('못 알아본 조회는 없는 것과 같다', () => {
+  const item = toScanItem(readPrescription(SHEET, 'Rosuvastatin', '1'),
+    { ...LOOKUP, known: false });
+  assert.ok(item);
+  assert.equal(item.name, 'Rosuvastatin', '읽은 글자가 남는다');
+  assert.equal(item.lookedUp, undefined);
+});

@@ -4,6 +4,7 @@ import { matchDrug } from '../formulary/match.ts';
 import { readNotes, type NotesReading } from '../formulary/notes.ts';
 import { toSchedule, type FormSheetValues } from '../hardware/formSheet.ts';
 import type { ItemFlag, ScanItem } from '../snapcare/types.ts';
+import type { DrugLookup } from './lookupTypes.ts';
 
 /**
  * 폼시트 한 장 → 앱이 아는 처방 하나.
@@ -127,7 +128,7 @@ const DAY_WORD: Record<string, string> = {
  * 표에서 오던 것들(제형·손씻기·흔들기)은 종이가 적은 것만 남는다. 모르는 약의
  * 제형을 지어내면 안약을 알약통으로 그리는 쪽이 아니라 **그 반대**가 나올 수 있다.
  */
-export function toScanItem(rx: SheetPrescription): ScanItem | null {
+export function toScanItem(rx: SheetPrescription, lookup?: DrugLookup | null): ScanItem | null {
   // 일정이 없으면 만들 것이 없다 — 알람도 상자 일정도 여기서 나온다.
   if (rx.schedule.schedule.length === 0) return null;
   // 이름 글자조차 안 나온 것은 다르다. 부를 이름이 없으면 화면에 띄울 물건이 없고,
@@ -149,13 +150,36 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
     종이는 이 조제에만 해당하는 것을 안다(약사가 이 환자에게 금주를 적은 경우).
     한쪽만 쓰면 나머지 절반이 화면에 못 온다.
   */
-  const flags: ItemFlag[] = [...new Set([...(rx.drug?.flags ?? []), ...rx.notes.flags])];
+  /*
+    조회 결과는 **표가 침묵할 때만** 섞는다.
+
+    표에서 맞은 약이면 `lookup` 을 아예 안 본다 — 사람이 쓴 것이 늘 이긴다는 규칙이
+    이 저장소 전체에 걸려 있고(`say.ts`, `/api/translate`), 여기서만 다르면 그
+    규칙이 규칙이 아니다.
+  */
+  const found = rx.drug ? null : (lookup?.known ? lookup : null);
+
+  /*
+    표의 플래그와 종이의 플래그를 합친다.
+
+    둘 다 필요하다. 표는 그 약에 언제나 참인 것을 알고(ACE 억제제의 임신 금기),
+    종이는 이 조제에만 해당하는 것을 안다(약사가 이 환자에게 금주를 적은 경우).
+    한쪽만 쓰면 나머지 절반이 화면에 못 온다.
+
+    조회에서 온 것은 **더하기만 한다.** 빼는 방향으로는 절대 안 쓴다 — 검증 안 된
+    출처가 경고를 지우면 그 조용한 삭제를 아무도 못 본다.
+  */
+  const flags: ItemFlag[] = [...new Set([
+    ...(rx.drug?.flags ?? []),
+    ...(found?.flags ?? []),
+    ...rx.notes.flags,
+  ])];
 
   return {
     id: `sheet_${(rx.drug?.inn ?? rx.read).toLowerCase().replace(/[^a-z]/g, '')}_${slot.slot}_${hour}`,
     // 표에 없으면 **읽은 글자 그대로** 부른다. 여기서 이름을 지어내면 사람이 종이와
     // 화면을 맞춰 볼 수 없고, 맞춰 보는 것이 이 화면에서 유일한 검산이다.
-    name: rx.drug?.name ?? rx.read,
+    name: rx.drug?.name ?? found?.name ?? rx.read,
     kind: 'prescription',
     /*
       표에 없는 약이면 초록을 안 켠다.
@@ -166,6 +190,11 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
       실패가 그대로 돌아온다.
     */
     unidentified: rx.drug ? undefined : true,
+    /*
+      조회로 채웠다는 표시. 화면 문구가 이 값으로 갈린다 — "무엇인지 모르겠다" 와
+      "우리 목록에 없어 확인 못 한 정보다" 는 사람이 할 일이 다르다.
+    */
+    lookedUp: found ? true : undefined,
     // 그림은 아이콘이 아니라 픽토그램이 맡는다. 이 자리는 옛 호출부가 아직 읽는
     // 값이라 비워 두지 않을 뿐이다.
     emoji: '',
@@ -182,18 +211,24 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
       dosageText: scheduleSentence(rx),
       durationText: slot.durationDays > 0 ? `for ${slot.durationDays} days` : 'ongoing',
       schedule: [{ time, label, emoji: '' }],
-      form: rx.drug?.form,
+      form: rx.drug?.form ?? (found?.form !== 'unknown' ? found?.form : undefined),
       doseCount: rx.count,
       doseText: rx.count ? `${rx.count}` : undefined,
       // 안약·연고는 쓰기 전에 손을 씻어야 한다. 표가 제형을 아니까 여기서 나온다 —
       // OCR 이 그 문장을 못 읽어도 그림에는 뜬다.
-      handwash: rx.drug?.form === 'eyedrop' || rx.drug?.form === 'cream' || rx.notes.handwash,
+      handwash: rx.drug?.form === 'eyedrop' || rx.drug?.form === 'cream'
+        || found?.handwash || rx.notes.handwash,
       // 현탁액은 흔들어야 한다. 가라앉은 채로 따르면 앞쪽 몇 회분은 묽고 바닥은
       // 진하다 — 같은 5mL 를 재도 들어가는 약의 양이 다르다.
-      shake: rx.drug?.form === 'syrup' || rx.notes.shake,
+      shake: rx.drug?.form === 'syrup' || found?.shake || rx.notes.shake,
       noLens: rx.notes.noLens,
       care: rx.notes.care,
-      notes: rx.notes.unknown,
+      /*
+        조회에서 온 한 문장("이 약은 혈압을 낮춥니다")을 종이의 주의 문구 옆에 둔다.
+        종이를 못 읽는 사람이 이 약이 무엇인지 아는 유일한 길이고, 화면의 모든 글은
+        소리가 붙어 있으므로 눌러서 들을 수 있다.
+      */
+      notes: [...rx.notes.unknown, ...(found?.purpose ? [found.purpose] : [])],
     },
     chips: [
       { emoji: '', label: `Tray ${slot.slot}` },
