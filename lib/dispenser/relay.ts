@@ -332,6 +332,22 @@ export class DispenserClient {
     return this.command(seconds ? { action: 'show_pairing', seconds } : { action: 'show_pairing' });
   }
 
+  /**
+   * Take the pairing screen back down, without unpairing.
+   *
+   * `showPairing` is meant to end when a phone scans the code — that is the
+   * moment the demo exists to show. This is the way back when it does not:
+   * the wrong slide, a question, a rehearsal that ran long. Waiting out the
+   * ninety seconds in front of an audience is not an option, and the only
+   * other exit was a reboot.
+   *
+   * Zero seconds is the off switch. The box clamps positive values to at
+   * least five, so a small number cannot stand in for this.
+   */
+  async hidePairing(): Promise<number> {
+    return this.command({ action: 'show_pairing', seconds: 0 });
+  }
+
   async goodbye(): Promise<number> {
     return this.command({ action: 'goodbye' });
   }

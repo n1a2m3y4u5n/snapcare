@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BellIcon, BoxIcon, LinkIcon } from '@/components/icons';
+import { BellIcon, BoxIcon, CloseIcon, LinkIcon } from '@/components/icons';
 
 import { PAIRED_EVENT, clientFor, loadPaired, type PairedDevice } from '@/lib/dispenser/paired';
 import { isDemo, setDemo } from '@/lib/snapcare/demo';
@@ -275,6 +275,26 @@ export default function PresentPage() {
           <span className="sc-icon flex items-center" aria-hidden><LinkIcon /></span>
           <span className="flex-1 font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
             {busy === 'Pairing QR' ? '…' : 'Pairing QR'}
+          </span>
+        </button>
+        {/*
+          되돌리는 단추.
+
+          위 단추의 짝이다. QR 이 사라지는 장면은 폰이 찍었을 때여야 하는데, 그 앞에서
+          순서가 어긋나면 — 슬라이드가 밀리거나, 질문이 들어오거나, 리허설이 길어지거나 —
+          발표자가 할 수 있는 일이 90초를 기다리는 것뿐이었다. 청중 앞에서 그건 못 한다.
+
+          짝은 안 푼다. 위 단추와 같이 **화면만** 되돌린다.
+        */}
+        <button
+          onClick={() => send('Hide QR', () => clientFor(paired).hidePairing())}
+          disabled={busy !== null}
+          className="sc-row mt-2 flex w-full items-center rounded-2xl py-3 text-left disabled:opacity-40"
+          style={{ background: 'var(--color-sc-bg)' }}
+        >
+          <span className="sc-icon flex items-center" aria-hidden><CloseIcon /></span>
+          <span className="flex-1 font-semibold" style={{ color: 'var(--color-sc-ink)' }}>
+            {busy === 'Hide QR' ? '…' : 'Hide QR'}
           </span>
         </button>
         <button

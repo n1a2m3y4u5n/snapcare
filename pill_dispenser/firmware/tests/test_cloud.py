@@ -977,3 +977,36 @@ def test_the_pairing_screen_cannot_be_left_up_forever(link):
     """
     link._carry_out({"action": "show_pairing", "seconds": 99999}, 50)  # noqa: SLF001
     assert link.status()["showPairingFor"] <= 600, "상한이 안 걸렸다"
+
+
+def test_zero_seconds_takes_the_pairing_screen_down_now(link):
+    """되돌리는 길.
+
+    QR 이 사라지는 장면은 폰이 찍었을 때여야 하는데, 그 앞에서 순서가 어긋나면 —
+    슬라이드가 밀리거나, 질문이 들어오거나 — 발표자가 할 수 있는 일이 90초를 기다리는
+    것뿐이었다. 청중 앞에서 그건 못 한다.
+
+    **짝은 안 푼다.** `goodbye` 와 다른 점이 그것이고, 헷갈리면 시연이 통째로 사라진다.
+    """
+    link._carry_out({"action": "hello"}, 60)                        # noqa: SLF001
+    claimed = link.status()["claimedAt"]
+
+    link._carry_out({"action": "show_pairing", "seconds": 600}, 61)  # noqa: SLF001
+    assert link.status()["showPairingFor"] > 0
+
+    link._carry_out({"action": "show_pairing", "seconds": 0}, 62)    # noqa: SLF001
+    assert link.status()["showPairingFor"] == 0, "0초인데 화면이 안 내려갔다"
+    assert link.status()["claimedAt"] == claimed, "짝을 건드리면 안 된다"
+
+
+def test_zero_is_not_rounded_up_to_the_minimum(link):
+    """0 을 하한(5초)보다 **먼저** 봐야 한다.
+
+    순서가 뒤집히면 0 이 5 로 올라가서 "끄기" 가 "5초 더 켜기" 가 된다. 화면에서는
+    5초 뒤에 어차피 꺼지므로 눈으로는 고쳐진 것처럼 보이고, 그래서 안 잡힌다.
+    """
+    link._carry_out({"action": "show_pairing", "seconds": 600}, 70)  # noqa: SLF001
+    for asked in (0, -1, -600):
+        link._carry_out({"action": "show_pairing", "seconds": 600}, 71)  # noqa: SLF001
+        link._carry_out({"action": "show_pairing", "seconds": asked}, 72)  # noqa: SLF001
+        assert link.status()["showPairingFor"] == 0, f"{asked} 초가 켜기로 읽혔다"

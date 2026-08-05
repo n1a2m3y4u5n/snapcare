@@ -725,7 +725,25 @@ class CloudLink:
             #
             # 반드시 꺼진다. 시간으로도 꺼지고 `hello` 로도 꺼진다. 앞엣것이 없으면
             # 시연이 끝난 뒤 상자가 짝짓기 화면을 붙들고 서 있게 된다.
-            seconds = _optional_int(opened.get("seconds")) or config.SHOW_PAIRING_S
+            # 0 이하는 **지금 끄기**다.
+            #
+            # 시연에서 QR 이 사라지는 장면은 폰이 찍었을 때(`hello`)여야 하는데, 그
+            # 앞에서 순서가 어긋나면 발표자에게 되돌릴 방법이 없었다. 시간이 다 갈
+            # 때까지 90초를 기다리거나 상자를 다시 켜는 것뿐이었고, 둘 다 발표 도중에
+            # 할 수 있는 일이 아니다.
+            #
+            # 아래 `max(5, ...)` 보다 **먼저** 본다. 안 그러면 0 이 5 로 올라가서
+            # "끄기" 가 "5초 더 켜기" 가 된다.
+            asked = _optional_int(opened.get("seconds"))
+            if asked is not None and asked <= 0:
+                with self._lock:
+                    self._show_pair_until = 0.0
+                log.info("hiding the pairing code (revision %d) — the pairing itself "
+                         "is untouched", rev)
+                self.nudge()
+                return
+
+            seconds = asked or config.SHOW_PAIRING_S
             seconds = max(5, min(int(seconds), 600))
             with self._lock:
                 self._show_pair_until = time.monotonic() + seconds
