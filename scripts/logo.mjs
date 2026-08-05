@@ -66,63 +66,27 @@ const TILT = 6;
 /*
   화면 머리에 놓을 글자 로고.
 
-  **손으로 그린 로고 시절의 코드를 걷어냈다.** 그때는 6도 기울여 쓰고 여백을 털었다.
-  기울인 것은 그 그림이 손글씨였기 때문이고, 턴 것은 잉크가 상자를 꽉 채우게 하려던
-  것이다. 둘 다 지금 로고에서는 틀린 손질이다 — 반듯한 활자를 기울이면 실수로 보이고,
-  여백은 **일부러 넣은 것**이라(마침표가 글자 블록 밖으로 매달리는 만큼 왼쪽을 비워
-  두어야 화면에서 가운데 선다) 털면 그 균형이 무너진다.
+  **원본의 계단 배치를 그대로 쓴다.**
 
-  걷어내지 않았으면 이 스크립트를 다시 도는 날 새 로고가 조용히 옛 손질로 덮였을
-  것이다. 파일은 멀쩡해 보이고 화면에서만 기울어 있다.
+  한 번 두 줄의 좌우 끝을 맞춰 본 적이 있다. SNAP 과 CARE 의 글자 폭이 1655 대 1606
+  으로 어긋나 있어서 아래 줄을 3% 키워 맞췄는데, 그러면 두 줄이 한 덩어리로 서는 대신
+  **네모난 블록**이 된다. 계단은 실수가 아니라 이 로고가 고른 모양이다 — 위 줄이 왼쪽에
+  서고 아래 줄이 오른쪽으로 물러나면서 두 낱말이 겹치지 않고 읽힌다.
 
-  아래 좌표는 원본에서 **재서** 얻은 것이다. 다른 그림을 주면 맞을 리가 없으므로
-  크기를 확인하고, 안 맞으면 그 자리에서 멈춘다 — 조용히 이상한 것을 뱉느니 낫다.
+  손으로 그린 로고 시절의 손질(6도 기울이기)도 안 한다. 그때는 그림이 손글씨여서
+  기울인 것이고, 반듯한 활자를 기울이면 실수로 보인다.
+
+  하는 일은 여백을 터는 것 하나다. 잉크가 상자를 꽉 채워야 같은 화면 폭에서 글자가
+  크게 선다.
 */
-const SOURCE = { w: 2366, h: 1135 };
-/** 두 줄의 잉크 상자. 위는 SNAP, 아래는 CARE 와 마침표. */
-const ROWS = {
-  top: { left: 64, top: 73, width: 1655, height: 498 },
-  bottom: { left: 601, top: 605, width: 1753, height: 513 },
-};
-/** 마침표를 뺀 CARE 의 폭. 이것을 SNAP 과 같게 맞춰야 두 줄의 좌우 끝이 선다. */
-const CARE_LETTERS = 1606;
-/** 두 줄 사이. 원본이 쓰던 값이고, 대문자 높이 485 의 7% 다. */
-const GAP = 35;
-
 async function wordmark(src) {
   await mkdir('public', { recursive: true });
-  const meta = await sharp(src).metadata();
-  if (meta.width !== SOURCE.w || meta.height !== SOURCE.h) {
-    throw new Error(
-      `이 스크립트의 좌표는 ${SOURCE.w}×${SOURCE.h} 짜리 원본에서 잰 것인데 `
-      + `${meta.width}×${meta.height} 를 받았다. 로고를 새로 그렸으면 ROWS 를 다시 재라.`);
-  }
-
-  const top = await sharp(src).extract(ROWS.top).png().toBuffer();
-  // 대문자 높이는 두 줄이 이미 485 로 같다. 어긋난 것은 폭이라, 3.05% 만 키워
-  // 글자 폭을 맞춘다. 대문자 높이는 500 이 되는데 화면 크기에서 1px 남짓이고,
-  // 줄맞춤이 어긋난 것보다 훨씬 싸다.
-  const k = ROWS.top.width / CARE_LETTERS;
-  const bottom = await sharp(src).extract(ROWS.bottom)
-    .resize({ width: Math.round(ROWS.bottom.width * k) }).png().toBuffer();
-  const bottomW = Math.round(ROWS.bottom.width * k);
-  const bottomH = Math.round(ROWS.bottom.height * k);
-
-  // 마침표가 글자 블록 밖으로 나오는 만큼 **왼쪽을 비운다.** 그래야 화면에서 파일을
-  // 가운데 두기만 하면 글자가 가운데 선다 — 옛 로고에 필요했던 `translateX` 가 없다.
-  const hang = bottomW - ROWS.top.width;
-  const side = hang + 24;
-  const width = side * 2 + ROWS.top.width;
-  const height = 24 * 2 + ROWS.top.height + GAP + bottomH;
-
-  await sharp({ create: { width, height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
-    .composite([
-      { input: top, left: side, top: 24 },
-      { input: bottom, left: side, top: 24 + ROWS.top.height + GAP },
-    ])
+  await sharp(src)
+    .trim({ threshold: 12 })
     .png({ compressionLevel: 9 })
     .toFile('public/logo-mark.png');
-  console.log(`썼다 public/logo-mark.png (메인 화면 머리) ${width}×${height}`);
+  const box = await sharp('public/logo-mark.png').metadata();
+  console.log(`썼다 public/logo-mark.png (메인 화면 머리) ${box.width}×${box.height}`);
 }
 
 /** 아이콘 다섯 벌. `pad` 만큼 띄운 정사각형에 마크를 앉힌다. */
