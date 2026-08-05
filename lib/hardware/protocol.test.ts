@@ -17,6 +17,26 @@ test('시각 표기를 HHMM 으로 정규화한다', () => {
   assert.equal(normalizeTime('0800'), '0800');
 });
 
+test('한 칸의 같은 시각은 한 번만 실린다', () => {
+  // 한 칸이 같은 분에 두 번 떨어질 수는 없다. 앱에서 두 번 눌렸든, 폼시트를 두 번
+  // 읽었든, 아침이 겹치는 처방 둘을 합쳤든 — 나가는 payload 에는 한 번만 실린다.
+  // 기기도 같은 일을 하지만(sc1._parse_slot_times), 그쪽은 우리가 아닌 곳에서 온
+  // 것까지 막는 자리이고 이쪽은 우리가 잘못된 것을 보내지 않는 자리다.
+  assert.equal(
+    encodeSchedule([{ slot: 1, times: ['0800', '8:00 AM', '2000'] }]),
+    'SC1*S*1:0800.2000',
+  );
+  assert.equal(
+    encodeWeekly([{ slot: 1, times: ['2000', '0800', '2000'], days: 127, durationDays: 30 }]),
+    'SC1*W*1:0800.2000-127-030',
+  );
+  // 한 칸이 하루에 여러 번인 것은 정상이다 — 없어지는 것은 겹치는 것뿐이다.
+  assert.equal(
+    encodeSchedule([{ slot: 1, times: ['0800', '1300', '2000'] }]),
+    'SC1*S*1:0800.1300.2000',
+  );
+});
+
 test('스케줄이 왕복한다', () => {
   const payload = encodeSchedule([
     { slot: 1, times: ['8:00 AM', '8:00 PM'] },

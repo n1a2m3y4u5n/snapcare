@@ -67,6 +67,31 @@ def test_times_are_sorted_and_deduplicated():
     assert slots[0].times == [8 * 60, 13 * 60, 20 * 60]
 
 
+def test_one_tray_cannot_be_asked_for_two_pills_at_one_minute():
+    """`0800.0800` 은 한 번이다. 물리적으로 한 번일 수밖에 없다.
+
+    스케줄러의 고수위 표시는 `(day, minutes)` 라서 같은 분의 두 번째 복용은 어떤
+    경로에서는 눌리고 어떤 경로에서는 안 눌린다. 그 모호함을 여기서, 한 번, 가장자리
+    에서 끝낸다 — 아래쪽 어디에서도 두 번짜리 계획을 보지 않는다.
+
+    통째로 거부하던 것을 고친 것이기도 하다. 한 칸의 오타가 다른 칸들의 계획까지
+    같이 버렸고, 사람에게 남는 것은 "그 일정 코드는 읽지 못했습니다" 와 아무 일정도
+    없는 기기였다.
+    """
+    for payload in ("SC1*S*1:0800.0800", "SC1*W*1:0800.0800-127-030"):
+        slots = sc1.decode_any_schedule(payload)
+        assert slots is not None, f"{payload} 가 통째로 거부됐다"
+        assert slots[0].times == [8 * 60]
+
+    # 다른 시각은 그대로 둘 다 남는다 — 한 칸이 하루에 여러 번인 것은 정상이다.
+    assert sc1.decode_schedule("SC1*S*1:0800.0800.2000")[0].times == [480, 1200]
+    assert sc1.slots_from_json(
+        [{"tray": 1, "times": ["0800", "0800", "2000"]}])[0].times == [480, 1200]
+
+    # 시각이 하나도 안 남으면 그것은 계획이 아니다.
+    assert sc1.slots_from_json([{"tray": 1, "times": []}]) is None
+
+
 def test_an_empty_body_clears_the_tray():
     assert sc1.decode_schedule("SC1*S*") == []
     assert sc1.decode_weekly("SC1*W*") == []
@@ -92,7 +117,6 @@ def test_decode_any_schedule():
     "SC1*S*1:0800/1:1200",        # one compartment, two plans
     "SC1*S*1:0800/",              # trailing separator
     "SC1*S*1:0800.",              # trailing time separator
-    "SC1*S*1:0800.0800",          # the same drop twice
     "SC1*S*1:0800.1200.1300.1400.1500.1600.1700",   # more times than MAX_TIMES
     "SC1*W*1:0800",               # weekly form missing its attributes
     "SC1*W*1:0800-127",           # ...and missing one of them
@@ -264,7 +288,6 @@ def test_json_round_trip():
     [{"tray": 1, "times": ["0800"], "days": 0}],         # a mask that never fires
     [{"tray": 1, "times": ["0800"], "days": 128}],
     [{"tray": 1, "times": ["2500"]}],
-    [{"tray": 1, "times": ["0800", "0800"]}],            # the same drop twice
     [{"tray": 1, "times": ["0800"]}, {"tray": 1, "times": ["1200"]}],
     [{"times": ["0800"]}],                               # no tray at all
     "not a list",

@@ -83,24 +83,33 @@ object Sc1 {
             if (slot.durationDays !in 0..MAX_DURATION_DAYS) {
                 throw ScheduleException("tray ${slot.tray}: durationDays must be 0..$MAX_DURATION_DAYS")
             }
-            if (slot.times.isEmpty() || slot.times.size > MAX_TIMES) {
+            if (slot.times.isEmpty()) {
                 throw ScheduleException("tray ${slot.tray}: give it 1 to $MAX_TIMES times")
             }
-            // A duplicate is not harmless — it dispenses twice at the same
-            // minute, which reads as a double dose in the log and is one.
-            if (slot.times.toSet().size != slot.times.size) {
-                throw ScheduleException("tray ${slot.tray}: a time is listed twice")
+            // A duplicate is collapsed, not refused. One tray cannot dispense
+            // twice at one minute — physically, and because the firmware's
+            // high-water mark is (day, minute), so the second would be
+            // suppressed on some paths and honoured on others. One dose is the
+            // only reading that is true everywhere, so every implementation of
+            // this format settles on it: sc1.py, webapp_kit, the app's copy and
+            // this one. Throwing here would refuse a schedule the device
+            // accepts.
+            val times = slot.times.distinct().sorted()
+            // The cap is on what is left after collapsing, which is what the
+            // firmware counts.
+            if (times.size > MAX_TIMES) {
+                throw ScheduleException("tray ${slot.tray}: give it 1 to $MAX_TIMES times")
             }
 
             val existing = byTray[slot.tray]
             if (existing == null) {
-                byTray[slot.tray] = slot.copy(times = slot.times.sorted())
+                byTray[slot.tray] = slot.copy(times = times)
             } else {
                 if (existing.days != slot.days || existing.durationDays != slot.durationDays) {
                     throw ScheduleException(
                         "tray ${slot.tray} appears twice with different days or duration")
                 }
-                val merged = (existing.times + slot.times).distinct().sorted()
+                val merged = (existing.times + times).distinct().sorted()
                 if (merged.size > MAX_TIMES) {
                     throw ScheduleException("tray ${slot.tray}: more than $MAX_TIMES times once merged")
                 }

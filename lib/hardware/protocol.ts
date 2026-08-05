@@ -110,10 +110,28 @@ export interface DoseEvent {
  * SC1*S*1:0800.2000/2:1800
  * ──────────────────────────────────────────────────────────── */
 
+/**
+ * 한 칸의 시각들을 **정규화하고 중복을 없앤다.**
+ *
+ * 한 칸이 같은 분에 두 번 떨어질 수는 없다 — 물리적으로도 그렇고, 기기의 고수위
+ * 표시가 `(날짜, 분)` 이라 두 번째는 어떤 경로에서는 눌리고 어떤 경로에서는 안
+ * 눌린다. 그 모호함을 보내기 전에 없앤다.
+ *
+ * 펌웨어도 같은 일을 한다(`sc1._parse_slot_times`). 양쪽 다 하는 것이 중복이 아닌
+ * 이유는, 기기는 이 앱이 아닌 곳에서 온 payload — 종이 폼시트, 예전 앱, 손으로 만든
+ * QR — 도 받기 때문이다. 이쪽은 우리가 잘못된 것을 **보내지 않기** 위한 것이고,
+ * 저쪽은 무엇이 오든 두 알이 되지 않게 하기 위한 것이다.
+ */
+function uniqueTimes(times: string[]): string {
+  const seen = new Set<string>();
+  for (const t of times) seen.add(normalizeTime(t));
+  return [...seen].sort().join(TIME_SEP);
+}
+
 export function encodeSchedule(slots: SlotSchedule[]): string {
   const body = slots
     .filter((s) => s.times.length > 0)
-    .map((s) => `${s.slot}:${s.times.map(normalizeTime).join(TIME_SEP)}`)
+    .map((s) => `${s.slot}:${uniqueTimes(s.times)}`)
     .join(SLOT_SEP);
   return [PROTOCOL, 'S', body].join(SEP);
 }
@@ -153,7 +171,7 @@ export function encodeWeekly(slots: WeeklySlot[]): string {
   const body = slots
     .filter((s) => s.times.length > 0)
     .map((s) => [
-      `${s.slot}:${s.times.map(normalizeTime).join(TIME_SEP)}`,
+      `${s.slot}:${uniqueTimes(s.times)}`,
       pad3(s.days),
       pad3(Math.min(s.durationDays, 999)),
     ].join(ATTR_SEP))

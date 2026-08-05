@@ -686,6 +686,55 @@ def test_hidden_doses_are_said_rather_than_dropped(canvas):
         "가릴 것이 없는데 점을 찍었다"
 
 
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_two_trays_at_one_time_are_one_row(canvas):
+    """여덟 시에 두 칸이 열려도 화면에는 여덟 시가 한 번이다.
+
+    앞에 선 사람에게 "08:00" 이 두 줄인 것은 두 개의 사실이 아니다. 모든 칸이 같은
+    컵으로 떨어지므로 여덟 시에 한 번 가서 나온 것을 먹으면 되고, 두 줄을 갈라 주던
+    트레이 번호는 이 패널에 더 이상 없다 — 그래서 합치지 않으면 같은 시각이 이유
+    없이 두 번 찍히고, 그건 고장으로 읽힌다.
+    """
+    from snapcare_dispenser.display import calendar
+
+    day = (_dose("08:00", 480, "taken", tray=1),
+           _dose("08:00", 480, "taken", tray=2),
+           _dose("20:00", 1200, "upcoming", tray=1))
+    assert [(r.at, r.state) for r in calendar.rows(day)] == [
+        ("08:00", "taken"), ("20:00", "upcoming")]
+
+    # 그림에서도 한 줄이다 — 한 칸짜리 하루와 같은 프레임이 나와야 한다.
+    palette = theme.pack(canvas)
+    canvas.fill(0)
+    screens.idle(canvas, _idle_of(day), theme=palette)
+    merged = _pixels(canvas)
+    canvas.fill(0)
+    screens.idle(canvas, _idle_of((day[0], day[2])), theme=palette)
+    assert merged == _pixels(canvas), "같은 시각이 두 줄로 그려졌다"
+
+
+def test_a_merged_row_never_claims_a_tick_it_has_not_earned():
+    """합쳐진 줄은 **둘 다** 먹었을 때만 체크다.
+
+    한 칸은 먹고 한 칸은 걸렀는데 체크가 뜨면, 그것은 이 기계가 여덟 시 약을 다
+    먹었다고 말하는 것이다. 오차는 언제나 나쁜 쪽으로 떨어져야 한다.
+    """
+    from snapcare_dispenser.display import calendar
+
+    def merged(*states):
+        day = tuple(_dose("08:00", 480, state, tray=i + 1)
+                    for i, state in enumerate(states))
+        return calendar.rows(day)[0].state
+
+    assert merged("taken", "taken") == "taken"
+    assert merged("taken", "missed") == "missed"
+    assert merged("missed", "taken") == "missed"
+    assert merged("taken", "waiting") == "waiting"
+    assert merged("taken", "upcoming") == "upcoming"
+    # 장부가 잃어버린 복용 하나가 섞여 있으면 그 아침은 정리된 아침이 아니다.
+    assert merged("taken", "unknown") == "unknown"
+
+
 def test_the_calendar_never_repaints_over_a_tray_number():
     """트레이 번호는 이 패널에서 완전히 사라졌고, 다시 새는 길을 막는다.
 
@@ -813,10 +862,33 @@ def test_the_snapshot_reads_three_days_and_yesterday_from_the_ledger(
     assert today.label.startswith(health_mod.MONTHS[clock.now().month - 1])
     assert today.label.split()[1] == f"{clock.now().day:02d}"
 
-    # 어제 것은 장부에 아무것도 없으므로 "모른다" 이지 "안 먹었다" 가 아니다.
-    assert {dose.state for dose in yesterday.doses} == {"unknown"}
+    # **오늘 올린 일정은 어제에 대해 할 말이 없다.** 예전에는 어제 칸이 `unknown`
+    # 으로 가득 찼다 — "장부가 모른다" 는 정직한 표현이지만, 애초에 계획된 적이
+    # 없는 복용에 대해서는 완전히 틀린 말이다.
+    assert yesterday.doses == (), "오늘 올린 일정이 어제에 복용을 만들어 냈다"
     # 내일 것은 전부 앞으로 올 것이다. 일어나지 않은 일에 대한 기록은 없다.
     assert {dose.state for dose in tomorrow.doses} == {"upcoming"}
+
+
+def test_a_course_that_began_before_today_still_fills_yesterday(dispenser, clock):
+    """어제부터 돌던 일정은 어제 칸에 그대로 있어야 한다.
+
+    바닥이 `start_day` 인 것이 중요하다. "어제는 안 그린다" 가 아니라 "시작하기
+    전은 안 그린다" 이고, 그 둘은 사흘째 아침에 갈린다 — 앞엣것이면 달력의 왼쪽
+    칸이 영원히 비어 있다.
+    """
+    from datetime import timedelta
+
+    from snapcare_dispenser import sc1
+    from snapcare_dispenser.display import health as health_mod
+
+    clock._at -= timedelta(days=1)                      # noqa: SLF001
+    dispenser.set_schedule(sc1.decode_any_schedule("SC1*W*1:0800.2000-127-000"))
+    clock._at += timedelta(days=1)                      # noqa: SLF001
+
+    yesterday, today, _tomorrow = health_mod.snapshot(dispenser).days
+    assert [dose.at for dose in yesterday.doses] == ["08:00", "20:00"]
+    assert [dose.at for dose in today.doses] == ["08:00", "20:00"]
 
 
 def test_the_new_plan_border_expires_on_its_own():

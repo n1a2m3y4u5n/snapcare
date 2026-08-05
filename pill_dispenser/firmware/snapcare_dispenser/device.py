@@ -423,7 +423,11 @@ class Dispenser:
                     if slot_state.start_day == 0:
                         slot_state.start_day = today
             else:
-                self.scheduler.load(slots, today)
+                # The minute matters as well as the day — see `Scheduler.load`.
+                # Without it a plan uploaded this afternoon reports every one of
+                # this morning's doses as missed, on a machine that was never
+                # asked to give them.
+                self.scheduler.load(slots, today, self.clock.minutes())
 
             self._payload = payload
             self._source = source

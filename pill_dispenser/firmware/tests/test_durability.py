@@ -148,10 +148,44 @@ def test_adding_a_second_medication_does_not_re_drop_the_first(
     assert servos.drops[1] == 1, "tray 1 dropped twice because tray 2 was added"
 
 
+def test_a_plan_that_arrives_in_the_afternoon_does_not_miss_the_morning(
+        dispenser, servos, clock):
+    """오후에 올라온 처방이 오늘 아침을 "거른 것" 으로 만들면 안 된다.
+
+    여덟 시에는 그 일정이 존재하지 않았다. 기계는 그 복용을 내밀 수도 없었고, 앞에
+    선 사람은 거를 기회조차 없었다. 그런데 틱이 창 닫힌 08:00 을 찾아 `unoffered`
+    로 적고, 보호자에게 알리고, 달력에 빨간 가위표를 그렸다.
+
+    창이 아직 열려 있는 복용은 다른 이야기다 — 그건 여전히 내민다. 위 시험이 그쪽을
+    본다.
+    """
+    clock.set(datetime(2026, 7, 29, 14, 20))
+    dispenser.apply_payload("SC1*W*1:0800.1300.2000-127-030", source="api")
+    dispenser.tick()
+
+    assert dispenser.awaiting_release == [], "지나간 아침을 지금 내밀고 있다"
+    assert servos.drops[1] == 0
+    # 무엇보다, 거른 것으로 적히지 않았다.
+    outcomes = dispenser.today_outcomes()
+    assert outcomes == {}, f"올리자마자 오늘이 거른 복용이 됐다: {outcomes}"
+
+    # 아직 오지 않은 것은 그대로 온다.
+    clock.set(datetime(2026, 7, 29, 20, 0))
+    dispenser.tick()
+    assert [(d.tray, d.minutes) for d in dispenser.awaiting_release] == [(1, 1200)]
+
+
 def test_a_changed_tray_still_forgets_what_it_dispensed(dispenser, servos, clock):
     """The other half of the contract. A tray whose times moved is a new
     prescription for that tray, and it starts from scratch — otherwise the
-    08:00 mark would suppress the new 08:00 dose of a different drug."""
+    08:00 mark would suppress the new 08:00 dose of a different drug.
+
+    Twenty minutes matters here and is the reason this case survives `load`
+    marking the spent part of the day. The 08:00 dose is still inside its grace
+    window at 08:20, so it is still reachable and must still be offered; a plan
+    arriving at 14:20 would put it out of reach, and *that* one is settled
+    rather than reported missed. See `Scheduler.load`.
+    """
     dispenser.apply_payload("SC1*W*1:0800-127-030", source="api")
     offer_at(dispenser, clock, datetime(2026, 7, 29, 8, 0))
     dispenser.release()
@@ -161,7 +195,11 @@ def test_a_changed_tray_still_forgets_what_it_dispensed(dispenser, servos, clock
     dispenser.tick()
 
     assert [(d.tray, d.minutes) for d in dispenser.awaiting_release] == [(1, 480)]
-    assert dispenser.scheduler.state[1].ever_fired is False
+    # 이 칸의 기억은 새로 시작했다. 그것을 말하는 것은 `ever_fired` 가 아니라
+    # **표시가 어디에 있느냐** 다 — 방금 준 08:00 이 아니라, 창이 이미 닫힌
+    # 시각들만 덮는 자리에 있어야 한다.
+    assert dispenser.scheduler.state[1].last_minutes < 8 * 60, \
+        "방금 준 08:00 의 표시가 새 처방에 그대로 남았다"
 
 
 def test_an_identical_schedule_does_not_withdraw_the_dose_it_is_offering(

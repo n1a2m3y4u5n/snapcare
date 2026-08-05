@@ -60,7 +60,8 @@ from . import PANEL_HEIGHT, PANEL_WIDTH, bar, checkbox, font
 from .canvas import Canvas
 from .health import Health
 
-__all__ = ["CAL_Y", "CAL_H", "MAX_ROWS", "COLUMNS", "draw", "key", "window"]
+__all__ = ["CAL_Y", "CAL_H", "MAX_ROWS", "COLUMNS", "draw", "key", "rows",
+           "window"]
 
 W = PANEL_WIDTH
 H = PANEL_HEIGHT
@@ -123,6 +124,72 @@ if ROW_H < BOX:
 def COL_X(index: int) -> int:  # noqa: N802 - a geometry constant that takes an index
     """The left edge of column `index`, 0 being yesterday."""
     return PAD + index * (COL_W + GUTTER)
+
+
+#: Which state wins when two trays are due at one minute and they disagree.
+#:
+#: Worst-first, and the order is the whole of the honesty here. A row that
+#: stands for two doses may only claim a tick when **both** of them were taken;
+#: any other combination has to draw as the worse one, because a person reading
+#: a tick has been told the eight o'clock medicines are done.
+#:
+#: `unknown` sits above `taken` for the same reason it does everywhere else in
+#: this firmware: one dose settled and one the ledger lost is not a settled
+#: morning.
+_WORST_FIRST: tuple[str, ...] = ("missed", "waiting", "upcoming", "unknown", "taken")
+
+
+def rows(doses: tuple) -> tuple:
+    """One entry per **time**, not per tray. What the column actually draws.
+
+    Two trays due at eight o'clock are one line on this panel. The person in
+    front of it is being told when to take their medicines, and "08:00" twice
+    over is not two facts — every hopper drops into the same cup, so at eight
+    o'clock they go to the machine once and take what comes out. The tray
+    numbers that made those two rows different are not on this panel at all any
+    more, so without this the calendar prints the same time twice with no way to
+    tell why, which reads as a fault.
+
+    A merged row takes the *worst* state of the doses under it — see
+    `_WORST_FIRST`. One tray taken and one missed is a missed row, and that is
+    the direction the error has to fall: a tick standing for a dose that never
+    went in is the one claim this codebase will not make.
+
+    Returns objects with `at` and `state` and nothing else, because that is all
+    a row is. They are not `Dose`s: a `Dose` has a tray, and the whole point of
+    this function is that a row no longer has one.
+    """
+    merged: dict[str, str] = {}
+    order: list[str] = []
+    for dose in doses:
+        at = str(getattr(dose, "at", ""))
+        state = str(getattr(dose, "state", ""))
+        if at not in merged:
+            merged[at] = state
+            order.append(at)
+            continue
+        merged[at] = min(
+            (merged[at], state),
+            key=lambda value: _WORST_FIRST.index(value)
+            if value in _WORST_FIRST else len(_WORST_FIRST))
+    return tuple(_Row(at, merged[at]) for at in order)
+
+
+class _Row:
+    """One drawn line: a time and the state of everything scheduled at it."""
+
+    __slots__ = ("at", "state")
+
+    def __init__(self, at: str, state: str):
+        self.at = at
+        self.state = state
+
+    def __eq__(self, other):
+        return (isinstance(other, _Row) and self.at == other.at
+                and self.state == other.state)
+
+    def __repr__(self):
+        return f"_Row({self.at!r}, {self.state!r})"
 
 
 def window(doses: tuple, limit: int = MAX_ROWS) -> tuple[int, int]:
@@ -204,7 +271,7 @@ def _column(canvas: Canvas, theme: dict, index: int, day) -> None:
     font.draw(canvas, left + (COL_W - text_w) // 2, HEAD_Y + (HEAD_H - DATE_H) // 2,
               label, ink, DATE_SCALE)
 
-    doses = tuple(getattr(day, "doses", ()) or ())
+    doses = rows(tuple(getattr(day, "doses", ()) or ()))
     start, below = window(doses)
     if start:
         _dots(canvas, left, HEAD_Y + HEAD_H, theme["TEXT_MUTE"])
@@ -281,13 +348,15 @@ _EMPTY = _Empty()
 def key(health: Health) -> tuple:
     """Everything this band renders, for the dirty-region compare.
 
-    The dose *states* and times, not the `Dose` objects: `tray` rides inside
-    those and is not drawn anywhere on this panel any more, so comparing them
-    whole would repaint the calendar every time a schedule was reloaded onto
-    different hoppers with identical times.
+    The **merged rows**, which is precisely what is on the glass — not the doses
+    behind them. `tray` rides inside a `Dose` and is not drawn anywhere on this
+    panel any more, so comparing the doses whole would repaint the calendar
+    every time a schedule was reloaded onto different hoppers at identical
+    times; and comparing them unmerged would repaint it when one of two doses
+    sharing a minute changed state without changing the row.
     """
     return tuple(
         (str(getattr(day, "label", "")), bool(getattr(day, "today", False)),
-         tuple((str(getattr(dose, "at", "")), str(getattr(dose, "state", "")))
-               for dose in getattr(day, "doses", ()) or ()))
+         tuple((row.at, row.state)
+               for row in rows(tuple(getattr(day, "doses", ()) or ()))))
         for day in getattr(health, "days", ()) or ())

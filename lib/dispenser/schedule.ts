@@ -100,7 +100,7 @@ export function normaliseSlots(slots: WeeklySlot[]): Required<WeeklySlot>[] {
       throw new ScheduleError(`tray ${tray}: durationDays must be 0..${MAX_DURATION_DAYS}`);
     }
 
-    if (!Array.isArray(slot.times) || slot.times.length < 1 || slot.times.length > MAX_TIMES) {
+    if (!Array.isArray(slot.times) || slot.times.length < 1) {
       throw new ScheduleError(`tray ${tray}: give it 1 to ${MAX_TIMES} times`);
     }
 
@@ -108,14 +108,25 @@ export function normaliseSlots(slots: WeeklySlot[]): Required<WeeklySlot>[] {
     for (const raw of slot.times) {
       const parsed = parseHhmm(String(raw));
       if (parsed === null) throw new ScheduleError(`tray ${tray}: "${raw}" is not a time`);
-      // A duplicate is not harmless: it would dispense twice at the same
-      // minute, which reads as a double dose in the log and is one.
-      if (minutes.includes(parsed)) {
-        throw new ScheduleError(`tray ${tray}: ${raw} is listed twice`);
-      }
-      minutes.push(parsed);
+      // A duplicate is **collapsed, not refused.** One tray cannot dispense
+      // twice at one minute — physically, and because the firmware's high-water
+      // mark is (day, minute), so the second would be suppressed on some paths
+      // and honoured on others. One dose is the only reading that is true
+      // everywhere, so it is the one every path settles on.
+      //
+      // This threw until the firmware stopped refusing them (sc1.py), and the
+      // two disagreeing is worse than either rule on its own: the same list of
+      // times would be a schedule over the optical path and an exception over
+      // this one. `fromApp.test.ts` exists to catch exactly that drift.
+      if (!minutes.includes(parsed)) minutes.push(parsed);
     }
     minutes.sort((a, b) => a - b);
+    // The cap is on what is left after collapsing, which is what the firmware
+    // counts. Checking the raw list instead would refuse seven entries that are
+    // six doses — a payload the device takes.
+    if (minutes.length > MAX_TIMES) {
+      throw new ScheduleError(`tray ${tray}: give it 1 to ${MAX_TIMES} times`);
+    }
 
     // Two entries for one tray are merged rather than refused, matching
     // `_collect` in sc1.py — but their days and duration must agree, because

@@ -236,7 +236,13 @@ test('a schedule the device would refuse is refused here first', () => {
   assert.throws(() => encodeWeekly([{ tray: 0, times: ['0800'] }]), ScheduleError);
   assert.throws(() => encodeWeekly([{ tray: 9, times: ['0800'] }]), ScheduleError);
   assert.throws(() => encodeWeekly([{ tray: 1, times: [] }]), ScheduleError);
-  assert.throws(() => encodeWeekly([{ tray: 1, times: ['0800', '08:00'] }]), ScheduleError);
+  // A duplicate time is one dose, not an error. The firmware collapses it too
+  // (sc1.py), and a client that threw here would refuse a schedule the device
+  // would have accepted.
+  assert.equal(
+    encodeWeekly([{ tray: 1, times: ['0800', '08:00'] }]),
+    'SC1*W*1:0800-127-000',
+  );
   assert.throws(() => encodeWeekly([{ tray: 1, times: ['0800'], days: 0 }]), ScheduleError);
   assert.throws(() => encodeWeekly([{ tray: 1, times: ['0800'], days: 128 }]), ScheduleError);
   assert.throws(() => encodeWeekly([{ tray: 1, times: ['0800'], durationDays: 1000 }]), ScheduleError);

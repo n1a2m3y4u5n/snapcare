@@ -164,6 +164,25 @@ await fetch(`http://${host}/api/schedule`, {
 to `protocol.ts` — you can send `encodeWeekly(slots)` as `{"payload": "..."}`
 instead, and the firmware takes either.
 
+**Two things the device settles for you, so you do not have to.**
+
+*The same time twice in one tray is one dose.* `{ tray: 1, times: ['0800',
+'0800'] }` loads as a single eight o'clock dose and drops a single pill — one
+tray cannot dispense twice in one minute, physically or in the ledger, and the
+firmware, this kit and `Sc1.kt` all collapse it rather than refusing. It used to
+refuse the whole payload, which threw away every other tray's plan over one
+duplicated line. The cap of six times a tray applies to what is left after
+collapsing.
+
+*A course starts the day it arrives, and from the hour it arrives.* There is no
+start date on the wire and you do not need to send one: `durationDays` counts
+from the moment the device accepts the plan. The device will not put doses on
+days before that — a plan uploaded on Wednesday says nothing about Tuesday, and
+its calendar shows Tuesday empty rather than inventing misses — and a dose
+earlier *today* whose grace window has already closed is settled quietly rather
+than reported to the carer as missed. One that is still inside its window is
+still offered, because somebody can still take it.
+
 **This also closes the paper-form gap.** A caregiver photographs a form sheet,
 `form_sheet_parser` produces `SC1*W*…`, and it reaches the device through the
 same endpoint the app uses. There is no second path to maintain.

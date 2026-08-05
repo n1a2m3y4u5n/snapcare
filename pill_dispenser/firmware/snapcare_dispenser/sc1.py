@@ -210,13 +210,28 @@ def _parse_slot_times(chunk: str) -> SlotSchedule | None:
         minutes = parse_hhmm(piece)
         if minutes is None:
             return None
+        # Sorted and unique, as the C++ `insertTime` does. **The second one is
+        # dropped, not refused.**
+        #
+        # It used to reject the whole payload, and that is worse than it sounds:
+        # one tray listed at `0800.0800` — a double tap in the app, a form sheet
+        # read twice, a merge of two prescriptions that share a morning — threw
+        # away every other tray's plan with it, and the person got "that
+        # schedule code did not parse" and no schedule at all.
+        #
+        # What the duplicate can never be allowed to mean is two pills. One tray
+        # cannot dispense twice at one minute — the scheduler's high-water mark
+        # is `(day, minutes)`, so the second would be suppressed at some points
+        # in the code and honoured at others — so the ambiguity is settled here,
+        # once, at the edge, and everything downstream sees a schedule that
+        # simply has one dose at eight.
+        if minutes in out.times:
+            continue
         if len(out.times) >= MAX_TIMES:
             return None
-        # Sorted and unique, as the C++ `insertTime` does. The same drop twice
-        # in one payload is a malformed message, not a request for two pills.
-        if minutes in out.times:
-            return None
         out.times.append(minutes)
+    if not out.times:
+        return None
     out.times.sort()
     return out
 
@@ -501,12 +516,19 @@ def slots_from_json(data) -> list[SlotSchedule] | None:
         if not isinstance(times_raw, list) or not 1 <= len(times_raw) <= MAX_TIMES:
             return None
 
+        # Deduplicated rather than refused, exactly as `_parse_slot_times`
+        # does it — this is the same schedule arriving over a different wire,
+        # and the two paths disagreeing about what `["0800", "0800"]` means is
+        # how a plan that scans off a sheet gets refused from the app.
         minutes = []
         for t in times_raw:
             parsed = parse_hhmm(str(t).strip())
-            if parsed is None or parsed in minutes:
+            if parsed is None:
                 return None
-            minutes.append(parsed)
+            if parsed not in minutes:
+                minutes.append(parsed)
+        if not minutes:
+            return None
 
         slots.append(SlotSchedule(slot=slot, times=sorted(minutes),
                                   days=days, duration_days=duration))

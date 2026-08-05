@@ -97,15 +97,62 @@ class Scheduler:
 
     # ── loading ─────────────────────────────────────────────────────────────
 
-    def load(self, slots: list[SlotSchedule], today: int) -> None:
+    def load(self, slots: list[SlotSchedule], today: int,
+             minutes: int | None = None) -> None:
         """Adopt a *new* schedule and start every course from `today`.
 
         This forgets what has already been dispensed, which is right for a new
         prescription and catastrophic for a reboot. `restore` is the one to use
         when the schedule has not actually changed.
+
+        **`minutes` is what makes "from today" mean "from now".** Pass the
+        current minute of the day and every dose that is already *out of reach*
+        is marked settled, so a plan uploaded at two in the afternoon does not
+        turn this morning into misses.
+
+        It is a real event when it happens: the tick finds an 08:00 dose whose
+        window shut hours ago, records it `unoffered`, reports it to the carer
+        and draws a red cross on the calendar — for a dose this machine could
+        not possibly have offered, because the schedule naming it did not exist
+        at eight o'clock. `_overdue_before` already refuses to invent misses for
+        *past days* on a freshly loaded tray; this is the same refusal for the
+        hours of today that are already spent.
+
+        **Out of reach means past its grace window, not merely past.** The line
+        is `minutes - grace_minutes`, and the distinction is the whole of the
+        care needed here:
+
+          * a schedule that changes tray 1's drug at 08:20, when its 08:00 dose
+            is twenty minutes old, must still offer it — the medication is
+            different from the one already taken, the window is still open, and
+            somebody is standing at the machine. That case has a test of its
+            own and predates this argument;
+          * the same 08:00 dose in a plan that arrives at 14:20 cannot be
+            offered by anybody, and reporting it missed is the machine blaming
+            a person for a prescription that did not exist.
+
+        Left `None` by callers that have no clock to hand, which is every test
+        that only cares about the plan. Then nothing is marked and the behaviour
+        is what it always was.
         """
         self._slots = [replace(s, times=list(s.times)) for s in slots]
         self._state = {s.slot: SlotState(start_day=today) for s in self._slots}
+        if minutes is None:
+            return
+        # Strictly before the cutoff: a dose sitting exactly on it is still
+        # inside its window by a minute, and the one thing worse than a
+        # fabricated miss is a real dose quietly suppressed.
+        cutoff = minutes - self.grace_minutes - 1
+        if cutoff < 0:
+            return
+        for state in self._state.values():
+            state.last_day = today
+            state.last_minutes = cutoff
+            # `ever_fired` is what `next` and `confirm` consult before they
+            # believe the mark at all, so the mark is inert without it. It does
+            # not let `_overdue_before` loose on the past: that has its own
+            # `past_day < start_day` floor, and start_day is today.
+            state.ever_fired = True
 
     def restore(self, slots: list[SlotSchedule], state: dict[int, SlotState]) -> None:
         """Come back up after a restart with the memory intact.
@@ -352,18 +399,31 @@ class Scheduler:
         apart is what lets a dose with no record at all render as "nothing is
         known" rather than as a confident claim either way.
 
-        Deliberately the same two filters `upcoming` applies, and no others: a
-        course that has run its `duration_days` and a day the mask excludes are
-        both days on which the tray genuinely has nothing scheduled. Sorted by
-        minute, then by tray, so two trays at 08:00 always draw in the same
-        order — a schedule band whose columns swap between frames is one nobody
-        can read.
+        Three filters, and the first of them is the one this used to be missing.
+
+        **A course does not exist before the day it started.** `load` stamps
+        `start_day` with the day the schedule arrived, so a plan uploaded this
+        afternoon has nothing whatever to say about yesterday — and this
+        returned it anyway, which put a column of doses on the calendar that
+        were never scheduled, never offered and never missed. On the panel they
+        drew as `unknown`: the honest rendering of "the ledger says nothing",
+        which is exactly the wrong thing to say about a dose that was never
+        planned. `_overdue_before` has had this floor since it was written,
+        which is why the *dispensing* path never invented a past dose while the
+        *display* path did.
+
+        The other two are what they were: a course that has run its
+        `duration_days` and a day the mask excludes are both days on which the
+        tray genuinely has nothing scheduled. Sorted by minute, then by tray, so
+        two trays at 08:00 always come back in the same order.
         """
         plan: list[tuple[int, int]] = []
         for s in self._slots:
             st = self._state.get(s.slot)
             if st is None:
                 continue
+            if day < st.start_day:
+                continue  # before this course began
             if s.duration_days and day >= st.start_day + s.duration_days:
                 continue
             if not s.due_on_day(weekday):
@@ -377,11 +437,20 @@ class Scheduler:
         Only used to show "next dose at 19:00" on the status page. It looks at
         today alone; a tray whose next dose is on Thursday reports nothing
         rather than a time that would be read as today's.
+
+        Carries the same `start_day` floor as `day_plan`, and for the same
+        reason rather than for symmetry: `day` is normally today and today is
+        never before the course began, but a clock that has moved backwards —
+        NTP correcting a fast RTC across a midnight, a phone posting an earlier
+        date — makes it possible, and a "next dose" from a course that has not
+        started is a time somebody would sit and wait for.
         """
         best: tuple[int, int] | None = None
         for s in self._slots:
             st = self._state.get(s.slot)
             if st is None:
+                continue
+            if day < st.start_day:
                 continue
             if s.duration_days and day >= st.start_day + s.duration_days:
                 continue
