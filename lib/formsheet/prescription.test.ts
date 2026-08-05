@@ -19,7 +19,13 @@ test('종이 한 장이 여섯 가지를 다 답한다', () => {
   const rx = readPrescription(SHEET, 'Amoxicillin 500mg', '2');
   const item = toScanItem(rx)!;
 
-  assert.equal(item.name, 'Amoxicillin');            // 이름
+  /*
+    함량이 붙은 채로 뜬다 — 종이에 그렇게 적혀 있기 때문이다.
+
+    전에는 표의 이름('Amoxicillin')으로 갈아 끼웠다. 이제 화면은 종이의 낱말을 따르고,
+    그 숫자는 사람이 통에서 찾는 것이다. 이름을 바꿔 띄우면 맞춰 볼 것이 없어진다.
+  */
+  assert.equal(item.name, 'Amoxicillin 500mg');       // 이름
   assert.equal(item.rx?.form, 'capsule');            // 그림의 머리
   assert.equal(rx.schedule.schedule[0].slot, 3);     // 몇 번째 층
   assert.equal(rx.schedule.schedule[0].days, 127);   // 매일
@@ -302,4 +308,37 @@ test('못 알아본 조회는 없는 것과 같다', () => {
   assert.ok(item);
   assert.equal(item.name, 'Rosuvastatin', '읽은 글자가 남는다');
   assert.equal(item.lookedUp, undefined);
+});
+
+/*
+  화면에 뜨는 이름은 **종이에 적힌 말**이어야 한다.
+
+  "Acetaminophen 이라고 썼는데 Paracetamol 로 뜬다" 는 보고에서 나온 시험이다. 판정은
+  맞았지만(같은 약) 화면이 확인할 수 없는 낱말을 보여줬다. 포장지에서 못 찾는 이름은
+  글을 못 읽는 사람에게 확인할 방법이 아예 없는 이름이다.
+*/
+test('종이가 별칭으로 적었으면 그 별칭을 띄운다', () => {
+  const item = toScanItem(readPrescription(SHEET, 'Acetaminophen', '1'));
+  assert.ok(item);
+  assert.equal(item.name, 'Acetaminophen', '종이에 적힌 그대로여야 한다');
+  // 그래도 판정은 표의 약으로 돈다 — 같은 약이라는 사실을 잃으면 안 된다.
+  assert.ok(item.chips?.some((c) => c.label === 'Same as Paracetamol'),
+    '두 낱말이 같은 약이라고 말해 줘야 한다 — 안 그러면 통 두 개를 다 먹는다');
+});
+
+test('상품명도 마찬가지다 — 통에 그렇게 인쇄돼 있다', () => {
+  assert.equal(toScanItem(readPrescription(SHEET, 'Panadol', '1'))?.name, 'Panadol');
+});
+
+test('오타는 안 따른다 — 어느 통에도 그렇게 안 적혀 있다', () => {
+  // 맞춘 약은 Amoxicillin 이고, 오타를 띄우면 맞춰 볼 것이 없어진다.
+  const item = toScanItem(readPrescription(SHEET, 'Amoxicilin', '1'));
+  assert.equal(item?.name, 'Amoxicillin');
+  assert.ok(!item?.chips?.some((c) => c.label.startsWith('Same as')), '같은 낱말이면 칸을 안 만든다');
+});
+
+test('종이와 표가 같은 낱말이면 군더더기를 안 붙인다', () => {
+  const item = toScanItem(readPrescription(SHEET, 'Paracetamol', '1'));
+  assert.equal(item?.name, 'Paracetamol');
+  assert.ok(!item?.chips?.some((c) => c.label.startsWith('Same as')));
 });

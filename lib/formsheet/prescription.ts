@@ -1,6 +1,6 @@
 // 상대 경로 — 시험에서 @/ 별칭이 안 통한다 (lib/snapcare/course.ts 와 같은 이유).
 import type { Drug } from '../formulary/who.ts';
-import { matchDrug } from '../formulary/match.ts';
+import { matchDrug, normalize } from '../formulary/match.ts';
 import { cleanDrugName, plausibleName } from '../formulary/name.ts';
 import { readNotes, type NotesReading } from '../formulary/notes.ts';
 import { toSchedule, type FormSheetValues } from '../hardware/formSheet.ts';
@@ -122,6 +122,42 @@ const DAY_WORD: Record<string, string> = {
 };
 
 /**
+ * 화면에 쓸 이름 — **종이에 적힌 말이 이긴다.**
+ *
+ * 무엇이 문제였나
+ * ---------------
+ * 종이에 `Acetaminophen` 이라고 적혀 있는데 화면에 `Paracetamol` 이 떴다. 판정은
+ * 맞았다 — 둘은 같은 약이고 표가 그렇게 적어 두었다(`who.ts` 의 `also`). 틀린 것은
+ * 화면이다.
+ *
+ * 이 저장소는 그 규칙을 이미 적어 두었다. 번역 라우트에 있다:
+ *
+ *     약 이름은 절대 옮기지 마라 — 사람은 그 이름을 포장지에서 찾고,
+ *     옮겨진 이름은 찾을 수가 없다.
+ *
+ * 언어를 옮기는 것만 그런 것이 아니다. `Acetaminophen` 이라고 인쇄된 통을 든 사람에게
+ * `Paracetamol` 은 확인할 수 없는 낱말이고, 확인할 수 없으면 그 화면은 못 믿는다.
+ * 실제로 "자꾸 아예 다른 약으로 뜬다" 는 말을 들었다 — 화면이 맞는데도 그렇게 읽힌다.
+ *
+ * 어디까지 종이를 따르나
+ * ----------------------
+ * **표가 아는 이름일 때만.** 종이의 낱말이 그 약의 정식명·성분명·별칭 중 하나와
+ * 정확히 같으면 그것을 쓴다. 그 셋은 전부 세상이 실제로 쓰는 이름이라 포장지에서
+ * 찾을 수 있다.
+ *
+ * 오타는 안 따른다. `Amoxicilin` 은 어느 통에도 안 적혀 있으므로 그것을 띄우면
+ * 맞춰 볼 것이 없다 — 그때는 표의 이름이 낫다. 즉 여기서 가르는 것은 "종이냐 표냐"
+ * 가 아니라 **그 낱말이 어딘가에 실제로 인쇄되어 있느냐** 다.
+ */
+function displayName(rx: SheetPrescription): string | null {
+  if (!rx.drug) return null;
+  const read = normalize(rx.read);
+  if (!read) return null;
+  const known = [rx.drug.name, rx.drug.inn, ...(rx.drug.also ?? [])];
+  return known.some((k) => normalize(k) === read) ? rx.read : null;
+}
+
+/**
  * 처방 하나를 앱의 `ScanItem` 으로.
  *
  * 이 자리를 지나야 나머지가 다 붙는다 — 판정 엔진, 픽토그램(`itemToDsl`), 알람,
@@ -195,7 +231,7 @@ export function toScanItem(rx: SheetPrescription, lookup?: DrugLookup | null): S
     id: `sheet_${(rx.drug?.inn ?? rx.read).toLowerCase().replace(/[^a-z]/g, '')}_${slot.slot}_${hour}`,
     // 표에 없으면 **읽은 글자 그대로** 부른다. 여기서 이름을 지어내면 사람이 종이와
     // 화면을 맞춰 볼 수 없고, 맞춰 보는 것이 이 화면에서 유일한 검산이다.
-    name: rx.drug?.name ?? found?.name ?? rx.read,
+    name: displayName(rx) ?? rx.drug?.name ?? found?.name ?? rx.read,
     kind: 'prescription',
     /*
       표에 없는 약이면 초록을 안 켠다.
@@ -247,6 +283,16 @@ export function toScanItem(rx: SheetPrescription, lookup?: DrugLookup | null): S
       notes: [...rx.notes.unknown, ...(found?.purpose ? [found.purpose] : [])],
     },
     chips: [
+      /*
+        종이의 낱말과 표의 이름이 다를 때 **같은 약이라고 말해 준다.**
+
+        이 칸이 없으면 화면이 두 낱말로 갈린다 — 제목은 "Acetaminophen" 인데 상호작용
+        경고는 "Already taking paracetamol" 이라고 쓴다(그쪽은 성분명으로 잰다). 두
+        낱말을 나란히 보면서 같은 약인 줄 모르면, 통 두 개를 다 먹는 쪽으로 틀린다.
+        그것이 이 앱이 막으려는 바로 그 실패다.
+      */
+      ...(displayName(rx) && rx.drug && normalize(rx.read) !== normalize(rx.drug.name)
+        ? [{ emoji: '', label: `Same as ${rx.drug.name}` }] : []),
       { emoji: '', label: `Tray ${slot.slot}` },
       { emoji: '', label: everyDay ? 'Every day' : days.map((d) => DAY_WORD[d].slice(0, 3)).join(' ') },
       { emoji: '', label: slot.durationDays > 0 ? `${slot.durationDays} days` : 'Ongoing' },
