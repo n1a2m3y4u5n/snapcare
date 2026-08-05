@@ -54,6 +54,29 @@ export function byMedicine(rows: DoseRow[], anchor: string,
 
   return [...byTray.values()]
     .map((m) => ({ ...m, rate: m.offered ? m.taken / m.offered : null }))
+    /*
+      **이름도 모르고 나온 적도 없는 칸은 뺀다.**
+
+      화면에 이런 줄들이 있었다:
+
+          3  Compartment 3   3/8
+          4  Compartment 4   0/2
+          5  Compartment 5   0/1
+
+      상자를 직접 눌러 돌린 자국이다 — 발표 콘솔의 배출 단추, 작업대에서의 시험,
+      앱에 알람 없이 종이로 바로 보낸 일정. 이름은 알람에서 오므로 그 칸들은 이름을
+      못 받고 `Compartment N` 으로 남는다.
+
+      이 게이지가 있는 이유는 **고칠 곳을 가리키는 것**이다(위 주석). "Compartment 5:
+      0/1" 은 아무 데도 안 가리킨다 — 무슨 약인지 모르니 약통을 열어도 할 일이 없고,
+      한 번도 안 나왔으니 어긋난 습관도 없다. 정보가 0인 줄이 목록의 절반을 차지하면
+      정보가 있는 줄까지 안 읽힌다.
+
+      둘 다일 때만 뺀다. 이름이 없어도 실제로 나온 적이 있으면(`Compartment 3` 의
+      3/8) 남긴다 — 무슨 약인지는 몰라도 **그 칸에서 뭔가 일어나고 있다**는 사실은
+      진짜이고, 그것을 지우면 사람이 모르는 채로 지나간다.
+    */
+    .filter((m) => m.taken > 0 || !m.name.startsWith('Compartment '))
     // 층 순서대로. 상자를 열었을 때 위에서 아래로 보이는 순서다.
     .sort((a, b) => a.tray - b.tray);
 }

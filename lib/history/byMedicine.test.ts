@@ -52,3 +52,37 @@ test('줄마다 읽어 줄 말이 있다', () => {
   const [m] = byMedicine([dose(1, true, TODAY, 'Metformin'), dose(1, false, TODAY, 'Metformin')], TODAY);
   assert.match(medicineSentence(m), /out of 2 doses, missed once/);
 });
+
+/*
+  이름도 모르고 나온 적도 없는 칸.
+
+  상자를 직접 눌러 돌린 자국이다 — 발표 콘솔의 배출 단추, 작업대 시험, 알람 없이
+  종이로 바로 보낸 일정. 화면에 "Compartment 5: 0/1" 로 남는데, 그 줄은 아무 데도
+  안 가리킨다: 무슨 약인지 모르니 약통을 열어도 할 일이 없고, 한 번도 안 나왔으니
+  어긋난 습관도 없다.
+*/
+const row = (tray: number, name: string, taken: boolean) => ({
+  dayKey: '2026-08-05', due: '0800', taken, tray, reason: '', name,
+});
+
+test('이름 모르고 나온 적도 없는 칸은 목록에서 뺀다', () => {
+  const out = byMedicine([
+    row(1, 'Metformin 500mg', true),
+    row(4, '', false),
+    row(5, '', false),
+  ], '2026-08-05', 28);
+  assert.deepEqual(out.map((m) => m.tray), [1], '빈 칸이 남아 있으면 진짜 줄이 안 읽힌다');
+});
+
+test('이름은 몰라도 실제로 나온 칸은 남긴다', () => {
+  // 무슨 약인지는 몰라도 그 칸에서 뭔가 일어나고 있다는 사실은 진짜다.
+  const out = byMedicine([row(3, '', true), row(3, '', false)], '2026-08-05', 28);
+  assert.deepEqual(out.map((m) => m.tray), [3]);
+  assert.equal(out[0].taken, 1);
+});
+
+test('이름이 있으면 한 번도 안 나왔어도 남긴다', () => {
+  // 이쪽은 가리킬 곳이 있다 — 그 약을 계속 거르고 있다는 뜻이고, 고칠 수 있다.
+  const out = byMedicine([row(2, 'Amlodipine 5mg', false)], '2026-08-05', 28);
+  assert.deepEqual(out.map((m) => m.name), ['Amlodipine 5mg']);
+});
