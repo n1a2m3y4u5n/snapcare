@@ -49,7 +49,29 @@ export interface SyncBlob {
    * 칸이 절대 안 들어간다 — 넣는 쪽도 읽는 쪽도 `isDemo()` 안에 있다.
    */
   demoBox?: { claim: string; relayUrl: string };
+  /**
+   * **시연 전용.** 이 블롭이 어느 판의 시연 자료를 들고 있나.
+   *
+   * 시연 파일은 폰들이 함께 쓴다. 그래서 시연 자료를 고쳐도 — 새 시드를 심어도,
+   * 판을 올려 저장분을 버려도 — **다음 받아오기에 낡은 것이 되돌아온다.** 어느 폰
+   * 하나가 옛 자료를 들고 있으면 그것이 서버를 거쳐 나머지 전부로 퍼진다.
+   *
+   * 실제로 그랬다: 기록의 주인 이름을 고치고 저장 판을 올렸는데도 화면이 계속 62건을
+   * 한 칸에 뭉쳐 보여 줬다. 로컬은 매번 깨끗해졌고 서버가 매번 되돌려 놓았다.
+   *
+   * `version` 을 올리는 방법도 있지만 그쪽은 **실제 사용자의 서버 사본까지** 한 번
+   * 버린다. 시연 자료만 갈아 끼우려고 남의 백업을 버릴 이유가 없다.
+   */
+  demoSeed?: number;
 }
+
+/**
+ * 시연 자료의 판. 시드를 고칠 때마다 올린다.
+ *
+ * 이 수가 서버 것보다 크면 받아온 시연 자료를 안 쓰고 우리 것을 밀어 올린다.
+ * 작거나 같으면 평소대로 받는다 — 다른 폰이 리허설 중에 만든 것을 지우지 않는다.
+ */
+export const DEMO_SEED = 2;
 
 /** 서버 데이터를 신뢰해도 되는가 (버전 일치 + 최소 형태 검사). */
 export function isUsable(blob: SyncBlob | null): blob is SyncBlob {
@@ -127,6 +149,21 @@ export async function pull(): Promise<PersonBlob | null> {
     여는 **모든 폰**에 모르는 사람들이 붙는다. 배포된 파일에 넷이 쌓여 있었다.
   */
   if (blob.roster?.length && !isDemo()) mergeRoster(blob.roster);
+
+  /*
+    낡은 시연 자료는 **안 받는다.**
+
+    서버 것이 이 판보다 오래됐으면 그것을 쓰지 않고 `null` 을 돌려준다. 부르는 쪽은
+    "서버에 내 자리가 없다" 로 보고 로컬 시드를 심은 뒤 그것을 올린다 — 즉 한 번
+    지나가면 서버가 새 자료로 갈린다.
+
+    시연 밖에서는 안 돈다. 실제 사용자의 블롭에는 이 칸이 아예 없다.
+  */
+  if (isDemo() && (blob.demoSeed ?? 0) < DEMO_SEED) {
+    console.info('[sync] 서버의 시연 자료가 낡았다 — 안 받고 새로 올린다');
+    return null;
+  }
+
   return blob.people?.[activeAccountId()] ?? null;
 }
 
@@ -159,6 +196,8 @@ export function withoutPerson(seen: SyncBlob | null, roster: Account[], id: stri
   const people = { ...(seen?.people ?? {}) };
   delete people[id];
   return { version: SYNC_VERSION, roster, people,
+    // 시연에서만 찍는다 — 실제 블롭에는 이 칸이 없다.
+    ...(isDemo() ? { demoSeed: DEMO_SEED } : {}),
            ...(seen?.demoBox ? { demoBox: seen.demoBox } : {}) };
 }
 
