@@ -150,18 +150,22 @@ export default function DevicePage() {
         <h1 className=" text-2xl font-extrabold" style={{ color: 'var(--color-sc-ink)' }}
             {...ask('Dispenser. Send your dose times to the dispenser, or read what it shows.')}>Dispenser</h1>
         {/*
-          짝을 지으면 이 말이 더 이상 참이 아니다 — 사서함을 거치므로 같은 공유기 뒤에
-          있을 필요가 없다. 화면이 사실과 다른 말을 하고 있으면, 그 말을 믿고 상자 옆으로
-          걸어가는 사람이 생긴다.
+          짝이 없을 때만 낸다.
+
+          짝을 짓기 전에는 "같은 와이파이" 가 **해야 할 일**이다 — 그걸 모르면 보내기가
+          안 되고, 왜 안 되는지도 화면 어디에도 없다.
+
+          짝을 지은 뒤의 "어디서나 됩니다" 는 그렇지 않다. 사실이긴 한데(사서함을
+          거치므로 같은 공유기 뒤에 있을 필요가 없다) 사람이 그걸 알아서 할 일이
+          달라지지 않는다. 화면 맨 위의 한 줄은 이 화면에서 가장 비싼 자리이고, 거기에
+          아무것도 안 시키는 문장이 앉아 있었다.
         */}
-        <Speakable text={box.paired
-          ? 'The dispenser has its own mailbox. You can send from anywhere.'
-          : 'The phone and the dispenser are on the same Wi-Fi. Nothing else is needed.'}
-                   className="mt-1 text-sm flex w-full items-center gap-2">
-          <span className="flex-1">
-            {box.paired ? 'Anywhere — the dispenser has its own mailbox.' : 'Same Wi-Fi — nothing else needed.'}
-          </span>
-        </Speakable>
+        {!box.paired && (
+          <Speakable text="The phone and the dispenser are on the same Wi-Fi. Nothing else is needed."
+                     className="mt-1 text-sm flex w-full items-center gap-2">
+            <span className="flex-1">Same Wi-Fi — nothing else needed.</span>
+          </Speakable>
+        )}
 
         {/*
           지금 꺼내야 하는 약이 있으면 무엇보다 먼저다. 기기는 시간이 됐다고 약을
