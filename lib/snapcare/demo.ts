@@ -15,11 +15,28 @@
  * 두 갈래로 나누면 본선까지 모든 수정을 두 번씩 해야 한다. 코드는 하나로 두고
  * 자료만 가른다. 배포도 하나면 되고, 시연 도중에도 바꿀 수 있다.
  *
- *   그냥 열면          → 깨끗한 첫 실행 (현지 평가·실사용)
- *   ?demo=1 로 한 번   → 자료가 채워진 상태 (심사 시연). 그 브라우저에 기억된다.
- *   ?demo=0 으로       → 다시 깨끗하게
+ *   그냥 열면          → **자료가 채워진 상태.** 아래 "기본을 뒤집었다" 를 볼 것.
+ *   ?demo=0 으로       → 깨끗한 첫 실행 (현지 평가·실사용). 그 브라우저에 기억된다.
+ *   ?demo=1 로         → 다시 시연용으로
+ *
+ * 로그인 화면 아래의 "Start empty" / "Demo data" 가 같은 값을 쓴다.
  *
  * 배포 전체를 시연용으로 두고 싶으면 NEXT_PUBLIC_DEMO=1 로 빌드한다.
+ *
+ * 기본을 뒤집었다
+ * ---------------
+ * 처음에는 빈 상태가 기본이었다. 이유는 위에 적힌 그대로다 — 어르신이 앱을 처음
+ * 열었을 때 자기가 하지도 않은 스캔이 보이면 안 된다.
+ *
+ * 그런데 이 주소를 지금 실제로 여는 사람은 **심사위원과 구경하는 사람**이다. 그들이
+ * 보는 첫 화면이 텅 빈 앱이면 이 앱이 무엇을 하는지가 아무 데도 안 보이고, 그것을
+ * 보려면 화면 맨 아래의 작은 글씨를 찾아 눌러야 한다는 것을 알아야 한다. 아무도 모른다.
+ *
+ * 현지 평가에서 빈 상태가 필요한 것은 그대로다. 그래서 없애지 않고 **명시적으로**
+ * 고르게 했다: `?demo=0` 이나 "Start empty". 전에는 그 상태가 "아무것도 안 고른 것"
+ * 과 같은 값이라 고를 수가 없었다(값을 지우는 것이 곧 빈 상태였다).
+ *
+ * 세 갈래다: 안 정함(→ 시연), '0'(→ 빔), '1'(→ 시연).
  */
 
 const FLAG = 'snapcare-demo';
@@ -45,10 +62,12 @@ export function isDemo(): boolean {
     return true;
   }
   if (q === '0') {
-    localStorage.removeItem(FLAG);
+    // 지우지 않고 '0' 을 적는다. 지우면 "안 정함" 과 같아지는데, 안 정함은 이제
+    // 시연이다 — 빈 상태를 고른 사람이 새로고침 한 번에 시연으로 돌아가게 된다.
+    localStorage.setItem(FLAG, '0');
     return false;
   }
-  return localStorage.getItem(FLAG) === '1';
+  return localStorage.getItem(FLAG) !== '0';
 }
 
 /**
@@ -61,8 +80,8 @@ export function isDemo(): boolean {
  */
 export function setDemo(on: boolean): void {
   if (typeof localStorage === 'undefined') return;
-  if (on) localStorage.setItem(FLAG, '1');
-  else localStorage.removeItem(FLAG);
+  // 끌 때도 **적는다.** 지우면 "안 정함" 이 되고, 안 정함은 시연이다.
+  localStorage.setItem(FLAG, on ? '1' : '0');
 }
 
 /*

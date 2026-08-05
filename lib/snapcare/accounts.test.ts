@@ -36,8 +36,19 @@ const {
   listAccounts, mergeRoster, removeAccount, scopedKey, setActiveFace, sweepDemoStrays,
 } = await import('./accounts.ts');
 
+/*
+  비우고 나서 **시연을 꺼 둔다.**
+
+  전에는 비우는 것만으로 충분했다. 아무것도 안 적혀 있으면 시연이 아니었기 때문이다.
+  기본이 뒤집히면서(`demo.ts`) 그 전제가 사라졌다 — 이제 안 적힌 것은 시연이고,
+  이 파일의 시험들이 재려는 것은 대부분 시연이 아닌 쪽이다.
+
+  여기서 이 여덟 줄이 실제로 깨졌다. 시험이 제 할 일을 한 것이고, 값을 못 박는 편이
+  맞다 — "기본이 무엇인가" 는 `demo.test.ts` 가 따로 잰다.
+*/
 function reset() {
   store.clear();
+  store.setItem('snapcare-demo', '0');
 }
 
 test('첫 사람은 예전 저장 열쇠를 그대로 쓴다', () => {
@@ -122,7 +133,8 @@ test('얼굴을 바꾸면 명단에도 반영된다', () => {
  * 것("이 사람이 이 화면을 이해하는가")이 그 순간 성립하지 않는다.
  */
 const demoOn = () => store.setItem('snapcare-demo', '1');
-const demoOff = () => store.removeItem('snapcare-demo');
+// 지우는 것이 아니라 '0' 을 적는다 — 지우면 이제 시연이 켜진다.
+const demoOff = () => store.setItem('snapcare-demo', '0');
 
 /**
  * 자국 치우기를 다시 돌린다.
