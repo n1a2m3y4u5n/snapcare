@@ -80,7 +80,7 @@ history rather than a condition — nothing about it can be fixed — but it is 
 one piece of history nobody has seen yet, so it holds for `missed_dwell_s`,
 which is long enough that somebody who heard the buzzer from another room and
 came to look still finds out *which* dose it was. It no longer has to hold any
-longer than that: the schedule band keeps the amber triangle for the rest of the
+longer than that: the calendar keeps the red cross for the rest of the
 day, so the memory outlives the frame without the frame outstaying its welcome.
 
 Dwells are quantised by the caller, not by this file
@@ -239,9 +239,23 @@ _ATTENTION = frozenset({"boot", "button", "touch"})
 _TRANSIENT = {
     "released": "released",
     "missed": "missed",
-    "schedule": "schedule",
     "network": "network",
 }
+
+#: `schedule` is deliberately not in the table above any more, and this is where
+#: it went instead. A new plan used to put a violet screen over the panel for a
+#: dwell — a picture announcing that the picture underneath had changed. What it
+#: does now is mark the calendar it changed: `_decide` passes `highlight=True`
+#: to the resting frame for this long, and `calendar.draw` puts an amber border
+#: round the whole thing.
+#:
+#: Ten seconds because it has to survive somebody looking up from the phone they
+#: just sent the schedule from, and must not still be there when they walk back
+#: past a minute later. It is deliberately *not* a dwell: the calendar is the
+#: screen either way, so nothing is being held on the panel and nothing is
+#: waiting to be released — which is why a new dose coming due during those ten
+#: seconds takes the panel instantly, with no interaction between the two.
+PLAN_HIGHLIGHT_S = 10.0
 
 #: The `wifi` values that mean somebody has to do something in the room.
 #:
@@ -265,27 +279,30 @@ class Plan:
         fn = getattr(screens, plan.screen)
         fn(canvas, *plan.args)
 
-    The seven names and their arguments, which match `screens.py`:
+    The six names and their arguments, which match `screens.py`:
 
         boot    (health,)            blocked  (health,)
         due     (health,)            network  (health,)
-        missed  (health, tray, at)   idle     (health,)
-        schedule(health, trays)
+        missed  (health,)            idle     (health, highlight)
+        pair    (health,)
 
     `screens.released` is not among them. A release takes no screen — see
-    `_transient` — and that frame now exists only for the commissioning colour
-    walk.
+    `_transient` — and that frame now exists only for the commissioning walk.
+    Neither is `schedule`: a new plan marks the resting frame instead of
+    replacing it, which is what `idle`'s second argument carries.
 
     **`args` always starts with `health` and is never compared.** Both halves of
     that are load-bearing. Passing the whole snapshot is what lets every screen
-    draw the status bar and the schedule band without this file knowing a thing
+    draw the status bar and the calendar without this file knowing a thing
     about either; excluding it from equality is what stops a twenty-two-field
     object forcing a 38 ms repaint every time the relay reconnects.
 
-    `key` is what is compared instead: the facts the *hero band* is showing, and
-    nothing else. If a fact is in `key` it must be drawn in the hero, and if it
-    is drawn in the hero it must be in `key` — the first mistake repaints for
-    nothing, the second leaves a stale number on the glass.
+    `key` is what is compared instead: the facts *this frame* is showing that no
+    band works out for itself. The two bands have keys of their own — `bar.key`
+    and `calendar.key` — and the painter compares those separately, which is
+    what lets a dose settling repaint 204 rows instead of the whole panel. A
+    fact that is in neither is a stale picture on the glass; a fact in two is a
+    repaint bought twice.
 
     `night` is part of the comparison because the palette flipping at 22:00 is a
     frame the panel has to be told about; `level` is not, because it is a
@@ -424,6 +441,7 @@ class Presence:
 
     def __init__(self, *, dwell_s: float = 20.0, dim_after_s: float = 30.0,
                  missed_dwell_s: float = 300.0,
+                 plan_highlight_s: float = PLAN_HIGHLIGHT_S,
                  boot_dwell_s: float = config.DISPLAY_BOOT_DWELL_S,
                  quiet: tuple[int, int] = config.DISPLAY_QUIET_HOURS,
                  monotonic: Callable[[], float] = time.monotonic):
@@ -434,6 +452,8 @@ class Presence:
         #: night.
         self.dim_after_s = max(0.0, float(dim_after_s))
         self.missed_dwell_s = max(0.0, float(missed_dwell_s))
+        #: How long the calendar wears its amber border after a schedule lands.
+        self.plan_highlight_s = max(0.0, float(plan_highlight_s))
         #: How long the boot frame is held after the daemon says it has started,
         #: even once every subsystem has already answered. Below about a second
         #: it is a flicker on the way to another screen rather than a machine
@@ -450,6 +470,7 @@ class Presence:
         self._ev_tray: int | None = None
         self._ev_at = ""
         self._ev_trays: tuple[int, ...] = ()
+        self._plan_at = float("-inf")
         self._ev_ssid = ""
         self._due_seen = float("-inf")
         self._due_tray: int | None = None
@@ -535,6 +556,15 @@ class Presence:
             self._forget_due()
             return
 
+        if kind == "schedule":
+            # No screen and no dwell — see `PLAN_HIGHLIGHT_S`. The calendar was
+            # rebuilt from the new plan before this arrived, so the panel is
+            # already showing the answer; all this does is mark it for ten
+            # seconds so that somebody looking up from their phone can see
+            # *that* it changed as well as what it changed to.
+            self._plan_at = now
+            return
+
         if kind in _TRANSIENT:
             self._event = kind
             self._event_at = now
@@ -569,7 +599,7 @@ class Presence:
         The plan is stored even when it is a repeat, so that `_last.args` always
         carries the freshest snapshot. Nothing here reads it, but the painter
         does: it is the object it redraws from when the status bar and the
-        schedule band have both changed under a screen that is otherwise still
+        calendar have both changed under a screen that is otherwise still
         correct.
         """
         try:
@@ -661,7 +691,7 @@ class Presence:
 
         # 5a. Nothing is happening and nothing has been read yet. The resting
         #     frame would be drawn entirely from empty fields — a status bar of
-        #     confident nothings and a hero with no dose and no clock — so the
+        #     confident nothings and a calendar with no days in it — so the
         #     boot frame stands in, which is the honest picture of a machine
         #     that is up and has not yet taken a reading of itself.
         if not _field(health, "known", False):
@@ -693,18 +723,23 @@ class Presence:
 
         # 5. Nothing is happening, which is still worth a screen: the next dose,
         #    the day so far, and where to find this machine on the network.
-        next_at = _field(health, "next_at", "")
-        return plan("idle", (health,),
-                    (_field(health, "next_tray", None), next_at,
-                     # The hero shows the wall clock only when there is no dose
-                     # left to show instead. Including `now` unconditionally
-                     # would repaint the whole panel every minute for a number
-                     # that is in the status bar, where a minute costs 5.76 ms
-                     # rather than 38.4.
-                     "" if next_at else _field(health, "now", ""),
-                     _field(health, "address", ""),
-                     _field(health, "trays_loaded", 0)),
-                    Level.REST)
+        # The calendar draws itself from `health.days`, which `_decide` does not
+        # look at and must not: the *bands* are compared by their own keys —
+        # `bar.key` and `calendar.key` — in the painter, which is what lets a
+        # dose settling repaint 204 rows instead of the whole panel. What this
+        # key carries is the one thing about the resting frame that the calendar
+        # cannot work out for itself.
+        return plan("idle", (health, self._plan_highlight(now)),
+                    (self._plan_highlight(now),), Level.REST)
+
+    def _plan_highlight(self, now: float) -> bool:
+        """Is the calendar still wearing its new-plan border?
+
+        A function of the clock rather than a flag that something clears, so
+        there is no path where the border is left on the panel by an event that
+        did not arrive. The ten seconds simply run out.
+        """
+        return now - self._plan_at < self.plan_highlight_s
 
 
     def _with_latched_dose(self, health):
@@ -784,11 +819,15 @@ class Presence:
             # 파랑이 색 어휘에서 사라지는 것도 아니다. 그 띠의 표시가 계속 쓴다.
             return None
         if kind == "missed":
-            return ((health, self._ev_tray, self._ev_at),
+            # No tray and no time in the args: the frame is the calendar, and
+            # the dose that was missed is already a red cross in its own row on
+            # its own day. They stay in the *key* because that is what decides
+            # whether this is a new event or the same one still dwelling — two
+            # doses expiring an hour apart must not be one border that never
+            # goes away.
+            return ((health,),
                     (self._ev_tray, self._ev_at,
                      earlier_day(self._ev_at, _field(health, "now", ""))))
-        if kind == "schedule":
-            return (health, self._ev_trays), (self._ev_trays,)
         if kind == "network":
             # An SSID on the event is the supervisor saying it has just raised
             # the hotspot, and that is better evidence than the snapshot, which

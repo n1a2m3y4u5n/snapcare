@@ -1,19 +1,23 @@
 """One frame per state. This is the interface, and the rest is plumbing.
 
-The frame is three bands
------------------------
+The frame is two bands
+----------------------
 Every screen in this file draws the whole panel, and it draws it in the same
-three pieces:
+two pieces:
 
-    bar     y   0..35    what the machine is        `bar.py`
-    hero    y  36..183   the one thing that matters  here
-    strip   y 184..239   the whole day              `strip.py`
+    bar       y  0..35    what the machine is        `bar.py`
+    calendar  y 36..239   three days of doses        `calendar.py`
 
-Only the hero belongs to this file. That split is the design: the bar and the
-strip are *permanent* and say the same kind of thing on every frame, so a person
-learns where to look once, and the hero is the only part that changes shape. A
-frame is then read in one saccade — the hero says what is happening, and the two
-bands are there when you want them and ignorable when you do not.
+There used to be three. A `hero` band sat between them showing the one dose that
+mattered as a large clock, and a `strip` along the bottom showed today as a row
+of coloured shapes — which meant the same dose was drawn twice, in two
+vocabularies, and neither of them could say anything about yesterday.
+
+The calendar answers all of it in one picture, so this file's job has shrunk to
+two things: hand the calendar the snapshot, and get out of the way. The one
+frame that genuinely needs the panel to itself is a dose ringing — see `due`,
+which puts a checkbox the size of a hand over the calendar, because that is the
+one moment the machine is asking for something rather than reporting.
 
 What replaced the pictograms, and why
 -------------------------------------
@@ -72,15 +76,13 @@ in it is a far worse bug than an ugly screen.
 """
 from __future__ import annotations
 
-from .. import config
-from . import (PANEL_HEIGHT, PANEL_WIDTH, bar, font, numerals, qr_art, shapes,
-               strip, theme as theme_mod)
+from . import (PANEL_HEIGHT, PANEL_WIDTH, bar, calendar, checkbox, font,
+               qr_art, shapes, theme as theme_mod)
 from .canvas import Canvas, Tone
 from .health import Health
 from .shapes import Shape
 
-__all__ = ["due", "released", "missed", "schedule", "network", "blocked",
-           "idle", "boot"]
+__all__ = ["due", "released", "missed", "network", "blocked", "idle", "boot"]
 
 W = PANEL_WIDTH
 H = PANEL_HEIGHT
@@ -90,25 +92,12 @@ H = PANEL_HEIGHT
 #: with a slice missing once it is screwed down.
 PAD = H // 20                                   # 12
 
+#: Everything under the bar. The calendar owns it on every frame but the alarm,
+#: and `calendar.py` is where its own subdivisions live — these two are here
+#: because the frames that are *not* the calendar (`blocked`, `boot`) still have
+#: to know where the region starts and how tall it is.
 HERO_Y = bar.BAR_H                              # 36
-HERO_H = strip.STRIP_Y - bar.BAR_H              # 148
-
-#: Where the hero's left column (severity, tray) ends and its right column
-#: (the time) begins. Three tenths: enough for a 59 px shape with air, and it
-#: leaves the time the two thirds it needs to be read from a doorway.
-SPLIT = W * 3 // 10                             # 96
-
-#: The severity shape's radius. Sized from the band with the margin intact.
-#:
-#: The quarter is a leftover: a tray digit of the same height used to stack
-#: under the shape, so the two of them plus a gap had to fit. The digit is gone
-#: (this machine has one cup) and the shape is centred alone now, but the radius
-#: it was given is the one that reads well at arm's length, so the arithmetic
-#: stays rather than being retuned for its own sake.
-HERO_R = (HERO_H - 2 * PAD - PAD // 2) // 4     # 29
-
-HERO_RX = SPLIT                                 # 96
-HERO_RW = W - PAD - SPLIT                       # 212
+HERO_H = H - bar.BAR_H                          # 204
 
 #: The secondary line under the time: an address, or a date. Two rows of the
 #: 5x7 face, which is an arm's-length element and is honest about it.
@@ -121,46 +110,6 @@ SEC_H = 2 * font.HEIGHT                         # 14
 # part that was already right: every one of them exists because a screen that
 # nobody can read must never be *wrong*, and each has a specific wrong answer it
 # was written to refuse.
-
-def _tray_text(tray: object) -> str:
-    """A tray number, at most two characters.
-
-    Anything unexpected is `?`, which is in both faces and is honest.
-    Truncating instead — which is what `str(tray)[:2]` did — turns tray 123 into
-    a confident, unmissable `12`, and somebody opens hopper 12.
-    """
-    if isinstance(tray, int) and not isinstance(tray, bool) and 0 <= tray <= 99:
-        return str(tray)
-    return "?"
-
-
-def _tray_set(trays: object) -> frozenset[int] | None:
-    """The trays a schedule names, as numbers — or `None` for "nobody said".
-
-    `None` and an empty list are the same answer here and it is not "no trays":
-    it is that this frame was given nothing to describe. The two are worth one
-    return value because the picture draws them identically and must — see
-    `_tray_stack`, where an unknown plan is eight grey pillars and never eight
-    red ones.
-
-    Out-of-range numbers are dropped rather than clamped. `config` refuses a
-    slot outside 1..MAX_TRAYS long before a frame is painted, so anything
-    arriving here is already a bug upstream, and a 9 nudged onto pillar 8 would
-    be this screen inventing a tray the machine does not have.
-    """
-    if trays is None:
-        return None
-    found = [trays] if isinstance(trays, int) and not isinstance(trays, bool) else trays
-    try:
-        numbers = list(found)
-    except TypeError:
-        return None
-    wanted = frozenset(
-        tray for tray in numbers
-        if isinstance(tray, int) and not isinstance(tray, bool)
-        and 1 <= tray <= config.MAX_TRAYS)
-    return wanted or None
-
 
 def _clock_text(when: object) -> str:
     """A time of day as `HH:MM`, from any of the shapes this project uses.
@@ -222,94 +171,6 @@ def _flood(canvas: Canvas, theme: dict, colour: str) -> None:
     and what else is owed today.
     """
     canvas.rect(0, HERO_Y, W, HERO_H, theme[colour])
-
-
-def _hero_shape(canvas: Canvas, shape: Shape, value: int) -> None:
-    """The solid severity shape in the left column, centred on the band.
-
-    A tray number used to stack under it, and the shape was lifted to make room.
-    Both are gone: **this machine has one cup.** Every hopper drops into the
-    same place, so "which tray" is a fact about the inside of the machine and
-    not about anything the person in front of it has to do. Reported from the
-    bench as exactly that — 왼쪽에 트레이 번호 뜨는 거 지우자.
-
-    It is still on the app, where the person loading the hoppers needs it, and
-    still in the log. What it is not is the biggest thing on a frame somebody
-    reads at arm's length while a buzzer is going.
-    """
-    top = HERO_Y + (HERO_H - (2 * HERO_R + 1)) // 2
-    shapes.fill(canvas, SPLIT // 2, top + HERO_R, HERO_R, shape, value)
-
-
-def _hero_smile(canvas: Canvas, face: int, ink: int) -> None:
-    """오늘 할 일이 끝났다 — 웃는 얼굴.
-
-    여기 회색 네모가 있었다. 뜻으로는 맞았다(`PENDING` 은 "아직" 이고 남은 것이
-    없으니 아무 등급도 아니다). 그런데 이 패널이 하루 중 **가장 오래 서 있는 화면**이
-    이것이다. 복용은 하루에 서너 번이고 나머지 스무 시간은 이 프레임이 떠 있는데,
-    그 스무 시간 동안 부엌에 서 있는 그림이 회색 네모였다.
-
-    회색 네모가 말하는 것도 사실 없었다. 등급이 아니라는 것을 말하려고 등급의 모양을
-    빌려 쓰고 있었으니, 보는 사람에게는 "무언가 대기 중" 으로 읽힌다.
-
-    웃는 얼굴은 **번 것이다**
-    -------------------------
-    아무 때나 웃지 않는다. `idle` 이 이 자리에 오는 경우가 둘이고 — 오늘 것을 다
-    먹었다, 오늘 것을 다 걸렀다 — 둘 다 "다음이 없다" 이다. 거른 날에 웃으면 그것은
-    이 기계가 할 수 있는 가장 나쁜 거짓말이다. 부르는 쪽이 그것을 가른다.
-
-    그림
-    ----
-    채운 원에 배경색으로 눈과 입을 파낸다. 이 패널에 구멍을 뚫는 연산이 없어서,
-    얼굴을 칠한 뒤 그 위에 배경색을 덮는 것이 구멍이다.
-
-    입은 포물선이다. 호를 그리는 함수가 없기도 하고, 세로 막대를 열 몇 개 세우는
-    쪽이 더 정확하다 — 이 크기에서 원호를 근사하면 양 끝이 계단으로 남는다.
-
-    비율은 실루엣이 3m 에서 견디도록 잡았다. 눈이 작으면 원 하나로 뭉치고, 입이
-    얕으면 웃는지 아닌지가 안 보인다.
-    """
-    top = HERO_Y + (HERO_H - (2 * HERO_R + 1)) // 2
-    cx, cy = SPLIT // 2, top + HERO_R
-    r = HERO_R
-
-    shapes.fill(canvas, cx, cy, r, Shape.SAFE, face)
-
-    eye_r = max(2, r * 7 // 50)                      # 4
-    for side in (-1, 1):
-        shapes.fill(canvas, cx + side * (r * 2 // 5), cy - r * 7 // 25, eye_r,
-                    Shape.SAFE, ink)
-
-    # 입. `half` 는 가로 반지름, `depth` 는 가운데가 얼마나 내려앉는가.
-    half = r * 13 // 25                              # 15
-    depth = r * 7 // 25                              # 8
-    thick = max(3, r * 3 // 25)                      # 3
-    base = cy + r * 4 // 25                          # 아래 눈보다 충분히 내려서
-    for dx in range(-half, half + 1):
-        # y = base + depth - depth * (dx/half)^2 — 가운데가 가장 낮고 끝이 올라간다.
-        lift = (depth * dx * dx + half * half // 2) // (half * half)
-        canvas.rect(cx + dx, base + depth - lift, 1, thick, ink)
-
-
-def _hero_time(canvas: Canvas, text: str, value: int, *,
-               secondary: str = "", secondary_value: int | None = None) -> None:
-    """The right column: a time as large as it will go, and an optional line.
-
-    The size is fitted rather than fixed. A hardcoded height is a clock that is
-    correct for `08:00` and clipped for a caller that hands over something
-    longer — and clipping is silent on this surface, so the bug ships as a
-    plausible-looking screen with a digit sliced off.
-    """
-    if not text:
-        return
-    size = numerals.fit(text, HERO_RW, HERO_H // 2, floor=24)
-    block = size + (PAD // 2 + SEC_H if secondary else 0)
-    top = HERO_Y + (HERO_H - block) // 2
-    numerals.draw_centred(canvas, HERO_RX, top, HERO_RW, size, text, value)
-    if secondary:
-        _small_centred(canvas, HERO_RX, top + size + PAD // 2, HERO_RW,
-                       secondary,
-                       value if secondary_value is None else secondary_value, 2)
 
 
 def _small_centred(canvas: Canvas, x: int, y: int, width: int, text: str,
@@ -396,426 +257,190 @@ def _breaks_cleanly(text: str, per_line: int, lines: int) -> bool:
     return not remaining
 
 
-def _big_number(canvas: Canvas, text: str, value: int) -> None:
-    """One number given the whole right column — `released` and `schedule`.
-
-    These two are the frames where a *count* is the message rather than a time,
-    so the number gets the height a clock would have had and there is no clock
-    on the frame to be confused with it.
-    """
-    size = numerals.fit(text, HERO_RW, HERO_H - 2 * PAD, floor=40)
-    numerals.draw_centred(canvas, HERO_RX, HERO_Y + (HERO_H - size) // 2,
-                          HERO_RW, size, text, value)
-
-
-#: The hoppers, drawn as a stack of flat pillars — the machine's own shape.
-#:
-#: `config.MAX_TRAYS` rather than `INSTALLED_TRAYS`, and the difference matters:
-#: the picture is the *firmware's* eight positions, so the stack is the same
-#: height on every machine and a tray lights up in the place it physically is.
-#: Sizing it to the fitted count instead would draw a two-pillar stack on a
-#: two-tray box, and then tray 2 of eight and tray 2 of two would be the same
-#: picture in different places.
-_PILLARS = config.MAX_TRAYS                     # 8
-#: Between the plate's edge and the pillars, and between the pillars. Both are
-#: the ink colour showing through, which is what makes eight bars read as eight
-#: rather than as one striped block.
-_PILLAR_PAD = 5
-_PILLAR_GAP = 4
-_PLATE_H = HERO_H - 2 * PAD                     # 124
-#: Three quarters of the right column, centred in it. Full width was tried and
-#: is worse: eight bars 196 px long and 11 px tall is a 18:1 rectangle eight
-#: times over, and it reads as a grille rather than as a stack of trays. Kept
-#: wide enough to carry the colour across a room, narrow enough that a pillar
-#: still looks like an object.
-_PLATE_W = HERO_RW * 3 // 4                     # 159
-_PLATE_X = HERO_RX + (HERO_RW - _PLATE_W) // 2
-#: 11 rows each: (124 - 2*5 - 7*4) // 8. Written as arithmetic so that changing
-#: the padding cannot silently push the last pillar through the plate.
-_PILLAR_H = (_PLATE_H - 2 * _PILLAR_PAD - (_PILLARS - 1) * _PILLAR_GAP) // _PILLARS
-
-if _PILLAR_H < 4:
-    raise ValueError("the tray stack does not fit the hero band")
-
-
-#: The ink a tray's own number is printed in, against the three pillar colours.
-#: Measured, like every other pair in this project: black on the green is
-#: 10.79:1 and on the red 5.10:1, and on the grey it would be 3.06:1 — under the
-#: floor, on the one state that means "we were told nothing", so that pillar
-#: takes the light ink instead at 5.93:1.
-_PILLAR_NUMBER_INK = {"OK": "BLACK", "FAULT": "BLACK", "TEXT_MUTE": "TEXT"}
-
-
-def _tray_stack(canvas: Canvas, theme: dict, wanted: frozenset[int] | None) -> None:
-    """Eight hoppers, each one green or red, numbered — the whole plan.
-
-    Green is a tray this schedule covers and red is one it does not, which on a
-    machine with two hoppers loaded is two green pillars and six red. It
-    replaced a printed list of tray numbers (`2`, or `1 2`), and the reason is
-    that the list needed reading: it named the trays in digits somebody had to
-    know the meaning of, in a row whose length changed with the plan. The stack
-    is the machine's own shape, so *where* the green is says which tray without
-    anybody counting, and the picture is the same size and in the same place
-    whatever the plan says.
-
-    **Tray 1 is at the bottom**, because that is where tray 1 is in the case.
-    The stack is a picture of the machine and not a list of its trays, so it is
-    drawn the way somebody standing in front of it sees it — the whole value of
-    a picture here is that it can be compared to the object without translating,
-    and a stack numbered the other way up is a diagram that has to be read
-    against the thing it describes.
-
-    Each pillar carries its own number, small and centred, in the 5x7 face —
-    which is what `font.py` is for and the one place on this frame a digit is
-    the right size at 7 px. The picture answers "which one" on its own for
-    somebody who knows the machine; the number is for the person who has just
-    been handed it, and for the phone call where somebody has to say which
-    hopper to fill.
-
-    **On a black plate, not on the violet.** This is the one screen where a
-    severity colour cannot be drawn on the field it lands on: `FAULT` red
-    measures 1.03:1 against the `SCHEDULE` violet — the two are within a
-    percent of the same luminance, so a red pillar on the flood would be
-    genuinely invisible, not merely low contrast. On the plate they are 5.1:1
-    and 10.8:1. The plate is drawn in the field's own ink, the same black as the
-    circle beside it, so it reads as part of the frame rather than as a second
-    surface.
-
-    An unknown plan is eight **grey** pillars, and this is the same rule the bar
-    keeps: absence is not a verdict. Eight red ones would say the machine has
-    lost every hopper, which is a far more alarming claim than "nobody told this
-    frame what arrived".
-    """
-    left, top = _PLATE_X, HERO_Y + PAD
-    canvas.rect(left, top, _PLATE_W, _PLATE_H, theme["BLACK"])
-
-    width = _PLATE_W - 2 * _PILLAR_PAD
-    for index in range(_PILLARS):
-        # Top of the picture down, so the arithmetic stays a straight stack —
-        # and tray 8 is the top one, tray 1 the bottom.
-        tray = _PILLARS - index
-        if wanted is None:
-            colour = "TEXT_MUTE"
-        else:
-            colour = "OK" if tray in wanted else "FAULT"
-
-        pillar_y = top + _PILLAR_PAD + index * (_PILLAR_H + _PILLAR_GAP)
-        canvas.rect(left + _PILLAR_PAD, pillar_y, width, _PILLAR_H,
-                    theme[colour])
-
-        number = str(tray)
-        font.draw(canvas,
-                  left + _PILLAR_PAD + (width - font.text_width(number)) // 2,
-                  pillar_y + (_PILLAR_H - font.HEIGHT) // 2,
-                  number, theme[_PILLAR_NUMBER_INK[colour]])
-
-
-def _frame(canvas: Canvas, health: Health, theme: dict, *,
-           focal: object = None) -> None:
-    """The two permanent bands. Every screen but `network` starts here."""
+def _frame(canvas: Canvas, health: Health, theme: dict) -> None:
+    """The status bar. Every screen but `network` and `pair` starts here."""
     bar.draw(canvas, health, theme)
-    strip.draw(canvas, health, theme, focal=focal)
+
+
+def _calendar_frame(canvas: Canvas, health: Health, theme: dict,
+                    highlight: str = "") -> None:
+    """The bar and the calendar — the panel in its ordinary state.
+
+    Three of the frames below are this and nothing else, differing only in
+    whether a coloured frame is drawn round the calendar for a few seconds.
+    That is the whole point of the redesign: **the resting screen is the
+    answer**, so an event does not replace it with a picture of itself, it
+    marks it and lets somebody look at the thing that changed.
+    """
+    _frame(canvas, health, theme)
+    calendar.draw(canvas, health, theme, highlight=highlight)
 
 
 # ── the dose states ─────────────────────────────────────────────────────────
 
+#: The alarm's checkbox, and the room round it. Sized down from the band rather
+#: than up from a guess: the box is what is left after the margin, the dose's
+#: own time under it and the window bar under that.
+ALARM_TIME_H = font.HEIGHT * 3                  # 21
+ALARM_BAR_H = 6
+ALARM_GAP = 8
+ALARM_BOX = (HERO_H - 2 * PAD - ALARM_TIME_H - ALARM_BAR_H - 2 * ALARM_GAP)
+ALARM_BLOCK = ALARM_BOX + ALARM_TIME_H + ALARM_BAR_H + 2 * ALARM_GAP
+ALARM_X = (W - ALARM_BOX) // 2
+ALARM_Y = HERO_Y + (HERO_H - ALARM_BLOCK) // 2
+
+#: How many frames the tick is drawn over when somebody presses the glass, and
+#: the last one — a complete tick — is what stays on the panel until the next
+#: repaint. Six is enough that a person sees a stroke rather than a state
+#: change, and few enough that the whole animation is under a third of a second
+#: of SPI on a bus where one frame is 38 ms.
+CHECK_STEPS = 6
+
+
 def due(canvas: Canvas, health: Health, *, theme: dict | None = None,
-        beat: bool = False) -> None:
-    """A dose is waiting on a press. Green, a solid circle, black ink.
+        beat: bool = False, check: int = 0) -> None:
+    """A dose is waiting on a press: one checkbox, the size of a hand.
 
-    `beat` swaps the hero's two colours: the green becomes the ink and the black
-    becomes the ground. Painted alternately with the ordinary frame it is a
-    pulse, and the pulse is the answer to the one thing this screen could not
-    say — **that it wants to be pressed.**
+    This is the only frame that covers the calendar, and it is the only moment
+    the machine is *asking* rather than reporting. What it asks for is a press,
+    and the picture is the thing to press — a box waiting to be ticked, at 137
+    px, in the middle of the glass, over the whole of which is the touch target
+    (see `touch.py`).
 
-    A still panel reads as a display. Somebody who has been told the machine
-    will tell them when to take a pill sees a green picture with a time on it,
-    which is a machine reporting, and reporting is not asking. There is no
-    button to draw: the whole glass is the target by design (see `touch.py`),
-    and the one affordance a target that large can carry is *motion*, which
-    needs no reading and survives being across a room.
+    **It blinks, and that is the affordance.** A still panel reads as a display:
+    somebody who has been told the machine will tell them when to take a pill
+    sees a picture with a time on it, which is a machine reporting, and
+    reporting is not asking. `beat` is flipped by the chirp thread on the same
+    rhythm as the buzzer, and it does not swap colours or flash the panel — it
+    lifts the box out of the surface and lets it settle back. Brighter and
+    darker, so the movement is on the object somebody is being asked to touch
+    and nowhere else.
 
-    Not a new pictogram. A hand pressing a button was tried on this panel and
-    read as a face — that is why the pictograms are gone at all — and a pulse
-    costs no glyph, no legibility and no contrast: the same pair swapped is the
-    same 10.79:1 either way round.
+    `check` is the answer. Nought is the empty box; `CHECK_STEPS` is a finished
+    green tick, and the frames between are the tick being *drawn*, in the
+    direction a hand would draw it. It runs while the servo is already turning,
+    so the picture of the dose being taken and the pill arriving in the cup are
+    one event rather than an animation followed by a wait.
 
-    Only the hero flips. The bar and the strip hold still, so the flashing part
-    is exactly the part being asked about and the status a person may need
-    *while* it flashes stays readable.
-
-    The ink is black and that is a measurement, not a preference: white on the
-    green this screen used to use is 2.25:1, which is below even the large-text
-    floor, on the single most important frame the product has. Black on the
-    green it uses now is 10.79:1.
-
-    The shape is a circle — `shapes.FOR_TONE`'s judgement, not this file's. A
-    dose waiting for you is the machine doing its job, and spending the caution
-    level on the most ordinary event in the device's life would teach somebody
-    to ignore triangles three times a day forever.
-
-    Nothing is passed in. Everything on this frame comes off `health`, which is
-    what fixes a real bug: the old screen took a loose tray and time, and
-    releasing one of two waiting doses painted a green panel naming the tray of
-    a dose twelve hours away.
+    Nothing else is on this frame but the time the dose was due for and how much
+    of its window is left. There is no tray number, here or anywhere else on
+    this panel: every hopper drops into the same cup, so which one it came from
+    is a fact about the inside of the machine and never a thing the person in
+    front of it has to know.
     """
     theme = _palette(canvas, theme)
-    ground, mark = ("BLACK", "DUE") if beat else ("DUE", "BLACK")
-    _flood(canvas, theme, ground)
-    ink = theme[mark]
-    _hero_shape(canvas, Shape.SAFE, ink)
+    _frame(canvas, health, theme)
+    canvas.rect(0, HERO_Y, W, HERO_H, theme["INK"])
+
+    # Brighter and darker, not two colours. The box is one object and the beat
+    # is it catching the light; a colour swap would be a second state somebody
+    # has to work out is the same box.
+    lift = theme["TEXT"] if beat else canvas.mix(theme["TEXT"], theme["INK"], 45)
+    canvas.rect(ALARM_X, ALARM_Y, ALARM_BOX, ALARM_BOX, lift)
+    frame_w = max(2, ALARM_BOX // 22)
+    canvas.rect(ALARM_X + frame_w, ALARM_Y + frame_w,
+                ALARM_BOX - 2 * frame_w, ALARM_BOX - 2 * frame_w,
+                theme["RULE"] if beat else canvas.mix(theme["RULE"], theme["INK"], 40))
+
+    if check > 0:
+        checkbox.draw_tick(canvas, ALARM_X, ALARM_Y, ALARM_BOX, theme["OK"],
+                           check, CHECK_STEPS)
 
     when = _clock_text(_field(health, "waiting_at"))
-    _hero_time(canvas, when or "--:--", ink)
-    _window_bar(canvas, health, theme, ink)
-
-    # Two doses owed reads as a stacked silhouette rather than a count. A digit
-    # here would be the third number on the frame and the one nobody needs: the
-    # instruction is the same either way, and the strip already shows both.
-    waiting = _field(health, "waiting", 0)
-    if isinstance(waiting, int) and waiting >= 2:
-        top = HERO_Y + (HERO_H - (2 * HERO_R + 1)) // 2
-        shapes.fill(canvas, SPLIT // 2 - HERO_R // 4, top + HERO_R - HERO_R // 4,
-                    HERO_R, Shape.SAFE,
-                    canvas.mix(theme[ground], theme[mark], 45))
-        shapes.fill(canvas, SPLIT // 2, top + HERO_R, HERO_R, Shape.SAFE, ink)
-
-    _frame(canvas, health, theme, focal=when)
+    _small_centred(canvas, 0, ALARM_Y + ALARM_BOX + ALARM_GAP, W,
+                   when or "--:--", theme["TEXT"], 3)
+    _window_bar(canvas, health, theme,
+                ALARM_Y + ALARM_BOX + ALARM_GAP + ALARM_TIME_H + ALARM_GAP)
 
 
-def _window_bar(canvas: Canvas, health: Health, theme: dict, ink: int) -> None:
+def _window_bar(canvas: Canvas, health: Health, theme: dict, y: int) -> None:
     """How much of the release window is left, as a bar rather than a number.
 
-    This is the first time the deadline has ever reached the panel. It matters
-    because the offer is not open-ended — an untapped dose is recorded missed
-    when the hour runs out — and until now the only place that hour existed was
+    The offer is not open-ended — an untapped dose is recorded missed when the
+    hour runs out — and until this existed the only place that hour appeared was
     in the log afterwards.
 
     Quantised to tenths on purpose. A bar driven by the real remainder would
-    change on every tick and force a 38 ms repaint four times a minute for a
+    change on every tick and force a repaint four times a minute for a
     difference nobody can see; ten steps in an hour is a bar that visibly moves
     and costs ten frames.
     """
     frac = _field(health, "waiting_frac", 0)
     if not isinstance(frac, int) or not 0 < frac <= 10:
         return
-    top = HERO_Y + HERO_H - PAD - SEC_H // 2
-    used = HERO_RW * (10 - frac) // 10
-    canvas.rect(HERO_RX, top, HERO_RW, SEC_H // 2, ink)
-    canvas.rect(HERO_RX + used + 1, top + 1, HERO_RW - used - 2, SEC_H // 2 - 2,
-                theme["DUE"])
+    width = ALARM_BOX
+    left = (W - width) // 2
+    canvas.rect(left, y, width, ALARM_BAR_H, theme["RULE"])
+    # Not green. On this frame green means one thing — the box has been ticked,
+    # the dose is taken — and a green bar draining away beneath an untouched box
+    # would be the same colour saying "done" and "not done yet" on one screen.
+    canvas.rect(left, y, width * frac // 10, ALARM_BAR_H, theme["TEXT_DIM"])
 
 
-def released(canvas: Canvas, health: Health, tray: object = None, *,
-             theme: dict | None = None) -> None:
-    """The pills are in the cup. Blue, a solid circle, and the time it happened.
+def released(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
+    """The pills are in the cup.
 
-    **No longer shown during a release.** `presence` gives that transition no
-    screen of its own: the servo turns and the pills fall in front of the
-    person, so a frame announcing it is the machine reporting something they
-    have just watched happen, and it delays the resting screen they actually
-    want back. Reported from the bench in those words — "어차피 모터가 돌아가니까
-    확인음 정도만 해주면 되고, 차라리 빨리 메인 화면으로 돌아가주는 게 더 중요할
-    듯. 약간 혼란스러움."
-
-    What survives is the colour, in two places that matter more: the strip's
-    mark for that dose turns blue in the resting frame, which is the memory
-    somebody consults tomorrow, and `--selftest` paints this frame full-screen
-    so a person can confirm the panel renders blue at all. That last one is not
-    cosmetic — the BGR bit in `MADCTL` swaps red and blue, and therefore swaps
-    *missed* for *released*, and a whole-panel colour is the only way to see it.
-
-    It also used to lead with the **tray number**, on the reasoning that "which
-    cup" is the entire message once the pills are out. That reasoning belongs to
-    a machine with an outlet per hopper. This one has stacked trays that all
-    fall to one place, so the number answered a question nobody had.
-
-    So the frame keeps its colour and loses its number, and the file's own rule
-    comes back with it: in every state the largest thing on the panel is a
-    clock. This was the last exception to it.
-
-    The time is **now**, not the next dose. Now is a record of the thing that
-    just happened, which is what this frame is; the next dose on a blue screen
-    invites "is another one ready?", and the resting frame that follows in a few
-    seconds already answers that properly, with the pending shape that means it.
-
-    No tick glyph, and none is wanted: the strip in this same frame has already
-    turned that dose's mark blue, which is a better acknowledgement than a
-    symbol because it is the memory the person will consult tomorrow appearing
-    at the moment it becomes true.
-
-    `tray` is still taken. It is what `presence` keys the frame on, so that a
-    second release repaints rather than being mistaken for the first, and it
-    stays in the signature for that even though nothing draws it.
+    **No frame of its own any more, and this one is only reached by the
+    commissioning colour walk.** The release is already answered twice over: the
+    tick is drawn under the finger that asked for it, and the calendar row for
+    that dose is ticked a second later by the ordinary repaint. A screen
+    announcing the release on top of that is the machine reporting something the
+    person has just watched happen, and it delays the calendar they want back —
+    reported from the bench in those words: "차라리 빨리 메인 화면으로
+    돌아가주는 게 더 중요할 듯."
     """
     theme = _palette(canvas, theme)
-    _flood(canvas, theme, "RELEASED")
-    ink = theme["TEXT"]
-    _hero_shape(canvas, Shape.SAFE, ink)
-    _hero_time(canvas, _clock_text(_field(health, "now")) or "--:--", ink)
-    _frame(canvas, health, theme)
+    _calendar_frame(canvas, health, theme)
 
 
-def missed(canvas: Canvas, health: Health, tray: object = None,
-           when: object = None, *, theme: dict | None = None) -> None:
-    """A dose went untaken, or its window closed. Amber, a solid triangle.
+def missed(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
+    """A dose went untaken, or its window closed.
 
-    Deliberately the same skeleton as `due` — shape left, tray under it, time
-    right — so the eye lands in the same places and finds the same two facts.
-    What changed is the colour, the shape and the lightness: the two are 2.16x
-    apart in luminance now, where the frames this replaced were 1.12x apart and
-    therefore all but identical to somebody who cannot use the red-green
-    difference.
+    The calendar, with an amber frame round it for the dwell. The dose itself is
+    already a red cross in its own row, on the day it belongs to — which is a
+    better answer than the full-screen amber panel this replaced, because it
+    says *which* dose without a caption and leaves the rest of the day visible
+    beside it.
 
-    The time is the one it was *due* at, not the time now. This frame is a
-    record of something that did not happen, and the useful question it answers
-    for whoever walks in later is "which one did I miss".
+    The frame is what makes it an event rather than a state. Somebody walking
+    past a panel that has silently grown a cross has no reason to look; a border
+    that was not there a minute ago is what turns the head, and then the thing
+    they turn towards is the calendar rather than a picture of a triangle.
+
+    Red, and the *same* red as the cross inside it — not the amber this state
+    used to flood the panel with. Two borders now exist and they have to be told
+    apart at a glance from across a room: amber means the plan changed, red
+    means a dose did not happen. Tying the border to the mark it is pointing at
+    makes that one fact in one colour instead of two things to learn, and it was
+    a real risk — the amber `MISSED` field colour and the `NEW_PLAN` orange are
+    within a shade of each other on this panel.
     """
     theme = _palette(canvas, theme)
-    _flood(canvas, theme, "MISSED")
-    ink = theme["BLACK"]
-    _hero_shape(canvas, Shape.CAUTION, ink)
-    _hero_time(canvas, _clock_text(when) or "--:--", ink)
-    _frame(canvas, health, theme, focal=_clock_text(when))
-
-
-def schedule(canvas: Canvas, health: Health, trays: object = None, *,
-             theme: dict | None = None) -> None:
-    """A new plan was accepted. Violet, a solid circle, and **which** trays.
-
-    For whoever is holding the phone that sent it. What they need to know is
-    whether the plan that landed is the plan they meant, and on a machine with
-    two hoppers fitted "how many" is 1 or 2 and says almost nothing — while
-    *which* tells the person where the pills go, and makes a schedule naming
-    tray 5 on a two-tray machine visible here and nowhere else in the room.
-
-    It was the count once, and the count was ambiguous on top of being thin: a
-    lone `2` could mean two trays or tray 2. It became a list of tray numbers,
-    which fixed the ambiguity and left the reading — `1 2` is two digits that
-    only mean something to somebody who knows the hoppers are numbered, and
-    nothing at all to somebody who does not read. It is a picture now:
-    `_tray_stack` draws the machine's eight hoppers as they are stacked in the
-    case, green for the ones this plan covers and red for the ones it does not.
-    Where the green is *is* the answer, and it needs no digits.
-
-    The stronger acknowledgement is underneath, in the strip, which has already
-    been rebuilt from the new plan — every mark a pending square at its new
-    time. Showing the plan beats naming it, and now both halves of this frame
-    show it.
-    """
-    theme = _palette(canvas, theme)
-    _flood(canvas, theme, "SCHEDULE")
-    _hero_shape(canvas, Shape.SAFE, theme["BLACK"])
-    _tray_stack(canvas, theme, _tray_set(trays))
-    _frame(canvas, health, theme)
+    _calendar_frame(canvas, health, theme, highlight="FAULT")
 
 
 # ── the machine's own states ────────────────────────────────────────────────
 
-def idle(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
-    """Nothing is happening, which is still worth a frame.
+def idle(canvas: Canvas, health: Health, highlight: bool = False, *,
+         theme: dict | None = None) -> None:
+    """The resting frame, which is now the whole interface.
 
-    A blank panel would save power and is the only thing that cannot age a
-    screen, and it is the wrong answer: a dark panel is indistinguishable from a
-    dead device, and this project has already decided once that that trade is
-    unacceptable. So the resting frame answers the three questions somebody has
-    when they walk past and nothing is flashing — is it alive, is it all right,
-    and when is the next one — and it answers all three without them touching
-    anything.
+    Three days of checkboxes and the status bar. It answers, without anybody
+    touching anything: is it alive, is it all right, did I take last night's, is
+    one coming, and what did I miss. The frame it replaced answered the middle
+    three not at all — it drew the next dose as a large clock and today as a row
+    of coloured shapes, and yesterday existed only in the phone app, which is
+    the one object the person this device is for does not have in their hand.
 
-    The hero shows the **next dose**, not the current time. The bar has the wall
-    clock; putting a second clock in the hero would be two renderings of one
-    fact, and the dose is the thing the machine knows that the wall does not.
-
-    The secondary line is the device's address whenever it has one, and it is
-    permanent. That is a fix rather than a decoration: Chrome on Android does no
-    mDNS, so those four numbers are the only way into the device's own page for
-    about half of everybody who tries — and the frame that used to show them was
-    part of a rotation that dropped it exactly when there was an address to
-    show.
+    `highlight` is the ten seconds after a schedule arrives. It is `True` for a
+    plan that has just landed and it draws an amber border round the calendar —
+    see `calendar.draw`. A violet screen used to take the whole panel to
+    announce that the schedule had changed, which is the wrong way round: the
+    answer to "a new schedule arrived" is to show the new schedule.
     """
     theme = _palette(canvas, theme)
-    canvas.rect(0, HERO_Y, W, HERO_H, theme["INK"])
-    address = _name_text(_field(health, "address"))
-
-    upcoming = _next_upcoming(health)
-    if upcoming is not None:
-        _hero_shape(canvas, Shape.PENDING, theme["MARK_PENDING"])
-        _hero_time(canvas, _clock_text(upcoming.at), theme["TEXT"],
-                   secondary=address, secondary_value=theme["TEXT_DIM"])
-        _frame(canvas, health, theme, focal=upcoming.at)
-        return
-
-    # Nothing left today. The shape loses its tray and re-centres, and the hero
-    # falls back to the wall clock — the panel still has a large time on it, and
-    # the strip underneath says whether the day is done or was never planned.
-    loaded = _field(health, "trays_loaded", 0)
-    if loaded and _day_is_done(health):
-        # 오늘 것을 다 먹었다. 이 패널이 하루 중 가장 오래 서 있는 화면이고,
-        # 그 스무 시간이 회색 네모였다.
-        _hero_smile(canvas, theme["MARK_TAKEN"], theme["INK"])
-    elif loaded:
-        _hero_shape(canvas, Shape.PENDING, theme["TEXT_MUTE"])
-    else:
-        # No prescription at all: an outline, because solid means "we know" and
-        # this machine has nothing to know yet.
-        stack = 2 * HERO_R + 1
-        top = HERO_Y + (HERO_H - stack) // 2
-        shapes.draw(canvas, SPLIT // 2, top + HERO_R, HERO_R, Shape.PENDING,
-                    theme["TEXT_MUTE"], 2)
-    _hero_time(canvas, _clock_text(_field(health, "now")) or "--:--",
-               theme["TEXT"], secondary=address,
-               secondary_value=theme["TEXT_DIM"])
-    _frame(canvas, health, theme)
-
-
-def _day_is_done(health: Health) -> bool:
-    """오늘 것을 **다 먹었나.** 웃어도 되는지를 정하는 값이다.
-
-    "다음이 없다" 로는 모자란다. 오늘 것을 다 걸러도 다음은 없고, 거른 날에 웃는
-    것은 이 기계가 할 수 있는 가장 나쁜 거짓말이다 — 약을 안 먹었는데 화면이 잘했다고
-    말하는 것이라, 그 사람은 자기가 먹었다고 믿게 된다.
-
-    `taken` 만 센다. `unknown` — 장부에 없는 지난 복용 — 도 웃지 않는다. 그것은
-    "안 먹었다" 가 아니라 "모른다" 이고, 모르는 것 위에 웃는 얼굴을 얹는 것은 확신
-    없는 자리에 확신을 그리는 일이다. 이 패널이 외곽선 도형을 남겨 둔 이유와 같다.
-
-    **기계가 안 내민 복용은 안 센다.** 거른 복용에는 두 가지가 있다 — 불이 켜지고
-    소리가 났는데 아무도 안 눌렀거나(`not-released`), 그 한 시간 내내 기계가 꺼져
-    있었거나 시계를 못 믿어서 아예 안 내밀었거나(`window-closed`). 뒤쪽은 사람이
-    거른 것이 아니다. 그것을 사람의 실패로 세면 **상자를 하루 꺼 뒀다는 이유로**
-    웃는 얼굴이 사라지고, 그 다음부터 이 얼굴은 사람이 한 일과 무관해진다.
-
-    띠는 여전히 둘 다 삼각형으로 그린다. 어느 쪽이든 약이 안 나갔고 누군가는 알아야
-    한다 — 얼굴이 답하는 물음("오늘 할 일을 했나")과 띠가 답하는 물음("무슨 일이
-    있었나")이 다를 뿐이다.
-
-    하루가 비어 있으면 웃지 않는다. 처방이 없는 기계와 오늘 것을 끝낸 기계는 다르고,
-    그 둘이 같은 얼굴을 하면 얼굴이 아무것도 말하지 않는 것이 된다. 하루가 통째로
-    안 내밀어진 날도 마찬가지다 — 가져간 것이 하나는 있어야 한다.
-    """
-    day = _field(health, "day", ()) or ()
-    if not any(getattr(d, "state", "") == "taken" for d in day):
-        return False
-    return all(getattr(d, "state", "") == "taken" or not getattr(d, "offered", True)
-               for d in day)
-
-
-def _next_upcoming(health: Health):
-    """The next dose still to come today, off `health.day`.
-
-    Read from the day rather than from `next_tray`/`next_at` so that the hero
-    and the strip cannot disagree about which dose is next — they are drawn from
-    one list, in one frame, and a panel that contradicts itself is worse than
-    one that says less.
-    """
-    try:
-        for dose in health.day:
-            if dose.state == "upcoming":
-                return dose
-    except Exception:  # noqa: BLE001 - a hand-built Health in a test or selftest
-        return None
-    return None
+    _calendar_frame(canvas, health, theme,
+                    highlight="NEW_PLAN" if highlight else "")
 
 
 def blocked(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
@@ -1047,6 +672,17 @@ def pair(canvas: Canvas, health: Health, *, theme: dict | None = None) -> None:
 #: changes — and a bar appeared across the top of it while the code stayed
 #: underneath, which reads as a screen that is half stuck.
 FULL_PANEL = frozenset({"network", "pair"})
+
+#: The frames that show the calendar under the bar, and therefore the frames
+#: whose bottom 204 rows `indicators` may repaint on their own when a dose
+#: settles.
+#:
+#: `due` is deliberately absent and it is the whole reason this set exists. The
+#: alarm covers those rows with a checkbox the size of a hand, so a partial
+#: calendar repaint under it would wipe out the one frame this device exists
+#: for — silently, in the middle of the ten minutes somebody is meant to be
+#: looking at it — because a dose in another column happened to change state.
+CALENDAR = frozenset({"idle", "released", "missed"})
 
 
 #: `Tone` is re-exported because `indicators.py` still speaks in tones when it

@@ -64,13 +64,14 @@ page rather than pretending something is lit.
 from __future__ import annotations
 
 import contextlib
+import functools
 import logging
 import threading
 import time
 from datetime import datetime
 
 from . import config, gpiochip, provisioning
-from .display import bar, make_display, screens, strip, theme
+from .display import bar, calendar, make_display, presence as presence_mod, screens, theme
 from .display.canvas import Tone
 from .display.health import Health
 from .display.presence import Presence
@@ -170,7 +171,7 @@ class LogIndicator(Indicator):
         log.info("indicator: amber — tray %d was missed", tray)
 
     def schedule_accepted(self, trays: object = None) -> None:
-        log.info("indicator: violet — new schedule accepted for tray(s) %s", trays)
+        log.info("indicator: new schedule accepted for tray(s) %s", trays)
 
     def network_needs_setup(self, ssid: str = "") -> None:
         log.info("indicator: cyan — waiting to be put on a network")
@@ -387,7 +388,8 @@ class FittedIndicator(Indicator):
         #: actually goes down the bus. See `_decide`.
         self._canvas = None
         self._bar_key = None
-        self._strip_key = None
+        self._cal_key = None
+        self._highlight_timer: threading.Timer | None = None
         self._night = False
         #: Whether the due frame is currently on its flipped half. Tracked so a
         #: pulse never repaints a frame that already looks like that, which on a
@@ -561,9 +563,13 @@ class FittedIndicator(Indicator):
 
         Two things at once, because the two failures are different: somebody who
         cannot hear it needs the panel to move, and somebody looking away from
-        the panel needs the sound. Neither is the alarm — the tick is far shorter
-        and far faster than any chirp, and the frame is the pulse's lit half held
-        for a moment, so nothing new has to be learned to read either of them.
+        the panel needs the sound.
+
+        The panel's half is now the literal answer to the question the screen
+        was asking: the box that has been blinking under their hand is ticked,
+        stroke by stroke, in green. Nothing new has to be learned — it is the
+        same box, and a tick appearing in a box is the most widely understood
+        picture of "done" this device could have used.
         """
         # 알람을 먼저 비키게 한다. 두 가지가 동시에 해결된다.
         #
@@ -584,7 +590,49 @@ class FittedIndicator(Indicator):
             threading.Thread(
                 target=self._ack_tone, args=(buzzer,),
                 name="snapcare-ack", daemon=True).start()
-        self._beat(True)
+
+        # And the tick is drawn under their finger. On its own thread for the
+        # same reason as the tone: the release must not wait on an animation,
+        # and this runs during the two seconds the servo is already turning — so
+        # the box being ticked and the pill arriving in the cup are one event
+        # rather than a picture followed by a wait.
+        threading.Thread(target=self._draw_tick, name="snapcare-tick",
+                         daemon=True).start()
+
+    #: How long the whole tick takes. Fast enough to read as a stroke of a pen
+    #: rather than a progress bar, and comfortably inside the servo sweep it is
+    #: drawn over.
+    _TICK_S = 0.30
+
+    def _draw_tick(self) -> None:
+        """Animate the alarm's checkbox being ticked, then leave it ticked.
+
+        Never raises and never blocks anything that matters. It is the answer to
+        the press — the gap this fills is the two seconds in which a machine
+        that is working perfectly looks to the person pressing it like a machine
+        that ignored them — but it is still decoration on top of a release that
+        happens with or without a panel.
+
+        Stops the moment the alarm frame is no longer what is standing. A tick
+        drawn onto a calendar, or onto a blocked screen that came up while the
+        finger was still on the glass, would be a green mark in the middle of a
+        frame that means something else entirely.
+        """
+        plan = self._last_plan
+        if plan is None or getattr(plan, "screen", "") != "due":
+            return
+        step = self._TICK_S / screens.CHECK_STEPS
+        for frame in range(1, screens.CHECK_STEPS + 1):
+            if self._stop.is_set() or getattr(self._last_plan, "screen", "") != "due":
+                return
+            try:
+                palette = theme.pack(self._surface(), night=self._night)
+                self._paint(screens.due, *plan.args, palette=palette,
+                            beat=True, check=frame)
+            except Exception:  # noqa: BLE001 - never onto the release path
+                log.debug("could not draw the tick")
+                return
+            self._stop.wait(step)
 
     @staticmethod
     def _ack_tone(buzzer) -> None:
@@ -636,13 +684,12 @@ class FittedIndicator(Indicator):
     def _decide(self) -> None:
         """Ask the policy what belongs on the panel, and push the least of it.
 
-        Three regions, three keys. The bar changes when a subsystem does, the
-        strip when the day does, and the hero when the machine's *state* does —
-        and those move at wildly different rates. A whole frame is 153,600 bytes
-        and 38 ms of bus; the bar's rows alone are 5.8 ms and the strip's 9.0.
-        On a machine sitting idle the overwhelmingly common event is that the
-        minute rolled over and nothing else, and that must not cost a full frame
-        on the loop that also has to hit a scheduled minute.
+        Two regions, two keys. The bar changes when a subsystem does and the
+        calendar when a dose does, and those move at wildly different rates: a
+        whole frame is 153,600 bytes and 38 ms of bus, where the bar's 36 rows
+        are 5.8 ms. On a machine sitting idle the overwhelmingly common event is
+        that the minute rolled over and nothing else, and that must not cost a
+        full frame on the loop that also has to hit a scheduled minute.
         """
         health = self._health
         plan = self.presence.tick(health)
@@ -651,7 +698,7 @@ class FittedIndicator(Indicator):
         if not self.display:
             return
         palette = theme.pack(self._surface(), night=night)
-        bar_key, strip_key = bar.key(health), strip.key(health)
+        bar_key, cal_key = bar.key(health), calendar.key(health)
 
         if plan is None:
             if night != self._night:
@@ -668,15 +715,23 @@ class FittedIndicator(Indicator):
             # starts from the truth.
             standing = self._last_plan.screen if self._last_plan else ""
             if standing in screens.FULL_PANEL:
-                self._bar_key, self._strip_key = bar_key, strip_key
+                self._bar_key, self._cal_key = bar_key, cal_key
                 return
             if bar_key != self._bar_key:
                 self._partial(bar.draw, health, palette, 0, bar.BAR_H)
                 self._bar_key = bar_key
-            if strip_key != self._strip_key:
-                self._partial(strip.draw, health, palette,
-                              strip.STRIP_Y, strip.STRIP_H)
-                self._strip_key = strip_key
+            if cal_key != self._cal_key:
+                # Only under a frame that is actually showing the calendar. The
+                # alarm covers those 204 rows with a checkbox the size of a
+                # hand, and painting a day's doses into the middle of it would
+                # be the one frame this device exists for being wiped out by a
+                # dose settling in another column.
+                if standing in screens.CALENDAR:
+                    self._partial(
+                        functools.partial(calendar.draw,
+                                          highlight=self._standing_highlight()),
+                        health, palette, calendar.CAL_Y, calendar.CAL_H)
+                self._cal_key = cal_key
             return
 
         screen_fn = getattr(screens, plan.screen, None)
@@ -686,7 +741,27 @@ class FittedIndicator(Indicator):
             return
         self._last_plan = plan
         self._paint(screen_fn, *plan.args, palette=palette)
-        self._bar_key, self._strip_key, self._night = bar_key, strip_key, night
+        self._bar_key, self._cal_key, self._night = bar_key, cal_key, night
+
+    def _standing_highlight(self) -> str:
+        """The border the calendar is currently wearing, if any.
+
+        A band repaint has to know: the border is part of the calendar, so a
+        partial redraw that did not know about it would quietly take it off the
+        panel the first time a dose settled inside the ten seconds — which is
+        exactly when somebody is looking at it.
+
+        Read off the standing plan rather than kept as a second flag, so there
+        is one answer to "is the highlight on" and the policy owns it.
+        """
+        plan = self._last_plan
+        if plan is None:
+            return ""
+        if plan.screen == "missed":
+            return "FAULT"
+        if plan.screen == "idle" and len(plan.args) > 1 and plan.args[1]:
+            return "NEW_PLAN"
+        return ""
 
     def _repaint_last(self, health, palette, night: bool) -> None:
         """Redraw whatever is up, in the palette it should now be in."""
@@ -694,7 +769,7 @@ class FittedIndicator(Indicator):
         screen_fn = getattr(screens, plan.screen, None) if plan else None
         if screen_fn is not None:
             self._paint(screen_fn, *plan.args, palette=palette)
-        self._bar_key, self._strip_key = bar.key(health), strip.key(health)
+        self._bar_key, self._cal_key = bar.key(health), calendar.key(health)
         self._night = night
 
     def _surface(self):
@@ -794,21 +869,47 @@ class FittedIndicator(Indicator):
         self._signal("missed", tray=tray, at=hhmm(when))
 
     def schedule_accepted(self, trays: object = None) -> None:
-        log.info("indicator: violet — new schedule accepted for tray(s) %s", trays)
+        """A new plan arrived. Show it — do not announce it.
+
+        This used to put a violet screen over the panel for a dwell: a picture
+        whose entire message was that the picture underneath it had changed. The
+        calendar has already been rebuilt from the new plan by the time this is
+        called, so the answer was on the glass the whole time and the
+        announcement was covering it up.
+
+        What happens instead is a border round the calendar for ten seconds —
+        `presence.PLAN_HIGHLIGHT_S` — which says *that* something changed while
+        leaving *what* changed visible underneath it.
+
+        `trays` is still accepted and still logged, and no longer reaches the
+        panel. Which hopper a dose comes out of is a fact about the inside of
+        this machine: every tray drops into the same cup, so the number means
+        nothing to the person in front of it and it is not on the screen any
+        more, here or anywhere else.
+        """
+        log.info("indicator: new schedule accepted for tray(s) %s", trays)
         self._showing = Tone.SCHEDULE
-        # **Which** hoppers the new plan covers, not how many.
-        #
-        # This screen answers whoever sent the schedule, and what they need to
-        # know is whether the plan that landed is the plan they meant. On a
-        # two-tray machine "how many" is 1 or 2 and says almost nothing; "which"
-        # tells the person where the pills go, and a schedule that arrives
-        # naming tray 5 on a two-tray machine is visible here and nowhere else
-        # in the room.
-        #
-        # It also stops the number lying. Both callers used to pass nothing, so
-        # this fell back to the machine's own tray count — a confident `8` on a
-        # frame whose whole job is to describe the schedule.
-        self._signal("schedule", trays=_tray_tuple(trays))
+        self._signal("schedule")
+        # The border has to come *off* on time as well as go on, and nothing
+        # else would wake this loop for ten seconds: the scheduler tick is every
+        # fifteen. One timer, replacing any still pending, so a burst of
+        # schedules does not leave a queue of repaints behind it.
+        self._retime_highlight(presence_mod.PLAN_HIGHLIGHT_S + 0.2)
+
+    def _retime_highlight(self, delay: float) -> None:
+        """Repaint once, `delay` from now, to take the new-plan border off."""
+        timer = self._highlight_timer
+        if timer is not None:
+            timer.cancel()
+        self._highlight_timer = threading.Timer(delay, self._expire_highlight)
+        self._highlight_timer.daemon = True
+        self._highlight_timer.start()
+
+    def _expire_highlight(self) -> None:
+        try:
+            self._decide()
+        except Exception:  # noqa: BLE001 - a border is never worth a traceback
+            log.debug("could not repaint when the new-plan border expired")
 
     def network_needs_setup(self, ssid: str = "") -> None:
         log.info("indicator: cyan — waiting to be put on a network")
@@ -921,6 +1022,13 @@ class FittedIndicator(Indicator):
         """
         self._stop.set()
         self._alerting.clear()
+        # Cancelled before the panel is closed, not after: a timer that fires
+        # into a shut display is a traceback on a thread nobody is reading, in
+        # the middle of a shutdown that was going perfectly well.
+        timer = self._highlight_timer
+        if timer is not None:
+            timer.cancel()
+            self._highlight_timer = None
         if self._thread:
             self._thread.join(timeout=2)
         for name, part in (("display", self.display), ("buzzer", self.buzzer)):

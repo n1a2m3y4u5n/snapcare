@@ -59,6 +59,7 @@ from __future__ import annotations
 
 import logging
 import time
+from dataclasses import replace
 
 from .. import config
 from .canvas import Rgb565
@@ -194,16 +195,29 @@ def run(interactive: bool = True, speed_hz: int | None = None,
 
 
 def _demo_health() -> Health:
-    """A machine mid-morning with a dose taken and one to come."""
-    from .health import Dose  # noqa: PLC0415
+    """A machine mid-morning, with all three checkbox states on the panel.
 
+    A tick, a cross and an empty box, and a yesterday that is not empty — this
+    is the frame somebody is being asked "is the picture right", so every mark
+    the calendar can draw has to be on it. A bench fixture showing three
+    identical empty boxes proves the panel lights up and nothing else.
+    """
+    from .health import MONTHS, Day, Dose  # noqa: PLC0415
+
+    day = (Dose(tray=1, minutes=480, at="08:00", state="taken"),
+           Dose(tray=3, minutes=780, at="13:00", state="missed"),
+           Dose(tray=1, minutes=1200, at="20:00", state="upcoming"))
+    yesterday = tuple(replace(dose, state="taken") for dose in day)
+    labels = (f"{MONTHS[7]} 04", f"{MONTHS[7]} 05", f"{MONTHS[7]} 06")
     return Health(
         dispensing=True, known=True, wifi="online", clock_source="ntp",
         address="192.168.1.42", now="09:41", trays_loaded=2,
         power="ok", cell="ok", storage="ok", relay="connected",
-        day=(Dose(tray=1, minutes=480, at="08:00", state="taken"),
-             Dose(tray=3, minutes=780, at="13:00", state="upcoming"),
-             Dose(tray=1, minutes=1200, at="20:00", state="upcoming")),
+        day=day,
+        days=(Day(label=labels[0], date="26-08-04", today=False, doses=yesterday),
+              Day(label=labels[1], date="26-08-05", today=True, doses=day),
+              Day(label=labels[2], date="26-08-06", today=False,
+                  doses=tuple(replace(dose, state="upcoming") for dose in day))),
     )
 
 

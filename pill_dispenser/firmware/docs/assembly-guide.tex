@@ -583,26 +583,29 @@ its mass, and the shape means the same thing to everybody:
 day is a warning they stop reading.
 
 \vspace{2mm}
-\noindent\textbf{\sffamily The frame is three bands, and they never move.} A
-status bar across the top carries seven fixed slots \textemdash{} wifi, relay,
-clock, tray, power, coin cell, SD card \textemdash{} each an icon with a solid
-severity shape under it, plus the wall clock. It never reorders and never
-reflows, because a row you cannot learn is a row you have to read. An empty
-field draws a dim icon and \emph{no} mark: absence is not a fault and is
-certainly not a tick.
+\noindent\textbf{\sffamily The frame is two bands, and they never move.} A
+status bar across the top carries six fixed slots \textemdash{} wifi, relay,
+clock, tray, power, SD card \textemdash{} each an icon drawn in the colour of its
+own state, plus the date and the wall clock. It never reorders and never
+reflows, because a row you cannot learn is a row you have to read. A subsystem
+that has said nothing keeps a grey icon: absence is not a fault and is certainly
+not a tick.
 
-The middle band is the one dose that matters, with the time as the largest thing
-on the panel and the tray number under the shape. Below it, a strip carries the
-whole day: one solid mark per dose with its time under it, and a white divider
-showing where you are. Taken is a blue circle, waiting a green circle, missed an
-amber triangle, still to come a steel square \textemdash{} so ``did I take the
-eight o'clock one'' is answered by looking.
+Everything below it is a calendar \textemdash{} yesterday, today and tomorrow,
+side by side, each dose a checkbox with its time beside it. A green tick is
+taken, a red cross is missed, an empty grey box has not come round yet. Today is
+the middle column and never moves; its date sits in a pastel red box. So ``did I
+take the eight o'clock one'' is answered by looking, for three days at once, and
+so is ``did I take last night's'' \textemdash{} which is the question a pill box
+is actually asked.
 
-The device's IP address sits permanently under the time. That matters more than
-it sounds: Chrome on Android cannot resolve \code{pilldispenser.local}, so those
-four numbers are the only way in for about half of everybody who tries \textemdash{}
-and the screen that used to show them was part of a rotation that dropped it
-exactly when there was an address to show.
+There are no tray numbers anywhere on the panel. Every hopper drops into the
+same cup, so which one a dose came from is a fact about the inside of the
+machine; it is in the app and in the log, where somebody is loading the hoppers.
+
+When a dose comes due the calendar is covered by one checkbox the size of a
+hand, blinking. Touching the glass draws a green tick into it while the servo
+turns, so the answer to the press and the pill arriving are one event.
 
 \vspace{2mm}
 \noindent\textbf{\sffamily A tap anywhere releases a dose that is due.} There are

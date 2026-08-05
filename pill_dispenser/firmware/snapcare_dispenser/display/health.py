@@ -24,7 +24,7 @@ can only draw them.
 
 One problem at a time
 ---------------------
-`problem` is a single slug and never a list. The hero band has room for one
+`problem` is a single slug and never a list. The `blocked` frame has room for one
 cause, and a person handed three faults acts on none of them. So the choice of
 which one to show is made here, once, rather than by whichever screen is up.
 
@@ -121,6 +121,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, replace
+from datetime import timedelta
 
 from .. import config, rtc, soc
 from .shapes import Shape
@@ -152,7 +153,7 @@ _RELAY_FAULTS = ("offline", "retrying", "unsupported", "incompatible")
 
 @dataclass(frozen=True)
 class Dose:
-    """One dose in today's plan, as the schedule band draws it.
+    """One dose on one day, as the calendar draws it.
 
     Small, frozen and made of nothing but a nullable int, an int and two short
     strings, because a tuple of these rides inside `Health` and is compared for
@@ -189,6 +190,50 @@ class Dose:
     #: 그런데 "오늘 다 먹었다" 를 판단할 때는 갈려야 한다. 기계가 안 내민 것을 사람의
     #: 실패로 세면, 상자를 하루 꺼 뒀다는 이유로 웃는 얼굴이 사라진다.
     offered: bool = True
+
+
+#: The month names the calendar's date line is drawn with, January first.
+#:
+#: Written out here rather than taken from `strftime`, and that is not
+#: reinvention. `%b` is locale-dependent — a Pi whose LANG is not English gives
+#: back a name the 5x7 face has no glyphs for, and the panel would draw a row of
+#: question marks on a device that is otherwise perfectly configured. The face
+#: has capitals and digits and nothing else, so the vocabulary a date can use is
+#: fixed at build time and belongs where it can be read.
+MONTHS: tuple[str, ...] = ("JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                           "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
+
+
+@dataclass(frozen=True)
+class Day:
+    """One column of the calendar: a date, and what that day's doses did.
+
+    Three of these ride in `Health` and they are compared for equality on every
+    tick, which is why this is frozen and made of two short strings, a bool and
+    a tuple of `Dose` — the same discipline `Dose` itself keeps and for the same
+    reason.
+
+    Yesterday and tomorrow are as real as today here. That is the point of the
+    calendar: "did the evening dose go in last night" is the question a person
+    actually asks a pill box, and until now the panel could not answer it at all
+    — it drew today, and yesterday existed only in the app.
+    """
+
+    #: `AUG 05`, ready to draw. Assembled here rather than in the drawing code
+    #: because it is a fact about the day and because `MONTHS` is here.
+    label: str
+    #: `26-08-04`, the same spelling the status bar uses. Not drawn — it is what
+    #: a test names a column by, and what makes two `Day`s comparable without
+    #: reading their doses.
+    date: str
+    #: Exactly one of the three is true, and it is the middle one. A column that
+    #: does not know whether it is today cannot know whether to draw the
+    #: highlight, and working it out by position is how the highlight ends up on
+    #: the wrong column the day somebody changes the window.
+    today: bool
+    #: That day's doses, ascending by time. Empty for a day with nothing
+    #: scheduled, which is a real answer and not an absence.
+    doses: tuple[Dose, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -301,8 +346,15 @@ class Health:
     #: told us anything yet" apart from "we asked and the answer was nothing" —
     #: the first is the boot screen, the second is a row of absent chips.
     known: bool = False
-    #: Today's doses, ascending by `minutes`. The schedule band's whole input.
+    #: Today's doses, ascending by `minutes`. Kept beside `days` rather than
+    #: derived from it at every call site: "is today finished", "what is next"
+    #: and the presence policy all ask about today and only today, and
+    #: `days[1].doses` spelt out eleven times is eleven chances to write
+    #: `days[0]`. It is the same tuple object as the middle column's.
     day: tuple[Dose, ...] = ()
+    #: Yesterday, today, tomorrow — the calendar's whole input, in that order.
+    #: Today is always the middle one, which is what the highlight is drawn on.
+    days: tuple[Day, ...] = ()
     #: The tray of the *earliest* waiting dose, and its scheduled time. Read
     #: together from one reading of `awaiting_release`, so the due screen cannot
     #: name one dose's tray beside another dose's time — which is exactly what
@@ -488,6 +540,12 @@ def _read(dispenser, network, cloud, display=None) -> Health:
 
     next_tray, next_at = _next_dose(dispenser, at)
 
+    # Read once and used twice: it is `Health.day` on its own, and it is the
+    # middle column of `Health.days`. Two readings would be two chances for the
+    # calendar's today and the policy's today to disagree about a dose that
+    # settled between them, which is a panel arguing with itself.
+    today_doses = _try("today's doses", lambda: _day(dispenser, at, owed), ())
+
     health = Health(
         dispensing=dispensing,
         wifi=wifi,
@@ -503,7 +561,8 @@ def _read(dispenser, network, cloud, display=None) -> Health:
         today=f"{at.year % 100:02d}-{at.month:02d}-{at.day:02d}" if at is not None else "",
         waiting=len(owed),
         known=True,
-        day=_try("today's doses", lambda: _day(dispenser, at, owed), ()),
+        day=today_doses,
+        days=_try("the three days", lambda: _days(dispenser, at, owed, today_doses), ()),
         waiting_tray=soonest.tray if soonest is not None else None,
         waiting_at=_hhmm(soonest.minutes) if soonest is not None else "",
         waiting_frac=_try("the release window",
@@ -585,6 +644,77 @@ def _next_dose(dispenser, at) -> tuple[int | None, str]:
     return upcoming[0], _hhmm(upcoming[1])
 
 
+#: How far either side of today the calendar reaches. One, and the panel is laid
+#: out for exactly three columns — this exists so the arithmetic below says why
+#: it is 3 rather than hiding a literal in a range().
+CALENDAR_REACH = 1
+
+
+def _days(dispenser, at, owed, today_doses) -> tuple[Day, ...]:
+    """Yesterday, today and tomorrow, as the calendar draws them.
+
+    Today is handed in rather than rebuilt, because it has already been computed
+    with the doses that are *owed right now* folded into it — and those cannot
+    be recovered from the schedule or the ledger. A second pass over today would
+    quietly drop the dose somebody is standing in front of.
+
+    The other two are the schedule joined against their own day's ledger.
+    Tomorrow has no ledger and needs none: nothing has happened to a dose that
+    has not come round yet, and `_dose_state` calls the whole of tomorrow
+    `upcoming` because that is what it is.
+
+    Never raises, like everything else here. A day that cannot be worked out is
+    an empty column with its date still on it — a calendar missing a day's doses
+    is worth far more than no calendar.
+    """
+    if at is None:
+        return ()
+
+    days = []
+    for offset in range(-CALENDAR_REACH, CALENDAR_REACH + 1):
+        when = at.date() + timedelta(days=offset)
+        if offset == 0:
+            doses = today_doses
+        else:
+            doses = _try(f"the doses {offset:+d} days from today",
+                         lambda w=when, o=offset: _plan_of(dispenser, w, o), ())
+        days.append(Day(label=f"{MONTHS[when.month - 1]} {when.day:02d}",
+                        date=f"{when.year % 100:02d}-{when.month:02d}-{when.day:02d}",
+                        today=offset == 0, doses=doses))
+    return tuple(days)
+
+
+def _plan_of(dispenser, when, offset: int) -> tuple[Dose, ...]:
+    """One day that is not today: its plan, and the ledger's word on it."""
+    ordinal = when.toordinal()
+    plan = list(dispenser.scheduler.day_plan(ordinal, when.weekday()))
+    outcomes = ({} if offset > 0
+                else _try("that day's ledger",
+                          lambda: dict(dispenser.outcomes_on(ordinal)), {}))
+    fitted = _try("the fitted trays", lambda: set(dispenser.servos.pins), set())
+
+    doses = []
+    for slot, minutes in plan:
+        recorded = str(outcomes.get((slot, minutes), ""))
+        if recorded in ("taken", "missed", "unoffered"):
+            state = "missed" if recorded == "unoffered" else recorded
+            offered = recorded != "unoffered"
+        elif offset > 0:
+            # Tomorrow. Nothing has happened to it and nothing can have.
+            state, offered = "upcoming", True
+        else:
+            # A past day the ledger says nothing about. `unknown`, never
+            # `missed`: the log is bounded, so an old day falling off the end of
+            # it is the machine forgetting rather than the person failing, and
+            # the two must not draw the same.
+            state, offered = "unknown", True
+        doses.append(Dose(tray=slot if slot in fitted else None,
+                          minutes=minutes, at=_hhmm(minutes), state=state,
+                          offered=offered))
+    doses.sort(key=lambda dose: (dose.minutes, dose.tray if dose.tray is not None else -1))
+    return tuple(doses)
+
+
 def _day(dispenser, at, owed) -> tuple[Dose, ...]:
     """Today's doses and what became of each, ascending by time.
 
@@ -623,7 +753,8 @@ def _day(dispenser, at, owed) -> tuple[Dose, ...]:
     # A dose owed right now whose scheduled time is not in today's plan — one
     # that crossed midnight inside its grace window, or one whose course expired
     # while it waited. It is still owed, so it is still drawn; leaving it out
-    # would be the band contradicting the hero about a dose somebody can act on.
+    # would be the calendar contradicting the alarm about a dose somebody can
+    # act on.
     planned = set(plan)
     keys = plan + [key for key in sorted(waiting_keys) if key not in planned]
 

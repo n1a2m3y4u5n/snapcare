@@ -1008,6 +1008,29 @@ class Dispenser:
             self._roll_ledger(self.clock.day_number())
             return dict(self._outcomes)
 
+    def outcomes_on(self, day: int) -> dict[tuple[int, int], str]:
+        """The same thing for any day, not just today. `(tray, minute) -> state`.
+
+        Today comes off the live ledger, which is authoritative and free.
+        Anything else is rebuilt from the event log by the same function that
+        rebuilds it at boot — so a day the panel is showing and a day a restart
+        would restore are the same day, worked out by one piece of code.
+
+        The panel needs this because it draws three days at once and only one of
+        them is today. The alternative was to keep three ledgers in memory, and
+        three copies of a fact that is already on the card is three chances for
+        the panel to show a dose as taken that the log says was missed.
+
+        A day the log no longer reaches comes back empty, which the panel draws
+        as "nothing is known" rather than as a day with nothing in it. That is
+        the honest answer: `_LEDGER_LOOKBACK` lines is a few days on a device
+        with three doses a day and a few hours on one being hammered by a test.
+        """
+        if day == self.clock.day_number():
+            return self.today_outcomes()
+        events = self.store.read_events(limit=_LEDGER_LOOKBACK)
+        return self._outcomes_from(events, day)
+
     @property
     def unfitted_trays(self) -> tuple[int, ...]:
         """Trays the stored schedule names that this machine has no servo for.

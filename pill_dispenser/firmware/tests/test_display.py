@@ -106,9 +106,31 @@ def test_drawing_outside_the_canvas_is_ignored_rather_than_fatal():
 PANELS = [Rgb565(320, 240)]
 
 
+def _dose(at, minutes, state, **over):
+    from snapcare_dispenser.display.health import Dose
+    return Dose(tray=over.pop("tray", 1), minutes=minutes, at=at, state=state,
+                **over)
+
+
+def _days(yesterday=(), today=(), tomorrow=()):
+    """Three columns, the way `health.snapshot` builds them."""
+    from snapcare_dispenser.display.health import Day
+    return (Day(label="AUG 04", date="26-08-04", today=False, doses=yesterday),
+            Day(label="AUG 05", date="26-08-05", today=True, doses=today),
+            Day(label="AUG 06", date="26-08-06", today=False, doses=tomorrow))
+
+
+#: A day with one of each state on it, so a frame drawn from this fixture
+#: exercises every checkbox the calendar can draw.
+_TODAY = (_dose("08:00", 480, "taken"), _dose("13:00", 780, "missed"),
+          _dose("20:00", 1200, "upcoming"))
+
 WELL = Health(dispensing=True, problem="", wifi="online", ssid="SNAPCARE-V5XH",
               address="192.168.1.42", next_tray=3, next_at="20:00",
-              now="12:34", waiting=0)
+              now="12:34", waiting=0, day=_TODAY,
+              days=_days(today=_TODAY,
+                         yesterday=(_dose("08:00", 480, "taken"),),
+                         tomorrow=(_dose("08:00", 480, "upcoming"),)))
 UNWELL = Health(dispensing=False, problem="clock", wifi="offline",
                 ssid="SNAPCARE-V5XH", address="", next_tray=3, next_at="20:00",
                 now="12:34", waiting=0)
@@ -134,12 +156,10 @@ PAIRING = dataclasses.replace(
 
 def render_all(canvas):
     """Every state, as the buffer each one produces."""
-    when = "08:00"
     return {
         "due": _frame(canvas, screens.due, WAITING),
-        "released": _frame(canvas, screens.released, WELL, 3),
-        "missed": _frame(canvas, screens.missed, WELL, 3, when),
-        "schedule": _frame(canvas, screens.schedule, WELL, 2),
+        "released": _frame(canvas, screens.released, WELL),
+        "missed": _frame(canvas, screens.missed, WELL),
         "network": _frame(canvas, screens.network, SETUP),
         "pair": _frame(canvas, screens.pair, PAIRING),
         "idle": _frame(canvas, screens.idle, WELL),
@@ -156,7 +176,7 @@ def _frame(canvas, fn, *args):
 @pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
 def test_every_state_renders_on_every_panel(canvas):
     frames = render_all(canvas)
-    assert len(frames) == 9
+    assert len(frames) == 8
 
 
 def test_no_screen_renders_a_sentence():
@@ -226,14 +246,6 @@ def test_the_pairing_frame_survives_a_card_with_no_qr_encoder(monkeypatch):
     canvas = Rgb565(320, 240)
     screens.pair(canvas, PAIRING)          # must not raise
     assert len(canvas.buffer()) == 320 * 240 * 2
-
-
-def test_a_nonsense_tray_number_is_a_question_mark_not_a_wrong_number():
-    """`?` is in the font and is honest. A truncated `123` renders as a
-    confident, unmissable `12`, and somebody opens hopper 12."""
-    assert screens._tray_text(3) == "3"          # noqa: SLF001
-    for bad in (123, -1, None, True, "x", 3.0):
-        assert screens._tray_text(bad) == "?", bad  # noqa: SLF001
 
 
 def test_every_digit_stands_on_one_line_and_reaches_one_top():
@@ -509,138 +521,310 @@ def _pixels(canvas):
     return raw
 
 
-# ── 배출 확인 화면 ──────────────────────────────────────────────────────────
+# ── 달력: 사흘, 그리고 체크박스 ─────────────────────────────────────────────
+
+def _below_the_bar(canvas):
+    """The pixels the calendar or the alarm owns — everything under the bar.
+
+    Every green on this panel is not a tick: the status bar draws its healthy
+    icons in the same `OK` green, and a test that swept the whole frame for it
+    would pass on a machine whose WiFi chip is green and whose calendar is
+    empty. Which is the wrong question asked confidently.
+    """
+    from snapcare_dispenser.display import bar
+
+    return _pixels(canvas)[bar.BAR_H * canvas.width:]
+
+
+def test_the_window_keeps_the_end_of_the_day():
+    """여덟 줄이 넘는 하루에서 **무엇을 버리는가**는 판단이고, 여기 적어 둔다.
+
+    기본은 뒤쪽 여덟이다. 저녁에 패널을 보는 사람이 찾는 것은 남은 복용이지 아침에
+    끝난 것이 아니다.
+    """
+    from snapcare_dispenser.display import calendar
+
+    day = tuple(_dose(f"{h:02d}:00", h * 60, "taken") for h in range(6, 18))
+    assert len(day) == 12
+    start, below = calendar.window(day)
+    assert (start, below) == (4, 0), "하루의 끝이 아니라 앞을 잡았다"
+
+    # 여덟 이하는 그대로 다 그린다.
+    short = day[:8]
+    assert calendar.window(short) == (0, 0)
+    assert calendar.window(day[:3]) == (0, 0)
+
+
+def test_the_window_scrolls_up_to_the_first_dose_that_is_not_taken():
+    """안 먹은 첫 복용이 창 위로 밀려나면 **최소한만** 위로 감는다.
+
+    그 복용이 사람이 실제로 해야 할 일이다 — 거른 아침이거나, 지금 울리고 있는 것.
+    그것을 가린 채 정리된 체크 다섯 개를 보여주는 달력은 없느니만 못하다.
+
+    "안 먹은" 이지 "울리는" 이 아니다. 거른 복용도 봐야 하는 것은 마찬가지고, 울리는
+    것만 따라가는 창은 오늘 아침의 가위표를 저녁의 체크 뒤에 숨긴다.
+    """
+    from snapcare_dispenser.display import calendar
+
+    # 열둘 중 둘째가 안 먹은 것. 뒤쪽 여덟(인덱스 4부터)이면 가려진다.
+    day = [_dose(f"{h:02d}:00", h * 60, "taken") for h in range(6, 18)]
+    day[1] = _dose("07:00", 420, "missed")
+    start, below = calendar.window(tuple(day))
+    assert start == 1, "안 먹은 첫 복용이 화면 밖에 남았다"
+    assert below == 3, "가려진 줄이 있는데 없다고 셌다"
+
+    # 최소한만 감는다 — 안 먹은 것이 뒤쪽 여덟 안에 이미 있으면 창은 안 움직인다.
+    day = [_dose(f"{h:02d}:00", h * 60, "taken") for h in range(6, 18)]
+    day[9] = _dose("15:00", 900, "upcoming")
+    assert calendar.window(tuple(day))[0] == 4, "필요 없는데 위로 감았다"
+
+    # 다 먹은 하루는 감을 이유가 없다.
+    done = tuple(_dose(f"{h:02d}:00", h * 60, "taken") for h in range(6, 18))
+    assert calendar.window(done)[0] == 4
+
 
 @pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
-def test_the_released_frame_says_when_not_which_tray(canvas, monkeypatch):
-    """트레이 번호는 이 기계가 답할 수 없는 질문에 답하고 있었다.
+def test_today_is_the_middle_column_and_the_only_one_highlighted(canvas):
+    """가운데 칸이 오늘이고, 오늘만 파스텔 상자를 쓴다.
 
-    "어느 컵인가" 가 전부인 것은 칸마다 배출구가 있는 기계의 이야기다. 이 빌드는
-    트레이가 위아래로 쌓여 있고 약이 전부 한 곳으로 떨어지므로, 배출 뒤에 뜨는
-    큰 숫자는 앞에 선 사람이 하지도 않은 질문에 답하면서 헷갈리게만 했다.
-
-    같이 지켜지는 것이 하나 더 있다. 이 파일의 규칙은 "어느 상태에서든 화면에서
-    가장 큰 것은 시계" 이고, `released` 가 마지막 예외였다.
+    자리로 정하지 않고 `Day.today` 로 정한다. 자리로 정하면 창을 바꾸는 날 강조가
+    엉뚱한 칸에 붙고, 그것은 화면을 보는 사람이 하루를 잘못 읽는다는 뜻이다.
     """
-    drawn = []
-    monkeypatch.setattr(screens, "_hero_time",
-                        lambda c, text, ink, **kw: drawn.append(("time", text)))
-    monkeypatch.setattr(screens, "_big_number",
-                        lambda c, text, ink: drawn.append(("number", text)))
+    from snapcare_dispenser.display import calendar
 
-    screens.released(canvas, dataclasses.replace(WELL, now="09:14"), 3)
-
-    assert ("time", "09:14") in drawn
-    assert not any(kind == "number" for kind, _ in drawn), \
-        "the tray number is back, and this machine has one cup"
-
-
-# ── 새 일정이 왔을 때 ───────────────────────────────────────────────────────
-
-def _pillar_inks(canvas) -> list[int]:
-    """The colour of pillars 1..8 — **bottom row first**, the way they are numbered.
-
-    Sampled from the pixels rather than from a spy on the drawing helper: the
-    thing this screen has to get right is *which* pillar is green, and a spy on
-    a call that takes a set would pass just as happily with the stack drawn
-    upside down. Indexed by tray number here for the same reason — a test that
-    counted rows from the top would have to be edited to flip the stack, which
-    is exactly the edit it exists to refuse.
-
-    Sampled off-centre, because the middle of a pillar is now its printed
-    number and the number is drawn in a different colour on purpose.
-    """
+    screens.idle(canvas, WELL, theme=theme.pack(canvas))
     pixels = _pixels(canvas)
-    off_centre = screens.HERO_RX + screens.HERO_RW // 2 + 30
-    inks = []
-    for tray in range(1, screens._PILLARS + 1):  # noqa: SLF001
-        index = screens._PILLARS - tray          # noqa: SLF001
-        row = (screens.HERO_Y + screens.PAD + screens._PILLAR_PAD  # noqa: SLF001
-               + index * (screens._PILLAR_H + screens._PILLAR_GAP)  # noqa: SLF001
-               + screens._PILLAR_H // 2)         # noqa: SLF001
-        inks.append(pixels[row * canvas.width + off_centre])
-    return inks
+    pastel = theme.pack(canvas)["TODAY"]
+
+    def head_row(column):
+        y = calendar.HEAD_Y + calendar.HEAD_H // 2
+        left, right = calendar.COL_X(column), calendar.COL_X(column) + calendar.COL_W
+        return [pixels[y * canvas.width + x] for x in range(left, right)]
+
+    assert pastel in head_row(1), "오늘 칸에 강조가 없다"
+    assert pastel not in head_row(0), "어제 칸이 오늘로 그려졌다"
+    assert pastel not in head_row(2), "내일 칸이 오늘로 그려졌다"
 
 
 @pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
-def test_the_schedule_frame_shows_which_trays_as_a_stack(canvas):
-    """개수가 아니라 **어느 칸**이고, 이제 숫자가 아니라 그림이다.
+def test_the_three_dose_states_are_three_different_pictures(canvas):
+    """먹음/거름/아직은 서로 달라야 한다. 색만이 아니라 **모양**이 다르다.
 
-    이 화면은 일정을 보낸 사람에게 하는 답이고, 두 칸짜리 기계에서 "몇 칸" 은 1
-    아니면 2 라 알려주는 것이 거의 없다. 숫자 하나로는 모호하기까지 했다 — `2` 가
-    두 칸인지 2번 칸인지 화면만 봐서는 못 갈랐다.
+    체크와 가위표는 형태가 다르므로 적록색약인 사람도 그대로 읽는다. 이것이 네 개의
+    꽉 찬 도형을 이 그림으로 바꾼 이유의 절반이다.
+    """
+    from snapcare_dispenser.display import checkbox
 
-    번호 목록도 읽어야 한다는 문제가 남아 있었다. 지금은 기계 모양 그대로 여덟 칸을
-    쌓아 놓고, 이번 일정이 쓰는 칸만 초록으로 칠한다. **초록이 어디 있느냐**가
-    답이므로 세어 볼 것도, 읽을 것도 없다.
+    palette = theme.pack(canvas)
+    drawn = {}
+    for state in (checkbox.TAKEN, checkbox.MISSED, checkbox.PENDING,
+                  checkbox.UNKNOWN):
+        canvas.fill(0)
+        checkbox.draw(canvas, 10, 10, 40, state, palette)
+        drawn[state] = bytes(canvas.buffer())
 
-    픽셀에서 읽는다. 위아래가 뒤집힌 스택은 호출을 엿보는 테스트로는 절대 안 잡힌다.
+    assert len({drawn[checkbox.TAKEN], drawn[checkbox.MISSED],
+                drawn[checkbox.PENDING]}) == 3, "두 상태가 같은 그림이다"
+    # 모른다는 것은 안 먹었다가 아니고, 무엇보다 **먹었다가 아니다.**
+    assert drawn[checkbox.UNKNOWN] != drawn[checkbox.TAKEN]
+    assert palette["OK"] not in _pixels(canvas), "모르는 복용에 초록 체크가 그려졌다"
+
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_a_dose_the_ledger_lost_never_draws_a_tick(canvas):
+    """장부가 비어도 초록 체크는 절대 안 그린다.
+
+    `read_events` 는 UTF-8 한 바이트만 깨져도 영영 빈 리스트를 돌려준다. 그 하루를
+    체크로 그리면 이 기계는 증거 없이 "다 드셨습니다" 라고 말하는 것이고, 그것이 이
+    저장소가 아는 가장 나쁜 오류다.
+    """
+    palette = theme.pack(canvas)
+    lost = tuple(_dose(f"{h:02d}:00", h * 60, "unknown") for h in (8, 13, 20))
+    screens.idle(canvas, _idle_of(lost), theme=palette)
+    # 달력 안만 본다. 상태 막대의 아이콘도 같은 초록이고, 그쪽은 이 시험이 묻는
+    # 것이 아니다 — 재려는 것과 다른 것을 재면 통과해도 아무 뜻이 없다.
+    assert palette["OK"] not in _below_the_bar(canvas), \
+        "장부가 없는 하루에 초록 체크가 나타났다"
+
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_hidden_doses_are_said_rather_than_dropped(canvas):
+    """열두 개짜리 하루를 여덟 개짜리로 그려 놓고 가만히 있으면 안 된다.
+
+    조용히 자른 달력은 "그 하루는 여덟 번이었다" 고 말하는 달력이다.
+    """
+    from snapcare_dispenser.display import calendar
+
+    palette = theme.pack(canvas)
+    day = tuple(_dose(f"{h:02d}:00", h * 60, "taken") for h in range(6, 18))
+
+    canvas.fill(0)
+    screens.idle(canvas, _idle_of(day), theme=palette)
+    dotted = _pixels(canvas)
+
+    canvas.fill(0)
+    screens.idle(canvas, _idle_of(day[:8]), theme=palette)
+    plain = _pixels(canvas)
+
+    row = calendar.HEAD_Y + calendar.HEAD_H + calendar.MORE_H // 2
+    left = calendar.COL_X(1)
+    span = range(row * canvas.width + left, row * canvas.width + left + calendar.COL_W)
+    assert any(dotted[i] == palette["TEXT_MUTE"] for i in span), \
+        "가려진 복용이 있는데 아무 말이 없다"
+    assert not any(plain[i] == palette["TEXT_MUTE"] for i in span), \
+        "가릴 것이 없는데 점을 찍었다"
+
+
+def test_the_calendar_never_repaints_over_a_tray_number():
+    """트레이 번호는 이 패널에서 완전히 사라졌고, 다시 새는 길을 막는다.
+
+    번호가 화면에 없다는 것만으로는 모자라다 — `calendar.key` 가 트레이를 비교하면,
+    같은 시각의 같은 계획을 다른 칸에 다시 실은 것만으로 204 줄을 다시 그린다.
+    """
+    from snapcare_dispenser.display import calendar
+
+    one = _idle_of((_dose("08:00", 480, "taken", tray=1),))
+    other = _idle_of((_dose("08:00", 480, "taken", tray=7),))
+    assert calendar.key(one) == calendar.key(other), \
+        "달력이 아직 트레이 번호를 보고 있다"
+
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_the_alarm_is_one_checkbox_that_blinks(canvas):
+    """알람은 한가운데 커다란 체크박스 하나이고, 밝기가 오르내린다.
+
+    색을 뒤집는 것이 아니라 **같은 물체가 빛을 받는 것**이어야 한다. 색이 바뀌면
+    사람은 그것이 같은 상자인지부터 판단해야 하고, 그 판단이 필요한 순간에 이
+    화면은 이미 실패한 것이다.
     """
     palette = theme.pack(canvas)
 
-    screens.schedule(canvas, WELL, (2,))
-    assert _pillar_inks(canvas) == [palette["FAULT"], palette["OK"]] + \
-        [palette["FAULT"]] * 6, "2번 칸 하나짜리 일정이 다른 칸을 켰다"
+    canvas.fill(0)
+    screens.due(canvas, WAITING, theme=palette, beat=False)
+    dark = _pixels(canvas)
+    canvas.fill(0)
+    screens.due(canvas, WAITING, theme=palette, beat=True)
+    lit = _pixels(canvas)
 
-    screens.schedule(canvas, WELL, (1, 2))
-    assert _pillar_inks(canvas) == [palette["OK"]] * 2 + [palette["FAULT"]] * 6
+    assert dark != lit, "박동이 아무것도 안 바꿨다"
+    # 밝기만 다르고 **그림은 같아야 한다.** 실루엣이 달라지면 그것은 같은 상자가
+    # 빛을 받는 것이 아니라 두 개의 다른 그림이고, 사람은 매 박자마다 무엇을 보고
+    # 있는지부터 다시 판단해야 한다.
+    ink = palette["INK"]
+    assert [i for i, px in enumerate(dark) if px != ink] \
+        == [i for i, px in enumerate(lit) if px != ink], "박동이 그림을 바꿨다"
 
-    # 1번이 맨 아래고 8번이 맨 위다. 위아래가 뒤집히면 여기서 걸린다.
-    screens.schedule(canvas, WELL, (8,))
-    assert _pillar_inks(canvas) == [palette["FAULT"]] * 7 + [palette["OK"]]
-    top_row = (screens.HERO_Y + screens.PAD + screens._PILLAR_PAD  # noqa: SLF001
-               + screens._PILLAR_H // 2)         # noqa: SLF001
-    assert _pixels(canvas)[top_row * canvas.width
-                           + screens.HERO_RX + screens.HERO_RW // 2 + 30] \
-        == palette["OK"], "8번 칸이 맨 위가 아니다"
-
-
-@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
-def test_every_pillar_is_numbered_from_the_bottom(canvas, monkeypatch):
-    """칸 번호는 실물처럼 **아래에서 위로** 붙는다.
-
-    이 그림의 값어치는 눈앞의 기계와 그대로 견줄 수 있다는 것 하나다. 번호가 반대로
-    붙은 스택은 볼 때마다 머릿속에서 한 번 뒤집어야 하는 도면이고, 그러면 그림일
-    이유가 없어진다.
-
-    아래에서 위로 읽어 1..8 이 나오는지만 본다 — 색깔은 위 테스트가 본다.
-    """
-    drawn = []
-    original = font.draw
-
-    def spy(c, x, y, text, value, scale=1):
-        drawn.append((y, text))
-        return original(c, x, y, text, value, scale)
-
-    monkeypatch.setattr(font, "draw", spy)
-    screens.schedule(canvas, WELL, (1, 2))
-
-    plate_top = screens.HERO_Y + screens.PAD
-    inside = [(y, text) for y, text in drawn
-              if plate_top <= y < plate_top + screens._PLATE_H]  # noqa: SLF001
-    assert [text for _y, text in sorted(inside, reverse=True)] == \
-        ["1", "2", "3", "4", "5", "6", "7", "8"]
+    # 달력은 덮인다. 이 순간 기계는 보고하는 것이 아니라 **부탁하는 중**이다.
+    from snapcare_dispenser.display import calendar
+    assert "due" not in screens.CALENDAR
+    row = (calendar.ROWS_Y + calendar.ROW_H // 2) * canvas.width + calendar.COL_X(0)
+    assert lit[row] == palette["INK"], "알람 아래로 달력이 비쳤다"
 
 
 @pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
-def test_an_unknown_plan_is_eight_grey_trays_and_not_eight_broken_ones(canvas):
-    """예전에는 호출부가 아무것도 안 넘기면 **기계의 칸 수**가 떴다.
+def test_the_tick_is_drawn_rather_than_appearing(canvas):
+    """누르면 체크가 **그려진다.** 그냥 나타나면 다시 그린 것과 구별이 안 된다.
 
-    두 호출부가 실제로 그랬고, 그래서 일정을 설명해야 할 자리에 `8` 이 자신 있게
-    떠 있었다. 모르면 모른다고 해야 한다 — 그런데 그림에서 "모른다" 를 빨강으로
-    칠하면 이번에는 여덟 칸이 전부 빠졌다는 훨씬 센 주장이 된다. 회색이다.
+    이 애니메이션이 메우는 틈은 2초짜리고, 잘 도는 기계가 사람에게 무시한 것처럼
+    보이는 시간이 정확히 그 2초다.
     """
-    assert screens._tray_set(None) is None       # noqa: SLF001
-    assert screens._tray_set(()) is None         # noqa: SLF001
-    assert screens._tray_set("nonsense") is None  # noqa: SLF001
-    # 이 기계에 없는 칸은 8번으로 끌어다 붙이지 않고 버린다.
-    assert screens._tray_set((9, 0, -1)) is None  # noqa: SLF001
-    assert screens._tray_set((1, 99)) == frozenset({1})  # noqa: SLF001
-
     palette = theme.pack(canvas)
-    screens.schedule(canvas, WELL, None)
-    assert _pillar_inks(canvas) == [palette["TEXT_MUTE"]] * 8
-    assert palette["FAULT"] not in _pillar_inks(canvas)
+    green = palette["OK"]
+
+    counts = []
+    for frame in range(0, screens.CHECK_STEPS + 1):
+        canvas.fill(0)
+        screens.due(canvas, WAITING, theme=palette, beat=True, check=frame)
+        counts.append(sum(1 for px in _below_the_bar(canvas) if px == green))
+
+    assert counts[0] == 0, "누르기도 전에 체크가 있다"
+    assert counts == sorted(counts), "체크가 그려지다가 줄었다"
+    assert counts[-1] > counts[len(counts) // 2] > 0, "한 번에 다 나타났다"
+
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_a_new_plan_marks_the_calendar_instead_of_covering_it(canvas):
+    """보라색 화면은 없어졌다. 바뀐 달력을 보여주고, 10초 동안 테두리를 두른다.
+
+    "새 일정이 왔다" 의 답은 새 일정을 보여주는 것이다. 그것을 가린 채 왔다고
+    말하는 화면은 순서가 거꾸로다.
+    """
+    palette = theme.pack(canvas)
+    assert not hasattr(screens, "schedule"), "보라색 화면이 아직 남아 있다"
+
+    canvas.fill(0)
+    screens.idle(canvas, WELL, False, theme=palette)
+    plain = _pixels(canvas)
+    canvas.fill(0)
+    screens.idle(canvas, WELL, True, theme=palette)
+    marked = _pixels(canvas)
+
+    assert plain != marked
+    assert palette["NEW_PLAN"] in marked
+    assert palette["NEW_PLAN"] not in plain
+
+    # 테두리만 다르다: 안쪽 달력은 두 프레임에서 똑같아야 한다.
+    from snapcare_dispenser.display import calendar
+    row = calendar.ROWS_Y + calendar.ROW_H // 2
+    inside = slice(row * canvas.width + 4, row * canvas.width + canvas.width - 4)
+    assert plain[inside] == marked[inside], "테두리가 달력 안까지 바꿨다"
+
+
+def test_the_snapshot_reads_three_days_and_yesterday_from_the_ledger(
+        dispenser, clock):
+    """어제 칸은 지어내는 것이 아니라 **장부에서** 온다.
+
+    오늘 장부는 자정에 비워지므로, 어제를 그리려면 이벤트 로그를 다시 읽어야 한다 —
+    `Dispenser.outcomes_on` 이 그 일을 하고, 부팅 때 쓰는 것과 같은 함수다. 두 벌로
+    나뉘면 패널이 보여주는 하루와 재시작이 복원하는 하루가 갈린다.
+
+    로그가 닿지 않는 날은 빈 칸이 아니라 "모른다" 다. 그 둘을 같게 그리면 기계가
+    기억하지 못하는 것과 그날 약이 없었던 것이 한 그림이 된다.
+    """
+    from snapcare_dispenser import sc1
+    from snapcare_dispenser.display import health as health_mod
+
+    dispenser.set_schedule(sc1.decode_any_schedule("SC1*W*1:0800.2000-127-000"))
+    snap = health_mod.snapshot(dispenser)
+
+    assert len(snap.days) == 3, "달력은 사흘이다"
+    yesterday, today, tomorrow = snap.days
+    assert (yesterday.today, today.today, tomorrow.today) == (False, True, False)
+    assert today.doses is snap.day, "오늘 칸과 health.day 가 다른 목록이다"
+
+    # 날짜는 그릴 수 있는 모양으로 온다 — 5x7 얼굴에는 소문자가 없다.
+    assert today.label.startswith(health_mod.MONTHS[clock.now().month - 1])
+    assert today.label.split()[1] == f"{clock.now().day:02d}"
+
+    # 어제 것은 장부에 아무것도 없으므로 "모른다" 이지 "안 먹었다" 가 아니다.
+    assert {dose.state for dose in yesterday.doses} == {"unknown"}
+    # 내일 것은 전부 앞으로 올 것이다. 일어나지 않은 일에 대한 기록은 없다.
+    assert {dose.state for dose in tomorrow.doses} == {"upcoming"}
+
+
+def test_the_new_plan_border_expires_on_its_own():
+    """10초는 정책이 시계로 재고, 무언가가 지워 주기를 기다리지 않는다.
+
+    지워 주는 쪽에 맡기면 안 온 이벤트 하나가 패널에 테두리를 영원히 남긴다.
+    """
+    from snapcare_dispenser.display.presence import PLAN_HIGHLIGHT_S, Presence
+
+    clock = [1000.0]
+    policy = Presence(monotonic=lambda: clock[0])
+    health = _idle_of((_dose("08:00", 480, "upcoming"),))
+
+    policy.tick(health)
+    policy.event("schedule")
+    plan = policy.tick(health)
+    assert plan is not None and plan.screen == "idle"
+    assert plan.args[1] is True, "새 일정이 달력을 표시하지 않았다"
+
+    clock[0] += PLAN_HIGHLIGHT_S - 0.5
+    assert policy.tick(health) is None, "10초 안에 테두리가 사라졌다"
+
+    clock[0] += 1.0
+    plan = policy.tick(health)
+    assert plan is not None and plan.args[1] is False, "테두리가 10초를 넘겼다"
 
 
 # ── the bar's date ──────────────────────────────────────────────────────────
@@ -754,125 +938,11 @@ def test_the_when_block_keeps_clear_of_the_rule():
     assert bar.DATE_Y + bar.DATE_H == bar.CLOCK_Y + bar.CLOCK_H
 
 
-# ── 하루가 끝난 얼굴 ────────────────────────────────────────────────────────
-
 def _idle_of(day, **over):
     base = dict(known=True, dispensing=True, wifi="online", relay="connected",
                 clock_source="ntp", cell="ok", power="ok", storage="ok",
                 trays_loaded=3, prescribed=True, now="22:40", today="26-08-04")
     base.update(over)
-    return Health(day=day, **base)
+    return Health(day=day, days=_days(today=day), **base)
 
 
-def _dose(at, minutes, state):
-    from snapcare_dispenser.display.health import Dose
-    return Dose(tray=1, minutes=minutes, at=at, state=state)
-
-
-@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
-def test_a_finished_day_does_not_look_like_a_waiting_one(canvas):
-    """오늘 것을 다 먹은 화면과 아직 남은 화면이 달라야 한다.
-
-    이 프레임이 하루 중 가장 오래 서 있다 — 복용은 서너 번이고 나머지 스무 시간은
-    이것이 떠 있다. 그 스무 시간 동안 부엌에 서 있던 그림이 회색 네모였고, 그것은
-    등급이 아니라는 것을 말하려고 등급의 모양을 빌려 쓴 것이라 보는 사람에게는
-    "무언가 대기 중" 으로 읽혔다.
-    """
-    done = (_dose("07:00", 420, "taken"), _dose("12:00", 720, "taken"))
-    waiting = (_dose("07:00", 420, "taken"), _dose("23:00", 1380, "upcoming"))
-
-    assert _frame(canvas, screens.idle, _idle_of(done)) \
-        != _frame(canvas, screens.idle, _idle_of(waiting))
-
-
-@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
-def test_the_machine_does_not_smile_at_a_missed_day(canvas):
-    """이 기계가 할 수 있는 가장 나쁜 거짓말이다.
-
-    "다음이 없다" 로는 웃을 근거가 안 된다 — 오늘 것을 다 걸러도 다음은 없다. 약을
-    안 먹었는데 화면이 잘했다고 말하면 그 사람은 자기가 먹었다고 믿게 된다.
-
-    `unknown` 도 웃지 않는다. 장부에 없는 지난 복용은 "안 먹었다" 가 아니라 "모른다"
-    이고, 모르는 것 위에 웃는 얼굴을 얹는 것은 확신 없는 자리에 확신을 그리는 일이다.
-    """
-    done = (_dose("07:00", 420, "taken"), _dose("12:00", 720, "taken"))
-    smiling = _frame(canvas, screens.idle, _idle_of(done))
-
-    for spoilt in ("missed", "unknown"):
-        day = (_dose("07:00", 420, "taken"), _dose("12:00", 720, spoilt))
-        assert _frame(canvas, screens.idle, _idle_of(day)) != smiling, spoilt
-
-
-@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
-def test_an_empty_day_is_not_a_finished_day(canvas):
-    """처방이 없는 기계와 오늘 것을 끝낸 기계는 다르다.
-
-    둘이 같은 얼굴을 하면 그 얼굴이 아무것도 말하지 않는 것이 된다 — 공장 초기화
-    직후의 기계가 하루를 잘 마친 것처럼 보인다.
-    """
-    done = (_dose("07:00", 420, "taken"),)
-    assert _frame(canvas, screens.idle, _idle_of(())) \
-        != _frame(canvas, screens.idle, _idle_of(done))
-
-
-def test_the_smile_stays_inside_its_column():
-    """왼쪽 칸 밖으로 새면 시각을 덮는다. 시각은 이 프레임에서 가장 큰 요소다."""
-    from snapcare_dispenser.display import screens as scr
-
-    canvas = Rgb565(320, 240)
-    canvas.fill(0)
-    scr._hero_smile(canvas, 0xFFFF, 0x0000)
-
-    raw = bytes(canvas.buffer())
-    for y in range(scr.HERO_Y, scr.HERO_Y + scr.HERO_H):
-        for x in range(scr.SPLIT, 320):
-            i = 2 * (y * 320 + x)
-            assert raw[i] == 0 and raw[i + 1] == 0, f"얼굴이 {x},{y} 까지 샜다"
-
-
-@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
-def test_the_box_being_off_is_not_the_person_missing_a_dose(canvas):
-    """거른 복용에 두 가지가 있고, 얼굴은 그 둘을 갈라야 한다.
-
-    불이 켜지고 소리가 났는데 아무도 안 눌렀으면 그것은 사람이 거른 것이다.
-    그 한 시간 내내 기계가 꺼져 있었거나 시계를 못 믿어서 아예 안 내밀었으면 —
-    `window-closed` — 사람은 거를 기회조차 없었다.
-
-    뒤쪽을 사람의 실패로 세면 **상자를 하루 꺼 뒀다는 이유로** 웃는 얼굴이 사라지고,
-    그 다음부터 이 얼굴은 사람이 한 일과 무관해진다.
-
-    띠는 여전히 둘 다 삼각형으로 그린다. 어느 쪽이든 약이 안 나갔고 누군가는 알아야
-    한다 — 얼굴이 답하는 물음과 띠가 답하는 물음이 다를 뿐이다.
-    """
-    from snapcare_dispenser.display.health import Dose
-
-    taken = Dose(tray=1, minutes=420, at="07:00", state="taken")
-    unoffered = Dose(tray=2, minutes=720, at="12:00", state="missed", offered=False)
-    ignored = Dose(tray=2, minutes=720, at="12:00", state="missed", offered=True)
-
-    # 얼굴의 물음만 잰다. 프레임 전체를 견주면 띠가 그리는 조각 수까지 섞여서,
-    # 얼굴이 맞아도 실패한다 — 재려는 것과 다른 것을 재는 시험이 된다.
-    assert screens._day_is_done(_idle_of((taken, unoffered))), \
-        "기계가 안 내민 복용 때문에 웃음이 사라졌다"
-    assert not screens._day_is_done(_idle_of((taken, ignored))), \
-        "사람이 거른 복용인데도 웃고 있다"
-
-    # 그리고 그 둘은 화면에서 실제로 달라야 한다 — 하루의 모양이 같으므로
-    # 갈리는 것은 얼굴뿐이다.
-    assert _frame(canvas, screens.idle, _idle_of((taken, unoffered))) \
-        != _frame(canvas, screens.idle, _idle_of((taken, ignored)))
-
-
-def test_a_day_the_box_slept_through_does_not_smile():
-    """하나도 안 내민 날은 "다 먹은 날" 이 아니라 "아무 일도 없던 날" 이다.
-
-    가져간 것이 하나는 있어야 한다. 안 그러면 상자를 꺼 둔 하루가 하루를 잘 마친
-    것처럼 보인다.
-    """
-    from snapcare_dispenser.display import screens as scr
-    from snapcare_dispenser.display.health import Dose
-
-    slept = (Dose(tray=1, minutes=420, at="07:00", state="missed", offered=False),
-             Dose(tray=2, minutes=720, at="12:00", state="missed", offered=False))
-    assert not scr._day_is_done(_idle_of(slept))
-    assert scr._day_is_done(_idle_of((Dose(tray=1, minutes=420, at="07:00", state="taken"),)))

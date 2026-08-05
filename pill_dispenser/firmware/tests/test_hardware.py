@@ -69,6 +69,15 @@ class SpyScreens:
         self.extras = []
 
     def __getattr__(self, name):
+        # The module's constants come from the real module. `screens` is not
+        # only a set of frames — `FULL_PANEL` and `CALENDAR` are what the
+        # painter consults to decide whether a band may be repainted on its own
+        # — and a spy that answered those with a function let a partial repaint
+        # decision be taken against nothing at all.
+        if name.isupper():
+            from snapcare_dispenser.display import screens as real  # noqa: PLC0415
+            return getattr(real, name)
+
         # `theme` is keyword-only and swallowed: every real screen takes the
         # packed palette, and what this spy is here to record is which frame was
         # asked for and with what facts, not what colour it came out.
@@ -125,8 +134,16 @@ class FakeBuzzer:
 # ── the vocabulary ──────────────────────────────────────────────────────────
 
 def test_each_event_paints_its_own_screen(screens):
-    """Carried over from the Arduino build's colours unchanged, so somebody who
-    has used one device understands the other."""
+    """Two of the five events have no screen of their own any more, and both
+    absences are the point.
+
+    A **release** never had one: it happens in front of the person, so a frame
+    announcing it delays the one they want back.
+
+    A **new schedule** used to take the whole panel in violet to say the
+    calendar had changed. It marks the calendar instead — same screen, amber
+    border — so what lands on the panel is the plan itself rather than a picture
+    of the fact that a plan arrived."""
     display = FakeDisplay()
     indicator = FittedIndicator(display=display, buzzer=None)
 
@@ -136,15 +153,28 @@ def test_each_event_paints_its_own_screen(screens):
     indicator.schedule_accepted()
     indicator.clear()
 
-    # 배출은 자기 화면을 갖지 않는다 — 눈앞에서 일어나는 일이라 화면이 다시 알릴
-    # 것이 없고, 아래로 떨어져 쉬는 화면이 나온다.
-    assert screens.names == ["due", "idle", "missed", "schedule", "idle"]
-    assert len(display.frames) == 5, "every state has to reach the panel"
+    assert screens.names == ["due", "idle", "missed", "idle"]
+    assert len(display.frames) == 4, "every state has to reach the panel"
+
+    # The last frame is the resting one **wearing its border** — the new plan
+    # marked the calendar rather than replacing it. It arrives on the paint after
+    # the schedule rather than on the schedule itself, and that is right: the
+    # missed notice was still standing, and a dose that went untaken outranks the
+    # news that a plan changed. The calendar underneath is already the new one
+    # either way, which is the whole argument for marking instead of announcing.
+    assert screens.painted[1][1][1] is False, "the resting frame started marked"
+    assert screens.painted[3][1][1] is True, "the new plan did not mark the calendar"
 
 
-def test_the_screen_says_which_tray_and_when(screens):
-    """The one thing the screen can do that the ring could not. A ring on an
-    eight-hopper machine says "a dose" and leaves the person to guess which."""
+def test_the_screen_says_when_and_never_which_tray(screens):
+    """The dose's *time* reaches the screen and its tray never does.
+
+    A ring could say neither. The panel that replaced it said both, and the tray
+    number turned out to be the half nobody could use: every hopper on this
+    build drops into the same cup, so "tray 3" answers a question about the
+    inside of the machine that the person in front of it has not asked. It is
+    still in the log and still in the app, where somebody is loading the
+    hoppers."""
     indicator = FittedIndicator(display=FakeDisplay(), buzzer=None)
 
     indicator.dose_due(2, datetime(2026, 8, 1, 8, 0))
@@ -160,7 +190,9 @@ def test_the_screen_says_which_tray_and_when(screens):
     # 배출은 화면을 갖지 않으므로 그 자리는 쉬는 화면이다.
     assert screens.painted[1][0] == "idle"
     assert screens.painted[2][0] == "missed"
-    assert screens.painted[2][1][1:] == (3, "08:00")
+    # The missed frame is handed the snapshot and nothing else: which dose it
+    # was is already a red cross in its own row on its own day.
+    assert screens.painted[2][1][1:] == ()
 
 
 def test_a_datetime_never_reaches_a_screen_as_one(screens):

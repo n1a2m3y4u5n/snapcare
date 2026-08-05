@@ -32,7 +32,7 @@ So quiet hours move the *pixels*: the three surfaces go darker and the two text
 greys each step down one. That is honest about what the hardware can do, and it
 keeps the invariant that the panel never blanks.
 
-**State tones, mark colours and bar severity colours are never substituted**,
+**State tones, calendar colours and bar severity colours are never substituted**,
 and that is a property of the file rather than a promise: `NIGHT` names only
 structure colours, so there is no path by which a waiting dose at 3 a.m. is
 rendered quietly. It is exactly the dose that must not be.
@@ -41,8 +41,8 @@ from __future__ import annotations
 
 from .canvas import INK_DARK, INK_LIGHT, TONE_RGB, Canvas, Tone
 
-__all__ = ["STRUCTURE", "ABSOLUTE", "TONES", "MARKS", "SEVERITY", "PALETTE",
-           "NIGHT", "pack"]
+__all__ = ["STRUCTURE", "ABSOLUTE", "TONES", "SEVERITY", "CALENDAR",
+           "PALETTE", "NIGHT", "pack"]
 
 #: 8-8-8, the format everything below is written in and the format the contrast
 #: ratios in the comments were computed in.
@@ -91,22 +91,25 @@ ABSOLUTE: dict[str, Rgb] = {
 #: by a shade would break the keyline tether between them.
 TONES: dict[str, Rgb] = {tone.name: rgb for tone, rgb in TONE_RGB.items()}
 
-#: Dose marks on the schedule band. A mark is 21 px on `STRIP_BG`, where a
-#: 320x148 field's contrast budget does not apply, which is why `MARK_TAKEN` is
-#: a lighter blue than the `RELEASED` field it refers to: the field colour on
-#: this plane is 3.1:1, and a taken dose is the mark somebody scans the row for.
-#: `MARK_DUE` and `MARK_MISSED` are the field colours unchanged, because those
-#: two already clear the bar at this size and because the strip mark and the
-#: hero it echoes must be recognisably one thing.
+#: The calendar's own two, and both are measured against `INK` because the
+#: calendar's surface is the panel's black.
 #:
-#: The fifth dose state, `unknown`, is not here: it is `TEXT_MUTE` and it is the
-#: only outlined shape on the panel. Solid means we know; outline means we do
-#: not, and that is what stops an empty ledger claiming a past dose was taken.
-MARKS: dict[str, Rgb] = {
-    "MARK_TAKEN": (58, 150, 255),         # 6.12:1 on STRIP_BG, circle
-    "MARK_DUE": TONE_RGB[Tone.DUE],       # 9.46:1, circle
-    "MARK_MISSED": TONE_RGB[Tone.MISSED],  # 4.85:1, triangle
-    "MARK_PENDING": (122, 138, 164),      # 5.26:1, square
+#: **TODAY** is the box behind the middle column's date, and it is a pastel
+#: rather than a saturated red for one reason: it is not a warning. Every other
+#: red on this device means something is wrong, so today's marker had to be a
+#: red nobody reads as an alarm — and a pale one lets the date sit on it in
+#: black at 9.76:1, where light ink on a saturated red would be 1.79:1 and
+#: illegible. Against the black surface it is 8.87:1, so it carries from a
+#: doorway as a shape before anybody reads the date in it.
+#:
+#: **NEW_PLAN** is the frame drawn round the calendar for ten seconds after a
+#: schedule arrives. Amber, because that is this palette's "somebody should
+#: look" — but a third of the way down from `ATTN` towards the surface, at
+#: 4.31:1, because it is a *notice about a change* and not a fault. It replaced
+#: a violet screen that took the whole panel to say the calendar had changed.
+CALENDAR: dict[str, Rgb] = {
+    "TODAY": (244, 143, 143),             # 8.87:1 on INK, black on it 9.76:1
+    "NEW_PLAN": (196, 118, 32),           # 4.31:1 on INK
 }
 
 #: The status bar's three severity marks, against `BAR_BG`.
@@ -137,7 +140,7 @@ NIGHT: dict[str, Rgb] = {
     "STRIP_BG": (14, 16, 20),
 }
 
-_TABLES = (STRUCTURE, ABSOLUTE, TONES, MARKS, SEVERITY)
+_TABLES = (STRUCTURE, ABSOLUTE, TONES, SEVERITY, CALENDAR)
 
 #: Every name, in one flat namespace, because that is what `pack` returns and a
 #: screen should not have to know which table a colour came from.

@@ -60,7 +60,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from . import (config, envelope, gpiochip, indicators, provisioning, rtc, soc,
@@ -68,7 +68,7 @@ from . import (config, envelope, gpiochip, indicators, provisioning, rtc, soc,
 from .button import TakeDoseButton
 from .clock import Clock
 from .display import Tone, screens, shapes
-from .display.health import Dose, Health, shape_for
+from .display.health import MONTHS, Day, Dose, Health, shape_for
 from .display.shapes import Shape
 from .indicators import make_indicator
 from .servo import TrayServos, make_backend
@@ -425,6 +425,34 @@ def _health(**fields) -> Health:
     return Health(**fixture)
 
 
+def _specimen_day() -> tuple:
+    """One day with all three checkbox states on it, for the questions below.
+
+    Painted rather than snapshotted for the same reason `_health` exists: a
+    commissioning run on a bench has an empty schedule, and every question about
+    a tick, a cross and an empty box would be asked about a column with nothing
+    in it — which a person answers "nothing", correctly, about a panel that is
+    working perfectly.
+    """
+    return (Dose(tray=1, minutes=8 * 60, at="08:00", state="taken"),
+            Dose(tray=2, minutes=13 * 60, at="13:00", state="missed"),
+            Dose(tray=3, minutes=20 * 60, at="20:00", state="upcoming"))
+
+
+def _specimen_days() -> tuple:
+    """Yesterday, today and tomorrow, with today in the middle where it lives."""
+    when = datetime.now().date()
+    days = []
+    for offset in (-1, 0, 1):
+        that = when + timedelta(days=offset)
+        days.append(Day(
+            label=f"{MONTHS[that.month - 1]} {that.day:02d}",
+            date=f"{that.year % 100:02d}-{that.month:02d}-{that.day:02d}",
+            today=offset == 0,
+            doses=_specimen_day() if offset <= 0 else ()))
+    return tuple(days)
+
+
 def _show(report: Report, indicator, screen_fn, *args) -> bool:
     """Paint one screen, and notice if the panel died while it was drawn.
 
@@ -586,9 +614,10 @@ def check_display(report: Report, indicator, interactive: bool) -> None:
                    f"the panel would not give us a canvas to draw on: {exc}")
         return
 
-    # A dose for tray 3 at eight this morning. Both numbers are on the screen,
-    # and a person reading them back is proving the panel, the orientation and
-    # the font in one answer.
+    # Eight this morning, taken; one this afternoon, missed; one this evening
+    # still to come. One calendar column with all three checkbox states on it,
+    # which is what the next four questions are asked about.
+    #
     # Converted here, once. `screens` takes a formatted clock string, not a
     # datetime — handed a datetime it renders `2026-`, which is a panel that is
     # confidently wrong rather than blank. This is the check that asks a person
@@ -596,85 +625,138 @@ def check_display(report: Report, indicator, interactive: bool) -> None:
     # rubbish while it does.
     due_at = indicators.hhmm(
         datetime.now().replace(hour=8, minute=0, second=0, microsecond=0))
+    resting = _health(wifi="online", address="192.168.1.50", next_at="20:00",
+                      known=True, day=_specimen_day(), days=_specimen_days())
 
-    if not _show(report, indicator, screens.due, 3, due_at):
+    if not _show(report, indicator, screens.idle, resting):
         return
-    answer = _ask("a dose for tray 3 is on the screen. Which tray number does "
-                  "it show?", "number/nothing")
+
+    answer = _ask("this is the screen the machine sits on all day. How many "
+                  "columns of dates are on it?", "number/nothing")
     if not answer:
-        report.add("the screen names the tray", SKIP, "not answered")
-    elif answer.isdigit() and int(answer) == 3:
-        report.add("the screen names the tray", PASS)
+        report.add("the calendar reaches the panel", SKIP, "not answered")
     elif _blank(answer) or answer.startswith("n"):
-        report.add("the screen names the tray", FAIL, "the screen is blank",
+        report.add("the calendar reaches the panel", FAIL, "the screen is blank",
                    "the panel is being talked to but is showing nothing — check "
                    "the backlight lead on the LCD, and that DC is on GPIO "
                    f"{config.DISPLAY_DC_GPIO} and not shorted to a neighbour. A "
                    "DC line stuck at one level paints the initialisation "
                    "sequence as pixels or ignores everything")
+    elif _digits(answer) == "3":
+        report.add("the calendar reaches the panel", PASS, "three days")
     else:
-        report.add("the screen names the tray", FAIL, f"it showed {answer!r}",
-                   "if the digit is upside down or half off the edge, "
-                   f"DISPLAY_ROTATION ({config.DISPLAY_ROTATION}°) does not match "
-                   "how the panel is mounted")
+        report.add("the calendar reaches the panel", FAIL,
+                   f"it showed {answer!r} columns where three were painted",
+                   "if a column is half off the edge, DISPLAY_ROTATION "
+                   f"({config.DISPLAY_ROTATION}°) does not match how the panel "
+                   "is mounted")
 
-    # No repaint: this is the frame that is already up, and asking about it
-    # twice costs a question rather than a second 38 ms transfer somebody has to
-    # sit through.
-    _ask_shape(report, "a due dose is drawn as a circle",
-               shapes.FOR_TONE[Tone.DUE],
-               "that same screen — a dose waiting to be taken.")
+    answer = _ask("today's date is in a coloured box. Which of the three "
+                  "columns is it — left, middle or right?", "left/middle/right")
+    if not answer:
+        report.add("today is the middle column", SKIP, "not answered")
+    elif answer.strip().lower().startswith(("m", "c", "2")):
+        report.add("today is the middle column", PASS)
+    else:
+        report.add("today is the middle column", FAIL,
+                   f"it was read back as {answer!r}",
+                   "yesterday, today and tomorrow, in that order — a panel "
+                   "mounted upside down puts them the other way round, and then "
+                   "every dose on it is being read against the wrong day")
 
-    if not _show(report, indicator, screens.missed, 3, due_at):
+    # **This is the BGR check**, and it is the only one left. The bit swaps red
+    # and blue, and blue has left this panel with the frames that used it — so
+    # the evidence is now the cross: a red one drawn blue is a machine whose
+    # colours are transposed, and on this design that is a missed dose reading
+    # as something else entirely.
+    answer = _ask("one dose has a cross in its box instead of a tick. What "
+                  "colour is the cross?", "colour")
+    if not answer:
+        report.add("a missed dose is a red cross", SKIP, "not answered")
+    elif answer.strip().lower().startswith("red"):
+        report.add("a missed dose is a red cross", PASS)
+    elif answer.strip().lower().startswith(("blu", "cy", "purp", "vio")):
+        report.add("a missed dose is a red cross", FAIL,
+                   f"it was read back as {answer!r} — red and blue are swapped",
+                   "the MADCTL BGR bit is wrong for this panel. Every colour on "
+                   "the device is transposed, so a dose nobody took is not "
+                   "reading as one")
+    else:
+        report.add("a missed dose is a red cross", FAIL,
+                   f"it was read back as {answer!r}",
+                   "check `theme.py` against what is on the glass — the cross is "
+                   "drawn in `FAULT`")
+
+    answer = _ask("and a taken dose has a tick. What colour is that?", "colour")
+    if not answer:
+        report.add("a taken dose is a green tick", SKIP, "not answered")
+    elif answer.strip().lower().startswith("gre"):
+        report.add("a taken dose is a green tick", PASS)
+    else:
+        report.add("a taken dose is a green tick", FAIL,
+                   f"it was read back as {answer!r}",
+                   "green is the one colour the BGR bit leaves alone, so this "
+                   "failing while the cross passed points at the palette rather "
+                   "than at the wiring")
+
+    # The alarm. The one frame that covers the calendar, and the one the whole
+    # device exists for: a box the size of a hand, blinking, waiting to be
+    # pressed. A person who cannot see it blink is a person who will not press
+    # it, and this is the only way to find that out.
+    waiting = _health(wifi="online", address="192.168.1.50", known=True,
+                      waiting=1, waiting_tray=3, waiting_at=due_at,
+                      waiting_frac=7, day=_specimen_day(), days=_specimen_days())
+    if not _show(report, indicator, screens.due, waiting):
         return
-    _ask_shape(report, "a missed dose is drawn as a triangle",
-               shapes.FOR_TONE[Tone.MISSED],
-               "the same dose, now missed.")
+    answer = _ask("a dose is now due. What is in the middle of the screen?",
+                  "shape/nothing")
+    if not answer:
+        report.add("the alarm is one large box", SKIP, "not answered")
+    elif _blank(answer):
+        report.add("the alarm is one large box", FAIL,
+                   "nothing on the frame this device exists for",
+                   "the calendar painted and this did not, which is a screen "
+                   "fault rather than a wiring one — the log above has the "
+                   "exception")
+    elif answer.strip().lower().startswith(("box", "squ", "rect", "check", "네모", "상자")):
+        report.add("the alarm is one large box", PASS)
+    else:
+        report.add("the alarm is one large box", FAIL,
+                   f"it was described as {answer!r}",
+                   "an empty checkbox is the whole prompt — if it reads as "
+                   "anything else, nobody knows they are being asked to press it")
+
+    answer = _ask(f"the time on it should be {due_at}. What does it say?",
+                  "time/nothing")
+    if not answer:
+        report.add("the alarm names the dose's time", SKIP, "not answered")
+    elif _digits(answer) == _digits(due_at):
+        report.add("the alarm names the dose's time", PASS, due_at)
+    else:
+        report.add("the alarm names the dose's time", FAIL,
+                   f"it showed {answer!r} where {due_at} was painted",
+                   "this clock comes from the same source the scheduler uses, so "
+                   "a wrong figure here is a device that will dispense at the "
+                   "wrong hour — check the RTC result above")
 
     # The one screen that says the machine will not open a tray at all. A clock
     # nothing has vouched for is the realistic way to get here, and the octagon
     # is the only level that means "this will not get better on its own" — so it
     # is the one shape that must never be mistaken for the other two.
     locked = _health(dispensing=False, problem="clock", wifi="online",
-                     address="192.168.1.50")
-    if not _show(report, indicator, screens.status, locked):
+                     known=True, address="192.168.1.50")
+    if not _show(report, indicator, screens.blocked, locked):
         return
     _ask_shape(report, "a machine that will not dispense is drawn as an octagon",
                shape_for(locked),
                "this machine's clock is not trusted, so no tray will open.")
 
-    # What the device shows for twenty-three hours a day. A blank idle screen is
-    # the failure nobody reports as a failure: the machine looks switched off,
-    # somebody unplugs it, and the dose it would have offered in the morning
-    # never happens.
-    resting = _health(wifi="online", address="192.168.1.50", next_tray=2,
-                      next_at="20:00")
-    if not _show(report, indicator, screens.idle, resting):
-        return
-    answer = _ask("nothing is due; this is the screen the machine sits on all "
-                  "day. What time does it show?", "time/nothing")
-    if not answer:
-        report.add("the idle screen shows the time", SKIP, "not answered")
-    elif _blank(answer):
-        report.add("the idle screen shows the time", FAIL,
-                   "the screen a person sees most of the time is blank",
-                   "a dark panel between doses reads as a machine that is off, "
-                   "and a machine that looks off gets unplugged")
-    elif _digits(answer) == _digits(resting.now):
-        report.add("the idle screen shows the time", PASS, resting.now)
-    else:
-        report.add("the idle screen shows the time", FAIL,
-                   f"it showed {answer!r} where {resting.now} was painted",
-                   "the clock on this screen comes from the same source the "
-                   "scheduler uses, so a wrong figure here is a device that will "
-                   "dispense at the wrong hour — check the RTC result above")
-
     # The setup screen, and the only screen in the firmware with a word on it.
     # Read back against the printed label while somebody is standing here, which
     # is the only moment the two can be compared at all.
     ssid = report.device or config.AP_SSID_PREFIX
-    joining = _health(wifi="hotspot", ssid=ssid, problem="wifi")
-    if not _show(report, indicator, screens.wifi, joining):
+    joining = _health(wifi="hotspot", ssid=ssid, problem="wifi", known=True)
+    if not _show(report, indicator, screens.network, joining):
         return
     answer = _ask("this machine is waiting to be put on a network. Which network "
                   "name is on the screen?", "name/nothing")
@@ -693,25 +775,6 @@ def check_display(report: Report, indicator, interactive: bool) -> None:
                    "a truncated or wrapped SSID is a name somebody types into a "
                    "phone and cannot find — check that the name fits this panel's "
                    "width in screens.py")
-
-    # Green first because it is the one that matters, and because it is the
-    # one colour the BGR bit leaves alone — so a person who reads back
-    # green, then red where amber should be, has named the fault exactly.
-    # Blue and amber are the pair the bit actually swaps, and they are the
-    # pair this device can least afford to confuse.
-    for tone, name, paint in (
-            ("due", "green", (screens.due, 3, due_at)),
-            ("released", "blue", (screens.released, 3)),
-            ("missed", "amber", (screens.missed, 3, due_at)),
-            ("setup", "cyan", (screens.network, joining))):
-        if not _show(report, indicator, *paint):
-            return
-        answer = _ask(f"the screen should be {name}. What colour is it?", "colour")
-        if not answer:
-            report.add(f"the screen shows {tone} as {name}", SKIP, "not answered")
-        elif answer.strip().lower().startswith(name[:3]):
-            report.add(f"the screen shows {tone} as {name}", PASS)
-    
 
     indicator.clear()
 

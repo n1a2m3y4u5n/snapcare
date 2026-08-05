@@ -579,20 +579,24 @@ count of consecutive refused frames beside it, because neither driver *raises*
 on a write failure and a ribbon that works loose used to report perfect health
 for ever. `--display-test` is the way to settle it with your eyes.
 
-### The frame is three bands
+### The frame is two bands
 
 ```
 ┌──────────────────────────────────────────────┐
-│ ▮▮ ▮▮ ▮▮ ▮▮ ▮▮ ▮▮ ▮▮              09:41      │  bar    36 px
+│ ▮▮ ▮▮ ▮▮ ▮▮ ▮▮ ▮▮        26-08-05  14:20     │  bar       36 px
 ├──────────────────────────────────────────────┤
-│   ███                                        │
-│   ███        13:00                           │  hero  148 px
-│    3         192.168.1.42                    │
-├──────────────────────────────────────────────┤
-│   ●      ●      ■      ■                     │  strip  56 px
-│ 08:00  13:00  20:00  22:30                   │
+│    AUG 04    ┃  (AUG 05)  ┃    AUG 06        │
+│  ☑ 08:00     ┃  ☑ 08:00   ┃  ☐ 08:00         │
+│  ☑ 13:00     ┃  ☑ 13:00   ┃  ☐ 13:00         │  calendar 204 px
+│  ☒ 20:00     ┃  ☐ 18:00   ┃  ☐ 18:00         │
+│              ┃  ☐ 22:00   ┃  ☐ 22:00         │
 └──────────────────────────────────────────────┘
 ```
+
+There used to be three, and the middle one — a `hero` showing the next dose as a
+large clock — is gone with the row of coloured shapes that used to sit under it.
+Between them they drew the same dose twice in two vocabularies, and neither
+could say anything about yesterday.
 
 **The bar** is seven fixed slots — wifi, relay, clock, tray, power, cell, card —
 each an icon drawn in the colour of its own state, and the wall clock on the
@@ -607,40 +611,52 @@ and emphatically not a tick — a machine with no relay configured and no RTC
 fitted is a valid build, and three green circles on it would be the bar
 inventing health it has not verified.
 
-**The hero** is the one dose that matters, and its large numerals are always a
-time. There is no frame where the biggest thing on the panel is not a clock. The
-wall clock lives in the bar and the dose lives in the hero, told apart by
-position, permanently.
+**The calendar** is yesterday, today and tomorrow, side by side, each with its
+doses as checkboxes and the time beside each box. Today is the middle column and
+never moves; its date sits in a pastel red box, which is the only red on this
+device that does not mean something is wrong.
 
-**The strip** is the whole day: one solid colour-coded mark per dose with its
-time printed under it, and a white divider showing where you are in it. Taken is
-a blue circle, waiting a green circle, missed an amber triangle, still to come a
-steel square. A past dose the ledger has no entry for is an *outlined* square and
-prints no time — solid means "we know", outline means "we do not", and a
-confident false claim about whether a dose was taken is the worst error this
-codebase recognises.
+**A dose is a checkbox.** A green tick is taken, a red cross is missed, an empty
+grey box has not come round yet. That is the whole vocabulary, and it replaced a
+circle, a triangle, an octagon and a square in four colours — because nothing in
+a kitchen tells you a triangle means "missed", where a box with a tick in it is
+understood by people who cannot read the time beside it. The tick and the cross
+are different *shapes*, so it survives colour blindness for free, which the four
+solid marks did not: two of them differed in hue alone.
 
-**No pictograms inside the shapes.** The old frames drew a hand inside a circle
+A past dose the ledger has no entry for draws as an empty box in the mute grey —
+never a tick. `read_events` legitimately comes back empty after one bad byte on
+the card, and a machine that drew that day as a row of ticks would be telling a
+carer that six doses were taken on the strength of no evidence at all.
+
+**Eight rows a day, and which eight is a decision.** The default window is the
+*last* eight, because the doses near the end of the day are the ones still to
+come — unless the first dose that is not taken falls above that window, in which
+case it scrolls up by the smallest amount that puts it on screen. Hidden rows are
+said with three dots rather than silently dropped.
+
+**No pictograms inside anything.** The old frames drew a hand inside a circle
 and a cup inside another; on the actual glass they were read as a face and a
 skull. A 16x16 glyph scaled to fit inside a triangle's usable area is a smudge at
-any distance worth designing for. The shape is solid now and the numbers beside
-it carry what the picture was failing to.
+any distance worth designing for.
 
-**On the hero and the strip, colour is never the only channel.** Every severity
-is a shape as well — circle safe, triangle caution, octagon will-not-dispense,
-square not-yet — at 59 px on the hero and 21 px on the strip. Roughly one man in
-twelve cannot use the red-green difference, and filled shapes are told apart by
-mass, which survives both that and being across the room.
+**On the calendar, colour is never the only channel.** A tick and a cross are
+different shapes before they are different colours, so the roughly one man in
+twelve who cannot use the red-green difference reads a taken dose from a missed
+one exactly as easily as anybody else. The four solid marks this replaced could
+not say that: `missed` and `upcoming` sat 1.10x apart in lightness and were told
+apart by hue and a silhouette 21 px across.
 
-**On the bar it now is.** The status chips carried the same vocabulary at 13 px
-under each icon, and the icons carry it in their own ink instead: one element
+**On the status bar it is.** The chips carried a circle/triangle/octagon under
+each icon and the icons carry the severity in their own ink instead: one element
 per chip, green/amber/red/grey. The cost is stated rather than hidden — `OK`
 green and `ATTN` amber measure 8.93:1 and 8.99:1 on the bar's plane, which is to
 say they are the same grey, so *fine* and *needs somebody* are told apart by hue
 alone on that row. `FAULT` red is half their luminance and still separates in
-any vision; anything that actually stops the machine floods the hero, where the
-shape vocabulary is intact; and `--selftest` prints the whole row in words. It
-is a real trade and the bar's own docstring argues it at length.
+any vision; anything that actually stops the machine floods the panel below with
+the red octagon, which is the one place the shape vocabulary survives; and
+`--selftest` prints the whole row in words. It is a real trade and the bar's own
+docstring argues it at length.
 
 Two things here were measured rather than judged, and both had shipped wrong:
 
@@ -666,16 +682,21 @@ has used one of these devices understands the other:
 
 | | |
 |---|---|
-| **green, repeating chirp** | a dose is due; touch the screen, or release it in the app |
-| **blue** | released — the pills are in the cup |
-| **amber** | the dose went untaken, or its window closed |
-| **violet** | a new schedule was accepted |
+| **a blinking box, repeating chirp** | a dose is due; touch the screen, or release it in the app |
+| **a green tick** | that dose is taken — drawn under the finger that asked for it |
+| **a red cross, red border** | the dose went untaken, or its window closed |
+| **an amber border** | a new schedule arrived; the calendar under it is already the new one |
 | **cyan, silent** | waiting to be put on a WiFi network |
 | **red** | the machine will not open a tray until somebody fixes something |
 
-Green means "there is a dose you can have"; blue is what follows once somebody
-has released it. The distinction is load-bearing on this build, because nothing
-leaves the hopper until a person asks — green is an offer, not an announcement.
+Green means "this one is done" and nothing else on the panel is green, which is
+why the alarm's countdown bar is grey: a green bar draining away under an
+untouched box would be one colour saying "done" and "not done yet" on one screen.
+
+**The violet screen is gone.** A new schedule used to take the whole panel to
+announce that the calendar underneath had changed, which is the wrong way round.
+The answer to "a new schedule arrived" is to show the new schedule, so the
+calendar is repainted and wears an amber border for ten seconds.
 
 Red is the newest of them and it exists because amber was doing two jobs. "A
 dose was missed" and "this machine has stopped" are the two states the severity
@@ -683,12 +704,15 @@ grammar exists to keep apart, and the only thing separating them was a 2 px
 outline nobody can resolve across a room. Red for stopped is the road-sign
 convention, and the octagon says it again for anybody who cannot use the hue.
 
-**What the screen adds is which tray, what time, and what else today.** A ring on
-an eight-hopper machine says "a dose" and leaves the person to work out which
-one, and an amber ring says nothing about whether the dose it is mourning was
-this morning's or last night's. The hero carries the tray and the hour; the strip
-along the bottom carries the whole day, so "did I take the eight o'clock one" is
-answered by looking rather than by asking somebody.
+**What the screen adds is what time, and what else this week.** A ring says "a
+dose" and nothing about whether the one it is mourning was this morning's or last
+night's. The calendar answers "did I take the eight o'clock one" by being looked
+at, for three days at once.
+
+**No tray numbers, anywhere.** Every hopper on this build drops into the same
+cup, so which one a dose came out of is a fact about the inside of the machine
+and never something the person in front of it has to know. It is still in the
+log, in `/api/status` and in the app, where somebody is loading the hoppers.
 
 **What it must not become is a text display.** The whole device's word inventory
 is `SNAPCARE`, `PASSWORD`, an SSID, a passphrase, an IPv4 address and a `DD-MM` —
@@ -1107,7 +1131,7 @@ firmware/
     daemon.py         the process
     indicators.py     the screen and the buzzer: what the person sees and hears
     soc.py            what the board can tell you about itself: power, storage
-    display/          the panel, the three bands, and the two typefaces
+    display/          the panel, the two bands, and the two typefaces
     button.py         an optional physical switch: take this dose now
     touch.py          the screen as the button — a tap anywhere releases a dose
     rtc.py            whether the clock chip can be believed, whichever is fitted
