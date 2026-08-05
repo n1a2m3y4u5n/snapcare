@@ -538,21 +538,27 @@ def test_the_released_frame_says_when_not_which_tray(canvas, monkeypatch):
 # ── 새 일정이 왔을 때 ───────────────────────────────────────────────────────
 
 def _pillar_inks(canvas) -> list[int]:
-    """The colour of each of the eight pillars, read off the rendered frame.
+    """The colour of pillars 1..8 — **bottom row first**, the way they are numbered.
 
     Sampled from the pixels rather than from a spy on the drawing helper: the
     thing this screen has to get right is *which* pillar is green, and a spy on
     a call that takes a set would pass just as happily with the stack drawn
-    upside down.
+    upside down. Indexed by tray number here for the same reason — a test that
+    counted rows from the top would have to be edited to flip the stack, which
+    is exactly the edit it exists to refuse.
+
+    Sampled off-centre, because the middle of a pillar is now its printed
+    number and the number is drawn in a different colour on purpose.
     """
     pixels = _pixels(canvas)
-    middle = screens.HERO_RX + screens.HERO_RW // 2
+    off_centre = screens.HERO_RX + screens.HERO_RW // 2 + 30
     inks = []
-    for index in range(screens._PILLARS):        # noqa: SLF001
+    for tray in range(1, screens._PILLARS + 1):  # noqa: SLF001
+        index = screens._PILLARS - tray          # noqa: SLF001
         row = (screens.HERO_Y + screens.PAD + screens._PILLAR_PAD  # noqa: SLF001
                + index * (screens._PILLAR_H + screens._PILLAR_GAP)  # noqa: SLF001
                + screens._PILLAR_H // 2)         # noqa: SLF001
-        inks.append(pixels[row * canvas.width + middle])
+        inks.append(pixels[row * canvas.width + off_centre])
     return inks
 
 
@@ -565,8 +571,8 @@ def test_the_schedule_frame_shows_which_trays_as_a_stack(canvas):
     두 칸인지 2번 칸인지 화면만 봐서는 못 갈랐다.
 
     번호 목록도 읽어야 한다는 문제가 남아 있었다. 지금은 기계 모양 그대로 여덟 칸을
-    위에서 아래로 쌓아 놓고, 이번 일정이 쓰는 칸만 초록으로 칠한다. **초록이 어디
-    있느냐**가 답이므로 세어 볼 것도, 읽을 것도 없다.
+    쌓아 놓고, 이번 일정이 쓰는 칸만 초록으로 칠한다. **초록이 어디 있느냐**가
+    답이므로 세어 볼 것도, 읽을 것도 없다.
 
     픽셀에서 읽는다. 위아래가 뒤집힌 스택은 호출을 엿보는 테스트로는 절대 안 잡힌다.
     """
@@ -579,9 +585,41 @@ def test_the_schedule_frame_shows_which_trays_as_a_stack(canvas):
     screens.schedule(canvas, WELL, (1, 2))
     assert _pillar_inks(canvas) == [palette["OK"]] * 2 + [palette["FAULT"]] * 6
 
-    # 여덟 번째 칸은 스택의 맨 아래다. 오프바이원이면 여기서 걸린다.
+    # 1번이 맨 아래고 8번이 맨 위다. 위아래가 뒤집히면 여기서 걸린다.
     screens.schedule(canvas, WELL, (8,))
     assert _pillar_inks(canvas) == [palette["FAULT"]] * 7 + [palette["OK"]]
+    top_row = (screens.HERO_Y + screens.PAD + screens._PILLAR_PAD  # noqa: SLF001
+               + screens._PILLAR_H // 2)         # noqa: SLF001
+    assert _pixels(canvas)[top_row * canvas.width
+                           + screens.HERO_RX + screens.HERO_RW // 2 + 30] \
+        == palette["OK"], "8번 칸이 맨 위가 아니다"
+
+
+@pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")
+def test_every_pillar_is_numbered_from_the_bottom(canvas, monkeypatch):
+    """칸 번호는 실물처럼 **아래에서 위로** 붙는다.
+
+    이 그림의 값어치는 눈앞의 기계와 그대로 견줄 수 있다는 것 하나다. 번호가 반대로
+    붙은 스택은 볼 때마다 머릿속에서 한 번 뒤집어야 하는 도면이고, 그러면 그림일
+    이유가 없어진다.
+
+    아래에서 위로 읽어 1..8 이 나오는지만 본다 — 색깔은 위 테스트가 본다.
+    """
+    drawn = []
+    original = font.draw
+
+    def spy(c, x, y, text, value, scale=1):
+        drawn.append((y, text))
+        return original(c, x, y, text, value, scale)
+
+    monkeypatch.setattr(font, "draw", spy)
+    screens.schedule(canvas, WELL, (1, 2))
+
+    plate_top = screens.HERO_Y + screens.PAD
+    inside = [(y, text) for y, text in drawn
+              if plate_top <= y < plate_top + screens._PLATE_H]  # noqa: SLF001
+    assert [text for _y, text in sorted(inside, reverse=True)] == \
+        ["1", "2", "3", "4", "5", "6", "7", "8"]
 
 
 @pytest.mark.parametrize("canvas", PANELS, ids=lambda c: f"{c.width}x{c.height}")

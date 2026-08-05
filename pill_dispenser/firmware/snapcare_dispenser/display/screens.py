@@ -438,18 +438,39 @@ if _PILLAR_H < 4:
     raise ValueError("the tray stack does not fit the hero band")
 
 
+#: The ink a tray's own number is printed in, against the three pillar colours.
+#: Measured, like every other pair in this project: black on the green is
+#: 10.79:1 and on the red 5.10:1, and on the grey it would be 3.06:1 — under the
+#: floor, on the one state that means "we were told nothing", so that pillar
+#: takes the light ink instead at 5.93:1.
+_PILLAR_NUMBER_INK = {"OK": "BLACK", "FAULT": "BLACK", "TEXT_MUTE": "TEXT"}
+
+
 def _tray_stack(canvas: Canvas, theme: dict, wanted: frozenset[int] | None) -> None:
-    """Eight hoppers, top to bottom, each one green or red — the whole plan.
+    """Eight hoppers, each one green or red, numbered — the whole plan.
 
     Green is a tray this schedule covers and red is one it does not, which on a
     machine with two hoppers loaded is two green pillars and six red. It
     replaced a printed list of tray numbers (`2`, or `1 2`), and the reason is
     that the list needed reading: it named the trays in digits somebody had to
     know the meaning of, in a row whose length changed with the plan. The stack
-    is the machine's own shape — eight hoppers, top to bottom, in the order they
-    are stacked in the case — so *where* the green is says which tray without
+    is the machine's own shape, so *where* the green is says which tray without
     anybody counting, and the picture is the same size and in the same place
     whatever the plan says.
+
+    **Tray 1 is at the bottom**, because that is where tray 1 is in the case.
+    The stack is a picture of the machine and not a list of its trays, so it is
+    drawn the way somebody standing in front of it sees it — the whole value of
+    a picture here is that it can be compared to the object without translating,
+    and a stack numbered the other way up is a diagram that has to be read
+    against the thing it describes.
+
+    Each pillar carries its own number, small and centred, in the 5x7 face —
+    which is what `font.py` is for and the one place on this frame a digit is
+    the right size at 7 px. The picture answers "which one" on its own for
+    somebody who knows the machine; the number is for the person who has just
+    been handed it, and for the phone call where somebody has to say which
+    hopper to fill.
 
     **On a black plate, not on the violet.** This is the one screen where a
     severity colour cannot be drawn on the field it lands on: `FAULT` red
@@ -470,13 +491,23 @@ def _tray_stack(canvas: Canvas, theme: dict, wanted: frozenset[int] | None) -> N
 
     width = _PLATE_W - 2 * _PILLAR_PAD
     for index in range(_PILLARS):
+        # Top of the picture down, so the arithmetic stays a straight stack —
+        # and tray 8 is the top one, tray 1 the bottom.
+        tray = _PILLARS - index
         if wanted is None:
-            ink = theme["TEXT_MUTE"]
+            colour = "TEXT_MUTE"
         else:
-            ink = theme["OK"] if index + 1 in wanted else theme["FAULT"]
-        canvas.rect(left + _PILLAR_PAD,
-                    top + _PILLAR_PAD + index * (_PILLAR_H + _PILLAR_GAP),
-                    width, _PILLAR_H, ink)
+            colour = "OK" if tray in wanted else "FAULT"
+
+        pillar_y = top + _PILLAR_PAD + index * (_PILLAR_H + _PILLAR_GAP)
+        canvas.rect(left + _PILLAR_PAD, pillar_y, width, _PILLAR_H,
+                    theme[colour])
+
+        number = str(tray)
+        font.draw(canvas,
+                  left + _PILLAR_PAD + (width - font.text_width(number)) // 2,
+                  pillar_y + (_PILLAR_H - font.HEIGHT) // 2,
+                  number, theme[_PILLAR_NUMBER_INK[colour]])
 
 
 def _frame(canvas: Canvas, health: Health, theme: dict, *,
