@@ -38,7 +38,17 @@ const HEADS = ['capsule_strip', 'dropper_bottle', 'tablet_blister', 'liquid_bott
 const SLOTS = ['time_morning', 'time_noon', 'time_evening', 'time_night',
   'qty_one', 'qty_two', 'qty_three', 'qty_four', 'qty_five',
   'storage_fridge', 'storage_dry', 'body_eye', 'body_mouth',
-  'food_bowl', 'food_empty_bowl'];
+  'food_bowl', 'food_empty_bowl',
+  /*
+    Notes 칸에서만 나오는 슬롯 둘. **이 목록에 없어서 화면에서 통째로 사라지고 있었다.**
+
+    약사가 종이에 적은 주의를 읽는 기능(`lib/formulary/notes.ts`)을 붙이면서 그 결과가
+    만들어 내는 그림을 여기 안 넣었다. 매니페스트에 한 줄이라도 빠지면 화면은 엔진
+    합성으로 넘어가고, 그것이 실패하면 **캐시에 있는 줄만** 남는다(PictogramStrip 의
+    3번 폴백). 그래서 다른 그림은 다 뜨는데 주의사항만 안 뜬다 — 빈 화면이 아니라서
+    눈으로는 "원래 그런 것" 처럼 보인다.
+  */
+  'water_glass', 'storage_dark'];
 const ALLERGENS = ['allergen_peanut', 'allergen_tree_nut', 'allergen_milk', 'allergen_egg',
   'allergen_gluten', 'allergen_soy', 'allergen_shellfish', 'allergen_sesame'];
 /**
@@ -51,7 +61,19 @@ const ALLERGENS = ['allergen_peanut', 'allergen_tree_nut', 'allergen_milk', 'all
  */
 const PLAIN = ['finish_course', 'hand_wash', 'no_alcohol', 'caffeine', 'warn_bleeding',
   'food_sugar', 'food_salt', 'food_oil',
-  'time_morning', 'time_noon', 'time_evening', 'time_night'];
+  'time_morning', 'time_noon', 'time_evening', 'time_night',
+  // 흔들어 쓰는 약 (현탁액·시럽). 손 씻기와 같은 줄에 서는데 그것만 목록에 있었다.
+  'shake_bottle',
+  // Notes 에서 나오는 증상 그림 둘.
+  'symptom_dizzy', 'symptom_gut'];
+
+/**
+ * 사선을 두른 것들. **주의사항이 만드는 그림의 절반이 이 모양이다.**
+ *
+ * `itemToDsl` 은 금지를 `\no{...}` 로 내보낸다 — 운전 금지, 어린이 금지, 렌즈 금지.
+ * 위 `PLAIN` 에 맨 이름을 넣어도 이 형태는 안 만들어지므로 따로 세운다.
+ */
+const NEGATED = ['vehicle', 'state_child', 'contact_lens'];
 /**
  * 금기 상태. **이 둘은 목록에 아예 없었다.**
  *
@@ -105,7 +127,8 @@ function labels() {
     out.add(`\\no{\\${s}}`);   // 엔진이 실제로 내보내는 형태
     out.add(`\\${s}`);         // 설문 데모가 들고 있는 형태
   }
-  out.add('\\no{\\contact_lens}');
+  // 사선 두른 것들. 주의사항이 만드는 그림의 절반이 이 모양이다.
+  for (const n of NEGATED) out.add(`\\no{\\${n}}`);
 
   /*
     횟수로 감싼 형태와 회피 형태. 위 주석(CADENCES)에 적은 이유로 둘 다 빠져 있었다.
