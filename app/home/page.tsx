@@ -12,6 +12,7 @@ import { planTrays, FITTED_TRAYS } from '@/lib/hardware/dispenser';
 import { useReminders } from '@/stores/reminders';
 import { WhoSheet } from './who-sheet';
 import { BigCamera, Dock, type Satellite } from './dock';
+import { HowSheet } from './how-sheet';
 import { BoxIcon, FoodIcon, GearIcon, PillIcon } from '@/components/icons';
 import { ask, sayable } from '@/components/sc/Say';
 import { homeIntro } from '@/lib/snapcare/homeIntro';
@@ -259,9 +260,17 @@ export default function HomePage() {
           `containerType: 'size'` 는 남았다 — 카메라가 제 지름을 이 칸의 짧은 쪽에서
           뽑는다. 칸이 낮으면 낮은 쪽이, 좁으면 좁은 쪽이 정한다.
         */}
-        <div className="flex min-h-0 flex-1 items-center justify-center py-3"
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center py-3"
              style={{ containerType: 'size' }}>
           <BigCamera />
+          {/*
+            "이 앱을 어떻게 쓰나요" — 처음이면 저절로 열리고, 그 뒤로는 이 줄로 연다.
+
+            카메라 **바로 아래**다. 물음이 생기는 자리가 거기이므로 — 사람이 폰을 들고
+            "이걸 무엇을 향해 드나" 를 묻는 순간에 답이 눈앞에 있어야 한다. 설정 안에
+            두면 그 물음을 가진 사람은 영영 못 찾는다.
+          */}
+          <HowSheet />
         </div>
 
         {/*

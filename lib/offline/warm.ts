@@ -113,6 +113,9 @@ export const WARM_ASSETS = [
   '/label-eu-biscuit.png',
   '/label-peanut-bar.png',
   '/label-us-cereal.png',
+  // 처음 여는 사람에게 뜨는 안내(`app/home/how-sheet.tsx`)가 쓰는 석 장. 그 화면이
+  // 그림 셋으로 설명하는 것이라, 하나라도 안 뜨면 남는 것이 읽을 수 없는 글뿐이다.
+  '/device-code-demo.png',
   '/prescription-eyedrop.png',
   '/prescription-painkiller.png',
   '/prescription-syrup.png',
