@@ -1,6 +1,7 @@
 // 상대 경로 — 시험에서 @/ 별칭이 안 통한다 (lib/snapcare/course.ts 와 같은 이유).
 import type { Drug } from '../formulary/who.ts';
 import { matchDrug } from '../formulary/match.ts';
+import { cleanDrugName, plausibleName } from '../formulary/name.ts';
 import { readNotes, type NotesReading } from '../formulary/notes.ts';
 import { toSchedule, type FormSheetValues } from '../hardware/formSheet.ts';
 import type { ItemFlag, ScanItem } from '../snapcare/types.ts';
@@ -77,15 +78,30 @@ export function readPrescription(
   countText = '',
   notesText = '',
 ): SheetPrescription {
-  const read = String(nameText ?? '').replace(/\s+/g, ' ').trim();
+  const raw = String(nameText ?? '').replace(/\s+/g, ' ').trim();
+  /*
+    종이에 인쇄된 말을 먼저 뗀다.
+
+    "Acetaminophen Pill Dispenser Schedule" 이 화면에 떴었다 — 맨 위 제목이 이름칸
+    크롭에 걸린 것이다. 그 뒤 절반은 잡음이 아니라 **우리가 인쇄한 글자**라, 버릴
+    것이 아니라 떼어내면 이름이 남는다.
+  */
+  const read = cleanDrugName(raw) || raw;
   const match = matchDrug(read);
   return {
     drug: match?.drug ?? null,
     read,
-    // 글자가 세 자도 안 나왔으면 읽은 것이 아니다. 두 글자짜리 잡음은 어떤
-    // 약 이름도 아니고, 그것을 "목록에 없다" 로 말하면 사람이 종이를 다시 보는
-    // 대신 약을 손으로 찾으러 간다.
-    unread: read.replace(/[^A-Za-z]/g, '').length < 3,
+    /*
+      읽은 것으로 칠 수 없는 글자.
+
+      전에는 "글자 세 자 이상" 하나였다. 표에 없는 약도 화면에 띄우기로 하면서 그
+      문턱만으로 통과시켰더니 `Sr" 77 eam TR v Spent ee —— eee errr error ——` 가
+      약 이름 자리에 앉았고, 문장이 그 위에 지어졌고, 소리로도 나갔다.
+
+      이제 **모양**을 본다(`plausibleName`). 뜻으로 묻지 않는 이유는 이 자리가
+      정확히 목록에 없는 약을 받으려고 있기 때문이다.
+    */
+    unread: !plausibleName(read),
     count: readCount(countText),
     schedule: toSchedule(values),
     notes: readNotes(notesText),

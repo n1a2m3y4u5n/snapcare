@@ -6,6 +6,7 @@ import { densityFromTotals, mergeVisionDetail, MIN_PORTION_G, MAX_PORTION_G } fr
 import type { ModelTotals } from '@/lib/nutrition/mealModel';
 import type { NutrientAmounts, NutrientProfile } from '@/lib/nutrition/types';
 import { fetchByBarcode, searchByName } from '@/lib/nutrition/openfoodfacts';
+import { cleanDrugName } from '@/lib/formulary/name';
 
 
 /**
@@ -425,7 +426,14 @@ async function analyzeWithClaude(image: string, key: string): Promise<VisionResu
     panelRead: parsed.panelRead === true,
     item: {
       id: `scan_${Math.abs(hash(text))}`,
-      name: parsed.name ?? 'Unknown item',
+      /*
+        약이면 종이에 인쇄된 말을 뗀다.
+
+        "Acetaminophen Pill Dispenser Schedule" 로 나왔었다 — 페이지 전체를 보는
+        경로라 맨 위 제목을 같이 읽는다. 음식 이름은 안 건드린다: 거기서는 "Bowl of
+        jollof rice" 처럼 여러 낱말이 정상이고, 이 목록의 말이 나올 일도 없다.
+      */
+      name: (isRx ? cleanDrugName(parsed.name ?? '') : parsed.name) || parsed.name || 'Unknown item',
       kind,
       emoji: parsed.emoji ?? '📷',
       detectedVia: profile ? 'photo analysis' : 'photo analysis (nutrition unverified)',
