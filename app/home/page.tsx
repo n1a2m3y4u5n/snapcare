@@ -144,7 +144,7 @@ export default function HomePage() {
               손으로 그린 획이라 클수록 잘 읽히고, 이 화면의 첫인상이기도 하다.
             */}
             {/*
-              176px. 상자가 519×320 이라 이 높이에서 폭이 286px 이고, 좁은 폰(360)에서
+              176px. 상자가 543×320 이라 이 높이에서 폭이 299px 이고, 좁은 폰(360)에서
               좌우 여백을 뺀 320 안에 든다.
 
               한때 150 이었다. 그때는 가운데를 맞추느라 왼쪽에 여백을 20% 나 붙여 상자가
@@ -152,7 +152,7 @@ export default function HomePage() {
               으로 다시 재면서 여백이 3.4% 로 줄었고, 줄어든 만큼 글자를 키울 수 있다.
             */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-mark.png" alt="SnapCare" width={286} height={176}
+            <img src="/logo-mark.png" alt="SnapCare" width={299} height={176}
                  style={{ height: 176, width: 'auto' }} />
           </h1>
         </div>

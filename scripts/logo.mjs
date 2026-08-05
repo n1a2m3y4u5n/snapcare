@@ -87,7 +87,20 @@ async function centreOnInk(buf) {
   }
   if (mass === 0) return buf;
 
-  const off = Math.round(w / 2 - sum / mass);   // 오른쪽으로 밀어야 하는 양
+  /*
+    잰 값 위에 **손으로 조금 더** 민다.
+
+    무게중심은 잉크의 양만 센다. 눈은 거기에 더해 **덩어리가 어디에 뭉쳐 있는가**를
+    보는데, 이 로고는 왼쪽에 두 줄짜리 글자 덩어리가 서 있고 오른쪽은 사진기·반짝임
+    처럼 흩어진 점들이다. 흩어진 쪽은 무게로는 세지지만 덩어리로는 덜 세진다.
+
+    그 차이를 수식으로 잡으려면 이 그림에만 맞는 규칙을 만들게 된다. 잰 값을 기준으로
+    두고 눈으로 정한 만큼만 더하는 편이 정직하다 — 얼마를 더했는지가 숫자 하나로
+    남아서, 다음 사람이 그것만 보고 되돌릴 수 있다.
+  */
+  const NUDGE = 0.025;                          // 폭의 2.5% 만큼 오른쪽으로
+
+  const off = Math.round(w / 2 - sum / mass + w * NUDGE);
   if (Math.abs(off) < 4) return buf;            // 이미 가운데다
   const pad = Math.abs(off) * 2;
   return sharp(buf)
