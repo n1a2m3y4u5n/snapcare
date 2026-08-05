@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SYNC_VERSION, isUsable, withPerson, withoutPerson, type SyncBlob } from './sync.ts';
+import { DEMO_SEED, SYNC_VERSION, isUsable, stamp, withPerson, withoutPerson, type SyncBlob } from './sync.ts';
 import type { Account } from './accounts.ts';
 
 /**
@@ -120,4 +120,37 @@ test('실제 블롭에는 상자 칸이 아예 없다', () => {
   // 있으면 안 되는 것이 `undefined` 로라도 있으면, 언젠가 누가 그 칸을 채운다.
   const out = withPerson(null, ROSTER, 'me', { scans: [] });
   assert.equal('demoBox' in out, false);
+});
+
+/*
+  올리는 세 길 전부가 시연 도장을 남기는가.
+
+  `withoutPerson` 만 찍고 있었다. 앱이 늘 부르는 것은 `push()` → `withPerson` 이라,
+  도장이 **올릴 때마다 지워졌다.** 그러면 다음 `pull()` 이 서버 파일을 통째로 버리고,
+  `remote` 가 늘 null 이라 `demoBox()` 가 아무것도 못 돌려준다 — 다른 폰으로 열면
+  스스로 상자와 짝짓는 기능이 통째로 죽는다.
+
+  화면에는 아무 표시도 안 난다. 콘솔에 한 줄이 찍힐 뿐이고, 그 줄은 정상일 때도
+  비슷하게 생겼다.
+*/
+test('시연에서 올리는 모든 길이 도장을 남긴다', () => {
+  (globalThis as { window?: unknown }).window = { location: { search: '' } };
+  const box = new Map<string, string>();
+  (globalThis as { localStorage?: unknown }).localStorage = {
+    getItem: (k: string) => box.get(k) ?? null,
+    setItem: (k: string, v: string) => { box.set(k, v); },
+    removeItem: (k: string) => { box.delete(k); },
+  };
+
+  // 아무것도 안 정한 브라우저는 시연이다(`demo.ts`). 올리는 두 길을 모두 본다.
+  for (const [name, blob] of [
+    ['withPerson', withPerson(null, [], 'demo_me', {} as never)],
+    ['withoutPerson', withoutPerson(null, [], 'demo_kid')],
+  ] as [string, SyncBlob][]) {
+    assert.equal(stamp(blob).demoSeed, DEMO_SEED, `${name} 로 만든 것에 도장이 안 찍힌다`);
+  }
+
+  // 실제 사용자의 블롭에는 이 칸이 없어야 한다.
+  box.set('snapcare-demo', '0');
+  assert.equal(stamp(withPerson(null, [], 'me', {} as never)).demoSeed, undefined);
 });

@@ -195,9 +195,8 @@ export function withPerson(
 export function withoutPerson(seen: SyncBlob | null, roster: Account[], id: string): SyncBlob {
   const people = { ...(seen?.people ?? {}) };
   delete people[id];
+  // 시연 도장(`demoSeed`)은 `pushBlob` 이 찍는다 — 여기서 찍으면 다른 두 곳이 빠진다.
   return { version: SYNC_VERSION, roster, people,
-    // 시연에서만 찍는다 — 실제 블롭에는 이 칸이 없다.
-    ...(isDemo() ? { demoSeed: DEMO_SEED } : {}),
            ...(seen?.demoBox ? { demoBox: seen.demoBox } : {}) };
 }
 
@@ -207,6 +206,17 @@ export function withoutPerson(seen: SyncBlob | null, roster: Account[], id: stri
  * 따로 받아오지 않는 이유: 이 값을 쓰는 자리(`sync-provider`)는 `pull()` 바로 뒤이고,
  * 한 번 받은 것을 두 번 받을 이유가 없다.
  */
+/**
+ * 올리기 직전에 시연 도장을 찍는다.
+ *
+ * 순수 함수로 떼어 둔 이유는 시험 때문이다. `pushBlob` 은 망을 타므로 시험이 못
+ * 잡는데, 이 규칙이 깨지면 화면에 아무 표시도 안 난다 — 콘솔 한 줄이 전부이고 그
+ * 줄은 정상일 때도 비슷하게 생겼다.
+ */
+export function stamp(data: SyncBlob): SyncBlob {
+  return isDemo() ? { ...data, demoSeed: DEMO_SEED } : data;
+}
+
 export function demoBox(): { claim: string; relayUrl: string } | null {
   return remote?.demoBox ?? null;
 }
@@ -268,6 +278,22 @@ async function pullBlob(): Promise<SyncBlob | null> {
 /** 서버에 이 기기의 자료를 저장한다 */
 async function pushBlob(data: SyncBlob): Promise<boolean> {
   if (!isSupported()) return false;
+  /*
+    시연 도장은 **여기서** 찍는다.
+
+    올리는 쪽 셋(`withPerson`, `withoutPerson`, `setDemoBox`) 중 `withoutPerson` 만
+    찍고 있었다. 그런데 앱이 늘 부르는 것은 `push()` → `withPerson` 이라, 도장이
+    올릴 때마다 지워졌다.
+
+    그러면 다음 `pull()` 이 `demoSeed ?? 0` 을 0 으로 읽어 서버 파일을 통째로 버린다.
+    영원히. 콘솔에 "서버의 시연 자료가 낡았다" 가 앱을 열 때마다 찍히고 있었고,
+    그 결과 `remote` 가 늘 null 이라 **`demoBox()` 가 아무것도 못 돌려준다** —
+    다른 폰으로 열면 스스로 상자와 짝짓는 기능이 통째로 죽어 있었다.
+
+    부르는 쪽마다 챙기게 두면 또 한 곳이 빠진다. 실제로 셋 중 둘이 빠져 있었다.
+    올리는 길이 이 함수 하나뿐이므로 여기서 찍으면 잊을 자리가 없다.
+  */
+  data = stamp(data);
   try {
     // 올리기 전에 기기에서 잠근다. 서버는 열 수 없는 덩어리만 받는다 — fly 볼륨에
     // 침입해도, 우리가 ssh 로 들어가도 알레르기·처방 기록을 읽을 수 없다.
