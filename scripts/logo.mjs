@@ -97,8 +97,10 @@ async function centreOnInk(buf) {
     그 차이를 수식으로 잡으려면 이 그림에만 맞는 규칙을 만들게 된다. 잰 값을 기준으로
     두고 눈으로 정한 만큼만 더하는 편이 정직하다 — 얼마를 더했는지가 숫자 하나로
     남아서, 다음 사람이 그것만 보고 되돌릴 수 있다.
+
+    2.5% 로 시작해 눈으로 보고 5% 로 올렸다.
   */
-  const NUDGE = 0.025;                          // 폭의 2.5% 만큼 오른쪽으로
+  const NUDGE = 0.05;                           // 폭의 5% 만큼 오른쪽으로
 
   const off = Math.round(w / 2 - sum / mass + w * NUDGE);
   if (Math.abs(off) < 4) return buf;            // 이미 가운데다
