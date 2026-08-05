@@ -1,3 +1,5 @@
+import { matchDrug } from '@/lib/formulary/match';
+import { readNotes } from '@/lib/formulary/notes';
 import { recognizeText } from '@/lib/ocr';
 import { SHEET_CONFIG } from './config';
 import { cropField, forOcr } from './field';
@@ -27,7 +29,7 @@ import type { Mat3 } from './homography';
  * 기하가 미리 해 준 셈이고, 그 셋이 손글씨에서 가장 자주 틀리는 자리다.
  */
 
-/** 잘라낸 칸을 tesseract 가 받는 모양으로. */
+/** 잘라낸 칸을 그림 한 장으로. tesseract 도 Vision 도 이것을 받는다. */
 async function toBlob(g: Gray): Promise<Blob> {
   const canvas = typeof OffscreenCanvas !== 'undefined'
     ? new OffscreenCanvas(g.w, g.h)
@@ -77,11 +79,96 @@ export async function readHandwriting(
   };
   // 차례로 돈다. tesseract 워커가 하나라 나란히 던져 봐야 줄을 설 뿐이고,
   // 진행률이 두 개 섞여 사람에게는 되감기는 막대로 보인다.
-  return {
+  const local = {
     name: await read('name'),
     count: await read('count'),
     // 약사가 주의를 적는 자리. 종이가 이미 인쇄되어 있어 칸을 새로 팔 수 없는데,
     // 이 빈 줄은 처음부터 있었고 아무도 읽지 않고 있었다.
     notes: await read('notes'),
   };
+
+  if (!needsHelp(local)) return local;
+
+  /*
+    tesseract 가 놓쳤다 — 손글씨에 눈이 있는 쪽에 다시 묻는다.
+
+    측정: 필기체로 쓴 약 이름 셋에 tesseract 는 하나를 맞혔고(conf 33/41/0)
+    Vision 은 셋 다 맞혔다(각 1.7~1.9초). 같은 칸을 인쇄 글씨로 주면 tesseract 가
+    conf 96 이므로, 이 부름은 **손글씨일 때만** 일어난다.
+
+    셋을 한 번에 보낸다. 어차피 한 번 나가는 길이고, 이름만 뭉갠 사진이 개수와 주의는
+    멀쩡히 읽혔을 이유가 없다.
+  */
+  const shots = await Promise.all(
+    (['name', 'count', 'notes'] as const).map(async (f) => {
+      const rect = SHEET_CONFIG.fields[f];
+      if (!rect) return '';
+      try {
+        return await toDataUrl(forOcr(cropField(gray, transform, rect)));
+      } catch {
+        return '';
+      }
+    }),
+  );
+
+  const better = await askVision({ name: shots[0], count: shots[1], notes: shots[2] });
+  if (!better?.legible) return local;
+
+  /*
+    받은 것을 **덮어쓰지 않고 고른다.**
+
+    tesseract 가 이미 표에 맞는 이름을 읽었다면 그것을 지킨다 — 닫힌 목록에 맞은 답은
+    이 앱에서 가장 확실한 답이고, 그것을 못 맞은 쪽으로 바꿀 이유가 없다. 빈 칸도
+    안 덮는다: 못 읽은 것을 못 읽었다고 두는 편이, 한쪽이 지어낸 것으로 채우는 것보다
+    낫다.
+  */
+  return {
+    name: matchDrug(local.name) ? local.name : (better.name || local.name),
+    count: local.count.match(/\d/) ? local.count : (better.count || local.count),
+    notes: better.notes || local.notes,
+  };
+}
+
+/** 그림 한 장 → data URL. Vision 라우트가 받는 모양. */
+async function toDataUrl(g: Gray): Promise<string> {
+  const blob = await toBlob(g);
+  return new Promise<string>((ok, no) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result));
+    r.onerror = () => no(new Error('그림을 못 읽었다'));
+    r.readAsDataURL(blob);
+  });
+}
+
+/**
+ * tesseract 의 답을 그대로 써도 되는가.
+ *
+ * 두 신호를 본다. 어느 쪽도 "글자가 이상해 보인다" 같은 눈대중이 아니라, **다음
+ * 단계가 그것으로 무엇을 할 수 있는가**를 묻는다:
+ *
+ *   이름이 표에 안 맞는다        → 손글씨가 뭉개졌거나 표 밖의 약이다. 둘 다 다시 볼 값어치가 있다.
+ *   주의 줄에 글자는 있는데      → 약사가 뭔가 적었는데 우리가 못 알아들었다. 놓친 경고일 수 있다.
+ *   아는 주의가 하나도 없다
+ */
+function needsHelp(r: { name: string; count: string; notes: string }): boolean {
+  if (!matchDrug(r.name)) return true;
+  const notes = readNotes(r.notes);
+  return r.notes.trim().length > 0 && notes.flags.length === 0 && notes.unknown.length > 0;
+}
+
+/** 한 번만 묻는다. 못 물어보면 `null` — tesseract 가 읽은 것이 그대로 남는다. */
+async function askVision(shots: { name: string; count: string; notes: string }) {
+  try {
+    const res = await fetch('/api/handwriting', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(shots),
+      signal: AbortSignal.timeout(16_000),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { name: string; count: string; notes: string; legible: boolean };
+  } catch (err) {
+    console.warn('[form-sheet] 손글씨를 다시 못 물어봤다:', err);
+    return null;
+  }
 }
