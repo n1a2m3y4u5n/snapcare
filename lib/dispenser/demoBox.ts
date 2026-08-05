@@ -51,7 +51,8 @@ export async function adoptDemoBox(): Promise<boolean> {
   if (!box) return false;
   if (await loadPaired()) return false;
   try {
-    await pairWith(box.claim, box.relayUrl);
+    // 시연이 대신 맺어 준 짝이라고 표시해 둔다 — 시연 밖에서는 없는 것으로 친다.
+    await pairWith(box.claim, box.relayUrl, { viaDemo: true });
     return true;
   } catch (err) {
     console.warn('[demo] 시연 블롭의 상자로 짝짓지 못했다:', err);

@@ -41,6 +41,17 @@ export interface PairedDevice {
   boxKey: CryptoKey;
   /** 언제 짝지었나 — 화면에 "언제부터 쓰고 있는지" 를 보여줄 때. */
   pairedAt: string;
+  /**
+   * **시연이 대신 맺어 준 짝**인가.
+   *
+   * 시연 모드는 대회용 상자에 스스로 짝을 맺는다(`demoBox.ts`). 그 짝이 기기 안에
+   * 남는데, 시연을 끄고 "Start empty" 로 새로 시작해도 그대로 남아 있었다 — 상자를
+   * 한 번도 안 산 사람의 화면에 우리 상자가 연결된 것으로 떴다.
+   *
+   * 지우지는 않는다. 시연으로 돌아가면 다시 필요하고, 지우는 것은 되돌릴 수 없다.
+   * 대신 **시연 밖에서는 없는 것으로 친다** — `loadPaired` 가 그렇게 한다.
+   */
+  viaDemo?: boolean;
 }
 
 export function isSupported(): boolean {
@@ -71,7 +82,8 @@ function tx<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<
  * 열쇠**를 만들어 내고, 증상은 "기기가 전원이 뽑힌 것처럼 보인다" 하나뿐이다 —
  * 어느 쪽에서도 오류가 나지 않는다. 사람이 아직 코드를 보고 있을 때 거절해야 한다.
  */
-export async function pairWith(claim: string, relayUrl: string): Promise<PairedDevice> {
+export async function pairWith(claim: string, relayUrl: string,
+                               opts: { viaDemo?: boolean } = {}): Promise<PairedDevice> {
   if (!normaliseClaim(claim)) throw new Error('열 자리 코드가 아니다');
   const keys = await deriveKeys(claim);
   const paired: PairedDevice = {
@@ -80,6 +92,7 @@ export async function pairWith(claim: string, relayUrl: string): Promise<PairedD
     accessToken: keys.accessToken,
     boxKey: keys.boxKey,
     pairedAt: new Date().toISOString(),
+    ...(opts.viaDemo ? { viaDemo: true } : {}),
   };
   await tx('readwrite', (s) => s.put(paired, KEY));
 
@@ -127,11 +140,19 @@ export async function pairWith(claim: string, relayUrl: string): Promise<PairedD
   return paired;
 }
 
-/** 기억해 둔 짝. 없으면 null. */
+/**
+ * 기억해 둔 짝. 없으면 null.
+ *
+ * 시연이 대신 맺어 준 짝은 **시연 밖에서 안 보인다.** 그러지 않으면 "Start empty" 로
+ * 새로 시작한 사람의 화면에 대회용 상자가 연결된 것으로 뜨고, 그 사람은 자기가 사지도
+ * 않은 기기가 어디 있는지 찾게 된다. 짝짓기 안내도 안 뜬다 — 이미 짝이 있다고 보므로.
+ */
 export async function loadPaired(): Promise<PairedDevice | null> {
   if (!isSupported()) return null;
   try {
-    return (await tx<PairedDevice | undefined>('readonly', (s) => s.get(KEY))) ?? null;
+    const found = (await tx<PairedDevice | undefined>('readonly', (s) => s.get(KEY))) ?? null;
+    if (found?.viaDemo && !isDemo()) return null;
+    return found;
   } catch {
     return null;
   }
