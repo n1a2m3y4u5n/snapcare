@@ -66,9 +66,40 @@ test('못 읽은 것과 목록에 없는 것을 가른다', () => {
   assert.equal(notListed.read, 'Rosuvastatin', '무엇으로 읽었는지 화면이 보여줘야 한다');
 });
 
-test('이름을 못 맞히면 항목을 만들지 않는다', () => {
-  // 이름을 지어내면 그림과 경고까지 지어낸 약의 것이 뜬다.
-  assert.equal(toScanItem(readPrescription(SHEET, 'Rosuvastatin')), null);
+/*
+  전에는 이 자리에 "이름을 못 맞히면 항목을 만들지 않는다" 가 있었다. 이름을 지어낼까
+  봐 그랬는데, 지어내지 않는 방법이 하나 더 있다 — **읽은 글자를 그대로 쓰고 확신을
+  끄는 것**. 통째로 거부하면 종이에서 읽힌 나머지(일정·개수·주의)까지 같이 사라지고,
+  그 사람은 종이를 스스로 못 읽어서 여기 온 사람이다.
+*/
+test('표에 없는 약이어도 항목을 만든다 — 대신 초록을 안 켠다', () => {
+  const rx = readPrescription(SHEET, 'Rosuvastatin', '1');
+  assert.equal(rx.drug, null, '전제: 표에 없다');
+  assert.equal(rx.unread, false, '전제: 글자는 읽혔다');
+
+  const item = toScanItem(rx);
+  assert.ok(item, '종이가 통째로 거부되면 안 된다');
+  assert.equal(item.name, 'Rosuvastatin', '읽은 글자 그대로 — 종이와 맞춰 볼 수 있어야 한다');
+  assert.equal(item.unidentified, true, '확신을 끈다 — 판정 엔진이 이 값으로 초록을 막는다');
+  assert.equal(item.rx?.form, undefined, '모르는 약의 제형을 지어내지 않는다');
+  // 버려지던 것들. 이것이 이 변경의 요점이다.
+  assert.ok(item.rx?.schedule.length, '일정이 살아 있어야 한다');
+  assert.equal(item.rx?.doseCount, 1, '개수가 살아 있어야 한다');
+  // 이 문장이 화면에서 "언제 몇 알" 을 말하는 유일한 자리이고, 소리도 이것을 읽는다.
+  assert.match(item.rx?.dosageText ?? '', /^Rosuvastatin will drop from layer 3, 8:00 AM everyday\./);
+  assert.match(item.rx?.dosageText ?? '', /Take 1 each time\./);
+});
+
+test('글자조차 못 읽었으면 만들지 않는다 — 그때는 다시 찍는 문제다', () => {
+  const rx = readPrescription(SHEET, 'x');
+  assert.equal(rx.unread, true);
+  assert.equal(toScanItem(rx), null, '부를 이름이 없으면 화면에 띄울 물건이 없다');
+});
+
+test('표에 있으면 확신을 지우지 않는다', () => {
+  const item = toScanItem(readPrescription(SHEET, 'Amoxicillin'));
+  assert.ok(item);
+  assert.equal(item.unidentified, undefined);
 });
 
 test('버블을 안 채웠으면 항목을 만들지 않는다', () => {
@@ -220,3 +251,4 @@ test('끝까지 먹으라는 것은 일정이 아니라 주의다', () => {
   const item = toScanItem(readPrescription(SHEET, 'Amoxicillin', '2'))!;
   assert.notEqual(forPictograms(item).rx?.durationText, 'ongoing');
 });
+

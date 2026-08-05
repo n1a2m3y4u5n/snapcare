@@ -245,11 +245,19 @@ export default function CameraPage() {
       const rx = readPrescription(sheet.values, hand.name, hand.count, hand.notes);
       const item = toScanItem(rx);
       if (!item) {
-        // 종이는 찾았는데 채워진 것이 모자라다. 이것은 **다른 것을 찍은 것이 아니라**
-        // 이 종이를 못 읽은 것이라, 글자 읽기로 넘기지 않고 여기서 말한다.
+        /*
+          종이는 찾았는데 채워진 것이 모자라다. 이것은 **다른 것을 찍은 것이 아니라**
+          이 종이를 못 읽은 것이라, 글자 읽기로 넘기지 않고 여기서 말한다.
+
+          문구가 사람이 할 일과 맞아야 한다. 전에는 이름을 잘 읽었는데 표에 없는
+          경우까지 "the name is missing" 이라고 했다. 이름을 또박또박 쓴 사람에게
+          없다고 하면 그 사람은 같은 종이를 계속 다시 찍는다 — 몇 번을 찍어도 결과가
+          안 바뀌는 일을 시킨 것이다. 그 갈래는 이제 여기까지 오지 않지만(표에 없어도
+          화면이 나온다), 문구는 남은 두 경우에 대해서도 갈려 있어야 한다.
+        */
         fail(rx.unread
           ? 'Found the sheet, but could not read the medicine name. Photograph it flat, in good light.'
-          : `Found the sheet, but ${rx.schedule.missing.join(', ') || 'the name'} is missing.`);
+          : `Found the sheet, but ${rx.schedule.missing.join(', ') || 'the drop time'} is missing. Fill that in and photograph it again.`);
         return true;
       }
       goWith(item, shot);

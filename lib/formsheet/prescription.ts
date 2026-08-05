@@ -110,9 +110,29 @@ const DAY_WORD: Record<string, string> = {
  * 이 자리를 지나야 나머지가 다 붙는다 — 판정 엔진, 픽토그램(`itemToDsl`), 알람,
  * 그리고 상자로 가는 일정. 종이에서 읽은 것을 **찍어서 읽은 것과 같은 물건**으로
  * 만드는 것이 요점이고, 그래야 아래쪽 전부가 종이를 따로 알 필요가 없다.
+ *
+ * 표에 없는 약이어도 만든다
+ * -------------------------
+ * 전에는 `!rx.drug` 이면 `null` 을 냈다. 그래서 이름을 또박또박 쓴 종이가 통째로
+ * 거부됐다 — 표는 WHO 필수의약품 94종이고, 세상의 처방은 그보다 많다.
+ *
+ * 그때 버려지는 것이 이름 하나가 아니라는 게 문제다. 일정 버블, 개수, 주의 문구는
+ * 다 읽혔는데 그 전부가 같이 사라졌다. 그리고 이 앱을 쓰는 사람은 **그 종이를 스스로
+ * 읽지 못해서** 여기 온 사람이라, 아무것도 안 주는 것이 가장 나쁜 답이다.
+ *
+ * 대신 확신을 지운다. `unidentified` 를 세우면 판정 엔진이 초록을 안 켜고 "무엇인지
+ * 모르겠으니 포장을 확인하라" 를 붙인다 — 이 저장소가 손글씨 처방전에 이미 쓰는
+ * 방법이고(`verdict.ts`), 이유도 같다. 지우는 것이 아니라 확신을 지우는 것이다.
+ *
+ * 표에서 오던 것들(제형·손씻기·흔들기)은 종이가 적은 것만 남는다. 모르는 약의
+ * 제형을 지어내면 안약을 알약통으로 그리는 쪽이 아니라 **그 반대**가 나올 수 있다.
  */
 export function toScanItem(rx: SheetPrescription): ScanItem | null {
-  if (!rx.drug || rx.schedule.schedule.length === 0) return null;
+  // 일정이 없으면 만들 것이 없다 — 알람도 상자 일정도 여기서 나온다.
+  if (rx.schedule.schedule.length === 0) return null;
+  // 이름 글자조차 안 나온 것은 다르다. 부를 이름이 없으면 화면에 띄울 물건이 없고,
+  // 그 경우 사람이 할 일은 "다시 찍기" 라 여기서 멈추는 것이 맞다.
+  if (!rx.drug && rx.unread) return null;
 
   const slot = rx.schedule.schedule[0];
   const hour = Number(slot.times[0].slice(0, 2));
@@ -129,12 +149,23 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
     종이는 이 조제에만 해당하는 것을 안다(약사가 이 환자에게 금주를 적은 경우).
     한쪽만 쓰면 나머지 절반이 화면에 못 온다.
   */
-  const flags: ItemFlag[] = [...new Set([...(rx.drug.flags ?? []), ...rx.notes.flags])];
+  const flags: ItemFlag[] = [...new Set([...(rx.drug?.flags ?? []), ...rx.notes.flags])];
 
   return {
-    id: `sheet_${rx.drug.inn.replace(/[^a-z]/g, '')}_${slot.slot}_${hour}`,
-    name: rx.drug.name,
+    id: `sheet_${(rx.drug?.inn ?? rx.read).toLowerCase().replace(/[^a-z]/g, '')}_${slot.slot}_${hour}`,
+    // 표에 없으면 **읽은 글자 그대로** 부른다. 여기서 이름을 지어내면 사람이 종이와
+    // 화면을 맞춰 볼 수 없고, 맞춰 보는 것이 이 화면에서 유일한 검산이다.
+    name: rx.drug?.name ?? rx.read,
     kind: 'prescription',
+    /*
+      표에 없는 약이면 초록을 안 켠다.
+
+      닫힌 어휘가 손글씨 OCR 을 쓸 만하게 만든다는 것이 `match.ts` 의 논지고, 그
+      논지는 **맞은 경우에만** 성립한다. 못 맞았으면 우리가 들고 있는 것은 그냥 손글씨
+      인식 결과이고, 그것을 확신하고 읽으면 라고스 처방전에서 8hrly 가 8mg 이 된 그
+      실패가 그대로 돌아온다.
+    */
+    unidentified: rx.drug ? undefined : true,
     // 그림은 아이콘이 아니라 픽토그램이 맡는다. 이 자리는 옛 호출부가 아직 읽는
     // 값이라 비워 두지 않을 뿐이다.
     emoji: '',
@@ -151,15 +182,15 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
       dosageText: scheduleSentence(rx),
       durationText: slot.durationDays > 0 ? `for ${slot.durationDays} days` : 'ongoing',
       schedule: [{ time, label, emoji: '' }],
-      form: rx.drug.form,
+      form: rx.drug?.form,
       doseCount: rx.count,
       doseText: rx.count ? `${rx.count}` : undefined,
       // 안약·연고는 쓰기 전에 손을 씻어야 한다. 표가 제형을 아니까 여기서 나온다 —
       // OCR 이 그 문장을 못 읽어도 그림에는 뜬다.
-      handwash: rx.drug.form === 'eyedrop' || rx.drug.form === 'cream' || rx.notes.handwash,
+      handwash: rx.drug?.form === 'eyedrop' || rx.drug?.form === 'cream' || rx.notes.handwash,
       // 현탁액은 흔들어야 한다. 가라앉은 채로 따르면 앞쪽 몇 회분은 묽고 바닥은
       // 진하다 — 같은 5mL 를 재도 들어가는 약의 양이 다르다.
-      shake: rx.drug.form === 'syrup' || rx.notes.shake,
+      shake: rx.drug?.form === 'syrup' || rx.notes.shake,
       noLens: rx.notes.noLens,
       care: rx.notes.care,
       notes: rx.notes.unknown,
@@ -208,7 +239,19 @@ export function toScanItem(rx: SheetPrescription): ScanItem | null {
  */
 export function scheduleSentence(rx: SheetPrescription): string {
   const slot = rx.schedule.schedule[0];
-  if (!slot || !rx.drug) return '';
+  if (!slot) return '';
+  /*
+    표에 없는 약이어도 문장은 만든다.
+
+    전에는 `!rx.drug` 이면 빈 문자열을 냈다. 그 문장이 이 화면에서 유일하게 "언제
+    몇 알" 을 말하는 자리이고 소리도 그것을 읽는다 — 비우면 그 사람이 받는 것은
+    아무 말도 없는 화면이다. 버블에서 나온 시각과 요일은 표를 안 거치고 나온 값이라
+    약을 못 맞혔다고 해서 덜 확실해지지도 않는다.
+
+    이름만 읽은 글자로 바뀐다. 그것이 사람이 종이와 맞춰 볼 수 있는 유일한 값이다.
+  */
+  const called = rx.drug?.name ?? rx.read;
+  if (!called) return '';
 
   const raw = Number(slot.times[0].slice(0, 2));
   const pm = raw >= 12;
@@ -221,7 +264,7 @@ export function scheduleSentence(rx: SheetPrescription): string {
       : `everyday except ${listWords(missing.map((d) => DAY_WORD[d]))}`;
 
   const out = [
-    `${rx.drug.name} will drop from layer ${slot.slot}, `
+    `${called} will drop from layer ${slot.slot}, `
     + `${hour}:00 ${pm ? 'PM' : 'AM'} ${when}.`,
   ];
   if (rx.count) out.push(`Take ${rx.count} each time.`);
