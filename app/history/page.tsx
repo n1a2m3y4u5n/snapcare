@@ -6,7 +6,7 @@ import { MobileScreen } from '@/components/sc/MobileScreen';
 import { Hear, Speakable, ask, sayable } from '@/components/sc/Say';
 import { useScans, todayKey } from '@/stores/scans';
 import { useProfile } from '@/stores/profile';
-import { useIsClient } from '@/lib/hooks';
+import { useIsClient, useIsDemo } from '@/lib/hooks';
 import { adherence, adherenceSentence, clockOf, doseRows } from '@/lib/history/adherence';
 import { calendar } from '@/lib/history/calendar';
 import { routineSentence, routines } from '@/lib/history/routines';
@@ -48,6 +48,11 @@ export default function HistoryPage() {
 
   const member = useProfile((s) => s.profile);
   const ready = useIsClient();
+  /*
+    시연 모드에서는 통계가 시드 기록만 센다. 리허설로 떨어뜨린 진짜 배출이 오늘 칸에
+    쌓이면 보여 주려던 이야기가 그 칸 하나에서 무너진다.
+  */
+  const demo = useIsDemo();
 
   // 기록은 브라우저에만 있다. 그릴 때 읽으면 서버가 그린 화면과 어긋난다.
   const today = ready ? todayKey() : '';
@@ -60,8 +65,8 @@ export default function HistoryPage() {
     그림과 말이 서로 다른 것을 가리키게 된다.
   */
   const week = useMemo(
-    () => (ready && member ? adherence(doseRows(scans, member.id), anchor, 28, undefined, today) : null),
-    [ready, scans, anchor, today, member],
+    () => (ready && member ? adherence(doseRows(scans, member.id, demo), anchor, 28, undefined, today) : null),
+    [ready, scans, anchor, today, member, demo],
   );
   /*
     달력은 넉 주를 본다.
@@ -88,12 +93,12 @@ export default function HistoryPage() {
     약이라, 화면이 층별로 말하면 약통을 열어 그 층을 보면 되는 것이 된다.
   */
   const perMedicine = useMemo(
-    () => (ready && member ? byMedicine(doseRows(scans, member.id), anchor, 28) : []),
-    [ready, scans, anchor, member],
+    () => (ready && member ? byMedicine(doseRows(scans, member.id, demo), anchor, 28) : []),
+    [ready, scans, anchor, member, demo],
   );
   const month = useMemo(
-    () => (ready && member ? calendar(doseRows(scans, member.id), anchor, 28, today) : []),
-    [ready, scans, anchor, today, member],
+    () => (ready && member ? calendar(doseRows(scans, member.id, demo), anchor, 28, today) : []),
+    [ready, scans, anchor, today, member, demo],
   );
 
   /*

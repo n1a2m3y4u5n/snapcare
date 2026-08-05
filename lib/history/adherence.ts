@@ -40,9 +40,31 @@ export interface DoseRow {
 }
 
 /** 상자가 보고한 복용만 골라 낸다. 사람이 찍어 남긴 것은 분모가 될 수 없다. */
-export function doseRows(scans: ScanRecord[], memberId?: string): DoseRow[] {
+/**
+ * 시연 자료에만 붙는 이름표.
+ *
+ * `demoHistory` 가 뿌리는 기록은 전부 `demo_` 로 시작하고, 상자가 실제로 배출해서
+ * 생긴 기록은 `dev_` 로 시작한다(`lib/dispenser/doseLog.ts` 의 `eventId`). 두 갈래를
+ * 가르는 표시가 이미 있으므로 새로 만들 것이 없다.
+ */
+const SEEDED = 'demo_';
+
+export function doseRows(scans: ScanRecord[], memberId?: string, seededOnly = false): DoseRow[] {
   return scans
     .filter((s) => s.dose && (!memberId || s.memberId === memberId))
+    /*
+      시연 계정의 통계는 **지어낸 이야기**다. 진짜 배출을 거기 섞으면 이야기가 틀어진다.
+
+      발표 콘솔에서 `Open 1` 을 누를 때마다 상자가 사건을 하나 만들고 그것이 기록
+      한 줄이 된다. 리허설을 한 번 돌면 오늘 칸에만 스물몇 건이 쌓이고, 그 칸은
+      조각을 그만두고 게이지로 바뀌면서 오른쪽 위에 `29` 를 적는다. 자료는 맞는데
+      화면이 말하려던 이야기가 아니다.
+
+      **거르는 것은 세는 자리뿐이다.** 홈 화면은 그대로 진짜 배출을 보여 준다 —
+      "눌렀더니 앱에 떴다" 가 이 콘솔을 만든 이유이고, 그것까지 지우면 시연할 것이
+      없어진다. 통계는 이야기를, 홈은 방금 일어난 일을 말한다.
+    */
+    .filter((s) => !seededOnly || s.id.startsWith(SEEDED))
     .map((s) => ({
       dayKey: s.dayKey,
       due: s.dose!.due,

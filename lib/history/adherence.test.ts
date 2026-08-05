@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { adherence } from './adherence.ts';
+import { adherence, doseRows } from './adherence.ts';
 
 test('아직 안 온 복용은 순응도의 분모에 안 들어간다', () => {
   /*
@@ -22,4 +22,22 @@ test('아직 안 온 복용은 순응도의 분모에 안 들어간다', () => {
   const later = adherence(rows, '2026-08-05', 7, '2000');
   assert.equal(later.offered, 3);
   assert.equal(later.taken, 1);
+});
+
+test('시연 통계는 진짜 배출을 안 센다', () => {
+  /*
+    발표 콘솔에서 떨어뜨린 것이 오늘 칸에 쌓여 `29` 로 나왔다. 자료는 맞지만 시연
+    계정의 통계는 지어낸 이야기라, 진짜 사건이 섞이면 이야기가 그 칸에서 무너진다.
+  */
+  const scans = [
+    { id: 'demo_dose_2026-08-05_0800', dayKey: '2026-08-05', name: 'Metformin', memberId: 'me',
+      dose: { taken: true, due: '0800' } },
+    { id: 'dev_2026-08-05T14:02:11+09:00_1_1400', dayKey: '2026-08-05', name: 'Compartment 1', memberId: 'me',
+      dose: { taken: true, due: '1400' } },
+  ] as never as Parameters<typeof doseRows>[0];
+
+  assert.equal(doseRows(scans, 'me').length, 2, '평소에는 둘 다 센다');
+  const only = doseRows(scans, 'me', true);
+  assert.equal(only.length, 1);
+  assert.equal(only[0].name, 'Metformin');
 });
