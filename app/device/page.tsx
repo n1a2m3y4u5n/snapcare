@@ -226,25 +226,44 @@ export default function DevicePage() {
               </div>
 
               {/*
-                짝을 끊는 것은 되돌릴 수 있다(짝짓기 코드를 다시 읽으면 된다). 그래서
-                두 번 누르게 하지 않는다 — 지우는 것이 아니라 놓는 것이다.
+                **가득 채운 빨강.** 연한 빨강 바탕에 빨간 글자였다.
+
+                그 모양은 이 줄을 위의 "Send everything again" 과 **같은 무게**로
+                보이게 했다. 둘 다 흰 카드에 동그란 그림 하나와 두 줄짜리 글이고,
+                다른 것은 색조뿐이었다. 글을 못 읽는 사람에게 그 차이는 없는 것과 같다 —
+                누르면 되는 것과 누르면 안 되는 것이 나란히, 같은 모양으로 서 있었다.
+
+                끊기는 것은 되돌릴 수 있지만 **되돌리는 값이 이 사람에게 크다.** 다시
+                짝을 지으려면 상자 화면의 QR 을 찍어야 하고, 그 사이 상자는 새 일정을
+                못 받는다. 아무 일도 안 일어나는 것처럼 보이면서 그렇다.
+
+                안팎을 뒤집었다. 그림 자리가 흰 동그라미가 되어 붉은 바닥에서 눈에
+                박힌다. 이 앱에서 가득 채운 빨강은 여기 하나뿐이라, 뜻을 배울 것도 없다.
+
+                **여전히 한 번 누르면 끊긴다.** 확인을 한 단계 두는 편이 맞아 보이는데,
+                그건 이 화면의 규칙(누르면 그 자리에서 일어난다)을 바꾸는 일이라 따로
+                이야기하고 정할 것이다. 지금은 무게만 갈라 놓았다.
               */}
-              <div className="flex w-full items-center gap-3 rounded-2xl px-4 py-4"
-                   style={{ background: 'var(--color-avoid-bg)' }}>
+              <div className="mt-4 flex w-full items-center gap-3 rounded-2xl px-4 py-4 shadow-sm"
+                   style={{ background: 'var(--color-avoid)' }}>
               <button
                 onClick={() => void forget()}
                 className="flex min-w-0 flex-1 items-center gap-3 text-left
                            active:scale-[0.99] transition-transform"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl text-white"
-                      style={{ background: 'var(--color-avoid)' }}>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl"
+                      style={{ background: '#fff', color: 'var(--color-avoid)' }}>
                   <CloseIcon />
                 </span>
                 <span className="flex-1 text-left">
-                  <span className="block text-base font-bold" style={{ color: 'var(--color-avoid)' }}>
+                  <span className="block text-base font-bold text-white">
                     Forget this dispenser
                   </span>
-                  <span className="block text-xs" style={{ color: 'var(--color-sc-muted)' }}>
+                  {/*
+                    흰색이 아니라 연한 빨강이다. 두 줄의 무게를 가르되 읽히기는 해야
+                    하는데, 붉은 바닥에서 4.9:1 로 기준(4.5)을 넘는 가장 연한 값이다.
+                  */}
+                  <span className="block text-xs" style={{ color: 'var(--color-avoid-bg)' }}>
                     Your history stays. Pair again any time with its code.
                   </span>
                 </span>
