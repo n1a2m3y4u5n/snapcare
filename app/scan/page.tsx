@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
 import { PictogramStrip, OneGlyph } from '@/components/sc/PictogramStrip';
-import { TeachBack } from '@/components/sc/TeachBack';
 import { NutrientBars } from '@/components/sc/NutrientBars';
 import { Hear, Say, Speakable, sayable } from '@/components/sc/Say';
 import { HoldToHear } from '@/components/sc/HoldToHear';
@@ -491,15 +490,23 @@ function RxResult({
       )}
 
       {/*
-        되말하기.
+        되말하기가 여기 있었다 — "Let us check." 하고 그림 답지를 내미는 화면.
 
-        설명이 다 끝난 자리에 둔다 — 그림, 용량, 보관, 시각을 지나온 뒤다. 앞에 두면
-        아직 말하지 않은 것을 묻게 되고, 알람을 만드는 버튼 뒤에 두면 아무도 보지 않는다.
+        임상의 되말하기를 옮긴 것이었고 그 근거는 옳았다: 고개를 끄덕이는 것은 이해의
+        증거가 아니다. 틀린 것은 **누가 누구에게 확인하는가** 다.
 
-        건너뛸 수 있고, 틀려도 막지 않는다. 확인을 통과해야 정보를 주는 앱은 약을 못
-        먹게 하는 앱이다 — 이유는 lib/snapcare/teachBack.ts 에 적었다.
+        병원에서 그것은 방금 설명한 사람이 하는 확인이다. 여기서는 방금 설명한 쪽이
+        손글씨를 45% 밖에 못 읽는 우리이고, 확인을 받는 쪽은 그 종이를 읽지 못해서
+        이 앱을 켠 사람이다. 자기가 모르는 것을 물어 놓고 답을 채점한 셈이다.
+
+        이 자리에서 사람이 필요로 하는 것은 시험이 아니라 **확신**이다 — 무엇을,
+        몇 개, 언제. 그것은 위의 그림과 소리가 이미 하고 있고, 몇 번이든 다시 들을
+        수 있다. 퀴즈는 그 위에 얹힌 한 겹이었을 뿐이고, 틀렸을 때 사람이 얻는 것은
+        "내가 이 약을 잘못 알고 있다" 는 불안이지 옳은 지시가 아니었다.
+
+        엔진(lib/snapcare/teachBack.ts)과 컴포넌트는 남겨 둔다. 지운 것은 판단이지
+        코드의 옳고 그름이 아니고, 되살릴 근거가 생기면 그때는 한 줄이면 된다.
       */}
-      <TeachBack item={item} />
 
       {/*
         손글씨면 버튼도 초록이 아니다.

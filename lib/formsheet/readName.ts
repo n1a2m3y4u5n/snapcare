@@ -1,4 +1,5 @@
 import { matchDrug } from '@/lib/formulary/match';
+import { WHO_DRUGS } from '@/lib/formulary/who';
 import { readNotes } from '@/lib/formulary/notes';
 import { recognizeText } from '@/lib/ocr';
 import { SHEET_CONFIG } from './config';
@@ -104,14 +105,34 @@ export async function readHandwriting(
       const rect = SHEET_CONFIG.fields[f];
       if (!rect) return '';
       try {
-        return await toDataUrl(forOcr(cropField(gray, transform, rect)));
+        /*
+          **이진화하지 않고 보낸다.**
+
+          `forOcr` 은 tesseract 를 위한 손질이다 — 전역 Otsu 로 흑백을 만들고 밑줄을
+          지운다. tesseract 는 그것이 필요하지만 여기는 반대다: 회색조에 남아 있는
+          획의 농담이 손글씨를 읽는 단서인데, 이진화가 그것을 통째로 버린다.
+
+          눈으로 보면 분명하다. 조명이 기울어진 사진을 전역 문턱으로 자르면 어두운
+          쪽이 **거대한 검은 쐐기**가 되어 글자와 함께 붙어 버린다. 어제 이 자리가
+          그 그림을 보내고 있었다.
+
+          (쉬운 견본 하나로는 두 그림의 결과가 같았다. 그러니 이 변경으로 정확도가
+          얼마 오른다고는 말하지 않는다 — 다만 읽는 쪽이 쓸 수 있는 정보를 우리가
+          미리 부수어 보낼 이유가 없다.)
+        */
+        return await toDataUrl(cropField(gray, transform, rect));
       } catch {
         return '';
       }
     }),
   );
 
-  const better = await askVision({ name: shots[0], count: shots[1], notes: shots[2] });
+  const better = await askVision({
+    name: shots[0], count: shots[1], notes: shots[2],
+    // 어휘를 닫아 준다. 철자 변형(`also`)까지 함께 보낸다 — 종이에 INN 이 아니라
+    // 상품명이 적히는 것이 오히려 흔하고, 목록에 없는 철자는 모델에게 없는 것이다.
+    candidates: [...new Set(WHO_DRUGS.flatMap((d) => [d.name, ...(d.also ?? [])]))],
+  });
   if (!better?.legible) return local;
 
   /*
@@ -122,8 +143,18 @@ export async function readHandwriting(
     안 덮는다: 못 읽은 것을 못 읽었다고 두는 편이, 한쪽이 지어낸 것으로 채우는 것보다
     낫다.
   */
+  /*
+    목록에서 고른 것과 그대로 읽은 것 중 무엇을 쓰나.
+
+    모델이 목록의 한 항목을 **확신하고** 골랐으면 그것을 쓴다. 그 판단은 우리가
+    나중에 문자열로 붙이는 것보다 나은 증거를 갖고 있다 — 획을 봤다. 확신이 낮으면
+    안 쓴다: 500장 측정에서 문자열로 붙인 것 중 7.2% 가 다른 약에 가서 붙었고,
+    확신 없는 선택은 정확히 그 실패를 모델 쪽에서 되풀이하는 것이다.
+  */
+  const picked = better.match && better.matchConfidence >= 0.7 ? better.match : '';
+
   return {
-    name: matchDrug(local.name) ? local.name : (better.name || local.name),
+    name: matchDrug(local.name) ? local.name : (picked || better.name || local.name),
     count: local.count.match(/\d/) ? local.count : (better.count || local.count),
     notes: better.notes || local.notes,
   };
@@ -157,7 +188,7 @@ function needsHelp(r: { name: string; count: string; notes: string }): boolean {
 }
 
 /** 한 번만 묻는다. 못 물어보면 `null` — tesseract 가 읽은 것이 그대로 남는다. */
-async function askVision(shots: { name: string; count: string; notes: string }) {
+async function askVision(shots: { name: string; count: string; notes: string; candidates: string[] }) {
   try {
     const res = await fetch('/api/handwriting', {
       method: 'POST',
@@ -166,7 +197,10 @@ async function askVision(shots: { name: string; count: string; notes: string }) 
       signal: AbortSignal.timeout(16_000),
     });
     if (!res.ok) return null;
-    return (await res.json()) as { name: string; count: string; notes: string; legible: boolean };
+    return (await res.json()) as {
+      name: string; count: string; notes: string; legible: boolean;
+      match: string; matchConfidence: number;
+    };
   } catch (err) {
     console.warn('[form-sheet] 손글씨를 다시 못 물어봤다:', err);
     return null;
