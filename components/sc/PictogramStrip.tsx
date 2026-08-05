@@ -94,9 +94,22 @@ export function PictogramStrip({ source }: { source: string }) {
         </Speakable>
         <BiggerPictures />
       </div>
+      {/*
+        **줄바꿈이다. 옆으로 밀지 않는다.**
+
+        가로 스크롤이었다. 화면 밖으로 나간 그림은 밀어야 보이는데, **밀어야 한다는
+        것을 알려주는 것이 아무것도 없었다** — 잘린 그림 한 장의 가장자리뿐이고, 그건
+        글을 읽는 사람에게도 약한 신호다. 이 앱은 그림이 지시의 전부인 사람을 전제로
+        하는데, 그 사람이 뒤쪽 그림을 못 보면 "식후에" 나 "운전 금지" 가 통째로 없는
+        것과 같다. 그리고 뒤로 갈수록 주의사항이 온다 — 순서가 그렇게 정해져 있다
+        (`sigil.ts` — 먹는 법을 먼저, 조심할 것을 나중에).
+
+        줄바꿈은 세로로 길어지지만 이 화면은 어차피 스크롤되고, 세로 스크롤은 사람이
+        이미 하고 있는 동작이다. 배운 적 없는 동작을 요구하지 않는 쪽이 맞다.
+      */}
       <div className={big
         ? 'mt-2 flex flex-col gap-3'
-        : 'mt-2 flex gap-3 overflow-x-auto pb-1'}>
+        : 'mt-2 flex flex-wrap gap-3 pb-1'}>
         {missing.map((c) => (
           <MadeGlyph key={c} concept={c} />
         ))}
