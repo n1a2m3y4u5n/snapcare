@@ -199,3 +199,56 @@ test('흔들기는 약을 입에 대기 전에 온다', () => {
   const core = out.findIndex((l) => l.includes('pill_bottle') || l.includes('syrup'));
   assert.ok(shake >= 0 && (core === -1 || shake < core), `순서가 뒤집혔다: ${out.join(' · ')}`);
 });
+
+/*
+  미리 구운 것이 실제로 나오는 것을 덮는가.
+
+  왜 이 시험이 필요한가
+  ---------------------
+  화면은 매니페스트에 **모든 줄**이 있어야 정적으로 그린다. 하나라도 빠지면 엔진
+  합성으로 넘어가고, 그것이 실패하면 캐시에 있는 줄만 남는다(`PictogramStrip` 의
+  3번 폴백). 그래서 빠진 줄은 빈 화면이 아니라 **조용히 사라진 그림**으로 나타난다 —
+  눈으로는 "원래 그런 것" 처럼 보인다.
+
+  실제로 두 번 그랬다. 처음엔 주의사항이 만드는 그림이 통째로 빠져 있었고, 그 다음엔
+  제형 넷(크림·흡입기·산제·주사)의 머리가 빠져 있었다. 머리가 없으면 시각·개수·보관이
+  전부 그 머리를 그릇으로 쓰므로 그 약의 화면이 통째로 빈다.
+
+  두 목록이 서로 다른 파일에 손으로 적혀 있는 한 또 어긋난다. 그것을 사람이 눈으로
+  맞추는 대신 여기서 잡는다.
+*/
+test('미리 구운 것이 실제로 나오는 것을 덮는가', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { dslKey } = await import('./dsl.ts');
+  const { readPrescription, toScanItem } = await import('../formsheet/prescription.ts');
+  const { WHO_DRUGS } = await import('../formulary/who.ts');
+
+  const manifest = JSON.parse(readFileSync('public/pictograms/manifest.json', 'utf8'));
+  const NOTES = ['', 'After food. May cause drowsiness.', 'Take with food. Do not drive.',
+    'Keep in fridge. Shake well before use.', 'Not for children. Take with a full glass of water.',
+    'Keep in a dark place. May upset the stomach.', 'Remove contact lenses before use.',
+    'Take on an empty stomach'];
+
+  const missing = new Set<string>();
+  for (const drug of WHO_DRUGS) {
+    for (const notes of NOTES) {
+      for (const hour of ['8', '13', '19', '23']) {
+        const sheet = { layer: '3', days: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
+          duration: '7d', hour } as never;
+        const item = toScanItem(readPrescription(sheet, drug.name, '2', notes));
+        if (!item) continue;
+        // 회피 판정도 함께 — `\no{머리}` 는 그때만 나오는 모양이다.
+        for (const avoid of [false, true]) {
+          for (const line of itemToDsl(item, avoid).split('\n')) {
+            // `\?개념` 은 "그림이 없다" 는 표시라 캐시에 있을 수 없다.
+            if (!line || line.startsWith('\\?')) continue;
+            if (manifest[dslKey(line)] === undefined) missing.add(line);
+          }
+        }
+      }
+    }
+  }
+
+  assert.deepEqual([...missing].sort(), [],
+    '이 줄들이 화면에서 조용히 사라진다. scripts/prewarm-pictograms.mjs 의 목록에 넣고 다시 구워라');
+});

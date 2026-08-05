@@ -34,7 +34,20 @@ const MANIFEST = join(CACHE, 'manifest.json');
  * itemToDsl 을 직접 부르려면 TS 를 빌드해야 하므로, 표본에서 나오는 것으로 확인된
  * 조합을 여기 적는다. 어긋나면 캐시가 덜 데워질 뿐 동작이 깨지지는 않는다.
  */
-const HEADS = ['capsule_strip', 'dropper_bottle', 'tablet_blister', 'liquid_bottle', 'pill_bottle'];
+/*
+  약 그림의 머리 — `lib/snapcare/sigil.ts` 의 `FORM_HEAD` 전부, 그리고 모르는 제형이
+  떨어지는 `pill_bottle`.
+
+  다섯뿐이었다. 빠져 있던 넷(크림·흡입기·산제·주사)은 **그림이 한 장도 안 나오고
+  있었다** — 머리가 없으면 시각도 개수도 보관도 전부 그 머리를 그릇으로 쓰므로
+  그 약의 화면 전체가 빈다. 경구수액(ORS)이 산제라 그것도 포함이었고, 대상 지역에서
+  ORS 는 드문 약이 아니다.
+
+  이 목록이 저쪽과 어긋나면 조용히 그렇게 된다. 그래서 시험 하나가 두 곳을 묶는다
+  (`lib/snapcare/sigil.test.ts` 의 "미리 구운 것이 실제로 나오는 것을 덮는가").
+*/
+const HEADS = ['tablet_blister', 'capsule_strip', 'liquid_bottle', 'dropper_bottle',
+  'cream_tube', 'inhaler', 'syringe', 'suppository', 'sachet', 'pill_bottle'];
 const SLOTS = ['time_morning', 'time_noon', 'time_evening', 'time_night',
   'qty_one', 'qty_two', 'qty_three', 'qty_four', 'qty_five',
   'storage_fridge', 'storage_dry', 'body_eye', 'body_mouth',
