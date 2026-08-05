@@ -76,6 +76,14 @@ class Daemon:
         # Constructed even when it will not run, so that the status page can
         # say *why* — "no relay configured" is a different thing to explain
         # than "cannot reach the relay", and a None here would collapse them.
+        # 화면을 지금 다시 그려야 한다는 신호. tick 루프가 이 위에서 자고,
+        # `TICK_SECONDS` 를 다 기다리는 대신 여기서 깬다.
+        #
+        # **클라우드를 만들기 전에** 만든다. 바로 아래에서 연결하는데, 늦게 만들었더니
+        # 그 줄이 `AttributeError` 로 죽었다 — 기기가 부팅 도중에 멈춰서, 시험은 전부
+        # 통과하는데 실제 상자만 안 켜졌다(시험은 하드웨어가 없어 Daemon 을 안 짓는다).
+        self._redraw = threading.Event()
+
         self.cloud = CloudLink(self.dispenser, self.identity,
                                relay_url=relay_url, enabled=cloud)
         # Every recorded dose goes up promptly, whichever of the four things
@@ -125,9 +133,6 @@ class Daemon:
         )
         self.port = port
         self._stop = threading.Event()
-        # 화면을 지금 다시 그려야 한다는 신호. 아래 `_stop.wait(TICK_SECONDS)` 를
-        # 대신하며, 클라우드 명령이 화면을 바꿀 때 그 15 초를 건너뛰게 한다.
-        self._redraw = threading.Event()
         self._server = None
         self._ntp_trusted = False
         #: When the clock chip was last written. Seeded at 0 so the first
