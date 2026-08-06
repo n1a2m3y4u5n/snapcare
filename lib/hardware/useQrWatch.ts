@@ -102,11 +102,12 @@ const FRESH_MS = 4000;
  * 거칠게 훑고 그 둘레를 다시 훑는다. 한 번에 촘촘히 훑으면 단계마다 카메라가 자리를
  * 잡는 시간(약 120ms)이 곱해져서 사람이 기다리는 시간이 몇 초가 된다.
  */
-async function sweepFocus(track: MediaStreamTrack, video: HTMLVideoElement): Promise<number | null> {
+async function sweepFocus(track: MediaStreamTrack, video: HTMLVideoElement,
+                          note?: (s: string) => void): Promise<number | null> {
   const caps = track.getCapabilities?.() as
     { focusDistance?: { min: number; max: number; step?: number }; focusMode?: string[] } | undefined;
   const fd = caps?.focusDistance;
-  if (!fd || !caps?.focusMode?.includes('manual')) return null;
+  if (!fd || !caps?.focusMode?.includes('manual')) { note?.('sweep: 불가'); return null; }
 
   // 선명도는 작게 재도 된다. 큰 그림을 훑으면 단계마다 수십 밀리초가 더 든다.
   const c = document.createElement('canvas');
@@ -136,23 +137,41 @@ async function sweepFocus(track: MediaStreamTrack, video: HTMLVideoElement): Pro
     return measure();
   };
 
-  let best = fd.min, bestScore = -1;
-  const coarse = 6;
-  for (let i = 0; i < coarse; i++) {
-    const d = fd.min + ((fd.max - fd.min) * i) / (coarse - 1);
+  /*
+    **상한을 그대로 믿으면 안 된다.**
+
+    이 기기가 `focusDistance: 0 ~ 9223372036854776000` 이라고 답했다. 2의 63승이고,
+    "무한대" 를 그렇게 적은 것이다. 그 범위를 균등하게 나누면 첫 단계가 이미
+    1.8×10¹⁸ 이라 **모든 표본이 무의미한 자리**에 떨어진다 — 훑기가 도는데 아무것도
+    못 찾는다.
+
+    그래서 `min + 10` 에서 자른다. 단위가 미터면 10m 는 사실상 무한대이고, 디옵터면
+    10 은 10cm 라 우리가 읽는 거리다. **어느 쪽이든 쓸모 있는 구간이 그 안에 든다** —
+    단위를 몰라도 되는 것이 이 방법의 값이다(우리는 선명도로 고르지 거리로 안 고른다).
+
+    그리고 균등이 아니라 **가까운 쪽을 촘촘히** 본다. 사람이 종이를 들이대는 거리가
+    거기이고, 먼 쪽은 어차피 다 비슷하게 흐리다.
+  */
+  const lo = fd.min;
+  const hi = Math.min(fd.max, fd.min + 10);
+  const FRACTIONS = [0, 0.01, 0.03, 0.06, 0.12, 0.25, 0.5, 1];
+
+  let best = lo, bestScore = -1;
+  for (const f of FRACTIONS) {
+    const d = lo + (hi - lo) * f;
     const score = await at(d);
     if (score > bestScore) { bestScore = score; best = d; }
   }
-  // 이긴 자리 둘레를 한 번 더. 거친 단계 하나만큼의 폭을 다섯으로 나눈다.
-  const span = (fd.max - fd.min) / (coarse - 1);
-  for (let i = -2; i <= 2; i++) {
-    if (i === 0) continue;
-    const d = Math.min(fd.max, Math.max(fd.min, best + (span * i) / 2));
+  // 이긴 자리 둘레를 한 번 더. 이긴 값의 ±40% 를 넷으로 나눈다.
+  const around = Math.max((hi - lo) * 0.01, best * 0.4);
+  for (const k of [-1, -0.5, 0.5, 1]) {
+    const d = Math.min(hi, Math.max(lo, best + around * k));
     const score = await at(d);
     if (score > bestScore) { bestScore = score; best = d; }
   }
   await at(best);
-  console.info('[camera] 초점을 훑어 맞췄다 →', best.toFixed(3), `선명도 ${bestScore.toFixed(0)}`);
+  console.info('[camera] 초점을 훑어 맞췄다 →', best, `선명도 ${bestScore.toFixed(0)}`);
+  note?.(`sweep ${best.toPrecision(3)} @${bestScore.toFixed(0)}`);
   return best;
 }
 
@@ -380,8 +399,20 @@ export function useQrWatch(enabled = true): QrWatch {
         그래서 **이 브라우저가 `focusMode` 라는 제약을 아는지** 먼저 묻는다.
         `getSupportedConstraints()` 는 스트림을 안 열고도 답하고, iOS 에서는 거짓이다.
       */
-      const knowsFocus = !!(navigator.mediaDevices.getSupportedConstraints?.() as
-        { focusMode?: boolean } | undefined)?.focusMode;
+      /*
+        **이 플랫폼이 초점을 다루는가**를 `getCapabilities()` 로 묻는다.
+
+        전에는 `getSupportedConstraints().focusMode` 로 물었다. iOS 에서 다른 렌즈를
+        열다가 스트림을 죽인 일이 있어 붙인 관문인데, **안드로이드에서도 막고 있었다**
+        — 진단 줄에 `tried none` 이 찍혔다. 크롬이 그 목록에 `focusMode` 를 안 넣는
+        것으로 보인다.
+
+        지금 잡은 트랙이 `focusMode` 를 **말하고 있으면** 그 플랫폼은 초점을 다룬다.
+        이 기기가 `focus manual` 이라고 답한 것이 곧 그 증거다. iOS 는 이 칸 자체가
+        없으므로 전과 같이 건너뛴다 — 막으려던 것은 그대로 막힌다.
+      */
+      const knowsFocus = Array.isArray((track?.getCapabilities?.() as
+        { focusMode?: string[] } | undefined)?.focusMode);
       if (knowsFocus && track && focusless(track)) {
         const better = await pickFocusable(track, tried);
         if (better && !stopped) {
@@ -427,7 +458,8 @@ export function useQrWatch(enabled = true): QrWatch {
       */
       const canAuto = caps?.focusMode?.some((m) => m === 'continuous' || m === 'single-shot');
       if (track && !canAuto) {
-        void sweepFocus(track, video).catch(() => { /* 기기가 거절했다 */ });
+        void sweepFocus(track, video, (r) => setLens((was) => `${was ?? line} · ${r}`))
+          .catch(() => { /* 기기가 거절했다 */ });
       }
 
       /*
@@ -632,7 +664,8 @@ export function useQrWatch(enabled = true): QrWatch {
     const canAuto = caps?.focusMode?.some((m) => m === 'continuous' || m === 'single-shot');
     const video = videoRef.current;
     if (!canAuto && video) {
-      await sweepFocus(track, video).catch(() => null);
+      await sweepFocus(track, video,
+        (r) => setLens((was) => `${(was ?? '').replace(/ · sweep.*$/, '')} · ${r}`)).catch(() => null);
     }
   }, []);
 
