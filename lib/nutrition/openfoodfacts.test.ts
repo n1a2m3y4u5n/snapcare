@@ -93,3 +93,37 @@ test('용량은 이름으로 안 센다', () => {
   // OFF 는 용량을 `quantity` 에 따로 담는다. 이름 점수의 분모만 키우던 토큰이다.
   assert.equal(nameOverlap('Nutella 350g', 'Nutella'), nameOverlap('Nutella', 'Nutella'));
 });
+
+/*
+  1회분을 몰라서 화면이 통째로 비던 것.
+
+  `serving_size` 만 봤다. 그 칸이 비면 계산이 100g 로 떨어지는데, 그것은 **한 캔을
+  오분의 일만 마신 것**으로 세는 일이다. Monster 500ml 를 찍으면 소금이 0.2g(4%)으로
+  나와 화면의 문턱(5%)을 못 넘고, 영양 막대가 하나도 안 뜬다 — 사람이 보는 것은
+  "안전합니다" 한 줄뿐이다.
+
+  OFF 는 총 용량을 `quantity` 에 담고, 우리는 그 칸을 받아 오면서 안 쓰고 있었다.
+*/
+test('캔·병은 총 용량이 1회분이다', () => {
+  const can = toProfile({ product_name: 'X', quantity: '500 ml',
+    nutriments: { salt_100g: 0.2 } } as never);
+  assert.equal(can.servingGrams, 500);
+});
+
+test('선언된 1회분이 있으면 그것이 이긴다', () => {
+  // 한 봉지에 여러 번 먹는 제품이 그렇게 적는다. 총 용량으로 세면 몇 배가 된다.
+  const bag = toProfile({ product_name: 'X', quantity: '300 g', serving_size: '30 g',
+    nutriments: { sugars_100g: 40 } } as never);
+  assert.equal(bag.servingGrams, 30);
+});
+
+test('한 번에 먹을 수 없는 크기는 안 쓴다', () => {
+  /*
+    1kg 쌀자루를 한 번에 먹는 것으로 세면 아무 제품이나 "하루 기준의 300%" 가 되어
+    경고가 뜻을 잃는다. 모르는 채로 두는 편이 낫다.
+  */
+  const sack = toProfile({ product_name: 'X', quantity: '1 kg', nutriments: { salt_100g: 1 } } as never);
+  assert.equal(sack.servingGrams, undefined);
+  const bottle = toProfile({ product_name: 'X', quantity: '2 l', nutriments: { sugars_100g: 10 } } as never);
+  assert.equal(bottle.servingGrams, undefined);
+});

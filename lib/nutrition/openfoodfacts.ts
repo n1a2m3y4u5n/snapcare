@@ -31,6 +31,8 @@ interface OffProduct {
   /** 옛 주소는 쉼표로 이은 문자열, search-a-licious 는 배열로 준다. 둘 다 받는다. */
   brands?: string | string[];
   serving_size?: string;
+  /** 총 용량("500 ml"). 캔·병·한 봉지에서는 이것이 곧 1회분이다 — `servingOf` 참고. */
+  quantity?: string;
   nutriscore_grade?: string;
   allergens_tags?: string[];
   nutriments?: Record<string, unknown>;
@@ -70,7 +72,7 @@ export function toProfile(p: OffProduct): NutrientProfile {
     code: p.code,
     name: p.product_name?.trim() || 'Unknown product',
     brands: (Array.isArray(p.brands) ? p.brands.join(', ') : p.brands)?.trim() || undefined,
-    servingGrams: parseServingGrams(p.serving_size),
+    servingGrams: servingOf(p),
     per100,
     allergenTags: p.allergens_tags ?? [],
     nutriscore: p.nutriscore_grade,
@@ -82,6 +84,29 @@ export function toProfile(p: OffProduct): NutrientProfile {
  * OFF의 serving_size 는 자유 입력이라 '30 g', '1 portion (330 ml)', '2 biscuits (25g)' 등 형태가 제각각이다.
  * ml 은 물 기준 1ml=1g 으로 근사한다 (음료 대부분에서 오차가 작다).
  */
+/**
+ * 이 사람이 한 번에 먹는 양.
+ *
+ * `serving_size` 만 봤다. 그 칸이 비면 계산이 100g 로 떨어지는데, 그것이 **한 캔을
+ * 오분의 일만 마신 것**으로 세는 일이 된다. 실제로 겪은 것: Monster 500ml 캔을 찍으면
+ * 소금이 0.2g(4%)으로 나와 화면의 문턱(5%)을 못 넘고, 영양 막대가 **하나도 안 뜬다.**
+ * 사람이 보는 것은 "안전합니다" 한 줄뿐이다.
+ *
+ * OFF 는 총 용량을 `quantity` 에 따로 담고, 우리는 그 칸을 이미 받아 오면서 안 쓰고
+ * 있었다. 캔·병·한 봉지짜리 제품에서는 **그것이 곧 1회분**이다 — 500ml 캔을 반만
+ * 마시는 사람은 드물다.
+ *
+ * 600 을 넘으면 안 쓴다. 1kg 쌀자루나 2L 병을 한 번에 먹는 것으로 세면 반대 방향으로
+ * 틀리고, 그쪽이 더 나쁘다 — 아무 제품이나 "하루 기준치의 300%" 가 되어 경고가 뜻을
+ * 잃는다. 그 구간은 `serving_size` 가 없으면 여전히 100g 로 둔다.
+ */
+function servingOf(p: OffProduct): number | undefined {
+  const declared = parseServingGrams(p.serving_size);
+  if (declared) return declared;
+  const whole = parseServingGrams(p.quantity);
+  return whole && whole <= 600 ? whole : undefined;
+}
+
 export function parseServingGrams(raw: string | undefined): number | undefined {
   if (!raw) return undefined;
   const m = raw.match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
