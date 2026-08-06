@@ -70,7 +70,23 @@ export default function CameraPage() {
 
     이유는 useQrWatch 에 적었다 — 사진 한 장은 QR 을 읽는 도구로 최악이다.
   */
-  const { videoRef, live, recent, capture, focusable, focusAt } = useQrWatch(!busy);
+  /*
+    **브라우저 카메라를 안 연다.** 기기의 기본 카메라 앱으로 찍는다.
+
+    미리보기 영상에서 한 프레임을 떠 왔다. 그 길로는 초점을 우리가 감당해야 하는데,
+    안드로이드에서 그것이 끝내 안 됐다 — 잡히는 렌즈가 `focus manual` 뿐이고,
+    `focusDistance` 의 상한이 2의 63승으로 오는 기기가 있다. 고치려다 되던 것을 세 번
+    망가뜨렸다: 아이폰 검은 화면, 안드로이드 검은 사진, 분석이 안 끝나는 것.
+
+    기본 카메라 앱은 그 일을 이미 잘한다. 초점·노출·손떨림 보정이 기기 제조사가 만든
+    것이고, 접사 렌즈로 알아서 갈아탄다. 성분표의 작은 글자와 손글씨를 읽어야 하는
+    이 앱에서 그 차이가 판독 성패를 가른다.
+
+    **잃는 것**: 화면 안의 실시간 미리보기와, 그 위에서 프레임마다 돌던 QR 판독.
+    QR 은 찍은 사진에서 그대로 읽는다(`runOcr` → `decodeQrFromImage`) — 짝짓기는
+    그 길로 이어진다. 카메라 권한도 이제 안 묻는다.
+  */
+  const { videoRef, live, recent, focusable, focusAt } = useQrWatch(false);
 
   /*
     `?try=` 로 표본을 열던 길이 여기 있었다. 홈의 "TRY IT" 이 그리로 보냈는데, 그
@@ -354,16 +370,15 @@ export default function CameraPage() {
       **기다리는지 모르는 상태**가 없어진다. 그 둘의 차이가 여기서는 크다 — 이 앱을
       쓰는 사람은 화면이 답하지 않으면 자기가 잘못한 줄 안다.
     */
-    setBusy(true);
-    setHint(null);
-    setStatus('Looking…');
-    const started = performance.now();
-    const frame = await capture();
-    console.info(`[camera] 프레임 ${Math.round(performance.now() - started)}ms`,
-                 frame ? `${Math.round(frame.size / 1024)}KB` : '없음');
-    if (frame) { void runOcr(frame); return; }
-    setBusy(false);
-    setStatus(null);
+    /*
+      **기다리는 상태로 두지 않는다.**
+
+      기본 카메라 앱이 열리면 이 화면은 뒤로 물러난다. 사람이 거기서 찍을 수도, 취소할
+      수도 있는데 취소하면 `onFile` 이 안 불린다 — 여기서 `busy` 를 세워 두면 돌아온
+      화면이 영원히 "분석 중" 이다.
+
+      그래서 아무 상태도 안 세우고 연다. 판독은 사진이 돌아온 뒤 `onFile` 이 시작한다.
+    */
     fileRef.current?.click();
   }
 
@@ -654,18 +669,25 @@ export default function CameraPage() {
         )}
 
         {/*
-          카메라를 못 열었을 때만 나오는 자리. 영상이 있으면 화면을 가리지 않는다.
+          이 화면이 하는 말.
+
+          전에는 "카메라를 못 열었을 때만" 나오는 자리였다. 이제 미리보기가 아예
+          없으므로(찍는 일은 기기 카메라 앱이 한다) 늘 여기가 보인다.
+
+          문구도 바뀌어야 한다. "카메라가 여기를 향하고 있습니다" 는 그때는 참이었고
+          지금은 아니다 — 여기는 아직 아무것도 안 보고 있고, 누르면 그때 카메라가
+          열린다. 화면과 말이 어긋나면 글을 못 읽는 사람이 기댈 것이 그 말뿐이다.
         */}
         {!live && (
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 px-8 text-center">
             {/*
-              카메라를 못 열었을 때의 자리 표시. 📷 였다 — 화면에서 가장 큰 그림이
-              기기마다 다른 그림이면, 이 앱이 무엇을 하는 앱인지가 폰마다 달라진다.
+              📷 였다 — 화면에서 가장 큰 그림이 기기마다 다른 그림이면, 이 앱이 무엇을
+              하는 앱인지가 폰마다 달라진다.
             */}
             <span aria-hidden className="leading-none" style={{ fontSize: 56 }}><CameraIcon /></span>
-            <span className="text-xs opacity-70"
-                  {...sayable('The camera is pointed here. Press the big round button below to take the photograph.')}>
-              camera preview
+            <span className="text-sm font-semibold opacity-90"
+                  {...sayable('Press the big round button below. The camera will open.')}>
+              Press the button to open the camera
             </span>
           </div>
         )}
