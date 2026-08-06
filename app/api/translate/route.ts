@@ -43,9 +43,15 @@ const MAX_CHARS = 600;
   짧은 문장을 규칙대로 바꾸는 것이라 더 작은 모델로 충분하다 — 그리고 숫자가 어긋나면
   아래에서 잡아낸다.
 
+  **Sonnet 에서 Haiku 로 다시 내렸다.** 같은 일곱 문장으로 나란히 재니 2.8초 대 1.5초로
+  Haiku 가 두 배 가깝게 빨랐고, 답을 눈으로 확인하니 숫자도 뜻도 어긋나지 않았다 —
+  "임신 중에는 안전하지 않습니다", "이번 달에 저녁 약을 3번…" 처럼 안전이 걸린 문장이
+  둘 다 맞게 나온다. Haiku 쪽 한국어가 조금 딱딱하지만("복용하세요" 대 "드세요") 이
+  화면에서 1.3초는 그 차이보다 비싸다. 소리가 늦게 나면 사람은 안 눌린 줄 안다.
+
   올릴 필요가 생기면 `SNAPCARE_TRANSLATE_MODEL` 로 바꾼다.
 */
-const MODEL = process.env.SNAPCARE_TRANSLATE_MODEL || 'claude-sonnet-5';
+const MODEL = process.env.SNAPCARE_TRANSLATE_MODEL || 'claude-haiku-4-5';
 
 function systemFor(englishName: string, native: string): string {
   return `You translate short sentences for a medicine and food safety app.
