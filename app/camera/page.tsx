@@ -245,6 +245,33 @@ export default function CameraPage() {
         }
         if (!sheet.foundPage || !sheet.transform) return false;
 
+        /*
+          **나쁜 사진은 여기서 돌려보낸다.**
+
+          `foundPage` 와 `transform` 만 보고 있었다. 그래서 초점이 나갔거나, 어둡거나,
+          종이가 안 평평해 마커가 서로 다른 자리를 가리키는 사진도 확신 있는 일정이
+          됐다 — 그 일정이 약이 든 기계로 간다. `sheet.ts` 는 그 셋을 이미 재서
+          "거절한다" 고 주석에 적어 두었는데, 그 판정을 읽는 코드가 없었다.
+
+          **사진 탓인 것만** 본다(`photoProblems`). 칸이 비었거나 두 칸이 칠해진 것은
+          몇 번을 다시 찍어도 그대로라, 그것으로 돌려보내면 사람이 빠져나올 수 없다.
+          그쪽은 아래에서 읽히는 대로 화면에 남는다.
+
+          `true` 를 돌려주는 이유: 이것은 폼시트가 **맞다.** 거짓을 내면 보통 사진으로
+          넘어가 판별 모델이 처방전으로 읽어 버리고, 그러면 사람은 버블에 적은 일정이
+          왜 안 갔는지 알 길이 없다.
+        */
+        if (sheet.photoProblems.length > 0) {
+          const say = sheet.photoProblems.some((p) => p.includes('lie flat'))
+            ? 'Flatten the sheet and take the photo again.'
+            : 'That photo is too blurry or too dark. Take it again in better light.';
+          console.warn('[form-sheet] 사진을 돌려보냈다:', sheet.photoProblems);
+          void speak(say);
+          setHint(say);
+          setBusy(false);
+          return true;
+        }
+
         // 이름칸은 더 큰 그림에서 읽는다 — 종이의 4.7mm 라 2000px 배율에서는 글자가
         // 남지 않는다. 마커는 다시 안 찾는다.
         setStatus('Reading the name…');

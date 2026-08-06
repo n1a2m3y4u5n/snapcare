@@ -268,6 +268,18 @@ export interface SheetResult {
   baseline: number;
   quality: Quality | null;
   scores: Record<string, Record<string, number>>;
+  /**
+   * **다시 찍으면 고쳐지는** 문제만.
+   *
+   * `problems` 는 두 가지를 섞어 담는다: 사진 탓(초점·조도·종이가 안 평평함)과
+   * 종이 탓(칸이 비었음, 두 칸이 칠해졌음). 앞엣것은 사람이 한 장 더 찍으면 사라지고
+   * 뒤엣것은 몇 번을 찍어도 그대로다.
+   *
+   * 섞여 있으면 부르는 쪽이 쓸 수가 없다. 통째로 거절하면 칸을 덜 채운 종이가 영영
+   * 안 읽히고, 통째로 무시하면 초점 나간 사진이 확신 있는 일정이 된다 — 실제로
+   * 뒤엣것이었다. 카메라 화면은 `foundPage` 와 `transform` 만 보고 있었다.
+   */
+  photoProblems: string[];
   ok: boolean;
 }
 
@@ -359,6 +371,7 @@ export function readFormSheet(
     baseline,
     quality,
     scores,
+    photoProblems: priorProblems,
     ok: problems.length === 0,
   };
 }
@@ -386,6 +399,9 @@ export function parseFormSheet(gray: Gray, cfg: SheetConfig = SHEET_CONFIG): She
       baseline: 0,
       quality: null,
       scores: {},
+      // 종이를 아예 못 찾았다. 이것은 "이 사진은 폼시트가 아니다" 일 수도 있으므로
+      // 다시 찍으라고 하지 않는다 — 부르는 쪽이 보통 사진으로 넘긴다.
+      photoProblems: [],
       ok: false,
     };
   }

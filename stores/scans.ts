@@ -137,7 +137,11 @@ export const useScans = create<ScansState>()(
        * v8: 아이에게 자기 약을 준다(`KID_DOSES`). 이미 시연을 열어 본 폰은 아이 쪽
        * 복약이 **빈 채로 저장돼 있어서**, 판을 올려 다시 뿌리지 않으면 영영 빈다.
        */
-      version: 8,
+      /**
+       * v9: 땅콩 알레르기가 적힌 아이의 지난 기록에서 땅콩이 빨강이 된다. 이미 심긴
+       * 폰은 그 스물몇 건이 초록으로 저장돼 있어서, 다시 뿌리지 않으면 안 바뀐다.
+       */
+      version: 9,
       /**
        * 옛 저장분을 버린다 — **시연에서만.**
        *
@@ -265,7 +269,10 @@ export function seedDemoIfEmpty(): void {
   // 사람마다 자기 약이다. 아이에게 할머니 약을 주지 않는 것이 요점이었지, 아이에게
   // 약을 아예 안 주는 것이 아니었다 — 그래서 아이 쪽 복약 화면이 통째로 비어 있었다.
   const plan = me === DEMO_KID ? KID_DOSES : ADULT_DOSES;
-  useScans.setState({ scans: [...seed, ...demoHistory(todayKey(), PROFILE_ID, undefined, undefined, plan)] });
+    // 아이는 프로필에 땅콩 알레르기가 적혀 있다. 그러면 지난 기록의 땅콩도 빨강이어야
+  // 한다 — 지난 기록에는 판정 재계산이 없어서, 안 넘기면 스물네 번이 초록으로 남는다.
+  useScans.setState({ scans: [...seed,
+    ...demoHistory(todayKey(), PROFILE_ID, undefined, undefined, plan, me === DEMO_KID)] });
   /*
     알람도 같이 심는다.
 

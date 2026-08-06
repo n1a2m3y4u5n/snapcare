@@ -125,3 +125,29 @@ test('종이를 못 찾으면 예외가 아니라 결과로 알린다', () => {
   assert.deepEqual(r.values, { layer: null, days: [], duration: null, hour: null });
   assert.ok(r.problems[0].startsWith('could not locate the sheet'));
 });
+
+/*
+  다시 찍으면 고쳐지는 문제와 아닌 문제를 갈라 놓았는가.
+
+  `problems` 는 둘을 섞어 담는다: 사진 탓(초점·조도·종이가 안 평평함)과 종이 탓
+  (칸이 비었음, 두 칸이 칠해졌음). 카메라 화면은 그것을 아예 안 읽고 `foundPage` 와
+  `transform` 만 봤고, 그래서 초점 나간 사진도 확신 있는 일정이 됐다 — 그 일정이
+  약이 든 기계로 간다.
+
+  통째로 거절할 수도 없다. 칸을 덜 채운 종이는 몇 번을 다시 찍어도 그대로라, 그것으로
+  돌려보내면 사람이 빠져나올 수 없다.
+*/
+test('종이 탓인 문제는 사진 탓 목록에 안 들어간다', () => {
+  // 아무것도 안 칠한 종이를 읽으면 "nothing filled" 가 나온다. 그것은 다시 찍어도
+  // 그대로이므로, 여기에 섞이면 사람이 같은 사진을 영영 다시 찍게 된다.
+  const r = readFormSheet(blank());
+  assert.ok(r.problems.length > 0, '빈 종이인데 아무 문제도 안 났다');
+  assert.deepEqual(r.photoProblems, [], '종이 탓인 것이 사진 탓 목록에 들어갔다');
+});
+
+test('종이를 못 찾았을 때는 다시 찍으라고 하지 않는다', () => {
+  // 폼시트가 아닌 사진일 수 있다. 그때는 보통 사진으로 넘어가는 것이 맞다.
+  const noise = makeGray(300, 400);
+  noise.d.fill(200);
+  assert.deepEqual(parseFormSheet(noise).photoProblems, []);
+});

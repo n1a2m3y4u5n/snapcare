@@ -195,3 +195,27 @@ test('아이에게는 아이 약을 준다', () => {
   // 끼니는 그대로다 — 아이 쪽 논지의 나머지 절반이다.
   assert.ok(kid.filter((r) => !r.dose).length > 200);
 });
+
+test('땅콩 알레르기가 적힌 사람에게는 지난 땅콩도 빨강이다', () => {
+  /*
+    지난 기록에는 판정 재계산이 없다 — 판정은 찍는 순간에 나고 `level` 은 그때 박힌다.
+    그래서 프로필에 땅콩 알레르기가 적힌 아이의 시연 식단에서 땅콩버터 스물몇 번이
+    전부 초록이었다. 이 앱의 간판이 정확히 그 판정인데.
+  */
+  const kid = demoHistory('2026-08-05', 'me', 84, 23 * 60, KID_DOSES, true);
+  const peanut = kid.filter((r) => r.itemId === 'peanutButter' || r.itemId === 'snickers');
+  assert.ok(peanut.length > 0, '시연 식단에 땅콩이 있어야 이 시험이 뜻이 있다');
+  for (const r of peanut) {
+    assert.equal(r.level, 'avoid', `${r.timeLabel} 의 ${r.name} 이 ${r.level} 이다`);
+  }
+});
+
+test('알레르기가 안 적힌 사람에게는 일지가 찾아낼 몫으로 남긴다', () => {
+  // 할머니 쪽 이야기는 "일지가 찾아낸다" 이다. 처음부터 빨간 것으로 알고 있었다면
+  // 찾아낼 것이 없고, 그 기능을 보여줄 자리가 사라진다.
+  const adult = demoHistory('2026-08-05', 'me', 84, 23 * 60, ADULT_DOSES, false);
+  const peanut = adult.filter((r) => r.itemId === 'peanutButter');
+  assert.ok(peanut.length > 0);
+  assert.ok(peanut.every((r) => r.level !== 'avoid'), '찾아내기 전인데 이미 빨강이다');
+  assert.ok(peanut.some((r) => r.reaction === 'unwell'), '일지가 찾아낼 단서가 없다');
+});

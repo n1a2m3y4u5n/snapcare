@@ -196,6 +196,14 @@ const SWEETS = new Set<keyof typeof PRODUCTS>(
   ['redbull', 'snickers', 'mars', 'cola', 'nutella', 'juice'],
 );
 
+/**
+ * 땅콩이 든 것들. **제품 이름이 아니라 성분으로** 고른다.
+ *
+ * `itemId === 'snickers'` 였다. 식단에 땅콩버터가 들어오자 그 줄이 조용히 아무것도
+ * 안 잡게 됐고 — 일지가 결론을 못 내는데 시험은 통과했다 — 데모의 간판 기능이 비었다.
+ */
+const PEANUT_IDS = new Set<string>(['snickers', 'peanutButter']);
+
 const WEEK: (keyof typeof PRODUCTS)[][] = [
   // ── 첫째 주 ──
   ['oats', 'soup', 'juice', 'cola'],                    // 일
@@ -335,7 +343,8 @@ export const DEMO_DAYS = 84;
  * 일정을 받으면 두 가지를 한 번에 한다: 남의 약이 안 가고, 자기 약이 간다.
  */
 export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
-                            nowMinutes = nowInMinutes(), plan: DosePlan[] = ADULT_DOSES): ScanRecord[] {
+                            nowMinutes = nowInMinutes(), plan: DosePlan[] = ADULT_DOSES,
+                            knownPeanutAllergy = false): ScanRecord[] {
   const out: ScanRecord[] = [];
 
   for (let back = 0; back < days; back++) {
@@ -400,7 +409,20 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
           판정 엔진이 프로필을 보고 다시 매긴다(땅콩 알레르기가 있으면 땅콩버터가
           그때 빨강이 된다).
         */
-        level: SWEETS.has(key) ? 'caution' : 'safe',
+        /*
+          알레르기가 **이미 알려진 사람**에게는 여기서 빨강이다.
+
+          위 주석은 "회피는 판정 엔진이 프로필을 보고 다시 매긴다" 고 적어 두었는데,
+          지난 기록에는 그런 재계산이 없다 — 판정은 찍는 순간에 나고 `level` 은 그때
+          박힌다. 그래서 땅콩 알레르기가 있는 아이의 시연 식단에서 땅콩버터 스물네
+          번이 전부 초록이었다. 이 앱의 간판이 정확히 그 판정인데.
+
+          할머니 쪽은 초록이 맞다. 그쪽 이야기는 **일지가 찾아내는** 것이라(아래
+          `reaction: 'unwell'`), 처음부터 빨간 것으로 알고 있었다면 찾아낼 것이 없다.
+          아이 쪽은 프로필에 적혀 있는 것이므로 처음부터 빨강이어야 한다.
+        */
+        level: SWEETS.has(key) ? 'caution'
+          : (knownPeanutAllergy && PEANUT_IDS.has(key) ? 'avoid' : 'safe'),
         timeLabel: `${when} · ${at.label}`,
         dayKey: day,
         barcode: p.barcode,
@@ -441,8 +463,7 @@ export function demoHistory(today: string, memberId: string, days = DEMO_DAYS,
     안 잡게 됐고 — 일지가 결론을 못 내는데 시험은 통과했다 — 데모의 간판 기능이
     비어 버렸다. 성분으로 물으면 새 제품이 들어와도 따라온다.
   */
-  const PEANUT: (keyof typeof PRODUCTS)[] = ['snickers', 'peanutButter'];
-  const peanutIds = new Set<string>(PEANUT);
+  const peanutIds = PEANUT_IDS;
 
   for (const rec of out) {
     if (!answered.has(rec.dayKey)) continue;
