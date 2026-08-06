@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import jsQR from 'jsqr';
 
 /**
@@ -49,6 +49,16 @@ export interface QrWatch {
    */
   recent(): string | null;
   /**
+   * 이 기기에서 **눌러서 초점 맞추기**가 되는가.
+   *
+   * 되는 기기에서만 화면이 그 손짓을 받아야 한다. 안 되는데 받아 두면 누르고 아무
+   * 일도 안 일어나는 자리가 생기고, 글을 못 읽는 사람에게 그것은 "고장" 으로 읽힌다.
+   * `focusMode` 는 Chromium 계열에만 있고 iOS 의 Safari 에는 없다.
+   */
+  focusable: boolean;
+  /** 영상 안의 그 자리(0~1 비율)에 초점을 맞춘다. 안 되는 기기에서는 아무 일도 안 한다. */
+  focusAt(x: number, y: number): Promise<void>;
+  /**
    * 지금 보이는 화면을 그대로 사진으로 잡는다. 카메라가 안 켜져 있으면 null.
    *
    * 이것이 없으면 화면이 거짓말을 한다 — 실시간 미리보기를 띄워 놓고 셔터를 누르면
@@ -68,6 +78,14 @@ const FRESH_MS = 4000;
 export function useQrWatch(enabled = true): QrWatch {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [live, setLive] = useState(false);
+  /*
+    이 기기에서 **눌러서 초점 맞추기**가 되는가.
+
+    되는 기기에서만 화면이 그 손짓을 받는다. 안 되는데 받아 두면, 누르고 아무 일도
+    안 일어나는 자리가 생긴다 — 글을 못 읽는 사람에게 그것은 "고장" 으로 읽힌다.
+  */
+  const [focusable, setFocusable] = useState(false);
+  const trackRef = useRef<MediaStreamTrack | null>(null);
   const seen = useRef<{ text: string; at: number } | null>(null);
 
   useEffect(() => {
@@ -75,6 +93,7 @@ export function useQrWatch(enabled = true): QrWatch {
     if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) return;
 
     let stream: MediaStream | null = null;
+    let track: MediaStreamTrack | null = null;
     let timer: ReturnType<typeof setInterval> | null = null;
     let stopped = false;
     const canvas = document.createElement('canvas');
@@ -83,7 +102,9 @@ export function useQrWatch(enabled = true): QrWatch {
       stopped = true;
       if (timer) clearInterval(timer);
       stream?.getTracks().forEach((t) => t.stop());
+      trackRef.current = null;
       setLive(false);
+      setFocusable(false);
     };
 
     void (async () => {
@@ -114,6 +135,29 @@ export function useQrWatch(enabled = true): QrWatch {
       video.muted = true;
       try { await video.play(); } catch { /* 자동재생 거절 — 아래에서 걸러진다 */ }
       if (stopped) { stream.getTracks().forEach((t) => t.stop()); return; }
+
+      /*
+        **초점을 계속 맞추라고 말한다.**
+
+        브라우저 기본값에 맡기고 있었다. 대부분의 기기가 알아서 계속 맞추지만,
+        고정 초점으로 시작하거나 한 번 맞춘 뒤 놓아버리는 기기가 있다. 이 앱이
+        읽어야 하는 것은 성분표의 작은 글자와 처방전의 손글씨라, 초점 하나가
+        "읽힘" 과 "다시 찍으세요" 를 가른다.
+
+        **되는 기기에서만 켜진다.** `focusMode` 는 Chromium 계열이 지원하고 iOS 의
+        Safari 에는 없다. 그래서 능력을 물어보고 있을 때만 건다 — 없는 값을 주면
+        `applyConstraints` 가 통째로 던지고, 그러면 켜지던 것까지 안 켜진다.
+      */
+      track = stream.getVideoTracks()[0] ?? null;
+      trackRef.current = track;
+      const caps = track?.getCapabilities?.() as
+        { focusMode?: string[]; pointsOfInterest?: unknown } | undefined;
+      if (track && caps?.focusMode?.includes('continuous')) {
+        try {
+          await track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as never] });
+        } catch { /* 기기가 거절했다. 기본 동작으로 둔다. */ }
+      }
+      setFocusable(!!caps?.pointsOfInterest || !!caps?.focusMode?.includes('single-shot'));
       setLive(true);
 
       timer = setInterval(() => {
@@ -178,5 +222,39 @@ export function useQrWatch(enabled = true): QrWatch {
       canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.92));
   };
 
-  return { videoRef, live, recent, capture };
+  /**
+   * 화면의 그 자리에 초점을 맞춘다. `x`·`y` 는 영상 안에서의 비율(0~1).
+   *
+   * `pointsOfInterest` 로 어디를 볼지 말한 뒤 `single-shot` 으로 한 번 맞춘다. 둘 중
+   * 하나만 되는 기기가 있어 따로 건다 — 한 번에 주면 안 되는 값 하나 때문에 전부
+   * 거절당한다.
+   *
+   * 맞춘 뒤 다시 `continuous` 로 돌려 놓는다. 안 그러면 그 뒤로 초점이 그 거리에
+   * 붙박여서, 사람이 종이를 가까이 대도 안 따라온다.
+   */
+  const focusAt = useCallback(async (x: number, y: number) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const caps = track.getCapabilities?.() as
+      { focusMode?: string[]; pointsOfInterest?: unknown } | undefined;
+    if (caps?.pointsOfInterest) {
+      try {
+        await track.applyConstraints({ advanced: [{ pointsOfInterest: [{ x, y }] } as never] });
+      } catch { /* 기기가 거절했다 */ }
+    }
+    if (caps?.focusMode?.includes('single-shot')) {
+      try {
+        await track.applyConstraints({ advanced: [{ focusMode: 'single-shot' } as never] });
+      } catch { /* 기기가 거절했다 */ }
+    }
+    if (caps?.focusMode?.includes('continuous')) {
+      // 한 자리에 붙박이지 않게 되돌린다.
+      setTimeout(() => {
+        void track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as never] })
+          .catch(() => { /* 기기가 거절했다 */ });
+      }, 2500);
+    }
+  }, []);
+
+  return { videoRef, live, recent, capture, focusable, focusAt };
 }

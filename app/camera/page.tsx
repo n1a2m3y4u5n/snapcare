@@ -47,6 +47,8 @@ export default function CameraPage() {
     [reminders],
   );
   const [busy, setBusy] = useState(false);
+  /** 방금 누른 자리. 초점 동그라미를 그 자리에 잠깐 띄운다. */
+  const [spot, setSpot] = useState<{ x: number; y: number } | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   /**
@@ -68,7 +70,7 @@ export default function CameraPage() {
 
     이유는 useQrWatch 에 적었다 — 사진 한 장은 QR 을 읽는 도구로 최악이다.
   */
-  const { videoRef, live, recent, capture } = useQrWatch(!busy);
+  const { videoRef, live, recent, capture, focusable, focusAt } = useQrWatch(!busy);
 
   /*
     `?try=` 로 표본을 열던 길이 여기 있었다. 홈의 "TRY IT" 이 그리로 보냈는데, 그
@@ -603,6 +605,45 @@ export default function CameraPage() {
         <video ref={videoRef} playsInline muted
                className="absolute inset-0 h-full w-full object-cover"
                style={{ opacity: live ? 1 : 0 }} />
+
+        {/*
+          **눌러서 초점 맞추기.**
+
+          초점을 브라우저 기본값에 맡기고 있었다. 대부분은 알아서 맞추지만 손이
+          흔들리거나 종이가 가까우면 놓치고, 이 앱이 읽어야 하는 것은 성분표의 작은
+          글자와 손글씨라 그 한 번이 "읽힘" 과 "다시 찍으세요" 를 가른다.
+
+          **되는 기기에서만 받는다**(`focusable`). 안 되는데 받아 두면 누르고 아무 일도
+          안 일어나는 자리가 생기고, 글을 못 읽는 사람에게 그것은 고장으로 읽힌다.
+          `focusMode` 는 Chromium 계열에만 있고 iOS 의 Safari 에는 없다.
+
+          누른 자리를 동그라미로 잠깐 보인다. 카메라 앱이 전부 그렇게 하기 때문이고,
+          그 표시가 없으면 눌린 것인지 알 방법이 없다 — 초점이 맞는 것은 화면에서
+          거의 안 보인다.
+        */}
+        {live && focusable && (
+          <button
+            type="button"
+            aria-label="Tap to focus"
+            className="absolute inset-0 h-full w-full"
+            onClick={(e) => {
+              const box = e.currentTarget.getBoundingClientRect();
+              const x = (e.clientX - box.left) / box.width;
+              const y = (e.clientY - box.top) / box.height;
+              setSpot({ x: e.clientX - box.left, y: e.clientY - box.top });
+              void focusAt(Math.min(1, Math.max(0, x)), Math.min(1, Math.max(0, y)));
+            }}
+          />
+        )}
+        {spot && (
+          <span
+            aria-hidden
+            key={`${spot.x},${spot.y}`}
+            className="sc-focus-ring pointer-events-none absolute rounded-full"
+            style={{ left: spot.x - 34, top: spot.y - 34, width: 68, height: 68,
+                     border: '2px solid rgba(255,255,255,0.95)' }}
+          />
+        )}
 
         {/*
           조준 틀. 영상 위에 얹으니 위아래 조작 띠를 피해 가운데에만 둔다.
