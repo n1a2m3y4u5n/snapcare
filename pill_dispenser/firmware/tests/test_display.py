@@ -858,9 +858,16 @@ def test_the_snapshot_reads_three_days_and_yesterday_from_the_ledger(
     assert (yesterday.today, today.today, tomorrow.today) == (False, True, False)
     assert today.doses is snap.day, "오늘 칸과 health.day 가 다른 목록이다"
 
-    # 날짜는 그릴 수 있는 모양으로 온다 — 5x7 얼굴에는 소문자가 없다.
-    assert today.label.startswith(health_mod.MONTHS[clock.now().month - 1])
-    assert today.label.split()[1] == f"{clock.now().day:02d}"
+    # 머리글은 날짜가 아니라 어느 날인가로 온다. `AUG 05` 였는데, 그걸 읽으려면
+    # 오늘이 며칠인지를 먼저 알아야 한다 — 약통이 필요한 사람이 가장 확실하지 않은
+    # 것이 바로 그것이다. 진짜 날짜는 바로 위 상태 표시줄에 그대로 있다.
+    assert (yesterday.label, today.label, tomorrow.label) == (
+        "YESTERDAY", "TODAY", "TOMORROW")
+    # 그릴 수 있는 모양으로 온다 — 5x7 얼굴에는 소문자가 없다.
+    assert all(day.label.isupper() for day in snap.days)
+    # 날짜 자체는 `date` 에 남아 있다. 이건 그려지지 않고, 테스트와 비교가 쓴다.
+    assert today.date == (f"{clock.now().year % 100:02d}-"
+                          f"{clock.now().month:02d}-{clock.now().day:02d}")
 
     # **오늘 올린 일정은 어제에 대해 할 말이 없다.** 예전에는 어제 칸이 `unknown`
     # 으로 가득 찼다 — "장부가 모른다" 는 정직한 표현이지만, 애초에 계획된 적이

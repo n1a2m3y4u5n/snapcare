@@ -202,16 +202,19 @@ def _demo_health() -> Health:
     the calendar can draw has to be on it. A bench fixture showing three
     identical empty boxes proves the panel lights up and nothing else.
     """
-    from .health import MONTHS, Day, Dose  # noqa: PLC0415
+    from .health import DAY_NAMES, Day, Dose  # noqa: PLC0415
 
     day = (Dose(tray=1, minutes=480, at="08:00", state="taken"),
            Dose(tray=3, minutes=780, at="13:00", state="missed"),
            Dose(tray=1, minutes=1200, at="20:00", state="upcoming"))
     yesterday = tuple(replace(dose, state="taken") for dose in day)
-    labels = (f"{MONTHS[7]} 04", f"{MONTHS[7]} 05", f"{MONTHS[7]} 06")
+    # The real headings, not stand-ins. `YESTERDAY` is the longest thing this
+    # band ever draws and the only one that has to be tightened to fit, so a
+    # bench frame without it would pass the exact case somebody is here to check.
+    labels = tuple(DAY_NAMES[offset] for offset in (-1, 0, 1))
     return Health(
         dispensing=True, known=True, wifi="online", clock_source="ntp",
-        address="192.168.1.42", now="09:41", trays_loaded=2,
+        address="192.168.1.42", now="09:41", today="26-08-05", trays_loaded=2,
         power="ok", cell="ok", storage="ok", relay="connected",
         day=day,
         days=(Day(label=labels[0], date="26-08-04", today=False, doses=yesterday),

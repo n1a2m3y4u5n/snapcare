@@ -84,9 +84,9 @@ PAD = 6
 GUTTER = 4
 COL_W = (W - 2 * PAD - (COLUMNS - 1) * GUTTER) // COLUMNS   # 100
 
-#: The date line at the top of each column, and the box drawn behind today's.
-#: 5x7 at double size: 14 rows, which is the smallest a date can be and still be
-#: read at arm's length, and `AUG 05` at that scale is 72 px of the column's 100.
+#: The heading at the top of each column, and the box drawn behind today's.
+#: 5x7 at double size: 14 rows, which is the smallest this can be and still be
+#: read at arm's length.
 DATE_SCALE = 2
 DATE_H = font.HEIGHT * DATE_SCALE               # 14
 #: The highlight's own box, with the date centred in it.
@@ -251,25 +251,80 @@ def _dots(canvas: Canvas, left: int, y: int, value: int) -> None:
                     DOT, DOT, value)
 
 
-def _column(canvas: Canvas, theme: dict, index: int, day) -> None:
-    """One day: its date, its highlight if it is today, and its doses."""
+#: The gap between letters in a heading, in pixels, widest first. The first is
+#: what `font.draw` uses on its own; the rest are the tightenings available
+#: before a word would have to be cut.
+#:
+#: This exists because of one word. `TODAY` and `TOMORROW` fit a 100 px column
+#: at the face's own spacing — 58 px and 94 px — and `YESTERDAY` is 106 px,
+#: over by one letter. The choices were to abbreviate it, to shrink the whole
+#: heading, or to close the gaps by a pixel; the first two both cost every
+#: column something, to pay for a problem only one column has. At 1 px the nine
+#: letters come to 98 px and the word is still nine separate letters.
+_HEAD_GAPS: tuple[int, ...] = ((font.ADVANCE - font.WIDTH) * DATE_SCALE, 1, 0)
+
+#: The most letters a heading can hold even with no gaps at all. A longer one is
+#: cut, which is a bad answer — but a heading drawn over the next column is a
+#: worse one, and this is derived from the geometry rather than guessed, so it
+#: follows the column if the panel ever changes.
+_HEAD_MAX = COL_W // (font.WIDTH * DATE_SCALE)
+
+
+def _head_width(label: str, gap: int) -> int:
+    """How wide `label` draws with `gap` pixels between its letters."""
+    if not label:
+        return 0
+    return len(label) * font.WIDTH * DATE_SCALE + (len(label) - 1) * gap
+
+
+def _head_gap(labels) -> int:
+    """The widest letter gap that keeps *every* heading inside its column.
+
+    One gap for all three, decided by the longest word, rather than each column
+    tightening only itself. Three headings in a row with different letter
+    spacing reads as a rendering fault — the eye catches the inconsistency long
+    before it catches the pixel — and this is a band whose whole job is to be
+    read at a glance from a doorway.
+    """
+    widest = max((str(label) for label in labels), key=len, default="")
+    for gap in _HEAD_GAPS:
+        if _head_width(widest[:_HEAD_MAX], gap) <= COL_W:
+            return gap
+    return _HEAD_GAPS[-1]
+
+
+def _head_draw(canvas: Canvas, x: int, y: int, label: str, ink: int,
+               gap: int) -> None:
+    """Draw a heading one letter at a time, so the gap can be set in pixels.
+
+    `font.draw` advances by a whole font column scaled up, which at double size
+    is a 2 px gap and nothing else. Stepping per letter is the only way to ask
+    for one pixel.
+    """
+    for char in label:
+        font.draw(canvas, x, y, char, ink, DATE_SCALE)
+        x += font.WIDTH * DATE_SCALE + gap
+
+
+def _column(canvas: Canvas, theme: dict, index: int, day, gap: int) -> None:
+    """One day: its heading, its highlight if it is today, and its doses."""
     left = COL_X(index)
     today = bool(getattr(day, "today", False))
 
-    label = str(getattr(day, "label", ""))[:8]
-    text_w = font.text_width(label, DATE_SCALE)
+    label = str(getattr(day, "label", ""))[:_HEAD_MAX]
+    text_w = _head_width(label, gap)
     if today:
         box_w = min(COL_W, text_w + 12)
         _rounded(canvas, left + (COL_W - box_w) // 2, HEAD_Y, box_w, HEAD_H,
                  HEAD_R, theme["TODAY"])
         # Black on the pastel red is 9.76:1. The light ink on it would be
-        # 1.79:1 — the two are near enough the same lightness that the date
+        # 1.79:1 — the two are near enough the same lightness that the heading
         # would vanish into its own highlight.
         ink = theme["BLACK"]
     else:
         ink = theme["TEXT_DIM"]
-    font.draw(canvas, left + (COL_W - text_w) // 2, HEAD_Y + (HEAD_H - DATE_H) // 2,
-              label, ink, DATE_SCALE)
+    _head_draw(canvas, left + (COL_W - text_w) // 2,
+               HEAD_Y + (HEAD_H - DATE_H) // 2, label, ink, gap)
 
     doses = rows(tuple(getattr(day, "doses", ()) or ()))
     start, below = window(doses)
@@ -310,6 +365,8 @@ def draw(canvas: Canvas, health: Health, theme: dict, *,
     canvas.rect(0, CAL_Y, canvas.width, CAL_H, theme["INK"])
 
     days = tuple(getattr(health, "days", ()) or ())
+    # Decided once, across all three, so the headings share one letter spacing.
+    gap = _head_gap(getattr(day, "label", "") for day in days)
     for index in range(COLUMNS):
         if index:
             # A hairline between columns, in the same grey the bar's rule uses.
@@ -318,7 +375,7 @@ def draw(canvas: Canvas, health: Health, theme: dict, *,
             canvas.rect(COL_X(index) - GUTTER // 2 - 1, CAL_Y + 2,
                         1, CAL_H - 4, theme["RULE"])
         _column(canvas, theme, index,
-                days[index] if index < len(days) else _EMPTY)
+                days[index] if index < len(days) else _EMPTY, gap)
 
     if highlight:
         # Two rows rather than one. A single row against `INK` is 1.09:1 on this

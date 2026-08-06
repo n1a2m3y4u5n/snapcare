@@ -203,6 +203,25 @@ class Dose:
 MONTHS: tuple[str, ...] = ("JAN", "FEB", "MAR", "APR", "MAY", "JUN",
                            "JUL", "AUG", "SEP", "OCT", "NOV", "DEC")
 
+#: What each column is called, by its distance from today.
+#:
+#: `AUG 05` was here. It is the more precise answer and it was the wrong one:
+#: the question this panel exists to answer is *"did I take last night's"*, and
+#: answering it from a date means the person first has to know today's — which
+#: is the thing somebody who needs a pill box is least likely to be sure of. A
+#: date makes them do arithmetic to reach a fact the column already knows.
+#:
+#: Nothing is lost. The real date is on the status bar directly above, as
+#: `YY-MM-DD`, tied to the same clock trust — so the panel still says which day
+#: it is, once, in the place that is about the machine rather than about the
+#: medicine.
+#:
+#: Only three, and that is deliberate rather than lazy. Past `±1` there is no
+#: word left — "the day before yesterday" does not fit a 100 px column and does
+#: not read at three metres — so a wider calendar falls back to dates below, and
+#: that fallback is the honest one.
+DAY_NAMES: dict[int, str] = {-1: "YESTERDAY", 0: "TODAY", 1: "TOMORROW"}
+
 
 @dataclass(frozen=True)
 class Day:
@@ -219,8 +238,9 @@ class Day:
     — it drew today, and yesterday existed only in the app.
     """
 
-    #: `AUG 05`, ready to draw. Assembled here rather than in the drawing code
-    #: because it is a fact about the day and because `MONTHS` is here.
+    #: `YESTERDAY`, `TODAY`, `TOMORROW` — ready to draw. Assembled here rather
+    #: than in the drawing code because which day this is, is a fact about the
+    #: day; see `DAY_NAMES` for why it is a word and not a date.
     label: str
     #: `26-08-04`, the same spelling the status bar uses. Not drawn — it is what
     #: a test names a column by, and what makes two `Day`s comparable without
@@ -689,7 +709,8 @@ def _days(dispenser, at, owed, today_doses) -> tuple[Day, ...]:
         else:
             doses = _try(f"the doses {offset:+d} days from today",
                          lambda w=when, o=offset: _plan_of(dispenser, w, o), ())
-        days.append(Day(label=f"{MONTHS[when.month - 1]} {when.day:02d}",
+        days.append(Day(label=DAY_NAMES.get(
+                            offset, f"{MONTHS[when.month - 1]} {when.day:02d}"),
                         date=f"{when.year % 100:02d}-{when.month:02d}-{when.day:02d}",
                         today=offset == 0, doses=doses))
     return tuple(days)
