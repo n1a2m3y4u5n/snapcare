@@ -326,20 +326,107 @@ export function useQrWatch(enabled = true): QrWatch {
   */
   const MAX_EDGE = 2400;
 
-  const capture = async (): Promise<Blob | null> => {
-    const video = videoRef.current;
-    if (!video?.videoWidth) return null;
-    const scale = Math.min(1, MAX_EDGE / Math.max(video.videoWidth, video.videoHeight));
+  /** 그림 하나를 긴 변 `MAX_EDGE` 로 줄여 JPEG 으로. 두 경로가 같은 것을 내보내게 한다. */
+  const toJpeg = async (src: CanvasImageSource, w: number, h: number): Promise<Blob | null> => {
+    const scale = Math.min(1, MAX_EDGE / Math.max(w, h));
     const canvas = document.createElement('canvas');
-    canvas.width = Math.round(video.videoWidth * scale);
-    canvas.height = Math.round(video.videoHeight * scale);
+    canvas.width = Math.round(w * scale);
+    canvas.height = Math.round(h * scale);
     const ctx = canvas.getContext('2d');
     if (!ctx) return null;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(src, 0, 0, canvas.width, canvas.height);
     // JPEG 0.92 — 나머지 경로가 전부 사진 파일을 받으므로 형식을 맞춘다. 무손실로
     // 두면 4메가짜리 PNG 가 OCR 과 판별 요청에 실린다.
     return new Promise((resolve) =>
       canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.92));
+  };
+
+  const capture = async (): Promise<Blob | null> => {
+    const video = videoRef.current;
+    if (!video?.videoWidth) return null;
+
+    /*
+      **사진은 사진 경로로 찍는다.**
+
+      미리보기 영상의 한 프레임을 캔버스로 뜨고 있었다. 그것은 화면에 보여 주려고
+      만든 그림이라 두 가지가 모자라다:
+
+        해상도   미리보기는 1440p 언저리다. 성분표의 작은 글자와 손글씨가 거기서
+                 살아남지 못한다.
+        초점     영상 파이프라인은 "계속 대충 맞은" 상태로 흐르고, 셔터를 누른
+                 순간에 맞추려는 시도를 하지 않는다.
+
+      `ImageCapture.takePhoto()` 는 **정지 사진 파이프라인**을 탄다. 기기가 초점과
+      노출을 모아 잡은 뒤 센서 해상도로 한 장을 뽑는다 — 기기 카메라 앱이 하는 그
+      일이다. 안드로이드 크롬이 지원하고, 우리가 겪는 흐릿함이 정확히 이 차이다.
+
+      **되면 쓰고 안 되면 예전 길로 간다.** iOS 에는 이 API 가 없거나 반쪽이고, 되는
+      기기에서도 던지는 경우가 있다. 그리고 오래 걸리면 포기한다 — 사람은 셔터를
+      누르고 서 있고, 2.5초를 넘기면 안 눌린 줄 안다.
+
+      뽑은 그림은 예전과 같은 크기로 줄인다. 12메가픽셀 JPEG 을 그대로 올리면 판별
+      요청이 몇 메가가 되고, 그 시간이 초점으로 번 것을 도로 까먹는다.
+    */
+    const track = trackRef.current;
+
+    /*
+      찍기 직전에 **가운데를 보라**고 한 번 말한다.
+
+      조준 틀이 화면 가운데에 있고 사람은 거기에 종이를 맞춘다. 그런데 계속 맞추는
+      초점은 화면 전체를 보고 정하므로, 손이나 배경이 더 가까우면 그쪽에 맞은 채로
+      셔터를 맞는다.
+
+      `pointsOfInterest` 만 준다 — 초점 방식은 그대로 `continuous` 다. 방식을 바꾸면
+      그 거리에 붙박이고, 그 몇 초가 정확히 지금이다.
+
+      기다리는 시간은 짧게 잡았다. 초점이 실제로 옮겨 가는 데 걸리는 시간이고, 이보다
+      길게 잡으면 셔터가 굼떠진다 — 사람은 그 굼뜸을 "안 눌렸다" 로 읽는다.
+    */
+    const caps = track?.getCapabilities?.() as { pointsOfInterest?: unknown } | undefined;
+    if (track && caps?.pointsOfInterest) {
+      try {
+        await track.applyConstraints({ advanced: [{ pointsOfInterest: [{ x: 0.5, y: 0.5 }] } as never] });
+        await new Promise((r) => setTimeout(r, 250));
+      } catch { /* 기기가 거절했다 */ }
+    }
+
+    const Cap = (window as { ImageCapture?: new (t: MediaStreamTrack) => {
+      takePhoto(settings?: object): Promise<Blob>;
+      getPhotoCapabilities(): Promise<{ imageWidth?: { max?: number } }>;
+    } }).ImageCapture;
+
+    if (track && track.readyState === 'live' && Cap) {
+      try {
+        const shot = new Cap(track);
+        const want = await Promise.race([
+          (async () => {
+            const pc = await shot.getPhotoCapabilities().catch(() => null);
+            // 센서가 아무리 커도 우리가 쓰는 것은 긴 변 2400 이다. 그보다 조금 크게
+            // 받아 줄이면 충분하고, 108메가픽셀을 받아 디코딩할 이유는 없다.
+            const max = pc?.imageWidth?.max ?? 0;
+            return max > 0 ? { imageWidth: Math.min(max, 3200) } : undefined;
+          })(),
+          new Promise<undefined>((r) => setTimeout(() => r(undefined), 800)),
+        ]);
+        const blob = await Promise.race([
+          shot.takePhoto(want),
+          new Promise<null>((r) => setTimeout(() => r(null), 2500)),
+        ]);
+        if (blob) {
+          const bitmap = await createImageBitmap(blob);
+          const out = await toJpeg(bitmap, bitmap.width, bitmap.height);
+          bitmap.close?.();
+          if (out) {
+            console.info('[camera] 정지 사진', `${bitmap.width}x${bitmap.height}`);
+            return out;
+          }
+        }
+      } catch (err) {
+        console.warn('[camera] 정지 사진을 못 찍었다 — 미리보기 프레임으로 간다:', err);
+      }
+    }
+
+    return toJpeg(video, video.videoWidth, video.videoHeight);
   };
 
   /**
