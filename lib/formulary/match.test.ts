@@ -109,3 +109,62 @@ test('납작하게 만들기', () => {
   assert.equal(similarity('abc', 'abc'), 1);
   assert.equal(similarity('', ''), 0);
 });
+
+/*
+  표에 **없는** 약이 표 안의 이웃으로 바뀌지 않는가.
+
+  문턱이 0.72 였을 때 Clotrimazole(무좀 크림)이 Co-trimoxazole(설파계 항생제)이 됐다.
+  바르는 약이 먹는 항생제가 되고, 화면은 초록 "Safe to take" 를 낸다. 사람에게는
+  검산할 방법이 없다.
+
+  이 시험이 지키는 것은 문턱값 자체가 아니라 **그 문턱이 막던 것**이다. 값을 다시
+  만질 일이 생기면 여기서 걸린다.
+*/
+test('표에 없는 약을 표 안의 이웃으로 바꾸지 않는다', () => {
+  for (const [outside, mustNotBe] of [
+    ['Clotrimazole', 'Co-trimoxazole'],
+    ['Fluconazole', 'Miconazole cream'],
+    ['Betamethasone', 'Beclometasone'],
+    ['Prednisone', 'Prednisolone'],
+    ['Esomeprazole', 'Omeprazole'],
+    ['Duloxetine', 'Fluoxetine'],
+  ] as [string, string][]) {
+    const hit = matchDrug(outside);
+    assert.ok(hit?.drug.name !== mustNotBe, `${outside} 가 ${mustNotBe} 로 확정된다`);
+  }
+});
+
+test('흔한 OCR 오류는 그대로 맞힌다', () => {
+  // 문턱을 올린 대가가 여기 있다. 이 줄들이 깨지면 대가가 예상보다 커진 것이다.
+  for (const [read, want] of [
+    ['Metf0rmin', 'Metformin'],
+    ['Amoxicilin', 'Amoxicillin'],
+    ['Amlodipin', 'Amlodipine'],
+    ['lbuprofen', 'Ibuprofen'],
+    ['Omeprazol', 'Omeprazole'],
+    ['Metronidazol', 'Metronidazole'],
+  ] as [string, string][]) {
+    assert.equal(matchDrug(read)?.drug.name, want, `${read} 를 못 맞힌다`);
+  }
+});
+
+test('오독 접기가 서로 다른 약을 합치지 않는다', () => {
+  /*
+    `normalize` 가 `rn→m` 과 겹친 글자를 접는다. 그 접기는 표 안의 이름들끼리 충돌하지
+    않을 때만 안전하다 — 두 약이 같은 글자로 접히면 그 순간부터 한쪽이 다른 쪽으로
+    확정되고, 화면은 아무 표시도 안 낸다.
+
+    표에 약을 더할 때 여기서 걸린다. 지금 94종은 통과하지만 다음 하나가 아닐 수 있다.
+  */
+  const byFlat = new Map<string, string>();
+  for (const drug of WHO_DRUGS) {
+    for (const spelling of [drug.name, drug.inn, ...(drug.also ?? [])]) {
+      const flat = normalize(spelling);
+      if (!flat) continue;
+      const owner = byFlat.get(flat);
+      assert.ok(owner === undefined || owner === drug.name,
+        `"${owner}" 와 "${drug.name}" 이 같은 글자로 접힌다 (${flat}) — 접기를 좁혀라`);
+      byFlat.set(flat, drug.name);
+    }
+  }
+});

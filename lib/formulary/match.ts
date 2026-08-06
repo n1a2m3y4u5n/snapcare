@@ -51,8 +51,46 @@ const CONFUSABLE: Record<string, string> = {
  */
 const NOT_A_NAME = /\b\d+(\.\d+)?\s?(mg|mcg|ug|g|ml|l|iu|%)\b.*$|\b(tab|tabs|tablet|tablets|cap|caps|capsule|capsules|syrup|susp|suspension|drops?|cream|inj|injection|sachet|bp|usp|ip|medication|name|pill|count|per|slot|notes)\b/gi;
 
-/** 이 아래로는 답하지 않는다. */
-export const MIN_SIMILARITY = 0.72;
+/**
+ * 이 아래로는 답하지 않는다.
+ *
+ * 0.72 였다. 그 값에서 **표에 없는 약이 표 안의 이웃으로 조용히 바뀌었다.** 실제로
+ * 돌려 확인한 것들:
+ *
+ *   Clotrimazole (무좀 크림)  → Co-trimoxazole (설파계 항생제)   0.769
+ *   Fluconazole (먹는 약)     → Miconazole cream (바르는 약)     0.727
+ *   Duloxetine                → Fluoxetine                       0.800
+ *   Betamethasone             → Beclometasone                    0.786
+ *
+ * 첫 줄이 이 결함의 모양이다: 바르는 약이 먹는 항생제가 되고, 설파 알레르기 경고가
+ * 붙고, 화면은 초록 "Safe to take" 를 낸다. 사람에게는 검산할 방법이 없다 —
+ * `displayName()` 은 철자가 정확히 같을 때만 원문을 보여주므로 OCR 원문도 안 남는다.
+ *
+ * **재서 정했다.** 표 밖 약 37종과, 표 안 약 이름에 흔한 OCR 오류를 넣은 424개로
+ * 양쪽을 같이 봤다.
+ *
+ * 처음에는 문턱만 올렸는데, 그것만으로는 못 가른다:
+ *
+ *   문턱   표 밖 약이 엉뚱하게 확정   진짜 OCR 오류를 놓침
+ *   0.72   7종 (19%)                  0.0%
+ *   0.80   3종                        1.9%
+ *   0.84   0종                        7.5%
+ *
+ * 0.833 이 진짜 OCR 오류(Paracetarnol→Paracetamol)와 다른 약(Prednisone→Prednisolone)
+ * 이 **같은 점수**를 받는 자리라서, 어느 값을 골라도 한쪽이 다친다. 실제로 0.84 는
+ * 이 파일의 대표 예시인 `arnoxicillin → amoxicillin` 을 걸러 버렸다.
+ *
+ * 그래서 문턱과 함께 `normalize` 에서 **`rn` 을 `m` 으로 접었다**(그 이유는 그쪽 주석에).
+ * 두 가지를 같이 하니 양쪽이 갈린다:
+ *
+ *   0.84 + rn 접기   표 밖 약 0종,  놓침 0.0% (424건 중 최저 점수가 0.857)
+ *
+ * **왜 놓치는 쪽으로 기우나.** 두 실패의 값이 다르다. 못 맞히면 표 밖 조회
+ * (`/api/drug`)로 내려가고, 그것도 안 되면 "우리 목록에 없다 — 약사에게 확인하라"
+ * 로 끝난다. 사람이 다음에 할 일이 남는다. 잘못 맞히면 다른 약의 제형·경고·복용법이
+ * 확신 있는 초록 화면으로 나가고, 그것을 되돌릴 단서가 화면 어디에도 없다.
+ */
+export const MIN_SIMILARITY = 0.84;
 /** 2등과 이만큼은 벌어져야 한다. 아니면 둘 중 하나를 고를 근거가 없다. */
 export const MIN_MARGIN = 0.06;
 
@@ -63,11 +101,55 @@ export const MIN_MARGIN = 0.06;
  * `co-trimoxazole` 과 `co trimoxazole` 과 `cotrimoxazole` 은 같은 약이고,
  * 손으로 쓴 종이에서 그 셋을 가르는 것은 뜻이 없다.
  */
+/**
+ * 이름이 아닌 것만 떼고 **접지는 않는다.**
+ *
+ * `normalize` 와 갈라 둔 이유: 두 질문이 다르다. 저쪽은 "같은 약인가" 를 묻고 관대해야
+ * 하지만(오독을 접는다), 화면에 **어느 낱말을 띄울지**를 정하는 쪽은 "이 낱말이 어느
+ * 통엔가 실제로 인쇄되어 있는가" 를 묻는다. 거기서 접으면 오타가 통 이름 행세를 하고,
+ * 사람은 약장에서 맞춰 볼 것을 잃는다(`prescription.ts` 의 `displayName`).
+ *
+ * 함량과 제형은 양쪽 다 뗀다 — 종이의 "Amoxicillin 500mg" 과 표의 "Amoxicillin" 은
+ * 같은 낱말이고, 그 차이는 오독이 아니라 적는 방식이다.
+ */
+export function bareName(text: string): string {
+  return String(text ?? '').toLowerCase().replace(NOT_A_NAME, ' ').replace(/[^a-z]/g, '');
+}
+
 export function normalize(text: string): string {
   let out = String(text ?? '').toLowerCase();
   out = out.replace(NOT_A_NAME, ' ');
   out = out.replace(/[0-9]/g, (d) => CONFUSABLE[d] ?? ' ');
-  return out.replace(/[^a-z]/g, '');
+  out = out.replace(/[^a-z]/g, '');
+  /*
+    `rn` 을 `m` 으로 접는다 — **두 글자가 한 글자로 보이는 유일한 흔한 짝**이다.
+
+    위의 `CONFUSABLE` 은 한 글자씩만 되돌린다. 그런데 이 저장소가 맨 위에 적어 둔
+    대표 예시가 `arnoxicillin → amoxicillin` 이고, 그것은 한 글자 짝으로는 못 푼다.
+    거리로는 두 번이라 문턱을 0.84 로 올리면서 이 예시가 통째로 걸렸다.
+
+    **접어도 다른 약끼리 합쳐지지 않는다.** 표의 모든 이름과 별칭을 훑어 확인했다 —
+    `rn` 을 품은 이름이 하나도 없어서, 이 접기로 같아지는 것은 같은 약의 다른 표기
+    (`Co-trimoxazole` 과 `cotrimoxazole`)뿐이다. 표에 `rn` 이 들어간 약을 더하는
+    날에는 이 줄을 다시 봐야 하고, 그 확인은 시험이 한다.
+
+    한쪽만 접으면 안 된다. 여기서 접으므로 읽은 글자와 표의 이름이 같은 자로 재어진다.
+  */
+  out = out.replace(/rn/g, 'm');
+  /*
+    **겹친 글자를 하나로 접는다.**
+
+    약 이름에는 겹친 자음이 흔하고(amoxicillin, penicillin, metronidazole) 손으로 쓴
+    글자에서 그 겹침이 하나로 읽히거나 자리를 옮기는 것이 흔하다. 이 저장소가 시험으로
+    못박아 둔 예가 그것이다 — `amoxicilinl`. 거리로는 두 번이라 문턱 0.84 에 걸린다.
+
+    접어도 다른 약끼리 합쳐지지 않는다. 표의 모든 이름과 별칭을 훑어 확인했고, 같은
+    약의 다른 표기 말고는 같아지는 짝이 없었다. 그 확인은 시험이 이어서 한다.
+
+    양쪽에 같이 걸리므로 겹침의 **개수**는 비교에서 빠진다 — 그것이 노리는 것이다.
+    'll' 이 'l' 로 읽히는 것은 오독이지 다른 약이 아니다.
+  */
+  return out.replace(/([a-z])\1+/g, '$1');
 }
 
 /**

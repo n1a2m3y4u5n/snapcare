@@ -1,6 +1,6 @@
 // 상대 경로 — 시험에서 @/ 별칭이 안 통한다 (lib/snapcare/course.ts 와 같은 이유).
 import type { Drug } from '../formulary/who.ts';
-import { matchDrug, normalize } from '../formulary/match.ts';
+import { bareName, matchDrug, normalize } from '../formulary/match.ts';
 import { cleanDrugName, plausibleName } from '../formulary/name.ts';
 import { readNotes, type NotesReading } from '../formulary/notes.ts';
 import { toSchedule, type FormSheetValues } from '../hardware/formSheet.ts';
@@ -149,12 +149,28 @@ const DAY_WORD: Record<string, string> = {
  * 맞춰 볼 것이 없다 — 그때는 표의 이름이 낫다. 즉 여기서 가르는 것은 "종이냐 표냐"
  * 가 아니라 **그 낱말이 어딘가에 실제로 인쇄되어 있느냐** 다.
  */
+/**
+ * 표시용 비교 — **맞추기와 다른 자로 잰다.**
+ *
+ * `normalize`(match.ts)는 일부러 관대하다. 숫자를 글자로 되돌리고, `rn` 을 `m` 으로
+ * 접고, 겹친 글자를 하나로 접는다. 그래야 손으로 쓴 `arnoxicilin` 이 표의
+ * `Amoxicillin` 에 닿는다.
+ *
+ * 그 자로 여기까지 재면 안 된다. 이 함수가 묻는 것은 "같은 약인가" 가 아니라
+ * **"이 낱말이 어느 통엔가 실제로 인쇄되어 있는가"** 이고, `Amoxicilin` 은 어디에도
+ * 안 적혀 있다. 관대한 자를 그대로 쓰면 오타가 통 이름 행세를 하고, 사람은 약장에서
+ * 맞춰 볼 것을 잃는다.
+ *
+ * 그래서 여기서는 `bareName` 을 쓴다 — 함량·제형만 떼고 오독은 안 접는다.
+ */
+const printedForm = bareName;
+
 function displayName(rx: SheetPrescription): string | null {
   if (!rx.drug) return null;
-  const read = normalize(rx.read);
+  const read = printedForm(rx.read);
   if (!read) return null;
   const known = [rx.drug.name, rx.drug.inn, ...(rx.drug.also ?? [])];
-  return known.some((k) => normalize(k) === read) ? rx.read : null;
+  return known.some((k) => printedForm(k) === read) ? rx.read : null;
 }
 
 /**

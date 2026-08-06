@@ -74,3 +74,67 @@ test('식전과 식후를 섞지 않는다', () => {
   assert.deepEqual(readNotes('before meals').care, ['empty_stomach']);
   assert.deepEqual(readNotes('after meals').care, ['with_food']);
 });
+
+/*
+  부정과 시점이 뜻을 뒤집는 자리.
+
+  `with_food` 가 `words: ['food']` 였고 `unsafe_pregnancy` 가 'pregnancy' 라는 낱말만
+  봤다. 그래서 공복 지시가 밥그릇 그림이 되고, "임신 중 안전" 이 빨간 "먹지 마세요" 가
+  됐다. 둘 다 화면에서는 멀쩡해 보인다 — 그림도 문장도 정상적으로 생겼고, 다만 사실과
+  반대다.
+
+  같은 파일의 `no_driving`·`alcohol` 은 부정을 정규식에 넣어 이미 막고 있었다. 이 둘만
+  규칙에서 빠져 있었다.
+*/
+test('음식과 함께가 아닌 지시를 밥그릇으로 그리지 않는다', () => {
+  for (const piece of [
+    'Do not take with food',
+    'Not to be taken with food',
+    'Take 30 minutes before food',
+    'Avoid food for 2 hours',
+    'No food restriction',
+    'Take on an empty stomach',
+  ]) {
+    assert.ok(!readNotes(piece).care.includes('with_food'), `"${piece}" 가 with_food 로 잡힌다`);
+  }
+});
+
+test('음식과 함께 먹으라는 지시는 그대로 잡는다', () => {
+  for (const piece of ['Take with food', 'After a meal', 'with meals', '식후 복용']) {
+    assert.ok(readNotes(piece).care.includes('with_food'), `"${piece}" 를 놓친다`);
+  }
+});
+
+test('공복 지시가 빈 그릇으로 간다', () => {
+  for (const piece of ['Take 30 minutes before food', 'Avoid food for 2 hours', 'empty stomach']) {
+    assert.ok(readNotes(piece).care.includes('empty_stomach'), `"${piece}" 를 놓친다`);
+  }
+  // 둘이 같이 붙으면 빈 그릇과 밥그릇이 나란히 그려진다.
+  assert.ok(!readNotes('empty stomach, no food').care.includes('with_food'));
+});
+
+test('임신 중 안전하다는 말을 금기로 뒤집지 않는다', () => {
+  for (const piece of [
+    'Safe in pregnancy',
+    'May be used by pregnant women',
+    'Can be taken while pregnant',
+    'Ask about pregnancy',
+  ]) {
+    assert.ok(!readNotes(piece).flags.includes('unsafe_pregnancy'), `"${piece}" 가 금기로 잡힌다`);
+  }
+  assert.ok(!readNotes('Safe while breastfeeding').flags.includes('unsafe_breastfeeding'));
+});
+
+test('진짜 금기는 그대로 잡는다', () => {
+  /* 부정이 걸린 안전 표현은 안전 표현이 아니다. 이쪽이 뒤집히면 사람이 다친다. */
+  for (const piece of [
+    'Not safe in pregnancy',
+    'Unsafe in pregnancy',
+    'Do not use if pregnant',
+    'Contraindicated in pregnancy',
+    '임신 중 금기',
+  ]) {
+    assert.ok(readNotes(piece).flags.includes('unsafe_pregnancy'), `"${piece}" 를 놓친다`);
+  }
+  assert.ok(readNotes('Not safe while breastfeeding').flags.includes('unsafe_breastfeeding'));
+});
