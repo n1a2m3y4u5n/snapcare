@@ -898,6 +898,43 @@ def test_a_course_that_began_before_today_still_fills_yesterday(dispenser, clock
     assert [dose.at for dose in today.doses] == ["08:00", "20:00"]
 
 
+def test_yesterday_keeps_what_it_dispensed_after_the_plan_changes(dispenser, clock):
+    """처방이 바뀌어도 어제 실제로 나간 약은 어제 칸에 남아야 한다.
+
+    실제 기기에서 잡은 것이다. 어제 장부에 46건(먹음 29, 놓침 1, 안 내밈 16)이
+    있는데 어제 칸이 텅 비어 있었다. `start_day` 는 일정이 도착한 날로 찍히므로,
+    처방이 바뀌는 순간 `day_plan` 은 "이 처방 아래에서 어제는 계획이 없었다" 를
+    올바르게 답하고 — 그 답만 보고 그리면 어제가 통째로 사라진다.
+
+    **일어난 일은 일어난 것이다.** 나중에 온 처방이 그것을 없던 일로 만들 수 없다.
+    그래서 지난 날의 줄은 계획과 장부의 합집합이다.
+    """
+    from datetime import datetime, timedelta
+
+    from snapcare_dispenser import sc1
+    from snapcare_dispenser.display import health as health_mod
+
+    # 어제: 08:00 이 계획돼 있었고, 내밀렸고, 실제로 나갔다.
+    clock._at -= timedelta(days=1)                      # noqa: SLF001
+    yesterday = clock.now().date()
+    dispenser.set_schedule(sc1.decode_any_schedule("SC1*W*1:0800-127-000"))
+    clock.set(datetime.combine(yesterday, datetime.min.time()).replace(hour=8))
+    dispenser.tick()                                    # 내민다
+    assert len(dispenser.release()) == 1, "어제 약이 안 나갔다 — 준비가 틀렸다"
+
+    # 오늘: 처방이 바뀐다 — 08:00 이 사라지고 13:00 만 남는다.
+    clock.set(datetime.combine(yesterday + timedelta(days=1),
+                               datetime.min.time()).replace(hour=7))
+    dispenser.set_schedule(sc1.decode_any_schedule("SC1*W*1:1300-127-000"))
+
+    yesterday, today, _tomorrow = health_mod.snapshot(dispenser).days
+    assert [dose.at for dose in yesterday.doses] == ["08:00"], (
+        "처방이 바뀌자 어제 나간 약이 화면에서 사라졌다")
+    assert yesterday.doses[0].state == "taken", "먹은 것이 먹은 것으로 안 남았다"
+    # 오늘은 새 처방 그대로다. 어제 것이 오늘로 넘어오지 않는다.
+    assert [dose.at for dose in today.doses] == ["13:00"]
+
+
 def test_the_new_plan_border_expires_on_its_own():
     """10초는 정책이 시계로 재고, 무언가가 지워 주기를 기다리지 않는다.
 

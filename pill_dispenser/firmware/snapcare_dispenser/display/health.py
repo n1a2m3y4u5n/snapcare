@@ -717,7 +717,27 @@ def _days(dispenser, at, owed, today_doses) -> tuple[Day, ...]:
 
 
 def _plan_of(dispenser, when, offset: int) -> tuple[Dose, ...]:
-    """One day that is not today: its plan, and the ledger's word on it."""
+    """One day that is not today: its plan, and the ledger's word on it.
+
+    **For a past day the ledger is a source, not just an annotation.** This
+    used to walk the plan alone and look each entry up, so a dose the machine
+    genuinely dropped yesterday was invisible unless *today's* plan still had a
+    line at that tray and minute. That is the wrong way round: what happened
+    yesterday happened, and no later prescription can un-happen it.
+
+    It is not a corner case, it is the ordinary one. `start_day` is stamped
+    with the day a plan arrived, so the moment a prescription changes — a
+    medication dropped, a time moved — `day_plan` correctly reports that
+    yesterday had no plan *under this course*, and the whole of yesterday
+    vanished from the panel. Found on the bench with 46 recorded events for
+    yesterday and an empty yesterday column: 29 taken, 1 missed, 16 never
+    offered, all of them on the card, none of them drawn.
+
+    So the rows are the union. The plan says what was meant to happen and the
+    ledger says what did; a day is entitled to both, and either alone is a
+    smaller truth than the panel has to hand. Tomorrow keeps only the plan,
+    because there is no ledger for a day that has not happened.
+    """
     ordinal = when.toordinal()
     plan = list(dispenser.scheduler.day_plan(ordinal, when.weekday()))
     outcomes = ({} if offset > 0
@@ -726,7 +746,7 @@ def _plan_of(dispenser, when, offset: int) -> tuple[Dose, ...]:
     fitted = _try("the fitted trays", lambda: set(dispenser.servos.pins), set())
 
     doses = []
-    for slot, minutes in plan:
+    for slot, minutes in sorted(set(plan) | set(outcomes)):
         recorded = str(outcomes.get((slot, minutes), ""))
         if recorded in ("taken", "missed", "unoffered"):
             state = "missed" if recorded == "unoffered" else recorded
