@@ -6,7 +6,7 @@ import { prune } from '@/lib/snapcare/retention';
 import { ADULT_DOSES, KID_DOSES, demoHistory, demoReminders } from '@/lib/snapcare/demoHistory';
 import { useReminders } from './reminders';
 import { isDemo } from '@/lib/snapcare/demo';
-import { accountStorage, activeAccountId, listAccounts, removeAccount, DEMO_KID, DEMO_PRIMARY } from '@/lib/snapcare/accounts';
+import { accountStorage, activeAccountId, listAccounts, removeAccount, scopedKey, DEMO_KID, DEMO_PRIMARY } from '@/lib/snapcare/accounts';
 
 /**
  * 시드 최근 스캔 (와이어프레임 홈 RECENT 피드 기준).
@@ -141,7 +141,12 @@ export const useScans = create<ScansState>()(
        * v9: 땅콩 알레르기가 적힌 아이의 지난 기록에서 땅콩이 빨강이 된다. 이미 심긴
        * 폰은 그 스물몇 건이 초록으로 저장돼 있어서, 다시 뿌리지 않으면 안 바뀐다.
        */
-      version: 9,
+      /**
+       * v10: 이미 굳어 있는 폰을 한 번 푼다. 아이 계정이 25건만 든 채로 남은 폰들이
+       * 있고, 그것은 판을 올려야만 비워진다 — 아래 `migrate` 가 시연에서는 통째로
+       * 버리기 때문이다. 그 뒤로는 `seedDemoIfEmpty` 의 날짜 도장이 스스로 푼다.
+       */
+      version: 10,
       /**
        * 옛 저장분을 버린다 — **시연에서만.**
        *
@@ -231,7 +236,33 @@ export function seedDemoIfEmpty(): void {
   for (const a of listAccounts()) {
     if (!a.id.startsWith('demo_')) removeAccount(a.id);
   }
-  if (useScans.getState().scans.length > 0) return;
+  /*
+    **"비었을 때만" 으로는 모자랐다.**
+
+    시연 자료는 오늘 날짜에서 만들어진다. 그래서 어제 심은 것은 언제나 낡았고 —
+    달력의 오늘 칸이 비고, 84일 창이 하루씩 밀린다 — 저장소가 안 비었다는 이유로
+    영영 그대로 남는다.
+
+    같은 구멍에 더 나쁜 것이 걸렸다. 아이 계정이 25건만 든 채로 굳었다. 한때
+    `pull()` 이 서버의 낡은 조각을 먼저 채워 넣었고(그쪽은 고쳤다), 그러면 저장소가
+    안 비어 있으니 여기가 넘어간다. 사람이 보는 것은 반쯤 찬 계정이고, 몇 번을 다시
+    열어도, 판을 올려도 그대로다 — 판 올림은 한 번 돌고 나면 다시 안 돈다.
+
+    그래서 **심은 날**을 적어 두고 날이 바뀌면 다시 심는다. 판 번호와 달리 이것은
+    저절로 되풀이되므로, 다음에 같은 종류의 결함이 생겨도 하루면 스스로 풀린다.
+
+    사람이 만든 것은 안 지운다. 발표 도중에 떨어뜨린 약(`dev_…`)이나 찍은 사진은
+    시연 자료가 아니라 방금 일어난 일이다.
+  */
+  const stampKey = scopedKey('snapcare-demo-seeded');
+  const today = todayKey();
+  let seededOn: string | null = null;
+  try { seededOn = localStorage.getItem(stampKey); } catch { /* 저장이 막힌 브라우저 */ }
+
+  const have = useScans.getState().scans;
+  if (have.length > 0 && seededOn === today) return;
+  const mine = have.filter((r) => !r.id.startsWith('demo_'));
+
   const seed = DEMO_SCANS[activeAccountId()];
   if (!seed) return;
   /*
@@ -271,8 +302,9 @@ export function seedDemoIfEmpty(): void {
   const plan = me === DEMO_KID ? KID_DOSES : ADULT_DOSES;
     // 아이는 프로필에 땅콩 알레르기가 적혀 있다. 그러면 지난 기록의 땅콩도 빨강이어야
   // 한다 — 지난 기록에는 판정 재계산이 없어서, 안 넘기면 스물네 번이 초록으로 남는다.
-  useScans.setState({ scans: [...seed,
-    ...demoHistory(todayKey(), PROFILE_ID, undefined, undefined, plan, me === DEMO_KID)] });
+  useScans.setState({ scans: [...mine, ...seed,
+    ...demoHistory(today, PROFILE_ID, undefined, undefined, plan, me === DEMO_KID)] });
+  try { localStorage.setItem(stampKey, today); } catch { /* 저장이 막힌 브라우저 */ }
   /*
     알람도 같이 심는다.
 
@@ -282,7 +314,7 @@ export function seedDemoIfEmpty(): void {
 
     이미 알람이 있으면 손대지 않는다. 시연 도중에 사람이 만든 것을 지우면 안 된다.
   */
-  if (useReminders.getState().reminders.length === 0) {
+  if (useReminders.getState().reminders.length === 0 || seededOn !== today) {
     // 알람도 같은 표에서 나온다. 기록과 알람이 다른 표를 보면 "지금 정해져 있는 것"
     // 과 지난 넉 주가 서로 다른 약을 말하게 된다.
     useReminders.setState({ reminders: demoReminders(me, plan) });

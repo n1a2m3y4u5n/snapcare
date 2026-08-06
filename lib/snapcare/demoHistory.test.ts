@@ -219,3 +219,20 @@ test('알레르기가 안 적힌 사람에게는 일지가 찾아낼 몫으로 �
   assert.ok(peanut.every((r) => r.level !== 'avoid'), '찾아내기 전인데 이미 빨강이다');
   assert.ok(peanut.some((r) => r.reaction === 'unwell'), '일지가 찾아낼 단서가 없다');
 });
+
+test('시연 자료는 심은 날에 매여 있다', () => {
+  /*
+    `seedDemoIfEmpty` 가 "저장소가 비었을 때만" 심고 있었다. 시연 자료는 오늘 날짜에서
+    만들어지므로 어제 심은 것은 언제나 낡았는데 — 달력의 오늘 칸이 비고 84일 창이
+    하루씩 밀린다 — 저장소가 안 비었다는 이유로 영영 그대로 남았다.
+
+    이 시험은 그 전제를 못박는다: 날이 다르면 만들어지는 것도 다르다. 그러니 다시
+    심는 기준이 "비었는가" 가 아니라 "언제 심었는가" 여야 한다.
+  */
+  const a = demoHistory('2026-08-05', 'me', 84, 12 * 60, ADULT_DOSES);
+  const b = demoHistory('2026-08-06', 'me', 84, 12 * 60, ADULT_DOSES);
+  assert.notDeepEqual(a.map((r) => r.dayKey), b.map((r) => r.dayKey));
+  assert.ok(a.some((r) => r.dayKey === '2026-08-05'));
+  assert.ok(!a.some((r) => r.dayKey === '2026-08-06'), '오늘 뒤의 날은 안 만든다');
+  assert.ok(b.some((r) => r.dayKey === '2026-08-06'));
+});
