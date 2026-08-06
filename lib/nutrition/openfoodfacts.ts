@@ -148,10 +148,72 @@ function flatten(s: string): string {
  * 읽는다. 우리가 묻는 것은 "같은 물건인가" 이지 "같은 문자열인가" 가 아니다.
  */
 export function nameOverlap(query: string, candidate: string): number {
-  const q = flatten(query).split(' ').filter((w) => w.length > 2);
-  if (q.length === 0) return 0;
-  const c = ` ${flatten(candidate)} `;
-  return q.filter((w) => c.includes(` ${w} `) || c.includes(w)).length / q.length;
+  return nameMatch(query, candidate).score;
+}
+
+/**
+ * 나온 값을 뒤집을 수 있는 수식어들.
+ *
+ * "Zero" 가 붙은 것과 안 붙은 것은 **같은 이름의 다른 물건**이다. Coca-Cola Zero 를
+ * 찍었는데 Coca-Cola 의 영양이 붙으면 당이 0 에서 10.6g/100ml 이 되고, 당뇨 프로필의
+ * 판정이 통째로 뒤집힌다. 이름이 아무리 겹쳐도 이것이 어긋나면 다른 물건이다.
+ */
+const FLIPS = ['zero', 'free', 'diet', 'light', 'lite', 'sugarfree', 'unsweetened', 'decaf', 'skim', 'skimmed'];
+
+/**
+ * 이름이 같은 물건을 가리키는가.
+ *
+ * **양쪽에서 본다.** 전에는 "내 낱말이 후보에 얼마나 들어 있나" 하나만 봤는데, 그러면
+ * 후보 이름이 짧을 때 이길 수가 없다. 실제로 겪은 것:
+ *
+ *   찍은 것   "Munchy's Lexus Vanilla Cream Sandwich Biscuits"  (뜻 있는 낱말 여섯)
+ *   후보      "Lexus" (브랜드 Munchy's)                          → 2/6 = 0.33, 탈락
+ *
+ * OFF 의 레코드 이름은 짧기 일쑤고(브랜드가 따로 있으니), 판별 모델이 내는 이름은
+ * 길기 일쑤다(포장지를 그대로 읽으니). 한 방향만 보면 그 둘이 영영 안 만난다.
+ *
+ * 그래서 **후보의 낱말이 내 질의에 얼마나 들어 있나**도 같이 보고 높은 쪽을 쓴다.
+ * "Lexus" 는 통째로 질의 안에 있으므로 1.0 이다.
+ *
+ * 뒤집는 방향은 헐거워서 두 가지로 조인다:
+ *
+ *   맞은 낱말이 **둘 이상**   "Milk" 하나가 통째로 들어 있다고 아무 우유나 되면 안 된다.
+ *   `FLIPS` 가 어긋나면 탈락   Zero 를 찍었는데 Zero 아닌 것이 오면 그것은 다른 물건이다.
+ *
+ * 여기까지가 이 점수로 할 수 있는 전부다. `Snickers bar 50g` 와 `Mars Snickers` 는
+ * 0.50 인데, `Apple juice 1l` 과 `Orange juice` 도 0.50 이다 — 앞엣것은 받고 싶고
+ * 뒤엣것은 막아야 하는데 점수가 같다. 문턱을 내리면 사과주스에 오렌지주스의 당이
+ * 붙는다. 그래서 안 내린다: 못 찾으면 "성분표를 찍어 보라" 로 끝나지만, 잘못 찾으면
+ * 다른 제품의 숫자가 이 사람의 하루 누적에 조용히 들어간다.
+ */
+export function nameMatch(query: string, candidate: string): { score: number; matched: number } {
+  /*
+    용량은 이름이 아니다.
+
+    `500ml`, `50g`, `1l` 같은 토큰은 판별 모델이 포장지에서 읽어 붙이는데, OFF 는 그것을
+    이름이 아니라 `quantity` 칸에 따로 담는다. 그래서 이 토큰들은 **어느 후보에도 안
+    맞으면서 분모만 키운다** — 낱말 셋짜리 질의에서 하나가 용량이면 나머지가 다 맞아도
+    0.67 이다.
+  */
+  const SIZE = /^\d+(\.\d+)?(g|kg|mg|ml|l|cl|oz|lb|pc|pcs|x\d+)?$/;
+  const words = (t: string) => flatten(t).split(' ')
+    .filter((w) => w.length > 2 && !SIZE.test(w));
+  const q = words(query);
+  const c = words(candidate);
+  if (q.length === 0 || c.length === 0) return { score: 0, matched: 0 };
+
+  const cSet = ` ${c.join(' ')} `;
+  const qSet = ` ${q.join(' ')} `;
+  const hit = q.filter((w) => cSet.includes(w));
+  const back = c.filter((w) => qSet.includes(w));
+
+  // 값을 뒤집는 수식어는 양쪽에 같이 있거나 같이 없어야 한다.
+  for (const flip of FLIPS) {
+    if (q.includes(flip) !== c.includes(flip)) return { score: 0, matched: 0 };
+  }
+  if (hit.length < 2) return { score: hit.length / q.length, matched: hit.length };
+
+  return { score: Math.max(hit.length / q.length, back.length / c.length), matched: hit.length };
 }
 
 /**
@@ -255,7 +317,7 @@ async function searchOnce(q: string, forScoring: string): Promise<NutrientProfil
         문턱을 넘는다 — 다른 제품의 영양 정보가 이 사람의 하루 누적에 들어간다.
         묻는 것은 넓게, 받아들이는 것은 좁게.
       */
-      .map((p) => ({ p, score: nameOverlap(forScoring, `${p.brands ?? ''} ${p.name}`) }))
+      .map((p) => ({ p, score: nameMatch(forScoring, `${p.brands ?? ''} ${p.name}`).score }))
       .sort((a, b) => (Math.abs(b.score - a.score) > 0.05
         ? b.score - a.score
         : (b.p.allergenTags?.length ?? 0) - (a.p.allergenTags?.length ?? 0)))[0];
