@@ -154,10 +154,27 @@ export function nameOverlap(query: string, candidate: string): number {
   return q.filter((w) => c.includes(` ${w} `) || c.includes(w)).length / q.length;
 }
 
-/** 영양 수치가 하나도 없는 레코드는 찾은 것이 아니다 — OFF 에는 빈 항목이 많다. */
+/**
+ * 판정을 낼 만큼의 숫자가 있는가.
+ *
+ * 열량 하나만 봤다. 그런데 OFF 에는 열량만 채워진 레코드가 흔하고, 그것이 통과하면
+ * 화면이 **"숫자를 찾았다"** 로 넘어간다(`nutritionUnknown` 이 안 붙는다). 그 뒤가
+ * 조용하다: 당·소금·포화지방이 전부 비어 있으니 걸리는 플래그가 하나도 없고, 걸리는
+ * 것이 없으니 판정이 `safe` 가 된다. 당뇨 프로필이든 조건을 하나도 안 적은 사람이든
+ * 똑같이 초록이 뜬다.
+ *
+ * 열량만으로는 경고가 안 나온다. 기준치가 하루 전체(2000kcal)라 100g 당 500kcal 짜리도
+ * 25% 에 그치고, `verdict.ts` 는 100% 를 넘어야 경고를 낸다.
+ *
+ * 그래서 **판정에 쓰이는 값이 하나라도** 있어야 찾은 것으로 친다. 없으면 `null` 을
+ * 내고, 위에서 "성분표를 찍어 보라" 로 이어진다 — 지어낸 초록보다 낫다.
+ */
 function hasNumbers(p: NutrientProfile): boolean {
-  return typeof p.per100.energy === 'number';
+  return JUDGED.some((k) => typeof p.per100[k] === 'number');
 }
+
+/** 판정이 실제로 읽는 값들. 열량은 빠져 있다 — 위 주석에 이유가 있다. */
+export const JUDGED = ['sugars', 'salt', 'saturatedFat', 'fat', 'fiber', 'protein', 'carbohydrates'] as const;
 
 /**
  * 제품 이름(+브랜드)으로 찾는다. 확신이 안 서면 `null`.

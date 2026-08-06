@@ -5,7 +5,7 @@ import { validateDensity } from '@/lib/nutrition/validate';
 import { densityFromTotals, mergeVisionDetail, MIN_PORTION_G, MAX_PORTION_G } from '@/lib/nutrition/mealModel';
 import type { ModelTotals } from '@/lib/nutrition/mealModel';
 import type { NutrientAmounts, NutrientProfile } from '@/lib/nutrition/types';
-import { fetchByBarcode, searchByName } from '@/lib/nutrition/openfoodfacts';
+import { JUDGED, fetchByBarcode, searchByName } from '@/lib/nutrition/openfoodfacts';
 import { cleanDrugName } from '@/lib/formulary/name';
 
 
@@ -114,18 +114,39 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   */
   if (vision?.packaged && !visionIsRx(vision)) {
     const real = await realNutrition(vision);
+    /*
+      알레르겐은 **두 곳에서 온 것을 합친다.**
+
+      전에는 `profile: real ?? {…}` 였다. 조회가 성공하면 프로필을 통째로 갈아 끼우고,
+      사진에서 읽은 알레르겐을 살리는 코드는 실패 갈래에만 있었다. 그래서 OFF 레코드에
+      `allergens_tags` 가 없으면(흔하다 — 그쪽은 빈 배열을 만든다) 사진 속 성분 목록에서
+      읽은 `en:peanuts` 가 소멸했다.
+
+      그 뒤가 조용하다. `deriveFlags` 는 `profile.allergenTags` 만 읽으므로 플래그가 하나도
+      안 붙고, 걸리는 것이 없으니 판정이 `safe` 가 된다 — 땅콩 알레르기가 있는 사람에게
+      초록 "Safe to eat" 이 뜬다.
+
+      합치는 쪽이 안전하다. 한쪽만 본 알레르겐도 알레르겐이고, 없는 것을 지어내는 것이
+      아니라 **본 것을 안 버리는** 것이다.
+    */
+    const allergenTags = [...new Set([
+      ...(real?.allergenTags ?? []),
+      ...(vision.item.profile?.allergenTags ?? []),
+    ])];
     const item: ScanItem = {
       ...vision.item,
       detectedVia: real
         ? `packaged product (${SOURCE_WORD[real.source] ?? real.source})`
         : 'packaged product (nutrition not read)',
-      profile: real ?? {
-        source: 'vision',
-        name: vision.item.name,
-        // 숫자는 비운다. 빈 것은 계산 엔진이 그냥 건너뛰지만, 틀린 값은 하루 누적에 들어간다.
-        per100: {},
-        allergenTags: vision.item.profile?.allergenTags ?? [],
-      },
+      profile: real
+        ? { ...real, allergenTags }
+        : {
+            source: 'vision',
+            name: vision.item.name,
+            // 숫자는 비운다. 빈 것은 계산 엔진이 그냥 건너뛰지만, 틀린 값은 하루 누적에 들어간다.
+            per100: {},
+            allergenTags,
+          },
       // 숫자를 못 찾았으면 초록을 막는다. 걸리는 플래그가 없다는 이유로 'safe' 가
       // 뜨면, 글을 못 읽는 사람에게 그것은 먹어도 된다는 뜻이 된다.
       nutritionUnknown: real ? undefined : true,
@@ -274,15 +295,21 @@ function visionIsRx(v: VisionResult): boolean {
  *
  * 순서가 곧 확실성의 순서다 (위 주석의 사다리).
  */
+/** 판정에 쓰이는 값이 하나라도 있는가. 열량은 안 센다 — `openfoodfacts.ts` 참고. */
+function judgeable(p: NutrientProfile): boolean {
+  return JUDGED.some((k) => typeof p.per100[k] === 'number');
+}
+
 async function realNutrition(v: VisionResult): Promise<NutrientProfile | null> {
   if (v.barcode) {
     const byCode = await fetchByBarcode(v.barcode).catch(() => null);
-    if (byCode?.per100.energy !== undefined) return byCode;
+    // 열량 하나만 보면 안 된다 — 이유는 `openfoodfacts.ts` 의 `hasNumbers` 주석에.
+    // 그쪽과 같은 자로 재야 바코드 갈래만 느슨해지는 일이 없다.
+    if (byCode && judgeable(byCode)) return byCode;
   }
   // 성분표를 읽어낸 것은 이미 위에서 물리 검사를 통과했다. 추정이 아니라 전사라
   // 출처가 `label-ocr` 로 붙어 있다.
-  if (v.panelRead && v.item.profile?.source === 'label-ocr'
-      && v.item.profile.per100.energy !== undefined) {
+  if (v.panelRead && v.item.profile?.source === 'label-ocr' && judgeable(v.item.profile)) {
     return v.item.profile;
   }
   if (v.item.name && v.item.name !== 'Unknown item') {
