@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { PACKS } from './index.ts';
 import { LANGUAGES, voiceAvailable } from './languages.ts';
 import { dslSentence } from '../snapcare/dslSpeech.ts';
+import { HOME_INTRO_EN } from '../snapcare/homeIntro.ts';
 
 /**
  * 번역이 **비어 있지 않은지** 본다.
@@ -106,4 +107,27 @@ test('보관은 뒤에 따로 선다 — 서술어 둘인 문장이 나오지 �
 
   // 영어도 같이 나아진다 — 쉼표가 어색함을 가려 주고 있었을 뿐이다.
   assert.equal(dslSentence('\\capsule_strip{\\storage_dry}'), 'A capsule. Keep it dry, away from heat.');
+});
+
+
+/*
+  홈 인사가 **화면과 같은 색**을 말하는가.
+
+  "큰 검은 단추" 였다. 단추를 어두운 초록으로 바꾸면서 그 말이 틀렸는데, 그 문장은
+  일곱 군데(영어 + 여섯 언어)에 흩어져 있어서 하나도 안 고쳐졌다. 화면에서는 안
+  보인다 — 소리로만 나가는 문장이고, 듣는 사람은 그것이 틀렸다고 말해 줄 수 없다.
+
+  색 이름을 여기서 못 박아 두면, 다음에 단추 색을 바꾸는 사람이 이 시험에서 걸린다.
+*/
+test('홈 인사가 옛 단추 색을 말하지 않는다', () => {
+  const STALE = ['black', '검은', 'hitam', 'negru', 'baƙi', 'কালো', 'سیاہ'];
+  for (const [lang, pack] of Object.entries(PACKS)) {
+    const line = (pack as Record<string, string>)["home.intro"];
+    if (!line) continue;
+    for (const word of STALE) {
+      assert.ok(!line.includes(word),
+        `${lang} 의 home.intro 가 아직 "${word}" 라고 말한다 — 단추는 초록이다`);
+    }
+  }
+  assert.ok(!HOME_INTRO_EN.includes('black'));
 });

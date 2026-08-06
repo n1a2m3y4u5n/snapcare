@@ -10,7 +10,7 @@ export const id: SayPack = {
       고를 때 미리 들려주는 것도 이것이다 — 고르는 자리에서 듣는 소리와 실제로 앱을
       열었을 때 나는 소리가 같아야 고른 것이 무엇인지 알 수 있다.
     */
-    'home.intro': 'SnapCare. Foto makanan atau obat untuk memeriksanya. Tombol hitam besar mengambil foto.',
+    'home.intro': 'SnapCare. Foto makanan atau obat untuk memeriksanya. Tombol hijau besar di tengah mengambil foto.',
     /*
       판정 세 단계. 그림에는 없는 말이라 여기 둔다 — 그림은 "무엇이 들었나" 를
       말하고, 이 셋은 "그래서 어떻게 하라" 를 말한다. 문장을 짧게 두는 것이 규칙이다:
