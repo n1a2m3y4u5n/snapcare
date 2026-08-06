@@ -65,7 +65,26 @@ export function SyncProvider() {
       const blob = await pull();
       if (!alive) return;
       // 버전이 안 맞거나 모양이 깨진 서버 데이터는 무시하고 로컬을 다시 시드한다.
-      const hasServer = Boolean(blob) && (Boolean(blob!.profile) || (blob!.scans?.length ?? 0) > 0);
+      /*
+        **시연에서는 서버 사본으로 기록을 채우지 않는다.**
+
+        시연 기록은 오늘 날짜에서 만들어진다(`demoHistory`). 그러니 서버에 있는 사본은
+        어제 것이거나, 다른 폰이 반쯤 만들어 놓고 올린 것이다 — 언제나 낡았다.
+
+        `demoSeed` 도장을 고쳐 `pull()` 이 되살아난 순간 이것이 드러났다. 아이 계정으로
+        바꾸면 서버의 낡은 조각(복약 25건, 끼니 0건)이 도착하고, 그러면 저장소가 비어
+        있지 않으니 `seedDemoIfEmpty` 가 "이미 있다" 며 넘어간다. 사람이 보는 것은
+        **반쯤 찬 계정**이고, 몇 번을 다시 열어도 그대로다.
+
+        서버에서 계속 받아야 하는 것은 명단과 상자(`demoBox`)다. 그 둘은 날짜에서
+        나오는 것이 아니라 폰들끼리 나누는 것이라, 아래 `adoptDemoBox` 가 그대로 쓴다.
+
+        실사용은 안 건드린다. 그쪽 기록은 사람이 만든 것이라 서버 사본이 유일한 사본일
+        수 있다.
+      */
+      const demo = isDemo();
+      const hasServer = !demo
+        && Boolean(blob) && (Boolean(blob!.profile) || (blob!.scans?.length ?? 0) > 0);
       if (hasServer && blob) {
         // 사용자가 기다리는 동안 무언가 고쳤다면 서버 사본으로 덮지 않는다.
         //
@@ -83,10 +102,13 @@ export function SyncProvider() {
           if (blob.reminders) useReminders.setState({ reminders: blob.reminders });
         }
       } else {
-        // 서버에도 없다 = 이 사람의 첫 실행이다. 시연 모드면 여기서 채운다.
+        // 서버에 쓸 만한 것이 없거나(첫 실행) 시연이다. 어느 쪽이든 여기서 채운다.
         //
         // 마운트 직후에 넣어 봤더니 이 pull 이 끝나면서 빈 자료로 덮어썼다. 서버가
         // 무엇을 갖고 있는지 안 뒤에 넣어야 한다.
+        //
+        // 시연에서 저장소가 이미 차 있으면 `seedDemoIfEmpty` 는 아무 일도 안 한다 —
+        // 발표 도중에 떨어뜨린 약이나 찍은 사진을 지우면 안 되기 때문이다.
         seedDemoIfEmpty();
         void push(snapshot());
       }
