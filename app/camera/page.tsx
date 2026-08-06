@@ -684,8 +684,8 @@ export default function CameraPage() {
         )}
 
         {debug && lens && (
-          <span className="pointer-events-none absolute left-3 top-24 max-w-[80%] rounded-md px-2 py-1 text-[10px]"
-                style={{ background: 'rgb(0 0 0 / 60%)', color: '#fff' }}>
+          <span className="pointer-events-none absolute inset-x-3 top-24 rounded-md px-2 py-1 text-[10px]"
+                style={{ background: 'rgb(0 0 0 / 65%)', color: '#fff', wordBreak: 'break-all' }}>
             {lens}
           </span>
         )}

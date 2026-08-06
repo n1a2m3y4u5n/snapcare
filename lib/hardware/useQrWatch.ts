@@ -156,7 +156,7 @@ async function sweepFocus(track: MediaStreamTrack, video: HTMLVideoElement): Pro
   return best;
 }
 
-async function pickFocusable(current: MediaStreamTrack): Promise<MediaStream | null> {
+async function pickFocusable(current: MediaStreamTrack, tried: string[]): Promise<MediaStream | null> {
   if (!navigator.mediaDevices?.enumerateDevices) return null;
   let devices: MediaDeviceInfo[];
   try { devices = await navigator.mediaDevices.enumerateDevices(); } catch { return null; }
@@ -175,7 +175,7 @@ async function pickFocusable(current: MediaStreamTrack): Promise<MediaStream | n
   const candidates = devices
     .filter((d) => d.kind === 'videoinput' && d.deviceId && d.deviceId !== at.deviceId)
     .filter((d) => !SKIP.test(d.label))
-    .slice(0, 2);
+    .slice(0, 3);
 
   /*
     **초점만 보고 갈아타면 안 된다.**
@@ -189,7 +189,7 @@ async function pickFocusable(current: MediaStreamTrack): Promise<MediaStream | n
 
     그래서 **둘 다** 본다: 초점이 되고, 지금 것보다 화소가 안 적을 것.
   */
-  const nowPixels = (at.width ?? 0) * (at.height ?? 0);
+
 
   for (const d of candidates) {
     let s: MediaStream | null = null;
@@ -207,8 +207,21 @@ async function pickFocusable(current: MediaStreamTrack): Promise<MediaStream | n
         `manual` 뿐이면 한 번이라도 맞춰 주는 렌즈가 낫다 — 우리가 셔터 직전에
         부를 수 있다.
       */
+      /*
+        **초점이 해상도보다 중요하다.**
+
+        처음에는 "지금보다 화소가 적으면 안 받는다" 로 두었다. 그런데 그 규칙 때문에
+        자동 초점이 되는 주 렌즈를 놓쳤다 — 부탁한 해상도를 그 렌즈가 다 못 주면
+        화소가 모자란다는 이유로 거절되고, 초점이 안 맞는 렌즈에 남는다.
+
+        흐린 1440p 보다 또렷한 1080p 가 성분표를 잘 읽는다. 그래서 조건을 "긴 변이
+        1600 은 넘을 것" 으로 바꾼다. 그 아래는 작은 글자가 안 살아남으므로 초점을
+        얻어도 소용이 없다.
+      */
       const auto = caps?.focusMode?.some((m) => m === 'continuous' || m === 'single-shot');
-      if (auto && pixels >= nowPixels) {
+      const longEdge = Math.max(got.width ?? 0, got.height ?? 0);
+      tried.push(`${d.label || d.deviceId}:${got.width}x${got.height}:${caps?.focusMode?.join('/') ?? 'none'}`);
+      if (auto && longEdge >= 1600) {
         console.info('[camera] 렌즈를 바꾼다 →', d.label || d.deviceId,
                      `${got.width}x${got.height}`);
         return s;
@@ -349,6 +362,7 @@ export function useQrWatch(enabled = true): QrWatch {
         둘까지만 시도한다: 렌즈를 하나 여는 데 시간이 들고, 사람은 그동안 검은 화면을
         본다.
       */
+      const tried: string[] = [];
       const focusless = (t: MediaStreamTrack | null) => {
         const c = t?.getCapabilities?.() as { focusMode?: string[] } | undefined;
         return !c?.focusMode?.includes('continuous');
@@ -370,7 +384,7 @@ export function useQrWatch(enabled = true): QrWatch {
       const knowsFocus = !!(navigator.mediaDevices.getSupportedConstraints?.() as
         { focusMode?: boolean } | undefined)?.focusMode;
       if (knowsFocus && track && focusless(track)) {
-        const better = await pickFocusable(track);
+        const better = await pickFocusable(track, tried);
         if (better && !stopped) {
           stream.getTracks().forEach((t) => t.stop());
           stream = better;
@@ -393,8 +407,13 @@ export function useQrWatch(enabled = true): QrWatch {
       */
       const how = caps?.focusMode?.join('/') ?? 'none';
       const got = track?.getSettings?.() ?? {};
+      const fd = (track?.getCapabilities?.() as
+        { focusDistance?: { min: number; max: number } } | undefined)?.focusDistance;
       const line = `${track?.label || 'camera'} · ${got.width}x${got.height} · focus ${how}`
-        + `${caps?.pointsOfInterest ? ' · poi' : ''}`;
+        + `${caps?.pointsOfInterest ? ' · poi' : ''}`
+        // 훑기가 가능한가. `manual` 만 있고 이것이 없으면 우리가 할 수 있는 일이 없다.
+        + ` · fd ${fd ? `${fd.min}~${fd.max}` : 'none'}`
+        + (tried.length ? ` · tried ${tried.join(' | ')}` : ' · tried none');
       console.info('[camera]', line);
       setLens(line);
 
