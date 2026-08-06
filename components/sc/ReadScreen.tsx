@@ -77,13 +77,46 @@ export function ReadScreen({ variant = 'float', wide = false }: {
     한 박자 늦춘다: 화면이 그려지자마자 스무 개를 보내면 첫 그림이 그만큼 늦다.
   */
   useEffect(() => {
-    const at = setTimeout(() => {
+    const scan = () => {
       const texts = [...document.querySelectorAll('[data-say]')]
         .map((el) => el.getAttribute('data-say') ?? '')
         .filter(Boolean);
       prewarm(texts, sayLang);
-    }, 400);
-    return () => clearTimeout(at);
+    };
+
+    const at = setTimeout(scan, 400);
+
+    /*
+      **한 번만 훑으면 늦게 오는 말들이 통째로 빠진다.**
+
+      이 자리가 화면이 뜬 뒤 400ms 에 한 번만 DOM 을 훑고 있었다. 그런데 이 앱에서
+      말할 거리가 가장 많은 것들은 그때 아직 화면에 없다 — 저장소가 복원된 뒤에
+      그려지는 카드, 달의 통계, 숫자가 든 막대. 그것들은 목록에 안 들어가고, 사람이
+      단추를 누르면 그때부터 옮기기 시작해서 3초 안에 못 끝나고 **영어로 읽힌다.**
+
+      실제로 나온 말: 복약 화면 맨 위, 영양 탭의 설탕, 영양 탭 달력 통계. 셋 다
+      숫자가 든 문장이라 갈무리에도 없다 — 숫자가 바뀌면 새 문장이다.
+
+      그래서 화면이 바뀔 때마다 다시 훑는다. 이미 아는 말과 지금 옮기는 중인 말은
+      `prewarm` 이 걸러내므로, 다시 훑는 값은 DOM 을 한 번 읽는 것뿐이다.
+
+      한 박자 모은다(300ms). 목록이 그려지는 동안 한 줄마다 훑으면 같은 일을 스무 번
+      한다.
+    */
+    let debounce: ReturnType<typeof setTimeout> | null = null;
+    const observer = new MutationObserver(() => {
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(scan, 300);
+    });
+    observer.observe(document.body, {
+      subtree: true, childList: true, attributes: true, attributeFilter: ['data-say'],
+    });
+
+    return () => {
+      clearTimeout(at);
+      if (debounce) clearTimeout(debounce);
+      observer.disconnect();
+    };
   }, [sayLang, pathname]);
 
   /** 읽기를 멈추고 표시를 지운다. 상태 갱신은 재생 루프가 스스로 정리한다. */
