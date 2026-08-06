@@ -735,9 +735,27 @@ export default function CameraPage() {
           </div>
         )}
 
-        {/* 캡처. 화면 아래에 얹고, 영상이 끝까지 보이도록 자리만 차지한다. */}
+        {/*
+          캡처. 화면 아래에 얹고, 영상이 끝까지 보이도록 자리만 차지한다.
+
+          **판독 중에는 통째로 감춘다.**
+
+          전에는 `disabled` 로만 두어 흐릿한 흰 동그라미가 그 자리에 남았다. 이 앱을
+          쓰는 사람에게 화면에 있는 동그라미는 "누르는 것" 이고, 흐리다는 것만으로
+          "지금은 안 된다" 가 전해지지 않는다 — 눌러 보고, 아무 일도 안 일어나고,
+          그래서 한 번 더 누른다.
+
+          `disabled` 를 남겨 둔다. 감춘 것은 눈에 대한 것이고, 그 사이에 키보드나
+          보조기기가 닿는 경로는 따로 막혀 있어야 한다.
+
+          자리는 `mt-auto` 가 잡고 있었다. 통째로 지우면 영상이 아래로 늘어나 그때까지
+          보이던 구도가 바뀌므로, 감출 때도 같은 높이를 남긴다.
+        */}
         <div className="relative z-10 mt-auto flex justify-center pb-2 pt-10"
-             style={{ background: 'linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.55))' }}>
+             style={{
+               background: busy ? undefined : 'linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.55))',
+               visibility: busy ? 'hidden' : undefined,
+             }}>
           {/*
             보고 있는 것을 찍는다.
 
