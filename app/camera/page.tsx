@@ -19,6 +19,7 @@ import { useReminders } from '@/stores/reminders';
 import { estimateOnDevice, warmUp } from '@/lib/nutrition/estimateOnDevice';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
 import { useQrWatch } from '@/lib/hardware/useQrWatch';
+import { useIsDemo } from '@/lib/hooks';
 import { readQr } from '@/lib/dispenser/qrIntent';
 import { pairWith } from '@/lib/dispenser/paired';
 import { DEFAULT_RELAY } from '@/lib/dispenser/relayUrl';
@@ -47,6 +48,7 @@ export default function CameraPage() {
     [reminders],
   );
   const [busy, setBusy] = useState(false);
+  const demo = useIsDemo();
   /** 방금 누른 자리. 초점 동그라미를 그 자리에 잠깐 띄운다. */
   const [spot, setSpot] = useState<{ x: number; y: number } | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -70,7 +72,7 @@ export default function CameraPage() {
 
     이유는 useQrWatch 에 적었다 — 사진 한 장은 QR 을 읽는 도구로 최악이다.
   */
-  const { videoRef, live, recent, capture, focusable, focusAt } = useQrWatch(!busy);
+  const { videoRef, live, recent, capture, focusable, focusAt, lens } = useQrWatch(!busy);
 
   /*
     `?try=` 로 표본을 열던 길이 여기 있었다. 홈의 "TRY IT" 이 그리로 보냈는데, 그
@@ -668,6 +670,20 @@ export default function CameraPage() {
               camera preview
             </span>
           </div>
+        )}
+
+        {/*
+          잡은 렌즈와 초점 능력. **시연 모드에서만** 보인다.
+
+          초점이 안 맞는 것은 흐릿한 사진 하나로만 보이고, 그것이 고정 초점 렌즈 때문
+          인지 손이 흔들린 것인지 구별할 방법이 없다. 우리 손에 없는 폰에서 물어보려면
+          화면에 있어야 하는데, 발표 화면에 기기 이름이 떠 있을 이유는 없다.
+        */}
+        {demo && lens && (
+          <span className="pointer-events-none absolute left-3 top-24 rounded-md px-2 py-1 text-[10px]"
+                style={{ background: 'rgb(0 0 0 / 55%)', color: '#fff' }}>
+            {lens}
+          </span>
         )}
 
         {/* 처리 중이거나 할 말이 있을 때. 영상 위에 뜨되 셔터를 가리지 않는다. */}
