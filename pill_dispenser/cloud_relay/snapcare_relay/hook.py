@@ -69,13 +69,21 @@ def _post(url: str, token: str, payload: dict, timeout: float) -> None:
         log.info("push hook unreachable: %s", exc)
 
 
-def notify(device_id: str, slot: str, rev: int) -> None:
+def notify(device_id: str, slot: str, rev: int, wake: bool = False) -> None:
     """Fire and forget. Returns immediately; never raises.
 
     Only `reported` is worth sending. The other two slots are written *by the
     phone*, so waking the phone for them means a carer who saves a schedule
     gets a notification from their own tap.
     """
+    if not wake:
+        # The heartbeat is most reports. It goes up every five minutes whether
+        # or not anything happened — that is its job, it is how the app tells a
+        # quiet dispenser from an unplugged one. Buzzing a phone for it means
+        # "your medicine is ready" every five minutes, all night, and the
+        # message is fixed so the person cannot tell it from a real one. The
+        # first thing they learn is to ignore the notification.
+        return
     if slot != "reported":
         return
     if not config.HOOK_URL or not config.HOOK_TOKEN:

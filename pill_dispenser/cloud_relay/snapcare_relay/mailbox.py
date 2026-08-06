@@ -218,7 +218,12 @@ class Mailboxes:
 
     def __init__(self, directory: Path | None = None, now=time.monotonic,
                  on_write=None):
-        """`on_write(device_id, slot, rev)` runs after a successful write.
+        """`on_write(device_id, slot, rev, wake)` runs after a successful write.
+
+        `wake` is the writer saying this one is worth buzzing a phone for. It
+        has to come from the device: the relay cannot read the envelope, and
+        the app cannot either from the outside. Without it every heartbeat
+        looked exactly like a dose.
 
         A callback rather than a call to `hook.notify` directly, because this
         class stores envelopes and knows nothing about HTTP — and because the
@@ -348,7 +353,7 @@ class Mailboxes:
 
     # ── reading and writing a slot ──────────────────────────────────────────
 
-    def put(self, device: Device, slot_name: str, envelope: dict) -> int:
+    def put(self, device: Device, slot_name: str, envelope: dict, wake: bool = False) -> int:
         """Store an envelope. Returns the revision now current.
 
         The revision must increase. A client that is behind is told so, with
@@ -380,7 +385,7 @@ class Mailboxes:
         # that device behind it — the dispenser's own long poll included.
         if self._on_write is not None:
             try:
-                self._on_write(device.device_id, slot_name, rev)
+                self._on_write(device.device_id, slot_name, rev, wake)
             except Exception:            # noqa: BLE001 - see below
                 # The write has already succeeded and the client is about to be
                 # told so. A notification that does not go out costs a buzz; an

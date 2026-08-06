@@ -851,7 +851,8 @@ class CloudLink:
         sealed = envelope.seal(self.identity.box_key, self.identity.device_id,
                                "reported", rev, report)
         try:
-            self._request("PUT", "/reported", body={"envelope": sealed})
+            self._request("PUT", "/reported",
+                          body={"envelope": sealed, "wake": self._worth_waking(report)})
         except _Conflict:
             # Another process of ours, or a restart that lost count. Ask the
             # relay what revision it is actually on and carry on from there,
@@ -864,6 +865,30 @@ class CloudLink:
             self._last_published = body
         self._save_state()
         self._note_success()
+
+    def _worth_waking(self, report: dict) -> bool:
+        """Should a phone be buzzed for this report?
+
+        Every report used to buzz. The relay fires its hook on any write to
+        `reported`, and `reported` goes up every five minutes whether or not
+        anything happened — that heartbeat is what lets the app tell a quiet
+        dispenser from an unplugged one, so it cannot be dropped.
+
+        The result was "Your medicine is ready" every five minutes, all night.
+        The push carries no content by design (the message is fixed, so no drug
+        name crosses Google's or Apple's servers), which means the person cannot
+        tell that buzz from a real one. What they learn is to ignore it — and
+        the one buzz that matters is the one they then miss.
+
+        Only the device can decide this. The relay cannot read the envelope and
+        neither can our own API route from the outside; the box key lives on the
+        phone. So the box says it, in one bit outside the envelope.
+
+        The bit is exactly the notification's own sentence: **a dose is waiting
+        to be taken.** A tray that opened and was taken is history, not an
+        errand. A schedule change is not something to wake somebody for.
+        """
+        return bool(report.get("status", {}).get("awaitingRelease"))
 
     def _report(self) -> dict:
         status = self.dispenser.status()

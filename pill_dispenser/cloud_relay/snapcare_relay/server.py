@@ -219,7 +219,12 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         envelope = body.get("envelope") if isinstance(body.get("envelope"), dict) else body
-        rev = self.mailboxes.put(device, slot_name, envelope)
+        # `wake` is outside the envelope on purpose: the relay cannot read the
+        # envelope, and this is the one thing it has to decide — whether a
+        # phone should be buzzed. It is a single bit, and the notification it
+        # gates already reveals the same fact.
+        wake = body.get("wake") is True
+        rev = self.mailboxes.put(device, slot_name, envelope, wake=wake)
         self._json({"ok": True, "rev": rev})
 
     # ── the pages ───────────────────────────────────────────────────────────

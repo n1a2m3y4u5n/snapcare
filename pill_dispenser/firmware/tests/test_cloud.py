@@ -1036,3 +1036,20 @@ def test_a_pairing_command_asks_for_the_screen_now(link):
     woke.clear()
     link._carry_out({"action": "hello"}, 83)                         # noqa: SLF001
     assert woke, "폰이 찍었는데 화면을 안 깨웠다 — 시연에서 보이려는 바로 그 장면이다"
+
+
+def test_only_a_waiting_dose_asks_to_buzz_a_phone(link, dispenser):
+    """오분마다 가는 하트비트가 "약이 준비됐다" 알림이 되면 안 된다.
+
+    릴레이는 `reported` 가 쓰일 때마다 훅을 부르고, `reported` 는 아무 일이 없어도
+    오분마다 올라간다 — 그 하트비트가 조용한 상자와 뽑힌 상자를 가르는 유일한 신호라
+    없앨 수 없다. 그래서 **상자가** 깨울 만한 것인지 말해 줘야 한다.
+
+    보내는 한 비트는 알림의 문장 그 자체다: 기다리는 복용이 있는가. 이미 받아 간 약은
+    기록이지 할 일이 아니고, 일정이 바뀐 것은 사람을 깨울 일이 아니다.
+    """
+    assert link._worth_waking({"status": {"awaitingRelease": []}}) is False   # noqa: SLF001
+    assert link._worth_waking({"status": {}}) is False                        # noqa: SLF001
+    assert link._worth_waking({}) is False                                    # noqa: SLF001
+    assert link._worth_waking(                                                # noqa: SLF001
+        {"status": {"awaitingRelease": [{"tray": 1, "time": "0800"}]}}) is True

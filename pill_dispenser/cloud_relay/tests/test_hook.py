@@ -31,7 +31,7 @@ def test_a_write_calls_the_hook(tmp_path):
 
     boxes.put(device, "reported", envelope(1))
 
-    assert seen == [(DEVICE, "reported", 1)]
+    assert seen == [(DEVICE, "reported", 1, False)]
 
 
 def test_a_rejected_write_does_not_call_the_hook(tmp_path):
@@ -104,10 +104,10 @@ def test_only_the_reported_slot_is_sent(monkeypatch, configured):
     # means a carer who saves a schedule gets a notification from their own tap.
     sent = capture(monkeypatch)
     for slot in ("desired", "command"):
-        hook.notify("dev1", slot, 1)
+        hook.notify("dev1", slot, 1, wake=True)
     assert sent == []
 
-    hook.notify("dev1", "reported", 4)
+    hook.notify("dev1", "reported", 4, wake=True)
     assert len(sent) == 1
 
 
@@ -116,7 +116,7 @@ def test_the_payload_carries_no_envelope(monkeypatch, configured):
     # read the envelope, so nothing about a medicine can travel this path — and
     # this is what keeps that true when somebody adds a field "for debugging".
     sent = capture(monkeypatch)
-    hook.notify("kmPLb2W8Zx1NEc1bdYQgXw", "reported", 7)
+    hook.notify("kmPLb2W8Zx1NEc1bdYQgXw", "reported", 7, wake=True)
 
     url, token, payload = sent[0]
     assert url == "https://app.example/api/push/notify"
@@ -133,7 +133,7 @@ def test_nothing_is_sent_without_configuration(monkeypatch):
     monkeypatch.setattr(config, "HOOK_URL", "")
     monkeypatch.setattr(config, "HOOK_TOKEN", "shared-secret")
     sent = capture(monkeypatch)
-    hook.notify("dev1", "reported", 1)
+    hook.notify("dev1", "reported", 1, wake=True)
     assert sent == []
 
 
@@ -143,7 +143,7 @@ def test_nothing_is_sent_without_a_token(monkeypatch):
     monkeypatch.setattr(config, "HOOK_URL", "https://app.example/api/push/notify")
     monkeypatch.setattr(config, "HOOK_TOKEN", "")
     sent = capture(monkeypatch)
-    hook.notify("dev1", "reported", 1)
+    hook.notify("dev1", "reported", 1, wake=True)
     assert sent == []
 
 
@@ -155,7 +155,7 @@ def test_an_unreachable_web_app_is_swallowed(monkeypatch, configured):
         raise OSError("no route to host")
 
     monkeypatch.setattr(hook.urllib.request, "urlopen", boom)
-    hook.notify(DEVICE, "reported", 1)
+    hook.notify(DEVICE, "reported", 1, wake=True)
     for t in threading.enumerate():
         if t.name.startswith("push-hook-"):
             t.join(timeout=2)
@@ -172,7 +172,27 @@ def test_a_refusal_is_swallowed_too(monkeypatch, configured):
         raise urllib.error.HTTPError("https://app.example", 401, "no", {}, None)
 
     monkeypatch.setattr(hook.urllib.request, "urlopen", refuse)
-    hook.notify(DEVICE, "reported", 1)
+    hook.notify(DEVICE, "reported", 1, wake=True)
     for t in threading.enumerate():
         if t.name.startswith("push-hook-"):
             t.join(timeout=2)
+
+
+def test_the_heartbeat_does_not_buzz_a_phone(monkeypatch, configured):
+    """상자는 오분마다 보고한다 — 아무 일도 없어도.
+
+    그 하트비트가 "약이 준비됐다" 알림이 되면 사람은 밤새 오분마다 그것을 받는다.
+    알림에는 내용이 없으므로(약 이름이 구글·애플 서버를 지나가지 않게 한 약속이다)
+    받는 사람은 진짜인지 아닌지 가릴 수가 없다. 배우는 것은 무시하는 법이고, 그러면
+    정작 중요한 한 번을 놓친다.
+
+    깨울지 말지는 **상자만** 안다. 릴레이는 봉투를 못 읽고, 우리 API 라우트도 밖에서는
+    못 읽는다 — 열쇠가 폰에 있다. 그래서 봉투 밖의 한 비트로 온다.
+    """
+    sent = capture(monkeypatch)
+
+    hook.notify("dev1", "reported", 1, wake=False)
+    assert sent == [], "하트비트가 알림을 냈다"
+
+    hook.notify("dev1", "reported", 2, wake=True)
+    assert len(sent) == 1, "기다리는 복용이 있는데 알림이 안 갔다"
