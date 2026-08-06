@@ -59,13 +59,6 @@ export interface QrWatch {
   /** 영상 안의 그 자리(0~1 비율)에 초점을 맞춘다. 안 되는 기기에서는 아무 일도 안 한다. */
   focusAt(x: number, y: number): Promise<void>;
   /**
-   * 잡은 렌즈와 그 초점 능력. 카메라가 안 돌면 `null`.
-   *
-   * 화면에 보이라고 두는 값이다 — 초점이 안 맞는 것은 흐릿한 사진 하나로만 보이고,
-   * 고정 초점 렌즈 때문인지 손이 흔들린 것인지 구별할 방법이 없다.
-   */
-  lens: string | null;
-  /**
    * 지금 보이는 화면을 그대로 사진으로 잡는다. 카메라가 안 켜져 있으면 null.
    *
    * 이것이 없으면 화면이 거짓말을 한다 — 실시간 미리보기를 띄워 놓고 셔터를 누르면
@@ -130,14 +123,6 @@ export function useQrWatch(enabled = true): QrWatch {
     안 일어나는 자리가 생긴다 — 글을 못 읽는 사람에게 그것은 "고장" 으로 읽힌다.
   */
   const [focusable, setFocusable] = useState(false);
-  /*
-    잡은 렌즈와 그 능력. **화면에 보이라고 두는 값이다.**
-
-    초점이 안 맞는 것은 "흐릿한 사진" 하나로만 보이고, 그 흐릿함이 고정 초점 렌즈
-    때문인지 손이 흔들린 것인지 구별할 방법이 없다. 콘솔에 찍어 두었지만 폰에서
-    콘솔을 여는 것은 우리뿐이라, 손에 없는 기기에서 물어보려면 화면에 있어야 한다.
-  */
-  const [lens, setLens] = useState<string | null>(null);
   const trackRef = useRef<MediaStreamTrack | null>(null);
   const seen = useRef<{ text: string; at: number } | null>(null);
 
@@ -170,7 +155,6 @@ export function useQrWatch(enabled = true): QrWatch {
       trackRef.current = null;
       setLive(false);
       setFocusable(false);
-      setLens(null);
     };
 
     void (async () => {
@@ -279,7 +263,6 @@ export function useQrWatch(enabled = true): QrWatch {
       const how = caps?.focusMode?.join('/') ?? 'none';
       console.info('[camera]', track?.label || '(이름 없음)',
                    '· 초점방식', how, '· 지점지정', caps?.pointsOfInterest ? '됨' : '안 됨');
-      setLens(`${track?.label || 'camera'} · focus ${how}`);
 
       /*
         **다시 걸어 주는 자리가 둘 있다.**
@@ -379,5 +362,5 @@ export function useQrWatch(enabled = true): QrWatch {
     } catch { /* 기기가 거절했다. 계속 맞추는 것은 그대로다. */ }
   }, []);
 
-  return { videoRef, live, recent, capture, focusable, focusAt, lens };
+  return { videoRef, live, recent, capture, focusable, focusAt };
 }

@@ -12,7 +12,7 @@
  *  - API        : 통과 (판정은 신선해야 하고, 오프라인 폴백은 앱 코드가 직접 처리한다)
  */
 
-const VERSION = 'snapcare-4e1e6b8236d2da8d';
+const VERSION = 'snapcare-22b7299a41e541c6';
 const SHELL = `${VERSION}-shell`;
 const ASSETS = `${VERSION}-assets`;
 
@@ -33,9 +33,6 @@ const SHELL_URLS = [
   // 한 사람 것이 된다.
   '/profile',
   '/people',
-  // 알림을 누르거나 홈의 약 카드를 누르면 오는 화면. 약을 먹었다고 기록하는 자리라
-  // 망이 없다고 못 쓰면 기록이 통째로 빈다.
-  '/dose',
   '/provider',
   '/history',
   '/text-size',

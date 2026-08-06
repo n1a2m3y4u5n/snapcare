@@ -42,7 +42,6 @@ export const WARM_ROUTES = [
   '/login',
   '/profile',
   '/people',
-  '/dose',
   '/provider',
   // 지난 날들. 망이 없는 자리에서 되짚는 것이 이 화면의 요점이라
   // 오프라인에서 안 열리면 특히 아프다 — 기록은 이미 폰 안에 있다.

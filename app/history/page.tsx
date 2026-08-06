@@ -13,8 +13,6 @@ import { routineSentence, routines } from '@/lib/history/routines';
 import { useReminders } from '@/stores/reminders';
 import type { Reminder } from '@/stores/reminders';
 import { finished, nextDue, running } from '@/lib/snapcare/course';
-import { useAnalysis } from '@/stores/analysis';
-import { useRouter } from 'next/navigation';
 import { spokenName } from '@/lib/tts/speakable';
 import { DoseCalendar } from '@/components/sc/DoseCalendar';
 import { byMedicine, medicineSentence } from '@/lib/history/byMedicine';
@@ -43,8 +41,6 @@ export default function HistoryPage() {
   const scans = useScans((s) => s.scans);
   const reminders = useReminders((s) => s.reminders);
   const dropMedicine = useReminders((s) => s.dropMedicine);
-  const setCurrent = useAnalysis((s) => s.setCurrent);
-  const router = useRouter();
 
   const member = useProfile((s) => s.profile);
   const ready = useIsClient();
@@ -117,11 +113,17 @@ export default function HistoryPage() {
   const nextDose: Reminder | undefined = ready ? nextDue(live, hm) : undefined;
   const done: Reminder[] = ready ? finished(reminders, today) : [];
 
-  function openDose(r: Reminder) {
-    setCurrent(r.item);
-    router.push('/dose');
-  }
+/*
+    누르면 "먹었나요" 를 묻던 화면이 여기 있었다(`/dose`).
 
+    **먹었는지는 상자가 안다.** 트레이가 열리고 사람이 그것을 집어 갔는지를 기기가
+    보고 기록으로 올린다(`lib/dispenser/useDoseLog.ts`). 화면이 같은 것을 한 번 더
+    물으면 답이 둘이 되고, 두 답이 다를 때 어느 쪽이 맞는지 정할 방법이 없다 —
+    사람은 "먹었다" 를 눌렀는데 트레이는 안 열린 채로 남는 일이 실제로 가능하다.
+
+    그리고 이 앱의 사용자에게 그 물음은 **하지 않아도 되는 일**이다. 상자를 만든
+    이유가 정확히 그 수고를 없애는 것이었는데, 화면이 그것을 도로 시키고 있었다.
+  */
 
   return (
     <MobileScreen bar="inner">
@@ -176,7 +178,7 @@ export default function HistoryPage() {
           말하고, 무엇보다 그 시각이 **어느 약의 것인지**가 한 줄 안에서 붙는다.
         */}
 
-        {setNow.length > 0 && <RoutineCard list={setNow} next={nextDose} onOpen={openDose} />}
+        {setNow.length > 0 && <RoutineCard list={setNow} next={nextDose} />}
         {/*
           자료가 없어도 그린다.
 
@@ -221,11 +223,10 @@ export default function HistoryPage() {
  * 칸 번호를 같이 적는 이유는 이 목록이 **약을 채워 넣을 때** 펼쳐지는 목록이기도
  * 해서다. 그 번호는 상자로 일정을 보낼 때 쓰는 것과 같은 함수에서 나온다.
  */
-function RoutineCard({ list, next, onOpen }: {
+function RoutineCard({ list, next }: {
   list: ReturnType<typeof routines>;
   /** 다음에 올 복용. 그 줄을 짚어 준다. */
   next?: Reminder;
-  onOpen: (r: Reminder) => void;
 }) {
   const say = list.map(routineSentence).join(' ');
   return (
@@ -258,7 +259,7 @@ function RoutineCard({ list, next, onOpen }: {
                  background: 'var(--color-sc-bg)',
                  outline: isNext ? '2px solid var(--color-sc-primary)' : undefined,
                }}
-               onClick={isNext && next ? () => onOpen(next) : undefined}>
+>
             <span aria-hidden className="sc-icon"
                   style={{ color: isNext ? 'var(--color-sc-primary)' : 'var(--color-sc-muted)' }}>
               <PillIcon />
