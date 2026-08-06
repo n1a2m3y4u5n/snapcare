@@ -201,7 +201,6 @@ async function pickFocusable(current: MediaStreamTrack, tried: string[]): Promis
       const t = s.getVideoTracks()[0];
       const caps = t?.getCapabilities?.() as { focusMode?: string[] } | undefined;
       const got = t?.getSettings?.() ?? {};
-      const pixels = (got.width ?? 0) * (got.height ?? 0);
       /*
         `continuous` 가 제일 좋지만 `single-shot` 도 받는다. 지금 잡고 있는 것이
         `manual` 뿐이면 한 번이라도 맞춰 주는 렌즈가 낫다 — 우리가 셔터 직전에
