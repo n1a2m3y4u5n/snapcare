@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef } from 'react';
-import { AlarmIcon, CheckIcon, CloseIcon, DotIcon, SnowIcon } from '@/components/icons';
+import { AlarmIcon, CheckIcon, CloseIcon, SnowIcon } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { MobileScreen } from '@/components/sc/MobileScreen';
 import { VerdictHero } from '@/components/sc/VerdictHero';
@@ -13,7 +13,7 @@ import { doseSentence, storageSentence } from '@/lib/snapcare/say';
 import { alternativeFor, type Alternative } from '@/lib/snapcare/alternative';
 import { spokenName } from '@/lib/tts/speakable';
 import { TimeGlyph } from '@/components/sc/TimeGlyph';
-import { BasketIcon, FoodIcon, LEVEL_ICONS, PillIcon, SheetIcon } from '@/components/icons';
+import { BasketIcon, CarefulIcon, FoodIcon, LEVEL_ICONS, PillIcon, SheetIcon } from '@/components/icons';
 import { useNutrition } from '@/lib/nutrition/useNutrition';
 import { useAnalysis } from '@/stores/analysis';
 import { putThumb, prunePhotos } from '@/lib/photos/store';
@@ -250,7 +250,13 @@ function FoodResult({
         {/* 바코드가 없는 경우의 정성 폴백 */}
         {!item.barcode && item.nutrition?.note && (
           <div className="flex items-start gap-2 rounded-2xl bg-white px-4 py-3 shadow-sm">
-            <span className="mt-0.5 flex items-center text-lg" style={{ color: 'var(--color-caution)' }}><DotIcon /></span>
+            {/*
+              점이 아니라 삼각형이다. 이 줄은 숫자를 못 구했을 때 대신 나가는 주의
+              문장인데, 점은 이 앱에서 아무 뜻도 없는 그림이라 옆의 글에 무게를 못
+              보탰다. 판정 상자와 같은 그림을 쓰면 같은 종류의 말이라는 것이 붙는다.
+            */}
+            <span className="mt-0.5 flex shrink-0 items-center text-lg"
+                  aria-hidden style={{ color: 'var(--color-caution)' }}><CarefulIcon /></span>
             <Say className="text-sm" style={{ color: 'var(--color-sc-ink)' }}>{item.nutrition.note}</Say>
           </div>
         )}
@@ -415,6 +421,16 @@ function RxResult({
       {item.rx?.notes && item.rx.notes.length > 0 && (
         <div className="mt-3 rounded-2xl px-4 py-3" style={{ background: 'var(--color-caution-bg)' }}>
           <div className="flex items-start gap-2">
+            {/*
+              경고 색을 쓰는 자리에는 경고 그림도 있어야 한다.
+
+              이 칸은 바탕과 글자만 주의색이었다. 글을 못 읽는 사람에게 색 하나는
+              약한 단서다 — 화면에는 흰 카드가 여럿이고 그 사이에서 연한 주황은
+              "조금 다른 카드" 로 보인다. 판정 상자가 이미 쓰는 삼각형을 같이 세우면
+              같은 뜻이 두 번 말해지고, 그중 하나는 색을 못 가리는 사람에게도 닿는다.
+            */}
+            <span className="mt-px flex shrink-0 items-center text-base leading-none"
+                  aria-hidden style={{ color: 'var(--color-caution)' }}><CarefulIcon /></span>
             <span className="flex-1 text-[11px] font-bold tracking-wide"
                   style={{ color: 'var(--color-caution)' }}>
               ALSO ON THE SHEET — NO PICTURE FOR THIS
