@@ -94,7 +94,12 @@ function imageBlock(dataUrl: string) {
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const key = process.env.ANTHROPIC_API_KEY;
   // 열쇠가 없어도 앱은 돈다. 부르는 쪽이 tesseract 가 읽은 것을 그대로 쓴다.
-  if (!key) return NextResponse.json(EMPTY);
+  /*
+    열쇠가 없는 것은 이 사진의 문제가 아니다. 위 catch 와 같은 이유로 502 다 —
+    다만 다시 보낸다고 생길 열쇠가 아니므로 부르는 쪽의 재시도는 헛돈다. 그 한 번의
+    헛걸음이 "다시 찍으세요" 를 영영 듣는 것보다 싸다.
+  */
+  if (!key) return NextResponse.json({ error: 'no_key' }, { status: 502 });
 
   let body: { name?: unknown; count?: unknown; notes?: unknown; candidates?: unknown };
   try {
@@ -181,8 +186,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       matchConfidence: Number.isFinite(out.matchConfidence) ? Number(out.matchConfidence) : 0,
     });
   } catch (err) {
-    // 못 물어본 것은 실패가 아니다. tesseract 가 읽은 것이 그대로 남는다.
+    /*
+      **못 물어본 것을 "글씨를 못 읽겠다" 로 내보내면 안 된다.**
+
+      여기서 `EMPTY`(= `legible:false`)를 200 으로 돌려주고 있었다. 그러면 상류의
+      모든 실패 — 5xx, 시간 초과, 답이 JSON 이 아닌 것 — 가 앱에서 **읽을 수 없는
+      손글씨**로 둔갑한다.
+
+      사람이 보는 것은 "종이는 찾았는데 약 이름을 못 읽었습니다. 평평하게, 밝은 곳에서
+      다시 찍으세요" 이고, 그 말대로 몇 번을 다시 찍어도 안 바뀐다. 사진에는 아무
+      문제가 없기 때문이다.
+
+      그리고 그 200 이 부르는 쪽의 재시도까지 껐다. `readName.ts` 는 5xx 에만 한 번 더
+      보내는데, 잠깐 밀린 상류는 다시 보내면 대개 읽힌다 — 처방전 200장에서 503 이던
+      아홉 장이 재시도로 전부 읽혔다.
+
+      이제 502 로 낸다. 부르는 쪽이 한 번 다시 보내고, 그래도 안 되면 `reason:'offline'`
+      이 되어 "망이 필요합니다" 로 말이 바뀐다. 사람이 할 일이 다르면 말도 달라야 한다.
+
+      `legible:false` 는 이제 **모델이 실제로 못 읽겠다고 답했을 때**만 나간다.
+    */
     console.error('[handwriting] 실패:', err);
-    return NextResponse.json(EMPTY);
+    return NextResponse.json({ error: 'upstream' }, { status: 502 });
   }
 }
