@@ -19,7 +19,6 @@ import { useReminders } from '@/stores/reminders';
 import { estimateOnDevice, warmUp } from '@/lib/nutrition/estimateOnDevice';
 import { decodeQrFromImage } from '@/lib/hardware/qr';
 import { useQrWatch } from '@/lib/hardware/useQrWatch';
-import { useIsClient } from '@/lib/hooks';
 import { readQr } from '@/lib/dispenser/qrIntent';
 import { pairWith } from '@/lib/dispenser/paired';
 import { DEFAULT_RELAY } from '@/lib/dispenser/relayUrl';
@@ -48,18 +47,6 @@ export default function CameraPage() {
     [reminders],
   );
   const [busy, setBusy] = useState(false);
-  /*
-    `?debug=1` — 카메라가 무엇을 잡았는지 화면에 쓴다.
-
-    안드로이드 크롬은 폰에서 콘솔을 못 연다(PC 에 USB 로 연결해야 한다). 화질이나
-    초점이 이상하다는 말을 들었을 때 물어볼 값이 우리만 볼 수 있는 곳에 있으면
-    물어본 적이 없는 것과 같다.
-
-    시연 모드로 가르지 않는다 — 지금은 그쪽이 기본이라 늘 보이게 된다. 주소로 켜야
-    평소에도 발표에서도 안 나온다.
-  */
-  const ready = useIsClient();
-  const debug = ready && new URLSearchParams(window.location.search).get('debug') === '1';
   /** 방금 누른 자리. 초점 동그라미를 그 자리에 잠깐 띄운다. */
   const [spot, setSpot] = useState<{ x: number; y: number } | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -83,7 +70,7 @@ export default function CameraPage() {
 
     이유는 useQrWatch 에 적었다 — 사진 한 장은 QR 을 읽는 도구로 최악이다.
   */
-  const { videoRef, live, recent, capture, focusable, focusAt, lens } = useQrWatch(!busy);
+  const { videoRef, live, recent, capture, focusable, focusAt } = useQrWatch(!busy);
 
   /*
     `?try=` 로 표본을 열던 길이 여기 있었다. 홈의 "TRY IT" 이 그리로 보냈는데, 그
@@ -681,13 +668,6 @@ export default function CameraPage() {
               camera preview
             </span>
           </div>
-        )}
-
-        {debug && lens && (
-          <span className="pointer-events-none absolute inset-x-3 top-24 rounded-md px-2 py-1 text-[10px]"
-                style={{ background: 'rgb(0 0 0 / 65%)', color: '#fff', wordBreak: 'break-all' }}>
-            {lens}
-          </span>
         )}
 
         {/* 처리 중이거나 할 말이 있을 때. 영상 위에 뜨되 셔터를 가리지 않는다. */}
