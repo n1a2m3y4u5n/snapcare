@@ -709,29 +709,53 @@ export default function CameraPage() {
         */}
         {!live && (
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 px-8 text-center">
-            {/*
-              📷 였다 — 화면에서 가장 큰 그림이 기기마다 다른 그림이면, 이 앱이 무엇을
-              하는 앱인지가 폰마다 달라진다.
-            */}
-            <span aria-hidden className="leading-none" style={{ fontSize: 56 }}><CameraIcon /></span>
-            <span className="text-sm font-semibold opacity-90"
-                  {...sayable('Press the big round button below. The camera will open.')}>
-              Press the button to open the camera
-            </span>
+            {busy ? (
+              /*
+                판독 중.
+
+                여기에 "단추를 누르세요" 가 그대로 남아 있었다. 셔터는 이미 감췄는데
+                **누르라는 말은 안 감췄다** — 화면에서 가장 큰 글이 없는 단추를 가리키고
+                있었던 셈이다. 사진을 막 찍고 돌아온 사람이 읽는 첫 문장이 그것이라,
+                누를 것을 찾다가 아무것도 못 찾는다.
+
+                지금 무슨 일이 벌어지는지를 그 자리에 대신 놓는다. 돌아가는 고리는 글을
+                못 읽어도 "기다리는 중" 을 말하고, 아래 글은 어느 단계인지를 말한다
+                (`status` 는 "이름을 읽는 중", "약을 찾아보는 중" 처럼 바뀐다).
+              */
+              <>
+                <span aria-hidden
+                      className="animate-spin rounded-full border-4 border-white/25 border-t-white"
+                      style={{ width: 56, height: 56 }} />
+                <span className="text-base font-bold" aria-live="polite"
+                      {...sayable(status ?? 'Working on it. Please wait.')}>
+                  {status ?? 'Analyzing…'}
+                </span>
+              </>
+            ) : (
+              <>
+                {/*
+                  📷 였다 — 화면에서 가장 큰 그림이 기기마다 다른 그림이면, 이 앱이 무엇을
+                  하는 앱인지가 폰마다 달라진다.
+                */}
+                <span aria-hidden className="leading-none" style={{ fontSize: 56 }}><CameraIcon /></span>
+                <span className="text-sm font-semibold opacity-90"
+                      {...sayable('Press the big round button below. The camera will open.')}>
+                  Press the button to open the camera
+                </span>
+              </>
+            )}
           </div>
         )}
 
-        {/* 처리 중이거나 할 말이 있을 때. 영상 위에 뜨되 셔터를 가리지 않는다. */}
-        {(busy || hint) && (
+        {/*
+          할 말이 있을 때. 영상 위에 뜨되 셔터를 가리지 않는다.
+
+          판독 중 알림이 여기에도 있었다 — 가운데 큰 글과 아래 작은 알약이 같은 말을
+          두 번 했다. 미리보기가 없는 지금은 가운데가 비어 있으므로, 큰 쪽 하나만 남긴다.
+        */}
+        {hint && (
           <div className="pointer-events-none absolute inset-x-0 bottom-32 flex flex-col items-center gap-2 px-6 text-center">
-            {busy && (
-              <span className="rounded-full px-4 py-2 text-xs font-semibold"
-                    style={{ background: 'rgba(0,0,0,0.6)' }}
-                    {...sayable(status ?? 'Working on it.')}>
-                {status ?? 'Analyzing…'}
-              </span>
-            )}
-            {hint && <div className="pointer-events-auto"><Hint text={hint} /></div>}
+            <div className="pointer-events-auto"><Hint text={hint} /></div>
           </div>
         )}
 
