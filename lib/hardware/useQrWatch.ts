@@ -58,6 +58,8 @@ export interface QrWatch {
   focusable: boolean;
   /** 영상 안의 그 자리(0~1 비율)에 초점을 맞춘다. 안 되는 기기에서는 아무 일도 안 한다. */
   focusAt(x: number, y: number): Promise<void>;
+  /** 잡은 렌즈·해상도·초점 능력 한 줄. `?debug=1` 일 때만 화면에 쓴다. */
+  lens: string | null;
   /**
    * 지금 보이는 화면을 그대로 사진으로 잡는다. 카메라가 안 켜져 있으면 null.
    *
@@ -144,6 +146,17 @@ export function useQrWatch(enabled = true): QrWatch {
     안 일어나는 자리가 생긴다 — 글을 못 읽는 사람에게 그것은 "고장" 으로 읽힌다.
   */
   const [focusable, setFocusable] = useState(false);
+  /*
+    잡은 렌즈·해상도·초점 능력. `?debug=1` 일 때만 화면에 뜬다.
+
+    콘솔에도 찍지만 **안드로이드 크롬은 폰에서 콘솔을 못 연다** — PC 에 USB 로 연결
+    해야 보인다. 화질이나 초점이 이상하다는 말을 들었을 때 물어볼 수 있어야 하는데,
+    물어보는 값을 우리만 볼 수 있으면 물어본 적이 없는 것과 같다.
+
+    주소로 켜는 이유: 평소에도 시연에서도 안 보여야 한다. 시연 모드로 가르면 지금은
+    그쪽이 기본이라 늘 보인다.
+  */
+  const [lens, setLens] = useState<string | null>(null);
   const trackRef = useRef<MediaStreamTrack | null>(null);
   const seen = useRef<{ text: string; at: number } | null>(null);
 
@@ -176,6 +189,7 @@ export function useQrWatch(enabled = true): QrWatch {
       trackRef.current = null;
       setLive(false);
       setFocusable(false);
+      setLens(null);
     };
 
     void (async () => {
@@ -294,9 +308,10 @@ export function useQrWatch(enabled = true): QrWatch {
       */
       const how = caps?.focusMode?.join('/') ?? 'none';
       const got = track?.getSettings?.() ?? {};
-      console.info('[camera]', track?.label || '(이름 없음)',
-                   `· ${got.width}x${got.height}`,
-                   '· 초점방식', how, '· 지점지정', caps?.pointsOfInterest ? '됨' : '안 됨');
+      const line = `${track?.label || 'camera'} · ${got.width}x${got.height} · focus ${how}`
+        + `${caps?.pointsOfInterest ? ' · poi' : ''}`;
+      console.info('[camera]', line);
+      setLens(line);
 
       /*
         **다시 걸어 주는 자리가 둘 있다.**
@@ -483,5 +498,5 @@ export function useQrWatch(enabled = true): QrWatch {
     } catch { /* 기기가 거절했다. 계속 맞추는 것은 그대로다. */ }
   }, []);
 
-  return { videoRef, live, recent, capture, focusable, focusAt };
+  return { videoRef, live, recent, capture, focusable, focusAt, lens };
 }
