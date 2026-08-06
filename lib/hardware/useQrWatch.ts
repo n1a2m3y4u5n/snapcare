@@ -75,6 +75,44 @@ const FRESH_MS = 4000;
 /**
  * @param enabled 꺼 두면 카메라를 열지 않는다 (다른 처리가 도는 동안 등).
  */
+/**
+ * 초점이 되는 뒤쪽 카메라를 찾는다. 못 찾으면 `null` — 부르는 쪽이 원래 것을 쓴다.
+ *
+ * 이름으로 먼저 거른다. 권한을 이미 받은 뒤라 이름이 보이고, 초광각·심도·접사는
+ * 초점 장치가 없는 것이 흔하다. 그래도 이름은 기기마다 제멋대로라 **믿지 않고**,
+ * 실제로 열어서 `focusMode` 가 있는지 본다.
+ *
+ * 둘까지만 열어 본다. 렌즈 하나를 여는 데 시간이 들고 그동안 사람은 검은 화면을 본다.
+ */
+async function pickFocusable(current: MediaStreamTrack): Promise<MediaStream | null> {
+  if (!navigator.mediaDevices?.enumerateDevices) return null;
+  let devices: MediaDeviceInfo[];
+  try { devices = await navigator.mediaDevices.enumerateDevices(); } catch { return null; }
+
+  const now = current.getSettings?.().deviceId;
+  const SKIP = /ultra|wide|depth|macro|tele|front|user/i;
+  const candidates = devices
+    .filter((d) => d.kind === 'videoinput' && d.deviceId && d.deviceId !== now)
+    .filter((d) => !SKIP.test(d.label))
+    .slice(0, 2);
+
+  for (const d of candidates) {
+    let s: MediaStream | null = null;
+    try {
+      s = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: d.deviceId }, width: { ideal: 2560 }, height: { ideal: 1440 } },
+        audio: false,
+      });
+      const caps = s.getVideoTracks()[0]?.getCapabilities?.() as { focusMode?: string[] } | undefined;
+      if (caps?.focusMode?.includes('continuous')) return s;
+      s.getTracks().forEach((t) => t.stop());
+    } catch {
+      s?.getTracks().forEach((t) => t.stop());
+    }
+  }
+  return null;
+}
+
 export function useQrWatch(enabled = true): QrWatch {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [live, setLive] = useState(false);
@@ -94,6 +132,17 @@ export function useQrWatch(enabled = true): QrWatch {
 
     let stream: MediaStream | null = null;
     let track: MediaStreamTrack | null = null;
+    let onVisible: (() => void) | null = null;
+
+    /** 계속 맞추라고 말한다. 되는 기기에서만, 몇 번을 불러도 안전하게. */
+    const keepFocusing = async () => {
+      const t = trackRef.current;
+      const c = t?.getCapabilities?.() as { focusMode?: string[] } | undefined;
+      if (!t || !c?.focusMode?.includes('continuous')) return;
+      try {
+        await t.applyConstraints({ advanced: [{ focusMode: 'continuous' } as never] });
+      } catch { /* 기기가 거절했다. 기본 동작으로 둔다. */ }
+    };
     let timer: ReturnType<typeof setInterval> | null = null;
     let stopped = false;
     const canvas = document.createElement('canvas');
@@ -101,6 +150,7 @@ export function useQrWatch(enabled = true): QrWatch {
     const stop = () => {
       stopped = true;
       if (timer) clearInterval(timer);
+      if (onVisible) document.removeEventListener('visibilitychange', onVisible);
       stream?.getTracks().forEach((t) => t.stop());
       trackRef.current = null;
       setLive(false);
@@ -150,14 +200,68 @@ export function useQrWatch(enabled = true): QrWatch {
       */
       track = stream.getVideoTracks()[0] ?? null;
       trackRef.current = track;
+
+      /*
+        **초점이 되는 렌즈를 고른다.**
+
+        `facingMode: environment` 는 "뒤쪽" 까지만 말한다. 어느 뒤쪽인지는 기기가
+        고르는데, 요즘 폰은 뒤에 렌즈가 서넛이고 **초광각·심도·접사 렌즈는 초점
+        장치가 아예 없는 것이 흔하다.** 그런 렌즈를 잡으면 계속 맞추라고 아무리
+        말해도 안 맞는다 — 말할 상대가 없다.
+
+        아이폰에서는 안 겪었고 안드로이드에서 겪었다. WebKit 은 애초에 초점 제어를
+        안 열어 주므로 기기의 기본 동작(주 렌즈, 자동 초점)이 그대로 나오는데,
+        Chromium 계열은 우리가 고르게 해 주면서 잘못 고를 여지도 같이 준다.
+
+        그래서 잡은 렌즈에 `focusMode` 가 없으면 다른 뒤쪽 카메라를 열어 본다. 이름에
+        초광각·심도·접사가 들어간 것은 건너뛴다 — 권한을 이미 받았으므로 이름이 보인다.
+        둘까지만 시도한다: 렌즈를 하나 여는 데 시간이 들고, 사람은 그동안 검은 화면을
+        본다.
+      */
+      const focusless = (t: MediaStreamTrack | null) => {
+        const c = t?.getCapabilities?.() as { focusMode?: string[] } | undefined;
+        return !c?.focusMode?.includes('continuous');
+      };
+      if (track && focusless(track)) {
+        const better = await pickFocusable(track);
+        if (better && !stopped) {
+          stream.getTracks().forEach((t) => t.stop());
+          stream = better;
+          track = better.getVideoTracks()[0] ?? null;
+          trackRef.current = track;
+          video.srcObject = better;
+          try { await video.play(); } catch { /* 아래에서 걸러진다 */ }
+        }
+      }
+
       const caps = track?.getCapabilities?.() as
         { focusMode?: string[]; pointsOfInterest?: unknown } | undefined;
-      if (track && caps?.focusMode?.includes('continuous')) {
-        try {
-          await track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as never] });
-        } catch { /* 기기가 거절했다. 기본 동작으로 둔다. */ }
-      }
-      setFocusable(!!caps?.pointsOfInterest || !!caps?.focusMode?.includes('single-shot'));
+      await keepFocusing();
+      /*
+        어느 렌즈를 잡았고 무엇을 할 수 있는지 남긴다.
+
+        초점이 안 맞는 것은 화면에서 "흐릿한 사진" 하나로만 보이고, 그 흐릿함이
+        고정 초점 렌즈 때문인지 그냥 손이 흔들린 것인지 구별할 방법이 없다. 기기가
+        여럿이라 우리 손에 없는 폰에서 물어볼 수 있어야 한다.
+      */
+      console.info('[camera]', track?.label || '(이름 없음)',
+                   '· 초점방식', caps?.focusMode?.join('/') ?? '없음',
+                   '· 지점지정', caps?.pointsOfInterest ? '됨' : '안 됨');
+
+      /*
+        **다시 걸어 주는 자리가 둘 있다.**
+
+        기기가 카메라를 잠깐 놓았다가 되찾으면(다른 앱으로 갔다 오거나, 화면이 꺼졌다
+        켜지거나) 초점 방식이 기본값으로 돌아가는 기기가 있다. 그러면 이 화면은 계속
+        맞추는 줄 알고 있는데 실제로는 안 맞춘다 — 화면에 아무 표시도 안 난다.
+
+        `visibilitychange` 로 돌아온 순간에 한 번 더 건다. 이미 걸려 있으면 같은 값을
+        다시 주는 것뿐이라 값이 싸다.
+      */
+      onVisible = () => { if (document.visibilityState === 'visible') void keepFocusing(); };
+      document.addEventListener('visibilitychange', onVisible);
+
+      setFocusable(!!caps?.pointsOfInterest);
       setLive(true);
 
       timer = setInterval(() => {
@@ -223,37 +327,23 @@ export function useQrWatch(enabled = true): QrWatch {
   };
 
   /**
-   * 화면의 그 자리에 초점을 맞춘다. `x`·`y` 는 영상 안에서의 비율(0~1).
+   * 화면의 그 자리를 보라고 말한다. `x`·`y` 는 영상 안에서의 비율(0~1).
    *
-   * `pointsOfInterest` 로 어디를 볼지 말한 뒤 `single-shot` 으로 한 번 맞춘다. 둘 중
-   * 하나만 되는 기기가 있어 따로 건다 — 한 번에 주면 안 되는 값 하나 때문에 전부
-   * 거절당한다.
+   * **초점 방식은 계속 `continuous` 로 둔다.** 한때 여기서 `single-shot` 으로 한 번
+   * 맞추고 2.5초 뒤 되돌렸는데, 그 사이 초점이 그 거리에 붙박인다 — 사람이 종이를
+   * 가까이 대거나 손이 흔들리면 안 따라오고, 그 몇 초가 정확히 사진을 찍는 순간이다.
    *
-   * 맞춘 뒤 다시 `continuous` 로 돌려 놓는다. 안 그러면 그 뒤로 초점이 그 거리에
-   * 붙박여서, 사람이 종이를 가까이 대도 안 따라온다.
+   * `pointsOfInterest` 만 주면 **어디를 볼지**가 바뀌고 계속 따라가는 성질은 남는다.
+   * 되돌릴 타이머도 없어진다.
    */
   const focusAt = useCallback(async (x: number, y: number) => {
     const track = trackRef.current;
     if (!track) return;
-    const caps = track.getCapabilities?.() as
-      { focusMode?: string[]; pointsOfInterest?: unknown } | undefined;
-    if (caps?.pointsOfInterest) {
-      try {
-        await track.applyConstraints({ advanced: [{ pointsOfInterest: [{ x, y }] } as never] });
-      } catch { /* 기기가 거절했다 */ }
-    }
-    if (caps?.focusMode?.includes('single-shot')) {
-      try {
-        await track.applyConstraints({ advanced: [{ focusMode: 'single-shot' } as never] });
-      } catch { /* 기기가 거절했다 */ }
-    }
-    if (caps?.focusMode?.includes('continuous')) {
-      // 한 자리에 붙박이지 않게 되돌린다.
-      setTimeout(() => {
-        void track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as never] })
-          .catch(() => { /* 기기가 거절했다 */ });
-      }, 2500);
-    }
+    const caps = track.getCapabilities?.() as { pointsOfInterest?: unknown } | undefined;
+    if (!caps?.pointsOfInterest) return;
+    try {
+      await track.applyConstraints({ advanced: [{ pointsOfInterest: [{ x, y }] } as never] });
+    } catch { /* 기기가 거절했다. 계속 맞추는 것은 그대로다. */ }
   }, []);
 
   return { videoRef, live, recent, capture, focusable, focusAt };
