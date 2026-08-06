@@ -172,8 +172,8 @@ function flatten(s: string): string {
  * ("Nutella" vs "Nutella hazelnut spread 350g") 편집 거리는 그것을 크게 다르다고
  * 읽는다. 우리가 묻는 것은 "같은 물건인가" 이지 "같은 문자열인가" 가 아니다.
  */
-export function nameOverlap(query: string, candidate: string): number {
-  return nameMatch(query, candidate).score;
+export function nameOverlap(query: string, candidate: string, productName?: string): number {
+  return nameMatch(query, candidate, productName).score;
 }
 
 /**
@@ -211,7 +211,8 @@ const FLIPS = ['zero', 'free', 'diet', 'light', 'lite', 'sugarfree', 'unsweetene
  * 붙는다. 그래서 안 내린다: 못 찾으면 "성분표를 찍어 보라" 로 끝나지만, 잘못 찾으면
  * 다른 제품의 숫자가 이 사람의 하루 누적에 조용히 들어간다.
  */
-export function nameMatch(query: string, candidate: string): { score: number; matched: number } {
+export function nameMatch(query: string, candidate: string, productName = candidate):
+  { score: number; matched: number } {
   /*
     용량은 이름이 아니다.
 
@@ -236,7 +237,21 @@ export function nameMatch(query: string, candidate: string): { score: number; ma
   for (const flip of FLIPS) {
     if (q.includes(flip) !== c.includes(flip)) return { score: 0, matched: 0 };
   }
-  if (hit.length < 2) return { score: hit.length / q.length, matched: hit.length };
+  /*
+    한 낱말만 겹칠 때는 그 낱말이 **제품 이름**에 있어야 한다. 브랜드로는 안 된다.
+
+    후보 이름에는 브랜드가 앞에 붙는데, 브랜드 하나가 맞았다고 그 브랜드의 아무
+    제품이나 받으면 안 된다. 실제로 겪은 것: "Géli Caramel Candy" 를 찍고 낱말이
+    줄어든 질의가 `Geli` 가 되면, OFF 의 `Geli Berry mix` 가 1.00 으로 통과했다 —
+    캐러멜 사탕에 젤리의 당 60.7g 이 붙는다.
+
+    "Nutella" 처럼 낱말 하나가 곧 제품인 경우는 그대로 통과한다. 그쪽은 이름에 있다.
+  */
+  if (hit.length < 2) {
+    const inName = ` ${words(productName).join(' ')} `;
+    const solid = hit.filter((w) => inName.includes(w));
+    return { score: solid.length / q.length, matched: solid.length };
+  }
 
   return { score: Math.max(hit.length / q.length, back.length / c.length), matched: hit.length };
 }
@@ -342,7 +357,7 @@ async function searchOnce(q: string, forScoring: string): Promise<NutrientProfil
         문턱을 넘는다 — 다른 제품의 영양 정보가 이 사람의 하루 누적에 들어간다.
         묻는 것은 넓게, 받아들이는 것은 좁게.
       */
-      .map((p) => ({ p, score: nameMatch(forScoring, `${p.brands ?? ''} ${p.name}`).score }))
+      .map((p) => ({ p, score: nameMatch(forScoring, `${p.brands ?? ''} ${p.name}`, p.name).score }))
       .sort((a, b) => (Math.abs(b.score - a.score) > 0.05
         ? b.score - a.score
         : (b.p.allergenTags?.length ?? 0) - (a.p.allergenTags?.length ?? 0)))[0];

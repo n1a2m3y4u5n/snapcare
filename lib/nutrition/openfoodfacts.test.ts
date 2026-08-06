@@ -127,3 +127,17 @@ test('한 번에 먹을 수 없는 크기는 안 쓴다', () => {
   const bottle = toProfile({ product_name: 'X', quantity: '2 l', nutriments: { sugars_100g: 10 } } as never);
   assert.equal(bottle.servingGrams, undefined);
 });
+
+test('한 낱말만 겹치면 브랜드가 아니라 제품 이름에 있어야 한다', () => {
+  /*
+    후보 이름에는 브랜드가 앞에 붙는다. 브랜드 하나가 맞았다고 그 브랜드의 아무
+    제품이나 받으면, 찍은 것과 다른 제품의 숫자가 이 사람의 하루 누적에 들어간다.
+
+    실제로 겪은 것: "Géli Caramel Candy" 를 찍었는데 OFF 에 그 제품이 없다. 낱말이
+    줄어든 질의 `Geli` 로 `Geli Berry mix` 가 1.00 으로 통과했다 — 캐러멜 사탕에
+    젤리의 당 60.7g 이 붙는다.
+  */
+  assert.equal(nameOverlap('Geli', 'Geli Berry mix', 'Berry mix'), 0);
+  // 낱말 하나가 곧 제품인 경우는 그대로 통과한다 — 그쪽은 이름에 있다.
+  assert.equal(nameOverlap('Nutella', 'Ferrero Nutella hazelnut spread', 'Nutella hazelnut spread'), 1);
+});
