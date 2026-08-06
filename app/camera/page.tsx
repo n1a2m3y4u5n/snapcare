@@ -4,6 +4,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAnalysis } from '@/stores/analysis';
 import { makeThumb } from '@/lib/photos/store';
+import { takePendingShot } from '@/lib/photos/pending';
 import { CameraIcon } from '@/components/icons';
 import { decodeEvent } from '@/lib/hardware/protocol';
 import { decodeBitmap, grayFrom, RETRY_WORK_DIM } from '@/lib/formsheet/decode';
@@ -560,8 +561,36 @@ export default function CameraPage() {
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    // 같은 사진을 두 번 고를 수 있어야 한다. 값을 안 비우면 두 번째가 안 걸린다.
+    e.target.value = '';
     if (file) runOcr(file);
   }
+
+  /*
+    홈에서 찍어 온 사진이 있으면 **그대로 시작한다.**
+
+    홈의 큰 단추가 그 자리에서 기기 카메라를 열고(브라우저가 파일 고르기를 사람이
+    방금 누른 것에만 허락하기 때문이다) 사진을 맡긴 뒤 이 화면으로 넘어온다. 여기서
+    한 번 더 누르게 하면 같은 일을 두 번 시키는 것이 된다.
+
+    맡긴 것은 한 번만 나온다(`takePendingShot`). 안 그러면 이 화면에 다시 들어올
+    때마다 같은 사진이 또 돌고, 사람은 자기가 찍지 않은 것의 판정을 본다.
+
+    `runOcr` 는 그릴 때 부르면 안 되므로 붙은 뒤에 부른다. 한 번만 도는 것은 위의
+    한 번만 나온다는 성질이 이미 지킨다.
+  */
+  useEffect(() => {
+    const shot = takePendingShot();
+    if (!shot) return;
+    /*
+      다음 틱에 시작한다. `runOcr` 는 첫 줄에서 "분석 중" 을 세우는데, 그리는 도중에
+      상태를 바꾸면 React 19 가 한 번 더 그리게 하고 규칙에도 걸린다. 화면이 먼저
+      떠 있어야 그 "분석 중" 이 보이기도 한다.
+    */
+    const t = setTimeout(() => void runOcr(shot), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     /*

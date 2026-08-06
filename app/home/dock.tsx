@@ -1,6 +1,8 @@
 'use client';
 
+import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { setPendingShot } from '@/lib/photos/pending';
 
 import { CameraIcon } from '@/components/icons';
 
@@ -70,9 +72,25 @@ export interface Satellite {
  */
 export function BigCamera() {
   const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  /*
+    **누른 그 자리에서** 기기 카메라가 열린다.
+
+    전에는 판독 화면(`/camera`)으로 넘어간 뒤 거기서 셔터를 한 번 더 눌러야 했다.
+    같은 일을 두 번 누르게 하는 것이고, 이 앱을 쓰는 사람에게 한 번의 추가 손짓은
+    싼 값이 아니다.
+
+    화면을 먼저 넘기고 거기서 열 수는 없다 — 브라우저는 파일 고르기를 **사람이 방금
+    누른 것**에만 허락한다(user activation). 화면이 바뀌는 사이에 그 허락이 끊기고,
+    아무 일도 안 일어나는 단추가 된다. 그래서 입력이 여기 있다.
+
+    사진이 돌아오면 맡겨 두고 판독 화면으로 넘어간다(`lib/photos/pending.ts`).
+    사람이 카메라에서 취소하면 아무 일도 안 일어난다 — 홈에 그대로 남는 것이 맞다.
+  */
   return (
     <button
-      onClick={() => router.push('/camera')}
+      onClick={() => fileRef.current?.click()}
       aria-label="Scan something with the camera. Point it at food or medicine."
       /*
         지름을 **칸의 짧은 쪽**에서 뽑는다(`sc-round`, globals.css).
@@ -97,6 +115,21 @@ export function BigCamera() {
         귀로 듣는 사람은 전보다 더 긴 설명을 그대로 받는다.
       */}
       <CameraIcon size="44%" />
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          // 같은 사진을 두 번 고를 수 있어야 한다. 값을 안 비우면 두 번째가 안 걸린다.
+          e.target.value = '';
+          if (!file) return;
+          setPendingShot(file);
+          router.push('/camera');
+        }}
+      />
     </button>
   );
 }
