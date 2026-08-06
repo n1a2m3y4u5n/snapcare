@@ -122,7 +122,7 @@ test('보관은 뒤에 따로 선다 — 서술어 둘인 문장이 나오지 �
 test('홈 인사가 옛 단추 색을 말하지 않는다', () => {
   const STALE = ['black', '검은', 'hitam', 'negru', 'baƙi', 'কালো', 'سیاہ'];
   for (const [lang, pack] of Object.entries(PACKS)) {
-    const line = (pack as Record<string, string>)["home.intro"];
+    const line = (pack as unknown as Record<string, string>)["home.intro"];
     if (!line) continue;
     for (const word of STALE) {
       assert.ok(!line.includes(word),

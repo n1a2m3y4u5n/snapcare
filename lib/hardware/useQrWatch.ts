@@ -222,7 +222,23 @@ export function useQrWatch(enabled = true): QrWatch {
         const c = t?.getCapabilities?.() as { focusMode?: string[] } | undefined;
         return !c?.focusMode?.includes('continuous');
       };
-      if (track && focusless(track)) {
+      /*
+        **다른 렌즈를 열어 보는 것은 위험하다.**
+
+        iOS 는 카메라 스트림을 하나만 허용한다. 이미 열려 있는데 두 번째를 열려고 하면
+        **첫 번째가 죽고**, 화면이 검게 남는다. 실제로 그렇게 됐다 — 아이폰에서 카메라
+        화면이 갑자기 검정으로 떴다.
+
+        그리고 iOS 에서는 이 시도 자체가 뜻이 없다. WebKit 은 초점 제어를 웹에 안 열어
+        주므로 어느 렌즈를 열어도 `focusMode` 가 안 나온다 — 잃을 것만 있고 얻을 것이
+        없는 시도였다.
+
+        그래서 **이 브라우저가 `focusMode` 라는 제약을 아는지** 먼저 묻는다.
+        `getSupportedConstraints()` 는 스트림을 안 열고도 답하고, iOS 에서는 거짓이다.
+      */
+      const knowsFocus = !!(navigator.mediaDevices.getSupportedConstraints?.() as
+        { focusMode?: boolean } | undefined)?.focusMode;
+      if (knowsFocus && track && focusless(track)) {
         const better = await pickFocusable(track);
         if (better && !stopped) {
           stream.getTracks().forEach((t) => t.stop());
