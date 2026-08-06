@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { JUDGED, toProfile } from './openfoodfacts.ts';
+import { JUDGED, searchWords as searchWordsForTest, toProfile } from './openfoodfacts.ts';
 
 /*
   열량 하나만 있는 레코드를 "찾았다" 로 치면 안 된다.
@@ -34,4 +34,26 @@ test('열량만 있는 레코드에는 판정에 쓸 값이 하나도 없다', (
   assert.ok(!JUDGED.some((k) => typeof only.per100[k] === 'number'));
   const withSugar = toProfile({ product_name: 'X', nutriments: { sugars_100g: 32 } } as never);
   assert.ok(JUDGED.some((k) => typeof withSugar.per100[k] === 'number'));
+});
+
+/*
+  검색어에 붙은 군더더기가 검색을 통째로 죽이던 것.
+
+  판별 모델은 이름 뒤에 설명을 붙인다 — "Monster Energy Ultra (Zero Sugar)". 그것을
+  그대로 보내면 OFF 의 질의 문법이 괄호를 연산자로 읽어 **0건**을 낸다. 괄호만 빼면
+  같은 질의가 그 제품을 첫 번째로 돌려준다.
+
+  화면에는 "성분표를 못 읽었다 — 뒷면을 찍으세요" 가 뜬다. 사람은 캔을 뒤집는데,
+  이 앱은 그 이름으로 이미 찾을 수 있었다.
+*/
+test('괄호와 기호는 검색어에서 빠진다', () => {
+  assert.equal(searchWordsForTest('Monster Energy Ultra (Zero Sugar)').join(' '),
+    'monster energy ultra zero sugar');
+  assert.equal(searchWordsForTest('Nutella® 350g — hazelnut').join(' '),
+    'nutella 350g hazelnut');
+});
+
+test('낱말이 적으면 줄여서 다시 묻지 않는다', () => {
+  // 한 번 더 묻는 값이 싸지 않다 — 분당 한도가 있다.
+  assert.equal(searchWordsForTest('Nutella').length, 1);
 });

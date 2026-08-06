@@ -183,10 +183,44 @@ export const JUDGED = ['sugars', 'salt', 'saturatedFat', 'fat', 'fiber', 'protei
  * 이 저장소에 라벨 OCR 이 따로 있다. 여기서 억지로 하나를 고르면 **다른 제품의
  * 영양 정보가 이 사람의 하루 누적에 들어간다.**
  */
-export async function searchByName(query: string): Promise<NutrientProfile | null> {
-  const q = query.trim();
-  if (flatten(q).length < 3) return null;
+/**
+ * 검색에 보낼 낱말들.
+ *
+ * **괄호가 검색을 통째로 죽인다.** 판별 모델은 이름 뒤에 설명을 붙이는 일이 잦고
+ * ("Monster Energy Ultra (Zero Sugar)"), 그것을 그대로 보내면 OFF 의 질의 문법이
+ * 괄호를 연산자로 읽어 **0건**을 낸다. 괄호만 빼면 같은 질의가 그 제품을 첫 번째로
+ * 돌려준다 — 실제로 그렇게 확인했다.
+ *
+ * 화면에는 "성분표를 못 읽었다" 가 뜬다. 사람은 뒷면을 다시 찍으라는 말을 듣지만,
+ * 이 앱은 그 이름으로 이미 찾을 수 있었다.
+ */
+export function searchWords(query: string): string[] {
+  return flatten(query).split(' ').filter(Boolean);
+}
 
+export async function searchByName(query: string): Promise<NutrientProfile | null> {
+  const words = searchWords(query);
+  if (words.join('').length < 3) return null;
+
+  /*
+    길게 한 번, 짧게 한 번.
+
+    모델이 붙이는 꼬리는 괄호만이 아니다 — 용량("500ml can"), 묶음("family pack"),
+    맛 설명이 이름 뒤에 붙는데 그런 낱말은 어느 제품 이름에도 없다. 낱말이 다섯을
+    넘으면 앞의 넷으로 한 번 더 묻는다. 브랜드와 제품명은 앞에 오기 때문이다.
+
+    한 번 더 묻는 값이 싸지 않다(분당 10회 한도가 있다). 그래서 **첫 질의가 빈손일
+    때만** 두 번째를 보낸다.
+  */
+  const tries = words.length > 4 ? [words.join(' '), words.slice(0, 4).join(' ')] : [words.join(' ')];
+  for (const attempt of tries) {
+    const found = await searchOnce(attempt, query);
+    if (found) return found;
+  }
+  return null;
+}
+
+async function searchOnce(q: string, forScoring: string): Promise<NutrientProfile | null> {
   const url = `${SEARCH}?q=${encodeURIComponent(q)}&page_size=5&fields=${FIELDS}`;
   try {
     const res = await fetch(url, {
@@ -214,7 +248,14 @@ export async function searchByName(query: string): Promise<NutrientProfile | nul
     const found = (body.hits ?? body.products ?? [])
       .map(toProfile)
       .filter(hasNumbers)
-      .map((p) => ({ p, score: nameOverlap(q, `${p.brands ?? ''} ${p.name}`) }))
+      /*
+        점수는 **줄인 질의가 아니라 원래 이름**으로 매긴다.
+
+        줄여서 물어본 뒤 그 줄인 것으로 재면, 낱말이 적어진 만큼 아무 제품이나 쉽게
+        문턱을 넘는다 — 다른 제품의 영양 정보가 이 사람의 하루 누적에 들어간다.
+        묻는 것은 넓게, 받아들이는 것은 좁게.
+      */
+      .map((p) => ({ p, score: nameOverlap(forScoring, `${p.brands ?? ''} ${p.name}`) }))
       .sort((a, b) => (Math.abs(b.score - a.score) > 0.05
         ? b.score - a.score
         : (b.p.allergenTags?.length ?? 0) - (a.p.allergenTags?.length ?? 0)))[0];
