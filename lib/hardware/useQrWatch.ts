@@ -274,6 +274,13 @@ export function useQrWatch(enabled = true): QrWatch {
   */
   const [lens, setLens] = useState<string | null>(null);
   const trackRef = useRef<MediaStreamTrack | null>(null);
+  /*
+    지금 초점을 훑는 중인가.
+
+    훑는 동안에는 초점 거리를 몇 번씩 바꾸므로 촬영 세션이 계속 다시 꾸려진다.
+    그 사이에 찍으면 아직 안 채워진 버퍼가 나온다 — 검은 사진이다.
+  */
+  const sweeping = useRef(false);
   const seen = useRef<{ text: string; at: number } | null>(null);
 
   useEffect(() => {
@@ -458,8 +465,10 @@ export function useQrWatch(enabled = true): QrWatch {
       */
       const canAuto = caps?.focusMode?.some((m) => m === 'continuous' || m === 'single-shot');
       if (track && !canAuto) {
+        sweeping.current = true;
         void sweepFocus(track, video, (r) => setLens((was) => `${was ?? line} · ${r}`))
-          .catch(() => { /* 기기가 거절했다 */ });
+          .catch(() => { /* 기기가 거절했다 */ })
+          .finally(() => { sweeping.current = false; });
       }
 
       /*
@@ -532,18 +541,34 @@ export function useQrWatch(enabled = true): QrWatch {
   const MAX_EDGE = 2400;
 
   /** 그림 하나를 긴 변 `MAX_EDGE` 로 줄여 JPEG 으로. 두 경로가 같은 것을 내보내게 한다. */
-  const toJpeg = async (src: CanvasImageSource, w: number, h: number): Promise<Blob | null> => {
+  /**
+   * 그림 하나를 긴 변 `MAX_EDGE` 로 줄여 JPEG 으로. 두 경로가 같은 것을 내보내게 한다.
+   *
+   * **얼마나 밝았는지도 같이 돌려준다.** 아래에서 검은 사진을 걸러내는 데 쓴다.
+   */
+  const toJpeg = async (src: CanvasImageSource, w: number, h: number):
+    Promise<{ blob: Blob | null; luma: number }> => {
     const scale = Math.min(1, MAX_EDGE / Math.max(w, h));
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(w * scale);
     canvas.height = Math.round(h * scale);
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return { blob: null, luma: 0 };
     ctx.drawImage(src, 0, 0, canvas.width, canvas.height);
+
+    // 가운데 한 줄만 훑는다. 전부 읽으면 큰 사진에서 수십 밀리초가 든다.
+    let sum = 0, n = 0;
+    const row = ctx.getImageData(0, Math.floor(canvas.height / 2), canvas.width, 1).data;
+    for (let i = 0; i < row.length; i += 4) {
+      sum += (row[i] * 299 + row[i + 1] * 587 + row[i + 2] * 114) / 1000;
+      n++;
+    }
+
     // JPEG 0.92 — 나머지 경로가 전부 사진 파일을 받으므로 형식을 맞춘다. 무손실로
     // 두면 4메가짜리 PNG 가 OCR 과 판별 요청에 실린다.
-    return new Promise((resolve) =>
-      canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.92));
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.92));
+    return { blob, luma: n ? sum / n : 0 };
   };
 
   const capture = async (): Promise<Blob | null> => {
@@ -600,38 +625,65 @@ export function useQrWatch(enabled = true): QrWatch {
       getPhotoCapabilities(): Promise<{ imageWidth?: { max?: number } }>;
     } }).ImageCapture;
 
-    if (track && track.readyState === 'live' && Cap) {
+    /*
+      **촬영 설정을 안 준다.**
+
+      전에는 `getPhotoCapabilities()` 로 센서 크기를 물어 `imageWidth` 를 지정했다.
+      그것이 검은 사진의 원인으로 보인다 — 안드로이드에서 촬영 세션을 다시 꾸리는
+      중에 찍으면 아직 안 채워진 버퍼가 그대로 나온다. 크기는 어차피 아래에서
+      줄이므로, 기기가 고르는 기본값을 그대로 받는 편이 안전하다.
+
+      그리고 훑기가 도는 동안에는 안 찍는다. 초점 거리를 몇 번씩 바꾸는 중이라
+      세션이 계속 다시 꾸려진다 — 검은 사진이 나오기 딱 좋은 자리다.
+    */
+    if (track && track.readyState === 'live' && Cap && !sweeping.current) {
       try {
         const shot = new Cap(track);
-        const want = await Promise.race([
-          (async () => {
-            const pc = await shot.getPhotoCapabilities().catch(() => null);
-            // 센서가 아무리 커도 우리가 쓰는 것은 긴 변 2400 이다. 그보다 조금 크게
-            // 받아 줄이면 충분하고, 108메가픽셀을 받아 디코딩할 이유는 없다.
-            const max = pc?.imageWidth?.max ?? 0;
-            return max > 0 ? { imageWidth: Math.min(max, 3200) } : undefined;
-          })(),
-          new Promise<undefined>((r) => setTimeout(() => r(undefined), 800)),
-        ]);
         const blob = await Promise.race([
-          shot.takePhoto(want),
+          shot.takePhoto(),
           new Promise<null>((r) => setTimeout(() => r(null), 2500)),
         ]);
         if (blob) {
           const bitmap = await createImageBitmap(blob);
           const out = await toJpeg(bitmap, bitmap.width, bitmap.height);
+          const size = `${bitmap.width}x${bitmap.height}`;
           bitmap.close?.();
-          if (out) {
-            console.info('[camera] 정지 사진', `${bitmap.width}x${bitmap.height}`);
-            return out;
+          /*
+            **검은 사진은 안 쓴다.**
+
+            찍히긴 하는데 내용이 없는 경우가 있다. 그대로 올리면 판별이 "아무것도
+            못 봤다" 로 답하고, 사람은 자기가 잘못 찍은 줄 안다 — 사진은 멀쩡히
+            찍혔고 화면에도 그림이 있었는데.
+
+            가운데 한 줄의 평균 밝기로 거른다. 어두운 방에서 찍은 진짜 사진도 8 은
+            넘는다. 그 아래는 내용이 아니라 빈 버퍼다.
+          */
+          if (out.blob && out.luma >= 8) {
+            console.info('[camera] 정지 사진', size, `밝기 ${out.luma.toFixed(0)}`);
+            return out.blob;
           }
+          console.warn('[camera] 정지 사진이 비었다 — 미리보기 프레임으로 간다',
+                       size, `밝기 ${out.luma.toFixed(0)}`);
         }
       } catch (err) {
         console.warn('[camera] 정지 사진을 못 찍었다 — 미리보기 프레임으로 간다:', err);
       }
     }
 
-    return toJpeg(video, video.videoWidth, video.videoHeight);
+    /*
+      미리보기 프레임도 검을 수 있다 — 화면이 막 붙었거나 기기가 카메라를 되찾는
+      중이면 그렇다. 한 번 더 보고, 검으면 잠깐 기다렸다 다시 뜬다.
+
+      그래도 검으면 그대로 내보낸다. 여기서 `null` 을 돌려주면 셔터가 마지막 갈래로
+      떨어져 **기기 카메라 앱**이 열리는데, 그것은 사람이 부탁한 적 없는 일이다.
+    */
+    const first = await toJpeg(video, video.videoWidth, video.videoHeight);
+    if (first.luma >= 8) return first.blob;
+
+    await new Promise((r) => setTimeout(r, 200));
+    const again = await toJpeg(video, video.videoWidth, video.videoHeight);
+    console.warn('[camera] 미리보기가 어둡다', `밝기 ${first.luma.toFixed(0)} → ${again.luma.toFixed(0)}`);
+    return again.blob ?? first.blob;
   };
 
   /**
@@ -664,8 +716,11 @@ export function useQrWatch(enabled = true): QrWatch {
     const canAuto = caps?.focusMode?.some((m) => m === 'continuous' || m === 'single-shot');
     const video = videoRef.current;
     if (!canAuto && video) {
+      sweeping.current = true;
       await sweepFocus(track, video,
-        (r) => setLens((was) => `${(was ?? '').replace(/ · sweep.*$/, '')} · ${r}`)).catch(() => null);
+        (r) => setLens((was) => `${(was ?? '').replace(/ · sweep.*$/, '')} · ${r}`))
+        .catch(() => null)
+        .finally(() => { sweeping.current = false; });
     }
   }, []);
 
