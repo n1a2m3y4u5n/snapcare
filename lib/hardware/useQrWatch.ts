@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import jsQR from 'jsqr';
+import { laplacianVariance } from '../formsheet/image.ts';
 
 /**
  * 카메라를 열어 두고 QR 이 읽힐 때까지 계속 훑는다.
@@ -86,13 +87,91 @@ const FRESH_MS = 4000;
  *
  * 둘까지만 열어 본다. 렌즈 하나를 여는 데 시간이 들고 그동안 사람은 검은 화면을 본다.
  */
+/**
+ * 카메라가 스스로 못 맞출 때 **우리가 훑어서 맞춘다.**
+ *
+ * 갤럭시 탭에서 `focus manual` 만 나왔다. 그 기기에서는 `continuous` 도 `single-shot`
+ * 도 없어서, 계속 맞추라고 말할 상대가 없다 — 초점이 공장에서 놓인 자리에 그대로
+ * 있고 종이를 가까이 대면 흐리다.
+ *
+ * 대신 `focusDistance` 를 우리가 정할 수 있다. 그래서 카메라가 하는 일을 그대로 한다:
+ * 거리를 몇 단계로 옮겨 가며 **한 프레임씩 선명도를 재고** 가장 높은 자리에 둔다.
+ * 옛 카메라의 대비 검출 자동초점과 같은 방법이고, 선명도를 재는 함수는 이 저장소가
+ * 종이 판독에 이미 쓰는 것이다(`laplacianVariance`).
+ *
+ * 거칠게 훑고 그 둘레를 다시 훑는다. 한 번에 촘촘히 훑으면 단계마다 카메라가 자리를
+ * 잡는 시간(약 120ms)이 곱해져서 사람이 기다리는 시간이 몇 초가 된다.
+ */
+async function sweepFocus(track: MediaStreamTrack, video: HTMLVideoElement): Promise<number | null> {
+  const caps = track.getCapabilities?.() as
+    { focusDistance?: { min: number; max: number; step?: number }; focusMode?: string[] } | undefined;
+  const fd = caps?.focusDistance;
+  if (!fd || !caps?.focusMode?.includes('manual')) return null;
+
+  // 선명도는 작게 재도 된다. 큰 그림을 훑으면 단계마다 수십 밀리초가 더 든다.
+  const c = document.createElement('canvas');
+  const EDGE_S = 240;
+  const measure = (): number => {
+    const w0 = video.videoWidth, h0 = video.videoHeight;
+    if (!w0 || !h0) return 0;
+    const k = EDGE_S / Math.max(w0, h0);
+    c.width = Math.round(w0 * k); c.height = Math.round(h0 * k);
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return 0;
+    ctx.drawImage(video, 0, 0, c.width, c.height);
+    const px = ctx.getImageData(0, 0, c.width, c.height);
+    const g = new Uint8ClampedArray(c.width * c.height);
+    for (let i = 0; i < g.length; i++) {
+      g[i] = (px.data[i * 4] * 299 + px.data[i * 4 + 1] * 587 + px.data[i * 4 + 2] * 114) / 1000;
+    }
+    return laplacianVariance({ w: c.width, h: c.height, d: g });
+  };
+
+  const settle = () => new Promise((r) => setTimeout(r, 120));
+  const at = async (d: number): Promise<number> => {
+    try {
+      await track.applyConstraints({ advanced: [{ focusMode: 'manual', focusDistance: d } as never] });
+    } catch { return 0; }
+    await settle();
+    return measure();
+  };
+
+  let best = fd.min, bestScore = -1;
+  const coarse = 6;
+  for (let i = 0; i < coarse; i++) {
+    const d = fd.min + ((fd.max - fd.min) * i) / (coarse - 1);
+    const score = await at(d);
+    if (score > bestScore) { bestScore = score; best = d; }
+  }
+  // 이긴 자리 둘레를 한 번 더. 거친 단계 하나만큼의 폭을 다섯으로 나눈다.
+  const span = (fd.max - fd.min) / (coarse - 1);
+  for (let i = -2; i <= 2; i++) {
+    if (i === 0) continue;
+    const d = Math.min(fd.max, Math.max(fd.min, best + (span * i) / 2));
+    const score = await at(d);
+    if (score > bestScore) { bestScore = score; best = d; }
+  }
+  await at(best);
+  console.info('[camera] 초점을 훑어 맞췄다 →', best.toFixed(3), `선명도 ${bestScore.toFixed(0)}`);
+  return best;
+}
+
 async function pickFocusable(current: MediaStreamTrack): Promise<MediaStream | null> {
   if (!navigator.mediaDevices?.enumerateDevices) return null;
   let devices: MediaDeviceInfo[];
   try { devices = await navigator.mediaDevices.enumerateDevices(); } catch { return null; }
 
   const at = current.getSettings?.() ?? {};
-  const SKIP = /ultra|wide|depth|macro|tele|front|user/i;
+  /*
+    `wide` 를 통째로 걸러서는 안 된다.
+
+    주 카메라의 이름이 흔히 "wide" 다 — 초광각(`ultra wide`)과 구별하려고 그렇게
+    적는다. 그것을 거르면 **가장 좋은 렌즈를 후보에서 빼놓고** 나머지 중에서 고르게
+    된다. 갤럭시 탭에서 초점이 `manual` 로 남아 있던 것이 이 규칙에 걸렸을 수 있다.
+
+    거를 것은 초점 장치가 없기 쉬운 것들이다: 초광각·심도·접사·망원, 그리고 앞 카메라.
+  */
+  const SKIP = /ultra[\s-]?wide|depth|macro|tele|front|user|selfie/i;
   const candidates = devices
     .filter((d) => d.kind === 'videoinput' && d.deviceId && d.deviceId !== at.deviceId)
     .filter((d) => !SKIP.test(d.label))
@@ -123,7 +202,13 @@ async function pickFocusable(current: MediaStreamTrack): Promise<MediaStream | n
       const caps = t?.getCapabilities?.() as { focusMode?: string[] } | undefined;
       const got = t?.getSettings?.() ?? {};
       const pixels = (got.width ?? 0) * (got.height ?? 0);
-      if (caps?.focusMode?.includes('continuous') && pixels >= nowPixels) {
+      /*
+        `continuous` 가 제일 좋지만 `single-shot` 도 받는다. 지금 잡고 있는 것이
+        `manual` 뿐이면 한 번이라도 맞춰 주는 렌즈가 낫다 — 우리가 셔터 직전에
+        부를 수 있다.
+      */
+      const auto = caps?.focusMode?.some((m) => m === 'continuous' || m === 'single-shot');
+      if (auto && pixels >= nowPixels) {
         console.info('[camera] 렌즈를 바꾼다 →', d.label || d.deviceId,
                      `${got.width}x${got.height}`);
         return s;
@@ -314,6 +399,20 @@ export function useQrWatch(enabled = true): QrWatch {
       setLens(line);
 
       /*
+        자동으로 못 맞추는 기기면 **우리가 한 번 훑는다.**
+
+        `continuous` 도 `single-shot` 도 없는 기기가 있다(갤럭시 탭에서 `manual` 뿐
+        이었다). 그런 기기에서는 초점이 공장에서 놓인 자리에 그대로 있고, 종이를
+        가까이 대면 흐리다 — 말할 상대가 없으니 아무리 부탁해도 안 바뀐다.
+
+        1초 남짓 걸린다. 화면이 뜨자마자 하므로 사람이 종이를 들이대는 동안 끝난다.
+      */
+      const canAuto = caps?.focusMode?.some((m) => m === 'continuous' || m === 'single-shot');
+      if (track && !canAuto) {
+        void sweepFocus(track, video).catch(() => { /* 기기가 거절했다 */ });
+      }
+
+      /*
         **다시 걸어 주는 자리가 둘 있다.**
 
         기기가 카메라를 잠깐 놓았다가 되찾으면(다른 앱으로 갔다 오거나, 화면이 꺼졌다
@@ -326,7 +425,14 @@ export function useQrWatch(enabled = true): QrWatch {
       onVisible = () => { if (document.visibilityState === 'visible') void keepFocusing(); };
       document.addEventListener('visibilitychange', onVisible);
 
-      setFocusable(!!caps?.pointsOfInterest);
+      /*
+        누를 수 있는가. 지점지정이 되거나, 우리가 훑을 수 있으면 받는다.
+        둘 다 안 되는 기기(iOS)에서는 손짓을 안 받는다 — 누르고 아무 일도 안
+        일어나는 자리가 생기면 그것은 고장으로 읽힌다.
+      */
+      const sweepable = !!(track?.getCapabilities?.() as { focusDistance?: unknown } | undefined)
+        ?.focusDistance && !!caps?.focusMode?.includes('manual');
+      setFocusable(!!caps?.pointsOfInterest || sweepable);
       setLive(true);
 
       timer = setInterval(() => {
@@ -491,11 +597,25 @@ export function useQrWatch(enabled = true): QrWatch {
   const focusAt = useCallback(async (x: number, y: number) => {
     const track = trackRef.current;
     if (!track) return;
-    const caps = track.getCapabilities?.() as { pointsOfInterest?: unknown } | undefined;
-    if (!caps?.pointsOfInterest) return;
-    try {
-      await track.applyConstraints({ advanced: [{ pointsOfInterest: [{ x, y }] } as never] });
-    } catch { /* 기기가 거절했다. 계속 맞추는 것은 그대로다. */ }
+    const caps = track.getCapabilities?.() as
+      { pointsOfInterest?: unknown; focusMode?: string[] } | undefined;
+
+    if (caps?.pointsOfInterest) {
+      try {
+        await track.applyConstraints({ advanced: [{ pointsOfInterest: [{ x, y }] } as never] });
+      } catch { /* 기기가 거절했다. 계속 맞추는 것은 그대로다. */ }
+    }
+
+    /*
+      자동으로 못 맞추는 기기에서는 **어디를 보라**고 해도 뜻이 없다 — 볼 줄을 모른다.
+      그때는 누르는 것이 "다시 훑어라" 가 된다. 사람이 종이를 옮기거나 거리를 바꾼
+      뒤에 다시 맞출 길이 그것뿐이다.
+    */
+    const canAuto = caps?.focusMode?.some((m) => m === 'continuous' || m === 'single-shot');
+    const video = videoRef.current;
+    if (!canAuto && video) {
+      await sweepFocus(track, video).catch(() => null);
+    }
   }, []);
 
   return { videoRef, live, recent, capture, focusable, focusAt, lens };
