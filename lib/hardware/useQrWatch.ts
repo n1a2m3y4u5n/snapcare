@@ -89,12 +89,26 @@ async function pickFocusable(current: MediaStreamTrack): Promise<MediaStream | n
   let devices: MediaDeviceInfo[];
   try { devices = await navigator.mediaDevices.enumerateDevices(); } catch { return null; }
 
-  const now = current.getSettings?.().deviceId;
+  const at = current.getSettings?.() ?? {};
   const SKIP = /ultra|wide|depth|macro|tele|front|user/i;
   const candidates = devices
-    .filter((d) => d.kind === 'videoinput' && d.deviceId && d.deviceId !== now)
+    .filter((d) => d.kind === 'videoinput' && d.deviceId && d.deviceId !== at.deviceId)
     .filter((d) => !SKIP.test(d.label))
     .slice(0, 2);
+
+  /*
+    **초점만 보고 갈아타면 안 된다.**
+
+    처음에는 `focusMode` 하나만 봤다. 그런데 뒤쪽 카메라가 여럿인 기기에서 초점은
+    되는데 **센서가 작은** 렌즈가 있다 — 갤럭시 탭에서 카메라 화면이 뿌옇게 나왔고,
+    그 갈아타기가 원인일 수 있는 상태였다.
+
+    초점이 맞아도 1280x720 짜리 그림에서는 성분표의 작은 글자가 안 살아남는다.
+    초점을 얻자고 해상도를 잃으면 고치려던 것을 그대로 잃는다.
+
+    그래서 **둘 다** 본다: 초점이 되고, 지금 것보다 화소가 안 적을 것.
+  */
+  const nowPixels = (at.width ?? 0) * (at.height ?? 0);
 
   for (const d of candidates) {
     let s: MediaStream | null = null;
@@ -103,11 +117,18 @@ async function pickFocusable(current: MediaStreamTrack): Promise<MediaStream | n
         video: { deviceId: { exact: d.deviceId }, width: { ideal: 2560 }, height: { ideal: 1440 } },
         audio: false,
       });
-      const caps = s.getVideoTracks()[0]?.getCapabilities?.() as { focusMode?: string[] } | undefined;
-      if (caps?.focusMode?.includes('continuous')) return s;
-      s.getTracks().forEach((t) => t.stop());
+      const t = s.getVideoTracks()[0];
+      const caps = t?.getCapabilities?.() as { focusMode?: string[] } | undefined;
+      const got = t?.getSettings?.() ?? {};
+      const pixels = (got.width ?? 0) * (got.height ?? 0);
+      if (caps?.focusMode?.includes('continuous') && pixels >= nowPixels) {
+        console.info('[camera] 렌즈를 바꾼다 →', d.label || d.deviceId,
+                     `${got.width}x${got.height}`);
+        return s;
+      }
+      s.getTracks().forEach((t2) => t2.stop());
     } catch {
-      s?.getTracks().forEach((t) => t.stop());
+      s?.getTracks().forEach((t2) => t2.stop());
     }
   }
   return null;
@@ -163,10 +184,21 @@ export function useQrWatch(enabled = true): QrWatch {
           // 뒤쪽 카메라. 상자는 사람 쪽에 있지 않다.
           video: {
           facingMode: { ideal: 'environment' },
-          // 셔터가 이 스트림에서 사진을 뜨므로 판독 품질이 여기에 걸린다. 성분표와
-          // 처방전을 OCR 로 읽어야 하고, 그 글자는 640x480 에서 살아남지 못한다.
-          // `ideal` 이라 못 주는 기기는 줄 수 있는 만큼 준다.
-          width: { ideal: 2560 },
+          /*
+            셔터가 이 스트림에서 사진을 뜨므로 판독 품질이 여기에 걸린다. 성분표와
+            처방전을 OCR 로 읽어야 하고, 그 글자는 640x480 에서 살아남지 못한다.
+            `ideal` 이라 못 주는 기기는 줄 수 있는 만큼 준다.
+
+            **화면이 큰 기기에서는 더 부탁한다.** 2560 을 못 박아 두었더니 태블릿에서
+            미리보기가 뿌옇게 나왔다 — 영상이 화면 전체를 덮는 구조라(`object-cover`)
+            화면이 넓을수록 같은 스트림이 더 크게 늘어난다. 14인치 화면에 1440p 를
+            깔면 물리 화소가 두 배 가까이 모자란다.
+
+            화면의 물리 화소로 잡고 3840 에서 막는다. 그 위는 미리보기에 뜻이 없고
+            (사람 눈도 화면도 못 받는다) 프레임마다 훑는 QR 판독만 무거워진다.
+          */
+          width: { ideal: Math.min(3840, Math.max(2560,
+            Math.round(window.screen.width * (window.devicePixelRatio || 1)))) },
           height: { ideal: 1440 },
         },
           audio: false,
@@ -261,7 +293,9 @@ export function useQrWatch(enabled = true): QrWatch {
         여럿이라 우리 손에 없는 폰에서 물어볼 수 있어야 한다.
       */
       const how = caps?.focusMode?.join('/') ?? 'none';
+      const got = track?.getSettings?.() ?? {};
       console.info('[camera]', track?.label || '(이름 없음)',
+                   `· ${got.width}x${got.height}`,
                    '· 초점방식', how, '· 지점지정', caps?.pointsOfInterest ? '됨' : '안 됨');
 
       /*
