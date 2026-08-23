@@ -59,16 +59,24 @@ def read_roster() -> dict[str, dict]:
     return out
 
 
-def responded(dump: pathlib.Path | None) -> dict[str, str]:
-    """수신자 토큰 → 접수 시각."""
-    if not dump or not dump.is_dir():
+def responded(spec) -> dict[str, str]:
+    """수신자 토큰 → 접수 시각. 쉼표로 이은 여러 폴더를 받는다.
+
+    웹 응답과 메일 응답이 서로 다른 폴더에 있어서, 한쪽만 읽으면 답한 사람이
+    무응답으로 잡힌다.
+    """
+    if not spec:
         return {}
     out = {}
-    for f in sorted(dump.glob('*.json')):
-        j = json.loads(f.read_text(encoding='utf-8'))
-        tok = str(j.get('recipient') or '').strip()
-        if tok:
-            out[tok] = j.get('receivedAt', '')
+    for part in str(spec).split(','):
+        d = pathlib.Path(part.strip())
+        if not part.strip() or not d.is_dir():
+            continue
+        for f in sorted(d.glob('*.json')):
+            j = json.loads(f.read_text(encoding='utf-8'))
+            tok = str(j.get('recipient') or '').strip()
+            if tok:
+                out[tok] = j.get('receivedAt', '')
     return out
 
 
@@ -82,7 +90,7 @@ def style(ws, widths, freeze='A2'):
 
 
 def main() -> None:
-    dump = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else None
+    dump = sys.argv[1] if len(sys.argv) > 1 else None
     out = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / 'scratchpad' / '발송명단.xlsx'
 
     sent = read_sent()

@@ -101,6 +101,7 @@ def survey_shape() -> dict:
 
 
 def load(dirpath: pathlib.Path) -> list[dict]:
+    """폴더 하나. 쉼표로 이어 붙인 여러 폴더는 load_all 이 받는다."""
     out = []
     for f in sorted(dirpath.glob('*.json')):
         try:
@@ -108,6 +109,33 @@ def load(dirpath: pathlib.Path) -> list[dict]:
         except Exception as e:                       # noqa: BLE001
             print(f'  건너뜀 {f.name}: {e}', file=sys.stderr)
     return out
+
+
+def load_all(spec: str) -> list[dict]:
+    """웹 응답 폴더와 메일 응답 폴더를 함께 읽는다.
+
+    설문지 링크가 막히는 기관이 있어서 문항을 본문에 실어 보낸 경우가 있다. 그 답은
+    서버를 거치지 않으므로 손으로 옮겨 적어 따로 둔다. 두 경로를 한 표에 합치되
+    **어느 경로로 왔는지는 `경로` 열에 남긴다.** 합쳐 놓고 구분이 사라지면 나중에
+    "설문 응답"과 "메일 회신"을 같은 것으로 세게 된다.
+    """
+    rows: list[dict] = []
+    for part in str(spec).split(','):
+        part = part.strip()
+        if not part:
+            continue
+        d = pathlib.Path(part)
+        if not d.is_dir():
+            sys.exit(f'응답 폴더가 없다: {d}')
+        got = load(d)
+        print(f'  {d} 에서 {len(got)}건')
+        rows += got
+    rows.sort(key=lambda r: str(r.get('receivedAt') or ''))
+    return rows
+
+
+def route(r) -> str:
+    return {'recorded': '웹', 'email': '메일'}.get(str(r.get('source') or ''), r.get('source') or '')
 
 
 def minutes(r) -> str:
@@ -160,9 +188,7 @@ def main() -> None:
         os.environ.get('SNAPCARE_DATA_DIR', ROOT / '.data')) / 'survey'
     out = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / 'scratchpad' / 'survey-responses.xlsx'
 
-    if not src.is_dir():
-        sys.exit(f'응답 폴더가 없다: {src}')
-    rows = load(src)
+    rows = load_all(str(src))
     if not rows:
         sys.exit(f'{src} 에 응답이 없다')
     print(f'응답 {len(rows)}건 읽음')
@@ -183,22 +209,22 @@ def main() -> None:
     ws = wb.active
     ws.title = '응답'
     head(ws,
-         ['수신자 토큰', '명단의 이름', '명단의 소속', '응답ID', '접수시각', '소요(분)',
+         ['경로', '수신자 토큰', '명단의 이름', '명단의 소속', '응답ID', '접수시각', '소요(분)',
           '언어', '지목 구획', '인용 범위', '표준시간대', '화면', '링크 경유'] + keys,
-         [13, 24, 30, 26, 18, 9, 6, 8, 16, 22, 9, 9] + [30] * len(keys))
+         [7, 13, 24, 30, 26, 18, 9, 6, 8, 16, 22, 9, 9] + [30] * len(keys))
     for r in rows:
         a = r.get('answers') or {}
         env = r.get('env') or {}
         tok = r.get('recipient') or ''
         who = ROSTER.get(tok, ('', ''))
         ws.append([
-            tok, who[0], who[1], r.get('id', ''), r.get('receivedAt', ''), minutes(r),
+            route(r), tok, who[0], who[1], r.get('id', ''), r.get('receivedAt', ''), minutes(r),
             r.get('lang', ''), r.get('pinnedSection') or '', r.get('citeScope') or '',
             env.get('tz') or '', env.get('screen') or '', 'Y' if env.get('fromLink') else 'N',
         ] + [a.get(k, '') for k in keys])
         for c in ws[ws.max_row]:
             c.alignment, c.border = TOP, BOX
-    ws.auto_filter.ref = f'A1:{get_column_letter(12 + len(keys))}{ws.max_row}'
+    ws.auto_filter.ref = f'A1:{get_column_letter(13 + len(keys))}{ws.max_row}'
 
     # ── 2) 직군별 집계 ──────────────────────────────────────
     #
@@ -331,6 +357,23 @@ def main() -> None:
                 cell.alignment, cell.border = TOP, BOX
 
     out.parent.mkdir(parents=True, exist_ok=True)
+    # ── 6) 메일 회신 ────────────────────────────────────────
+    #
+    # 설문 링크를 열지 못했거나, 열었어도 메일로 답한 사람이 있다. 거절도 기록한다.
+    # 왜 답하지 않았는지가 응답률을 읽는 유일한 단서이기 때문이다.
+    log = ROOT / 'scratchpad' / 'contacts' / 'email-log.tsv'
+    if log.exists():
+        ws = wb.create_sheet('메일 회신')
+        lines = [l for l in log.read_text(encoding='utf-8').splitlines() if l.strip()]
+        cols = lines[0].split('\t')
+        head(ws, cols, [12, 22, 30, 13, 14, 80])
+        for line in lines[1:]:
+            ws.append(line.split('\t'))
+            for c in ws[ws.max_row]:
+                c.alignment, c.border = TOP, BOX
+            pass
+        ws.auto_filter.ref = ws.dimensions
+
     wb.save(out)
     print(f'저장: {out}')
     for s in wb.sheetnames:
