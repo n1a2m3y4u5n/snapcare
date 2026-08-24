@@ -359,19 +359,22 @@ def main() -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     # ── 6) 메일 회신 ────────────────────────────────────────
     #
-    # 설문 링크를 열지 못했거나, 열었어도 메일로 답한 사람이 있다. 거절도 기록한다.
+    # 설문 링크를 열지 못했거나, 열었어도 메일로 답한 사람이 있다. 거절도 남긴다.
     # 왜 답하지 않았는지가 응답률을 읽는 유일한 단서이기 때문이다.
-    log = ROOT / 'scratchpad' / 'contacts' / 'email-log.tsv'
+    #
+    # 요지만 적어 두면 나중에 인용할 때 원문을 다시 찾아야 하고, 그 사이에 요약이
+    # 원문을 대신하게 된다. 그래서 **본문을 그대로 싣는다.** 우리가 보낸 원문과
+    # 법적 고지 문구는 뺐고, 서명은 직함·소속이 드러나므로 남겼다.
+    log = ROOT / 'scratchpad' / 'contacts' / 'email-log.json'
     if log.exists():
+        items = json.loads(log.read_text(encoding='utf-8'))
         ws = wb.create_sheet('메일 회신')
-        lines = [l for l in log.read_text(encoding='utf-8').splitlines() if l.strip()]
-        cols = lines[0].split('\t')
-        head(ws, cols, [12, 22, 30, 13, 14, 80])
-        for line in lines[1:]:
-            ws.append(line.split('\t'))
+        cols = ['받은날짜', '보낸사람', '소속', '토큰', '분류', '요지', '원문']
+        head(ws, cols, [12, 24, 34, 13, 14, 46, 110])
+        for it in items:
+            ws.append([it.get(c, '') for c in cols])
             for c in ws[ws.max_row]:
                 c.alignment, c.border = TOP, BOX
-            pass
         ws.auto_filter.ref = ws.dimensions
 
     wb.save(out)
