@@ -197,6 +197,18 @@ def main() -> None:
     print(f"문항 정의: 직군 {len(SHAPE['branches'])}개, 판단 문항 {len(SHAPE['judge'])}개")
     global ROSTER
     ROSTER = roster()
+
+    # 웹으로도 답하고 메일로도 내용을 준 사람이 있다. 사람 수를 두 번 세지 않으려고
+    # 행을 늘리지 않고, 그 사람의 행에 열 하나로 붙인다. 붙이지 않으면 그 내용이
+    # 메일 회신 시트 안에만 남아 자유응답과 집계에서 빠진다.
+    SUPP: dict[str, str] = {}
+    _log = ROOT / 'scratchpad' / 'contacts' / 'email-log.json'
+    if _log.exists():
+        for it in json.loads(_log.read_text(encoding='utf-8')):
+            if '보완' in str(it.get('분류') or '') and it.get('토큰'):
+                SUPP[it['토큰']] = it.get('원문', '')
+        if SUPP:
+            print(f'메일 보완 {len(SUPP)}건을 같은 행에 붙인다')
     print(f'명단 {len(ROSTER)}명과 토큰으로 이어 붙인다')
     wb = Workbook()
 
@@ -210,8 +222,8 @@ def main() -> None:
     ws.title = '응답'
     head(ws,
          ['경로', '수신자 토큰', '명단의 이름', '명단의 소속', '응답ID', '접수시각', '소요(분)',
-          '언어', '지목 구획', '인용 범위', '표준시간대', '화면', '링크 경유'] + keys,
-         [7, 13, 24, 30, 26, 18, 9, 6, 8, 16, 22, 9, 9] + [30] * len(keys))
+          '언어', '지목 구획', '인용 범위', '표준시간대', '화면', '링크 경유', '메일 보완'] + keys,
+         [7, 13, 24, 30, 26, 18, 9, 6, 8, 16, 22, 9, 9, 90] + [30] * len(keys))
     for r in rows:
         a = r.get('answers') or {}
         env = r.get('env') or {}
@@ -221,10 +233,11 @@ def main() -> None:
             route(r), tok, who[0], who[1], r.get('id', ''), r.get('receivedAt', ''), minutes(r),
             r.get('lang', ''), r.get('pinnedSection') or '', r.get('citeScope') or '',
             env.get('tz') or '', env.get('screen') or '', 'Y' if env.get('fromLink') else 'N',
+            SUPP.get(tok, ''),
         ] + [a.get(k, '') for k in keys])
         for c in ws[ws.max_row]:
             c.alignment, c.border = TOP, BOX
-    ws.auto_filter.ref = f'A1:{get_column_letter(13 + len(keys))}{ws.max_row}'
+    ws.auto_filter.ref = f'A1:{get_column_letter(14 + len(keys))}{ws.max_row}'
 
     # ── 2) 직군별 집계 ──────────────────────────────────────
     #
