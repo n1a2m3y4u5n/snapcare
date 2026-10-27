@@ -1,301 +1,231 @@
 # SnapCare
 
-**One photo in — pictograms, voice, and a colour out.**
+사진 한 장으로 픽토그램, 음성, 색깔 하나를 돌려주는 의료정보 앱입니다.
 
-The 16th e-ICON World Contest · Global Team **H1** (Korea × Moldova)
-SDG 3 — Good Health and Well-being
+- 데모: https://snapcare.fly.dev
+- 수상: 제16회 e-ICON 세계대회 고등부 최우수상, 2위 (한국디지털교육협회장상)
 
-Live: **https://snapcare.fly.dev**
+제16회 e-ICON 세계대회 Global Team H1 (한국 x 몰도바), SDG 3 건강과 웰빙 부문 출품작입니다. 전신은 [PictoMed](https://github.com/n1a2m3y4u5n/pictomed)입니다.
 
----
+## 소개
 
-## The problem
+글을 읽지 못하는 성인은 전 세계에 7억 7,300만 명입니다(UNESCO, 2022). 그런데 처방전은 글이고, 영양성분표는 표이며, 대부분의 건강 앱은 글자로 가득합니다. 정보는 있지만 이 사람들에게 닿지 않습니다.
 
-773 million adults cannot read (UNESCO, 2022). Every health tool built for them still
-assumes they can: a prescription is text, a nutrition label is a table, and every mobile
-health app is a wall of words. The information exists — it just never arrives.
+SnapCare는 읽기 과정을 없앱니다. 사용자가 몸에 넣을 것(처방전, 약 상자, 포장 식품, 음식 한 접시)을 찍으면 앱이 **픽토그램, 음성 한 문장, 색깔 하나**로 동시에 답합니다. 로그인도 읽거나 입력할 필요 없이 순서가 있는 그림 키로 합니다.
 
-SnapCare removes reading from the loop. The user photographs whatever they are about to
-put in their body — a prescription, a medicine box, a packaged food, a plate of food — and
-the app answers in three channels at once: **a pictogram, a spoken sentence, and one colour**.
+## 주요 기능
 
-## What it does
+- 처방전 촬영: 약, 용량, 복용 시간, 주의사항을 뽑아 합성 픽토그램과 짧은 음성 안내로 보여 주고 복약 알림을 설정합니다.
+- 영양성분표 촬영: 표를 오프라인으로 읽고 사용자 본인의 일일 기준량으로 환산해 초록, 주황, 빨강으로 답합니다.
+- 음식 사진 촬영: 음식을 식별하고 구성을 추정한 뒤 같은 방식으로 판정합니다.
+- 제품이 아닌 사람 기준 판정: 같은 과자도 성인에게는 안전하고 7세 아이에게는 주의가 될 수 있습니다. 한도를 그 사람의 에너지 필요량으로 계산하기 때문입니다.
+- 하루 단위 보기: 오늘 먹은 것을 그 사람의 기준량에 누적해, 한 번의 스캔으로는 놓치는 것을 잡아냅니다.
+- 약통 연동: 8칸 약통(`pill_dispenser/`)이 맞는 칸을 제때 열고, 색과 소리로 알리고, 폰에 결과를 보고합니다.
 
-| | |
-|---|---|
-| **Photograph a prescription** | Extracts drug, dose, timing and warnings; renders them as composed pictograms and a short spoken script; sets the dose reminders |
-| **Photograph a nutrition label** | Reads the table offline, converts it to the person's own daily reference, and answers green / amber / red |
-| **Photograph a meal** | Identifies the dish, estimates its composition, and judges it the same way |
-| **Per person, not per product** | The same biscuit is safe for an adult and a caution for a seven-year-old, because the limits are computed from *their* energy requirement |
-| **Daily view** | Today's intake accumulated against that person's reference — catching what single scans cannot |
-
-Nothing in the flow requires reading or typing, including sign-in (an ordered picture key).
-
----
-
-## Architecture
+## 구조
 
 ```
-                 photo
+                 사진
                    │
         ┌──────────┴───────────┐
-        │  Tesseract OCR       │  offline, in-browser
+        │  Tesseract OCR       │  오프라인, 브라우저 안에서 실행
         └──────────┬───────────┘
-                   │  what kind of text is this?
+                   │  어떤 종류의 글자인가?
      ┌─────────────┼──────────────┬──────────────────┐
      │             │              │                  │
- prescription  nutrition label  neither          no text
+  처방전        영양성분표        둘 다 아님         글자 없음
      │             │              │                  │
      │             │              └────────┬─────────┘
      │             │                       │
-     │      label parser              Claude Vision      ← only these need a network
-     │      (+ validation)            (+ same validation)
+     │      성분표 파서               Claude Vision   ← 네트워크가 필요한 경로는 여기뿐
+     │      (+ 검증)                  (+ 같은 검증)
      │             │                       │
      └─────────────┴───────────┬───────────┘
                                │
                     ┌──────────┴──────────┐
-                    │  NUTRITION ENGINE   │  reference · scaling · verdict
-                    │  SIGIL · VOCA       │  pictograms · voice
+                    │  영양 엔진          │  기준량 · 환산 · 판정
+                    │  SIGIL · VOCA       │  픽토그램 · 음성
                     └──────────┬──────────┘
                                │
-                    pictogram + voice + colour
+                      픽토그램 + 음성 + 색깔
 ```
 
-The three input paths converge on one internal representation, so every downstream
-behaviour — verdicts, daily accumulation, pictograms, speech — is written once.
+세 입력 경로는 하나의 내부 표현으로 모입니다. 그래서 판정, 하루 누적, 픽토그램, 음성이 모두 한 번만 구현되어 있습니다.
 
-### The three engines
+### 세 개의 엔진
 
-**SIGIL** — pictogram synthesis (`engine/`)
-A LaTeX-influenced DSL (`\three_times_daily{\pill_bottle{\time_morning}}`) is parsed by a
-recursive-descent parser into an AST, then composed into a PNG with Python/Pillow. Existing
-medical pictogram standards (e.g. the USP set) *select* one of a fixed number of static
-images; SIGIL *composes* new ones, so an instruction that has no single symbol still gets a
-single picture. Adding a morpheme to the dictionary extends the whole system with no code
-change.
+**SIGIL: 픽토그램 합성** (`engine/`)
 
-**VOCA** — voice script synthesis (`lib/snapcare/say.ts`, `lib/voice.ts`)
-Rather than reading OCR output aloud, VOCA keeps only what is needed to act, and rebuilds it
-as a short script for the Web Speech API. Pictogram and speech are two renderings of the same
-semantic object, so they cannot contradict each other.
+LaTeX 풍의 DSL(`\three_times_daily{\pill_bottle{\time_morning}}`)을 재귀 하강 파서로 AST로 만들고, Python/Pillow로 PNG를 합성합니다. USP 같은 기존 의료 픽토그램 표준은 정해진 정적 이미지 중 하나를 고릅니다. SIGIL은 새 그림을 조합하므로, 하나의 기호로 표현되지 않는 지시도 한 장의 그림이 됩니다. 사전에 형태소를 추가하면 코드 변경 없이 전체 체계가 확장됩니다.
 
-**Nutrition engine** — reference, scaling, judgement (`lib/nutrition/`)
-WHO expresses its limits as *percentages of energy*, so we compute rather than tabulate: fix
-a person's energy requirement and their sugar, saturated-fat and salt ceilings follow. This is
-why the same food is judged differently for different people.
+**VOCA: 음성 스크립트 합성** (`lib/snapcare/say.ts`, `lib/voice.ts`)
+
+OCR 결과를 그대로 읽어 주지 않습니다. 행동에 필요한 것만 남겨 Web Speech API용 짧은 스크립트로 다시 만듭니다. 픽토그램과 음성은 같은 의미 객체의 두 가지 표현이라 서로 모순될 수 없습니다.
+
+**영양 엔진: 기준량, 환산, 판정** (`lib/nutrition/`)
+
+WHO는 한도를 에너지의 비율로 제시합니다. 그래서 표를 외우지 않고 계산합니다. 한 사람의 에너지 필요량을 정하면 당, 포화지방, 소금의 상한이 따라 나옵니다. 같은 음식이 사람마다 다르게 판정되는 이유입니다.
 
 ```
-sugars limit    = energy × 10% ÷ 4 kcal/g     WHO 2015, free sugars
-saturated fat   = energy × 10% ÷ 9 kcal/g     WHO 2023
-salt            = 5 g × (energy / 2000)       WHO 2012, scaled for children
-protein target  = weight × 0.83 g/kg          WHO/FAO/UNU 2007
+당류 한도     = 에너지 × 10% ÷ 4 kcal/g     WHO 2015, 유리당
+포화지방      = 에너지 × 10% ÷ 9 kcal/g     WHO 2023
+소금          = 5 g × (에너지 / 2000)        WHO 2012, 어린이는 비례 환산
+단백질 목표   = 체중 × 0.83 g/kg             WHO/FAO/UNU 2007
 ```
 
-### Reading numbers we are willing to act on
+### 믿고 행동할 수 있는 숫자만 읽기
 
-Nutrition data arrives from unreliable readers. Measured on real Tesseract output, `22.4 g`
-comes back as `2249` — the decimal point is dropped and the unit `g` is read as a digit.
-Believed literally, that is a tenfold error driving a health judgement.
+영양 데이터는 믿기 어려운 판독기에서 들어옵니다. 실제 Tesseract 출력에서 `22.4 g`이 `2249`로 나옵니다. 소수점이 사라지고 단위 `g`가 숫자로 읽힌 것입니다. 그대로 믿으면 10배 오차가 건강 판정을 좌우합니다.
 
-So no reading is trusted on sight. Every value — whether it came from OCR or from a language
-model — must survive the same gauntlet:
+그래서 어떤 판독값도 곧바로 믿지 않습니다. OCR이든 언어 모델이든 모든 값은 같은 검증을 통과해야 합니다.
 
-1. **Range** — a macronutrient cannot exceed 100 g per 100 g
-2. **Containment** — sugars ≤ carbohydrates, saturated fat ≤ fat
-3. **Mass** — the nutrients cannot outweigh the food that contains them
-4. **Energy** — `4·carb + 4·protein + 9·fat` must reconcile with the stated calories (Atwater)
+1. 범위: 3대 영양소는 100 g당 100 g을 넘을 수 없습니다.
+2. 포함 관계: 당류 ≤ 탄수화물, 포화지방 ≤ 지방
+3. 질량: 영양소의 합이 그것을 담은 음식보다 무거울 수 없습니다.
+4. 에너지: `4·탄수화물 + 4·단백질 + 9·지방`이 표기된 열량과 맞아야 합니다(Atwater).
 
-Where several readings survive, the one requiring fewest corrections wins; where survivors
-disagree materially, the field is **discarded and the user is asked to retake**. Saying
-"couldn't read it" is safer than showing a confident wrong number.
+여러 판독값이 살아남으면 보정이 가장 적은 값을 택합니다. 살아남은 값들이 크게 어긋나면 그 항목을 **버리고 다시 찍어 달라고 요청**합니다. "읽지 못했다"고 말하는 편이 자신 있게 틀린 숫자를 보여 주는 것보다 안전합니다. 비전 모델에도 같은 검증이 적용됩니다. 모델은 식별하고, 엔진이 판정합니다.
 
-The same validator gates the vision model. The model identifies; the engine judges.
+## 기술
 
----
+- Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, zustand
+- OCR: Tesseract (브라우저), 음식 사진: Claude Vision (`@anthropic-ai/sdk`)와 온디바이스 모델(onnxruntime-web, WASM)
+- 픽토그램 엔진: Python + Pillow (`engine/`)
+- 약통: Raspberry Pi 펌웨어, 서식 파서(OpenCV/ArUco), 중계 서버 (`pill_dispenser/`)
+- 배포: Docker 다단계 빌드, fly.io (도쿄)
 
-## Running it
+## 실행 방법
 
 ```bash
 npm install
 npm run dev          # http://localhost:3000
 ```
 
-Pictogram rendering shells out to Python. In development, point it at an interpreter that
-has Pillow:
+픽토그램 렌더링은 Python을 호출합니다. 개발 환경에서는 Pillow가 설치된 인터프리터를 지정합니다.
 
 ```
 # .env.local
 PICTOGRAM_PYTHON=/opt/homebrew/bin/python3
-ANTHROPIC_API_KEY=            # optional — meal-photo recognition only
-NEXT_PUBLIC_SNAPCARE_RELAY=   # optional — the pill box's mailbox; see below
+ANTHROPIC_API_KEY=            # 선택: 음식 사진 인식에만 필요
+NEXT_PUBLIC_SNAPCARE_RELAY=   # 선택: 약통 사서함 주소 (아래 참고)
 ```
 
-### The pill box
+음식 사진 인식을 뺀 모든 기능은 키와 네트워크 없이 동작합니다. OCR은 브라우저에서 돌고, 픽토그램은 로컬에서 렌더링되며, 조회한 제품 정보와 렌더링한 픽토그램은 처음 한 번 디스크에 캐시됩니다.
 
-The dispenser sits behind somebody's home router, so the phone cannot reach it directly.
-Both sides talk to a **relay** instead — a mailbox that holds three sealed slots and can
-read none of them. `NEXT_PUBLIC_SNAPCARE_RELAY` is its address.
+```bash
+npm run build && npm start    # 프로덕션 빌드
+npm run lint                  # eslint
+npx tsc --noEmit              # 타입 검사
+npm test                      # lib/, components/ 단위 테스트
+```
 
-Leave it unset and the app still works: the device screen falls back to the same-Wi-Fi
-path, and the pairing screen asks for an address. Set it and pairing needs nothing but the
-ten characters on the label.
+### 약통
 
-To run one locally, with a mock dispenser and no Raspberry Pi:
+약통은 가정용 공유기 뒤에 있어서 폰이 직접 닿을 수 없습니다. 양쪽이 **중계 서버(relay)** 를 거쳐 통신합니다. 중계 서버는 봉인된 슬롯 세 개를 보관하는 사서함이고, 내용은 읽을 수 없습니다. `NEXT_PUBLIC_SNAPCARE_RELAY`가 그 주소입니다.
+
+설정하지 않아도 앱은 동작합니다. 기기 화면이 같은 Wi-Fi 경로로 대체되고, 짝짓기 화면이 주소를 묻습니다. 설정하면 짝짓기에 라벨의 10자리 코드만 있으면 됩니다.
+
+로컬에서 모의 약통과 함께 중계 서버를 돌리려면(Raspberry Pi 불필요) 다음을 실행합니다.
 
 ```bash
 make -C pill_dispenser/cloud_relay demo     # relay on :8088
 ```
 
-The address is also what the Content-Security-Policy opens (`middleware.ts`). One origin,
-no more — an injected script can reach the mailbox, which cannot read what it holds, and
-nowhere else.
+이 주소는 Content-Security-Policy(`middleware.ts`)가 여는 유일한 출처이기도 합니다. 주입된 스크립트가 닿을 수 있는 곳은 내용을 읽을 수 없는 사서함뿐입니다.
 
-Everything except meal-photo recognition works with no key and no network: OCR runs in the
-browser, pictograms render locally, and looked-up products and rendered pictograms are cached
-to disk on first use.
+### 음식 사진의 두 가지 출처
 
-### The two meal-photo sources
+음식 사진에는 읽을 글자가 없으므로 `api/analyze`로 보내고, 서로가 보지 못하는 부분을 채우는 두 출처를 씁니다.
 
-A meal photo has no text to read, so it goes to `api/analyze`, which uses two
-sources that fill in what the other cannot see:
-
-| | on-device model | Claude Vision |
+| | 온디바이스 모델 | Claude Vision |
 |---|---|---|
-| energy, carbs, protein, fat | trained on weighed dishes | estimated |
-| **portion mass** | **predicted** | eyeballed |
-| name, food vs. medicine | — | yes |
-| allergens | — | yes |
-| sugars, saturated fat, fibre, salt | — | yes |
-| needs a network | no | yes |
+| 에너지, 탄수화물, 단백질, 지방 | 무게를 단 음식으로 학습 | 추정 |
+| **1회 분량(질량)** | **예측** | 눈대중 |
+| 이름, 음식/약 구분 | 없음 | 있음 |
+| 알레르겐 | 없음 | 있음 |
+| 당류, 포화지방, 식이섬유, 소금 | 없음 | 있음 |
+| 네트워크 필요 | 아니오 | 예 |
 
-The model runs **in the browser**, through onnxruntime-web on the WASM backend
-— no server inference, no round trip, no Python. `scripts/copy-model.mjs`
-publishes it from `nutrition_manager/web/model` on every build, so the model
-lives in one place and a newly promoted one is picked up automatically.
+둘 다 답하면 숫자는 모델에서, 나머지는 Vision에서 가져옵니다. 한쪽만 가능하면 그쪽 결과로 답합니다. 어느 쪽이든 결과는 판정 엔진에 닿기 전에 같은 물리 검증(범위, 부분집합 관계, 질량 보존, Atwater 항등식)을 통과합니다. 학습 분포를 벗어난 회귀 모델이 내는 값도 환각하는 LLM과 같은 검증에 걸립니다.
 
-When both answer, the numbers come from the model and Vision supplies the rest;
-when only one is available, the app answers with that one. Either way the
-result passes the same physical checks (ranges, subset relations, mass
-conservation, the Atwater identity) before the verdict engine sees it — a
-regression model drifting outside its training distribution is caught by the
-same gauntlet as a hallucinating LLM.
+모델은 "모르겠다"고 답할 수 없습니다. 회귀 모델이라 벽을 찍은 사진에도 음식 접시와 똑같이 숫자 다섯 개를 돌려줍니다. 숫자가 나왔다고 무언가를 인식했다는 증거는 아닙니다. 아무것도 식별하지 못한 경우 결과를 "미식별"로 표시하고 판정은 "안전"이라고 하지 않습니다. 음식이 무엇인지 모르면 알레르기를 대조할 수 없기 때문입니다.
 
-The model cannot abstain. It is a regressor, so it returns five numbers for a
-photograph of a wall as readily as for a plate of food, and numbers coming back
-is not evidence that anything was recognised. Where nothing identified the
-item, the result is marked unidentified and the verdict will not read "safe" —
-with no idea what the food is there is nothing to check an allergy against.
+모델은 **브라우저 안에서** onnxruntime-web(WASM 백엔드)으로 실행됩니다. 서버 추론도, 왕복 통신도, Python도 없습니다. `scripts/copy-model.mjs`가 빌드 때마다 `nutrition_manager/web/model`에서 모델을 가져와 배포하므로, 모델은 한 곳에만 있고 새로 승격한 모델이 자동 반영됩니다.
 
-```bash
-npm run build && npm start    # production build
-npm run lint                  # eslint (clean)
-npx tsc --noEmit              # types (clean)
-```
-
-## Layout
+## 디렉터리
 
 ```
-app/                    screens (App Router) and API routes
-  camera/               capture and routing between the three input paths
-  scan/                 verdict, pictograms, voice, per-member breakdown
-  nutrition/            today's accumulated intake
-  api/pictogram/        SIGIL — DSL → PNG, disk-cached
-  api/nutrition/        product lookup, disk-cached
-  api/analyze/          meal-photo recognition, validated before use
+app/                    화면(App Router)과 API 라우트
+  camera/               촬영, 세 입력 경로로 분기
+  scan/                 판정, 픽토그램, 음성, 구성원별 결과
+  nutrition/            오늘 누적 섭취량
+  api/pictogram/        SIGIL: DSL -> PNG, 디스크 캐시
+  api/nutrition/        제품 조회, 디스크 캐시
+  api/analyze/          음식 사진 인식, 사용 전 검증
 lib/
-  nutrition/            reference · compute · validate · label OCR · adapters
-  snapcare/             domain types, verdict engine, DSL bridge, voice
-engine/                 SIGIL: parser, compositor, morpheme dictionary, assets
-stores/                 client state (zustand, persisted)
-pill_dispenser/         hardware companion — form-sheet parser (OpenCV/ArUco)
-scripts/                sample generators used to test the label parser
+  nutrition/            기준량 · 계산 · 검증 · 성분표 OCR · 어댑터
+  snapcare/             도메인 타입, 판정 엔진, DSL 연결, 음성
+engine/                 SIGIL: 파서, 합성기, 형태소 사전, 에셋
+stores/                 클라이언트 상태 (zustand, 영속)
+pill_dispenser/         하드웨어: 서식 파서(OpenCV/ArUco), 펌웨어, 중계 서버
+scripts/                성분표 파서 테스트용 샘플 생성기
 ```
 
-## Deployment
+## 배포
 
-Docker multi-stage build on **fly.io** (Tokyo). A mounted volume holds the household store
-and the pictogram/product caches, so the app keeps answering when the network does not.
+Docker 다단계 빌드로 **fly.io**(도쿄)에 배포합니다. 마운트한 볼륨에 가구 단위 저장소와 픽토그램/제품 캐시를 두어, 네트워크가 끊겨도 앱이 계속 답합니다.
 
 ```bash
 fly deploy
-fly secrets set ANTHROPIC_API_KEY=… -a snapcare   # meal-photo recognition in production
+fly secrets set ANTHROPIC_API_KEY=… -a snapcare   # 프로덕션 음식 사진 인식
 ```
 
-The relay lives at **https://snapcare-relay.fly.dev** as its own fly app, deployed from
-`pill_dispenser/cloud_relay` (`fly deploy -a snapcare-relay` from that directory). It holds
-a 1 GB volume for the mailboxes and one always-on machine, because a dispenser holding a
-long poll is by design a connection that never goes idle.
+중계 서버는 별도 fly 앱 **https://snapcare-relay.fly.dev** 로 운영하며 `pill_dispenser/cloud_relay`에서 배포합니다(`fly deploy -a snapcare-relay`). 사서함용 1 GB 볼륨과 상시 가동 머신 한 대를 씁니다. 약통이 long poll을 붙들고 있으므로 연결이 유휴 상태가 될 수 없는 구조이기 때문입니다.
 
-Its address reaches the browser as a **build argument**, recorded in `fly.toml` under
-`[build.args]` so a plain `fly deploy` carries it. It is not a secret and it cannot go in
-`fly.toml`'s `[env]`: anything named `NEXT_PUBLIC_` is baked into the bundle when Next
-builds it, so a value supplied at run time never reaches the phone. Getting this wrong
-fails in a confusing way — the server knows the address and opens the CSP for it, while the
-page tries `localhost` and pairing fails as though the code on the label were wrong. The
-pairing screen says so when the build has no address at all.
+중계 서버 주소는 **빌드 인자**로 브라우저에 전달되며 `fly.toml`의 `[build.args]`에 기록됩니다. 비밀값이 아니고, `fly.toml`의 `[env]`에는 넣을 수 없습니다. `NEXT_PUBLIC_`으로 시작하는 값은 Next가 빌드할 때 번들에 박히므로 실행 시점에 주는 값은 폰에 닿지 않습니다. 이를 잘못 설정하면 원인을 찾기 어렵습니다. 서버는 주소를 알아 CSP를 열어 주는데 화면은 `localhost`로 접속을 시도해서, 라벨의 코드가 틀린 것처럼 짝짓기가 실패합니다. 빌드에 주소가 아예 없으면 짝짓기 화면이 그렇게 알려 줍니다.
 
-## Handwritten prescriptions: what we measured
+## 손글씨 처방전: 측정 결과
 
-A reviewer told us this would not work on handwriting, and we had only ever tested printed
-samples. So we measured it, on a public dataset of handwritten drug names cut from real
-Bangladeshi prescriptions ([RxHandBD](https://zenodo.org/records/18478741), MIT).
+심사위원 한 분이 손글씨에는 동작하지 않을 것이라고 지적했고, 우리는 인쇄체 샘플로만 시험해 봤을 뿐이었습니다. 그래서 방글라데시의 실제 처방전에서 잘라낸 손글씨 약 이름 공개 데이터셋([RxHandBD](https://zenodo.org/records/18478741), MIT)으로 측정했습니다.
 
 ```bash
 node scripts/handwriting-eval.mjs <path-to-RxHandBD> 500
 ```
 
-Over 500 words: **45% exactly right, 28% off by one or two letters, 27% wrong.** The
-middle band is the dangerous one — `Escilex` → `Eslilex`, `clavutil` → `Clavuxil` — because
-one letter away there is often another real drug. This dataset alone contains both
-`Inderen` and `Indever`.
+500단어에서 **45%는 정확히 맞았고, 28%는 한두 글자가 달랐고, 27%는 틀렸습니다.** 가운데 구간이 위험합니다. `Escilex`가 `Eslilex`로, `clavutil`이 `Clavuxil`로 읽히는데, 한 글자 차이에 다른 실제 약이 있는 경우가 많기 때문입니다. 이 데이터셋에만도 `Inderen`과 `Indever`가 둘 다 있습니다.
 
-We also asked whether the model's own confidence could pick out the readings worth trusting.
-It cannot. Accuracy peaks at a threshold of 0.5 — 20% of readings survive and 83% of those
-are right — and then *falls* as the bar rises further: 80% at 0.6, 77% at 0.7. A high
-confidence score is not evidence of a correct reading.
+모델 자신의 신뢰도로 믿을 만한 판독을 골라낼 수 있는지도 확인했습니다. 골라낼 수 없었습니다. 정확도는 임계값 0.5에서 최고(판독의 20%가 남고 그중 83%가 정답)이고, 기준을 올릴수록 오히려 *떨어졌습니다*(0.6에서 80%, 0.7에서 77%). 높은 신뢰도 점수는 올바른 판독의 증거가 아닙니다.
 
-**One number moved when we enlarged the sample, and it moved the wrong way.** At 200 words,
-nothing carrying a confidence of 0.8 or higher was wrong, and we wrote that down as
-reassuring. At 500, one was:
+**표본을 키우자 숫자 하나가 나쁜 쪽으로 움직였습니다.** 200단어에서는 신뢰도 0.8 이상인 판독 중 틀린 것이 없었고, 우리는 이를 안심할 결과로 적어 두었습니다. 500단어에서는 하나가 틀렸습니다.
 
 ```
-paper: Folzin (folic acid)   app: Naprosyn (naproxen)   confidence 0.85
+종이: Folzin (엽산)   앱: Naprosyn (나프록센)   신뢰도 0.85
 ```
 
-Not a near-miss — a different drug, asserted. It is rare (0.2%) but it exists, so confidence
-cannot be used as a safety catch. Had we stopped at 200 we would have built on that comfort.
+비슷하게 틀린 것이 아니라 다른 약을 단정한 것입니다. 드물지만(0.2%) 존재하므로 신뢰도를 안전장치로 쓸 수 없습니다. 200단어에서 멈췄다면 그 안심 위에 시스템을 지었을 것입니다.
 
-So the app does not try to be clever. A prescription it judges handwritten never gets a
-confident verdict — it says so, keeps the pictograms, and points at the clinic's paper form
-sheet, which is marks rather than handwriting and reads exactly.
+그래서 앱은 영리하려 하지 않습니다. 손글씨로 판단한 처방전에는 확신 있는 판정을 내리지 않습니다. 그렇다고 알리고, 픽토그램은 유지하며, 손글씨가 아니라 표시(마크)로 쓰여 정확히 읽히는 병원의 종이 서식으로 안내합니다.
 
-Full per-image results: `scripts/handwriting-eval.json`. Whole prescription pages are
-measured separately — see `MEASUREMENTS.md`.
+개별 이미지 결과는 `scripts/handwriting-eval.json`에 있습니다. 처방전 전체 페이지는 별도로 측정했으며 `MEASUREMENTS.md`를 참고하세요.
 
-## Data sources
+## 데이터 출처
 
-Nutrition references from WHO/FAO guidance, cited inline in `lib/nutrition/reference.ts`.
-Packaged-product data from **OpenFoodFacts**, which is community-edited and can be incomplete —
-the app says so on screen and tells the user to check the package for allergens.
-All nutrition output is an estimate and is labelled as such. It is not medical advice.
+영양 기준은 WHO/FAO 지침에서 가져왔고 `lib/nutrition/reference.ts`에 출처를 달았습니다. 포장 제품 데이터는 **OpenFoodFacts**에서 가져옵니다. 커뮤니티가 편집하는 자료라 불완전할 수 있으며, 앱은 이를 화면에 밝히고 알레르겐은 포장지를 확인하라고 안내합니다. 모든 영양 결과는 추정치이며 그렇게 표시됩니다. 의학적 조언이 아닙니다.
 
-## Use of AI
+## AI 활용
 
-Disclosed in full:
+전부 공개합니다.
 
-- **Claude Vision** identifies a dish from a photo and proposes its composition. It never
-  decides anything: its output passes through the same validator as OCR, and is discarded if
-  it fails. Verdicts, references, scaling and accumulation are ours.
-- **Claude Code** was used as a development tool while building this repository.
+- **Claude Vision**이 사진에서 음식을 식별하고 구성을 제안합니다. 판단은 하지 않습니다. 출력은 OCR과 같은 검증기를 통과해야 하고, 통과하지 못하면 버려집니다. 판정, 기준량, 환산, 누적은 우리가 만든 것입니다.
+- **Claude Code**를 이 저장소를 만드는 개발 도구로 사용했습니다.
 
-The engines — SIGIL, VOCA, and the nutrition reference/validation logic — are the team's own
-design and implementation.
+SIGIL, VOCA, 영양 기준/검증 로직은 팀이 직접 설계하고 구현했습니다.
 
-## Team H1
+## 팀 H1
 
 | | |
 |---|---|
-| **Yunsu Nam** (KR) | Development & prototype lead — web app, engines, deployment |
-| **Dohun Kim** (KR) | Coordination & uploads — hardware form-sheet parser |
-| **Daniel Stanchevici** (MD) | Design & wireframe lead — user flow, UI, pictogram design |
-| **Cristian Rudico** (MD) | Research & content lead — problem research, poster and presentation |
+| 남윤수 (KR) | 개발 및 프로토타입 총괄: 웹 앱, 엔진, 배포 |
+| Dohun Kim (KR) | 조율 및 업로드: 하드웨어 서식 파서 |
+| Daniel Stanchevici (MD) | 디자인 및 와이어프레임 총괄: 사용자 흐름, UI, 픽토그램 디자인 |
+| Cristian Rudico (MD) | 조사 및 콘텐츠 총괄: 문제 조사, 포스터와 발표 |
